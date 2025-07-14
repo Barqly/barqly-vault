@@ -82,8 +82,8 @@ barqly-vault/
 ### Milestone 1: Project Foundation & Setup
 **Goal**: Establish project structure, development environment, and core architecture
 
-- [ ] 1.1: Initialize Tauri project with React + TypeScript template
-- [ ] 1.2: Set up project folder structure following Rust best practices
+- [x] 1.1: Initialize Tauri project with React + TypeScript template
+- [x] 1.2: Set up project folder structure following Rust best practices
 - [ ] 1.3: Configure ESLint, Prettier, and Rust formatting tools
 - [ ] 1.4: Set up Git repository with proper .gitignore
 - [ ] 1.5: Create initial CI/CD pipeline with GitHub Actions
