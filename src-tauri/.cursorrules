@@ -1,0 +1,176 @@
+# Barqly Vault - Rust Backend Cursor Rules
+
+## Rust Development Guidelines
+
+### Code Style
+- Follow standard Rust naming conventions (snake_case for functions/variables, CamelCase for types)
+- Use `rustfmt` for consistent formatting
+- Leverage `clippy` for additional linting
+- Prefer explicit error handling over `.unwrap()` or `.expect()` in production code
+
+### Error Handling
+```rust
+// Use thiserror for error definitions
+#[derive(thiserror::Error, Debug)]
+pub enum CryptoError {
+    #[error("Invalid key format: {0}")]
+    InvalidKey(String),
+    #[error("Decryption failed: {0}")]
+    DecryptionFailed(String),
+}
+
+// Use anyhow for error propagation in application code
+use anyhow::{Context, Result};
+```
+
+### Module Structure
+```
+src-tauri/src/
+├── main.rs           # Application entry point
+├── commands/         # Tauri command handlers
+│   ├── mod.rs
+│   ├── setup.rs      # Key generation commands
+│   ├── encrypt.rs    # Encryption commands
+│   └── decrypt.rs    # Decryption commands
+├── crypto/           # Encryption logic
+│   ├── mod.rs
+│   ├── age.rs        # age encryption wrapper
+│   └── key_mgmt.rs   # Key management
+├── storage/          # Persistent storage
+│   ├── mod.rs
+│   ├── keys.rs       # Key storage
+│   └── config.rs     # Configuration
+├── file_ops/         # File operations
+│   ├── mod.rs
+│   ├── archive.rs    # TAR operations
+│   └── manifest.rs   # Manifest generation
+└── utils/            # Utilities
+    ├── mod.rs
+    └── paths.rs      # Cross-platform paths
+```
+
+### Security Best Practices
+- Use `zeroize` crate for clearing sensitive data:
+```rust
+use zeroize::Zeroize;
+
+let mut passphrase = String::from("sensitive");
+// Use passphrase...
+passphrase.zeroize();
+```
+
+- Prefer `age` crate over CLI for better control:
+```rust
+use age::{Encryptor, Decryptor, Identity, Recipient};
+```
+
+### Tauri Command Patterns
+```rust
+#[tauri::command]
+pub async fn generate_key(label: String, passphrase: String) -> Result<PublicKey, String> {
+    // Validate inputs
+    if label.is_empty() {
+        return Err("Key label cannot be empty".to_string());
+    }
+    
+    // Perform operation with proper error handling
+    crypto::generate_keypair(&label, &passphrase)
+        .map_err(|e| e.to_string())
+}
+```
+
+### Testing Patterns
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_key_generation() {
+        let temp_dir = TempDir::new().unwrap();
+        // Test implementation
+    }
+
+    #[tokio::test]
+    async fn test_async_operation() {
+        // Async test implementation
+    }
+}
+```
+
+### Performance Guidelines
+- Use `&str` instead of `String` for function parameters when ownership isn't needed
+- Leverage `Cow<str>` for APIs that might or might not allocate
+- Use `Arc<Mutex<T>>` sparingly; prefer message passing with channels
+- Profile before optimizing; clarity > premature optimization
+
+### Dependency Management
+- Prefer well-maintained crates with security audits
+- Pin dependency versions in Cargo.toml
+- Regular security audits with `cargo audit`
+- Minimal dependencies for reduced attack surface
+
+### Async/Await Guidelines
+- Use `tokio` runtime (comes with Tauri)
+- Avoid blocking operations in async contexts
+- Use `spawn_blocking` for CPU-intensive tasks:
+```rust
+let result = tokio::task::spawn_blocking(|| {
+    // CPU-intensive operation
+}).await?;
+```
+
+### Logging and Debugging
+```rust
+use tracing::{info, warn, error, debug};
+
+// Use structured logging
+info!(key_label = %label, "Generating new key");
+error!(error = ?e, "Failed to decrypt file");
+```
+
+### Cross-Platform Considerations
+```rust
+// Use platform-specific code sparingly
+#[cfg(target_os = "windows")]
+fn get_config_dir() -> PathBuf {
+    // Windows-specific implementation
+}
+
+#[cfg(not(target_os = "windows"))]
+fn get_config_dir() -> PathBuf {
+    // Unix-like implementation
+}
+```
+
+### Memory Safety Checklist
+- [ ] No unsafe code without thorough review and justification
+- [ ] Sensitive data cleared with `zeroize`
+- [ ] Proper lifetime annotations where needed
+- [ ] No memory leaks (test with valgrind/heaptrack)
+- [ ] Thread safety verified for shared state
+
+## Common Patterns
+
+### Result Type Aliases
+```rust
+pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub type CryptoResult<T> = std::result::Result<T, CryptoError>;
+```
+
+### Builder Pattern for Complex Types
+```rust
+pub struct EncryptionConfig {
+    // fields...
+}
+
+impl EncryptionConfig {
+    pub fn builder() -> EncryptionConfigBuilder {
+        EncryptionConfigBuilder::default()
+    }
+}
+```
+
+### RAII for Resource Management
+Always use RAII patterns for file handles, locks, and other resources that need cleanup. 

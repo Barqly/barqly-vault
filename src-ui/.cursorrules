@@ -1,0 +1,289 @@
+# Barqly Vault - Frontend Cursor Rules
+
+## React/TypeScript Development Guidelines
+
+### TypeScript Configuration
+- Strict mode enabled (`"strict": true`)
+- No implicit any (`"noImplicitAny": true`)
+- Strict null checks (`"strictNullChecks": true`)
+- Use type inference where possible, explicit types where necessary
+
+### Component Structure
+```typescript
+// Prefer functional components with TypeScript
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary';
+  disabled?: boolean;
+}
+
+export const Button: React.FC<ButtonProps> = ({ 
+  label, 
+  onClick, 
+  variant = 'primary',
+  disabled = false 
+}) => {
+  // Component implementation
+};
+```
+
+### File Organization
+```
+src/
+├── components/          # Reusable UI components
+│   ├── common/         # Generic components
+│   ├── forms/          # Form-specific components
+│   └── layout/         # Layout components
+├── pages/              # Page components (Setup, Encrypt, Decrypt)
+├── hooks/              # Custom React hooks
+├── services/           # Tauri API wrappers
+├── types/              # TypeScript type definitions
+├── utils/              # Utility functions
+├── styles/             # Global styles and themes
+└── App.tsx             # Root component
+```
+
+### State Management
+- Use Zustand for global state management
+- Keep state as close to where it's needed as possible
+- Prefer component state for UI-only state
+
+```typescript
+// Zustand store example
+import { create } from 'zustand';
+
+interface KeyStore {
+  keys: KeyInfo[];
+  selectedKey: string | null;
+  setSelectedKey: (keyId: string) => void;
+  loadKeys: () => Promise<void>;
+}
+
+export const useKeyStore = create<KeyStore>((set) => ({
+  keys: [],
+  selectedKey: null,
+  setSelectedKey: (keyId) => set({ selectedKey: keyId }),
+  loadKeys: async () => {
+    const keys = await tauriCommands.listKeys();
+    set({ keys });
+  },
+}));
+```
+
+### Tauri Integration Patterns
+```typescript
+// services/tauri.ts
+import { invoke } from '@tauri-apps/api/tauri';
+
+export const tauriCommands = {
+  generateKey: async (label: string, passphrase: string): Promise<string> => {
+    return invoke<string>('generate_key', { label, passphrase });
+  },
+  
+  encryptFiles: async (params: EncryptParams): Promise<void> => {
+    return invoke('encrypt_files', params);
+  },
+};
+
+// Always handle errors gracefully
+try {
+  const publicKey = await tauriCommands.generateKey(label, passphrase);
+} catch (error) {
+  console.error('Key generation failed:', error);
+  // Show user-friendly error message
+}
+```
+
+### Custom Hooks
+```typescript
+// hooks/useAsyncOperation.ts
+export function useAsyncOperation<T>() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  
+  const execute = useCallback(async (operation: () => Promise<T>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await operation();
+      return result;
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  return { execute, loading, error };
+}
+```
+
+### Form Handling
+```typescript
+// Use controlled components with proper validation
+interface FormData {
+  keyLabel: string;
+  passphrase: string;
+  confirmPassphrase: string;
+}
+
+const SetupForm: React.FC = () => {
+  const [formData, setFormData] = useState<FormData>({
+    keyLabel: '',
+    passphrase: '',
+    confirmPassphrase: '',
+  });
+  
+  const [errors, setErrors] = useState<Partial<FormData>>({});
+  
+  const validate = (): boolean => {
+    const newErrors: Partial<FormData> = {};
+    
+    if (!formData.keyLabel.trim()) {
+      newErrors.keyLabel = 'Key label is required';
+    }
+    
+    if (formData.passphrase.length < 12) {
+      newErrors.passphrase = 'Passphrase must be at least 12 characters';
+    }
+    
+    if (formData.passphrase !== formData.confirmPassphrase) {
+      newErrors.confirmPassphrase = 'Passphrases do not match';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+};
+```
+
+### Styling Guidelines
+- Use CSS Modules for component-specific styles
+- CSS Variables for theming
+- Mobile-first responsive design
+- Consistent spacing using design tokens
+
+```css
+/* styles/variables.css */
+:root {
+  /* Colors */
+  --color-primary: #0066cc;
+  --color-secondary: #6c757d;
+  --color-success: #28a745;
+  --color-danger: #dc3545;
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+}
+```
+
+### Accessibility Requirements
+- All interactive elements must be keyboard accessible
+- Proper ARIA labels for screen readers
+- Color contrast ratios meeting WCAG AA standards
+- Focus indicators for keyboard navigation
+
+```typescript
+<button
+  aria-label="Generate encryption key"
+  aria-disabled={isDisabled}
+  onClick={handleClick}
+  onKeyDown={handleKeyDown}
+>
+  Generate Key
+</button>
+```
+
+### Performance Optimization
+- Use React.memo for expensive components
+- Implement proper key props for lists
+- Lazy load heavy components
+- Debounce user input where appropriate
+
+```typescript
+// Memoized component
+export const ExpensiveComponent = React.memo(({ data }: Props) => {
+  // Component implementation
+}, (prevProps, nextProps) => {
+  // Custom comparison logic if needed
+  return prevProps.data.id === nextProps.data.id;
+});
+```
+
+### Error Boundaries
+```typescript
+class ErrorBoundary extends React.Component<Props, State> {
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+  
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error boundary caught:', error, errorInfo);
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return <ErrorFallback error={this.state.error} />;
+    }
+    
+    return this.props.children;
+  }
+}
+```
+
+### Testing Patterns
+```typescript
+// Use React Testing Library
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+
+describe('Button', () => {
+  it('should call onClick when clicked', async () => {
+    const handleClick = jest.fn();
+    render(<Button label="Test" onClick={handleClick} />);
+    
+    fireEvent.click(screen.getByText('Test'));
+    
+    await waitFor(() => {
+      expect(handleClick).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+```
+
+### Type Safety Patterns
+```typescript
+// Use discriminated unions for complex state
+type FileSelectionState = 
+  | { mode: 'none' }
+  | { mode: 'files'; files: string[] }
+  | { mode: 'folder'; folder: string };
+
+// Use const assertions for literals
+const STATUS = {
+  IDLE: 'idle',
+  LOADING: 'loading',
+  SUCCESS: 'success',
+  ERROR: 'error',
+} as const;
+
+type Status = typeof STATUS[keyof typeof STATUS];
+```
+
+### Common Pitfalls to Avoid
+- Don't use `any` type - use `unknown` if type is truly unknown
+- Don't ignore TypeScript errors - fix them properly
+- Don't use inline styles - use CSS Modules or styled components
+- Don't forget to handle loading and error states
+- Don't store sensitive data in component state 
