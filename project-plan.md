@@ -85,7 +85,7 @@ barqly-vault/
 - [x] 1.1: Initialize Tauri project with React + TypeScript template
 - [x] 1.2: Set up project folder structure following Rust best practices
 - [x] 1.3: Configure ESLint, Prettier, and Rust formatting tools
-- [ ] 1.4: Set up Git repository with proper .gitignore
+- [x] 1.4: Set up Git repository with proper .gitignore
 - [ ] 1.5: Create initial CI/CD pipeline with GitHub Actions
 - [ ] 1.6: Set up development documentation (README, CONTRIBUTING)
 - [ ] 1.7: Configure Tauri security settings and CSP
