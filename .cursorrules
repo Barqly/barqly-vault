@@ -11,6 +11,7 @@ Barqly Vault is a cross-platform desktop application for secure file encryption 
 - **Error Handling**: Comprehensive error handling with user-friendly messages
 - **Testing**: Maintain >80% test coverage for security-critical code
 - **Documentation**: Document all public APIs, complex logic, and security considerations
+- **Commit After Validation**: After every successful validation of a task or milestone, all relevant code must be committed to git with a clear, conventional commit message. This ensures traceability and project integrity.
 
 ### Architecture Principles
 1. **Separation of Concerns**: Clear boundaries between frontend, backend, and Tauri bridge
