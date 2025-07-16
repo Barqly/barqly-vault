@@ -4,8 +4,22 @@ import tsParser from '@typescript-eslint/parser';
 import react from 'eslint-plugin-react';
 import prettier from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
+import globals from 'globals';
 
 export default [
+  {
+    // Global ignores
+    ignores: ['dist', 'node_modules', '.vite-temp'],
+  },
+  // Config for Node.js files (e.g., vite.config.ts)
+  {
+    files: ['vite.config.ts', 'eslint.config.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
   js.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -17,9 +31,8 @@ export default [
         ecmaFeatures: { jsx: true },
       },
       globals: {
-        document: 'readonly',
-        HTMLElement: 'readonly',
-        window: 'readonly',
+        ...globals.browser,
+        ...globals.es2021,
       },
     },
     plugins: {
