@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
+    "test": "echo 'No test runner configured yet. Add Jest or React Testing Library for tests.'"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -17,6 +19,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "@types/node": "^24.0.14",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
