@@ -1,0 +1,48 @@
+name: CI Backend
+
+on:
+  push:
+    paths:
+      - 'src-tauri/**'
+      - '.github/workflows/ci-backend.yml'
+  pull_request:
+    paths:
+      - 'src-tauri/**'
+      - '.github/workflows/ci-backend.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions/setup-rust@v1
+        with:
+          rust-version: stable
+
+      - name: Install dependencies
+        run: |
+          cd src-tauri
+          cargo fetch
+
+      - name: Format check
+        run: |
+          cd src-tauri
+          cargo fmt --all -- --check
+
+      - name: Lint (clippy)
+        run: |
+          cd src-tauri
+          cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Build
+        run: |
+          cd src-tauri
+          cargo build --release
+
+      - name: Run tests
+        run: |
+          cd src-tauri
+          cargo test --all 
