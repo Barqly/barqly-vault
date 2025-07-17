@@ -12,4 +12,4 @@ fn test_logging_initialization_integration() {
 }
 
 // Other integration tests that require logger initialization are omitted due to singleton limitation.
-// If you need to test logging behavior, do so in the same test or use unit tests for non-global logic. 
+// If you need to test logging behavior, do so in the same test or use unit tests for non-global logic.

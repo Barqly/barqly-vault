@@ -1,10 +1,10 @@
-use std::fs::{OpenOptions, create_dir_all};
+use chrono::Local;
+use std::fs::{create_dir_all, OpenOptions};
 use std::io::Write;
 use std::sync::Mutex;
-use chrono::Local;
 
-use super::{LogLevel, LoggingError};
 use super::platform::get_log_dir;
+use super::{LogLevel, LoggingError};
 
 // SECURITY: Never log secrets or sensitive data (keys, passphrases, file contents, etc.)
 
@@ -15,10 +15,15 @@ pub struct Logger {
 
 impl Logger {
     pub fn new(level: LogLevel) -> Result<Self, LoggingError> {
-        let log_dir = get_log_dir().ok_or_else(|| LoggingError::Other("Could not determine log directory".to_string()))?;
+        let log_dir = get_log_dir()
+            .ok_or_else(|| LoggingError::Other("Could not determine log directory".to_string()))?;
         create_dir_all(&log_dir).map_err(LoggingError::Io)?;
         let log_path = log_dir.join("barqly-vault.log");
-        let file = OpenOptions::new().create(true).append(true).open(log_path).map_err(LoggingError::Io)?;
+        let file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(log_path)
+            .map_err(LoggingError::Io)?;
         Ok(Logger {
             log_file: Mutex::new(Some(file)),
             level,
@@ -39,4 +44,4 @@ impl Logger {
             }
         }
     }
-} 
+}

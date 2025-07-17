@@ -4,8 +4,8 @@
 mod logger;
 mod platform;
 
-use once_cell::sync::OnceCell;
 use crate::logging::logger::Logger;
+use once_cell::sync::OnceCell;
 
 static LOGGER: OnceCell<Logger> = OnceCell::new();
 
@@ -25,7 +25,9 @@ pub enum LoggingError {
 
 pub fn init_logging(level: LogLevel) -> Result<(), LoggingError> {
     let logger = Logger::new(level)?;
-    LOGGER.set(logger).map_err(|_| LoggingError::Other("Logger already initialized".to_string()))?;
+    LOGGER
+        .set(logger)
+        .map_err(|_| LoggingError::Other("Logger already initialized".to_string()))?;
     Ok(())
 }
 
@@ -57,8 +59,8 @@ mod tests {
     // This is the idiomatic approach in the Rust ecosystem (see log/env_logger/tracing crates).
     use super::*;
     use crate::logging::platform::get_log_dir;
-    use serial_test::serial;
     use rand::{distributions::Alphanumeric, Rng};
+    use serial_test::serial;
 
     fn get_unique_id() -> String {
         rand::thread_rng()
@@ -73,7 +75,7 @@ mod tests {
     fn test_log_file_creation_and_write() {
         // This test now verifies both file creation and content writing.
         let unique_message = format!("test message {}", get_unique_id());
-        
+
         let _ = init_logging(LogLevel::Info);
         log_info(&unique_message);
 
@@ -139,4 +141,4 @@ mod tests {
         assert_eq!(levels.len(), 4);
         assert!(levels.contains(&LogLevel::Error));
     }
-} 
+}

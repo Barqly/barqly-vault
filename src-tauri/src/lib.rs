@@ -6,7 +6,7 @@ fn greet(name: &str) -> String {
 
 pub mod logging;
 
-use logging::{init_logging, LogLevel, log_info};
+use logging::{init_logging, log_info, LogLevel};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
