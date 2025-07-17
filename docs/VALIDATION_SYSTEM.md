@@ -6,11 +6,13 @@
    chmod +x scripts/setup-hooks.sh
    ./scripts/setup-hooks.sh
    ```
-2. **Every time you commit,** you'll see a reminder to run:
+2. **Every time you commit,** the hook will automatically run:
    ```bash
-   cd src-tauri && cargo fmt && cargo clippy && cargo test
+   cargo fmt --check    # Formatting validation
+   cargo clippy         # Linting validation  
+   cargo test           # Test validation
    ```
-3. **If you see a reminder,** just follow the instructions before pushing!
+3. **If any validation fails,** the commit is blocked until you fix the issues!
 
 ---
 
@@ -31,7 +33,7 @@
 ## 🎯 Overview
 
 The validation system consists of:
-- **Pre-commit hooks** that remind about local validation before commits
+- **Pre-commit hooks** that automatically validate code quality before commits
 - **Local validation scripts** for manual checks
 - **CI/CD integration** that mirrors local validation
 
@@ -55,22 +57,25 @@ chmod +x .git/hooks/pre-commit
 
 ## 🚦 How It Works
 
-Every commit triggers a reminder:
+Every commit triggers automatic validation:
 ```
 🔍 Barqly Vault Pre-commit Validation
 =====================================
-📦 Rust project detected.
+📦 Rust project detected. Running validation...
+🎨 Running cargo fmt...
+✅ Formatting check passed
+🔍 Running cargo clippy...
+✅ Clippy check passed
+🧪 Running tests...
+✅ All tests passed
 
-💡 REMINDER: Consider running local validation before pushing:
-   cd src-tauri && cargo fmt && cargo clippy && cargo test
-
-⏱️  This saves time by preventing CI failures (4-5 min cycles).
-
+🎉 All validation checks passed!
 📝 Proceeding with commit...
 ```
 
-- **Never blocks your commit.**
-- **Just a friendly nudge!**
+- **Blocks commits** if any validation fails
+- **Shows clear error messages** with fix instructions
+- **Proceeds only** when all checks pass
 
 ---
 
@@ -86,22 +91,31 @@ cargo test           # Tests
 
 ## 📝 Usage Example
 
-### Recommended Workflow
+### Successful Commit
 ```bash
 # Edit code...
 git add .
 git commit -m "feat: new feature"
-# Reminder appears
-cd src-tauri && cargo fmt && cargo clippy && cargo test
+# Hook runs validation automatically
+# ✅ All checks pass
+# 📝 Commit proceeds
 git push
 ```
 
-### For Docs/Small Changes
+### Failed Validation
 ```bash
 git add .
-git commit -m "docs: update README"
-# Reminder appears, commit proceeds
-git push
+git commit -m "feat: new feature"
+# ❌ Formatting issues found!
+# 💡 Run 'cargo fmt' to fix formatting
+# Commit is blocked
+
+# Fix the issues
+cargo fmt
+git add .
+git commit -m "feat: new feature"
+# ✅ All checks pass
+# 📝 Commit proceeds
 ```
 
 ---
@@ -114,10 +128,11 @@ git push
 
 ---
 
-## 💡 If CI Fails
-- Fix issues locally (see error message)
-- Run validation steps above
-- Commit and push again
+## 💡 If Validation Fails
+- **Formatting issues:** Run `cargo fmt` to fix
+- **Clippy issues:** Fix the linting problems shown
+- **Test failures:** Fix the failing tests
+- **Re-commit:** The hook will validate again
 
 ---
 
@@ -128,7 +143,7 @@ git push
 ---
 
 ## 🔄 Integration with ZenAI Rituals
-- **Gentle reminders** about local validation
-- **Educational prompts** about best practices
-- **Reduced feedback loops** by catching issues early
-- **Non-intrusive** design that doesn't block workflow 
+- **Automated validation** before every commit
+- **Fail-fast approach** to catch issues early
+- **Reduced feedback loops** by preventing bad commits
+- **Consistent quality** across all team members 

@@ -50,5 +50,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 MIT
-# test
-# test validation
