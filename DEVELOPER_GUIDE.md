@@ -50,6 +50,7 @@ Use the `--config` flag to select the appropriate config at build or run time. N
 ## Security & Validation
 - Always validate security posture in a production build (CSP, capabilities, etc.).
 - See [validation_checklist.md](zenai/validation_checklist.md) for manual and automated security checks.
+- See [Validation System & Pre-commit Hook](docs/VALIDATION_SYSTEM.md) for local validation and commit hygiene.
 
 ---
 
@@ -71,7 +72,12 @@ Use the `--config` flag to select the appropriate config at build or run time. N
 - [Project Plan](project-plan.md)
 - [Validation Checklist](zenai/validation_checklist.md)
 - [Milestone 0 Sprint Planning](zenai/milestone_0_sprint_planning.md)
+- [Validation System](docs/VALIDATION_SYSTEM.md)
 
 ---
 
-_Keep this guide up to date as the project evolves!_ 
+_Keep this guide up to date as the project evolves!_
+
+---
+
+If you find a better way or spot an error in our onboarding or validation process, **please update the docs for the next engineer!** 
