@@ -4,21 +4,23 @@
   "version": "0.1.0",
   "identifier": "com.barqly.vault",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "npm run dev --prefix src-ui",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist"
+    "beforeBuildCommand": "npm run build --prefix src-ui",
+    "frontendDist": "../src-ui/dist"
   },
   "app": {
     "windows": [
       {
         "title": "Barqly Vault",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "devtools": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-src 'none';",
+      "capabilities": ["default"]
     }
   },
   "bundle": {
@@ -30,6 +32,17 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "entitlements": "entitlements.plist",
+      "hardenedRuntime": true,
+      "minimumSystemVersion": "10.13"
+    },
+    "windows": {
+      "certificateThumbprint": "",
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com"
+    },
+    "linux": {}
   }
 }
