@@ -58,17 +58,30 @@ mod tests {
     use super::*;
     use crate::logging::platform::get_log_dir;
     use serial_test::serial;
+    use rand::{distributions::Alphanumeric, Rng};
+
+    fn get_unique_id() -> String {
+        rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(12)
+            .map(char::from)
+            .collect()
+    }
 
     #[test]
     #[serial]
-    fn test_log_file_creation() {
-        // Ensure logger is initialized and a log is written
+    fn test_log_file_creation_and_write() {
+        // This test now verifies both file creation and content writing.
+        let unique_message = format!("test message {}", get_unique_id());
+        
         let _ = init_logging(LogLevel::Info);
-        log_info("Test log file creation");
-        let log_dir = get_log_dir();
-        assert!(log_dir.is_some());
-        let log_path = log_dir.unwrap().join("barqly-vault.log");
-        assert!(log_path.exists() || log_path.parent().unwrap().exists());
+        log_info(&unique_message);
+
+        let log_path = get_log_dir().unwrap().join("barqly-vault.log");
+        assert!(log_path.exists());
+
+        let content = std::fs::read_to_string(&log_path).expect("Should be able to read log file");
+        assert!(content.contains(&unique_message));
     }
 
     #[test]

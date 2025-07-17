@@ -26,14 +26,16 @@ impl Logger {
     }
 
     pub fn log(&self, level: LogLevel, message: &str) {
-        if (level as u8) > (self.level as u8) {
+        if level > self.level {
             return;
         }
         let now = Local::now().format("%Y-%m-%d %H:%M:%S");
         let log_line = format!("[{}][{:?}] {}\n", now, level, message);
         if let Ok(mut file_opt) = self.log_file.lock() {
             if let Some(file) = file_opt.as_mut() {
-                let _ = file.write_all(log_line.as_bytes());
+                if let Err(e) = file.write_all(log_line.as_bytes()) {
+                    eprintln!("Failed to write to log file: {}", e);
+                }
             }
         }
     }

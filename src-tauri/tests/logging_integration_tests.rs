@@ -2,7 +2,7 @@
 // NOTE: Logger initialization can only be tested once per process due to Rust's global singleton pattern (OnceCell).
 // Do not attempt to re-initialize the logger in multiple tests; this is the idiomatic Rust approach.
 
-use barqly_vault_lib::logging::{init_logging, LogLevel, log_info, log_error, log_warn, log_debug};
+use barqly_vault_lib::logging::{init_logging, LogLevel};
 
 #[test]
 fn test_logging_initialization_integration() {
