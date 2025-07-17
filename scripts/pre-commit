@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Barqly Vault Pre-commit Hook
+# This hook reminds about local validation before commits
+
+set -e
+
+echo "🔍 Barqly Vault Pre-commit Validation"
+echo "======================================"
+
+# Check if we're in the src-tauri directory or if it exists
+if [ -d "src-tauri" ]; then
+    echo "📦 Rust project detected."
+    echo ""
+    echo "💡 REMINDER: Consider running local validation before pushing:"
+    echo "   cd src-tauri && cargo fmt && cargo clippy && cargo test"
+    echo ""
+    echo "⏱️  This saves time by preventing CI failures (4-5 min cycles)."
+    echo ""
+else
+    echo "ℹ️  No Rust project found, skipping Rust validation reminder"
+fi
+
+# Check for any staged files that might need validation
+echo "📋 Checking staged files..."
+
+# Check for any .ts/.tsx files (frontend validation)
+if git diff --cached --name-only | grep -E '\.(ts|tsx)$' > /dev/null; then
+    echo "🌐 TypeScript files detected"
+    if [ -d "src-ui" ]; then
+        echo "💡 Consider running 'npm run lint' and 'npm run test' in src-ui/"
+    fi
+fi
+
+echo ""
+echo "📝 Proceeding with commit..."
+echo ""
+
+exit 0 
