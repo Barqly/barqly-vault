@@ -87,7 +87,7 @@ barqly-vault/
 - [x] 1.3: Configure ESLint, Prettier, and Rust formatting tools
 - [x] 1.4: Set up Git repository with proper .gitignore
 - [x] 1.5: Create initial CI/CD pipeline with GitHub Actions
-- [ ] 1.6: Set up development documentation (README, CONTRIBUTING)
+- [x] 1.6: Set up development documentation (README, CONTRIBUTING)
 - [ ] 1.7: Configure Tauri security settings and CSP
 - [ ] 1.8: Implement basic logging infrastructure
 
