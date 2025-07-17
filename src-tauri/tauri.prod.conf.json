@@ -1,0 +1,13 @@
+{
+  "app": {
+    "windows": [
+      {
+        "devtools": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-src 'none';",
+      "capabilities": ["default"]
+    }
+  }
+} 
