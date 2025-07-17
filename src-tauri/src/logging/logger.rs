@@ -35,11 +35,11 @@ impl Logger {
             return;
         }
         let now = Local::now().format("%Y-%m-%d %H:%M:%S");
-        let log_line = format!("[{}][{:?}] {}\n", now, level, message);
+        let log_line = format!("[{now}] [{level:?}] {message}\n");
         if let Ok(mut file_opt) = self.log_file.lock() {
             if let Some(file) = file_opt.as_mut() {
                 if let Err(e) = file.write_all(log_line.as_bytes()) {
-                    eprintln!("Failed to write to log file: {}", e);
+                    eprintln!("Failed to write to log file: {e}");
                 }
             }
         }

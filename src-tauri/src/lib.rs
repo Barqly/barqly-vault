@@ -11,7 +11,7 @@ use logging::{init_logging, log_info, LogLevel};
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     if let Err(e) = init_logging(LogLevel::Info) {
-        eprintln!("Failed to initialize logging: {:?}", e);
+        eprintln!("Failed to initialize logging: {e:?}");
     } else {
         log_info("Barqly Vault application started");
     }

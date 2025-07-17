@@ -118,7 +118,7 @@ mod tests {
     fn test_log_level_copy_clone() {
         let level = LogLevel::Info;
         let copied = level;
-        let cloned = level.clone();
+        let cloned = level; // Remove unnecessary clone() since LogLevel is Copy
         assert_eq!(level, copied);
         assert_eq!(level, cloned);
     }
@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn test_log_level_debug_format() {
         let level = LogLevel::Warn;
-        let debug_str = format!("{:?}", level);
+        let debug_str = format!("{level:?}");
         assert_eq!(debug_str, "Warn");
     }
 
