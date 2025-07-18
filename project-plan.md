@@ -79,6 +79,33 @@ barqly-vault/
 
 ## Milestones
 
+### Milestone 0: Product Documentation & Website
+**Goal**: Establish clear product vision and professional documentation
+
+- [x] 0.1: Product Requirements Document
+  - [x] 0.1.1: Problem statement and Bitcoin ecosystem context
+  - [x] 0.1.2: User personas (Bitcoin users, families, inheritance planning)
+  - [x] 0.1.3: User journey mapping (setup → encrypt → backup → recover)
+  - [x] 0.1.4: Feature requirements and success metrics
+  - [x] 0.1.5: Future roadmap and enhancement plans
+- [x] 0.2: Website Setup & Design
+  - [x] 0.2.1: Set up MkDocs with GitHub Pages
+  - [x] 0.2.2: Choose Bitcoin-friendly theme/design
+  - [x] 0.2.3: Create site structure and navigation
+  - [x] 0.2.4: Integrate GitHub Issues feedback system
+- [x] 0.3: Content Creation
+  - [x] 0.3.1: Homepage with Bitcoin custody focus
+  - [x] 0.3.2: Features and benefits documentation
+  - [x] 0.3.3: User journey visualization
+  - [x] 0.3.4: Installation and getting started guides
+  - [x] 0.3.5: Architecture and technical documentation
+  - [x] 0.3.6: Future roadmap and enhancement plans
+- [ ] 0.4: Validation & Review
+  - [ ] 0.4.1: Stakeholder review of product vision
+  - [ ] 0.4.2: Website usability testing
+  - [ ] 0.4.3: Documentation completeness check
+  - [ ] 0.4.4: Feedback system testing
+
 ### Milestone 1: Project Foundation & Setup
 **Goal**: Establish project structure, development environment, and core architecture
 
@@ -323,15 +350,17 @@ barqly-vault/
 
 ## Timeline Estimate
 
-- **Phase 1** (Milestones 1-3): 3-4 weeks
-- **Phase 2** (Milestones 4-7): 4-5 weeks  
-- **Phase 3** (Milestones 8-10): 3-4 weeks
+- **Phase 0** (Milestone 0): 1-2 weeks - Product vision and documentation
+- **Phase 1** (Milestones 1-3): 3-4 weeks - Foundation and core modules
+- **Phase 2** (Milestones 4-7): 4-5 weeks - Frontend and feature implementation
+- **Phase 3** (Milestones 8-10): 3-4 weeks - Polish and release preparation
 
-**Total**: 10-13 weeks for MVP
+**Total**: 11-15 weeks for MVP
 
 ## Next Steps
 
 1. Review and approve project plan
-2. Set up development environment
-3. Begin Milestone 1 implementation
-4. Establish weekly progress reviews 
+2. Begin Milestone 0 (Product Documentation & Website)
+3. Set up development environment
+4. Begin Milestone 1 implementation
+5. Establish weekly progress reviews 

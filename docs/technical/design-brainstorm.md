@@ -1,24 +1,51 @@
-**Barqly Vault App – Design Canvas (v0.1)**
+# Product Requirements Document - Barqly Vault
 
----
+## **📆 Product Overview**
 
-## **📆 Context**
+### **🔍 What is Barqly Vault?**
 
-### **🔍 What is it?**
+Barqly Vault is a cross-platform desktop application that provides simple, secure file encryption specifically designed for Bitcoin custody backup and restoration. It uses the audited `age` encryption standard to protect sensitive files like output descriptors, wallet databases, and recovery information.
 
-A cross-platform, standalone desktop app that allows users to securely encrypt and decrypt sensitive folders/files (e.g., Bitcoin Output Descriptors, recovery kits) using the `age` encryption tool under the hood.
+### **🎯 Product Vision**
 
-### **❓ Why build it?**
+To become the go-to tool for Bitcoin users who need secure, reliable file encryption without technical complexity. We aim to make military-grade encryption as easy to use as any other desktop application.
 
-To provide a human-friendly, trust-minimized, and self-sovereign way for individuals and families to:
+### **💡 Value Proposition**
 
-* Back up Bitcoin multisig metadata and sensitive personal files
+**For Bitcoin Users:** Simple, secure backup of critical wallet information that you control completely.
 
-* Ensure secure, consistent, and user-controlled recovery across macOS, Windows, and Linux
+**For Families:** Peace of mind knowing your Bitcoin can be recovered by loved ones if needed.
 
-* Eliminate dependency on proprietary tools or cloud storage
+**For Professionals:** Reliable, professional-grade encryption tool for client and business needs.
 
-* Keep the experience as intuitive and minimal as tools like Sparrow Wallet
+## **🔍 Problem Statement**
+
+### **❓ Why build Barqly Vault?**
+
+The Bitcoin ecosystem lacks simple, user-friendly tools for secure file encryption. Current solutions are either:
+
+- **Too Complex**: Command-line tools that require technical expertise
+- **Too Insecure**: Cloud-based solutions that compromise user sovereignty
+- **Too Limited**: Single-platform tools that don't work across devices
+- **Too Generic**: Not optimized for Bitcoin-specific use cases
+
+### **🎯 Market Gap**
+
+**Bitcoin users need a tool that:**
+- Makes encryption as simple as using any desktop app
+- Provides military-grade security without complexity
+- Works consistently across all platforms
+- Is specifically designed for Bitcoin custody scenarios
+- Maintains complete user control and sovereignty
+
+### **💪 Our Solution**
+
+Barqly Vault addresses this gap by providing:
+- **Simple Interface**: Three-tab design (Setup, Encrypt, Decrypt)
+- **Proven Security**: Built on the audited `age` encryption standard
+- **Cross-Platform**: Works on macOS, Windows, and Linux
+- **Bitcoin-Focused**: Optimized for wallet backup and recovery
+- **Self-Sovereign**: No cloud dependencies, user-controlled
 
 ### **🤝 Who is it for?**
 
@@ -334,7 +361,89 @@ Optional (future tabs or inline tools):
 
 * No immediate need for DID in MVP, but directionally important for Barqly's identity, messaging, and recovery architecture
 
+## **📊 Success Metrics**
+
+### **User Adoption Metrics**
+- **Setup Completion Rate**: >90% of users complete initial setup
+- **First Backup Success**: >95% success rate for first backup
+- **Cross-Platform Usage**: Consistent adoption across macOS, Windows, Linux
+- **User Retention**: >80% of users create second backup within 30 days
+
+### **Security Metrics**
+- **Zero Security Incidents**: No reported security vulnerabilities
+- **Encryption Reliability**: 100% successful encryption/decryption rate
+- **Key Management**: Zero reported key loss incidents
+- **Integrity Verification**: 100% manifest verification success rate
+
+### **User Experience Metrics**
+- **Setup Time**: <5 minutes for complete initial setup
+- **Backup Time**: <2 minutes for typical Bitcoin custody files
+- **Error Rate**: <5% user-reported errors
+- **Support Requests**: <10% of users require support
+
+### **Business Metrics**
+- **Community Growth**: Active GitHub community and contributions
+- **Professional Adoption**: Adoption by Bitcoin companies and professionals
+- **Documentation Quality**: Comprehensive, up-to-date documentation
+- **Open Source Health**: Regular updates and community engagement
+
+## **🎯 Feature Requirements**
+
+### **Core Features (MVP)**
+- [x] **Key Generation**: Create and manage encryption keys
+- [x] **File Encryption**: Encrypt files and folders with age
+- [x] **File Decryption**: Decrypt and restore files
+- [x] **Cross-Platform**: macOS, Windows, Linux support
+- [x] **Simple UI**: Three-tab interface (Setup, Encrypt, Decrypt)
+
+### **Security Requirements**
+- [x] **age Encryption**: Military-grade encryption standard
+- [x] **Passphrase Protection**: Secure private key storage
+- [x] **Local-Only**: No cloud dependencies
+- [x] **Integrity Verification**: Manifest-based file verification
+- [x] **Memory Safety**: Secure handling of sensitive data
+
+### **User Experience Requirements**
+- [x] **Intuitive Interface**: Simple, guided workflows
+- [x] **Error Handling**: Clear, actionable error messages
+- [x] **Progress Indication**: Visual feedback for operations
+- [x] **Documentation**: Comprehensive user guides
+- [x] **Accessibility**: Keyboard navigation and screen reader support
+
+### **Technical Requirements**
+- [x] **Performance**: <2 second startup time
+- [x] **Reliability**: 99.9% uptime and operation success
+- [x] **Compatibility**: Support for files up to 100MB
+- [x] **Updates**: Secure update mechanism
+- [x] **Logging**: Comprehensive error and security logging
+
+## **📋 Acceptance Criteria**
+
+### **Setup Flow**
+- User can create encryption key in <2 minutes
+- Passphrase validation prevents weak passwords
+- Key backup reminder is enforced
+- Public key is clearly displayed and copyable
+
+### **Encryption Flow**
+- User can select files/folders easily
+- Progress is clearly indicated
+- Output files are properly named and organized
+- Manifest is generated and accessible
+
+### **Decryption Flow**
+- User can select encrypted files easily
+- Passphrase entry is secure and clear
+- Recovery location is user-selectable
+- Integrity verification is automatic
+
+### **Cross-Platform**
+- Identical functionality across all platforms
+- Platform-specific security features are utilized
+- File paths are handled correctly
+- UI is consistent and native-feeling
+
 ---
 
-Ready to refine the first screen (Setup) or continue adding layers to the Encrypt tab.
+*This document defines the core product requirements for Barqly Vault MVP. Additional features and enhancements are outlined in the [Product Roadmap](roadmap.md).*
 
