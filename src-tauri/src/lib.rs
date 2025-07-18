@@ -6,6 +6,7 @@ fn greet(name: &str) -> String {
 
 pub mod crypto;
 pub mod logging;
+pub mod storage;
 
 use logging::{init_logging, log_info, LogLevel};
 
