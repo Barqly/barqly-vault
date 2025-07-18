@@ -40,7 +40,7 @@ Take the security of professional-grade encryption and make it as easy to use as
 
 ## Get Started
 
-- [Download](https://github.com/your-username/barqly-vault/releases) (Coming Soon)
+- [Download](https://github.com/inauman/barqly-vault/releases) (Coming Soon)
 - [User Guide](user/getting-started.md)
 - [Features](product/features.md)
 
@@ -48,12 +48,12 @@ Take the security of professional-grade encryption and make it as easy to use as
 
 - [User Journey](product/user-journey.md)
 - [Roadmap](product/roadmap.md)
-- [Contributing](CONTRIBUTING.md)
+- [Contributing](https://github.com/inauman/barqly-vault/blob/main/CONTRIBUTING.md)
 
 ## Support
 
-- [GitHub Issues](https://github.com/your-username/barqly-vault/issues) - Report bugs or request features
-- [Discussions](https://github.com/your-username/barqly-vault/discussions) - Ask questions and share feedback
+- [GitHub Issues](https://github.com/inauman/barqly-vault/issues) - Report bugs or request features
+- [Discussions](https://github.com/inauman/barqly-vault/discussions) - Ask questions and share feedback
 
 ---
 

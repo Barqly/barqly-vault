@@ -75,12 +75,12 @@ Barqly Vault makes secure file encryption simple. Follow these three steps to pr
 
 - **First time user?** Start with a small test file
 - **Forgot passphrase?** Unfortunately, we can't recover it - that's the security feature
-- **Questions?** Check our [GitHub Discussions](https://github.com/your-username/barqly-vault/discussions)
-- **Found a bug?** Report it on [GitHub Issues](https://github.com/your-username/barqly-vault/issues)
+- **Questions?** Check our [GitHub Discussions](https://github.com/inauman/barqly-vault/discussions)
+- **Found a bug?** Report it on [GitHub Issues](https://github.com/inauman/barqly-vault/issues)
 
 ## What's Next?
 
-- Learn about [advanced features](features.md)
-- Explore our [user journey](product/user-journey.md)
-- Check out our [roadmap](product/roadmap.md)
-- [Contribute to the project](CONTRIBUTING.md) 
+- Learn about [advanced features](../product/features.md)
+- Explore our [user journey](../product/user-journey.md)
+- Check out our [roadmap](../product/roadmap.md)
+- [Contribute to the project](https://github.com/inauman/barqly-vault/blob/main/CONTRIBUTING.md) 
