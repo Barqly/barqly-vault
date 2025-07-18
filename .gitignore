@@ -109,4 +109,7 @@ private/
 BarqlyVault/Staging/
 BarqlyVault/Decrypted/
 *.age
-!test-fixtures/**/*.age 
+!test-fixtures/**/*.age
+
+# Private documentation (not for public GitHub Pages)
+docs-private/ 

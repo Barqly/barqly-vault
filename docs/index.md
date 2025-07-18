@@ -38,22 +38,17 @@ Take the security of professional-grade encryption and make it as easy to use as
 
 ---
 
-## Get Started
+## Current Status
 
-- [Download](https://github.com/inauman/barqly-vault/releases) (Coming Soon)
-- [User Guide](user/getting-started.md)
-- [Features](product/features.md)
+**Development Phase**: Core application development in progress  
+**Timeline**: Q3-Q4 2024 for initial release  
+**Platform**: Cross-platform desktop application (macOS, Windows, Linux)
 
-## Learn More
+## Technology Stack
 
-- [User Journey](product/user-journey.md)
-- [Roadmap](product/roadmap.md)
-- [Contributing](https://github.com/inauman/barqly-vault/blob/main/CONTRIBUTING.md)
-
-## Support
-
-- [GitHub Issues](https://github.com/inauman/barqly-vault/issues) - Report bugs or request features
-- [Discussions](https://github.com/inauman/barqly-vault/discussions) - Ask questions and share feedback
+- **Backend**: Rust with Tauri framework
+- **Frontend**: React with TypeScript
+- **Encryption**: Age encryption standard
 
 ---
 
