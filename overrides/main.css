@@ -1,0 +1,78 @@
+/* Custom styles for Barqly Vault */
+
+/* Bitcoin-themed color scheme */
+:root {
+  --md-primary-fg-color: #f7931a;  /* Bitcoin orange */
+  --md-primary-fg-color--light: #ffa726;
+  --md-primary-fg-color--dark: #e65100;
+  --md-accent-fg-color: #f7931a;
+}
+
+/* Hero section styling */
+.md-header {
+  background: linear-gradient(135deg, #f7931a 0%, #e65100 100%);
+}
+
+/* Custom button styling */
+.md-button {
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Bitcoin-themed callouts */
+.md-typeset .admonition {
+  border-left: 4px solid #f7931a;
+}
+
+.md-typeset .admonition-title {
+  background-color: rgba(247, 147, 26, 0.1);
+  color: #e65100;
+}
+
+/* Custom typography */
+.md-typeset h1 {
+  color: #f7931a;
+  font-weight: 700;
+}
+
+.md-typeset h2 {
+  color: #e65100;
+  border-bottom: 2px solid #f7931a;
+}
+
+/* Bitcoin-themed cards */
+.md-typeset .grid {
+  gap: 1rem;
+}
+
+.md-typeset .grid > * {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.md-typeset .grid > *:hover {
+  border-color: #f7931a;
+  box-shadow: 0 4px 12px rgba(247, 147, 26, 0.15);
+}
+
+/* Dark mode adjustments */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #f7931a;
+  --md-primary-fg-color--light: #ffa726;
+  --md-primary-fg-color--dark: #e65100;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .grid > * {
+  background: #2d2d2d;
+  border-color: #404040;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .grid > *:hover {
+  border-color: #f7931a;
+  background: #333333;
+} 
