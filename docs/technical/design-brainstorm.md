@@ -445,5 +445,5 @@ Optional (future tabs or inline tools):
 
 ---
 
-*This document defines the core product requirements for Barqly Vault MVP. Additional features and enhancements are outlined in the [Product Roadmap](roadmap.md).*
+*This document defines the core product requirements for Barqly Vault MVP. Additional features and enhancements are outlined in the [Product Roadmap](../product/roadmap.md).*
 
