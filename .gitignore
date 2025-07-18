@@ -111,5 +111,6 @@ BarqlyVault/Decrypted/
 *.age
 !test-fixtures/**/*.age
 
-# Private documentation (not for public GitHub Pages)
-docs-private/ 
+# Note: docs-private/ is intentionally NOT ignored
+# It contains detailed documentation that's not linked from the main page
+# but is accessible if someone finds the URL (which is fine for a private repo) 
