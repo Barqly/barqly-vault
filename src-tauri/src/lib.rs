@@ -4,6 +4,7 @@ fn greet(name: &str) -> String {
     format!("Hello, {name}! You've been greeted from Rust!")
 }
 
+pub mod crypto;
 pub mod logging;
 
 use logging::{init_logging, log_info, LogLevel};
