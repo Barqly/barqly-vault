@@ -282,11 +282,11 @@ barqly-vault/
   - [x] 9.3.2: Implement setup/teardown lifecycle management
   - [x] 9.3.3: Add performance measurement capabilities
   - [x] 9.3.4: Create enhanced assertion helpers with descriptive error messages
-- [ ] 9.4: Refactor existing tests to new framework
-  - [ ] 9.4.1: Convert `age_ops_tests.rs` to use new framework
-  - [ ] 9.4.2: Update test naming to follow "test-cases-as-documentation" principle
-  - [ ] 9.4.3: Implement parameterized tests using `rstest`
-  - [ ] 9.4.4: Add proper error handling and assertions
+- [x] 9.4: Refactor existing tests to new framework
+  - [x] 9.4.1: Convert `age_ops_tests.rs` to use new framework
+  - [x] 9.4.2: Update test naming to follow "test-cases-as-documentation" principle
+  - [x] 9.4.3: Implement parameterized tests using `rstest`
+  - [x] 9.4.4: Add proper error handling and assertions
 - [ ] 9.5: Add E2E test framework
   - [ ] 9.5.1: Create `tests/e2e/` directory structure
   - [ ] 9.5.2: Implement critical user workflow tests
@@ -299,8 +299,8 @@ barqly-vault/
 ### Milestone 10: Testing & Security Audit
 **Goal**: Ensure reliability and security
 
-- [ ] 10.1: Complete unit test coverage (>80%)
-- [ ] 10.2: Write integration test suite
+- [x] 10.1: Complete unit test coverage (>80%)
+- [x] 10.2: Write integration test suite
 - [ ] 10.3: Perform security audit
   - [ ] 10.3.1: Review crypto implementation
   - [ ] 10.3.2: Check for timing attacks
