@@ -220,7 +220,7 @@ fn calculate_file_hash(path: &Path) -> Result<String> {
         let n = file
             .read(&mut buffer)
             .map_err(|e| FileOpsError::HashCalculationFailed {
-                message: format!("Failed to read file: {}", e),
+                message: format!("Failed to read file: {e}"),
             })?;
 
         if n == 0 {

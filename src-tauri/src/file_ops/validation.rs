@@ -148,7 +148,7 @@ pub fn normalize_path(path: &Path) -> Result<PathBuf> {
     let canonical = path
         .canonicalize()
         .map_err(|e| FileOpsError::CrossPlatformPathError {
-            message: format!("Failed to canonicalize path: {}", e),
+            message: format!("Failed to canonicalize path: {e}"),
         })?;
 
     // Convert to platform-specific format
@@ -167,7 +167,7 @@ pub fn get_relative_path(path: &Path, base: &Path) -> Result<PathBuf> {
     path.strip_prefix(base)
         .map(|p| p.to_path_buf())
         .map_err(|e| FileOpsError::CrossPlatformPathError {
-            message: format!("Failed to get relative path: {}", e),
+            message: format!("Failed to get relative path: {e}"),
         })
 }
 

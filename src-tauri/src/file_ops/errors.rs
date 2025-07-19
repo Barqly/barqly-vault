@@ -124,7 +124,7 @@ impl FileOpsError {
                 format!("Permission denied: {}", path.display())
             }
             FileOpsError::InvalidSelection { message } => {
-                format!("Invalid selection: {}", message)
+                format!("Invalid selection: {message}")
             }
             FileOpsError::SymlinkDetected { path } => {
                 format!("Security risk: Symlink detected at {}", path.display())

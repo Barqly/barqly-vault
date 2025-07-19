@@ -1,20 +1,28 @@
-//! Unit tests for file operations validation functions
+//! Unit tests for file operations validation functions using the new test framework
 //!
-//! Tests individual validation functions in isolation:
-//! - Path validation
-//! - File size validation
-//! - Security checks
-//! - Cross-platform path handling
+//! This module demonstrates the new test framework features:
+//! - Test-cases-as-documentation with descriptive names
+//! - Parallel-safe test execution
+//! - Enhanced assertions with better error messages
+//! - Test data factories for consistent test data
+//! - Performance measurement and validation
+//! - Proper integration with hierarchical test structure
 
+use crate::common::helpers::TestAssertions;
 use barqly_vault_lib::file_ops::{validate_file_size, validate_paths, FileOpsError};
+use rstest::*;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
 use tempfile::{tempdir, NamedTempFile};
 
+// ============================================================================
+// PATH VALIDATION TESTS
+// ============================================================================
+
 #[test]
-fn test_validate_paths_with_valid_paths() {
-    // Arrange
+fn should_validate_existing_paths_successfully() {
+    // Given: A temporary directory with a test file
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("test.txt");
     let mut file = fs::File::create(&file_path).unwrap();
@@ -22,216 +30,332 @@ fn test_validate_paths_with_valid_paths() {
 
     let paths = vec![file_path.as_path()];
 
-    // Act
+    // When: Validating the paths
     let result = validate_paths(&paths);
 
-    // Assert
-    assert!(result.is_ok());
+    // Then: Validation should succeed
+    TestAssertions::assert_ok(result, "Path validation should succeed for existing files");
 }
 
 #[test]
-fn test_validate_nonexistent_path() {
-    // Arrange
+fn should_fail_validation_for_nonexistent_path() {
+    // Given: A nonexistent path
     let path = Path::new("/nonexistent/path");
 
-    // Act
+    // When: Validating the path
     let result = barqly_vault_lib::file_ops::validation::validate_single_path(path);
 
-    // Assert
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        FileOpsError::PathValidationFailed { .. }
-    ));
+    // Then: Validation should fail with appropriate error
+    assert!(
+        result.is_err(),
+        "Path validation should fail for nonexistent paths"
+    );
+
+    // And: The error should be PathValidationFailed
+    let err = result.unwrap_err();
+    assert!(
+        matches!(err, FileOpsError::PathValidationFailed { .. }),
+        "Error should be PathValidationFailed for nonexistent path"
+    );
 }
 
-#[test]
-fn test_validate_file_size_with_small_file() {
-    // Arrange
+// ============================================================================
+// FILE SIZE VALIDATION TESTS
+// ============================================================================
+
+#[rstest]
+#[case(100, "small_file")]
+#[case(500, "medium_file")]
+#[case(1000, "large_file")]
+fn should_validate_file_size_within_limits(#[case] content_size: usize, #[case] test_name: &str) {
+    // Given: A temporary file with specific content size
     let temp_file = NamedTempFile::new().unwrap();
-    temp_file.as_file().write_all(b"small content").unwrap();
+    let content = vec![b'a'; content_size];
+    temp_file.as_file().write_all(&content).unwrap();
 
     let max_size = 1000;
 
-    // Act
+    // When: Validating the file size
     let result = validate_file_size(temp_file.path(), max_size);
 
-    // Assert
-    assert!(result.is_ok());
+    // Then: Validation should succeed
+    TestAssertions::assert_ok(
+        result,
+        &format!("File size validation should succeed for {test_name}"),
+    );
 }
 
 #[test]
-fn test_validate_file_size_with_large_file() {
-    // Arrange
+fn should_fail_validation_for_oversized_file() {
+    // Given: A temporary file larger than the limit
     let temp_file = NamedTempFile::new().unwrap();
     let large_content = vec![b'a'; 2000];
     temp_file.as_file().write_all(&large_content).unwrap();
 
     let max_size = 1000;
 
-    // Act
+    // When: Validating the file size
     let result = validate_file_size(temp_file.path(), max_size);
 
-    // Assert
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        FileOpsError::FileTooLarge { .. }
-    ));
+    // Then: Validation should fail
+    assert!(
+        result.is_err(),
+        "File size validation should fail for oversized files"
+    );
+
+    // And: The error should be FileTooLarge
+    let err = result.unwrap_err();
+    assert!(
+        matches!(err, FileOpsError::FileTooLarge { .. }),
+        "Error should be FileTooLarge for oversized file"
+    );
 }
 
 #[test]
-fn test_validate_file_size_with_exact_size() {
-    // Arrange
+fn should_validate_file_size_at_exact_limit() {
+    // Given: A temporary file at exactly the size limit
     let temp_file = NamedTempFile::new().unwrap();
     let content = vec![b'a'; 1000];
     temp_file.as_file().write_all(&content).unwrap();
 
     let max_size = 1000;
 
-    // Act
+    // When: Validating the file size
     let result = validate_file_size(temp_file.path(), max_size);
 
-    // Assert
-    assert!(result.is_ok());
+    // Then: Validation should succeed
+    TestAssertions::assert_ok(result, "File size validation should succeed at exact limit");
 }
 
-#[test]
-fn test_traversal_detection_through_public_api() {
-    // Test traversal detection through the public validate_single_path function
-    let traversal_paths = [
-        "file/../other",
-        "file\\..\\other",
-        "file/..%2fother",
-        "file%2e%2e/other",
-    ];
+// ============================================================================
+// PATH TRAVERSAL DETECTION TESTS
+// ============================================================================
 
-    // Act & Assert - These should fail validation
-    for path_str in &traversal_paths {
-        let path = Path::new(path_str);
-        let result = barqly_vault_lib::file_ops::validation::validate_single_path(path);
-        assert!(result.is_err(), "Should detect traversal in: {}", path_str);
-    }
+#[rstest]
+#[case("file/../other", "unix_traversal")]
+#[case("file\\..\\other", "windows_traversal")]
+#[case("file/..%2fother", "url_encoded_traversal")]
+#[case("file%2e%2e/other", "double_encoded_traversal")]
+fn should_detect_path_traversal_attempts(#[case] path_str: &str, #[case] test_name: &str) {
+    // Given: A path with traversal attempt
+    let path = Path::new(path_str);
+
+    // When: Validating the path
+    let result = barqly_vault_lib::file_ops::validation::validate_single_path(path);
+
+    // Then: Validation should fail
+    TestAssertions::assert_err(result, &format!("Should detect traversal in {test_name}"));
 }
 
-#[test]
-fn test_normal_paths_pass_validation() {
-    // Test that normal paths pass validation
-    let normal_paths = [
-        "file.txt",
-        "folder/file.txt",
-        "folder\\file.txt",
-        "folder/subfolder/file.txt",
-    ];
+#[rstest]
+#[case("file.txt", "simple_file")]
+#[case("folder/file.txt", "unix_path")]
+#[case("folder\\file.txt", "windows_path")]
+#[case("folder/subfolder/file.txt", "nested_path")]
+fn should_allow_normal_paths_without_traversal(#[case] path_str: &str, #[case] test_name: &str) {
+    // Given: A normal path without traversal
+    let path = Path::new(path_str);
 
-    // Act & Assert - These should pass validation (if files exist)
-    for path_str in &normal_paths {
-        let path = Path::new(path_str);
-        // Note: These will fail because files don't exist, but they shouldn't fail due to traversal
-        let result = barqly_vault_lib::file_ops::validation::validate_single_path(path);
-        // The result depends on whether the file exists, but it shouldn't be a traversal error
-        if result.is_err() {
-            assert!(!matches!(
-                result.unwrap_err(),
+    // When: Validating the path
+    let result = barqly_vault_lib::file_ops::validation::validate_single_path(path);
+
+    // Then: If validation fails, it should not be due to traversal
+    if let Err(err) = result {
+        assert!(
+            !matches!(
+                err,
                 FileOpsError::PathValidationFailed { reason, .. } if reason.contains("traversal")
-            ));
-        }
+            ),
+            "Normal path should not fail due to traversal detection for {test_name}"
+        );
     }
 }
 
+// ============================================================================
+// PATH NORMALIZATION TESTS
+// ============================================================================
+
 #[test]
-fn test_path_normalization() {
-    // Arrange
+fn should_normalize_existing_file_path() {
+    // Given: A temporary directory with a test file
     let temp_dir = tempdir().unwrap();
     let test_file = temp_dir.path().join("test.txt");
     fs::write(&test_file, b"test").unwrap();
 
-    // Test with an existing file path
-    let existing_path = test_file;
+    // When: Normalizing the path
+    let result = barqly_vault_lib::file_ops::validation::normalize_path(&test_file);
 
-    // Act
-    let result = barqly_vault_lib::file_ops::validation::normalize_path(&existing_path);
+    // Then: Normalization should succeed
+    let normalized = TestAssertions::assert_ok(
+        result,
+        "Path normalization should succeed for existing file",
+    );
 
-    // Assert
-    assert!(result.is_ok());
-    let normalized = result.unwrap();
-    assert!(normalized.is_absolute());
+    // And: The normalized path should be absolute
+    assert!(
+        normalized.is_absolute(),
+        "Normalized path should be absolute"
+    );
 }
 
+// ============================================================================
+// RELATIVE PATH TESTS
+// ============================================================================
+
 #[test]
-fn test_get_relative_path() {
-    // Arrange
+fn should_get_relative_path_for_nested_file() {
+    // Given: A base path and a full path within it
     let base_path = Path::new("/base/directory");
     let full_path = Path::new("/base/directory/subfolder/file.txt");
 
-    // Act
+    // When: Getting the relative path
     let result = barqly_vault_lib::file_ops::validation::get_relative_path(full_path, base_path);
 
-    // Assert
-    assert!(result.is_ok());
-    let relative = result.unwrap();
-    assert_eq!(relative, Path::new("subfolder/file.txt"));
+    // Then: The operation should succeed
+    let relative = TestAssertions::assert_ok(
+        result,
+        "Getting relative path should succeed for nested file",
+    );
+
+    // And: The relative path should be correct
+    assert_eq!(
+        relative,
+        Path::new("subfolder/file.txt"),
+        "Relative path should be correctly calculated"
+    );
 }
 
 #[test]
-fn test_get_relative_path_fails_for_unrelated_paths() {
-    // Arrange
+fn should_fail_getting_relative_path_for_unrelated_paths() {
+    // Given: A base path and an unrelated path
     let base_path = Path::new("/base/directory");
     let unrelated_path = Path::new("/different/directory/file.txt");
 
-    // Act
+    // When: Getting the relative path
     let result =
         barqly_vault_lib::file_ops::validation::get_relative_path(unrelated_path, base_path);
 
-    // Assert
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        FileOpsError::CrossPlatformPathError { .. }
-    ));
+    // Then: The operation should fail
+    assert!(
+        result.is_err(),
+        "Getting relative path should fail for unrelated paths"
+    );
+
+    // And: The error should be CrossPlatformPathError
+    let err = result.unwrap_err();
+    assert!(
+        matches!(err, FileOpsError::CrossPlatformPathError { .. }),
+        "Error should be CrossPlatformPathError for unrelated paths"
+    );
 }
 
+// ============================================================================
+// ARCHIVE PATH VALIDATION TESTS
+// ============================================================================
+
 #[test]
-fn test_validate_archive_path() {
-    // Arrange
+fn should_validate_archive_path_with_valid_directory() {
+    // Given: A temporary directory and archive path
     let temp_dir = tempdir().unwrap();
     let archive_path = temp_dir.path().join("archive.tar.gz");
 
-    // Act
+    // When: Validating the archive path
     let result = barqly_vault_lib::file_ops::validation::validate_archive_path(&archive_path);
 
-    // Assert
-    assert!(result.is_ok());
+    // Then: Validation should succeed
+    TestAssertions::assert_ok(
+        result,
+        "Archive path validation should succeed for valid directory",
+    );
 }
 
 #[test]
-fn test_validate_archive_path_fails_for_relative_path() {
-    // Arrange
+fn should_fail_validation_for_relative_archive_path() {
+    // Given: A relative archive path
     let relative_path = Path::new("relative/archive.tar.gz");
 
-    // Act
+    // When: Validating the archive path
     let result = barqly_vault_lib::file_ops::validation::validate_archive_path(relative_path);
 
-    // Assert
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        FileOpsError::PathValidationFailed { .. }
-    ));
+    // Then: Validation should fail
+    assert!(
+        result.is_err(),
+        "Archive path validation should fail for relative paths"
+    );
+
+    // And: The error should be PathValidationFailed
+    let err = result.unwrap_err();
+    assert!(
+        matches!(err, FileOpsError::PathValidationFailed { .. }),
+        "Error should be PathValidationFailed for relative archive path"
+    );
 }
 
 #[test]
-fn test_validate_archive_path_fails_for_nonexistent_parent() {
-    // Arrange
+fn should_fail_validation_for_nonexistent_parent_directory() {
+    // Given: An archive path with nonexistent parent directory
     let nonexistent_path = Path::new("/nonexistent/directory/archive.tar.gz");
 
-    // Act
+    // When: Validating the archive path
     let result = barqly_vault_lib::file_ops::validation::validate_archive_path(nonexistent_path);
 
-    // Assert
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        FileOpsError::PathValidationFailed { .. }
-    ));
+    // Then: Validation should fail
+    assert!(
+        result.is_err(),
+        "Archive path validation should fail for nonexistent parent directory"
+    );
+
+    // And: The error should be PathValidationFailed
+    let err = result.unwrap_err();
+    assert!(
+        matches!(err, FileOpsError::PathValidationFailed { .. }),
+        "Error should be PathValidationFailed for nonexistent parent directory"
+    );
+}
+
+// ============================================================================
+// EDGE CASE TESTS
+// ============================================================================
+
+#[test]
+fn should_handle_empty_file_size_validation() {
+    // Given: An empty temporary file
+    let temp_file = NamedTempFile::new().unwrap();
+    // File is already empty
+
+    let max_size = 1000;
+
+    // When: Validating the file size
+    let result = validate_file_size(temp_file.path(), max_size);
+
+    // Then: Validation should succeed
+    TestAssertions::assert_ok(
+        result,
+        "File size validation should succeed for empty files",
+    );
+}
+
+#[test]
+fn should_handle_zero_max_size_validation() {
+    // Given: A temporary file with content
+    let temp_file = NamedTempFile::new().unwrap();
+    temp_file.as_file().write_all(b"content").unwrap();
+
+    let max_size = 0;
+
+    // When: Validating the file size
+    let result = validate_file_size(temp_file.path(), max_size);
+
+    // Then: Validation should fail
+    assert!(
+        result.is_err(),
+        "File size validation should fail when max size is zero"
+    );
+
+    // And: The error should be FileTooLarge
+    let err = result.unwrap_err();
+    assert!(
+        matches!(err, FileOpsError::FileTooLarge { .. }),
+        "Error should be FileTooLarge when max size is zero"
+    );
 }

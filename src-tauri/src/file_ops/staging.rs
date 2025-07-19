@@ -11,6 +11,7 @@ use tracing::{error, info};
 /// Staging area for temporary file operations
 pub struct StagingArea {
     /// Temporary directory for staging
+    #[allow(dead_code)]
     temp_dir: TempDir,
     /// Path to the staging directory
     staging_path: PathBuf,
@@ -24,7 +25,7 @@ impl StagingArea {
     /// Create a new staging area
     pub fn new() -> Result<Self> {
         let temp_dir = tempfile::tempdir().map_err(|e| FileOpsError::StagingAreaFailed {
-            message: format!("Failed to create temporary directory: {}", e),
+            message: format!("Failed to create temporary directory: {e}"),
         })?;
 
         let staging_path = temp_dir.path().to_path_buf();
@@ -85,7 +86,7 @@ impl StagingArea {
 
         // Copy file to staging area
         fs::copy(source, &dest_path).map_err(|e| FileOpsError::IoError {
-            message: format!("Failed to copy file to staging area: {}", e),
+            message: format!("Failed to copy file to staging area: {e}"),
             source: e,
         })?;
 
@@ -128,7 +129,7 @@ impl StagingArea {
 
         let staging_folder = self.staging_path.join(folder_name);
         fs::create_dir_all(&staging_folder).map_err(|e| FileOpsError::IoError {
-            message: format!("Failed to create staging folder: {}", e),
+            message: format!("Failed to create staging folder: {e}"),
             source: e,
         })?;
 
@@ -141,7 +142,7 @@ impl StagingArea {
             if entry.file_type().is_file() {
                 let relative_path = entry.path().strip_prefix(folder).map_err(|e| {
                     FileOpsError::CrossPlatformPathError {
-                        message: format!("Failed to get relative path: {}", e),
+                        message: format!("Failed to get relative path: {e}"),
                     }
                 })?;
 
@@ -150,14 +151,14 @@ impl StagingArea {
                 // Create parent directories if needed
                 if let Some(parent) = dest_path.parent() {
                     fs::create_dir_all(parent).map_err(|e| FileOpsError::IoError {
-                        message: format!("Failed to create parent directory: {}", e),
+                        message: format!("Failed to create parent directory: {e}"),
                         source: e,
                     })?;
                 }
 
                 // Copy file
                 fs::copy(entry.path(), &dest_path).map_err(|e| FileOpsError::IoError {
-                    message: format!("Failed to copy file to staging area: {}", e),
+                    message: format!("Failed to copy file to staging area: {e}"),
                     source: e,
                 })?;
 
@@ -209,7 +210,7 @@ impl StagingArea {
     /// Create a temporary file in the staging area
     pub fn create_temp_file(&self, _prefix: &str, _suffix: &str) -> Result<NamedTempFile> {
         NamedTempFile::new_in(&self.staging_path).map_err(|e| FileOpsError::StagingAreaFailed {
-            message: format!("Failed to create temporary file: {}", e),
+            message: format!("Failed to create temporary file: {e}"),
         })
     }
 
@@ -264,7 +265,7 @@ fn calculate_file_hash(path: &Path) -> Result<String> {
         let n = file
             .read(&mut buffer)
             .map_err(|e| FileOpsError::HashCalculationFailed {
-                message: format!("Failed to read file: {}", e),
+                message: format!("Failed to read file: {e}"),
             })?;
 
         if n == 0 {

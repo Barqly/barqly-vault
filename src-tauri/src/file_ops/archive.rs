@@ -13,7 +13,7 @@ use std::fs::{self, File};
 use std::io::{self, Read};
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tar::{Archive, Builder};
 use tracing::info;
 
@@ -127,14 +127,14 @@ pub fn extract_archive(
 
     // Create output directory if it doesn't exist
     fs::create_dir_all(output_dir).map_err(|e| FileOpsError::IoError {
-        message: format!("Failed to create output directory: {}", e),
+        message: format!("Failed to create output directory: {e}"),
         source: e,
     })?;
 
     // Open and validate archive
     let archive_file =
         File::open(archive_path).map_err(|e| FileOpsError::ArchiveExtractionFailed {
-            message: format!("Failed to open archive: {}", e),
+            message: format!("Failed to open archive: {e}"),
         })?;
 
     // Create GZIP decoder
@@ -150,17 +150,17 @@ pub fn extract_archive(
     for entry_result in archive
         .entries()
         .map_err(|e| FileOpsError::ArchiveExtractionFailed {
-            message: format!("Failed to read archive entries: {}", e),
+            message: format!("Failed to read archive entries: {e}"),
         })?
     {
         let mut entry = entry_result.map_err(|e| FileOpsError::ArchiveExtractionFailed {
-            message: format!("Failed to read archive entry: {}", e),
+            message: format!("Failed to read archive entry: {e}"),
         })?;
 
         let path = entry
             .path()
             .map_err(|e| FileOpsError::ArchiveExtractionFailed {
-                message: format!("Failed to get entry path: {}", e),
+                message: format!("Failed to get entry path: {e}"),
             })?
             .to_path_buf();
 
@@ -169,7 +169,7 @@ pub fn extract_archive(
         // Create parent directories if needed
         if let Some(parent) = output_path.parent() {
             fs::create_dir_all(parent).map_err(|e| FileOpsError::IoError {
-                message: format!("Failed to create parent directory: {}", e),
+                message: format!("Failed to create parent directory: {e}"),
                 source: e,
             })?;
         }
@@ -178,12 +178,12 @@ pub fn extract_archive(
         if entry.header().entry_type().is_file() {
             let mut output_file =
                 File::create(&output_path).map_err(|e| FileOpsError::IoError {
-                    message: format!("Failed to create output file: {}", e),
+                    message: format!("Failed to create output file: {e}"),
                     source: e,
                 })?;
 
             io::copy(&mut entry, &mut output_file).map_err(|e| FileOpsError::IoError {
-                message: format!("Failed to extract file: {}", e),
+                message: format!("Failed to extract file: {e}"),
                 source: e,
             })?;
 
@@ -225,7 +225,7 @@ fn create_tar_gz(
 ) -> Result<ArchiveInfo> {
     // Create output file
     let output_file = File::create(output_path).map_err(|e| FileOpsError::IoError {
-        message: format!("Failed to create archive file: {}", e),
+        message: format!("Failed to create archive file: {e}"),
         source: e,
     })?;
 
@@ -243,14 +243,14 @@ fn create_tar_gz(
 
         let relative_path = file_info.path.strip_prefix(staging.path()).map_err(|e| {
             FileOpsError::CrossPlatformPathError {
-                message: format!("Failed to get relative path: {}", e),
+                message: format!("Failed to get relative path: {e}"),
             }
         })?;
 
         tar_builder
             .append_file(relative_path, &mut file)
             .map_err(|e| FileOpsError::ArchiveCreationFailed {
-                message: format!("Failed to add file to archive: {}", e),
+                message: format!("Failed to add file to archive: {e}"),
             })?;
     }
 
@@ -258,20 +258,20 @@ fn create_tar_gz(
     let gz_encoder = tar_builder
         .into_inner()
         .map_err(|e| FileOpsError::ArchiveCreationFailed {
-            message: format!("Failed to finalize archive: {}", e),
+            message: format!("Failed to finalize archive: {e}"),
         })?;
 
     let output_file = gz_encoder
         .finish()
         .map_err(|e| FileOpsError::ArchiveCreationFailed {
-            message: format!("Failed to finish GZIP compression: {}", e),
+            message: format!("Failed to finish GZIP compression: {e}"),
         })?;
 
     // Get archive size
     let compressed_size = output_file
         .metadata()
         .map_err(|e| FileOpsError::IoError {
-            message: format!("Failed to get archive metadata: {}", e),
+            message: format!("Failed to get archive metadata: {e}"),
             source: e,
         })?
         .len();
@@ -296,7 +296,7 @@ fn create_tar_gz_with_progress(
 ) -> Result<ArchiveInfo> {
     // Create output file
     let output_file = File::create(output_path).map_err(|e| FileOpsError::IoError {
-        message: format!("Failed to create archive file: {}", e),
+        message: format!("Failed to create archive file: {e}"),
         source: e,
     })?;
 
@@ -314,14 +314,14 @@ fn create_tar_gz_with_progress(
 
         let relative_path = file_info.path.strip_prefix(staging.path()).map_err(|e| {
             FileOpsError::CrossPlatformPathError {
-                message: format!("Failed to get relative path: {}", e),
+                message: format!("Failed to get relative path: {e}"),
             }
         })?;
 
         tar_builder
             .append_file(relative_path, &mut file)
             .map_err(|e| FileOpsError::ArchiveCreationFailed {
-                message: format!("Failed to add file to archive: {}", e),
+                message: format!("Failed to add file to archive: {e}"),
             })?;
 
         // Report progress
@@ -332,20 +332,20 @@ fn create_tar_gz_with_progress(
     let gz_encoder = tar_builder
         .into_inner()
         .map_err(|e| FileOpsError::ArchiveCreationFailed {
-            message: format!("Failed to finalize archive: {}", e),
+            message: format!("Failed to finalize archive: {e}"),
         })?;
 
     let output_file = gz_encoder
         .finish()
         .map_err(|e| FileOpsError::ArchiveCreationFailed {
-            message: format!("Failed to finish GZIP compression: {}", e),
+            message: format!("Failed to finish GZIP compression: {e}"),
         })?;
 
     // Get archive size
     let compressed_size = output_file
         .metadata()
         .map_err(|e| FileOpsError::IoError {
-            message: format!("Failed to get archive metadata: {}", e),
+            message: format!("Failed to get archive metadata: {e}"),
             source: e,
         })?
         .len();
@@ -376,7 +376,7 @@ fn calculate_file_hash(path: &Path) -> Result<String> {
         let n = file
             .read(&mut buffer)
             .map_err(|e| FileOpsError::HashCalculationFailed {
-                message: format!("Failed to read file: {}", e),
+                message: format!("Failed to read file: {e}"),
             })?;
 
         if n == 0 {
@@ -395,7 +395,8 @@ mod tests {
     use super::*;
     use std::fs;
     use std::io::Write;
-    use tempfile::{tempdir, NamedTempFile};
+    use std::path::PathBuf;
+    use tempfile::tempdir;
 
     fn create_test_file(dir: &Path, name: &str, content: &str) -> PathBuf {
         let file_path = dir.join(name);

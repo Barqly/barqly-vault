@@ -44,4 +44,9 @@ tracing = "0.1"
 [dev-dependencies]
 serial_test = "2.0"
 rand = "0.8"
+# Test framework dependencies
+rstest = "0.18"
+mockall = "0.12"
+assert2 = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 

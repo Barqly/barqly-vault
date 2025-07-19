@@ -263,22 +263,55 @@ barqly-vault/
 - [ ] 8.7: Add telemetry (opt-in, privacy-respecting)
 - [ ] 8.8: Performance optimization
 
-### Milestone 9: Testing & Security Audit
+### Milestone 9: Test Strategy Implementation
+**Goal**: Establish comprehensive, hierarchical test framework following ZenAI Programming Rituals
+
+- [x] 9.1: Implement hierarchical test structure
+  - [x] 9.1.1: Create `tests/common/` with shared utilities, fixtures, and helpers
+  - [x] 9.1.2: Create `tests/unit/` with test suite runner and setup/teardown lifecycle
+  - [x] 9.1.3: Create `tests/integration/` with workflow-based organization
+  - [x] 9.1.4: Create `tests/smoke/` with health check validation
+  - [x] 9.1.5: Create `tests/test_runner/` as main orchestrator
+- [x] 9.2: Fix module organization and import resolution
+  - [x] 9.2.1: Resolve all `crate::tests::*` import issues
+  - [x] 9.2.2: Implement proper relative imports using `super::`
+  - [x] 9.2.3: Restructure test binaries to proper modules
+  - [x] 9.2.4: Ensure parallel-safe test execution
+- [x] 9.3: Implement test quality standards
+  - [x] 9.3.1: Add test data factories for deterministic, isolated test data
+  - [x] 9.3.2: Implement setup/teardown lifecycle management
+  - [x] 9.3.3: Add performance measurement capabilities
+  - [x] 9.3.4: Create enhanced assertion helpers with descriptive error messages
+- [ ] 9.4: Refactor existing tests to new framework
+  - [ ] 9.4.1: Convert `age_ops_tests.rs` to use new framework
+  - [ ] 9.4.2: Update test naming to follow "test-cases-as-documentation" principle
+  - [ ] 9.4.3: Implement parameterized tests using `rstest`
+  - [ ] 9.4.4: Add proper error handling and assertions
+- [ ] 9.5: Add E2E test framework
+  - [ ] 9.5.1: Create `tests/e2e/` directory structure
+  - [ ] 9.5.2: Implement critical user workflow tests
+  - [ ] 9.5.3: Add cross-platform E2E test support
+- [ ] 9.6: Integrate with CI/CD pipelines
+  - [ ] 9.6.1: Configure test execution in GitHub Actions
+  - [ ] 9.6.2: Add test coverage reporting
+  - [ ] 9.6.3: Implement test result aggregation and reporting
+
+### Milestone 10: Testing & Security Audit
 **Goal**: Ensure reliability and security
 
-- [ ] 9.1: Complete unit test coverage (>80%)
-- [ ] 9.2: Write integration test suite
-- [ ] 9.3: Perform security audit
-  - [ ] 9.3.1: Review crypto implementation
-  - [ ] 9.3.2: Check for timing attacks
-  - [ ] 9.3.3: Validate input sanitization
-  - [ ] 9.3.4: Review file permissions
-- [ ] 9.4: Conduct penetration testing
-- [ ] 9.5: Performance testing with large files
-- [ ] 9.6: Cross-platform compatibility testing
-- [ ] 9.7: Create test documentation
+- [ ] 10.1: Complete unit test coverage (>80%)
+- [ ] 10.2: Write integration test suite
+- [ ] 10.3: Perform security audit
+  - [ ] 10.3.1: Review crypto implementation
+  - [ ] 10.3.2: Check for timing attacks
+  - [ ] 10.3.3: Validate input sanitization
+  - [ ] 10.3.4: Review file permissions
+- [ ] 10.4: Conduct penetration testing
+- [ ] 10.5: Performance testing with large files
+- [ ] 10.6: Cross-platform compatibility testing
+- [ ] 10.7: Create test documentation
 
-### Milestone 10: Documentation & Release
+### Milestone 11: Documentation & Release
 **Goal**: Prepare for public release
 
 - [ ] 10.1: Write user documentation
@@ -362,7 +395,7 @@ barqly-vault/
 - **Phase 0** (Milestone 0): 1-2 weeks - Product vision and documentation
 - **Phase 1** (Milestones 1-3): 3-4 weeks - Foundation and core modules
 - **Phase 2** (Milestones 4-7): 4-5 weeks - Frontend and feature implementation
-- **Phase 3** (Milestones 8-10): 3-4 weeks - Polish and release preparation
+- **Phase 3** (Milestones 8-11): 3-4 weeks - Polish and release preparation
 
 **Total**: 11-15 weeks for MVP
 

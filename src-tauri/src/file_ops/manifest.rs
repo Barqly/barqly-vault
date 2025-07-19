@@ -5,7 +5,7 @@ use crate::file_ops::{ArchiveOperation, FileInfo, FileOpsConfig, FileOpsError, R
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
-use std::io::{self, Read};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use tracing::{info, warn};
 
@@ -106,12 +106,12 @@ impl Manifest {
     pub fn save(&self, path: &Path) -> Result<()> {
         let json = serde_json::to_string_pretty(self).map_err(|e| {
             FileOpsError::ManifestCreationFailed {
-                message: format!("Failed to serialize manifest: {}", e),
+                message: format!("Failed to serialize manifest: {e}"),
             }
         })?;
 
         fs::write(path, json).map_err(|e| FileOpsError::IoError {
-            message: format!("Failed to write manifest file: {}", e),
+            message: format!("Failed to write manifest file: {e}"),
             source: e,
         })?;
 
@@ -123,12 +123,12 @@ impl Manifest {
     pub fn load(path: &Path) -> Result<Self> {
         let content =
             fs::read_to_string(path).map_err(|e| FileOpsError::ManifestVerificationFailed {
-                message: format!("Failed to read manifest file: {}", e),
+                message: format!("Failed to read manifest file: {e}"),
             })?;
 
         let manifest: Manifest = serde_json::from_str(&content).map_err(|e| {
             FileOpsError::ManifestVerificationFailed {
-                message: format!("Failed to parse manifest JSON: {}", e),
+                message: format!("Failed to parse manifest JSON: {e}"),
             }
         })?;
 
@@ -316,7 +316,7 @@ pub fn create_manifest_from_archive(
 
     // Extract archive to temporary directory
     let temp_dir = tempfile::tempdir().map_err(|e| FileOpsError::ManifestCreationFailed {
-        message: format!("Failed to create temporary directory: {}", e),
+        message: format!("Failed to create temporary directory: {e}"),
     })?;
 
     let extracted_files = extract_archive(archive_path, temp_dir.path(), config)?;
@@ -365,7 +365,7 @@ fn calculate_manifest_hash(manifest: &Manifest) -> Result<String> {
 
     let json = serde_json::to_string(&manifest_copy).map_err(|e| {
         FileOpsError::ManifestCreationFailed {
-            message: format!("Failed to serialize manifest for hash calculation: {}", e),
+            message: format!("Failed to serialize manifest for hash calculation: {e}"),
         }
     })?;
 
@@ -391,7 +391,7 @@ fn calculate_file_hash(path: &Path) -> Result<String> {
         let n = file
             .read(&mut buffer)
             .map_err(|e| FileOpsError::HashCalculationFailed {
-                message: format!("Failed to read file: {}", e),
+                message: format!("Failed to read file: {e}"),
             })?;
 
         if n == 0 {
@@ -411,7 +411,8 @@ mod tests {
     use crate::file_ops::{create_archive, FileSelection};
     use std::fs;
     use std::io::Write;
-    use tempfile::{tempdir, NamedTempFile};
+    use std::path::PathBuf;
+    use tempfile::tempdir;
 
     fn create_test_file(dir: &Path, name: &str, content: &str) -> PathBuf {
         let file_path = dir.join(name);
