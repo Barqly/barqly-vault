@@ -15,6 +15,8 @@ Barqly Vault is a cross-platform desktop application for secure file encryption 
 - **Frontend**: Tauri + React + TypeScript
 - **Backend**: Rust
 - **Encryption**: age (via Rust crate or CLI)
+- **Archive**: tar + flate2 (GZIP compression)
+- **File Operations**: walkdir (directory traversal), sha2 (hashing)
 - **Build System**: Cargo + Tauri CLI
 - **Testing**: Jest (frontend), Rust built-in tests (backend)
 - **CI/CD**: GitHub Actions
@@ -136,6 +138,13 @@ barqly-vault/
   - [ ] 2.3.2: Create staging area management
   - [ ] 2.3.3: Implement tar archive creation
   - [ ] 2.3.4: Add manifest generation
+  - [ ] 2.3.5: Implement path validation and security checks
+  - [ ] 2.3.6: Add file size validation and warnings
+  - [ ] 2.3.7: Implement archive extraction and verification
+  - [ ] 2.3.8: Add comprehensive error handling and user messages
+  - [ ] 2.3.9: Implement structured logging with OpenTelemetry
+  - [ ] 2.3.10: Write comprehensive unit and integration tests
+  - [ ] 2.3.11: Validate against blueprint specifications (see docs-private/technical/blueprint-milestone2-task3.md)
 - [ ] 2.4: Create config module
   - [ ] 2.4.1: Define configuration schema
   - [ ] 2.4.2: Implement config persistence

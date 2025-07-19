@@ -5,6 +5,7 @@ fn greet(name: &str) -> String {
 }
 
 pub mod crypto;
+pub mod file_ops;
 pub mod logging;
 pub mod storage;
 
