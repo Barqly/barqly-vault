@@ -121,16 +121,16 @@ barqly-vault/
 ### Milestone 2: Core Rust Modules
 **Goal**: Build the foundational Rust modules for crypto, storage, and file operations
 
-- [ ] 2.1: Create crypto module with age integration
-  - [ ] 2.1.1: Evaluate age crate vs CLI approach
-  - [ ] 2.1.2: Implement key generation functionality
-  - [ ] 2.1.3: Implement encryption/decryption functions
-  - [ ] 2.1.4: Add passphrase protection for private keys
-- [ ] 2.2: Create storage module for key management
-  - [ ] 2.2.1: Define key storage structure
-  - [ ] 2.2.2: Implement cross-platform path handling
-  - [ ] 2.2.3: Add key listing and retrieval functions
-  - [ ] 2.2.4: Implement secure key deletion
+- [x] 2.1: Create crypto module with age integration
+  - [x] 2.1.1: Evaluate age crate vs CLI approach
+  - [x] 2.1.2: Implement key generation functionality
+  - [x] 2.1.3: Implement encryption/decryption functions
+  - [x] 2.1.4: Add passphrase protection for private keys
+- [x] 2.2: Create storage module for key management
+  - [x] 2.2.1: Define key storage structure
+  - [x] 2.2.2: Implement cross-platform path handling
+  - [x] 2.2.3: Add key listing and retrieval functions
+  - [x] 2.2.4: Implement secure key deletion
 - [ ] 2.3: Create file operations module
   - [ ] 2.3.1: Implement file/folder selection logic
   - [ ] 2.3.2: Create staging area management
@@ -140,8 +140,8 @@ barqly-vault/
   - [ ] 2.4.1: Define configuration schema
   - [ ] 2.4.2: Implement config persistence
   - [ ] 2.4.3: Add migration support for future updates
-- [ ] 2.5: Write comprehensive unit tests for all modules
-- [ ] 2.6: Create module documentation with examples
+- [x] 2.5: Write comprehensive unit tests for all modules
+- [x] 2.6: Create module documentation with examples
 
 ### Milestone 3: Tauri Command Bridge
 **Goal**: Create the API layer between frontend and backend
