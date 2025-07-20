@@ -287,7 +287,7 @@ fn should_create_and_verify_manifest_successfully() {
 #[test]
 fn should_handle_invalid_file_selection_gracefully() {
     // Given: Non-existent file selection
-    let mut env = FileOpsTestEnv::new();
+    let env = FileOpsTestEnv::new();
     let non_existent_file = env.path().join("non_existent.txt");
     let selection = FileSelection::Files(vec![non_existent_file]);
     let config = FileOpsConfig::default();
