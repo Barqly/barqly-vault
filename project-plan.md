@@ -133,18 +133,18 @@ barqly-vault/
   - [x] 2.2.2: Implement cross-platform path handling
   - [x] 2.2.3: Add key listing and retrieval functions
   - [x] 2.2.4: Implement secure key deletion
-- [ ] 2.3: Create file operations module
-  - [ ] 2.3.1: Implement file/folder selection logic
-  - [ ] 2.3.2: Create staging area management
-  - [ ] 2.3.3: Implement tar archive creation
-  - [ ] 2.3.4: Add manifest generation
-  - [ ] 2.3.5: Implement path validation and security checks
-  - [ ] 2.3.6: Add file size validation and warnings
-  - [ ] 2.3.7: Implement archive extraction and verification
-  - [ ] 2.3.8: Add comprehensive error handling and user messages
-  - [ ] 2.3.9: Implement structured logging with OpenTelemetry
-  - [ ] 2.3.10: Write comprehensive unit and integration tests
-  - [ ] 2.3.11: Validate against blueprint specifications (see docs-private/technical/blueprint-milestone2-task3.md)
+- [x] 2.3: Create file operations module
+  - [x] 2.3.1: Implement file/folder selection logic
+  - [x] 2.3.2: Create staging area management
+  - [x] 2.3.3: Implement tar archive creation
+  - [x] 2.3.4: Add manifest generation
+  - [x] 2.3.5: Implement path validation and security checks
+  - [x] 2.3.6: Add file size validation and warnings
+  - [x] 2.3.7: Implement archive extraction and verification
+  - [x] 2.3.8: Add comprehensive error handling and user messages
+  - [x] 2.3.9: Implement structured logging with OpenTelemetry
+  - [x] 2.3.10: Write comprehensive unit and integration tests
+  - [x] 2.3.11: Validate against blueprint specifications (see docs-private/technical/blueprint-milestone2-task3.md)
 - [ ] 2.4: Create config module
   - [ ] 2.4.1: Define configuration schema
   - [ ] 2.4.2: Implement config persistence
