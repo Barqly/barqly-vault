@@ -1,13 +1,24 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {name}! You've been greeted from Rust!")
-}
-
+pub mod commands;
 pub mod crypto;
 pub mod file_ops;
 pub mod logging;
 pub mod storage;
+
+use commands::{
+    create_manifest,
+    decrypt_data,
+    delete_key_command,
+    encrypt_data,
+    // Crypto commands
+    generate_key,
+    get_config,
+    get_file_info,
+    // Storage commands
+    list_keys_command,
+    // File commands
+    select_files,
+    update_config,
+};
 
 use logging::{init_logging, log_info, LogLevel};
 
@@ -20,7 +31,21 @@ pub fn run() {
     }
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            // Crypto commands
+            generate_key,
+            encrypt_data,
+            decrypt_data,
+            // Storage commands
+            list_keys_command,
+            delete_key_command,
+            get_config,
+            update_config,
+            // File commands
+            select_files,
+            get_file_info,
+            create_manifest,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
