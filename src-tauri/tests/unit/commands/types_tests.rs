@@ -94,7 +94,7 @@ mod command_error_tests {
     fn test_command_response_error() {
         let error_message = "Test error".to_string();
         let error = CommandError::validation(error_message.clone());
-        let response: CommandResponse<String> = Err(error);
+        let response: CommandResponse<String> = Err(Box::new(error));
 
         match response {
             Ok(_) => panic!("Should be error response"),
@@ -287,13 +287,13 @@ mod validation_tests {
     }
 
     impl ValidateInput for MockValidatable {
-        fn validate(&self) -> Result<(), CommandError> {
+        fn validate(&self) -> Result<(), Box<CommandError>> {
             if self.value.is_empty() {
-                return Err(CommandError::validation("Value is required"));
+                return Err(Box::new(CommandError::validation("Value is required")));
             }
 
             if self.value.len() > 100 {
-                return Err(CommandError::validation("Value too long"));
+                return Err(Box::new(CommandError::validation("Value too long")));
             }
 
             Ok(())

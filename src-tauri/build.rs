@@ -33,10 +33,7 @@ fn generate_typescript_definitions() {
     fs::write(&typescript_path, typescript_content)
         .expect("Failed to write TypeScript definitions");
 
-    println!(
-        "cargo:warning=TypeScript definitions generated at: {:?}",
-        typescript_path
-    );
+    println!("cargo:warning=TypeScript definitions generated at: {typescript_path:?}",);
 }
 
 /// Generate TypeScript content from Rust types

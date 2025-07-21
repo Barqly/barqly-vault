@@ -31,6 +31,7 @@ use std::fmt;
 ///
 /// This enum provides a consistent response format for all commands.
 /// The frontend can pattern match on the status to handle success/error cases.
+/// The error type is boxed to avoid large error variants.
 ///
 /// # TypeScript Equivalent
 /// ```typescript
@@ -44,19 +45,20 @@ pub enum CommandResult<T> {
     /// Successful command execution with result data
     Success(T),
     /// Command failed with error details
-    Error(CommandError),
+    Error(Box<CommandError>),
 }
 
 /// Type alias for command results to make them easier to work with
 ///
 /// This is the primary return type for all Tauri commands.
 /// It provides a consistent error handling pattern across the application.
+/// The error type is boxed to avoid large error variants in Result types.
 ///
 /// # TypeScript Equivalent
 /// ```typescript
 /// type CommandResponse<T> = T | CommandError;
 /// ```
-pub type CommandResponse<T> = Result<T, CommandError>;
+pub type CommandResponse<T> = Result<T, Box<CommandError>>;
 
 /// Unified error type for all commands with comprehensive error information
 ///
@@ -315,12 +317,12 @@ pub enum ProgressDetails {
 
 /// Trait for validatable command inputs
 pub trait ValidateInput {
-    fn validate(&self) -> Result<(), CommandError>;
+    fn validate(&self) -> Result<(), Box<CommandError>>;
 }
 
 /// Enhanced validation trait with detailed error reporting
 pub trait ValidateInputDetailed {
-    fn validate_detailed(&self) -> Result<(), CommandError>;
+    fn validate_detailed(&self) -> Result<(), Box<CommandError>>;
 
     /// Get field-specific validation rules
     fn get_validation_rules() -> HashMap<String, String> {
@@ -328,7 +330,7 @@ pub trait ValidateInputDetailed {
     }
 
     /// Validate a specific field
-    fn validate_field(&self, _field_name: &str) -> Result<(), CommandError> {
+    fn validate_field(&self, _field_name: &str) -> Result<(), Box<CommandError>> {
         self.validate_detailed()
     }
 }
@@ -338,12 +340,12 @@ pub struct ValidationHelper;
 
 impl ValidationHelper {
     /// Validate that a string is not empty
-    pub fn validate_not_empty(value: &str, field_name: &str) -> Result<(), CommandError> {
+    pub fn validate_not_empty(value: &str, field_name: &str) -> Result<(), Box<CommandError>> {
         if value.trim().is_empty() {
-            return Err(
+            return Err(Box::new(
                 CommandError::validation(format!("{field_name} cannot be empty"))
                     .with_recovery_guidance(format!("Please provide a {field_name}")),
-            );
+            ));
         }
         Ok(())
     }
@@ -354,97 +356,109 @@ impl ValidationHelper {
         field_name: &str,
         min: usize,
         max: usize,
-    ) -> Result<(), CommandError> {
+    ) -> Result<(), Box<CommandError>> {
         let len = value.len();
         if len < min {
-            return Err(CommandError::validation(format!(
-                "{field_name} is too short (minimum {min} characters)"
-            ))
-            .with_recovery_guidance(format!("Please provide a longer {field_name}")));
+            return Err(Box::new(
+                CommandError::validation(format!(
+                    "{field_name} is too short (minimum {min} characters)"
+                ))
+                .with_recovery_guidance(format!("Please provide a longer {field_name}")),
+            ));
         }
         if len > max {
-            return Err(CommandError::validation(format!(
-                "{field_name} is too long (maximum {max} characters)"
-            ))
-            .with_recovery_guidance(format!("Please provide a shorter {field_name}")));
+            return Err(Box::new(
+                CommandError::validation(format!(
+                    "{field_name} is too long (maximum {max} characters)"
+                ))
+                .with_recovery_guidance(format!("Please provide a shorter {field_name}")),
+            ));
         }
         Ok(())
     }
 
     /// Validate path exists and is accessible
-    pub fn validate_path_exists(path: &str, field_name: &str) -> Result<(), CommandError> {
+    pub fn validate_path_exists(path: &str, field_name: &str) -> Result<(), Box<CommandError>> {
         let path_buf = std::path::Path::new(path);
         if !path_buf.exists() {
-            return Err(CommandError::operation(
-                ErrorCode::FileNotFound,
-                format!("{field_name} not found: {path}"),
-            )
-            .with_recovery_guidance("Please check the path and try again"));
+            return Err(Box::new(
+                CommandError::operation(
+                    ErrorCode::FileNotFound,
+                    format!("{field_name} not found: {path}"),
+                )
+                .with_recovery_guidance("Please check the path and try again"),
+            ));
         }
         Ok(())
     }
 
     /// Validate path is a file
-    pub fn validate_is_file(path: &str, field_name: &str) -> Result<(), CommandError> {
+    pub fn validate_is_file(path: &str, field_name: &str) -> Result<(), Box<CommandError>> {
         let path_buf = std::path::Path::new(path);
         if !path_buf.is_file() {
-            return Err(
+            return Err(Box::new(
                 CommandError::validation(format!("{field_name} must be a file: {path}"))
                     .with_recovery_guidance("Please select a valid file"),
-            );
+            ));
         }
         Ok(())
     }
 
     /// Validate path is a directory
-    pub fn validate_is_directory(path: &str, field_name: &str) -> Result<(), CommandError> {
+    pub fn validate_is_directory(path: &str, field_name: &str) -> Result<(), Box<CommandError>> {
         let path_buf = std::path::Path::new(path);
         if !path_buf.is_dir() {
-            return Err(CommandError::validation(format!(
-                "{field_name} must be a directory: {path}"
-            ))
-            .with_recovery_guidance("Please select a valid directory"));
+            return Err(Box::new(
+                CommandError::validation(format!("{field_name} must be a directory: {path}"))
+                    .with_recovery_guidance("Please select a valid directory"),
+            ));
         }
         Ok(())
     }
 
     /// Validate file size is within limits
-    pub fn validate_file_size(path: &str, max_size_mb: u64) -> Result<(), CommandError> {
+    pub fn validate_file_size(path: &str, max_size_mb: u64) -> Result<(), Box<CommandError>> {
         let path_buf = std::path::Path::new(path);
         if let Ok(metadata) = std::fs::metadata(path_buf) {
             let size_mb = metadata.len() / (1024 * 1024);
             if size_mb > max_size_mb {
-                return Err(CommandError::operation(
-                    ErrorCode::FileTooLarge,
-                    format!("File too large: {size_mb} MB (maximum {max_size_mb} MB)"),
-                )
-                .with_recovery_guidance("Please select a smaller file"));
+                return Err(Box::new(
+                    CommandError::operation(
+                        ErrorCode::FileTooLarge,
+                        format!("File too large: {size_mb} MB (maximum {max_size_mb} MB)"),
+                    )
+                    .with_recovery_guidance("Please select a smaller file"),
+                ));
             }
         }
         Ok(())
     }
 
     /// Validate key label format
-    pub fn validate_key_label(label: &str) -> Result<(), CommandError> {
+    pub fn validate_key_label(label: &str) -> Result<(), Box<CommandError>> {
         // Key labels should only contain letters, numbers, and dashes
         if !label.chars().all(|c| c.is_alphanumeric() || c == '-') {
-            return Err(CommandError::operation(
-                ErrorCode::InvalidKeyLabel,
-                "Key label contains invalid characters",
-            )
-            .with_recovery_guidance("Use only letters, numbers, and dashes"));
+            return Err(Box::new(
+                CommandError::operation(
+                    ErrorCode::InvalidKeyLabel,
+                    "Key label contains invalid characters",
+                )
+                .with_recovery_guidance("Use only letters, numbers, and dashes"),
+            ));
         }
         Ok(())
     }
 
     /// Validate passphrase strength
-    pub fn validate_passphrase_strength(passphrase: &str) -> Result<(), CommandError> {
+    pub fn validate_passphrase_strength(passphrase: &str) -> Result<(), Box<CommandError>> {
         if passphrase.len() < 8 {
-            return Err(CommandError::operation(
-                ErrorCode::WeakPassphrase,
-                "Passphrase is too short (minimum 8 characters)",
-            )
-            .with_recovery_guidance("Use a longer passphrase"));
+            return Err(Box::new(
+                CommandError::operation(
+                    ErrorCode::WeakPassphrase,
+                    "Passphrase is too short (minimum 8 characters)",
+                )
+                .with_recovery_guidance("Use a longer passphrase"),
+            ));
         }
 
         let has_letter = passphrase.chars().any(|c| c.is_alphabetic());
@@ -452,11 +466,15 @@ impl ValidationHelper {
         let _has_special = passphrase.chars().any(|c| !c.is_alphanumeric());
 
         if !has_letter || !has_digit {
-            return Err(CommandError::operation(
-                ErrorCode::WeakPassphrase,
-                "Passphrase must contain letters and numbers",
-            )
-            .with_recovery_guidance("Include letters, numbers, and symbols for better security"));
+            return Err(Box::new(
+                CommandError::operation(
+                    ErrorCode::WeakPassphrase,
+                    "Passphrase must contain letters and numbers",
+                )
+                .with_recovery_guidance(
+                    "Include letters, numbers, and symbols for better security",
+                ),
+            ));
         }
 
         Ok(())
@@ -484,7 +502,7 @@ impl ErrorHandler {
         result: Result<T, E>,
         context: &str,
         error_code: ErrorCode,
-    ) -> Result<T, CommandError>
+    ) -> Result<T, Box<CommandError>>
     where
         E: std::error::Error + 'static,
     {
@@ -516,12 +534,12 @@ impl ErrorHandler {
                 command_error.span_id = Some(span.span_id.clone());
             }
 
-            command_error
+            Box::new(command_error)
         })
     }
 
     /// Handle validation errors with structured logging
-    pub fn handle_validation_error(&self, field: &str, reason: &str) -> CommandError {
+    pub fn handle_validation_error(&self, field: &str, reason: &str) -> Box<CommandError> {
         let error_message = format!("Validation failed for {field}: {reason}");
 
         // Create structured error context
@@ -545,7 +563,7 @@ impl ErrorHandler {
             command_error.span_id = Some(span.span_id.clone());
         }
 
-        command_error
+        Box::new(command_error)
     }
 }
 
@@ -805,6 +823,12 @@ impl fmt::Display for CommandError {
 }
 
 impl std::error::Error for CommandError {}
+
+impl From<Box<CommandError>> for CommandError {
+    fn from(boxed_error: Box<CommandError>) -> Self {
+        *boxed_error
+    }
+}
 
 // ============================================================================
 // PROGRESS REPORTING INFRASTRUCTURE

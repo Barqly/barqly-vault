@@ -164,7 +164,7 @@ pub enum EncryptionStatus {
 }
 
 impl ValidateInput for GenerateKeyInput {
-    fn validate(&self) -> Result<(), CommandError> {
+    fn validate(&self) -> Result<(), Box<CommandError>> {
         // Validate label is not empty
         ValidationHelper::validate_not_empty(&self.label, "Key label")?;
 
@@ -179,34 +179,38 @@ impl ValidateInput for GenerateKeyInput {
 }
 
 impl ValidateInput for ValidatePassphraseInput {
-    fn validate(&self) -> Result<(), CommandError> {
+    fn validate(&self) -> Result<(), Box<CommandError>> {
         ValidationHelper::validate_not_empty(&self.passphrase, "Passphrase")?;
         Ok(())
     }
 }
 
 impl ValidateInput for EncryptDataInput {
-    fn validate(&self) -> Result<(), CommandError> {
+    fn validate(&self) -> Result<(), Box<CommandError>> {
         ValidationHelper::validate_not_empty(&self.key_id, "Key ID")?;
 
         if self.file_paths.is_empty() {
-            return Err(CommandError::operation(
-                ErrorCode::MissingParameter,
-                "At least one file must be selected",
-            )
-            .with_recovery_guidance("Please select one or more files to encrypt"));
+            return Err(Box::new(
+                CommandError::operation(
+                    ErrorCode::MissingParameter,
+                    "At least one file must be selected",
+                )
+                .with_recovery_guidance("Please select one or more files to encrypt"),
+            ));
         }
 
         // Validate file count limit
         if self.file_paths.len() > 1000 {
-            return Err(CommandError::operation(
-                ErrorCode::TooManyFiles,
-                format!(
-                    "Too many files selected: {} (maximum 1000)",
-                    self.file_paths.len()
-                ),
-            )
-            .with_recovery_guidance("Please select fewer files"));
+            return Err(Box::new(
+                CommandError::operation(
+                    ErrorCode::TooManyFiles,
+                    format!(
+                        "Too many files selected: {} (maximum 1000)",
+                        self.file_paths.len()
+                    ),
+                )
+                .with_recovery_guidance("Please select fewer files"),
+            ));
         }
 
         Ok(())
@@ -214,7 +218,7 @@ impl ValidateInput for EncryptDataInput {
 }
 
 impl ValidateInput for DecryptDataInput {
-    fn validate(&self) -> Result<(), CommandError> {
+    fn validate(&self) -> Result<(), Box<CommandError>> {
         ValidationHelper::validate_not_empty(&self.encrypted_file, "Encrypted file path")?;
         ValidationHelper::validate_not_empty(&self.key_id, "Key ID")?;
         ValidationHelper::validate_not_empty(&self.passphrase, "Passphrase")?;
@@ -233,7 +237,7 @@ impl ValidateInput for DecryptDataInput {
 }
 
 impl ValidateInput for GetEncryptionStatusInput {
-    fn validate(&self) -> Result<(), CommandError> {
+    fn validate(&self) -> Result<(), Box<CommandError>> {
         ValidationHelper::validate_not_empty(&self.operation_id, "Operation ID")?;
         ValidationHelper::validate_length(&self.operation_id, "Operation ID", 1, 100)?;
         Ok(())
@@ -241,7 +245,7 @@ impl ValidateInput for GetEncryptionStatusInput {
 }
 
 impl ValidateInput for VerifyManifestInput {
-    fn validate(&self) -> Result<(), CommandError> {
+    fn validate(&self) -> Result<(), Box<CommandError>> {
         ValidationHelper::validate_not_empty(&self.manifest_path, "Manifest path")?;
         ValidationHelper::validate_not_empty(
             &self.extracted_files_dir,
@@ -267,7 +271,7 @@ impl ValidateInput for VerifyManifestInput {
 }
 
 impl ValidateInput for GetProgressInput {
-    fn validate(&self) -> Result<(), CommandError> {
+    fn validate(&self) -> Result<(), Box<CommandError>> {
         ValidationHelper::validate_not_empty(&self.operation_id, "Operation ID")?;
         ValidationHelper::validate_length(&self.operation_id, "Operation ID", 1, 100)?;
         Ok(())
@@ -715,7 +719,7 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
 fn create_file_selection_atomic(
     file_paths: &[String],
     error_handler: &ErrorHandler,
-) -> Result<file_ops::FileSelection, CommandError> {
+) -> Result<file_ops::FileSelection, Box<CommandError>> {
     if file_paths.len() == 1 {
         // Atomic check: validate path exists and get metadata in single operation
         let path = Path::new(&file_paths[0]);
@@ -745,7 +749,7 @@ fn create_file_selection_atomic(
 fn determine_output_path(
     output_name: &str,
     error_handler: &ErrorHandler,
-) -> Result<std::path::PathBuf, CommandError> {
+) -> Result<std::path::PathBuf, Box<CommandError>> {
     let output_path = Path::new(output_name);
     if output_path.is_relative() {
         // Use current directory for relative paths
@@ -764,7 +768,7 @@ fn determine_output_path(
 fn read_archive_file_safely(
     archive_path: &std::path::Path,
     error_handler: &ErrorHandler,
-) -> Result<Vec<u8>, CommandError> {
+) -> Result<Vec<u8>, Box<CommandError>> {
     // Check file size before reading to prevent memory exhaustion
     let metadata = error_handler.handle_operation_error(
         std::fs::metadata(archive_path),
@@ -796,7 +800,7 @@ fn read_archive_file_safely(
 fn cleanup_temp_file(temp_path: &std::path::Path, error_handler: &ErrorHandler) {
     if let Err(e) = std::fs::remove_file(temp_path) {
         // Log cleanup failure but don't fail the operation
-        let _: Result<(), CommandError> = error_handler.handle_operation_error(
+        let _: Result<(), Box<CommandError>> = error_handler.handle_operation_error(
             Err(e),
             "cleanup_temp_file",
             ErrorCode::InternalError,

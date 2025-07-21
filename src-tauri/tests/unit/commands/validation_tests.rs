@@ -278,9 +278,9 @@ mod crypto_validation_tests {
 mod path_validation_tests {
     use super::*;
 
-    fn validate_path(path: &str) -> Result<(), CommandError> {
+    fn validate_path(path: &str) -> Result<(), Box<CommandError>> {
         if path.is_empty() {
-            return Err(CommandError::validation("Path cannot be empty"));
+            return Err(Box::new(CommandError::validation("Path cannot be empty")));
         }
 
         // Accept both Unix and Windows absolute paths
@@ -291,13 +291,15 @@ mod path_validation_tests {
                 || path.starts_with("\\\\"));
 
         if !is_unix_absolute && !is_windows_absolute {
-            return Err(CommandError::validation("Path must be absolute"));
+            return Err(Box::new(CommandError::validation("Path must be absolute")));
         }
 
         // Check for potentially dangerous patterns
         let path_lower = path.to_lowercase();
         if path_lower.contains("..") || path_lower.contains("~") {
-            return Err(CommandError::validation("Path contains invalid patterns"));
+            return Err(Box::new(CommandError::validation(
+                "Path contains invalid patterns",
+            )));
         }
 
         Ok(())

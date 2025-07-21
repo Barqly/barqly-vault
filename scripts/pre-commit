@@ -22,9 +22,9 @@ if [ -d "src-tauri" ]; then
     fi
     echo "✅ Formatting check passed"
     
-    # Run cargo clippy
+    # Run cargo clippy with strict settings (same as CI)
     echo "🔍 Running cargo clippy..."
-    if ! cargo clippy; then
+    if ! cargo clippy --all-targets --all-features -- -D warnings; then
         echo "❌ Clippy linting issues found!"
         echo "💡 Fix the issues above and try again"
         exit 1

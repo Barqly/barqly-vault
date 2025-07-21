@@ -253,7 +253,7 @@ pub async fn create_manifest(file_paths: Vec<String>) -> CommandResponse<Manifes
 fn create_file_selection_atomic(
     file_paths: &[String],
     error_handler: &ErrorHandler,
-) -> Result<file_ops::FileSelection, CommandError> {
+) -> Result<file_ops::FileSelection, Box<CommandError>> {
     if file_paths.len() == 1 {
         // Atomic check: validate path exists and get metadata in single operation
         let path = std::path::Path::new(&file_paths[0]);
@@ -287,7 +287,7 @@ fn cleanup_temp_files(
 ) {
     // Clean up temp archive file
     if let Err(e) = std::fs::remove_file(temp_archive_path) {
-        let _: Result<(), CommandError> = error_handler.handle_operation_error(
+        let _: Result<(), Box<CommandError>> = error_handler.handle_operation_error(
             Err(e),
             "cleanup_temp_archive",
             ErrorCode::InternalError,
@@ -296,7 +296,7 @@ fn cleanup_temp_files(
 
     // Clean up temp directory
     if let Err(e) = temp_dir.close() {
-        let _: Result<(), CommandError> = error_handler.handle_operation_error(
+        let _: Result<(), Box<CommandError>> = error_handler.handle_operation_error(
             Err(e),
             "cleanup_temp_directory",
             ErrorCode::InternalError,
