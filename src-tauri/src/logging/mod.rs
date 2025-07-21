@@ -86,7 +86,7 @@ pub fn init_logging(level: LogLevel) -> Result<(), LoggingError> {
 }
 
 /// Log with structured data following OpenTelemetry standards
-pub fn log_structured(entry: LogEntry) {
+fn log_structured(entry: LogEntry) {
     if let Some(logger) = LOGGER.get() {
         logger.log_structured(entry);
     }
@@ -139,7 +139,7 @@ pub fn log_operation(
 }
 
 // Legacy logging functions for backward compatibility
-pub fn log(level: LogLevel, message: &str) {
+fn log(level: LogLevel, message: &str) {
     let entry = LogEntry {
         level,
         message: message.to_string(),
