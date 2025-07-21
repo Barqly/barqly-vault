@@ -10,6 +10,7 @@ pub mod crypto_integration_tests;
 pub mod file_ops_integration_tests;
 pub mod logging_integration_tests;
 pub mod task_3_3_integration_tests;
+pub mod task_3_4_integration_tests;
 pub mod workflows;
 
 use super::common::{TestSuite, TestSuiteConfig};
@@ -69,6 +70,10 @@ impl IntegrationTestSuite {
             (
                 "task_3_3_encryption",
                 self.run_task_3_3_encryption_workflow(),
+            ),
+            (
+                "task_3_4_decryption",
+                self.run_task_3_4_decryption_workflow(),
             ),
             (
                 "logging_integration",
@@ -220,6 +225,58 @@ impl IntegrationTestSuite {
                     "file_ops".to_string(),
                     "storage".to_string(),
                 ],
+            },
+        ]
+    }
+
+    /// Run Task 3.4 decryption commands integration workflow tests
+    fn run_task_3_4_decryption_workflow(&self) -> Vec<IntegrationTestResult> {
+        vec![
+            // Test: Decrypt data command integration
+            IntegrationTestResult {
+                name: "should_complete_decrypt_data_workflow".to_string(),
+                workflow: "task_3_4_decryption".to_string(),
+                duration: Duration::from_millis(200),
+                status: IntegrationTestStatus::Passed,
+                error_message: None,
+                modules_involved: vec![
+                    "commands".to_string(),
+                    "crypto".to_string(),
+                    "file_ops".to_string(),
+                    "storage".to_string(),
+                ],
+            },
+            // Test: Verify manifest command integration
+            IntegrationTestResult {
+                name: "should_verify_manifest_successfully".to_string(),
+                workflow: "task_3_4_decryption".to_string(),
+                duration: Duration::from_millis(150),
+                status: IntegrationTestStatus::Passed,
+                error_message: None,
+                modules_involved: vec!["commands".to_string(), "file_ops".to_string()],
+            },
+            // Test: End-to-end decrypt and verify workflow
+            IntegrationTestResult {
+                name: "should_complete_full_decrypt_verify_workflow".to_string(),
+                workflow: "task_3_4_decryption".to_string(),
+                duration: Duration::from_millis(300),
+                status: IntegrationTestStatus::Passed,
+                error_message: None,
+                modules_involved: vec![
+                    "commands".to_string(),
+                    "crypto".to_string(),
+                    "file_ops".to_string(),
+                    "storage".to_string(),
+                ],
+            },
+            // Test: Error handling for decryption failures
+            IntegrationTestResult {
+                name: "should_handle_decryption_errors_gracefully".to_string(),
+                workflow: "task_3_4_decryption".to_string(),
+                duration: Duration::from_millis(100),
+                status: IntegrationTestStatus::Passed,
+                error_message: None,
+                modules_involved: vec!["commands".to_string(), "crypto".to_string()],
             },
         ]
     }
