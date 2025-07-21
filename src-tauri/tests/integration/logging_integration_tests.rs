@@ -28,21 +28,15 @@ fn should_initialize_logging_successfully() {
     match result {
         Ok(_) => {
             // Success case - logging initialized successfully
-            assert!(true, "Logging initialization succeeded");
+            // No assertion needed - success is implicit
         }
         Err(error) => {
-            if format!("{:?}", error).contains("already initialized") {
+            if format!("{error:?}").contains("already initialized") {
                 // This is expected behavior for singleton pattern
-                assert!(
-                    true,
-                    "Logger already initialized - this is expected for singleton pattern"
-                );
+                // No assertion needed - expected behavior is implicit
             } else {
                 // This is an unexpected error
-                panic!(
-                    "Logging initialization failed with unexpected error: {:?}",
-                    error
-                );
+                panic!("Logging initialization failed with unexpected error: {error:?}");
             }
         }
     }
@@ -90,15 +84,15 @@ fn should_handle_multiple_initialization_attempts_gracefully() {
     // or succeed independently, but should not panic
     if result1.is_err() {
         eprintln!(
-            "First logging initialization failed: {:?}",
-            result1.unwrap_err()
+            "First logging initialization failed: {error:?}",
+            error = result1.unwrap_err()
         );
     }
 
     if result2.is_err() {
         eprintln!(
-            "Second logging initialization failed: {:?}",
-            result2.unwrap_err()
+            "Second logging initialization failed: {error:?}",
+            error = result2.unwrap_err()
         );
     }
 }
@@ -155,15 +149,15 @@ fn should_handle_extreme_log_levels_correctly() {
     // Then: Both operations should complete without panicking
     if restrictive_result.is_err() {
         eprintln!(
-            "Restrictive level initialization failed: {:?}",
-            restrictive_result.unwrap_err()
+            "Restrictive level initialization failed: {error:?}",
+            error = restrictive_result.unwrap_err()
         );
     }
 
     if verbose_result.is_err() {
         eprintln!(
-            "Verbose level initialization failed: {:?}",
-            verbose_result.unwrap_err()
+            "Verbose level initialization failed: {error:?}",
+            error = verbose_result.unwrap_err()
         );
     }
 }
@@ -184,13 +178,15 @@ fn should_initialize_within_reasonable_time() {
     // Then: Initialization should complete within reasonable time (< 1 second)
     assert!(
         initialization_time.as_millis() < 1000,
-        "Logging initialization should complete within 1 second, took: {:?}",
-        initialization_time
+        "Logging initialization should complete within 1 second, took: {initialization_time:?}"
     );
 
     // Verify initialization succeeded (may fail gracefully in test env)
     if result.is_err() {
-        eprintln!("Logging initialization failed: {:?}", result.unwrap_err());
+        eprintln!(
+            "Logging initialization failed: {error:?}",
+            error = result.unwrap_err()
+        );
     }
 }
 

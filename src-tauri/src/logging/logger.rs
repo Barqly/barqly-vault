@@ -39,7 +39,7 @@ impl Logger {
         // Create structured log entry in JSON format
         let log_data = json!({
             "timestamp": entry.timestamp.to_rfc3339(),
-            "level": format!("{:?}", entry.level),
+            "level": format!("{level:?}", level = entry.level),
             "message": entry.message,
             "trace_id": entry.trace_id,
             "span_id": entry.span_id,

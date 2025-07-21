@@ -67,16 +67,14 @@ mod crypto_validation_tests {
             let result = input.validate();
             assert!(
                 result.is_err(),
-                "Invalid label '{}' should fail validation",
-                invalid_label
+                "Invalid label '{invalid_label}' should fail validation"
             );
 
             if let Err(error) = result {
                 assert!(
                     error.message.contains("invalid characters")
                         || error.message.contains("letters, numbers, and dashes"),
-                    "Error message should mention valid characters for label '{}'",
-                    invalid_label
+                    "Error message should mention valid characters for label '{invalid_label}'"
                 );
             }
         }
@@ -99,15 +97,13 @@ mod crypto_validation_tests {
             let result = input.validate();
             assert!(
                 result.is_err(),
-                "Weak passphrase '{}' should fail validation",
-                weak_passphrase
+                "Weak passphrase '{weak_passphrase}' should fail validation"
             );
 
             if let Err(error) = result {
                 assert!(
                     error.message.contains("8 characters") || error.message.contains("letters and numbers"),
-                    "Error message should mention minimum length or requirements for passphrase '{}'",
-                    weak_passphrase
+                    "Error message should mention minimum length or requirements for passphrase '{weak_passphrase}'"
                 );
             }
         }
@@ -317,8 +313,7 @@ mod path_validation_tests {
             let result = validate_path(path);
             assert!(
                 result.is_ok(),
-                "Windows path '{}' should pass validation",
-                path
+                "Windows path '{path}' should pass validation"
             );
         }
     }
@@ -333,11 +328,7 @@ mod path_validation_tests {
 
         for path in valid_unix_paths {
             let result = validate_path(path);
-            assert!(
-                result.is_ok(),
-                "Unix path '{}' should pass validation",
-                path
-            );
+            assert!(result.is_ok(), "Unix path '{path}' should pass validation");
         }
     }
 
@@ -351,11 +342,7 @@ mod path_validation_tests {
 
         for path in valid_macos_paths {
             let result = validate_path(path);
-            assert!(
-                result.is_ok(),
-                "macOS path '{}' should pass validation",
-                path
-            );
+            assert!(result.is_ok(), "macOS path '{path}' should pass validation");
         }
     }
 
@@ -373,8 +360,7 @@ mod path_validation_tests {
             let result = validate_path(path);
             assert!(
                 result.is_err(),
-                "Invalid path '{}' should fail validation",
-                path
+                "Invalid path '{path}' should fail validation"
             );
         }
     }
@@ -391,8 +377,7 @@ mod path_validation_tests {
             let result = validate_path(path);
             assert!(
                 result.is_ok(),
-                "Path with special chars '{}' should pass validation",
-                path
+                "Path with special chars '{path}' should pass validation"
             );
         }
     }
@@ -409,8 +394,7 @@ mod path_validation_tests {
             let result = validate_path(path);
             assert!(
                 result.is_ok(),
-                "Unicode path '{}' should pass validation",
-                path
+                "Unicode path '{path}' should pass validation"
             );
         }
     }
@@ -659,7 +643,7 @@ mod task_3_3_command_tests {
 
     #[test]
     fn test_create_manifest_input_single_folder() {
-        let file_paths = vec!["/path/to/folder".to_string()];
+        let file_paths = ["/path/to/folder".to_string()];
 
         // Test single folder input
         assert_eq!(file_paths.len(), 1, "Should have 1 folder path");
@@ -668,7 +652,7 @@ mod task_3_3_command_tests {
 
     #[test]
     fn test_create_manifest_input_empty_paths() {
-        let file_paths: Vec<String> = vec![];
+        let file_paths: Vec<String> = Vec::new();
 
         // This would be validated in the command implementation
         assert!(file_paths.is_empty(), "Empty paths should be detected");
@@ -770,8 +754,7 @@ mod task_3_3_command_tests {
             let result = input.validate();
             assert!(
                 result.is_ok(),
-                "Operation ID with special characters '{}' should pass validation",
-                operation_id
+                "Operation ID with special characters '{operation_id}' should pass validation"
             );
         }
     }
@@ -796,7 +779,7 @@ mod task_3_3_command_tests {
     #[test]
     fn test_encrypt_files_input_many_files() {
         let many_files: Vec<String> = (0..1000)
-            .map(|i| format!("/path/to/file_{}.txt", i))
+            .map(|i| format!("/path/to/file_{i}.txt"))
             .collect();
 
         let input = EncryptDataInput {
@@ -815,7 +798,7 @@ mod task_3_3_command_tests {
     #[test]
     fn test_create_manifest_input_many_files() {
         let many_files: Vec<String> = (0..1000)
-            .map(|i| format!("/path/to/file_{}.txt", i))
+            .map(|i| format!("/path/to/file_{i}.txt"))
             .collect();
 
         // Test that many files don't cause validation issues
@@ -865,8 +848,7 @@ mod security_tests {
             let result = input.validate();
             assert!(
                 result.is_ok(),
-                "Input validation should pass for path '{}' - path traversal is caught in file_ops validation",
-                malicious_path
+                "Input validation should pass for path '{malicious_path}' - path traversal is caught in file_ops validation"
             );
         }
     }
@@ -909,8 +891,7 @@ mod security_tests {
             let result = input.validate();
             assert!(
                 result.is_ok(), // Input validation passes
-                "Input validation should pass for restricted path '{}'",
-                restricted_path
+                "Input validation should pass for restricted path '{restricted_path}'"
             );
             // Note: File system validation should catch these in actual execution
         }
@@ -924,7 +905,7 @@ mod security_tests {
     fn should_handle_very_large_file_lists() {
         // Test with file list size that exceeds the limit
         let large_file_list: Vec<String> = (0..10001)
-            .map(|i| format!("/path/to/file_{}.txt", i))
+            .map(|i| format!("/path/to/file_{i}.txt"))
             .collect();
 
         let input = EncryptDataInput {
@@ -1102,8 +1083,7 @@ mod security_tests {
             let result = input.validate();
             assert!(
                 result.is_ok(),
-                "Unicode path '{}' should pass validation",
-                unicode_path
+                "Unicode path '{unicode_path}' should pass validation"
             );
         }
     }

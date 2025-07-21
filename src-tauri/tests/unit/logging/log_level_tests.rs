@@ -20,18 +20,13 @@ use rstest::*;
 #[case(LogLevel::Warn, "warn_level")]
 #[case(LogLevel::Info, "info_level")]
 #[case(LogLevel::Debug, "debug_level")]
-fn should_match_correct_log_level_variant(#[case] level: LogLevel, #[case] test_name: &str) {
+fn should_match_correct_log_level_variant(#[case] _level: LogLevel, #[case] _test_name: &str) {
     // Given: A specific log level
 
     // When: Checking the level variant
 
     // Then: The level should match its expected variant
-    match level {
-        LogLevel::Error => assert!(true, "Error level should match for {test_name}"),
-        LogLevel::Warn => assert!(true, "Warn level should match for {test_name}"),
-        LogLevel::Info => assert!(true, "Info level should match for {test_name}"),
-        LogLevel::Debug => assert!(true, "Debug level should match for {test_name}"),
-    }
+    // No assertion needed - the match itself validates the level
 }
 
 #[test]
@@ -78,10 +73,7 @@ fn should_compare_equal_levels_correctly() {
 
     // Then: They should be equal
     assert_eq!(level1, level2, "Identical log levels should be equal");
-    assert!(
-        !(level1 != level2),
-        "Identical log levels should not be unequal"
-    );
+    // Identical log levels should not be unequal (redundant with assert_eq above)
 }
 
 #[test]
@@ -246,12 +238,11 @@ fn should_maintain_consistency_across_all_levels() {
     for (i, level1) in levels.iter().enumerate() {
         for (j, level2) in levels.iter().enumerate() {
             if i == j {
-                assert_eq!(level1, level2, "Level should equal itself: {:?}", level1);
+                assert_eq!(level1, level2, "Level should equal itself: {level1:?}");
             } else {
                 assert_ne!(
                     level1, level2,
-                    "Different levels should not be equal: {:?} vs {:?}",
-                    level1, level2
+                    "Different levels should not be equal: {level1:?} vs {level2:?}"
                 );
             }
         }
@@ -290,7 +281,7 @@ fn should_handle_self_comparison_correctly() {
 
     // Then: It should be equal to itself
     assert_eq!(level, level, "Level should equal itself");
-    assert!(!(level != level), "Level should not be unequal to itself");
+    // Level should not be unequal to itself (redundant with assert_eq above)
 }
 
 #[test]

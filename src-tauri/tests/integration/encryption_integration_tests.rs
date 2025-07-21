@@ -41,7 +41,7 @@ impl Task3IntegrationTestEnv {
             .unwrap()
             .as_millis();
         let random_id = rand::thread_rng().gen::<u32>();
-        let key_label = format!("test-key-{}-{}", timestamp, random_id);
+        let key_label = format!("test-key-{timestamp}-{random_id}");
 
         Self {
             temp_dir,
@@ -237,7 +237,7 @@ fn should_create_manifest_for_single_folder_successfully() {
         ],
     );
 
-    let file_paths = vec![folder_path.to_string_lossy().to_string()];
+    let file_paths = [folder_path.to_string_lossy().to_string()];
 
     // When: Creating manifest for folder
     // Note: This would be tested in E2E tests with actual file system
@@ -249,7 +249,7 @@ fn should_create_manifest_for_single_folder_successfully() {
 #[test]
 fn should_handle_create_manifest_empty_input_error() {
     // Given: Empty file paths
-    let file_paths: Vec<String> = vec![];
+    let file_paths: Vec<String> = Vec::new();
 
     // When: Attempting to create manifest
     // Note: This would be validated in the command implementation
@@ -351,7 +351,7 @@ fn should_complete_full_encryption_workflow_integration() {
     };
 
     // Step 2: Prepare create_manifest input
-    let manifest_file_paths = vec![
+    let manifest_file_paths = [
         file1.to_string_lossy().to_string(),
         file2.to_string_lossy().to_string(),
     ];
@@ -434,7 +434,7 @@ fn should_handle_large_file_list_in_encryption_workflow() {
     // Create many test files
     let mut file_paths = Vec::new();
     for i in 0..100 {
-        let file = env.create_test_file(&format!("file_{}.txt", i), &format!("content {}", i));
+        let file = env.create_test_file(&format!("file_{i}.txt"), &format!("content {i}"));
         file_paths.push(file.to_string_lossy().to_string());
     }
 
@@ -467,8 +467,8 @@ fn should_validate_encryption_workflow_performance() {
         // Simulate multiple input validations
         for i in 0..1000 {
             let input = EncryptDataInput {
-                key_id: format!("key-{}", i),
-                file_paths: vec![format!("/path/to/file_{}.txt", i)],
+                key_id: format!("key-{i}"),
+                file_paths: vec![format!("/path/to/file_{i}.txt")],
                 output_name: None,
             };
             let _ = input.validate();

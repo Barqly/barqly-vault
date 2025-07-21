@@ -559,7 +559,10 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     let _cleanup_guard = EncryptionCleanupGuard;
 
     // Initialize progress manager for operation tracking
-    let operation_id = format!("encrypt_{}", chrono::Utc::now().timestamp());
+    let operation_id = format!(
+        "encrypt_{timestamp}",
+        timestamp = chrono::Utc::now().timestamp()
+    );
     let mut progress_manager = ProgressManager::new(operation_id.clone(), 100);
 
     // Log operation start with structured context
@@ -980,7 +983,10 @@ pub async fn decrypt_data(
     let error_handler = ErrorHandler::new().with_span(span_context.clone());
 
     // Initialize progress manager for operation tracking
-    let operation_id = format!("decrypt_{}", chrono::Utc::now().timestamp());
+    let operation_id = format!(
+        "decrypt_{timestamp}",
+        timestamp = chrono::Utc::now().timestamp()
+    );
     let mut progress_manager = ProgressManager::new(operation_id.clone(), 100);
 
     // Validate input
@@ -1224,7 +1230,10 @@ pub async fn verify_manifest(
         SpanContext::new("verify_manifest").with_attribute("manifest_path", &input.manifest_path);
 
     // Initialize progress manager for operation tracking
-    let operation_id = format!("verify_{}", chrono::Utc::now().timestamp());
+    let operation_id = format!(
+        "verify_{timestamp}",
+        timestamp = chrono::Utc::now().timestamp()
+    );
     let mut progress_manager = ProgressManager::new(operation_id.clone(), 100);
 
     // Create error handler with span context

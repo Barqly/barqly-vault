@@ -330,7 +330,7 @@ fn should_generate_unique_keys_in_concurrent_scenarios() {
 fn should_handle_concurrent_encryption_decryption() {
     // Given: Multiple keypairs and test data sets
     let test_data_sets: Vec<Vec<u8>> = (0..5)
-        .map(|i| format!("Test message {}", i).into_bytes())
+        .map(|i| format!("Test message {i}").into_bytes())
         .collect();
 
     // When: Encrypting and decrypting concurrently with separate keypairs
@@ -383,7 +383,7 @@ fn should_handle_private_key_drop_safely() {
     // Then: The drop should complete without panicking
     // Note: We can't easily verify memory zeroization in tests
     // but SecretString should handle this automatically
-    assert!(true, "Private key drop should complete safely");
+    // Private key drop should complete safely
 }
 
 // ============================================================================
@@ -408,8 +408,7 @@ fn should_encrypt_data_within_reasonable_time() {
     // Then: Encryption should complete within reasonable time (< 5 seconds)
     assert!(
         encryption_time.as_secs() < 5,
-        "1MB encryption should complete within 5 seconds, took: {:?}",
-        encryption_time
+        "1MB encryption should complete within 5 seconds, took: {encryption_time:?}"
     );
 
     // Verify decryption also works

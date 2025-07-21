@@ -331,13 +331,13 @@ fn should_handle_large_files_successfully(#[case] file_size: usize, #[case] test
     let large_content: String = (0..file_size)
         .map(|i| (i % 26 + 97) as u8 as char)
         .collect();
-    let large_file = env.create_test_file(&format!("large_{}.dat", test_name), &large_content);
+    let large_file = env.create_test_file(&format!("large_{test_name}.dat"), &large_content);
 
     let selection = FileSelection::Files(vec![large_file]);
     let config = FileOpsConfig::default();
 
     // When: Creating archive with large file
-    let archive_path = env.path().join(format!("large_{}.tar.gz", test_name));
+    let archive_path = env.path().join(format!("large_{test_name}.tar.gz"));
     let archive_operation = TestAssertions::assert_ok(
         create_archive(&selection, &archive_path, &config),
         &format!("Large file archive creation should succeed for {test_name}"),
@@ -355,7 +355,7 @@ fn should_handle_large_files_successfully(#[case] file_size: usize, #[case] test
     );
 
     // When: Extracting large file
-    let extract_dir = env.path().join(format!("extracted_large_{}", test_name));
+    let extract_dir = env.path().join(format!("extracted_large_{test_name}"));
     let extracted_files = TestAssertions::assert_ok(
         extract_archive(&archive_path, &extract_dir, &config),
         &format!("Large file extraction should succeed for {test_name}"),
@@ -365,7 +365,7 @@ fn should_handle_large_files_successfully(#[case] file_size: usize, #[case] test
     assert_eq!(extracted_files.len(), 1, "Should extract 1 file");
     assert!(extract_dir.exists(), "Extraction directory should exist");
 
-    let extracted_file = extract_dir.join(format!("large_{}.dat", test_name));
+    let extracted_file = extract_dir.join(format!("large_{test_name}.dat"));
     assert!(extracted_file.exists(), "Extracted large file should exist");
 
     let extracted_content =
@@ -480,8 +480,7 @@ fn should_handle_cross_platform_paths_correctly() {
         let extracted_file = extract_dir.join(expected_file);
         assert!(
             extracted_file.exists(),
-            "Extracted file '{}' should exist",
-            expected_file
+            "Extracted file '{expected_file}' should exist"
         );
     }
 }
