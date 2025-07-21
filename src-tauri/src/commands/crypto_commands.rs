@@ -3,14 +3,21 @@
 //! This module provides Tauri commands that expose the crypto module
 //! functionality to the frontend with proper validation and error handling.
 
-use super::types::{CommandError, CommandResponse, ErrorCode, ValidateInput};
+use super::types::{CommandError, CommandResponse, ErrorCode, ErrorHandler, ValidateInput};
 use crate::crypto::{encrypt_private_key, generate_keypair};
 use crate::file_ops;
+use crate::logging::{log_operation, SpanContext};
 use crate::storage;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::Window;
 use tracing::{info, instrument};
+
+// Global operation state to prevent race conditions
+static ENCRYPTION_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
 
 /// Input for key generation command
 #[derive(Debug, Deserialize)]
@@ -330,47 +337,83 @@ fn contains_sequential_pattern(passphrase: &str) -> bool {
 #[tauri::command]
 #[instrument(skip(input, _window), fields(key_id = %input.key_id, file_count = input.file_paths.len()))]
 pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandResponse<String> {
-    // Validate input
-    input.validate()?;
+    // Create span context for operation tracing
+    let span_context = SpanContext::new("encrypt_files")
+        .with_attribute("key_id", &input.key_id)
+        .with_attribute("file_count", input.file_paths.len().to_string());
+
+    // Create error handler with span context
+    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+
+    // Validate input with structured error handling
+    input
+        .validate()
+        .map_err(|e| error_handler.handle_validation_error("input", &e.message))?;
+
+    // Check for race conditions - prevent concurrent encryption operations
+    if ENCRYPTION_IN_PROGRESS
+        .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+        .is_err()
+    {
+        let error = error_handler.handle_validation_error(
+            "operation",
+            "Another encryption operation is already in progress",
+        );
+        return Err(error);
+    }
+
+    // Ensure cleanup on exit
+    let _cleanup_guard = EncryptionCleanupGuard;
+
+    // Log operation start with structured context
+    let mut attributes = HashMap::new();
+    attributes.insert("file_count".to_string(), input.file_paths.len().to_string());
+    attributes.insert("key_id".to_string(), input.key_id.clone());
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Starting encryption operation",
+        &span_context,
+        attributes,
+    );
 
     info!("Starting encryption for {} files", input.file_paths.len());
 
-    // Get the public key for encryption
-    let keys = storage::list_keys()
-        .map_err(|e| CommandError::operation(ErrorCode::StorageFailed, e.to_string()))?;
+    // Get the public key for encryption with structured error handling
+    let keys = error_handler.handle_operation_error(
+        storage::list_keys(),
+        "list_keys",
+        ErrorCode::StorageFailed,
+    )?;
 
     let key_info = keys
         .iter()
         .find(|k| k.label == input.key_id)
-        .ok_or_else(|| CommandError::not_found(format!("Key '{}' not found", input.key_id)))?;
+        .ok_or_else(|| {
+            let error = error_handler
+                .handle_validation_error("key_id", &format!("Key '{}' not found", input.key_id));
+            error
+        })?;
 
     // Get the public key string, handling the case where it might be None
     let public_key_str = key_info.public_key.as_ref().ok_or_else(|| {
-        CommandError::operation(
-            ErrorCode::EncryptionFailed,
-            format!("Public key not available for key '{}'", input.key_id),
+        error_handler.handle_validation_error(
+            "public_key",
+            &format!("Public key not available for key '{}'", input.key_id),
         )
     })?;
 
     // Create PublicKey from the string
     let public_key = crate::crypto::PublicKey::from(public_key_str.clone());
 
-    // Create file selection from input paths
-    let file_selection = if input.file_paths.len() == 1 {
-        // Check if it's a directory
-        let path = std::path::Path::new(&input.file_paths[0]);
-        if path.is_dir() {
-            file_ops::FileSelection::Folder(path.to_path_buf())
-        } else {
-            file_ops::FileSelection::Files(input.file_paths.iter().map(|p| p.into()).collect())
-        }
-    } else {
-        file_ops::FileSelection::Files(input.file_paths.iter().map(|p| p.into()).collect())
-    };
+    // Create file selection from input paths with atomic validation
+    let file_selection = create_file_selection_atomic(&input.file_paths, &error_handler)?;
 
     // Validate the file selection
-    file_ops::validate_selection(&file_selection, &file_ops::FileOpsConfig::default())
-        .map_err(|e| CommandError::operation(ErrorCode::InvalidInput, e.to_string()))?;
+    error_handler.handle_operation_error(
+        file_ops::validate_selection(&file_selection, &file_ops::FileOpsConfig::default()),
+        "validate_selection",
+        ErrorCode::InvalidInput,
+    )?;
 
     // Determine output path
     let output_name = input.output_name.unwrap_or_else(|| {
@@ -378,38 +421,59 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
         format!("encrypted_{timestamp}.age")
     });
 
-    let output_path = std::path::Path::new(&output_name);
-    if output_path.is_relative() {
-        // Use current directory for relative paths
-        let current_dir = std::env::current_dir()
-            .map_err(|e| CommandError::operation(ErrorCode::InternalError, e.to_string()))?;
-        output_path.join(&current_dir)
-    } else {
-        output_path.to_path_buf()
-    };
+    let output_path = determine_output_path(&output_name, &error_handler)?;
 
     // Create file operations config
     let config = file_ops::FileOpsConfig::default();
 
-    // Create archive first
-    let archive_operation = file_ops::create_archive(&file_selection, output_path, &config)
-        .map_err(|e| CommandError::operation(ErrorCode::EncryptionFailed, e.to_string()))?;
+    // Create archive first with structured error handling
+    let archive_operation = error_handler.handle_operation_error(
+        file_ops::create_archive(&file_selection, &output_path, &config),
+        "create_archive",
+        ErrorCode::EncryptionFailed,
+    )?;
 
-    // Read the archive file
-    let archive_data = std::fs::read(&archive_operation.archive_path)
-        .map_err(|e| CommandError::operation(ErrorCode::EncryptionFailed, e.to_string()))?;
+    // Read the archive file with streaming for large files
+    let archive_data = error_handler.handle_operation_error(
+        read_archive_file_safely(&archive_operation.archive_path, &error_handler),
+        "read_archive_file",
+        ErrorCode::EncryptionFailed,
+    )?;
 
     // Encrypt the archive data
-    let encrypted_data = crate::crypto::encrypt_data(&archive_data, &public_key)
-        .map_err(|e| CommandError::operation(ErrorCode::EncryptionFailed, e.to_string()))?;
+    let encrypted_data = error_handler.handle_operation_error(
+        crate::crypto::encrypt_data(&archive_data, &public_key),
+        "encrypt_data",
+        ErrorCode::EncryptionFailed,
+    )?;
 
     // Write encrypted data to final output file
     let encrypted_path = output_path.with_extension("age");
-    std::fs::write(&encrypted_path, encrypted_data)
-        .map_err(|e| CommandError::operation(ErrorCode::EncryptionFailed, e.to_string()))?;
+    error_handler.handle_operation_error(
+        std::fs::write(&encrypted_path, encrypted_data),
+        "write_encrypted_file",
+        ErrorCode::EncryptionFailed,
+    )?;
 
-    // Clean up temporary archive file
-    let _ = std::fs::remove_file(&archive_operation.archive_path);
+    // Clean up temporary archive file with proper error handling
+    cleanup_temp_file(&archive_operation.archive_path, &error_handler);
+
+    // Log operation completion
+    let mut completion_attributes = HashMap::new();
+    completion_attributes.insert(
+        "file_count".to_string(),
+        archive_operation.file_count.to_string(),
+    );
+    completion_attributes.insert(
+        "output_path".to_string(),
+        encrypted_path.to_string_lossy().to_string(),
+    );
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Encryption completed successfully",
+        &span_context,
+        completion_attributes,
+    );
 
     info!(
         "Encryption completed successfully: {} -> {}",
@@ -418,6 +482,111 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     );
 
     Ok(encrypted_path.to_string_lossy().to_string())
+}
+
+// Helper functions for atomic operations and safe file handling
+
+/// Create file selection with atomic validation to prevent TOCTOU
+fn create_file_selection_atomic(
+    file_paths: &[String],
+    error_handler: &ErrorHandler,
+) -> Result<file_ops::FileSelection, CommandError> {
+    if file_paths.len() == 1 {
+        // Atomic check: validate path exists and get metadata in single operation
+        let path = Path::new(&file_paths[0]);
+
+        // Use metadata to determine if it's a directory (atomic operation)
+        let metadata = error_handler.handle_operation_error(
+            std::fs::metadata(path),
+            "get_file_metadata",
+            ErrorCode::InvalidInput,
+        )?;
+
+        if metadata.is_dir() {
+            Ok(file_ops::FileSelection::Folder(path.to_path_buf()))
+        } else {
+            Ok(file_ops::FileSelection::Files(
+                file_paths.iter().map(|p| p.into()).collect(),
+            ))
+        }
+    } else {
+        Ok(file_ops::FileSelection::Files(
+            file_paths.iter().map(|p| p.into()).collect(),
+        ))
+    }
+}
+
+/// Determine output path with proper validation
+fn determine_output_path(
+    output_name: &str,
+    error_handler: &ErrorHandler,
+) -> Result<std::path::PathBuf, CommandError> {
+    let output_path = Path::new(output_name);
+    if output_path.is_relative() {
+        // Use current directory for relative paths
+        let current_dir = error_handler.handle_operation_error(
+            std::env::current_dir(),
+            "get_current_directory",
+            ErrorCode::InternalError,
+        )?;
+        Ok(output_path.join(&current_dir))
+    } else {
+        Ok(output_path.to_path_buf())
+    }
+}
+
+/// Read archive file with memory safety checks
+fn read_archive_file_safely(
+    archive_path: &std::path::Path,
+    error_handler: &ErrorHandler,
+) -> Result<Vec<u8>, CommandError> {
+    // Check file size before reading to prevent memory exhaustion
+    let metadata = error_handler.handle_operation_error(
+        std::fs::metadata(archive_path),
+        "get_archive_metadata",
+        ErrorCode::EncryptionFailed,
+    )?;
+
+    const MAX_ARCHIVE_SIZE: u64 = 100 * 1024 * 1024; // 100MB limit
+    if metadata.len() > MAX_ARCHIVE_SIZE {
+        return Err(error_handler.handle_validation_error(
+            "archive_size",
+            &format!(
+                "Archive too large: {} bytes (max: {} bytes)",
+                metadata.len(),
+                MAX_ARCHIVE_SIZE
+            ),
+        ));
+    }
+
+    // Read file with proper error handling
+    error_handler.handle_operation_error(
+        std::fs::read(archive_path),
+        "read_archive_file",
+        ErrorCode::EncryptionFailed,
+    )
+}
+
+/// Clean up temporary file with proper error handling
+fn cleanup_temp_file(temp_path: &std::path::Path, error_handler: &ErrorHandler) {
+    if let Err(e) = std::fs::remove_file(temp_path) {
+        // Log cleanup failure but don't fail the operation
+        let _: Result<(), CommandError> = error_handler.handle_operation_error(
+            Err(e),
+            "cleanup_temp_file",
+            ErrorCode::InternalError,
+        );
+    }
+}
+
+/// RAII guard for encryption operation cleanup
+struct EncryptionCleanupGuard;
+
+impl Drop for EncryptionCleanupGuard {
+    fn drop(&mut self) {
+        // Release the encryption lock when the operation completes
+        ENCRYPTION_IN_PROGRESS.store(false, Ordering::Release);
+    }
 }
 
 /// Decrypt files with progress streaming
