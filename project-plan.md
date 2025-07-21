@@ -156,16 +156,16 @@ barqly-vault/
 **Goal**: Create the API layer between frontend and backend
 
 - [x] 3.1: Design Tauri command interface
-- [x] 3.2: Implement setup commands
-  - [x] 3.2.1: generate_key command
-  - [x] 3.2.2: list_keys command
-  - [x] 3.2.3: validate_passphrase command
-  - [x] 3.2.4: Write unit tests, run fmt, clippy etc
-- [ ] 3.3: Implement encryption commands
-  - [ ] 3.3.1: encrypt_files command
-  - [ ] 3.3.2: create_manifest command
-  - [ ] 3.3.3: get_encryption_status command
-  - [ ] 3.3.4: Write unit tests, run fmt, clippy etc
+  - [x] 3.2: Implement setup commands
+    - [x] 3.2.1: generate_key command
+    - [x] 3.2.2: list_keys command
+    - [x] 3.2.3: validate_passphrase command
+    - [x] 3.2.4: Write unit tests, run fmt, clippy etc
+  - [x] 3.3: Implement encryption commands
+    - [x] 3.3.1: encrypt_files command
+    - [x] 3.3.2: create_manifest command
+    - [x] 3.3.3: get_encryption_status command
+    - [x] 3.3.4: Write unit tests, run fmt, clippy etc
 - [ ] 3.4: Implement decryption commands
   - [ ] 3.4.1: decrypt_file command
   - [ ] 3.4.2: verify_manifest command
