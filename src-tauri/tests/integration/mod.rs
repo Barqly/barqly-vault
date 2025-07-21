@@ -7,10 +7,10 @@
 //! - Test result aggregation
 
 pub mod crypto_integration_tests;
+pub mod decryption_integration_tests;
+pub mod encryption_integration_tests;
 pub mod file_ops_integration_tests;
 pub mod logging_integration_tests;
-pub mod task_3_3_integration_tests;
-pub mod task_3_4_integration_tests;
 pub mod workflows;
 
 use super::common::{TestSuite, TestSuiteConfig};
@@ -67,14 +67,8 @@ impl IntegrationTestSuite {
             ("crypto_storage", self.run_crypto_storage_workflow()),
             ("file_ops_crypto", self.run_file_ops_crypto_workflow()),
             ("storage_file_ops", self.run_storage_file_ops_workflow()),
-            (
-                "task_3_3_encryption",
-                self.run_task_3_3_encryption_workflow(),
-            ),
-            (
-                "task_3_4_decryption",
-                self.run_task_3_4_decryption_workflow(),
-            ),
+            ("encryption_workflow", self.run_encryption_workflow()),
+            ("decryption_workflow", self.run_decryption_workflow()),
             (
                 "logging_integration",
                 self.run_logging_integration_workflow(),
@@ -178,13 +172,13 @@ impl IntegrationTestSuite {
         ]
     }
 
-    /// Run Task 3.3 encryption commands integration workflow tests
-    fn run_task_3_3_encryption_workflow(&self) -> Vec<IntegrationTestResult> {
+    /// Run encryption commands integration workflow tests
+    fn run_encryption_workflow(&self) -> Vec<IntegrationTestResult> {
         vec![
             // Test: Encrypt files command integration
             IntegrationTestResult {
                 name: "should_complete_encrypt_files_workflow".to_string(),
-                workflow: "task_3_3_encryption".to_string(),
+                workflow: "encryption_workflow".to_string(),
                 duration: Duration::from_millis(150),
                 status: IntegrationTestStatus::Passed,
                 error_message: None,
@@ -197,7 +191,7 @@ impl IntegrationTestSuite {
             // Test: Create manifest command integration
             IntegrationTestResult {
                 name: "should_create_manifest_successfully".to_string(),
-                workflow: "task_3_3_encryption".to_string(),
+                workflow: "encryption_workflow".to_string(),
                 duration: Duration::from_millis(100),
                 status: IntegrationTestStatus::Passed,
                 error_message: None,
@@ -206,7 +200,7 @@ impl IntegrationTestSuite {
             // Test: Get encryption status command integration
             IntegrationTestResult {
                 name: "should_get_encryption_status_successfully".to_string(),
-                workflow: "task_3_3_encryption".to_string(),
+                workflow: "encryption_workflow".to_string(),
                 duration: Duration::from_millis(50),
                 status: IntegrationTestStatus::Passed,
                 error_message: None,
@@ -215,7 +209,7 @@ impl IntegrationTestSuite {
             // Test: End-to-end encryption workflow
             IntegrationTestResult {
                 name: "should_complete_full_encryption_workflow".to_string(),
-                workflow: "task_3_3_encryption".to_string(),
+                workflow: "encryption_workflow".to_string(),
                 duration: Duration::from_millis(200),
                 status: IntegrationTestStatus::Passed,
                 error_message: None,
@@ -229,13 +223,13 @@ impl IntegrationTestSuite {
         ]
     }
 
-    /// Run Task 3.4 decryption commands integration workflow tests
-    fn run_task_3_4_decryption_workflow(&self) -> Vec<IntegrationTestResult> {
+    /// Run decryption commands integration workflow tests
+    fn run_decryption_workflow(&self) -> Vec<IntegrationTestResult> {
         vec![
             // Test: Decrypt data command integration
             IntegrationTestResult {
                 name: "should_complete_decrypt_data_workflow".to_string(),
-                workflow: "task_3_4_decryption".to_string(),
+                workflow: "decryption_workflow".to_string(),
                 duration: Duration::from_millis(200),
                 status: IntegrationTestStatus::Passed,
                 error_message: None,
@@ -249,7 +243,7 @@ impl IntegrationTestSuite {
             // Test: Verify manifest command integration
             IntegrationTestResult {
                 name: "should_verify_manifest_successfully".to_string(),
-                workflow: "task_3_4_decryption".to_string(),
+                workflow: "decryption_workflow".to_string(),
                 duration: Duration::from_millis(150),
                 status: IntegrationTestStatus::Passed,
                 error_message: None,
@@ -258,7 +252,7 @@ impl IntegrationTestSuite {
             // Test: End-to-end decrypt and verify workflow
             IntegrationTestResult {
                 name: "should_complete_full_decrypt_verify_workflow".to_string(),
-                workflow: "task_3_4_decryption".to_string(),
+                workflow: "decryption_workflow".to_string(),
                 duration: Duration::from_millis(300),
                 status: IntegrationTestStatus::Passed,
                 error_message: None,
@@ -272,7 +266,7 @@ impl IntegrationTestSuite {
             // Test: Error handling for decryption failures
             IntegrationTestResult {
                 name: "should_handle_decryption_errors_gracefully".to_string(),
-                workflow: "task_3_4_decryption".to_string(),
+                workflow: "decryption_workflow".to_string(),
                 duration: Duration::from_millis(100),
                 status: IntegrationTestStatus::Passed,
                 error_message: None,

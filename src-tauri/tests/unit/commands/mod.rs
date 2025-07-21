@@ -10,13 +10,11 @@
 pub mod types_tests;
 pub mod validation_tests;
 
-use super::super::common::{TestSuite, TestSuiteConfig};
 use std::collections::HashMap;
 use std::time::Duration;
 
 /// Commands unit test suite configuration
 pub struct CommandsUnitTestSuite {
-    config: TestSuiteConfig,
     test_results: HashMap<String, TestResult>,
 }
 
@@ -45,7 +43,6 @@ impl CommandsUnitTestSuite {
     /// Create a new commands unit test suite
     pub fn new() -> Self {
         Self {
-            config: TestSuiteConfig::new(),
             test_results: HashMap::new(),
         }
     }

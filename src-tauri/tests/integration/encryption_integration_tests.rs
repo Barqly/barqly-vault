@@ -90,10 +90,6 @@ impl Task3IntegrationTestEnv {
 
         self.key_label.clone()
     }
-
-    fn path(&self) -> &std::path::Path {
-        self.temp_dir.path()
-    }
 }
 
 // ============================================================================
@@ -404,7 +400,7 @@ fn should_complete_full_encryption_workflow_integration() {
 #[test]
 fn should_handle_invalid_file_paths_in_encryption_workflow() {
     // Given: Test environment with non-existent files
-    let mut env = Task3IntegrationTestEnv::new();
+    let env = Task3IntegrationTestEnv::new();
     let key_id = env.setup_test_key();
 
     let input = EncryptDataInput {

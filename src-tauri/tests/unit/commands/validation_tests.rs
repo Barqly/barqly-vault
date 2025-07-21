@@ -820,7 +820,6 @@ mod task_3_3_command_tests {
 #[cfg(test)]
 mod security_tests {
     use super::*;
-    use std::path::Path;
 
     // ============================================================================
     // PATH TRAVERSAL ATTACK TESTS

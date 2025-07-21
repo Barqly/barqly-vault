@@ -1,4 +1,3 @@
-use chrono::Local;
 use serde_json::json;
 use std::fs::{create_dir_all, OpenOptions};
 use std::io::Write;
@@ -55,22 +54,6 @@ impl Logger {
 
         let log_line = format!("{log_data}\n");
 
-        if let Ok(mut file_opt) = self.log_file.lock() {
-            if let Some(file) = file_opt.as_mut() {
-                if let Err(e) = file.write_all(log_line.as_bytes()) {
-                    eprintln!("Failed to write to log file: {e}");
-                }
-            }
-        }
-    }
-
-    /// Legacy logging method for backward compatibility
-    pub fn log(&self, level: LogLevel, message: &str) {
-        if level > self.level {
-            return;
-        }
-        let now = Local::now().format("%Y-%m-%d %H:%M:%S");
-        let log_line = format!("[{now}] [{level:?}] {message}\n");
         if let Ok(mut file_opt) = self.log_file.lock() {
             if let Some(file) = file_opt.as_mut() {
                 if let Err(e) = file.write_all(log_line.as_bytes()) {
