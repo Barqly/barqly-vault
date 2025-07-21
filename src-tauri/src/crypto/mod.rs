@@ -7,6 +7,14 @@
 //! - Passphrases use constant-time comparison
 //! - Uses audited age encryption library
 //!
+//! ## Public API
+//! The following functions are available for external use:
+//! - `generate_keypair()` - Create a new keypair
+//! - `encrypt_data()` - Encrypt data with a public key
+//! - `decrypt_data()` - Decrypt data with a private key
+//! - `encrypt_private_key()` - Encrypt a private key with a passphrase
+//! - `decrypt_private_key()` - Decrypt a private key with a passphrase
+//!
 //! ## Example
 //! ```no_run
 //! use barqly_vault_lib::crypto;
@@ -78,6 +86,21 @@ impl Drop for PrivateKey {
 /// Result type for crypto operations
 pub type Result<T> = std::result::Result<T, CryptoError>;
 
-// Re-export key functions for convenience
-pub use age_ops::{decrypt_data, encrypt_data};
-pub use key_mgmt::{decrypt_private_key, encrypt_private_key, generate_keypair};
+// ============================================================================
+// PUBLIC API - Functions available for external use
+// ============================================================================
+
+/// Generate a new keypair for encryption/decryption
+pub use key_mgmt::generate_keypair;
+
+/// Encrypt data with a public key
+pub use age_ops::encrypt_data;
+
+/// Decrypt data with a private key
+pub use age_ops::decrypt_data;
+
+/// Encrypt a private key with a passphrase for secure storage
+pub use key_mgmt::encrypt_private_key;
+
+/// Decrypt a private key with a passphrase
+pub use key_mgmt::decrypt_private_key;
