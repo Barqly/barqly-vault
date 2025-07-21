@@ -8,7 +8,7 @@ use commands::{
     create_manifest,
     decrypt_data,
     delete_key_command,
-    encrypt_data,
+    encrypt_files,
     // Crypto commands
     generate_key,
     get_config,
@@ -36,7 +36,7 @@ pub fn run() {
             // Crypto commands
             generate_key,
             validate_passphrase,
-            encrypt_data,
+            encrypt_files,
             decrypt_data,
             // Storage commands
             list_keys_command,

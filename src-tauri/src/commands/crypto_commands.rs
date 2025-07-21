@@ -5,6 +5,7 @@
 
 use super::types::{CommandError, CommandResponse, ErrorCode, ValidateInput};
 use crate::crypto::{encrypt_private_key, generate_keypair};
+use crate::file_ops;
 use crate::storage;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
@@ -288,17 +289,95 @@ fn contains_sequential_pattern(passphrase: &str) -> bool {
 /// Encrypt files with progress streaming
 #[tauri::command]
 #[instrument(skip(input, _window), fields(key_id = %input.key_id, file_count = input.file_paths.len()))]
-pub async fn encrypt_data(input: EncryptDataInput, _window: Window) -> CommandResponse<String> {
+pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandResponse<String> {
     // Validate input
     input.validate()?;
 
     info!("Starting encryption for {} files", input.file_paths.len());
 
-    // TODO: Implement full encryption workflow with progress streaming
-    // This is a placeholder implementation
+    // Get the public key for encryption
+    let keys = storage::list_keys()
+        .map_err(|e| CommandError::operation(ErrorCode::StorageFailed, e.to_string()))?;
 
-    // For now, return a placeholder response
-    Ok("encrypted_file.age".to_string())
+    let key_info = keys
+        .iter()
+        .find(|k| k.label == input.key_id)
+        .ok_or_else(|| CommandError::not_found(format!("Key '{}' not found", input.key_id)))?;
+
+    // Get the public key string, handling the case where it might be None
+    let public_key_str = key_info.public_key.as_ref().ok_or_else(|| {
+        CommandError::operation(
+            ErrorCode::EncryptionFailed,
+            format!("Public key not available for key '{}'", input.key_id),
+        )
+    })?;
+
+    // Create PublicKey from the string
+    let public_key = crate::crypto::PublicKey::from(public_key_str.clone());
+
+    // Create file selection from input paths
+    let file_selection = if input.file_paths.len() == 1 {
+        // Check if it's a directory
+        let path = std::path::Path::new(&input.file_paths[0]);
+        if path.is_dir() {
+            file_ops::FileSelection::Folder(path.to_path_buf())
+        } else {
+            file_ops::FileSelection::Files(input.file_paths.iter().map(|p| p.into()).collect())
+        }
+    } else {
+        file_ops::FileSelection::Files(input.file_paths.iter().map(|p| p.into()).collect())
+    };
+
+    // Validate the file selection
+    file_ops::validate_selection(&file_selection, &file_ops::FileOpsConfig::default())
+        .map_err(|e| CommandError::operation(ErrorCode::InvalidInput, e.to_string()))?;
+
+    // Determine output path
+    let output_name = input.output_name.unwrap_or_else(|| {
+        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
+        format!("encrypted_{timestamp}.age")
+    });
+
+    let output_path = std::path::Path::new(&output_name);
+    if output_path.is_relative() {
+        // Use current directory for relative paths
+        let current_dir = std::env::current_dir()
+            .map_err(|e| CommandError::operation(ErrorCode::InternalError, e.to_string()))?;
+        output_path.join(&current_dir)
+    } else {
+        output_path.to_path_buf()
+    };
+
+    // Create file operations config
+    let config = file_ops::FileOpsConfig::default();
+
+    // Create archive first
+    let archive_operation = file_ops::create_archive(&file_selection, output_path, &config)
+        .map_err(|e| CommandError::operation(ErrorCode::EncryptionFailed, e.to_string()))?;
+
+    // Read the archive file
+    let archive_data = std::fs::read(&archive_operation.archive_path)
+        .map_err(|e| CommandError::operation(ErrorCode::EncryptionFailed, e.to_string()))?;
+
+    // Encrypt the archive data
+    let encrypted_data = crate::crypto::encrypt_data(&archive_data, &public_key)
+        .map_err(|e| CommandError::operation(ErrorCode::EncryptionFailed, e.to_string()))?;
+
+    // Write encrypted data to final output file
+    let encrypted_path = output_path.with_extension("age");
+    std::fs::write(&encrypted_path, encrypted_data)
+        .map_err(|e| CommandError::operation(ErrorCode::EncryptionFailed, e.to_string()))?;
+
+    // Clean up temporary archive file
+    let _ = std::fs::remove_file(&archive_operation.archive_path);
+
+    info!(
+        "Encryption completed successfully: {} -> {}",
+        archive_operation.file_count,
+        encrypted_path.display()
+    );
+
+    Ok(encrypted_path.to_string_lossy().to_string())
 }
 
 /// Decrypt files with progress streaming
