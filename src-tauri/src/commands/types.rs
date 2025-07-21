@@ -1,37 +1,162 @@
-//! Command types and error handling for Tauri bridge
+//! # Command Types and Error Handling for Tauri Bridge
 //!
 //! This module defines the core types used by all Tauri commands,
 //! including error handling, progress updates, and validation traits.
+//!
+//! ## TypeScript Generation
+//! These types are used to generate TypeScript definitions for the frontend.
+//! All public types implement `Serialize`/`Deserialize` for Tauri bridge compatibility.
+//!
+//! ## Error Handling Strategy
+//! - All commands return `CommandResponse<T>` (alias for `Result<T, CommandError>`)
+//! - Errors include user-friendly messages and recovery guidance
+//! - Error codes enable client-side error handling
+//!
+//! ## Progress Tracking
+//! - Long-running operations emit progress updates
+//! - Progress includes percentage, message, and operation-specific details
+//! - Frontend can subscribe to progress events for real-time updates
+//!
+//! ## Security Considerations
+//! - Sensitive data (passphrases, keys) are never logged
+//! - Error messages don't leak sensitive information
+//! - All input is validated before processing
 
 use crate::logging::{log_error_with_context, SpanContext};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 
-/// Standard command response wrapper
+/// Standard command response wrapper for Tauri bridge
+///
+/// This enum provides a consistent response format for all commands.
+/// The frontend can pattern match on the status to handle success/error cases.
+///
+/// # TypeScript Equivalent
+/// ```typescript
+/// type CommandResult<T> =
+///   | { status: 'success'; data: T }
+///   | { status: 'error'; data: CommandError };
+/// ```
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "status", content = "data")]
 pub enum CommandResult<T> {
+    /// Successful command execution with result data
     Success(T),
+    /// Command failed with error details
     Error(CommandError),
 }
 
 /// Type alias for command results to make them easier to work with
+///
+/// This is the primary return type for all Tauri commands.
+/// It provides a consistent error handling pattern across the application.
+///
+/// # TypeScript Equivalent
+/// ```typescript
+/// type CommandResponse<T> = T | CommandError;
+/// ```
 pub type CommandResponse<T> = Result<T, CommandError>;
 
-/// Unified error type for all commands
+/// Unified error type for all commands with comprehensive error information
+///
+/// This struct provides detailed error information including:
+/// - Error code for programmatic handling
+/// - User-friendly message for display
+/// - Optional technical details for debugging
+/// - Recovery guidance for user actions
+/// - Trace context for debugging
+///
+/// # TypeScript Equivalent
+/// ```typescript
+/// interface CommandError {
+///   code: ErrorCode;
+///   message: string;
+///   details?: string;
+///   recovery_guidance?: string;
+///   user_actionable: boolean;
+///   trace_id?: string;
+///   span_id?: string;
+/// }
+/// ```
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CommandError {
+    /// Error code for client-side handling
     pub code: ErrorCode,
+    /// User-friendly error message
     pub message: String,
+    /// Optional technical details for debugging
     pub details: Option<String>,
+    /// Optional guidance for user recovery
     pub recovery_guidance: Option<String>,
+    /// Whether the user can take action to resolve this error
     pub user_actionable: bool,
+    /// Optional trace ID for debugging
     pub trace_id: Option<String>,
+    /// Optional span ID for debugging
     pub span_id: Option<String>,
 }
 
-/// Error codes for client-side handling
+/// Error codes for client-side handling and internationalization
+///
+/// These codes enable the frontend to:
+/// - Display appropriate error messages
+/// - Implement error-specific recovery flows
+/// - Provide localized error messages
+/// - Handle errors programmatically
+///
+/// # TypeScript Equivalent
+/// ```typescript
+/// enum ErrorCode {
+///   // Validation errors
+///   INVALID_INPUT = 'INVALID_INPUT',
+///   MISSING_PARAMETER = 'MISSING_PARAMETER',
+///   INVALID_PATH = 'INVALID_PATH',
+///   INVALID_KEY_LABEL = 'INVALID_KEY_LABEL',
+///   WEAK_PASSPHRASE = 'WEAK_PASSPHRASE',
+///   INVALID_FILE_FORMAT = 'INVALID_FILE_FORMAT',
+///   FILE_TOO_LARGE = 'FILE_TOO_LARGE',
+///   TOO_MANY_FILES = 'TOO_MANY_FILES',
+///   
+///   // Permission errors
+///   PERMISSION_DENIED = 'PERMISSION_DENIED',
+///   PATH_NOT_ALLOWED = 'PATH_NOT_ALLOWED',
+///   INSUFFICIENT_PERMISSIONS = 'INSUFFICIENT_PERMISSIONS',
+///   READ_ONLY_FILE_SYSTEM = 'READ_ONLY_FILE_SYSTEM',
+///   
+///   // Not found errors
+///   KEY_NOT_FOUND = 'KEY_NOT_FOUND',
+///   FILE_NOT_FOUND = 'FILE_NOT_FOUND',
+///   DIRECTORY_NOT_FOUND = 'DIRECTORY_NOT_FOUND',
+///   OPERATION_NOT_FOUND = 'OPERATION_NOT_FOUND',
+///   
+///   // Operation errors
+///   ENCRYPTION_FAILED = 'ENCRYPTION_FAILED',
+///   DECRYPTION_FAILED = 'DECRYPTION_FAILED',
+///   STORAGE_FAILED = 'STORAGE_FAILED',
+///   ARCHIVE_CORRUPTED = 'ARCHIVE_CORRUPTED',
+///   MANIFEST_INVALID = 'MANIFEST_INVALID',
+///   INTEGRITY_CHECK_FAILED = 'INTEGRITY_CHECK_FAILED',
+///   CONCURRENT_OPERATION = 'CONCURRENT_OPERATION',
+///   
+///   // Resource errors
+///   DISK_SPACE_INSUFFICIENT = 'DISK_SPACE_INSUFFICIENT',
+///   MEMORY_INSUFFICIENT = 'MEMORY_INSUFFICIENT',
+///   FILE_SYSTEM_ERROR = 'FILE_SYSTEM_ERROR',
+///   NETWORK_ERROR = 'NETWORK_ERROR',
+///   
+///   // Security errors
+///   INVALID_KEY = 'INVALID_KEY',
+///   WRONG_PASSPHRASE = 'WRONG_PASSPHRASE',
+///   TAMPERED_DATA = 'TAMPERED_DATA',
+///   UNAUTHORIZED_ACCESS = 'UNAUTHORIZED_ACCESS',
+///   
+///   // Internal errors
+///   INTERNAL_ERROR = 'INTERNAL_ERROR',
+///   UNEXPECTED_ERROR = 'UNEXPECTED_ERROR',
+///   CONFIGURATION_ERROR = 'CONFIGURATION_ERROR',
+/// }
+/// ```
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ErrorCode {
@@ -84,47 +209,106 @@ pub enum ErrorCode {
     ConfigurationError,
 }
 
-/// Progress update for streaming operations
+/// Progress update for streaming operations with detailed information
+///
+/// This struct provides comprehensive progress information for long-running operations.
+/// The frontend can use this to display progress bars, status messages, and estimated completion times.
+///
+/// # TypeScript Equivalent
+/// ```typescript
+/// interface ProgressUpdate {
+///   operation_id: string;
+///   progress: number; // 0.0 to 1.0
+///   message: string;
+///   details?: ProgressDetails;
+///   timestamp: string; // ISO 8601
+///   estimated_time_remaining?: number; // seconds
+/// }
+/// ```
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProgressUpdate {
+    /// Unique identifier for the operation
     pub operation_id: String,
-    pub progress: f32, // 0.0 to 1.0
+    /// Progress percentage from 0.0 to 1.0
+    pub progress: f32,
+    /// Human-readable status message
     pub message: String,
+    /// Optional operation-specific progress details
     pub details: Option<ProgressDetails>,
+    /// Timestamp of the progress update
     pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub estimated_time_remaining: Option<u64>, // in seconds
+    /// Estimated time remaining in seconds
+    pub estimated_time_remaining: Option<u64>,
 }
 
+/// Operation-specific progress details for different command types
+///
+/// This enum provides detailed progress information specific to different operation types.
+/// The frontend can use this to display operation-specific progress indicators.
+///
+/// # TypeScript Equivalent
+/// ```typescript
+/// type ProgressDetails =
+///   | { type: 'FileOperation'; current_file: string; total_files: number; current_file_progress: number; current_file_size: number; total_size: number }
+///   | { type: 'Encryption'; bytes_processed: number; total_bytes: number; encryption_rate?: number }
+///   | { type: 'Decryption'; bytes_processed: number; total_bytes: number; decryption_rate?: number }
+///   | { type: 'ArchiveOperation'; files_processed: number; total_files: number; bytes_processed: number; total_bytes: number; compression_ratio?: number }
+///   | { type: 'ManifestOperation'; files_verified: number; total_files: number; current_file: string };
+/// ```
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum ProgressDetails {
+    /// File operation progress (copying, moving, etc.)
     FileOperation {
+        /// Current file being processed
         current_file: String,
+        /// Total number of files to process
         total_files: usize,
+        /// Progress within current file (0.0 to 1.0)
         current_file_progress: f32,
+        /// Size of current file in bytes
         current_file_size: u64,
+        /// Total size of all files in bytes
         total_size: u64,
     },
+    /// Encryption operation progress
     Encryption {
+        /// Bytes processed so far
         bytes_processed: u64,
+        /// Total bytes to process
         total_bytes: u64,
-        encryption_rate: Option<f64>, // bytes per second
+        /// Encryption rate in bytes per second
+        encryption_rate: Option<f64>,
     },
+    /// Decryption operation progress
     Decryption {
+        /// Bytes processed so far
         bytes_processed: u64,
+        /// Total bytes to process
         total_bytes: u64,
-        decryption_rate: Option<f64>, // bytes per second
+        /// Decryption rate in bytes per second
+        decryption_rate: Option<f64>,
     },
+    /// Archive operation progress (compression, extraction)
     ArchiveOperation {
+        /// Files processed so far
         files_processed: usize,
+        /// Total files to process
         total_files: usize,
+        /// Bytes processed so far
         bytes_processed: u64,
+        /// Total bytes to process
         total_bytes: u64,
+        /// Compression ratio achieved
         compression_ratio: Option<f32>,
     },
+    /// Manifest operation progress (verification, generation)
     ManifestOperation {
+        /// Files verified so far
         files_verified: usize,
+        /// Total files to verify
         total_files: usize,
+        /// Current file being verified
         current_file: String,
     },
 }
