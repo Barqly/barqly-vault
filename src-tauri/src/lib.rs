@@ -14,6 +14,7 @@ use commands::{
     get_config,
     get_encryption_status,
     get_file_info,
+    get_progress,
     // Storage commands
     list_keys_command,
     // File commands
@@ -42,6 +43,7 @@ pub fn run() {
             get_encryption_status,
             decrypt_data,
             verify_manifest,
+            get_progress,
             // Storage commands
             list_keys_command,
             delete_key_command,

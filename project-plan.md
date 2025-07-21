@@ -171,7 +171,7 @@ barqly-vault/
   - [x] 3.4.2: verify_manifest command
   - [x] 3.4.3: Write unit tests, run fmt, clippy etc
 - [x] 3.5: Add error handling and validation
-- [ ] 3.6: Implement progress reporting for long operations
+- [x] 3.6: Implement progress reporting for long operations
 - [ ] 3.7: Write integration tests for all commands
 
 ### Milestone 4: Frontend Foundation

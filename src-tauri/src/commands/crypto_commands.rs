@@ -4,7 +4,8 @@
 //! functionality to the frontend with proper validation and error handling.
 
 use super::types::{
-    CommandError, CommandResponse, ErrorCode, ErrorHandler, ValidateInput, ValidationHelper,
+    CommandError, CommandResponse, ErrorCode, ErrorHandler, ProgressDetails, ProgressManager,
+    ValidateInput, ValidationHelper,
 };
 use crate::crypto::{encrypt_private_key, generate_keypair};
 use crate::file_ops;
@@ -20,6 +21,36 @@ use tracing::{info, instrument};
 
 // Global operation state to prevent race conditions
 static ENCRYPTION_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
+
+// Global progress tracking
+use std::sync::Mutex;
+
+static PROGRESS_TRACKER: once_cell::sync::Lazy<
+    Mutex<HashMap<String, super::types::ProgressUpdate>>,
+> = once_cell::sync::Lazy::new(|| Mutex::new(HashMap::new()));
+
+/// Update global progress for an operation
+fn update_global_progress(operation_id: &str, progress: super::types::ProgressUpdate) {
+    if let Ok(mut tracker) = PROGRESS_TRACKER.lock() {
+        tracker.insert(operation_id.to_string(), progress);
+    }
+}
+
+/// Get global progress for an operation
+fn get_global_progress(operation_id: &str) -> Option<super::types::ProgressUpdate> {
+    if let Ok(tracker) = PROGRESS_TRACKER.lock() {
+        tracker.get(operation_id).cloned()
+    } else {
+        None
+    }
+}
+
+/// Clear global progress for an operation
+fn clear_global_progress(operation_id: &str) {
+    if let Ok(mut tracker) = PROGRESS_TRACKER.lock() {
+        tracker.remove(operation_id);
+    }
+}
 
 /// Input for key generation command
 #[derive(Debug, Deserialize)]
@@ -85,6 +116,24 @@ pub struct GetEncryptionStatusInput {
 pub struct VerifyManifestInput {
     pub manifest_path: String,
     pub extracted_files_dir: String,
+}
+
+/// Input for progress status command
+#[derive(Debug, Deserialize)]
+pub struct GetProgressInput {
+    pub operation_id: String,
+}
+
+/// Response from progress status command
+#[derive(Debug, Serialize)]
+pub struct GetProgressResponse {
+    pub operation_id: String,
+    pub progress: f32,
+    pub message: String,
+    pub details: Option<ProgressDetails>,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub estimated_time_remaining: Option<u64>,
+    pub is_complete: bool,
 }
 
 /// Response from manifest verification command
@@ -220,6 +269,14 @@ impl ValidateInput for VerifyManifestInput {
             "Extracted files directory",
         )?;
 
+        Ok(())
+    }
+}
+
+impl ValidateInput for GetProgressInput {
+    fn validate(&self) -> Result<(), CommandError> {
+        ValidationHelper::validate_not_empty(&self.operation_id, "Operation ID")?;
+        ValidationHelper::validate_length(&self.operation_id, "Operation ID", 1, 100)?;
         Ok(())
     }
 }
@@ -504,6 +561,10 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     // Ensure cleanup on exit
     let _cleanup_guard = EncryptionCleanupGuard;
 
+    // Initialize progress manager for operation tracking
+    let operation_id = format!("encrypt_{}", chrono::Utc::now().timestamp());
+    let mut progress_manager = ProgressManager::new(operation_id.clone(), 100);
+
     // Log operation start with structured context
     let mut attributes = HashMap::new();
     attributes.insert("file_count".to_string(), input.file_paths.len().to_string());
@@ -517,7 +578,14 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
 
     info!("Starting encryption for {} files", input.file_paths.len());
 
+    // Report initial progress
+    progress_manager.set_progress(0.05, "Initializing encryption operation...");
+    update_global_progress(&operation_id, progress_manager.get_current_update());
+
     // Get the public key for encryption with structured error handling
+    progress_manager.set_progress(0.10, "Retrieving encryption key...");
+    update_global_progress(&operation_id, progress_manager.get_current_update());
+
     let keys = error_handler.handle_operation_error(
         storage::list_keys(),
         "list_keys",
@@ -545,6 +613,9 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     let public_key = crate::crypto::PublicKey::from(public_key_str.clone());
 
     // Create file selection from input paths with atomic validation
+    progress_manager.set_progress(0.15, "Validating file selection...");
+    update_global_progress(&operation_id, progress_manager.get_current_update());
+
     let file_selection = create_file_selection_atomic(&input.file_paths, &error_handler)?;
 
     // Validate the file selection
@@ -565,14 +636,24 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     // Create file operations config
     let config = file_ops::FileOpsConfig::default();
 
-    // Create archive first with structured error handling
+    // Create archive with progress reporting
+    progress_manager.set_progress(0.20, "Creating archive...");
+    update_global_progress(&operation_id, progress_manager.get_current_update());
+
+    // Create archive with progress reporting
     let archive_operation = error_handler.handle_operation_error(
         file_ops::create_archive(&file_selection, &output_path, &config),
         "create_archive",
         ErrorCode::EncryptionFailed,
     )?;
 
+    progress_manager.set_progress(0.60, "Archive created successfully");
+    update_global_progress(&operation_id, progress_manager.get_current_update());
+
     // Read the archive file with streaming for large files
+    progress_manager.set_progress(0.70, "Reading archive file...");
+    update_global_progress(&operation_id, progress_manager.get_current_update());
+
     let archive_data = error_handler.handle_operation_error(
         read_archive_file_safely(&archive_operation.archive_path, &error_handler),
         "read_archive_file",
@@ -580,6 +661,9 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     )?;
 
     // Encrypt the archive data
+    progress_manager.set_progress(0.80, "Encrypting data...");
+    update_global_progress(&operation_id, progress_manager.get_current_update());
+
     let encrypted_data = error_handler.handle_operation_error(
         crate::crypto::encrypt_data(&archive_data, &public_key),
         "encrypt_data",
@@ -587,6 +671,9 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     )?;
 
     // Write encrypted data to final output file
+    progress_manager.set_progress(0.90, "Writing encrypted file...");
+    update_global_progress(&operation_id, progress_manager.get_current_update());
+
     let encrypted_path = output_path.with_extension("age");
     error_handler.handle_operation_error(
         std::fs::write(&encrypted_path, encrypted_data),
@@ -595,7 +682,13 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     )?;
 
     // Clean up temporary archive file with proper error handling
+    progress_manager.set_progress(0.95, "Cleaning up temporary files...");
+    update_global_progress(&operation_id, progress_manager.get_current_update());
     cleanup_temp_file(&archive_operation.archive_path, &error_handler);
+
+    // Complete the operation
+    progress_manager.complete("Encryption completed successfully");
+    update_global_progress(&operation_id, progress_manager.get_current_update());
 
     // Log operation completion
     let mut completion_attributes = HashMap::new();
@@ -889,6 +982,10 @@ pub async fn decrypt_data(
     // Create error handler with span context
     let error_handler = ErrorHandler::new().with_span(span_context.clone());
 
+    // Initialize progress manager for operation tracking
+    let operation_id = format!("decrypt_{}", chrono::Utc::now().timestamp());
+    let mut progress_manager = ProgressManager::new(operation_id.clone(), 100);
+
     // Validate input
     input
         .validate()
@@ -906,7 +1003,12 @@ pub async fn decrypt_data(
         attributes,
     );
 
+    // Report initial progress
+    progress_manager.set_progress(0.05, "Initializing decryption operation...");
+
     // Load the encrypted private key
+    progress_manager.set_progress(0.10, "Loading encryption key...");
+
     let encrypted_key = error_handler.handle_operation_error(
         storage::load_encrypted_key(&input.key_id),
         "load_encrypted_key",
@@ -914,6 +1016,8 @@ pub async fn decrypt_data(
     )?;
 
     // Decrypt the private key with the passphrase
+    progress_manager.set_progress(0.20, "Decrypting private key...");
+
     let private_key = error_handler.handle_operation_error(
         crate::crypto::decrypt_private_key(&encrypted_key, SecretString::from(input.passphrase)),
         "decrypt_private_key",
@@ -921,6 +1025,8 @@ pub async fn decrypt_data(
     )?;
 
     // Read the encrypted file
+    progress_manager.set_progress(0.30, "Reading encrypted file...");
+
     let encrypted_data = error_handler.handle_operation_error(
         std::fs::read(&input.encrypted_file),
         "read_encrypted_file",
@@ -928,6 +1034,8 @@ pub async fn decrypt_data(
     )?;
 
     // Decrypt the data
+    progress_manager.set_progress(0.50, "Decrypting data...");
+
     let decrypted_data = error_handler.handle_operation_error(
         crate::crypto::decrypt_data(&encrypted_data, &private_key),
         "decrypt_data",
@@ -957,6 +1065,8 @@ pub async fn decrypt_data(
     )?;
 
     // Extract the archive
+    progress_manager.set_progress(0.70, "Extracting archive...");
+
     let config = file_ops::FileOpsConfig::default();
     let extracted_files = error_handler.handle_operation_error(
         file_ops::extract_archive(&temp_archive_path, output_path, &config),
@@ -965,11 +1075,16 @@ pub async fn decrypt_data(
     )?;
 
     // Clean up temporary file
+    progress_manager.set_progress(0.90, "Cleaning up temporary files...");
     cleanup_temp_file(&temp_archive_path, &error_handler);
 
     // Try to verify manifest if it exists
+    progress_manager.set_progress(0.95, "Verifying manifest...");
     let manifest_verified =
         verify_manifest_if_exists(&extracted_files, output_path, &error_handler);
+
+    // Complete the operation
+    progress_manager.complete("Decryption completed successfully");
 
     // Log operation completion
     let mut completion_attributes = HashMap::new();
@@ -1060,6 +1175,47 @@ pub async fn get_encryption_status(
     Ok(response)
 }
 
+/// Get progress for a long-running operation
+#[tauri::command]
+#[instrument(skip(input), fields(operation_id = %input.operation_id))]
+pub async fn get_progress(input: GetProgressInput) -> CommandResponse<GetProgressResponse> {
+    // Create span context for operation tracing
+    let span_context =
+        SpanContext::new("get_progress").with_attribute("operation_id", &input.operation_id);
+
+    // Create error handler with span context
+    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+
+    // Validate input
+    input
+        .validate()
+        .map_err(|e| error_handler.handle_validation_error("input", &e.message))?;
+
+    // Get progress from global tracker
+    match get_global_progress(&input.operation_id) {
+        Some(progress) => {
+            let is_complete = progress.progress >= 1.0;
+
+            Ok(GetProgressResponse {
+                operation_id: progress.operation_id,
+                progress: progress.progress,
+                message: progress.message,
+                details: progress.details,
+                timestamp: progress.timestamp,
+                estimated_time_remaining: progress.estimated_time_remaining,
+                is_complete,
+            })
+        }
+        None => {
+            // Return not found error
+            Err(error_handler.handle_validation_error(
+                "operation_id",
+                &format!("Operation '{}' not found", input.operation_id),
+            ))
+        }
+    }
+}
+
 /// Verify manifest integrity
 #[tauri::command]
 #[instrument(skip(input), fields(manifest_path = %input.manifest_path))]
@@ -1069,6 +1225,10 @@ pub async fn verify_manifest(
     // Create span context for operation tracing
     let span_context =
         SpanContext::new("verify_manifest").with_attribute("manifest_path", &input.manifest_path);
+
+    // Initialize progress manager for operation tracking
+    let operation_id = format!("verify_{}", chrono::Utc::now().timestamp());
+    let mut progress_manager = ProgressManager::new(operation_id.clone(), 100);
 
     // Create error handler with span context
     let error_handler = ErrorHandler::new().with_span(span_context.clone());
@@ -1092,7 +1252,12 @@ pub async fn verify_manifest(
         attributes,
     );
 
+    // Report initial progress
+    progress_manager.set_progress(0.10, "Initializing manifest verification...");
+
     // Load the manifest
+    progress_manager.set_progress(0.30, "Loading manifest file...");
+
     let manifest = error_handler.handle_operation_error(
         file_ops::manifest::Manifest::load(std::path::Path::new(&input.manifest_path)),
         "load_manifest",
@@ -1100,6 +1265,8 @@ pub async fn verify_manifest(
     )?;
 
     // Get file information for extracted files
+    progress_manager.set_progress(0.50, "Scanning extracted files...");
+
     let extracted_files = error_handler.handle_operation_error(
         get_extracted_files_info(&input.extracted_files_dir),
         "get_extracted_files_info",
@@ -1107,6 +1274,8 @@ pub async fn verify_manifest(
     )?;
 
     // Verify the manifest
+    progress_manager.set_progress(0.70, "Verifying file integrity...");
+
     let verification_result = file_ops::verify_manifest(
         &manifest,
         &extracted_files,
@@ -1115,6 +1284,9 @@ pub async fn verify_manifest(
 
     match verification_result {
         Ok(()) => {
+            // Complete the operation
+            progress_manager.complete("Manifest verification completed successfully");
+
             // Log successful verification
             let mut completion_attributes = HashMap::new();
             completion_attributes
@@ -1138,6 +1310,9 @@ pub async fn verify_manifest(
             })
         }
         Err(e) => {
+            // Complete the operation with error
+            progress_manager.complete("Manifest verification failed");
+
             // Log verification failure
             let mut failure_attributes = HashMap::new();
             failure_attributes.insert("error".to_string(), e.to_string());

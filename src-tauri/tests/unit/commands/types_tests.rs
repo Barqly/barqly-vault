@@ -119,6 +119,8 @@ mod progress_update_tests {
             progress: 0.5,
             message: "Processing...".to_string(),
             details: None,
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining: None,
         };
 
         assert_eq!(
@@ -136,6 +138,8 @@ mod progress_update_tests {
             current_file: "file1.txt".to_string(),
             total_files: 5,
             current_file_progress: 0.3,
+            current_file_size: 1024,
+            total_size: 5120,
         };
 
         let progress = ProgressUpdate {
@@ -143,6 +147,8 @@ mod progress_update_tests {
             progress: 0.2,
             message: "Processing files...".to_string(),
             details: Some(details),
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining: None,
         };
 
         assert_eq!(
@@ -155,6 +161,8 @@ mod progress_update_tests {
             current_file,
             total_files,
             current_file_progress,
+            current_file_size,
+            total_size,
         }) = progress.details
         {
             assert_eq!(current_file, "file1.txt");
@@ -170,6 +178,7 @@ mod progress_update_tests {
         let details = ProgressDetails::Encryption {
             bytes_processed: 1024,
             total_bytes: 2048,
+            encryption_rate: Some(512.0),
         };
 
         let progress = ProgressUpdate {
@@ -177,11 +186,14 @@ mod progress_update_tests {
             progress: 0.5,
             message: "Encrypting...".to_string(),
             details: Some(details),
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining: None,
         };
 
         if let Some(ProgressDetails::Encryption {
             bytes_processed,
             total_bytes,
+            encryption_rate,
         }) = progress.details
         {
             assert_eq!(bytes_processed, 1024);
@@ -198,6 +210,8 @@ mod progress_update_tests {
             progress: 0.75,
             message: "Test message".to_string(),
             details: None,
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining: None,
         };
 
         let serialized = serde_json::to_string(&progress).expect("Should serialize");
@@ -224,6 +238,8 @@ mod progress_update_tests {
             current_file: "test.txt".to_string(),
             total_files: 10,
             current_file_progress: 0.5,
+            current_file_size: 2048,
+            total_size: 10240,
         };
 
         let progress = ProgressUpdate {
@@ -231,6 +247,8 @@ mod progress_update_tests {
             progress: 0.3,
             message: "Processing files".to_string(),
             details: Some(details),
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining: None,
         };
 
         let serialized = serde_json::to_string(&progress).expect("Should serialize");
@@ -382,6 +400,8 @@ mod error_handling_tests {
             progress: 0.999999,
             message: "Almost done".to_string(),
             details: None,
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining: None,
         };
 
         let serialized = serde_json::to_string(&progress).expect("Should serialize");

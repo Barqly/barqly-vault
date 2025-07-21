@@ -85,25 +85,47 @@ pub enum ErrorCode {
 }
 
 /// Progress update for streaming operations
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProgressUpdate {
     pub operation_id: String,
     pub progress: f32, // 0.0 to 1.0
     pub message: String,
     pub details: Option<ProgressDetails>,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub estimated_time_remaining: Option<u64>, // in seconds
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum ProgressDetails {
     FileOperation {
         current_file: String,
         total_files: usize,
         current_file_progress: f32,
+        current_file_size: u64,
+        total_size: u64,
     },
     Encryption {
         bytes_processed: u64,
         total_bytes: u64,
+        encryption_rate: Option<f64>, // bytes per second
+    },
+    Decryption {
+        bytes_processed: u64,
+        total_bytes: u64,
+        decryption_rate: Option<f64>, // bytes per second
+    },
+    ArchiveOperation {
+        files_processed: usize,
+        total_files: usize,
+        bytes_processed: u64,
+        total_bytes: u64,
+        compression_ratio: Option<f32>,
+    },
+    ManifestOperation {
+        files_verified: usize,
+        total_files: usize,
+        current_file: String,
     },
 }
 
@@ -599,3 +621,163 @@ impl fmt::Display for CommandError {
 }
 
 impl std::error::Error for CommandError {}
+
+// ============================================================================
+// PROGRESS REPORTING INFRASTRUCTURE
+// ============================================================================
+
+/// Progress callback function type for Tauri commands
+pub type ProgressCallback = Box<dyn Fn(ProgressUpdate) + Send + Sync>;
+
+/// Progress manager for tracking and reporting operation progress
+pub struct ProgressManager {
+    operation_id: String,
+    start_time: chrono::DateTime<chrono::Utc>,
+    last_update: chrono::DateTime<chrono::Utc>,
+    callback: Option<ProgressCallback>,
+    total_work: u64,
+    completed_work: u64,
+    current_message: String,
+    current_details: Option<ProgressDetails>,
+}
+
+impl ProgressManager {
+    /// Create a new progress manager
+    pub fn new(operation_id: String, total_work: u64) -> Self {
+        let now = chrono::Utc::now();
+        Self {
+            operation_id,
+            start_time: now,
+            last_update: now,
+            callback: None,
+            total_work,
+            completed_work: 0,
+            current_message: "Starting operation...".to_string(),
+            current_details: None,
+        }
+    }
+
+    /// Set the progress callback
+    pub fn with_callback(mut self, callback: ProgressCallback) -> Self {
+        self.callback = Some(callback);
+        self
+    }
+
+    /// Update progress with completed work
+    pub fn update_progress(&mut self, completed: u64, message: impl Into<String>) {
+        self.completed_work = completed;
+        self.current_message = message.into();
+        self.report_progress();
+    }
+
+    /// Update progress with details
+    pub fn update_with_details(
+        &mut self,
+        completed: u64,
+        message: impl Into<String>,
+        details: ProgressDetails,
+    ) {
+        self.completed_work = completed;
+        self.current_message = message.into();
+        self.current_details = Some(details);
+        self.report_progress();
+    }
+
+    /// Increment progress by a specific amount
+    pub fn increment(&mut self, increment: u64, message: impl Into<String>) {
+        self.completed_work += increment;
+        self.current_message = message.into();
+        self.report_progress();
+    }
+
+    /// Set progress to a specific percentage
+    pub fn set_progress(&mut self, percentage: f32, message: impl Into<String>) {
+        let completed = (self.total_work as f32 * percentage) as u64;
+        self.update_progress(completed, message);
+    }
+
+    /// Complete the operation
+    pub fn complete(&mut self, message: impl Into<String>) {
+        self.completed_work = self.total_work;
+        self.current_message = message.into();
+        self.report_progress();
+    }
+
+    /// Report current progress to callback
+    fn report_progress(&mut self) {
+        let progress = if self.total_work > 0 {
+            self.completed_work as f32 / self.total_work as f32
+        } else {
+            0.0
+        };
+
+        let estimated_time_remaining = self.calculate_eta();
+
+        let update = ProgressUpdate {
+            operation_id: self.operation_id.clone(),
+            progress,
+            message: self.current_message.clone(),
+            details: self.current_details.clone(),
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining,
+        };
+
+        // Update global progress tracker
+        if let Some(callback) = &self.callback {
+            callback(update.clone());
+        }
+
+        self.last_update = chrono::Utc::now();
+    }
+
+    /// Calculate estimated time remaining
+    fn calculate_eta(&self) -> Option<u64> {
+        if self.completed_work == 0 || self.total_work == 0 {
+            return None;
+        }
+
+        let elapsed = (chrono::Utc::now() - self.start_time).num_seconds() as u64;
+        if elapsed == 0 {
+            return None;
+        }
+
+        let rate = self.completed_work as f64 / elapsed as f64;
+        let remaining_work = self.total_work - self.completed_work;
+        let eta = (remaining_work as f64 / rate) as u64;
+
+        Some(eta)
+    }
+
+    /// Get current progress percentage
+    pub fn progress_percentage(&self) -> u8 {
+        if self.total_work > 0 {
+            ((self.completed_work as f32 / self.total_work as f32) * 100.0) as u8
+        } else {
+            0
+        }
+    }
+
+    /// Get current progress as fraction
+    pub fn progress_fraction(&self) -> f32 {
+        if self.total_work > 0 {
+            self.completed_work as f32 / self.total_work as f32
+        } else {
+            0.0
+        }
+    }
+
+    /// Get current progress update
+    pub fn get_current_update(&self) -> ProgressUpdate {
+        let progress = self.progress_fraction();
+        let estimated_time_remaining = self.calculate_eta();
+
+        ProgressUpdate {
+            operation_id: self.operation_id.clone(),
+            progress,
+            message: self.current_message.clone(),
+            details: self.current_details.clone(),
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining,
+        }
+    }
+}
