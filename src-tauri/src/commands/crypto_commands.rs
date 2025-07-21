@@ -26,6 +26,19 @@ pub struct GenerateKeyResponse {
     pub saved_path: String,
 }
 
+/// Input for passphrase validation command
+#[derive(Debug, Deserialize)]
+pub struct ValidatePassphraseInput {
+    pub passphrase: String,
+}
+
+/// Response from passphrase validation
+#[derive(Debug, Serialize)]
+pub struct ValidatePassphraseResponse {
+    pub is_valid: bool,
+    pub message: String,
+}
+
 /// Input for encryption command
 #[derive(Debug, Deserialize)]
 pub struct EncryptDataInput {
@@ -75,6 +88,15 @@ impl ValidateInput for GenerateKeyInput {
             ));
         }
 
+        Ok(())
+    }
+}
+
+impl ValidateInput for ValidatePassphraseInput {
+    fn validate(&self) -> Result<(), CommandError> {
+        if self.passphrase.is_empty() {
+            return Err(CommandError::validation("Passphrase cannot be empty"));
+        }
         Ok(())
     }
 }
@@ -163,6 +185,104 @@ pub async fn generate_key(input: GenerateKeyInput) -> CommandResponse<GenerateKe
         key_id: input.label,
         saved_path: saved_path.to_string_lossy().to_string(),
     })
+}
+
+/// Validate passphrase strength
+#[tauri::command]
+#[instrument(skip(input), fields(passphrase_length = input.passphrase.len()))]
+pub async fn validate_passphrase(
+    input: ValidatePassphraseInput,
+) -> CommandResponse<ValidatePassphraseResponse> {
+    // Validate input
+    input.validate()?;
+
+    info!("Validating passphrase strength");
+
+    let passphrase = &input.passphrase;
+
+    // Check minimum length (12 characters as per security principles)
+    if passphrase.len() < 12 {
+        return Ok(ValidatePassphraseResponse {
+            is_valid: false,
+            message: "Passphrase must be at least 12 characters long".to_string(),
+        });
+    }
+
+    // Check for complexity requirements (at least 3 of 4 categories)
+    let has_uppercase = passphrase.chars().any(|c| c.is_uppercase());
+    let has_lowercase = passphrase.chars().any(|c| c.is_lowercase());
+    let has_digit = passphrase.chars().any(|c| c.is_numeric());
+    let has_special = passphrase.chars().any(|c| !c.is_alphanumeric());
+
+    let complexity_score = [has_uppercase, has_lowercase, has_digit, has_special]
+        .iter()
+        .filter(|&&x| x)
+        .count();
+
+    if complexity_score < 3 {
+        return Ok(ValidatePassphraseResponse {
+            is_valid: false,
+            message: "Passphrase must contain at least 3 of: uppercase letters, lowercase letters, numbers, and special characters".to_string(),
+        });
+    }
+
+    // Check for common weak patterns
+    let common_patterns = [
+        "password", "123456", "qwerty", "admin", "letmein", "welcome", "monkey", "dragon",
+        "master", "football", "baseball", "shadow", "michael", "jennifer", "thomas", "jessica",
+        "jordan", "hunter", "michelle", "charlie", "andrew", "daniel", "maggie", "summer",
+    ];
+
+    let passphrase_lower = passphrase.to_lowercase();
+    for pattern in &common_patterns {
+        if passphrase_lower.contains(pattern) {
+            return Ok(ValidatePassphraseResponse {
+                is_valid: false,
+                message: "Passphrase contains common weak patterns".to_string(),
+            });
+        }
+    }
+
+    // Check for sequential patterns
+    if contains_sequential_pattern(passphrase) {
+        return Ok(ValidatePassphraseResponse {
+            is_valid: false,
+            message: "Passphrase contains sequential patterns (like 123, abc)".to_string(),
+        });
+    }
+
+    info!("Passphrase validation successful");
+    Ok(ValidatePassphraseResponse {
+        is_valid: true,
+        message: "Passphrase meets security requirements".to_string(),
+    })
+}
+
+/// Check for sequential patterns in passphrase
+fn contains_sequential_pattern(passphrase: &str) -> bool {
+    if passphrase.len() < 3 {
+        return false;
+    }
+
+    let chars: Vec<char> = passphrase.chars().collect();
+
+    for i in 0..chars.len() - 2 {
+        let c1 = chars[i] as u32;
+        let c2 = chars[i + 1] as u32;
+        let c3 = chars[i + 2] as u32;
+
+        // Check for sequential characters (like abc, 123)
+        if c2 == c1 + 1 && c3 == c2 + 1 {
+            return true;
+        }
+
+        // Check for reverse sequential characters (like cba, 321)
+        if c2 == c1 - 1 && c3 == c2 - 1 {
+            return true;
+        }
+    }
+
+    false
 }
 
 /// Encrypt files with progress streaming

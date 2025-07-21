@@ -18,6 +18,7 @@ use commands::{
     // File commands
     select_files,
     update_config,
+    validate_passphrase,
 };
 
 use logging::{init_logging, log_info, LogLevel};
@@ -34,6 +35,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             // Crypto commands
             generate_key,
+            validate_passphrase,
             encrypt_data,
             decrypt_data,
             // Storage commands

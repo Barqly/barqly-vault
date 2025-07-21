@@ -9,7 +9,9 @@
 
 use crate::common::helpers::TestAssertions;
 use barqly_vault_lib::commands::{
-    crypto_commands::{DecryptDataInput, EncryptDataInput, GenerateKeyInput},
+    crypto_commands::{
+        DecryptDataInput, EncryptDataInput, GenerateKeyInput, ValidatePassphraseInput,
+    },
     types::{CommandError, ErrorCode, ValidateInput},
 };
 
@@ -459,5 +461,67 @@ mod edge_case_tests {
 
         let result = input.validate();
         assert!(result.is_ok(), "Mixed case inputs should pass validation");
+    }
+}
+
+#[cfg(test)]
+mod validate_passphrase_tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_passphrase_input_empty_passphrase() {
+        let input = ValidatePassphraseInput {
+            passphrase: String::new(),
+        };
+        let result = input.validate();
+        assert!(result.is_err());
+        if let Err(error) = result {
+            assert!(error.message.contains("cannot be empty"));
+        } else {
+            panic!("Expected validation error");
+        }
+    }
+
+    #[test]
+    fn test_validate_passphrase_input_validation_success() {
+        let input = ValidatePassphraseInput {
+            passphrase: "valid_passphrase".to_string(),
+        };
+        let result = input.validate();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_passphrase_command_weak_passphrase() {
+        let input = ValidatePassphraseInput {
+            passphrase: "weak".to_string(),
+        };
+
+        // This would be tested in integration tests, but we can test the validation logic
+        let result = input.validate();
+        assert!(result.is_ok()); // Input validation passes
+
+        // The actual command logic would be tested in integration tests
+        // where we can call the Tauri command directly
+    }
+
+    #[test]
+    fn test_validate_passphrase_command_strong_passphrase() {
+        let input = ValidatePassphraseInput {
+            passphrase: "StrongPass123!@#".to_string(),
+        };
+
+        let result = input.validate();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_passphrase_command_unicode_passphrase() {
+        let input = ValidatePassphraseInput {
+            passphrase: "Unicode密码123!@#".to_string(),
+        };
+
+        let result = input.validate();
+        assert!(result.is_ok());
     }
 }

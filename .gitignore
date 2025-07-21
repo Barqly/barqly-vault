@@ -32,6 +32,12 @@ dist-ssr/
 *.swo
 *~
 
+# compressed files
+*.zip
+*.7z
+*.tar
+*.tar.gz
+
 # OS files
 .DS_Store
 .DS_Store?

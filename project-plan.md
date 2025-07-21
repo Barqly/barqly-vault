@@ -155,18 +155,21 @@ barqly-vault/
 ### Milestone 3: Tauri Command Bridge
 **Goal**: Create the API layer between frontend and backend
 
-- [ ] 3.1: Design Tauri command interface
+- [x] 3.1: Design Tauri command interface
 - [ ] 3.2: Implement setup commands
   - [ ] 3.2.1: generate_key command
   - [ ] 3.2.2: list_keys command
   - [ ] 3.2.3: validate_passphrase command
+  - [ ] 3.2.4: Write unit tests, run fmt, clippy etc
 - [ ] 3.3: Implement encryption commands
   - [ ] 3.3.1: encrypt_files command
   - [ ] 3.3.2: create_manifest command
   - [ ] 3.3.3: get_encryption_status command
+  - [ ] 3.3.4: Write unit tests, run fmt, clippy etc
 - [ ] 3.4: Implement decryption commands
   - [ ] 3.4.1: decrypt_file command
   - [ ] 3.4.2: verify_manifest command
+  - [ ] 3.4.3: Write unit tests, run fmt, clippy etc
 - [ ] 3.5: Add error handling and validation
 - [ ] 3.6: Implement progress reporting for long operations
 - [ ] 3.7: Write integration tests for all commands
