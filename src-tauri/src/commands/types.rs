@@ -25,6 +25,8 @@ pub struct CommandError {
     pub code: ErrorCode,
     pub message: String,
     pub details: Option<String>,
+    pub recovery_guidance: Option<String>,
+    pub user_actionable: bool,
     pub trace_id: Option<String>,
     pub span_id: Option<String>,
 }
@@ -37,22 +39,49 @@ pub enum ErrorCode {
     InvalidInput,
     MissingParameter,
     InvalidPath,
+    InvalidKeyLabel,
+    WeakPassphrase,
+    InvalidFileFormat,
+    FileTooLarge,
+    TooManyFiles,
 
     // Permission errors
     PermissionDenied,
     PathNotAllowed,
+    InsufficientPermissions,
+    ReadOnlyFileSystem,
 
     // Not found errors
     KeyNotFound,
     FileNotFound,
+    DirectoryNotFound,
+    OperationNotFound,
 
     // Operation errors
     EncryptionFailed,
     DecryptionFailed,
     StorageFailed,
+    ArchiveCorrupted,
+    ManifestInvalid,
+    IntegrityCheckFailed,
+    ConcurrentOperation,
+
+    // Resource errors
+    DiskSpaceInsufficient,
+    MemoryInsufficient,
+    FileSystemError,
+    NetworkError,
+
+    // Security errors
+    InvalidKey,
+    WrongPassphrase,
+    TamperedData,
+    UnauthorizedAccess,
 
     // Internal errors
     InternalError,
+    UnexpectedError,
+    ConfigurationError,
 }
 
 /// Progress update for streaming operations
@@ -81,6 +110,151 @@ pub enum ProgressDetails {
 /// Trait for validatable command inputs
 pub trait ValidateInput {
     fn validate(&self) -> Result<(), CommandError>;
+}
+
+/// Enhanced validation trait with detailed error reporting
+pub trait ValidateInputDetailed {
+    fn validate_detailed(&self) -> Result<(), CommandError>;
+
+    /// Get field-specific validation rules
+    fn get_validation_rules() -> HashMap<String, String> {
+        HashMap::new()
+    }
+
+    /// Validate a specific field
+    fn validate_field(&self, _field_name: &str) -> Result<(), CommandError> {
+        self.validate_detailed()
+    }
+}
+
+/// Validation helper for consistent error messages
+pub struct ValidationHelper;
+
+impl ValidationHelper {
+    /// Validate that a string is not empty
+    pub fn validate_not_empty(value: &str, field_name: &str) -> Result<(), CommandError> {
+        if value.trim().is_empty() {
+            return Err(
+                CommandError::validation(format!("{field_name} cannot be empty"))
+                    .with_recovery_guidance(format!("Please provide a {field_name}")),
+            );
+        }
+        Ok(())
+    }
+
+    /// Validate string length
+    pub fn validate_length(
+        value: &str,
+        field_name: &str,
+        min: usize,
+        max: usize,
+    ) -> Result<(), CommandError> {
+        let len = value.len();
+        if len < min {
+            return Err(CommandError::validation(format!(
+                "{field_name} is too short (minimum {min} characters)"
+            ))
+            .with_recovery_guidance(format!("Please provide a longer {field_name}")));
+        }
+        if len > max {
+            return Err(CommandError::validation(format!(
+                "{field_name} is too long (maximum {max} characters)"
+            ))
+            .with_recovery_guidance(format!("Please provide a shorter {field_name}")));
+        }
+        Ok(())
+    }
+
+    /// Validate path exists and is accessible
+    pub fn validate_path_exists(path: &str, field_name: &str) -> Result<(), CommandError> {
+        let path_buf = std::path::Path::new(path);
+        if !path_buf.exists() {
+            return Err(CommandError::operation(
+                ErrorCode::FileNotFound,
+                format!("{field_name} not found: {path}"),
+            )
+            .with_recovery_guidance("Please check the path and try again"));
+        }
+        Ok(())
+    }
+
+    /// Validate path is a file
+    pub fn validate_is_file(path: &str, field_name: &str) -> Result<(), CommandError> {
+        let path_buf = std::path::Path::new(path);
+        if !path_buf.is_file() {
+            return Err(
+                CommandError::validation(format!("{field_name} must be a file: {path}"))
+                    .with_recovery_guidance("Please select a valid file"),
+            );
+        }
+        Ok(())
+    }
+
+    /// Validate path is a directory
+    pub fn validate_is_directory(path: &str, field_name: &str) -> Result<(), CommandError> {
+        let path_buf = std::path::Path::new(path);
+        if !path_buf.is_dir() {
+            return Err(CommandError::validation(format!(
+                "{field_name} must be a directory: {path}"
+            ))
+            .with_recovery_guidance("Please select a valid directory"));
+        }
+        Ok(())
+    }
+
+    /// Validate file size is within limits
+    pub fn validate_file_size(path: &str, max_size_mb: u64) -> Result<(), CommandError> {
+        let path_buf = std::path::Path::new(path);
+        if let Ok(metadata) = std::fs::metadata(path_buf) {
+            let size_mb = metadata.len() / (1024 * 1024);
+            if size_mb > max_size_mb {
+                return Err(CommandError::operation(
+                    ErrorCode::FileTooLarge,
+                    format!("File too large: {size_mb} MB (maximum {max_size_mb} MB)"),
+                )
+                .with_recovery_guidance("Please select a smaller file"));
+            }
+        }
+        Ok(())
+    }
+
+    /// Validate key label format
+    pub fn validate_key_label(label: &str) -> Result<(), CommandError> {
+        // Key labels should only contain letters, numbers, and dashes
+        if !label.chars().all(|c| c.is_alphanumeric() || c == '-') {
+            return Err(CommandError::operation(
+                ErrorCode::InvalidKeyLabel,
+                "Key label contains invalid characters",
+            )
+            .with_recovery_guidance("Use only letters, numbers, and dashes"));
+        }
+        Ok(())
+    }
+
+    /// Validate passphrase strength
+    pub fn validate_passphrase_strength(passphrase: &str) -> Result<(), CommandError> {
+        if passphrase.len() < 8 {
+            return Err(CommandError::operation(
+                ErrorCode::WeakPassphrase,
+                "Passphrase is too short (minimum 8 characters)",
+            )
+            .with_recovery_guidance("Use a longer passphrase"));
+        }
+
+        let has_letter = passphrase.chars().any(|c| c.is_alphabetic());
+        let has_digit = passphrase.chars().any(|c| c.is_numeric());
+        let _has_special = passphrase.chars().any(|c| !c.is_alphanumeric());
+
+        if !has_letter || !has_digit {
+            return Err(CommandError::operation(
+                ErrorCode::WeakPassphrase,
+                "Passphrase must contain letters and numbers",
+            )
+            .with_recovery_guidance("Include letters, numbers, and symbols for better security"));
+        }
+
+        Ok(())
+    }
 }
 
 /// Standardized error handling with OpenTelemetry logging
@@ -182,6 +356,8 @@ impl CommandError {
             code: ErrorCode::InvalidInput,
             message: message.into(),
             details: None,
+            recovery_guidance: None,
+            user_actionable: true,
             trace_id: None,
             span_id: None,
         }
@@ -193,6 +369,8 @@ impl CommandError {
             code: ErrorCode::PermissionDenied,
             message: message.into(),
             details: None,
+            recovery_guidance: Some("Check file permissions and try again".to_string()),
+            user_actionable: true,
             trace_id: None,
             span_id: None,
         }
@@ -204,6 +382,8 @@ impl CommandError {
             code: ErrorCode::KeyNotFound,
             message: message.into(),
             details: None,
+            recovery_guidance: Some("Verify the key exists and try again".to_string()),
+            user_actionable: true,
             trace_id: None,
             span_id: None,
         }
@@ -211,10 +391,13 @@ impl CommandError {
 
     /// Create a new operation error
     pub fn operation(code: ErrorCode, message: impl Into<String>) -> Self {
+        let (recovery_guidance, user_actionable) = Self::get_recovery_guidance(&code);
         Self {
             code,
             message: message.into(),
             details: None,
+            recovery_guidance,
+            user_actionable,
             trace_id: None,
             span_id: None,
         }
@@ -235,6 +418,177 @@ impl CommandError {
         self.trace_id = Some(trace_id.into());
         self.span_id = Some(span_id.into());
         self
+    }
+
+    /// Add recovery guidance to an error
+    pub fn with_recovery_guidance(mut self, guidance: impl Into<String>) -> Self {
+        self.recovery_guidance = Some(guidance.into());
+        self
+    }
+
+    /// Mark error as not user actionable
+    pub fn not_user_actionable(mut self) -> Self {
+        self.user_actionable = false;
+        self
+    }
+
+    /// Get recovery guidance and user actionable flag for an error code
+    fn get_recovery_guidance(code: &ErrorCode) -> (Option<String>, bool) {
+        match code {
+            // Validation errors - user actionable
+            ErrorCode::InvalidInput => (
+                Some("Please check your input and try again".to_string()),
+                true,
+            ),
+            ErrorCode::MissingParameter => (
+                Some("Please provide all required information".to_string()),
+                true,
+            ),
+            ErrorCode::InvalidPath => (
+                Some("Please select a valid file or folder".to_string()),
+                true,
+            ),
+            ErrorCode::InvalidKeyLabel => (
+                Some("Use only letters, numbers, and dashes for key labels".to_string()),
+                true,
+            ),
+            ErrorCode::WeakPassphrase => (
+                Some("Use a stronger passphrase with letters, numbers, and symbols".to_string()),
+                true,
+            ),
+            ErrorCode::InvalidFileFormat => {
+                (Some("Please select a valid file format".to_string()), true)
+            }
+            ErrorCode::FileTooLarge => (
+                Some("File is too large. Please select a smaller file".to_string()),
+                true,
+            ),
+            ErrorCode::TooManyFiles => (
+                Some("Too many files selected. Please reduce the selection".to_string()),
+                true,
+            ),
+
+            // Permission errors - user actionable
+            ErrorCode::PermissionDenied => (
+                Some("Check file permissions and try again".to_string()),
+                true,
+            ),
+            ErrorCode::PathNotAllowed => (
+                Some("Please select a file from an allowed location".to_string()),
+                true,
+            ),
+            ErrorCode::InsufficientPermissions => (
+                Some("Run the application with appropriate permissions".to_string()),
+                true,
+            ),
+            ErrorCode::ReadOnlyFileSystem => (
+                Some(
+                    "Cannot write to read-only location. Choose a different destination"
+                        .to_string(),
+                ),
+                true,
+            ),
+
+            // Not found errors - user actionable
+            ErrorCode::KeyNotFound => (
+                Some("Verify the key exists and try again".to_string()),
+                true,
+            ),
+            ErrorCode::FileNotFound => (
+                Some("File not found. Please check the path and try again".to_string()),
+                true,
+            ),
+            ErrorCode::DirectoryNotFound => (
+                Some("Directory not found. Please check the path and try again".to_string()),
+                true,
+            ),
+            ErrorCode::OperationNotFound => (
+                Some("Operation not found. Please try again".to_string()),
+                true,
+            ),
+
+            // Operation errors - some user actionable
+            ErrorCode::EncryptionFailed => (
+                Some("Encryption failed. Please check your files and try again".to_string()),
+                true,
+            ),
+            ErrorCode::DecryptionFailed => (
+                Some("Decryption failed. Please check your key and passphrase".to_string()),
+                true,
+            ),
+            ErrorCode::StorageFailed => (
+                Some("Storage operation failed. Please check disk space and try again".to_string()),
+                true,
+            ),
+            ErrorCode::ArchiveCorrupted => (
+                Some("Archive appears corrupted. Please use a different backup".to_string()),
+                true,
+            ),
+            ErrorCode::ManifestInvalid => (
+                Some("Manifest is invalid. Archive may be corrupted".to_string()),
+                true,
+            ),
+            ErrorCode::IntegrityCheckFailed => (
+                Some("Integrity check failed. Archive may be corrupted".to_string()),
+                true,
+            ),
+            ErrorCode::ConcurrentOperation => (
+                Some("Another operation is in progress. Please wait and try again".to_string()),
+                true,
+            ),
+
+            // Resource errors - some user actionable
+            ErrorCode::DiskSpaceInsufficient => (
+                Some("Insufficient disk space. Please free up space and try again".to_string()),
+                true,
+            ),
+            ErrorCode::MemoryInsufficient => (
+                Some(
+                    "Insufficient memory. Please close other applications and try again"
+                        .to_string(),
+                ),
+                true,
+            ),
+            ErrorCode::FileSystemError => (
+                Some("File system error. Please check your disk and try again".to_string()),
+                true,
+            ),
+            ErrorCode::NetworkError => (
+                Some("Network error. Please check your connection and try again".to_string()),
+                true,
+            ),
+
+            // Security errors - user actionable
+            ErrorCode::InvalidKey => (
+                Some("Invalid key. Please select the correct encryption key".to_string()),
+                true,
+            ),
+            ErrorCode::WrongPassphrase => {
+                (Some("Wrong passphrase. Please try again".to_string()), true)
+            }
+            ErrorCode::TamperedData => (
+                Some("Data appears to have been tampered with".to_string()),
+                true,
+            ),
+            ErrorCode::UnauthorizedAccess => (
+                Some("Unauthorized access. Please check your permissions".to_string()),
+                true,
+            ),
+
+            // Internal errors - not user actionable
+            ErrorCode::InternalError => (
+                Some("An internal error occurred. Please restart the application".to_string()),
+                false,
+            ),
+            ErrorCode::UnexpectedError => (
+                Some("An unexpected error occurred. Please restart the application".to_string()),
+                false,
+            ),
+            ErrorCode::ConfigurationError => (
+                Some("Configuration error. Please reinstall the application".to_string()),
+                false,
+            ),
+        }
     }
 }
 

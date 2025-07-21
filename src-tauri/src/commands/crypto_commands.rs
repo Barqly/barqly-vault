@@ -3,7 +3,9 @@
 //! This module provides Tauri commands that expose the crypto module
 //! functionality to the frontend with proper validation and error handling.
 
-use super::types::{CommandError, CommandResponse, ErrorCode, ErrorHandler, ValidateInput};
+use super::types::{
+    CommandError, CommandResponse, ErrorCode, ErrorHandler, ValidateInput, ValidationHelper,
+};
 use crate::crypto::{encrypt_private_key, generate_keypair};
 use crate::file_ops;
 use crate::logging::{log_operation, SpanContext};
@@ -121,27 +123,14 @@ pub enum EncryptionStatus {
 
 impl ValidateInput for GenerateKeyInput {
     fn validate(&self) -> Result<(), CommandError> {
-        // Validate label format (alphanumeric, dash, underscore)
-        if self.label.is_empty() {
-            return Err(CommandError::validation("Key label cannot be empty"));
-        }
+        // Validate label is not empty
+        ValidationHelper::validate_not_empty(&self.label, "Key label")?;
 
-        if !self
-            .label
-            .chars()
-            .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
-        {
-            return Err(CommandError::validation(
-                "Key label can only contain letters, numbers, and dashes",
-            ));
-        }
+        // Validate label format
+        ValidationHelper::validate_key_label(&self.label)?;
 
         // Validate passphrase strength
-        if self.passphrase.len() < 12 {
-            return Err(CommandError::validation(
-                "Passphrase must be at least 12 characters",
-            ));
-        }
+        ValidationHelper::validate_passphrase_strength(&self.passphrase)?;
 
         Ok(())
     }
@@ -149,23 +138,33 @@ impl ValidateInput for GenerateKeyInput {
 
 impl ValidateInput for ValidatePassphraseInput {
     fn validate(&self) -> Result<(), CommandError> {
-        if self.passphrase.is_empty() {
-            return Err(CommandError::validation("Passphrase cannot be empty"));
-        }
+        ValidationHelper::validate_not_empty(&self.passphrase, "Passphrase")?;
         Ok(())
     }
 }
 
 impl ValidateInput for EncryptDataInput {
     fn validate(&self) -> Result<(), CommandError> {
-        if self.key_id.is_empty() {
-            return Err(CommandError::validation("Key ID cannot be empty"));
-        }
+        ValidationHelper::validate_not_empty(&self.key_id, "Key ID")?;
 
         if self.file_paths.is_empty() {
-            return Err(CommandError::validation(
+            return Err(CommandError::operation(
+                ErrorCode::MissingParameter,
                 "At least one file must be selected",
-            ));
+            )
+            .with_recovery_guidance("Please select one or more files to encrypt"));
+        }
+
+        // Validate file count limit
+        if self.file_paths.len() > 1000 {
+            return Err(CommandError::operation(
+                ErrorCode::TooManyFiles,
+                format!(
+                    "Too many files selected: {} (maximum 1000)",
+                    self.file_paths.len()
+                ),
+            )
+            .with_recovery_guidance("Please select fewer files"));
         }
 
         Ok(())
@@ -174,23 +173,18 @@ impl ValidateInput for EncryptDataInput {
 
 impl ValidateInput for DecryptDataInput {
     fn validate(&self) -> Result<(), CommandError> {
-        if self.encrypted_file.is_empty() {
-            return Err(CommandError::validation(
-                "Encrypted file path cannot be empty",
-            ));
-        }
+        ValidationHelper::validate_not_empty(&self.encrypted_file, "Encrypted file path")?;
+        ValidationHelper::validate_not_empty(&self.key_id, "Key ID")?;
+        ValidationHelper::validate_not_empty(&self.passphrase, "Passphrase")?;
+        ValidationHelper::validate_not_empty(&self.output_dir, "Output directory")?;
 
-        if self.key_id.is_empty() {
-            return Err(CommandError::validation("Key ID cannot be empty"));
-        }
+        // Validate encrypted file exists and is a file
+        ValidationHelper::validate_path_exists(&self.encrypted_file, "Encrypted file")?;
+        ValidationHelper::validate_is_file(&self.encrypted_file, "Encrypted file")?;
 
-        if self.passphrase.is_empty() {
-            return Err(CommandError::validation("Passphrase cannot be empty"));
-        }
-
-        if self.output_dir.is_empty() {
-            return Err(CommandError::validation("Output directory cannot be empty"));
-        }
+        // Validate output directory exists and is a directory
+        ValidationHelper::validate_path_exists(&self.output_dir, "Output directory")?;
+        ValidationHelper::validate_is_directory(&self.output_dir, "Output directory")?;
 
         Ok(())
     }
@@ -198,35 +192,33 @@ impl ValidateInput for DecryptDataInput {
 
 impl ValidateInput for GetEncryptionStatusInput {
     fn validate(&self) -> Result<(), CommandError> {
-        if self.operation_id.trim().is_empty() {
-            return Err(CommandError::validation("Operation ID cannot be empty"));
-        }
+        ValidationHelper::validate_not_empty(&self.operation_id, "Operation ID")?;
+        ValidationHelper::validate_length(&self.operation_id, "Operation ID", 1, 100)?;
         Ok(())
     }
 }
 
 impl ValidateInput for VerifyManifestInput {
     fn validate(&self) -> Result<(), CommandError> {
-        if self.manifest_path.trim().is_empty() {
-            return Err(CommandError::validation("Manifest path cannot be empty"));
-        }
-        if self.extracted_files_dir.trim().is_empty() {
-            return Err(CommandError::validation(
-                "Extracted files directory cannot be empty",
-            ));
-        }
+        ValidationHelper::validate_not_empty(&self.manifest_path, "Manifest path")?;
+        ValidationHelper::validate_not_empty(
+            &self.extracted_files_dir,
+            "Extracted files directory",
+        )?;
 
-        // Validate manifest path exists
-        if !std::path::Path::new(&self.manifest_path).exists() {
-            return Err(CommandError::validation("Manifest file does not exist"));
-        }
+        // Validate manifest path exists and is a file
+        ValidationHelper::validate_path_exists(&self.manifest_path, "Manifest file")?;
+        ValidationHelper::validate_is_file(&self.manifest_path, "Manifest file")?;
 
-        // Validate extracted files directory exists
-        if !std::path::Path::new(&self.extracted_files_dir).exists() {
-            return Err(CommandError::validation(
-                "Extracted files directory does not exist",
-            ));
-        }
+        // Validate extracted files directory exists and is a directory
+        ValidationHelper::validate_path_exists(
+            &self.extracted_files_dir,
+            "Extracted files directory",
+        )?;
+        ValidationHelper::validate_is_directory(
+            &self.extracted_files_dir,
+            "Extracted files directory",
+        )?;
 
         Ok(())
     }

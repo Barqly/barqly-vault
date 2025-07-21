@@ -73,7 +73,8 @@ mod crypto_validation_tests {
 
             if let Err(error) = result {
                 assert!(
-                    error.message.contains("letters, numbers, and dashes"),
+                    error.message.contains("invalid characters")
+                        || error.message.contains("letters, numbers, and dashes"),
                     "Error message should mention valid characters for label '{}'",
                     invalid_label
                 );
@@ -104,8 +105,8 @@ mod crypto_validation_tests {
 
             if let Err(error) = result {
                 assert!(
-                    error.message.contains("12 characters"),
-                    "Error message should mention minimum length for passphrase '{}'",
+                    error.message.contains("8 characters") || error.message.contains("letters and numbers"),
+                    "Error message should mention minimum length or requirements for passphrase '{}'",
                     weak_passphrase
                 );
             }
@@ -167,11 +168,22 @@ mod crypto_validation_tests {
 
     #[test]
     fn test_decrypt_data_input_validation_success() {
+        // Create temporary files for testing
+        let temp_dir = tempfile::tempdir().unwrap();
+        let encrypted_file = temp_dir.path().join("test.encrypted");
+        let output_dir = temp_dir.path().join("output");
+
+        // Create the encrypted file
+        std::fs::write(&encrypted_file, "test data").unwrap();
+
+        // Create the output directory
+        std::fs::create_dir(&output_dir).unwrap();
+
         let input = DecryptDataInput {
-            encrypted_file: "/path/to/encrypted.file".to_string(),
+            encrypted_file: encrypted_file.to_string_lossy().to_string(),
             key_id: "test-key-id".to_string(),
             passphrase: "strong-passphrase-123".to_string(),
-            output_dir: "/path/to/output".to_string(),
+            output_dir: output_dir.to_string_lossy().to_string(),
         };
 
         let result = input.validate();
@@ -409,7 +421,7 @@ mod edge_case_tests {
     #[test]
     fn test_very_long_inputs() {
         let long_label = "a".repeat(1000);
-        let long_passphrase = "b".repeat(1000);
+        let long_passphrase = "b".repeat(999) + "1"; // Add a number to meet requirements
 
         let input = GenerateKeyInput {
             label: long_label.clone(),
@@ -426,10 +438,10 @@ mod edge_case_tests {
 
     #[test]
     fn test_boundary_values() {
-        // Test minimum valid passphrase length
+        // Test minimum valid passphrase length (now 8 characters with letters and numbers)
         let input = GenerateKeyInput {
             label: "test-key".to_string(),
-            passphrase: "123456789012".to_string(), // exactly 12 characters
+            passphrase: "pass1234".to_string(), // exactly 8 characters with letters and numbers
         };
 
         let result = input.validate();
@@ -455,7 +467,7 @@ mod edge_case_tests {
 
     #[test]
     fn test_mixed_case_inputs() {
-        let mixed_label = "Test-Key_123";
+        let mixed_label = "Test-Key-123"; // Remove underscore as it's no longer allowed
         let mixed_passphrase = "PassPhrase123!@#";
 
         let input = GenerateKeyInput {
@@ -733,7 +745,10 @@ mod task_3_3_command_tests {
         };
 
         let result = input.validate();
-        assert!(result.is_ok(), "Long operation_id should pass validation");
+        assert!(
+            result.is_err(),
+            "Long operation_id should fail validation due to length limit"
+        );
     }
 
     #[test]
@@ -789,7 +804,10 @@ mod task_3_3_command_tests {
         };
 
         let result = input.validate();
-        assert!(result.is_ok(), "Many files should pass validation");
+        assert!(
+            result.is_ok(),
+            "1000 files should pass validation (at the limit)"
+        );
     }
 
     #[test]
@@ -902,8 +920,8 @@ mod security_tests {
 
     #[test]
     fn should_handle_very_large_file_lists() {
-        // Test with maximum reasonable file list size
-        let large_file_list: Vec<String> = (0..10000)
+        // Test with file list size that exceeds the limit
+        let large_file_list: Vec<String> = (0..10001)
             .map(|i| format!("/path/to/file_{}.txt", i))
             .collect();
 
@@ -915,8 +933,8 @@ mod security_tests {
 
         let result = input.validate();
         assert!(
-            result.is_ok(),
-            "Large file list (10,000 files) should pass validation"
+            result.is_err(),
+            "Large file list (10,001 files) should fail validation due to limit"
         );
     }
 
@@ -1142,22 +1160,44 @@ mod task_3_4_command_tests {
 
     #[test]
     fn test_decrypt_data_input_validation_success() {
+        // Create temporary files for testing
+        let temp_dir = tempfile::tempdir().unwrap();
+        let encrypted_file = temp_dir.path().join("test.encrypted");
+        let output_dir = temp_dir.path().join("output");
+
+        // Create the encrypted file
+        std::fs::write(&encrypted_file, "test data").unwrap();
+
+        // Create the output directory
+        std::fs::create_dir(&output_dir).unwrap();
+
         let input = DecryptDataInput {
-            encrypted_file: "/path/to/encrypted.age".to_string(),
+            encrypted_file: encrypted_file.to_string_lossy().to_string(),
             key_id: "test-key".to_string(),
             passphrase: "test-passphrase".to_string(),
-            output_dir: "/tmp/output".to_string(),
+            output_dir: output_dir.to_string_lossy().to_string(),
         };
         assert!(input.validate().is_ok());
     }
 
     #[test]
     fn test_decrypt_data_input_unicode_paths() {
+        // Create temporary files for testing with unicode paths
+        let temp_dir = tempfile::tempdir().unwrap();
+        let encrypted_file = temp_dir.path().join("文件.age");
+        let output_dir = temp_dir.path().join("输出");
+
+        // Create the encrypted file
+        std::fs::write(&encrypted_file, "test data").unwrap();
+
+        // Create the output directory
+        std::fs::create_dir(&output_dir).unwrap();
+
         let input = DecryptDataInput {
-            encrypted_file: "/path/with/unicode/文件.age".to_string(),
+            encrypted_file: encrypted_file.to_string_lossy().to_string(),
             key_id: "test-key".to_string(),
             passphrase: "test-passphrase".to_string(),
-            output_dir: "/tmp/output/输出".to_string(),
+            output_dir: output_dir.to_string_lossy().to_string(),
         };
         assert!(input.validate().is_ok());
     }
