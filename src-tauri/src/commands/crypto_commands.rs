@@ -45,13 +45,6 @@ fn get_global_progress(operation_id: &str) -> Option<super::types::ProgressUpdat
     }
 }
 
-/// Clear global progress for an operation
-fn clear_global_progress(operation_id: &str) {
-    if let Ok(mut tracker) = PROGRESS_TRACKER.lock() {
-        tracker.remove(operation_id);
-    }
-}
-
 /// Input for key generation command
 #[derive(Debug, Deserialize)]
 pub struct GenerateKeyInput {

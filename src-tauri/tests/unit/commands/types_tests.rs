@@ -161,8 +161,8 @@ mod progress_update_tests {
             current_file,
             total_files,
             current_file_progress,
-            current_file_size,
-            total_size,
+            current_file_size: _,
+            total_size: _,
         }) = progress.details
         {
             assert_eq!(current_file, "file1.txt");
@@ -193,7 +193,7 @@ mod progress_update_tests {
         if let Some(ProgressDetails::Encryption {
             bytes_processed,
             total_bytes,
-            encryption_rate,
+            encryption_rate: _,
         }) = progress.details
         {
             assert_eq!(bytes_processed, 1024);

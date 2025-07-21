@@ -20,6 +20,7 @@ use tempfile::TempDir;
 // ============================================================================
 
 struct TestEnvironment {
+    #[allow(dead_code)] // Keep temp_dir to prevent cleanup of test files
     temp_dir: TempDir,
     test_files: Vec<PathBuf>,
     encrypted_data: Vec<u8>,
