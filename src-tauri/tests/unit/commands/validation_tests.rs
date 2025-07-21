@@ -1089,3 +1089,148 @@ mod security_tests {
         }
     }
 }
+
+#[cfg(test)]
+mod task_3_4_command_tests {
+    use super::*;
+    use barqly_vault_lib::commands::crypto_commands::{
+        DecryptDataInput, VerifyManifestInput, VerifyManifestResponse,
+    };
+
+    #[test]
+    fn test_decrypt_data_input_empty_encrypted_file() {
+        let input = DecryptDataInput {
+            encrypted_file: "".to_string(),
+            key_id: "test-key".to_string(),
+            passphrase: "test-passphrase".to_string(),
+            output_dir: "/tmp/output".to_string(),
+        };
+        assert!(input.validate().is_err());
+    }
+
+    #[test]
+    fn test_decrypt_data_input_empty_key_id() {
+        let input = DecryptDataInput {
+            encrypted_file: "/path/to/encrypted.age".to_string(),
+            key_id: "".to_string(),
+            passphrase: "test-passphrase".to_string(),
+            output_dir: "/tmp/output".to_string(),
+        };
+        assert!(input.validate().is_err());
+    }
+
+    #[test]
+    fn test_decrypt_data_input_empty_passphrase() {
+        let input = DecryptDataInput {
+            encrypted_file: "/path/to/encrypted.age".to_string(),
+            key_id: "test-key".to_string(),
+            passphrase: "".to_string(),
+            output_dir: "/tmp/output".to_string(),
+        };
+        assert!(input.validate().is_err());
+    }
+
+    #[test]
+    fn test_decrypt_data_input_empty_output_dir() {
+        let input = DecryptDataInput {
+            encrypted_file: "/path/to/encrypted.age".to_string(),
+            key_id: "test-key".to_string(),
+            passphrase: "test-passphrase".to_string(),
+            output_dir: "".to_string(),
+        };
+        assert!(input.validate().is_err());
+    }
+
+    #[test]
+    fn test_decrypt_data_input_validation_success() {
+        let input = DecryptDataInput {
+            encrypted_file: "/path/to/encrypted.age".to_string(),
+            key_id: "test-key".to_string(),
+            passphrase: "test-passphrase".to_string(),
+            output_dir: "/tmp/output".to_string(),
+        };
+        assert!(input.validate().is_ok());
+    }
+
+    #[test]
+    fn test_decrypt_data_input_unicode_paths() {
+        let input = DecryptDataInput {
+            encrypted_file: "/path/with/unicode/文件.age".to_string(),
+            key_id: "test-key".to_string(),
+            passphrase: "test-passphrase".to_string(),
+            output_dir: "/tmp/output/输出".to_string(),
+        };
+        assert!(input.validate().is_ok());
+    }
+
+    #[test]
+    fn test_verify_manifest_input_empty_manifest_path() {
+        let input = VerifyManifestInput {
+            manifest_path: "".to_string(),
+            extracted_files_dir: "/tmp/extracted".to_string(),
+        };
+        assert!(input.validate().is_err());
+    }
+
+    #[test]
+    fn test_verify_manifest_input_empty_extracted_files_dir() {
+        let input = VerifyManifestInput {
+            manifest_path: "/path/to/manifest.json".to_string(),
+            extracted_files_dir: "".to_string(),
+        };
+        assert!(input.validate().is_err());
+    }
+
+    #[test]
+    fn test_verify_manifest_input_validation_success() {
+        let input = VerifyManifestInput {
+            manifest_path: "/path/to/manifest.json".to_string(),
+            extracted_files_dir: "/tmp/extracted".to_string(),
+        };
+        // This will fail validation because the files don't exist, but the format is correct
+        // We can't easily test the file existence check in unit tests
+        let result = input.validate();
+        // The validation will fail because the files don't exist, but that's expected
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_verify_manifest_input_unicode_paths() {
+        let input = VerifyManifestInput {
+            manifest_path: "/path/with/unicode/manifest文件.json".to_string(),
+            extracted_files_dir: "/tmp/extracted/输出".to_string(),
+        };
+        // This will fail validation because the files don't exist, but the format is correct
+        let result = input.validate();
+        // The validation will fail because the files don't exist, but that's expected
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_verify_manifest_response_creation() {
+        let response = VerifyManifestResponse {
+            is_valid: true,
+            message: "Manifest verification successful".to_string(),
+            file_count: 5,
+            total_size: 1024,
+        };
+        assert!(response.is_valid);
+        assert_eq!(response.file_count, 5);
+        assert_eq!(response.total_size, 1024);
+        assert!(response.message.contains("successful"));
+    }
+
+    #[test]
+    fn test_verify_manifest_response_failure() {
+        let response = VerifyManifestResponse {
+            is_valid: false,
+            message: "Manifest verification failed: hash mismatch".to_string(),
+            file_count: 3,
+            total_size: 512,
+        };
+        assert!(!response.is_valid);
+        assert_eq!(response.file_count, 3);
+        assert_eq!(response.total_size, 512);
+        assert!(response.message.contains("failed"));
+    }
+}

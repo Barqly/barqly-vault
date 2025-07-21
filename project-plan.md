@@ -166,10 +166,10 @@ barqly-vault/
     - [x] 3.3.2: create_manifest command
     - [x] 3.3.3: get_encryption_status command
     - [x] 3.3.4: Write unit tests, run fmt, clippy etc
-- [ ] 3.4: Implement decryption commands
-  - [ ] 3.4.1: decrypt_file command
-  - [ ] 3.4.2: verify_manifest command
-  - [ ] 3.4.3: Write unit tests, run fmt, clippy etc
+- [x] 3.4: Implement decryption commands
+  - [x] 3.4.1: decrypt_file command
+  - [x] 3.4.2: verify_manifest command
+  - [x] 3.4.3: Write unit tests, run fmt, clippy etc
 - [ ] 3.5: Add error handling and validation
 - [ ] 3.6: Implement progress reporting for long operations
 - [ ] 3.7: Write integration tests for all commands

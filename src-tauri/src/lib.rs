@@ -20,6 +20,7 @@ use commands::{
     select_files,
     update_config,
     validate_passphrase,
+    verify_manifest,
 };
 
 use logging::{init_logging, log_info, LogLevel};
@@ -40,6 +41,7 @@ pub fn run() {
             encrypt_files,
             get_encryption_status,
             decrypt_data,
+            verify_manifest,
             // Storage commands
             list_keys_command,
             delete_key_command,

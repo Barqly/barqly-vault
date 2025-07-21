@@ -78,6 +78,22 @@ pub struct GetEncryptionStatusInput {
     pub operation_id: String,
 }
 
+/// Input for manifest verification command
+#[derive(Debug, Deserialize)]
+pub struct VerifyManifestInput {
+    pub manifest_path: String,
+    pub extracted_files_dir: String,
+}
+
+/// Response from manifest verification command
+#[derive(Debug, Serialize)]
+pub struct VerifyManifestResponse {
+    pub is_valid: bool,
+    pub message: String,
+    pub file_count: usize,
+    pub total_size: u64,
+}
+
 /// Response from encryption status command
 #[derive(Debug, Serialize)]
 pub struct EncryptionStatusResponse {
@@ -185,6 +201,33 @@ impl ValidateInput for GetEncryptionStatusInput {
         if self.operation_id.trim().is_empty() {
             return Err(CommandError::validation("Operation ID cannot be empty"));
         }
+        Ok(())
+    }
+}
+
+impl ValidateInput for VerifyManifestInput {
+    fn validate(&self) -> Result<(), CommandError> {
+        if self.manifest_path.trim().is_empty() {
+            return Err(CommandError::validation("Manifest path cannot be empty"));
+        }
+        if self.extracted_files_dir.trim().is_empty() {
+            return Err(CommandError::validation(
+                "Extracted files directory cannot be empty",
+            ));
+        }
+
+        // Validate manifest path exists
+        if !std::path::Path::new(&self.manifest_path).exists() {
+            return Err(CommandError::validation("Manifest file does not exist"));
+        }
+
+        // Validate extracted files directory exists
+        if !std::path::Path::new(&self.extracted_files_dir).exists() {
+            return Err(CommandError::validation(
+                "Extracted files directory does not exist",
+            ));
+        }
+
         Ok(())
     }
 }
@@ -693,6 +736,152 @@ impl Drop for EncryptionCleanupGuard {
     }
 }
 
+/// Helper function to verify manifest if it exists in the extracted files
+fn verify_manifest_if_exists(
+    extracted_files: &[crate::file_ops::FileInfo],
+    output_path: &std::path::Path,
+    _error_handler: &ErrorHandler,
+) -> bool {
+    // Look for manifest file in extracted files
+    let manifest_file = extracted_files.iter().find(|file| {
+        file.path
+            .file_name()
+            .is_some_and(|name| name == "manifest.json")
+    });
+
+    if let Some(manifest_info) = manifest_file {
+        let manifest_path = output_path.join(&manifest_info.path);
+
+        // Try to load and verify the manifest
+        match file_ops::manifest::Manifest::load(&manifest_path) {
+            Ok(manifest) => {
+                match file_ops::verify_manifest(
+                    &manifest,
+                    extracted_files,
+                    &file_ops::FileOpsConfig::default(),
+                ) {
+                    Ok(()) => {
+                        log_operation(
+                            crate::logging::LogLevel::Info,
+                            "Manifest verification successful",
+                            &SpanContext::new("verify_manifest"),
+                            HashMap::new(),
+                        );
+                        true
+                    }
+                    Err(e) => {
+                        log_operation(
+                            crate::logging::LogLevel::Warn,
+                            &format!("Manifest verification failed: {e}"),
+                            &SpanContext::new("verify_manifest"),
+                            HashMap::new(),
+                        );
+                        false
+                    }
+                }
+            }
+            Err(e) => {
+                log_operation(
+                    crate::logging::LogLevel::Warn,
+                    &format!("Failed to load manifest: {e}"),
+                    &SpanContext::new("verify_manifest"),
+                    HashMap::new(),
+                );
+                false
+            }
+        }
+    } else {
+        // No manifest found, consider it verified (optional manifest)
+        log_operation(
+            crate::logging::LogLevel::Info,
+            "No manifest found, skipping verification",
+            &SpanContext::new("verify_manifest"),
+            HashMap::new(),
+        );
+        true
+    }
+}
+
+/// Helper function to get file information for extracted files
+fn get_extracted_files_info(
+    extracted_dir: &str,
+) -> Result<Vec<crate::file_ops::FileInfo>, crate::file_ops::FileOpsError> {
+    use std::fs;
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt;
+    use std::path::Path;
+    use walkdir::WalkDir;
+
+    let mut file_infos = Vec::new();
+    let extracted_path = Path::new(extracted_dir);
+
+    for entry in WalkDir::new(extracted_path)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+    {
+        let path = entry.path();
+        let metadata = fs::metadata(path)?;
+
+        // Calculate relative path from extracted directory
+        let relative_path = path.strip_prefix(extracted_path).map_err(|_| {
+            crate::file_ops::FileOpsError::PathValidationFailed {
+                path: path.to_path_buf(),
+                reason: "Failed to get relative path".to_string(),
+            }
+        })?;
+
+        // Calculate file hash
+        let hash = calculate_file_hash_simple(path)?;
+
+        let file_info = crate::file_ops::FileInfo {
+            path: relative_path.to_path_buf(),
+            size: metadata.len(),
+            modified: chrono::DateTime::from(metadata.modified()?),
+            hash,
+            #[cfg(unix)]
+            permissions: metadata.permissions().mode(),
+        };
+
+        file_infos.push(file_info);
+    }
+
+    Ok(file_infos)
+}
+
+/// Simple file hash calculation function
+fn calculate_file_hash_simple(
+    path: &std::path::Path,
+) -> Result<String, crate::file_ops::FileOpsError> {
+    use sha2::{Digest, Sha256};
+    use std::fs::File;
+    use std::io::Read;
+
+    let mut file = File::open(path).map_err(|_e| crate::file_ops::FileOpsError::FileNotFound {
+        path: path.to_path_buf(),
+    })?;
+
+    let mut hasher = Sha256::new();
+    let mut buffer = [0; 8192];
+
+    loop {
+        let n = file.read(&mut buffer).map_err(|e| {
+            crate::file_ops::FileOpsError::HashCalculationFailed {
+                message: format!("Failed to read file: {e}"),
+            }
+        })?;
+
+        if n == 0 {
+            break;
+        }
+
+        hasher.update(&buffer[..n]);
+    }
+
+    let result = hasher.finalize();
+    Ok(hex::encode(result))
+}
+
 /// Decrypt files with progress streaming
 #[tauri::command]
 #[instrument(skip(input, _window), fields(key_id = %input.key_id))]
@@ -725,13 +914,81 @@ pub async fn decrypt_data(
         attributes,
     );
 
-    // TODO: Implement full decryption workflow with progress streaming
-    // This is a placeholder implementation
+    // Load the encrypted private key
+    let encrypted_key = error_handler.handle_operation_error(
+        storage::load_encrypted_key(&input.key_id),
+        "load_encrypted_key",
+        ErrorCode::KeyNotFound,
+    )?;
+
+    // Decrypt the private key with the passphrase
+    let private_key = error_handler.handle_operation_error(
+        crate::crypto::decrypt_private_key(&encrypted_key, SecretString::from(input.passphrase)),
+        "decrypt_private_key",
+        ErrorCode::DecryptionFailed,
+    )?;
+
+    // Read the encrypted file
+    let encrypted_data = error_handler.handle_operation_error(
+        std::fs::read(&input.encrypted_file),
+        "read_encrypted_file",
+        ErrorCode::FileNotFound,
+    )?;
+
+    // Decrypt the data
+    let decrypted_data = error_handler.handle_operation_error(
+        crate::crypto::decrypt_data(&encrypted_data, &private_key),
+        "decrypt_data",
+        ErrorCode::DecryptionFailed,
+    )?;
+
+    // Create output directory if it doesn't exist
+    let output_path = std::path::Path::new(&input.output_dir);
+    error_handler.handle_operation_error(
+        std::fs::create_dir_all(output_path),
+        "create_output_directory",
+        ErrorCode::PermissionDenied,
+    )?;
+
+    // Write decrypted data to temporary file
+    let temp_archive_path = error_handler.handle_operation_error(
+        tempfile::NamedTempFile::new(),
+        "create_temp_file",
+        ErrorCode::InternalError,
+    )?;
+
+    let temp_archive_path = temp_archive_path.path().to_path_buf();
+    error_handler.handle_operation_error(
+        std::fs::write(&temp_archive_path, &decrypted_data),
+        "write_temp_archive",
+        ErrorCode::InternalError,
+    )?;
+
+    // Extract the archive
+    let config = file_ops::FileOpsConfig::default();
+    let extracted_files = error_handler.handle_operation_error(
+        file_ops::extract_archive(&temp_archive_path, output_path, &config),
+        "extract_archive",
+        ErrorCode::InternalError,
+    )?;
+
+    // Clean up temporary file
+    cleanup_temp_file(&temp_archive_path, &error_handler);
+
+    // Try to verify manifest if it exists
+    let manifest_verified =
+        verify_manifest_if_exists(&extracted_files, output_path, &error_handler);
 
     // Log operation completion
     let mut completion_attributes = HashMap::new();
-    completion_attributes.insert("extracted_files_count".to_string(), "1".to_string());
-    completion_attributes.insert("manifest_verified".to_string(), "true".to_string());
+    completion_attributes.insert(
+        "extracted_files_count".to_string(),
+        extracted_files.len().to_string(),
+    );
+    completion_attributes.insert(
+        "manifest_verified".to_string(),
+        manifest_verified.to_string(),
+    );
     log_operation(
         crate::logging::LogLevel::Info,
         "Decryption operation completed successfully",
@@ -739,11 +996,16 @@ pub async fn decrypt_data(
         completion_attributes,
     );
 
-    // For now, return a placeholder response
+    // Convert extracted files to string paths
+    let extracted_file_paths: Vec<String> = extracted_files
+        .iter()
+        .map(|file_info| file_info.path.to_string_lossy().to_string())
+        .collect();
+
     Ok(DecryptionResult {
-        extracted_files: vec!["extracted_file.txt".to_string()],
+        extracted_files: extracted_file_paths,
         output_dir: input.output_dir,
-        manifest_verified: true,
+        manifest_verified,
     })
 }
 
@@ -804,4 +1066,102 @@ pub async fn get_encryption_status(
     );
 
     Ok(response)
+}
+
+/// Verify manifest integrity
+#[tauri::command]
+#[instrument(skip(input), fields(manifest_path = %input.manifest_path))]
+pub async fn verify_manifest(
+    input: VerifyManifestInput,
+) -> CommandResponse<VerifyManifestResponse> {
+    // Create span context for operation tracing
+    let span_context =
+        SpanContext::new("verify_manifest").with_attribute("manifest_path", &input.manifest_path);
+
+    // Create error handler with span context
+    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+
+    // Validate input
+    input
+        .validate()
+        .map_err(|e| error_handler.handle_validation_error("input", &e.message))?;
+
+    // Log operation start with structured context
+    let mut attributes = HashMap::new();
+    attributes.insert("manifest_path".to_string(), input.manifest_path.clone());
+    attributes.insert(
+        "extracted_files_dir".to_string(),
+        input.extracted_files_dir.clone(),
+    );
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Starting manifest verification",
+        &span_context,
+        attributes,
+    );
+
+    // Load the manifest
+    let manifest = error_handler.handle_operation_error(
+        file_ops::manifest::Manifest::load(std::path::Path::new(&input.manifest_path)),
+        "load_manifest",
+        ErrorCode::FileNotFound,
+    )?;
+
+    // Get file information for extracted files
+    let extracted_files = error_handler.handle_operation_error(
+        get_extracted_files_info(&input.extracted_files_dir),
+        "get_extracted_files_info",
+        ErrorCode::FileNotFound,
+    )?;
+
+    // Verify the manifest
+    let verification_result = file_ops::verify_manifest(
+        &manifest,
+        &extracted_files,
+        &file_ops::FileOpsConfig::default(),
+    );
+
+    match verification_result {
+        Ok(()) => {
+            // Log successful verification
+            let mut completion_attributes = HashMap::new();
+            completion_attributes
+                .insert("file_count".to_string(), manifest.files.len().to_string());
+            completion_attributes.insert(
+                "total_size".to_string(),
+                manifest.archive.total_uncompressed_size.to_string(),
+            );
+            log_operation(
+                crate::logging::LogLevel::Info,
+                "Manifest verification completed successfully",
+                &span_context,
+                completion_attributes,
+            );
+
+            Ok(VerifyManifestResponse {
+                is_valid: true,
+                message: "Manifest verification successful".to_string(),
+                file_count: manifest.files.len(),
+                total_size: manifest.archive.total_uncompressed_size,
+            })
+        }
+        Err(e) => {
+            // Log verification failure
+            let mut failure_attributes = HashMap::new();
+            failure_attributes.insert("error".to_string(), e.to_string());
+            log_operation(
+                crate::logging::LogLevel::Warn,
+                "Manifest verification failed",
+                &span_context,
+                failure_attributes,
+            );
+
+            Ok(VerifyManifestResponse {
+                is_valid: false,
+                message: format!("Manifest verification failed: {e}"),
+                file_count: manifest.files.len(),
+                total_size: manifest.archive.total_uncompressed_size,
+            })
+        }
+    }
 }
