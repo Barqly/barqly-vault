@@ -3,7 +3,7 @@
 //! This module provides Tauri commands that expose the file_ops module
 //! functionality to the frontend with proper validation and error handling.
 
-use super::types::CommandResponse;
+use super::types::{CommandError, CommandResponse, ErrorCode};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tauri::Window;
@@ -86,19 +86,24 @@ pub async fn get_file_info(paths: Vec<String>) -> CommandResponse<Vec<FileInfo>>
         .into_iter()
         .map(|path| {
             let path_buf = PathBuf::from(&path);
-            FileInfo {
+
+            // Get file metadata with proper error handling
+            let metadata = std::fs::metadata(&path_buf)
+                .map_err(|e| CommandError::operation(ErrorCode::FileNotFound, e.to_string()))?;
+
+            Ok(FileInfo {
                 path: path.clone(),
                 name: path_buf
                     .file_name()
                     .unwrap_or_default()
                     .to_string_lossy()
                     .to_string(),
-                size: 1024,          // Placeholder size
-                is_file: true,       // Placeholder
-                is_directory: false, // Placeholder
-            }
+                size: metadata.len(),
+                is_file: metadata.is_file(),
+                is_directory: metadata.is_dir(),
+            })
         })
-        .collect();
+        .collect::<Result<Vec<FileInfo>, CommandError>>()?;
 
     Ok(file_infos)
 }
