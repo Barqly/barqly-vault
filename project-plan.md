@@ -172,7 +172,7 @@ barqly-vault/
   - [x] 3.4.3: Write unit tests, run fmt, clippy etc
 - [x] 3.5: Add error handling and validation
 - [x] 3.6: Implement progress reporting for long operations
-- [ ] 3.7: Write integration tests for all commands
+- [x] 3.7: Write integration tests for all commands
 
 ### Milestone 4: Frontend Foundation
 **Goal**: Build the React/TypeScript frontend structure
