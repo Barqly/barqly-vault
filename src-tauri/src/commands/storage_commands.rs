@@ -3,10 +3,12 @@
 //! This module provides Tauri commands that expose the storage module
 //! functionality to the frontend with proper validation and error handling.
 
-use super::types::{CommandError, CommandResponse, ErrorCode};
+use super::types::{CommandResponse, ErrorCode, ErrorHandler};
+use crate::logging::{log_operation, SpanContext};
 use crate::storage::{delete_key, list_keys};
 use serde::{Deserialize, Serialize};
-use tracing::{info, instrument};
+use std::collections::HashMap;
+use tracing::instrument;
 
 /// Key metadata for frontend display
 #[derive(Debug, Serialize)]
@@ -37,10 +39,22 @@ pub struct AppConfigUpdate {
 #[tauri::command]
 #[instrument]
 pub async fn list_keys_command() -> CommandResponse<Vec<KeyMetadata>> {
-    info!("Listing available keys");
+    // Create span context for operation tracing
+    let span_context = SpanContext::new("list_keys");
 
-    let keys = list_keys()
-        .map_err(|e| CommandError::operation(ErrorCode::StorageFailed, e.to_string()))?;
+    // Create error handler with span context
+    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+
+    // Log operation start with structured context
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Starting key listing operation",
+        &span_context,
+        HashMap::new(),
+    );
+
+    let keys =
+        error_handler.handle_operation_error(list_keys(), "list_keys", ErrorCode::StorageFailed)?;
 
     let metadata: Vec<KeyMetadata> = keys
         .into_iter()
@@ -51,7 +65,16 @@ pub async fn list_keys_command() -> CommandResponse<Vec<KeyMetadata>> {
         })
         .collect();
 
-    info!("Found {} keys", metadata.len());
+    // Log operation completion
+    let mut completion_attributes = HashMap::new();
+    completion_attributes.insert("key_count".to_string(), metadata.len().to_string());
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Key listing operation completed successfully",
+        &span_context,
+        completion_attributes,
+    );
+
     Ok(metadata)
 }
 
@@ -59,23 +82,48 @@ pub async fn list_keys_command() -> CommandResponse<Vec<KeyMetadata>> {
 #[tauri::command]
 #[instrument(skip(key_id), fields(key_id = %key_id))]
 pub async fn delete_key_command(key_id: String) -> CommandResponse<()> {
-    info!("Deleting key: {}", key_id);
+    // Create span context for operation tracing
+    let span_context = SpanContext::new("delete_key").with_attribute("key_id", &key_id);
+
+    // Create error handler with span context
+    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+
+    // Log operation start with structured context
+    let mut attributes = HashMap::new();
+    attributes.insert("key_id".to_string(), key_id.clone());
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Starting key deletion operation",
+        &span_context,
+        attributes,
+    );
 
     // Validate key exists
-    let keys = list_keys()
-        .map_err(|e| CommandError::operation(ErrorCode::StorageFailed, e.to_string()))?;
+    let keys =
+        error_handler.handle_operation_error(list_keys(), "list_keys", ErrorCode::StorageFailed)?;
 
     if !keys.iter().any(|k| k.label == key_id) {
-        return Err(CommandError::not_found(format!(
-            "No key found with label '{key_id}'"
-        )));
+        return Err(error_handler
+            .handle_validation_error("key_id", &format!("No key found with label '{key_id}'")));
     }
 
     // Delete the key
-    delete_key(&key_id)
-        .map_err(|e| CommandError::operation(ErrorCode::StorageFailed, e.to_string()))?;
+    error_handler.handle_operation_error(
+        delete_key(&key_id),
+        "delete_key",
+        ErrorCode::StorageFailed,
+    )?;
 
-    info!("Key deleted successfully: {}", key_id);
+    // Log operation completion
+    let mut completion_attributes = HashMap::new();
+    completion_attributes.insert("key_id".to_string(), key_id);
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Key deletion operation completed successfully",
+        &span_context,
+        completion_attributes,
+    );
+
     Ok(())
 }
 
@@ -83,37 +131,88 @@ pub async fn delete_key_command(key_id: String) -> CommandResponse<()> {
 #[tauri::command]
 #[instrument]
 pub async fn get_config() -> CommandResponse<AppConfig> {
-    info!("Getting application configuration");
+    // Create span context for operation tracing
+    let span_context = SpanContext::new("get_config");
+
+    // Log operation start with structured context
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Starting configuration retrieval",
+        &span_context,
+        HashMap::new(),
+    );
 
     // TODO: Implement configuration loading from file
     // For now, return default configuration
-    Ok(AppConfig {
+    let config = AppConfig {
         version: env!("CARGO_PKG_VERSION").to_string(),
         default_key_label: None,
         remember_last_folder: true,
         max_recent_files: 10,
-    })
+    };
+
+    // Log operation completion
+    let mut completion_attributes = HashMap::new();
+    completion_attributes.insert("version".to_string(), config.version.clone());
+    completion_attributes.insert(
+        "remember_last_folder".to_string(),
+        config.remember_last_folder.to_string(),
+    );
+    completion_attributes.insert(
+        "max_recent_files".to_string(),
+        config.max_recent_files.to_string(),
+    );
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Configuration retrieval completed successfully",
+        &span_context,
+        completion_attributes,
+    );
+
+    Ok(config)
 }
 
 /// Update application configuration
 #[tauri::command]
 #[instrument(skip(config))]
 pub async fn update_config(config: AppConfigUpdate) -> CommandResponse<()> {
-    info!("Updating application configuration");
+    // Create span context for operation tracing
+    let span_context = SpanContext::new("update_config");
+
+    // Create error handler with span context (for future use)
+    let _error_handler = ErrorHandler::new().with_span(span_context.clone());
+
+    // Log operation start with structured context
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Starting configuration update",
+        &span_context,
+        HashMap::new(),
+    );
 
     // TODO: Implement configuration validation and persistence
-    // For now, just log the update
+    // For now, just log the update with structured attributes
+    let mut update_attributes = HashMap::new();
+
     if let Some(label) = &config.default_key_label {
-        info!("Setting default key label: {}", label);
+        update_attributes.insert("default_key_label".to_string(), label.clone());
     }
 
     if let Some(remember) = config.remember_last_folder {
-        info!("Setting remember last folder: {}", remember);
+        update_attributes.insert("remember_last_folder".to_string(), remember.to_string());
     }
 
     if let Some(max_files) = config.max_recent_files {
-        info!("Setting max recent files: {}", max_files);
+        update_attributes.insert("max_recent_files".to_string(), max_files.to_string());
     }
+
+    // Log operation completion with all update attributes
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Configuration update completed successfully",
+        &span_context,
+        update_attributes,
+    );
 
     Ok(())
 }

@@ -53,7 +53,7 @@ impl Logger {
             }))
         });
 
-        let log_line = format!("{}\n", log_data);
+        let log_line = format!("{log_data}\n");
 
         if let Ok(mut file_opt) = self.log_file.lock() {
             if let Some(file) = file_opt.as_mut() {
