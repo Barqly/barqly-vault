@@ -6,6 +6,7 @@
 //! - Parallel execution configuration
 //! - Test result aggregation
 
+pub mod commands;
 pub mod crypto;
 pub mod file_ops;
 pub mod logging;
@@ -59,6 +60,7 @@ impl UnitTestSuite {
 
         // Run tests in parallel using rayon
         let test_modules = vec![
+            ("commands", self.run_commands_tests()),
             ("crypto", self.run_crypto_tests()),
             ("file_ops", self.run_file_ops_tests()),
             ("storage", self.run_storage_tests()),
@@ -119,6 +121,15 @@ impl UnitTestSuite {
     fn run_storage_tests(&self) -> Vec<TestResult> {
         // Import and run storage tests
         // use storage::*;
+
+        // This would be populated with actual test execution
+        Vec::new()
+    }
+
+    /// Run commands module unit tests
+    fn run_commands_tests(&self) -> Vec<TestResult> {
+        // Import and run commands tests
+        // use commands::*;
 
         // This would be populated with actual test execution
         Vec::new()
