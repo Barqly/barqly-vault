@@ -65,6 +65,37 @@ pub struct DecryptionResult {
     pub manifest_verified: bool,
 }
 
+/// Input for encryption status command
+#[derive(Debug, Deserialize)]
+pub struct GetEncryptionStatusInput {
+    pub operation_id: String,
+}
+
+/// Response from encryption status command
+#[derive(Debug, Serialize)]
+pub struct EncryptionStatusResponse {
+    pub operation_id: String,
+    pub status: EncryptionStatus,
+    pub progress_percentage: u8,
+    pub current_file: Option<String>,
+    pub total_files: usize,
+    pub processed_files: usize,
+    pub total_size: u64,
+    pub processed_size: u64,
+    pub estimated_time_remaining: Option<u64>, // in seconds
+    pub error_message: Option<String>,
+}
+
+/// Encryption operation status
+#[derive(Debug, Serialize)]
+pub enum EncryptionStatus {
+    Pending,
+    InProgress,
+    Completed,
+    Failed,
+    Cancelled,
+}
+
 impl ValidateInput for GenerateKeyInput {
     fn validate(&self) -> Result<(), CommandError> {
         // Validate label format (alphanumeric, dash, underscore)
@@ -138,6 +169,15 @@ impl ValidateInput for DecryptDataInput {
             return Err(CommandError::validation("Output directory cannot be empty"));
         }
 
+        Ok(())
+    }
+}
+
+impl ValidateInput for GetEncryptionStatusInput {
+    fn validate(&self) -> Result<(), CommandError> {
+        if self.operation_id.is_empty() {
+            return Err(CommandError::validation("Operation ID cannot be empty"));
+        }
         Ok(())
     }
 }
@@ -401,4 +441,39 @@ pub async fn decrypt_data(
         output_dir: input.output_dir,
         manifest_verified: true,
     })
+}
+
+/// Get encryption operation status
+#[tauri::command]
+#[instrument(skip(input), fields(operation_id = %input.operation_id))]
+pub async fn get_encryption_status(
+    input: GetEncryptionStatusInput,
+) -> CommandResponse<EncryptionStatusResponse> {
+    // Validate input
+    input.validate()?;
+
+    info!(
+        "Getting encryption status for operation: {}",
+        input.operation_id
+    );
+
+    // TODO: Implement actual status tracking
+    // For now, return a placeholder response indicating the operation is completed
+    // In a real implementation, this would query a status store or progress tracker
+
+    let response = EncryptionStatusResponse {
+        operation_id: input.operation_id,
+        status: EncryptionStatus::Completed,
+        progress_percentage: 100,
+        current_file: None,
+        total_files: 1,
+        processed_files: 1,
+        total_size: 1024,
+        processed_size: 1024,
+        estimated_time_remaining: None,
+        error_message: None,
+    };
+
+    info!("Encryption status retrieved successfully");
+    Ok(response)
 }

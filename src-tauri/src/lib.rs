@@ -12,6 +12,7 @@ use commands::{
     // Crypto commands
     generate_key,
     get_config,
+    get_encryption_status,
     get_file_info,
     // Storage commands
     list_keys_command,
@@ -37,6 +38,7 @@ pub fn run() {
             generate_key,
             validate_passphrase,
             encrypt_files,
+            get_encryption_status,
             decrypt_data,
             // Storage commands
             list_keys_command,
