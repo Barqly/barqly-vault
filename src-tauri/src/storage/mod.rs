@@ -47,9 +47,7 @@ pub use key_store::{
     delete_key, get_key_info, key_exists, list_keys, load_encrypted_key, save_encrypted_key,
     KeyInfo,
 };
-pub use paths::{
-    get_app_dir, get_key_file_path, get_key_metadata_path, get_keys_dir, get_logs_dir,
-};
+pub use paths::{get_key_file_path, get_key_metadata_path};
 
 /// Result type for storage operations
 pub type Result<T> = std::result::Result<T, StorageError>;
@@ -98,6 +96,9 @@ pub fn get_keys_directory() -> Result<PathBuf> {
 pub fn get_logs_directory() -> Result<PathBuf> {
     get_logs_dir()
 }
+
+// Internal function imports for the public API functions above
+use paths::{get_app_dir, get_keys_dir, get_logs_dir};
 
 #[cfg(test)]
 mod tests {
