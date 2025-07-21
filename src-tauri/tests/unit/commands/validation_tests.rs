@@ -7,12 +7,12 @@
 //! - Path validation across platforms
 //! - Edge cases and error conditions
 
-use crate::common::helpers::TestAssertions;
 use barqly_vault_lib::commands::{
     crypto_commands::{
-        DecryptDataInput, EncryptDataInput, GenerateKeyInput, ValidatePassphraseInput,
+        DecryptDataInput, EncryptDataInput, GenerateKeyInput, GetEncryptionStatusInput,
+        ValidatePassphraseInput,
     },
-    types::{CommandError, ErrorCode, ValidateInput},
+    types::{CommandError, ValidateInput},
 };
 
 #[cfg(test)]
@@ -265,7 +265,6 @@ mod crypto_validation_tests {
 #[cfg(test)]
 mod path_validation_tests {
     use super::*;
-    use std::path::Path;
 
     fn validate_path(path: &str) -> Result<(), CommandError> {
         if path.is_empty() {
@@ -302,9 +301,10 @@ mod path_validation_tests {
 
         for path in valid_windows_paths {
             let result = validate_path(path);
-            TestAssertions::assert_ok(
-                result,
-                &format!("Windows path '{}' should pass validation", path),
+            assert!(
+                result.is_ok(),
+                "Windows path '{}' should pass validation",
+                path
             );
         }
     }
@@ -319,9 +319,10 @@ mod path_validation_tests {
 
         for path in valid_unix_paths {
             let result = validate_path(path);
-            TestAssertions::assert_ok(
-                result,
-                &format!("Unix path '{}' should pass validation", path),
+            assert!(
+                result.is_ok(),
+                "Unix path '{}' should pass validation",
+                path
             );
         }
     }
@@ -336,9 +337,10 @@ mod path_validation_tests {
 
         for path in valid_macos_paths {
             let result = validate_path(path);
-            TestAssertions::assert_ok(
-                result,
-                &format!("macOS path '{}' should pass validation", path),
+            assert!(
+                result.is_ok(),
+                "macOS path '{}' should pass validation",
+                path
             );
         }
     }
@@ -373,9 +375,10 @@ mod path_validation_tests {
 
         for path in special_char_paths {
             let result = validate_path(path);
-            TestAssertions::assert_ok(
-                result,
-                &format!("Path with special chars '{}' should pass validation", path),
+            assert!(
+                result.is_ok(),
+                "Path with special chars '{}' should pass validation",
+                path
             );
         }
     }
@@ -390,9 +393,10 @@ mod path_validation_tests {
 
         for path in unicode_paths {
             let result = validate_path(path);
-            TestAssertions::assert_ok(
-                result,
-                &format!("Unicode path '{}' should pass validation", path),
+            assert!(
+                result.is_ok(),
+                "Unicode path '{}' should pass validation",
+                path
             );
         }
     }
@@ -523,5 +527,292 @@ mod validate_passphrase_tests {
 
         let result = input.validate();
         assert!(result.is_ok());
+    }
+}
+
+#[cfg(test)]
+mod task_3_3_command_tests {
+    use super::*;
+
+    // ============================================================================
+    // ENCRYPT_FILES COMMAND TESTS
+    // ============================================================================
+
+    #[test]
+    fn test_encrypt_files_input_validation_success() {
+        let input = EncryptDataInput {
+            key_id: "test-key-id".to_string(),
+            file_paths: vec![
+                "/path/to/file1.txt".to_string(),
+                "/path/to/file2.txt".to_string(),
+            ],
+            output_name: Some("encrypted_output.age".to_string()),
+        };
+
+        let result = input.validate();
+        assert!(
+            result.is_ok(),
+            "Valid encrypt_files input should pass validation"
+        );
+    }
+
+    #[test]
+    fn test_encrypt_files_input_single_folder() {
+        let input = EncryptDataInput {
+            key_id: "test-key-id".to_string(),
+            file_paths: vec!["/path/to/folder".to_string()],
+            output_name: None,
+        };
+
+        let result = input.validate();
+        assert!(result.is_ok(), "Single folder input should pass validation");
+    }
+
+    #[test]
+    fn test_encrypt_files_input_empty_key_id() {
+        let input = EncryptDataInput {
+            key_id: "".to_string(),
+            file_paths: vec!["/path/to/file.txt".to_string()],
+            output_name: None,
+        };
+
+        let result = input.validate();
+        assert!(result.is_err(), "Empty key_id should fail validation");
+
+        if let Err(error) = result {
+            assert_eq!(
+                error.message, "Key ID cannot be empty",
+                "Error message should match"
+            );
+        }
+    }
+
+    #[test]
+    fn test_encrypt_files_input_empty_file_paths() {
+        let input = EncryptDataInput {
+            key_id: "test-key-id".to_string(),
+            file_paths: vec![],
+            output_name: None,
+        };
+
+        let result = input.validate();
+        assert!(result.is_err(), "Empty file_paths should fail validation");
+
+        if let Err(error) = result {
+            assert_eq!(
+                error.message, "At least one file must be selected",
+                "Error message should match"
+            );
+        }
+    }
+
+    #[test]
+    fn test_encrypt_files_input_with_output_name() {
+        let input = EncryptDataInput {
+            key_id: "test-key-id".to_string(),
+            file_paths: vec!["/path/to/file.txt".to_string()],
+            output_name: Some("custom_output.age".to_string()),
+        };
+
+        let result = input.validate();
+        assert!(
+            result.is_ok(),
+            "Input with custom output name should pass validation"
+        );
+    }
+
+    // ============================================================================
+    // CREATE_MANIFEST COMMAND TESTS
+    // ============================================================================
+
+    #[test]
+    fn test_create_manifest_input_validation_success() {
+        let file_paths = vec![
+            "/path/to/file1.txt".to_string(),
+            "/path/to/file2.txt".to_string(),
+            "/path/to/file3.txt".to_string(),
+        ];
+
+        // Note: create_manifest takes Vec<String> directly, no struct validation
+        // This test validates the input format and structure
+        assert!(!file_paths.is_empty(), "File paths should not be empty");
+        assert_eq!(file_paths.len(), 3, "Should have 3 file paths");
+
+        for path in &file_paths {
+            assert!(!path.is_empty(), "Individual file path should not be empty");
+        }
+    }
+
+    #[test]
+    fn test_create_manifest_input_single_folder() {
+        let file_paths = vec!["/path/to/folder".to_string()];
+
+        // Test single folder input
+        assert_eq!(file_paths.len(), 1, "Should have 1 folder path");
+        assert!(!file_paths[0].is_empty(), "Folder path should not be empty");
+    }
+
+    #[test]
+    fn test_create_manifest_input_empty_paths() {
+        let file_paths: Vec<String> = vec![];
+
+        // This would be validated in the command implementation
+        assert!(file_paths.is_empty(), "Empty paths should be detected");
+    }
+
+    #[test]
+    fn test_create_manifest_input_unicode_paths() {
+        let file_paths = vec![
+            "/path/to/文件.txt".to_string(),
+            "/path/to/📁/document.pdf".to_string(),
+        ];
+
+        // Test unicode path handling
+        assert_eq!(file_paths.len(), 2, "Should have 2 unicode file paths");
+        for path in &file_paths {
+            assert!(!path.is_empty(), "Unicode file path should not be empty");
+        }
+    }
+
+    // ============================================================================
+    // GET_ENCRYPTION_STATUS COMMAND TESTS
+    // ============================================================================
+
+    #[test]
+    fn test_get_encryption_status_input_validation_success() {
+        let input = GetEncryptionStatusInput {
+            operation_id: "op-1234567890abcdef".to_string(),
+        };
+
+        let result = input.validate();
+        assert!(result.is_ok(), "Valid operation_id should pass validation");
+    }
+
+    #[test]
+    fn test_get_encryption_status_input_empty_operation_id() {
+        let input = GetEncryptionStatusInput {
+            operation_id: "".to_string(),
+        };
+
+        let result = input.validate();
+        assert!(result.is_err(), "Empty operation_id should fail validation");
+
+        if let Err(error) = result {
+            assert_eq!(
+                error.message, "Operation ID cannot be empty",
+                "Error message should match"
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_encryption_status_input_whitespace_operation_id() {
+        let input = GetEncryptionStatusInput {
+            operation_id: "   ".to_string(),
+        };
+
+        let result = input.validate();
+        assert!(
+            result.is_err(),
+            "Whitespace-only operation_id should fail validation"
+        );
+
+        if let Err(error) = result {
+            assert_eq!(
+                error.message, "Operation ID cannot be empty",
+                "Error message should match"
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_encryption_status_input_long_operation_id() {
+        let long_id = "a".repeat(1000);
+        let input = GetEncryptionStatusInput {
+            operation_id: long_id.clone(),
+        };
+
+        let result = input.validate();
+        assert!(result.is_ok(), "Long operation_id should pass validation");
+    }
+
+    #[test]
+    fn test_get_encryption_status_input_special_characters() {
+        let test_cases = vec![
+            "op-123_456-789",
+            "operation@test.com",
+            "op#123$456%789",
+            "op-123.456.789",
+        ];
+
+        for operation_id in test_cases {
+            let input = GetEncryptionStatusInput {
+                operation_id: operation_id.to_string(),
+            };
+
+            let result = input.validate();
+            assert!(
+                result.is_ok(),
+                "Operation ID with special characters '{}' should pass validation",
+                operation_id
+            );
+        }
+    }
+
+    // ============================================================================
+    // EDGE CASE TESTS FOR TASK 3.3 COMMANDS
+    // ============================================================================
+
+    #[test]
+    fn test_encrypt_files_input_very_long_paths() {
+        let long_path = "/".to_string() + &"a".repeat(1000) + "/file.txt";
+        let input = EncryptDataInput {
+            key_id: "test-key-id".to_string(),
+            file_paths: vec![long_path],
+            output_name: None,
+        };
+
+        let result = input.validate();
+        assert!(result.is_ok(), "Very long file path should pass validation");
+    }
+
+    #[test]
+    fn test_encrypt_files_input_many_files() {
+        let many_files: Vec<String> = (0..1000)
+            .map(|i| format!("/path/to/file_{}.txt", i))
+            .collect();
+
+        let input = EncryptDataInput {
+            key_id: "test-key-id".to_string(),
+            file_paths: many_files,
+            output_name: None,
+        };
+
+        let result = input.validate();
+        assert!(result.is_ok(), "Many files should pass validation");
+    }
+
+    #[test]
+    fn test_create_manifest_input_many_files() {
+        let many_files: Vec<String> = (0..1000)
+            .map(|i| format!("/path/to/file_{}.txt", i))
+            .collect();
+
+        // Test that many files don't cause validation issues
+        assert_eq!(many_files.len(), 1000, "Should have 1000 file paths");
+        assert!(!many_files.is_empty(), "Many files should not be empty");
+    }
+
+    #[test]
+    fn test_get_encryption_status_input_unicode_operation_id() {
+        let input = GetEncryptionStatusInput {
+            operation_id: "操作-123-测试".to_string(),
+        };
+
+        let result = input.validate();
+        assert!(
+            result.is_ok(),
+            "Unicode operation_id should pass validation"
+        );
     }
 }

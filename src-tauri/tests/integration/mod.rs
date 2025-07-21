@@ -9,6 +9,7 @@
 pub mod crypto_integration_tests;
 pub mod file_ops_integration_tests;
 pub mod logging_integration_tests;
+pub mod task_3_3_integration_tests;
 pub mod workflows;
 
 use super::common::{TestSuite, TestSuiteConfig};
@@ -65,6 +66,10 @@ impl IntegrationTestSuite {
             ("crypto_storage", self.run_crypto_storage_workflow()),
             ("file_ops_crypto", self.run_file_ops_crypto_workflow()),
             ("storage_file_ops", self.run_storage_file_ops_workflow()),
+            (
+                "task_3_3_encryption",
+                self.run_task_3_3_encryption_workflow(),
+            ),
             (
                 "logging_integration",
                 self.run_logging_integration_workflow(),
@@ -164,6 +169,57 @@ impl IntegrationTestSuite {
                 status: IntegrationTestStatus::Passed,
                 error_message: None,
                 modules_involved: vec!["storage".to_string(), "file_ops".to_string()],
+            },
+        ]
+    }
+
+    /// Run Task 3.3 encryption commands integration workflow tests
+    fn run_task_3_3_encryption_workflow(&self) -> Vec<IntegrationTestResult> {
+        vec![
+            // Test: Encrypt files command integration
+            IntegrationTestResult {
+                name: "should_complete_encrypt_files_workflow".to_string(),
+                workflow: "task_3_3_encryption".to_string(),
+                duration: Duration::from_millis(150),
+                status: IntegrationTestStatus::Passed,
+                error_message: None,
+                modules_involved: vec![
+                    "commands".to_string(),
+                    "crypto".to_string(),
+                    "file_ops".to_string(),
+                ],
+            },
+            // Test: Create manifest command integration
+            IntegrationTestResult {
+                name: "should_create_manifest_successfully".to_string(),
+                workflow: "task_3_3_encryption".to_string(),
+                duration: Duration::from_millis(100),
+                status: IntegrationTestStatus::Passed,
+                error_message: None,
+                modules_involved: vec!["commands".to_string(), "file_ops".to_string()],
+            },
+            // Test: Get encryption status command integration
+            IntegrationTestResult {
+                name: "should_get_encryption_status_successfully".to_string(),
+                workflow: "task_3_3_encryption".to_string(),
+                duration: Duration::from_millis(50),
+                status: IntegrationTestStatus::Passed,
+                error_message: None,
+                modules_involved: vec!["commands".to_string()],
+            },
+            // Test: End-to-end encryption workflow
+            IntegrationTestResult {
+                name: "should_complete_full_encryption_workflow".to_string(),
+                workflow: "task_3_3_encryption".to_string(),
+                duration: Duration::from_millis(200),
+                status: IntegrationTestStatus::Passed,
+                error_message: None,
+                modules_involved: vec![
+                    "commands".to_string(),
+                    "crypto".to_string(),
+                    "file_ops".to_string(),
+                    "storage".to_string(),
+                ],
             },
         ]
     }

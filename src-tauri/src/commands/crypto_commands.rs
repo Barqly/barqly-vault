@@ -175,7 +175,7 @@ impl ValidateInput for DecryptDataInput {
 
 impl ValidateInput for GetEncryptionStatusInput {
     fn validate(&self) -> Result<(), CommandError> {
-        if self.operation_id.is_empty() {
+        if self.operation_id.trim().is_empty() {
             return Err(CommandError::validation("Operation ID cannot be empty"));
         }
         Ok(())
