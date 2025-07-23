@@ -178,10 +178,31 @@ barqly-vault/
 **Goal**: Build the React/TypeScript frontend structure
 - [x] 4.0: Recreate (convert image/photos) mocksup in mermaid
 - [x] 4.1: Set up React Router for navigation
-- [ ] 4.2: Create base UI components
-  - [ ] 4.2.1: Layout components (Header, TabBar, StatusBar)
-  - [ ] 4.2.2: Form components (Input, Button, Dropdown)
-  - [ ] 4.2.3: Feedback components (Alert, Progress, Modal)
+- [ ] 4.2: Create base UI components with full test coverage
+  - [ ] 4.2.1: Foundation Form Components
+    - [x] 4.2.1.1: KeyGenerationForm (key label + passphrase input)
+    - [ ] 4.2.1.2: PassphraseInput (secure password with validation)
+    - [ ] 4.2.1.3: FileSelectionButton (file/folder picker trigger)
+    - [ ] 4.2.1.4: KeySelectionDropdown (key picker with metadata)
+  - [ ] 4.2.2: Feedback Components
+    - [ ] 4.2.2.1: ProgressBar (visual progress indicator)
+    - [ ] 4.2.2.2: ErrorMessage (structured error display)
+    - [ ] 4.2.2.3: SuccessMessage (success state feedback)
+    - [ ] 4.2.2.4: LoadingSpinner (loading state indicator)
+  - [ ] 4.2.3: Business Logic Hooks
+    - [ ] 4.2.3.1: useKeyGeneration (key creation workflow)
+    - [ ] 4.2.3.2: useFileEncryption (file encryption workflow)
+    - [ ] 4.2.3.3: useFileDecryption (file decryption workflow)
+    - [ ] 4.2.3.4: useProgressTracking (progress monitoring)
+  - [ ] 4.2.4: Page Integration
+    - [ ] 4.2.4.1: SetupPage (complete key generation workflow)
+    - [ ] 4.2.4.2: EncryptPage (file encryption workflow)
+    - [ ] 4.2.4.3: DecryptPage (file decryption workflow)
+  - [ ] 4.2.5: Testing & Quality Assurance
+    - [ ] 4.2.5.1: Unit tests for all components (90%+ coverage)
+    - [ ] 4.2.5.2: Integration tests for all workflows
+    - [ ] 4.2.5.3: E2E tests for critical user journeys
+    - [ ] 4.2.5.4: Accessibility testing (WCAG 2.1 AA)
 - [ ] 4.3: Implement state management (Context API or Zustand)
 - [ ] 4.4: Create custom hooks for Tauri commands
 - [ ] 4.5: Set up theme system with CSS variables
