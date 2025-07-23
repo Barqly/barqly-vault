@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Key, Lock, Unlock } from 'lucide-react';
+import { Key, Lock, Unlock, FileText } from 'lucide-react';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -27,6 +27,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: 'Decrypt',
       icon: Unlock,
       description: 'Decrypt files',
+    },
+    {
+      path: '/demo',
+      label: 'Demo',
+      icon: FileText,
+      description: 'File selection demo',
     },
   ];
 

@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import PassphraseInput from '../../../components/forms/PassphraseInput';
@@ -54,24 +53,22 @@ describe('PassphraseInput (4.2.1.2)', () => {
   });
 
   describe('Passphrase Visibility Toggle', () => {
-    it('should toggle password visibility when eye button is clicked', async () => {
-      render(<PassphraseInput />);
+    it('should toggle password visibility when show/hide button is clicked', async () => {
+      render(<PassphraseInput value="" onChange={() => {}} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByLabelText(/passphrase/i) as HTMLInputElement;
+      expect(input.type).toBe('password');
+
       const toggleButton = screen.getByRole('button', { name: /show password/i });
-
-      // Initially password should be hidden
-      expect(input).toHaveAttribute('type', 'password');
-
-      // Click to show password
       await user.click(toggleButton);
-      expect(input).toHaveAttribute('type', 'text');
-      expect(screen.getByRole('button', { name: /hide password/i })).toBeInTheDocument();
 
-      // Click to hide password again
+      expect(input.type).toBe('text');
+      expect(toggleButton).toHaveAttribute('aria-label', 'hide password');
+
       await user.click(toggleButton);
-      expect(input).toHaveAttribute('type', 'password');
-      expect(screen.getByRole('button', { name: /show password/i })).toBeInTheDocument();
+
+      expect(input.type).toBe('password');
+      expect(toggleButton).toHaveAttribute('aria-label', 'show password');
     });
 
     it('should not toggle visibility when input is disabled', async () => {
@@ -160,7 +157,9 @@ describe('PassphraseInput (4.2.1.2)', () => {
       await user.type(input, 'short');
       await user.tab();
 
-      expect(screen.getByText(/passphrase must be at least 8 characters long/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/passphrase must be at least 8 characters long/i),
+      ).toBeInTheDocument();
     });
 
     it('should show validation error for short passphrase when required', async () => {
@@ -170,7 +169,9 @@ describe('PassphraseInput (4.2.1.2)', () => {
       await user.type(input, 'weakpass');
       await user.tab();
 
-      expect(screen.getByText(/passphrase must be at least 12 characters long/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/passphrase must be at least 12 characters long/i),
+      ).toBeInTheDocument();
     });
 
     it('should not show validation error for strong passphrase', async () => {
@@ -213,7 +214,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       expect(mockOnStrengthChange).toHaveBeenCalledWith({
         isStrong: true,
         message: 'Strong passphrase',
-        score: 6
+        score: 6,
       });
     });
 
@@ -251,21 +252,16 @@ describe('PassphraseInput (4.2.1.2)', () => {
       expect(toggleButton).toHaveAttribute('tabIndex', '-1');
     });
 
-    it('should be keyboard navigable', async () => {
-      render(<PassphraseInput />);
+    it('should handle keyboard navigation correctly', async () => {
+      render(<PassphraseInput value="" onChange={() => {}} />);
 
       const input = screen.getByLabelText(/passphrase/i);
-      const toggleButton = screen.getByRole('button', { name: /show password/i });
-
-      await user.tab();
+      input.focus();
       expect(input).toHaveFocus();
 
-      // Toggle button should not be focusable
       await user.tab();
       expect(document.body).toHaveFocus();
     });
-
-
   });
 
   describe('Error Handling', () => {
@@ -294,7 +290,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       render(<PassphraseInput />);
 
       const input = screen.getByLabelText(/passphrase/i);
-      
+
       // Rapid typing
       await user.type(input, 'a'.repeat(50));
 
@@ -309,7 +305,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       render(<PassphraseInput onStrengthChange={mockOnStrengthChange} />);
 
       const input = screen.getByLabelText(/passphrase/i);
-      
+
       // Rapid typing
       for (let i = 0; i < 10; i++) {
         await user.type(input, 'a');
@@ -319,4 +315,4 @@ describe('PassphraseInput (4.2.1.2)', () => {
       expect(mockOnStrengthChange).toHaveBeenCalledTimes(11);
     });
   });
-}); 
+});

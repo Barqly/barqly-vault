@@ -1,15 +1,16 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, MockedFunction } from 'vitest';
 import KeyGenerationForm from '../../../components/forms/KeyGenerationForm';
 
-// Mock Tauri commands
-vi.mock('@tauri-apps/api', () => ({
+// Mock the Tauri API
+vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
 }));
 
-const mockInvoke = vi.mocked(await import('@tauri-apps/api')).invoke;
+// Import and type the mock
+import { invoke } from '@tauri-apps/api/core';
+const mockInvoke = invoke as MockedFunction<typeof invoke>;
 
 describe('KeyGenerationForm (4.2.1.1)', () => {
   const user = userEvent.setup();
@@ -135,7 +136,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       mockInvoke.mockResolvedValueOnce({
         public_key: 'age1testpublickey',
         key_id: 'test-key-123',
-        saved_path: '/path/to/key'
+        saved_path: '/path/to/key',
       });
 
       render(<KeyGenerationForm />);
@@ -151,13 +152,13 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       await waitFor(() => {
         expect(mockInvoke).toHaveBeenCalledWith('generate_key', {
           label: 'My Backup Key',
-          passphrase: 'SecurePassphrase123!'
+          passphrase: 'SecurePassphrase123!',
         });
       });
     });
 
     it('should show loading state during key generation', async () => {
-      mockInvoke.mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 100)));
+      mockInvoke.mockImplementationOnce(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
       render(<KeyGenerationForm />);
 
@@ -177,7 +178,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       mockInvoke.mockResolvedValueOnce({
         public_key: 'age1testpublickey',
         key_id: 'test-key-123',
-        saved_path: '/path/to/key'
+        saved_path: '/path/to/key',
       });
 
       render(<KeyGenerationForm />);
@@ -200,7 +201,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       mockInvoke.mockResolvedValueOnce({
         public_key: mockPublicKey,
         key_id: 'test-key-123',
-        saved_path: '/path/to/key'
+        saved_path: '/path/to/key',
       });
 
       render(<KeyGenerationForm />);
@@ -242,7 +243,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       mockInvoke.mockResolvedValueOnce({
         public_key: 'age1testpublickey',
         key_id: 'test-key-123',
-        saved_path: '/path/to/key'
+        saved_path: '/path/to/key',
       });
 
       render(<KeyGenerationForm />);
@@ -315,4 +316,4 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       expect(errorMessage).toHaveAttribute('role', 'alert');
     });
   });
-}); 
+});

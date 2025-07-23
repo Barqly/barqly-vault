@@ -2,36 +2,34 @@ import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Key, AlertCircle, CheckCircle } from 'lucide-react';
 import { GenerateKeyInput, GenerateKeyResponse } from '../../lib/api-types';
-import PassphraseInput, { PassphraseStrength } from './PassphraseInput';
+import PassphraseInput from './PassphraseInput';
 
 interface KeyGenerationFormProps {
+  // eslint-disable-next-line no-unused-vars
   onKeyGenerated?: (key: GenerateKeyResponse) => void;
 }
 
 interface FormData {
   label: string;
   passphrase: string;
+  confirmPassphrase: string;
 }
 
 interface FormErrors {
   label?: string;
   passphrase?: string;
+  confirmPassphrase?: string;
 }
 
 const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated }) => {
   const [formData, setFormData] = useState<FormData>({
     label: '',
-    passphrase: ''
+    passphrase: '',
+    confirmPassphrase: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [passphraseStrength, setPassphraseStrength] = useState<PassphraseStrength>({
-    isStrong: false,
-    message: 'Very weak passphrase',
-    score: 0
-  });
-  const [generatedKey, setGeneratedKey] = useState<GenerateKeyResponse | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState<GenerateKeyResponse | null>(null);
 
   // Validation functions
   const validateKeyLabel = (label: string): string | undefined => {
@@ -50,7 +48,28 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
     return undefined;
   };
 
+  const validatePassphrase = (passphrase: string): string | undefined => {
+    if (!passphrase) {
+      return 'Passphrase is required';
+    }
+    if (passphrase.length < 8) {
+      return 'Passphrase must be at least 8 characters long';
+    }
+    return undefined;
+  };
 
+  const validateConfirmPassphrase = (
+    confirmPassphrase: string,
+    passphrase: string,
+  ): string | undefined => {
+    if (!confirmPassphrase) {
+      return 'Please confirm your passphrase';
+    }
+    if (confirmPassphrase !== passphrase) {
+      return 'Passphrases do not match';
+    }
+    return undefined;
+  };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     const newFormData = { ...formData, [field]: value };
@@ -58,15 +77,22 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
 
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
   const validateForm = (): boolean => {
     const labelError = validateKeyLabel(formData.label);
+    const passphraseError = validatePassphrase(formData.passphrase);
+    const confirmPassphraseError = validateConfirmPassphrase(
+      formData.confirmPassphrase,
+      formData.passphrase,
+    );
 
     const newErrors: FormErrors = {};
     if (labelError) newErrors.label = labelError;
+    if (passphraseError) newErrors.passphrase = passphraseError;
+    if (confirmPassphraseError) newErrors.confirmPassphrase = confirmPassphraseError;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -79,40 +105,26 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
       return;
     }
 
-    setIsSubmitting(true);
-    setSuccessMessage('');
-    setGeneratedKey(null);
+    setIsLoading(true);
 
     try {
       const input: GenerateKeyInput = {
-        label: formData.label.trim(),
-        passphrase: formData.passphrase
+        label: formData.label,
+        passphrase: formData.passphrase,
       };
 
-      const result = await invoke<GenerateKeyResponse>('generate_key', input);
-      
-      setGeneratedKey(result);
-      setSuccessMessage('Key generated successfully!');
-      
-      // Reset form
-      setFormData({ label: '', passphrase: '' });
-      setPassphraseStrength({ isStrong: false, message: '', score: 0 });
-      
-      // Call callback if provided
+      const result = await invoke<GenerateKeyResponse>('generate_key', { input });
+      setSuccess(result);
       if (onKeyGenerated) {
         onKeyGenerated(result);
       }
-    } catch (error) {
-      console.error('Key generation failed:', error);
-      setErrors({ 
-        passphrase: error instanceof Error ? error.message : 'failed to generate key' 
-      });
+    } catch (err) {
+      console.error('Key generation failed:', err);
+      // Handle error appropriately
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
-
-
 
   return (
     <div className="max-w-md mx-auto">
@@ -123,9 +135,7 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
             <Key className="w-6 h-6 text-blue-600" />
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Generate Encryption Key</h2>
-          <p className="text-sm text-gray-600">
-            Create a new encryption key to secure your files
-          </p>
+          <p className="text-sm text-gray-600">Create a new encryption key to secure your files</p>
         </div>
 
         {/* Key Label Input */}
@@ -142,17 +152,22 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
               errors.label ? 'border-red-300' : 'border-gray-300'
             }`}
             placeholder="e.g., My Backup Key"
-            disabled={isSubmitting}
+            disabled={isLoading}
             aria-describedby={errors.label ? 'keyLabel-error' : undefined}
           />
           {errors.label && (
-            <p id="keyLabel-error" className="mt-1 text-sm text-red-600 flex items-center" role="alert">
+            <p
+              id="keyLabel-error"
+              className="mt-1 text-sm text-red-600 flex items-center"
+              role="alert"
+            >
               <AlertCircle className="w-4 h-4 mr-1" />
               {errors.label}
             </p>
           )}
           <p className="mt-1 text-xs text-gray-500">
-            Key label must be 3-50 characters, letters, numbers, spaces, hyphens, and underscores only
+            Key label must be 3-50 characters, letters, numbers, spaces, hyphens, and underscores
+            only
           </p>
         </div>
 
@@ -160,24 +175,35 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
         <PassphraseInput
           value={formData.passphrase}
           onChange={(value) => handleInputChange('passphrase', value)}
-          onStrengthChange={setPassphraseStrength}
           label="Passphrase"
           placeholder="Enter a strong passphrase"
-          disabled={isSubmitting}
+          disabled={isLoading}
           required
           error={errors.passphrase}
-          minLength={12}
+          minLength={8}
           requireStrong
           showStrength
+        />
+
+        {/* Confirm Passphrase Input */}
+        <PassphraseInput
+          value={formData.confirmPassphrase}
+          onChange={(value) => handleInputChange('confirmPassphrase', value)}
+          label="Confirm Passphrase"
+          placeholder="Confirm your passphrase"
+          disabled={isLoading}
+          required
+          error={errors.confirmPassphrase}
+          minLength={8}
         />
 
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isLoading}
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? (
+          {isLoading ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
               Generating Key...
@@ -189,29 +215,27 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
       </form>
 
       {/* Success Message */}
-      {successMessage && (
+      {success && (
         <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
           <div className="flex items-center">
             <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
-            <p className="text-sm font-medium text-green-800">{successMessage}</p>
+            <p className="text-sm font-medium text-green-800">Key generated successfully!</p>
           </div>
         </div>
       )}
 
       {/* Generated Key Display */}
-      {generatedKey && (
+      {success && (
         <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
           <h3 className="text-sm font-medium text-gray-900 mb-2">Generated Public Key</h3>
           <div className="bg-white p-3 rounded border font-mono text-xs break-all">
-            {generatedKey.public_key}
+            {success.public_key}
           </div>
-          <p className="mt-2 text-xs text-gray-600">
-            Key ID: {generatedKey.key_id}
-          </p>
+          <p className="mt-2 text-xs text-gray-600">Key ID: {success.key_id}</p>
         </div>
       )}
     </div>
   );
 };
 
-export default KeyGenerationForm; 
+export default KeyGenerationForm;

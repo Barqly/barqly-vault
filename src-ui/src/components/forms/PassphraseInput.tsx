@@ -9,7 +9,9 @@ export interface PassphraseStrength {
 
 export interface PassphraseInputProps {
   value?: string;
+  // eslint-disable-next-line no-unused-vars
   onChange?: (value: string) => void;
+  // eslint-disable-next-line no-unused-vars
   onStrengthChange?: (strength: PassphraseStrength) => void;
   onBlur?: () => void;
   onFocus?: () => void;
@@ -40,7 +42,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   requireStrong = false,
   showStrength = true,
   className = '',
-  id
+  id,
 }) => {
   const [internalValue, setInternalValue] = useState('');
   const [showPassphrase, setShowPassphrase] = useState(false);
@@ -48,10 +50,12 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   const [passphraseStrength, setPassphraseStrength] = useState<PassphraseStrength>({
     isStrong: false,
     message: 'Very weak passphrase',
-    score: 0
+    score: 0,
   });
 
   // Use controlled value if provided, otherwise use internal state
+  // Remove all instances of: const value = ... and const strength = ... (where unused)
+  // Replace /\[ with /[ and /\/ with /
   const value = controlledValue !== undefined ? controlledValue : internalValue;
 
   // Check passphrase strength
@@ -66,8 +70,8 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
       lowercase: /[a-z]/.test(passphrase),
       uppercase: /[A-Z]/.test(passphrase),
       numbers: /\d/.test(passphrase),
-      symbols: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(passphrase),
-      noCommon: !/(password|123|qwerty|admin)/i.test(passphrase)
+      symbols: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(passphrase),
+      noCommon: !/(password|123|qwerty|admin)/i.test(passphrase),
     };
 
     // Score based on criteria
@@ -104,27 +108,30 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   }, []);
 
   // Validate passphrase
-  const validatePassphrase = useCallback((passphrase: string): string => {
-    if (required && !passphrase) {
-      return 'Passphrase is required';
-    }
-    if (passphrase && passphrase.length < minLength) {
-      return `Passphrase must be at least ${minLength} characters long`;
-    }
-    if (requireStrong && passphrase) {
-      const strength = checkPassphraseStrength(passphrase);
-      if (!strength.isStrong) {
-        return 'Passphrase is too weak';
+  const validatePassphrase = useCallback(
+    (passphrase: string): string => {
+      if (required && !passphrase) {
+        return 'Passphrase is required';
       }
-    }
-    return '';
-  }, [required, minLength, requireStrong, checkPassphraseStrength]);
+      if (passphrase && passphrase.length < minLength) {
+        return `Passphrase must be at least ${minLength} characters long`;
+      }
+      if (requireStrong && passphrase) {
+        const strength = checkPassphraseStrength(passphrase);
+        if (!strength.isStrong) {
+          return 'Passphrase is too weak';
+        }
+      }
+      return '';
+    },
+    [required, minLength, requireStrong, checkPassphraseStrength],
+  );
 
   // Update strength when value changes
   useEffect(() => {
     const strength = checkPassphraseStrength(value);
     setPassphraseStrength(strength);
-    
+
     if (onStrengthChange) {
       onStrengthChange(strength);
     }
@@ -134,12 +141,12 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setValidationError('');
-    
+
     // Update internal state if not controlled
     if (controlledValue === undefined) {
       setInternalValue(newValue);
     }
-    
+
     if (onChange) {
       onChange(newValue);
     }
@@ -149,7 +156,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   const handleBlur = () => {
     const error = validatePassphrase(value);
     setValidationError(error);
-    
+
     if (onBlur) {
       onBlur();
     }
@@ -158,7 +165,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   // Handle focus
   const handleFocus = () => {
     setValidationError('');
-    
+
     if (onFocus) {
       onFocus();
     }
@@ -188,7 +195,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
-      
+
       <div className="relative">
         <input
           id={id || 'passphrase-input'}
@@ -209,7 +216,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
           `}
           aria-describedby={displayError ? `${id || 'passphrase-input'}-error` : undefined}
         />
-        
+
         <button
           type="button"
           onClick={() => setShowPassphrase(!showPassphrase)}
@@ -243,11 +250,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
 
       {/* Error Message */}
       {displayError && (
-        <p 
-          id={`${id || 'passphrase-input'}-error`}
-          className="text-sm text-red-600"
-          role="alert"
-        >
+        <p id={`${id || 'passphrase-input'}-error`} className="text-sm text-red-600" role="alert">
           {displayError}
         </p>
       )}
@@ -255,4 +258,4 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   );
 };
 
-export default PassphraseInput; 
+export default PassphraseInput;
