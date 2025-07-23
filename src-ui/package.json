@@ -9,7 +9,13 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
-    "test": "echo 'No test runner configured yet. Add Jest or React Testing Library for tests.'"
+    "fmt": "prettier --write src",
+    "test": "echo 'No test runner configured yet. Add Jest or React Testing Library for tests.'",
+    "ui:dev": "vite",
+    "ui:build": "tsc && vite build",
+    "ui:preview": "vite preview",
+    "ui:lint": "eslint src --ext .ts,.tsx,.js,.jsx",
+    "ui:fmt": "prettier --write src"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
@@ -21,6 +27,7 @@
     "lucide-react": "^0.525.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^7.7.0",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
