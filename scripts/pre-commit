@@ -52,12 +52,64 @@ fi
 # Check for any staged files that might need validation
 echo "📋 Checking staged files..."
 
-# Check for any .ts/.tsx files (frontend validation)
-if git diff --cached --name-only | grep -E '\.(ts|tsx)$' > /dev/null; then
-    echo "🌐 TypeScript files detected"
+# Check for frontend files and run validation
+if git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx|json|css|html)$' > /dev/null; then
+    echo "🌐 Frontend files detected. Running validation..."
+    
     if [ -d "src-ui" ]; then
-        echo "💡 Consider running 'npm run lint' and 'npm run test' in src-ui/"
+        cd src-ui
+        
+        # Check if node_modules exists, if not install dependencies
+        if [ ! -d "node_modules" ]; then
+            echo "📦 Installing frontend dependencies..."
+            npm install
+        fi
+        
+        # Run Prettier formatting check
+        echo "🎨 Running Prettier formatting check..."
+        if ! npx prettier --check .; then
+            echo "❌ Code formatting issues found!"
+            echo "💡 Run 'npx prettier --write .' in src-ui/ to fix formatting"
+            exit 1
+        fi
+        echo "✅ Formatting check passed"
+        
+        # Run ESLint
+        echo "🔍 Running ESLint..."
+        if ! npm run lint; then
+            echo "❌ ESLint issues found!"
+            echo "💡 Fix the linting issues above and try again"
+            exit 1
+        fi
+        echo "✅ ESLint check passed"
+        
+        # Run TypeScript type checking
+        echo "🔧 Running TypeScript type check..."
+        if ! npx tsc --noEmit; then
+            echo "❌ TypeScript type errors found!"
+            echo "💡 Fix the type errors above and try again"
+            exit 1
+        fi
+        echo "✅ TypeScript check passed"
+        
+        # Run tests (if they exist)
+        if npm run test --if-present; then
+            echo "✅ Tests passed"
+        else
+            echo "⚠️  No tests configured or tests failed"
+        fi
+        
+        cd ..
+        echo ""
+        echo "🎉 All frontend validation checks passed!"
+        echo ""
+    else
+        echo "⚠️  Frontend files detected but src-ui/ directory not found"
     fi
 fi
+
+echo "🎉 All validation checks passed!"
+echo "📝 Proceeding with commit..."
+echo ""
 
 exit 0 
