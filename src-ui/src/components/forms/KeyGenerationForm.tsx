@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Key, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Key, AlertCircle, CheckCircle } from 'lucide-react';
 import { GenerateKeyInput, GenerateKeyResponse } from '../../lib/api-types';
+import PassphraseInput, { PassphraseStrength } from './PassphraseInput';
 
 interface KeyGenerationFormProps {
   onKeyGenerated?: (key: GenerateKeyResponse) => void;
@@ -17,12 +18,6 @@ interface FormErrors {
   passphrase?: string;
 }
 
-interface PassphraseStrength {
-  isStrong: boolean;
-  message: string;
-  score: number;
-}
-
 const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated }) => {
   const [formData, setFormData] = useState<FormData>({
     label: '',
@@ -30,10 +25,9 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassphrase, setShowPassphrase] = useState(false);
   const [passphraseStrength, setPassphraseStrength] = useState<PassphraseStrength>({
     isStrong: false,
-    message: '',
+    message: 'Very weak passphrase',
     score: 0
   });
   const [generatedKey, setGeneratedKey] = useState<GenerateKeyResponse | null>(null);
@@ -56,81 +50,7 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
     return undefined;
   };
 
-  const validatePassphrase = (passphrase: string): string | undefined => {
-    if (!passphrase) {
-      return 'Passphrase is required';
-    }
-    if (passphrase.length < 12) {
-      return 'Passphrase must be at least 12 characters long';
-    }
-    const strength = checkPassphraseStrength(passphrase);
-    if (!strength.isStrong) {
-      return 'Passphrase is too weak';
-    }
-    return undefined;
-  };
 
-  const checkPassphraseStrength = (passphrase: string): PassphraseStrength => {
-    if (!passphrase) {
-      return { isStrong: false, message: '', score: 0 };
-    }
-
-    let score = 0;
-    const messages: string[] = [];
-
-    // Length check
-    if (passphrase.length >= 12) score += 2;
-    if (passphrase.length >= 16) score += 1;
-    if (passphrase.length >= 20) score += 1;
-
-    // Character variety checks
-    if (/[a-z]/.test(passphrase)) score += 1;
-    if (/[A-Z]/.test(passphrase)) score += 1;
-    if (/[0-9]/.test(passphrase)) score += 1;
-    if (/[^a-zA-Z0-9]/.test(passphrase)) score += 1;
-
-    // Common password check
-    const commonPasswords = ['password', '123456', 'qwerty', 'admin', 'letmein'];
-    if (commonPasswords.some(common => passphrase.toLowerCase().includes(common))) {
-      score -= 2;
-      messages.push('Avoid common passwords');
-    }
-
-    // Sequential patterns check
-    if (/(.)\1{2,}/.test(passphrase)) {
-      score -= 1;
-      messages.push('Avoid repeated characters');
-    }
-
-    // Determine strength level
-    let message = '';
-    let isStrong = false;
-
-    if (score >= 6) {
-      message = 'Strong passphrase';
-      isStrong = true;
-    } else if (score >= 4) {
-      message = 'Moderate passphrase';
-      isStrong = false;
-    } else if (score >= 2) {
-      message = 'Weak passphrase';
-      isStrong = false;
-    } else {
-      message = 'Very weak passphrase';
-      isStrong = false;
-    }
-
-    // Show "passphrase is too weak" for weak passwords
-    if (!isStrong) {
-      message = 'Passphrase is too weak';
-    }
-
-    if (messages.length > 0) {
-      message += ` - ${messages.join(', ')}`;
-    }
-
-    return { isStrong, message, score };
-  };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     const newFormData = { ...formData, [field]: value };
@@ -140,21 +60,13 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
-
-    // Check passphrase strength in real-time
-    if (field === 'passphrase') {
-      const strength = checkPassphraseStrength(value);
-      setPassphraseStrength(strength);
-    }
   };
 
   const validateForm = (): boolean => {
     const labelError = validateKeyLabel(formData.label);
-    const passphraseError = validatePassphrase(formData.passphrase);
 
     const newErrors: FormErrors = {};
     if (labelError) newErrors.label = labelError;
-    if (passphraseError) newErrors.passphrase = passphraseError;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -200,12 +112,7 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
     }
   };
 
-  const getPassphraseStrengthColor = () => {
-    if (passphraseStrength.score >= 6) return 'text-green-600';
-    if (passphraseStrength.score >= 4) return 'text-yellow-600';
-    if (passphraseStrength.score >= 2) return 'text-orange-600';
-    return 'text-red-600';
-  };
+
 
   return (
     <div className="max-w-md mx-auto">
@@ -250,67 +157,19 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
         </div>
 
         {/* Passphrase Input */}
-        <div>
-          <label htmlFor="passphrase" className="block text-sm font-medium text-gray-700 mb-2">
-            Passphrase
-          </label>
-          <div className="relative">
-            <input
-              id="passphrase"
-              type={showPassphrase ? 'text' : 'password'}
-              value={formData.passphrase}
-              onChange={(e) => handleInputChange('passphrase', e.target.value)}
-              className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.passphrase ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="Enter a strong passphrase"
-              disabled={isSubmitting}
-              aria-describedby={errors.passphrase ? 'passphrase-error' : 'passphrase-strength'}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassphrase(!showPassphrase)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              disabled={isSubmitting}
-              tabIndex={-1}
-              aria-label={showPassphrase ? 'Hide password' : 'Show password'}
-            >
-              {showPassphrase ? (
-                <EyeOff className="h-4 w-4 text-gray-400" />
-              ) : (
-                <Eye className="h-4 w-4 text-gray-400" />
-              )}
-            </button>
-          </div>
-          
-          {/* Passphrase Strength Indicator */}
-          <div id="passphrase-strength" className="mt-2">
-            <p className={`text-sm font-medium ${getPassphraseStrengthColor()}`}>
-              Passphrase Strength: {passphraseStrength.message || 'Enter a passphrase'}
-            </p>
-            <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
-              <div
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  passphraseStrength.score >= 6 ? 'bg-green-500' :
-                  passphraseStrength.score >= 4 ? 'bg-yellow-500' :
-                  passphraseStrength.score >= 2 ? 'bg-orange-500' : 'bg-red-500'
-                }`}
-                style={{ width: `${Math.min((passphraseStrength.score / 6) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          {errors.passphrase && (
-            <p id="passphrase-error" className="mt-1 text-sm text-red-600 flex items-center" role="alert">
-              <AlertCircle className="w-4 h-4 mr-1" />
-              {errors.passphrase}
-            </p>
-          )}
-          
-          <p className="mt-1 text-xs text-gray-500">
-            Passphrase must be at least 12 characters with letters, numbers, and symbols
-          </p>
-        </div>
+        <PassphraseInput
+          value={formData.passphrase}
+          onChange={(value) => handleInputChange('passphrase', value)}
+          onStrengthChange={setPassphraseStrength}
+          label="Passphrase"
+          placeholder="Enter a strong passphrase"
+          disabled={isSubmitting}
+          required
+          error={errors.passphrase}
+          minLength={12}
+          requireStrong
+          showStrength
+        />
 
         {/* Submit Button */}
         <button
