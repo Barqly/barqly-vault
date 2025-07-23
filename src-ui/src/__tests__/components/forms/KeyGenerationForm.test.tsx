@@ -48,7 +48,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       render(<KeyGenerationForm />);
 
       const generateButton = screen.getByRole('button', { name: /generate key/i });
-      fireEvent.submit(generateButton.closest("form")!);
+      fireEvent.submit(generateButton.closest('form')!);
 
       expect(screen.getByText(/key label is required/i)).toBeInTheDocument();
     });
@@ -60,7 +60,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       await user.type(keyLabelInput, 'invalid@label');
 
       const generateButton = screen.getByRole('button', { name: /generate key/i });
-      fireEvent.submit(generateButton.closest("form")!);
+      fireEvent.submit(generateButton.closest('form')!);
 
       expect(screen.getByText(/key label contains invalid characters/i)).toBeInTheDocument();
     });
@@ -72,7 +72,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       await user.type(keyLabelInput, 'Valid Key Label');
 
       const generateButton = screen.getByRole('button', { name: /generate key/i });
-      fireEvent.submit(generateButton.closest("form")!);
+      fireEvent.submit(generateButton.closest('form')!);
 
       expect(screen.getByText(/passphrase is required/i)).toBeInTheDocument();
     });
@@ -126,7 +126,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
 
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
       await user.type(passphraseInput, 'MySecurePassphrase123!@#');
-      
+
       // Fill in confirm passphrase to avoid showing "Very weak passphrase" for empty field
       const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
       await user.type(confirmPassphraseInput, 'MySecurePassphrase123!@#');
@@ -151,12 +151,12 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
 
       await user.type(keyLabelInput, 'My Backup Key');
       await user.type(passphraseInput, 'SecurePassphrase123!');
-      
+
       // Fill in confirm passphrase
       const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
       await user.type(confirmPassphraseInput, 'SecurePassphrase123!');
-      
-      fireEvent.submit(generateButton.closest("form")!);
+
+      fireEvent.submit(generateButton.closest('form')!);
 
       await waitFor(() => {
         expect(mockInvoke).toHaveBeenCalledWith('generate_key', {
@@ -179,12 +179,12 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
 
       await user.type(keyLabelInput, 'My Backup Key');
       await user.type(passphraseInput, 'SecurePassphrase123!');
-      
+
       // Fill in confirm passphrase
       const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
       await user.type(confirmPassphraseInput, 'SecurePassphrase123!');
-      
-      fireEvent.submit(generateButton.closest("form")!);
+
+      fireEvent.submit(generateButton.closest('form')!);
 
       expect(screen.getByText(/generating key/i)).toBeInTheDocument();
       expect(generateButton).toBeDisabled();
@@ -205,12 +205,12 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
 
       await user.type(keyLabelInput, 'My Backup Key');
       await user.type(passphraseInput, 'SecurePassphrase123!');
-      
+
       // Fill in confirm passphrase
       const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
       await user.type(confirmPassphraseInput, 'SecurePassphrase123!');
-      
-      fireEvent.submit(generateButton.closest("form")!);
+
+      fireEvent.submit(generateButton.closest('form')!);
 
       await waitFor(() => {
         expect(screen.getByText(/key generated successfully/i)).toBeInTheDocument();
@@ -233,12 +233,12 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
 
       await user.type(keyLabelInput, 'My Backup Key');
       await user.type(passphraseInput, 'SecurePassphrase123!');
-      
+
       // Fill in confirm passphrase
       const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
       await user.type(confirmPassphraseInput, 'SecurePassphrase123!');
-      
-      fireEvent.submit(generateButton.closest("form")!);
+
+      fireEvent.submit(generateButton.closest('form')!);
 
       await waitFor(() => {
         expect(screen.getByText(mockPublicKey)).toBeInTheDocument();
@@ -256,12 +256,12 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
 
       await user.type(keyLabelInput, 'My Backup Key');
       await user.type(passphraseInput, 'SecurePassphrase123!');
-      
+
       // Fill in confirm passphrase
       const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
       await user.type(confirmPassphraseInput, 'SecurePassphrase123!');
-      
-      fireEvent.submit(generateButton.closest("form")!);
+
+      fireEvent.submit(generateButton.closest('form')!);
 
       await waitFor(() => {
         expect(screen.getByText(/key generation failed/i)).toBeInTheDocument();
@@ -285,12 +285,12 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
 
       await user.type(keyLabelInput, 'My Backup Key');
       await user.type(passphraseInput, 'SecurePassphrase123!');
-      
+
       // Fill in confirm passphrase
       const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
       await user.type(confirmPassphraseInput, 'SecurePassphrase123!');
-      
-      fireEvent.submit(generateButton.closest("form")!);
+
+      fireEvent.submit(generateButton.closest('form')!);
 
       await waitFor(() => {
         expect(screen.getByText(/key generated successfully/i)).toBeInTheDocument();
@@ -305,7 +305,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       render(<KeyGenerationForm />);
 
       const generateButton = screen.getByRole('button', { name: /generate key/i });
-      fireEvent.submit(generateButton.closest("form")!);
+      fireEvent.submit(generateButton.closest('form')!);
 
       // Should show validation errors for all required fields
       await waitFor(() => {
@@ -360,20 +360,18 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       render(<KeyGenerationForm />);
 
       const generateButton = screen.getByRole('button', { name: /generate key/i });
-      fireEvent.submit(generateButton.closest("form")!);
+      fireEvent.submit(generateButton.closest('form')!);
 
       // Check that validation errors have proper ARIA attributes
       await waitFor(() => {
         const keyLabelError = screen.getByText(/Key label is required/i);
         expect(keyLabelError).toHaveAttribute('role', 'alert');
       });
-      
+
       await waitFor(() => {
         const passphraseError = screen.getByText(/Passphrase is required/i);
         expect(passphraseError).toHaveAttribute('role', 'alert');
       });
     });
   });
-
-
 });

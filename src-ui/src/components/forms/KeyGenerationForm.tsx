@@ -120,7 +120,7 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
       if (onKeyGenerated) {
         onKeyGenerated(result);
       }
-      
+
       // Reset form after successful key generation
       setFormData({
         label: '',
