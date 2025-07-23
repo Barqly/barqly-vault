@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import zxcvbn from 'zxcvbn';
 
 export interface PassphraseStrength {
   isStrong: boolean;
@@ -62,53 +63,86 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   // Use controlled value if provided, otherwise use internal state
   const value = controlledValue !== undefined ? controlledValue : internalValue;
 
-  // Check passphrase strength
+  // Check passphrase strength using zxcvbn with Bitcoin custody requirements
   const checkPassphraseStrength = useCallback((passphrase: string): PassphraseStrength => {
     if (!passphrase) {
       return { isStrong: false, message: 'Very weak passphrase', score: 0 };
     }
 
-    let score = 0;
-    const checks = {
-      length: passphrase.length >= 12,
-      lowercase: /[a-z]/.test(passphrase),
-      uppercase: /[A-Z]/.test(passphrase),
-      numbers: /\d/.test(passphrase),
-      symbols: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(passphrase),
-      noCommon: !/(password|123|qwerty|admin)/i.test(passphrase),
-    };
+    // Use zxcvbn for base assessment
+    const result = zxcvbn(passphrase);
 
-    // Score based on criteria
-    if (checks.length) score += 1;
-    if (checks.lowercase) score += 1;
-    if (checks.uppercase) score += 1;
-    if (checks.numbers) score += 1;
-    if (checks.symbols) score += 1;
-    if (checks.noCommon) score += 1;
+    // Bitcoin custody security requirements
+    const hasUppercase = /[A-Z]/.test(passphrase);
+    const hasLowercase = /[a-z]/.test(passphrase);
+    const hasNumbers = /\d/.test(passphrase);
+    const hasSymbols = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(passphrase);
+    const isLongEnough = passphrase.length >= 16;
 
-    // Bonus for length
-    if (passphrase.length >= 16) score += 1;
-    if (passphrase.length >= 20) score += 1;
+    // Count character types
+    const charTypes = [hasUppercase, hasLowercase, hasNumbers, hasSymbols].filter(Boolean).length;
 
-    // Determine strength level
+    // Additional security checks for Bitcoin custody
+    const commonNames =
+      /(alice|bob|charlie|david|eve|frank|grace|henry|iris|jack|kate|lisa|mary|nancy|oliver|peter|queen|robert|sarah|tom|una|victor|wendy|xavier|yuki|zoe)/i;
+    const sequentialPatterns =
+      /(123|234|345|456|567|678|789|890|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz)/i;
+    const repeatingPatterns = /(.)\1{2,}/; // 3+ repeated characters
+    const keyboardPatterns = /(qwerty|asdfgh|zxcvbn|123456|654321|qazwsx|edcrfv|tgbyhn|ujmikl)/i;
+
+    // Check for specific security issues
+    const hasCommonName = commonNames.test(passphrase);
+    const hasSequentialPattern = sequentialPatterns.test(passphrase);
+    const hasRepeatingPattern = repeatingPatterns.test(passphrase);
+    const hasKeyboardPattern = keyboardPatterns.test(passphrase);
+
+    // Bitcoin custody requirements: 16+ chars, 3+ character types, good zxcvbn score, no security issues
+    const meetsBitcoinStandards =
+      isLongEnough &&
+      charTypes >= 3 &&
+      result.score >= 3 &&
+      !hasCommonName &&
+      !hasSequentialPattern &&
+      !hasRepeatingPattern &&
+      !hasKeyboardPattern;
+
     let message = '';
     let isStrong = false;
 
-    if (score >= 6) {
-      message = 'Strong passphrase';
-      isStrong = true;
-    } else if (score >= 4) {
-      message = 'Moderate passphrase';
-      isStrong = false;
-    } else if (score >= 2) {
-      message = 'Weak passphrase';
-      isStrong = false;
+    if (meetsBitcoinStandards) {
+      if (result.score === 4 && charTypes === 4) {
+        message = 'Excellent passphrase';
+        isStrong = true;
+      } else if (result.score >= 3) {
+        message = 'Strong passphrase';
+        isStrong = true;
+      }
     } else {
-      message = 'Very weak passphrase';
+      if (!isLongEnough) {
+        message = 'Too short - use at least 16 characters';
+      } else if (charTypes < 3) {
+        message = `Include more character types (${charTypes}/4): uppercase, lowercase, numbers, symbols`;
+      } else if (hasCommonName) {
+        message = 'Avoid common names - use random words instead';
+      } else if (hasSequentialPattern) {
+        message = 'Avoid sequential patterns like "123" or "abc"';
+      } else if (hasRepeatingPattern) {
+        message = 'Avoid repeating characters';
+      } else if (hasKeyboardPattern) {
+        message = 'Avoid keyboard patterns';
+      } else if (result.score < 3) {
+        message = 'Too predictable - avoid patterns and common sequences';
+      } else {
+        message = 'Moderate passphrase';
+      }
       isStrong = false;
     }
 
-    return { isStrong, message, score };
+    return {
+      isStrong,
+      message,
+      score: result.score * 3, // Scale to 0-12 for progress bar
+    };
   }, []);
 
   // Check if confirmation matches
@@ -187,17 +221,17 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
 
   // Get strength color
   const getStrengthColor = (): string => {
-    if (passphraseStrength.score >= 6) return 'text-green-600';
-    if (passphraseStrength.score >= 4) return 'text-yellow-600';
-    if (passphraseStrength.score >= 2) return 'text-orange-600';
+    if (passphraseStrength.score >= 9) return 'text-green-600';
+    if (passphraseStrength.score >= 6) return 'text-yellow-600';
+    if (passphraseStrength.score >= 3) return 'text-orange-600';
     return 'text-red-600';
   };
 
   // Get progress bar color
   const getProgressColor = (): string => {
-    if (passphraseStrength.score >= 6) return 'bg-green-500';
-    if (passphraseStrength.score >= 4) return 'bg-yellow-500';
-    if (passphraseStrength.score >= 2) return 'bg-orange-500';
+    if (passphraseStrength.score >= 9) return 'bg-green-500';
+    if (passphraseStrength.score >= 6) return 'bg-yellow-500';
+    if (passphraseStrength.score >= 3) return 'bg-orange-500';
     return 'bg-red-500';
   };
 
@@ -267,8 +301,15 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className={`h-2 rounded-full transition-all duration-300 ${getProgressColor()}`}
-                  style={{ width: `${Math.min((passphraseStrength.score / 6) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((passphraseStrength.score / 12) * 100, 100)}%` }}
                 />
+              </div>
+              {/* Security guidance */}
+              <div className="text-xs text-gray-600 space-y-1">
+                <p>• Minimum 16 characters for Bitcoin custody security</p>
+                <p>• Include at least 3 character types: uppercase, lowercase, numbers, symbols</p>
+                <p>• You can use any words, but mix them with numbers and symbols</p>
+                <p>• Avoid predictable patterns like "123" or "abc"</p>
               </div>
             </>
           )}

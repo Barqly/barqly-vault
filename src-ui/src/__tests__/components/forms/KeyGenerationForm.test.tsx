@@ -85,8 +85,8 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
       await user.type(passphraseInput, 'weak');
 
-      // Should show weak passphrase warning after user types
-      expect(screen.getByText(/Weak passphrase/i)).toBeInTheDocument();
+      // Should show requirement for 16 characters minimum
+      expect(screen.getByText(/too short - use at least 16 characters/i)).toBeInTheDocument();
     });
 
     it('should accept valid form data', async () => {
@@ -111,7 +111,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
       await user.type(passphraseInput, 'short');
 
-      expect(screen.getByText(/Weak passphrase/i)).toBeInTheDocument();
+      expect(screen.getByText(/too short - use at least 16 characters/i)).toBeInTheDocument();
     });
 
     it('should show weak passphrase warning for common passwords', async () => {
@@ -120,20 +120,16 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
       await user.type(passphraseInput, 'password123');
 
-      expect(screen.getByText(/Weak passphrase/i)).toBeInTheDocument();
+      expect(screen.getByText(/too short - use at least 16 characters/i)).toBeInTheDocument();
     });
 
     it('should accept strong passphrase', async () => {
       render(<KeyGenerationForm />);
 
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
-      await user.type(passphraseInput, 'MySecurePassphrase123!@#');
+      await user.type(passphraseInput, 'MySecureBitcoinCustodyPassphrase2024!@#$%');
 
-      // Fill in confirm passphrase to avoid showing "Very weak passphrase" for empty field
-      const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
-      await user.type(confirmPassphraseInput, 'MySecurePassphrase123!@#');
-
-      expect(screen.queryByText(/Very weak passphrase/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/excellent passphrase/i)).toBeInTheDocument();
     });
   });
 
