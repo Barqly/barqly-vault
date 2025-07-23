@@ -92,7 +92,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       const input = screen.getByLabelText(/passphrase/i);
       await user.type(input, 'a');
 
-      expect(screen.getByText(/too short - use at least 16 characters/i)).toBeInTheDocument();
+      expect(screen.getByText(/too short \(1\/12 characters\)/i)).toBeInTheDocument();
     });
 
     it('should show weak passphrase strength', async () => {
@@ -101,7 +101,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       const input = screen.getByLabelText(/passphrase/i);
       await user.type(input, 'weakpass');
 
-      expect(screen.getByText(/too short - use at least 16 characters/i)).toBeInTheDocument();
+      expect(screen.getByText(/too short \(8\/12 characters\)/i)).toBeInTheDocument();
     });
 
     it('should show weak passphrase strength for moderate input', async () => {
@@ -110,16 +110,16 @@ describe('PassphraseInput (4.2.1.2)', () => {
       const input = screen.getByLabelText(/passphrase/i);
       await user.type(input, 'moderate123');
 
-      expect(screen.getByText(/too short - use at least 16 characters/i)).toBeInTheDocument();
+      expect(screen.getByText(/too short \(11\/12 characters\)/i)).toBeInTheDocument();
     });
 
     it('should show strong passphrase strength', async () => {
       render(<PassphraseInput />);
 
       const input = screen.getByLabelText(/passphrase/i);
-      await user.type(input, 'MySecureBitcoinCustodyPassphrase2024!@#$%');
+      await user.type(input, 'MySecure@2024!');
 
-      expect(screen.getByText(/excellent passphrase/i)).toBeInTheDocument();
+      expect(screen.getByText(/strong passphrase/i)).toBeInTheDocument();
     });
 
     it('should show strength indicator by default', () => {
@@ -196,10 +196,10 @@ describe('PassphraseInput (4.2.1.2)', () => {
       render(<PassphraseInput requireStrong />);
 
       const input = screen.getByLabelText(/passphrase/i);
-      await user.type(input, 'MySecureBitcoinCustodyPassphrase2024!@#$%');
+      await user.type(input, 'MySecure@2024!');
       await user.tab();
 
-      expect(screen.queryByText(/passphrase is too weak/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/passphrase is not strong enough/i)).not.toBeInTheDocument();
     });
   });
 
@@ -224,14 +224,14 @@ describe('PassphraseInput (4.2.1.2)', () => {
       render(<PassphraseInput onStrengthChange={mockOnStrengthChange} />);
 
       const input = screen.getByLabelText(/passphrase/i);
-      await user.type(input, 'MySecureBitcoinCustodyPassphrase2024!@#$%');
+      await user.type(input, 'MySecure@2024!');
 
       // Check that onStrengthChange was called
       expect(mockOnStrengthChange).toHaveBeenCalled();
       // Check that it was called with the final strength
       expect(mockOnStrengthChange).toHaveBeenCalledWith({
         isStrong: true,
-        message: 'Excellent passphrase',
+        message: 'Strong passphrase',
         score: expect.any(Number),
       });
     });
@@ -305,7 +305,8 @@ describe('PassphraseInput (4.2.1.2)', () => {
 
   describe('Performance', () => {
     it('should handle rapid input changes efficiently', async () => {
-      render(<PassphraseInput />);
+      const mockOnChange = vi.fn();
+      render(<PassphraseInput onChange={mockOnChange} />);
 
       const input = screen.getByLabelText(/passphrase/i);
 
@@ -314,7 +315,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
 
       expect(input).toHaveValue('a'.repeat(50));
       // Check that strength is calculated correctly (repeated chars should be weak)
-      expect(screen.getByText(/include more character types/i)).toBeInTheDocument();
+      expect(screen.getByText(/add uppercase, numbers, symbols/i)).toBeInTheDocument();
     });
 
     it('should correctly assess Alice256789u7u7u8i9o8k7 passphrase', async () => {
@@ -323,8 +324,8 @@ describe('PassphraseInput (4.2.1.2)', () => {
       const input = screen.getByLabelText(/passphrase/i);
       await user.type(input, 'Alice256789u7u7u8i9o8k7');
 
-      // This should be weak due to common name "Alice" and sequential pattern "56789"
-      expect(screen.getByText(/avoid common names/i)).toBeInTheDocument();
+      // This should be weak because it's missing symbols
+      expect(screen.getByText(/add symbols/i)).toBeInTheDocument();
     });
 
     it('should call onStrengthChange for each keystroke', async () => {
@@ -340,6 +341,16 @@ describe('PassphraseInput (4.2.1.2)', () => {
 
       // Should call onStrengthChange for initial render + each keystroke
       expect(mockOnStrengthChange).toHaveBeenCalledTimes(11);
+    });
+
+    it('should correctly assess Alice123af5b8o0 passphrase', async () => {
+      render(<PassphraseInput />);
+
+      const input = screen.getByLabelText(/passphrase/i);
+      await user.type(input, 'Alice123af5b8o0');
+
+      // This should be weak because it's missing symbols
+      expect(screen.getByText(/add symbols/i)).toBeInTheDocument();
     });
   });
 });

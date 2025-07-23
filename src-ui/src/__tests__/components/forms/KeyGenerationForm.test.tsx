@@ -85,8 +85,8 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
       await user.type(passphraseInput, 'weak');
 
-      // Should show requirement for 16 characters minimum
-      expect(screen.getByText(/too short - use at least 16 characters/i)).toBeInTheDocument();
+      // Should show requirement for 12 characters minimum
+      expect(screen.getByText(/too short \(4\/12 characters\)/i)).toBeInTheDocument();
     });
 
     it('should accept valid form data', async () => {
@@ -111,7 +111,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
       await user.type(passphraseInput, 'short');
 
-      expect(screen.getByText(/too short - use at least 16 characters/i)).toBeInTheDocument();
+      expect(screen.getByText(/too short \(5\/12 characters\)/i)).toBeInTheDocument();
     });
 
     it('should show weak passphrase warning for common passwords', async () => {
@@ -120,16 +120,16 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
       await user.type(passphraseInput, 'password123');
 
-      expect(screen.getByText(/too short - use at least 16 characters/i)).toBeInTheDocument();
+      expect(screen.getByText(/too short \(11\/12 characters\)/i)).toBeInTheDocument();
     });
 
     it('should accept strong passphrase', async () => {
       render(<KeyGenerationForm />);
 
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
-      await user.type(passphraseInput, 'MySecureBitcoinCustodyPassphrase2024!@#$%');
+      await user.type(passphraseInput, 'MySecure@2024!');
 
-      expect(screen.getByText(/excellent passphrase/i)).toBeInTheDocument();
+      expect(screen.getByText(/strong passphrase/i)).toBeInTheDocument();
     });
   });
 
