@@ -181,7 +181,7 @@ barqly-vault/
 - [ ] 4.2: Create base UI components with full test coverage
   - [ ] 4.2.1: Foundation Form Components
     - [x] 4.2.1.1: KeyGenerationForm (key label + passphrase input)
-    - [ ] 4.2.1.2: PassphraseInput (secure password with validation)
+    - [x] 4.2.1.2: PassphraseInput (secure password with validation)
     - [ ] 4.2.1.3: FileSelectionButton (file/folder picker trigger)
     - [ ] 4.2.1.4: KeySelectionDropdown (key picker with metadata)
   - [ ] 4.2.2: Feedback Components
