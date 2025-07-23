@@ -285,18 +285,16 @@ describe('FileSelectionButton (4.2.1.3)', () => {
       const error = new Error('Permission denied');
       mockOpen.mockRejectedValue(error);
 
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const mockOnError = vi.fn();
 
-      render(<FileSelectionButton onSelectionChange={() => {}} />);
+      render(<FileSelectionButton onSelectionChange={() => {}} onError={mockOnError} />);
 
       const button = screen.getByRole('button', { name: /select file/i });
       await user.click(button);
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('File selection failed:', error);
+        expect(mockOnError).toHaveBeenCalledWith(error);
       });
-
-      consoleSpy.mockRestore();
     });
 
     it('should handle empty selection gracefully', async () => {

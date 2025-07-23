@@ -30,6 +30,7 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState<GenerateKeyResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Validation functions
   const validateKeyLabel = (label: string): string | undefined => {
@@ -75,8 +76,8 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
     const newFormData = { ...formData, [field]: value };
     setFormData(newFormData);
 
-    // Clear error when user starts typing
-    if (errors[field]) {
+    // Clear error when user starts typing (but not during form submission)
+    if (errors[field] && !isLoading) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
@@ -106,6 +107,7 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
     }
 
     setIsLoading(true);
+    setError(null);
 
     try {
       const input: GenerateKeyInput = {
@@ -118,9 +120,17 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
       if (onKeyGenerated) {
         onKeyGenerated(result);
       }
+      
+      // Reset form after successful key generation
+      setFormData({
+        label: '',
+        passphrase: '',
+        confirmPassphrase: '',
+      });
+      setError(null);
     } catch (err) {
       console.error('Key generation failed:', err);
-      // Handle error appropriately
+      setError(err instanceof Error ? err.message : 'Key generation failed');
     } finally {
       setIsLoading(false);
     }
@@ -183,6 +193,7 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
           minLength={8}
           requireStrong
           showStrength
+          id="passphrase-input"
         />
 
         {/* Confirm Passphrase Input */}
@@ -195,6 +206,7 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
           required
           error={errors.confirmPassphrase}
           minLength={8}
+          id="confirm-passphrase-input"
         />
 
         {/* Submit Button */}
@@ -213,6 +225,16 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
           )}
         </button>
       </form>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
+            <p className="text-sm font-medium text-red-800">{error}</p>
+          </div>
+        </div>
+      )}
 
       {/* Success Message */}
       {success && (

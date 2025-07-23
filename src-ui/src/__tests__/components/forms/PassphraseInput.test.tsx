@@ -63,12 +63,12 @@ describe('PassphraseInput (4.2.1.2)', () => {
       await user.click(toggleButton);
 
       expect(input.type).toBe('text');
-      expect(toggleButton).toHaveAttribute('aria-label', 'hide password');
+      expect(toggleButton).toHaveAttribute('aria-label', 'Hide password');
 
       await user.click(toggleButton);
 
       expect(input.type).toBe('password');
-      expect(toggleButton).toHaveAttribute('aria-label', 'show password');
+      expect(toggleButton).toHaveAttribute('aria-label', 'Show password');
     });
 
     it('should not toggle visibility when input is disabled', async () => {
