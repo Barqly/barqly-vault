@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure file encryption for Bitcoin custody
 
-.PHONY: help dev ui desktop build ui-build desktop-build preview ui-preview desktop-preview lint clean install
+.PHONY: help dev ui desktop build ui-build desktop-build preview ui-preview desktop-preview lint fmt rust-lint rust-fmt clean install
 
 # Default target
 help:
@@ -19,7 +19,10 @@ help:
 	@echo "  desktop-build        - Build desktop app for distribution"
 	@echo ""
 	@echo "Quality:"
-	@echo "  lint           - Lint UI code"
+	@echo "  lint           - Lint UI code (ESLint)"
+	@echo "  fmt            - Format UI code (Prettier)"
+	@echo "  rust-lint      - Lint Rust code (clippy)"
+	@echo "  rust-fmt       - Format Rust code (cargo fmt)"
 	@echo "  clean          - Clean build artifacts"
 	@echo ""
 	@echo "Setup:"
@@ -59,6 +62,18 @@ desktop-preview:
 lint:
 	@echo "🔍 Linting UI code..."
 	cd src-ui && npm run lint
+
+fmt:
+	@echo "🎨 Formatting UI code..."
+	cd src-ui && npx prettier --write .
+
+rust-lint:
+	@echo "🔍 Linting Rust code..."
+	cd src-tauri && cargo clippy
+
+rust-fmt:
+	@echo "🎨 Formatting Rust code..."
+	cd src-tauri && cargo fmt
 
 clean:
 	@echo "🧹 Cleaning build artifacts..."
