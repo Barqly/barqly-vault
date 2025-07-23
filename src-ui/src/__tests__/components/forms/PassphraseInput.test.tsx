@@ -129,11 +129,33 @@ describe('PassphraseInput (4.2.1.2)', () => {
     it('should show strength indicator by default', () => {
       render(<PassphraseInput />);
 
-      expect(screen.getByText(/passphrase strength: very weak passphrase/i)).toBeInTheDocument();
+      // Should show neutral "Passphrase Strength:" text by default
+      expect(screen.getByText(/passphrase strength:/i)).toBeInTheDocument();
     });
 
     it('should hide strength indicator when showStrength is false', () => {
       render(<PassphraseInput showStrength={false} />);
+
+      expect(screen.queryByText(/passphrase strength/i)).not.toBeInTheDocument();
+    });
+
+    it('should show confirmation match status for confirmation field', async () => {
+      render(<PassphraseInput isConfirmationField={true} originalPassphrase="test123" />);
+
+      const input = screen.getByLabelText(/passphrase/i);
+
+      // Type matching passphrase
+      await user.type(input, 'test123');
+      expect(screen.getByText(/passphrases match/i)).toBeInTheDocument();
+
+      // Type non-matching passphrase
+      await user.clear(input);
+      await user.type(input, 'different');
+      expect(screen.getByText(/passphrases don't match/i)).toBeInTheDocument();
+    });
+
+    it('should not show strength indicator for confirmation field', () => {
+      render(<PassphraseInput isConfirmationField={true} originalPassphrase="test123" />);
 
       expect(screen.queryByText(/passphrase strength/i)).not.toBeInTheDocument();
     });

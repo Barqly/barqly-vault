@@ -25,6 +25,9 @@ export interface PassphraseInputProps {
   showStrength?: boolean;
   className?: string;
   id?: string;
+  // New props for confirmation field behavior
+  isConfirmationField?: boolean;
+  originalPassphrase?: string;
 }
 
 const PassphraseInput: React.FC<PassphraseInputProps> = ({
@@ -43,6 +46,8 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   showStrength = true,
   className = '',
   id,
+  isConfirmationField = false,
+  originalPassphrase = '',
 }) => {
   const [internalValue, setInternalValue] = useState('');
   const [showPassphrase, setShowPassphrase] = useState(false);
@@ -52,10 +57,9 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
     message: 'Very weak passphrase',
     score: 0,
   });
+  const [hasUserTyped, setHasUserTyped] = useState(false);
 
   // Use controlled value if provided, otherwise use internal state
-  // Remove all instances of: const value = ... and const strength = ... (where unused)
-  // Replace /\[ with /[ and /\/ with /
   const value = controlledValue !== undefined ? controlledValue : internalValue;
 
   // Check passphrase strength
@@ -107,6 +111,15 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
     return { isStrong, message, score };
   }, []);
 
+  // Check if confirmation matches
+  const checkConfirmationMatch = useCallback((confirmation: string, original: string) => {
+    if (!confirmation) return { matches: false, message: '' };
+    if (confirmation === original) {
+      return { matches: true, message: 'Passphrases match' };
+    }
+    return { matches: false, message: "Passphrases don't match" };
+  }, []);
+
   // Validate passphrase
   const validatePassphrase = useCallback(
     (passphrase: string): string => {
@@ -141,6 +154,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setValidationError('');
+    setHasUserTyped(true);
 
     // Update internal state if not controlled
     if (controlledValue === undefined) {
@@ -189,6 +203,11 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
 
   const displayError = error || validationError;
 
+  // For confirmation field, check match status
+  const confirmationMatch = isConfirmationField
+    ? checkConfirmationMatch(value, originalPassphrase)
+    : null;
+
   return (
     <div className={`space-y-2 ${className}`}>
       <label htmlFor={id || 'passphrase-input'} className="block text-sm font-medium text-gray-700">
@@ -233,18 +252,37 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
         </button>
       </div>
 
-      {/* Passphrase Strength Indicator */}
-      {showStrength && (
+      {/* Passphrase Strength Indicator - Only for first field */}
+      {showStrength && !isConfirmationField && (
         <div id="passphrase-strength" className="space-y-2">
-          <p className={`text-sm font-medium ${getStrengthColor()}`}>
-            Passphrase Strength: {passphraseStrength.message}
+          {!hasUserTyped ? (
+            // Default state - show neutral message
+            <p className="text-sm font-medium text-gray-500">Passphrase Strength:</p>
+          ) : (
+            // User has typed - show strength with color and progress bar
+            <>
+              <p className={`text-sm font-medium ${getStrengthColor()}`}>
+                Passphrase Strength: {passphraseStrength.message}
+              </p>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all duration-300 ${getProgressColor()}`}
+                  style={{ width: `${Math.min((passphraseStrength.score / 6) * 100, 100)}%` }}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Confirmation Match Indicator - Only for confirmation field */}
+      {isConfirmationField && value && (
+        <div id="passphrase-confirmation" className="space-y-2">
+          <p
+            className={`text-sm font-medium ${confirmationMatch?.matches ? 'text-green-600' : 'text-red-600'}`}
+          >
+            {confirmationMatch?.message}
           </p>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className={`h-2 rounded-full transition-all duration-300 ${getProgressColor()}`}
-              style={{ width: `${Math.min((passphraseStrength.score / 6) * 100, 100)}%` }}
-            />
-          </div>
         </div>
       )}
 

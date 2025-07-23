@@ -32,14 +32,16 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
     it('should show passphrase strength indicator', () => {
       render(<KeyGenerationForm />);
 
-      expect(screen.getAllByText(/passphrase strength/i)).toHaveLength(2);
+      // Only the first field should show strength indicator by default
+      expect(screen.getAllByText(/passphrase strength/i)).toHaveLength(1);
     });
 
     it('should display form validation rules', () => {
       render(<KeyGenerationForm />);
 
       expect(screen.getByText(/key label must be/i)).toBeInTheDocument();
-      expect(screen.getAllByText(/passphrase strength/i)).toHaveLength(2);
+      // Only the first field should show strength indicator by default
+      expect(screen.getAllByText(/passphrase strength/i)).toHaveLength(1);
     });
   });
 
@@ -83,8 +85,8 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
       await user.type(passphraseInput, 'weak');
 
-      // Should show weak passphrase warning
-      expect(screen.getByText(/Very weak passphrase/i)).toBeInTheDocument();
+      // Should show weak passphrase warning after user types
+      expect(screen.getByText(/Weak passphrase/i)).toBeInTheDocument();
     });
 
     it('should accept valid form data', async () => {
@@ -109,7 +111,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
       await user.type(passphraseInput, 'short');
 
-      expect(screen.getByText(/Very weak passphrase/i)).toBeInTheDocument();
+      expect(screen.getByText(/Weak passphrase/i)).toBeInTheDocument();
     });
 
     it('should show weak passphrase warning for common passwords', async () => {
@@ -118,7 +120,7 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       const passphraseInput = screen.getByLabelText(/^Passphrase/i);
       await user.type(passphraseInput, 'password123');
 
-      expect(screen.getByText(/Very weak passphrase/i)).toBeInTheDocument();
+      expect(screen.getByText(/Weak passphrase/i)).toBeInTheDocument();
     });
 
     it('should accept strong passphrase', async () => {

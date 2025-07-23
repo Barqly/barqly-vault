@@ -207,6 +207,9 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
           error={errors.confirmPassphrase}
           minLength={8}
           id="confirm-passphrase-input"
+          isConfirmationField={true}
+          originalPassphrase={formData.passphrase}
+          showStrength={false}
         />
 
         {/* Submit Button */}
