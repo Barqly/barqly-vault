@@ -22,7 +22,5 @@
     "ui:lint": "npm run lint --prefix src-ui",
     "ui:fmt": "cd src-ui && npx prettier --write ."
   },
-  "devDependencies": {
-    "globals": "^16.3.0"
-  }
+  "devDependencies": {}
 }

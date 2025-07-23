@@ -25,7 +25,15 @@ jobs:
       - name: Install dependencies
         run: |
           cd src-ui
-          npm ci
+          npm ci --prefer-offline --no-audit
+
+      - name: Verify environment
+        run: |
+          cd src-ui
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "Checking globals package availability..."
+          node -e "console.log('globals package:', require('globals'))"
 
       - name: Format check
         run: |

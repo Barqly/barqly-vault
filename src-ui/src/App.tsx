@@ -1,11 +1,11 @@
-import React from 'react';
+import { type ReactElement } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import SetupPage from './pages/SetupPage';
 import EncryptPage from './pages/EncryptPage';
 import DecryptPage from './pages/DecryptPage';
 
-function App() {
+function App(): ReactElement {
   return (
     <Router>
       <MainLayout>
