@@ -1,0 +1,15 @@
+[workspace]
+members = ["src-tauri"]
+resolver = "2"
+
+[workspace.dependencies]
+# Shared dependencies that can be used across Rust crates
+# Add common dependencies here when we have multiple crates
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Barqly Team"]
+description = "Secure file encryption for Bitcoin custody"
+license = "MIT"
+repository = "https://github.com/barqly/barqly-vault" 

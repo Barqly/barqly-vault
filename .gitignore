@@ -117,6 +117,14 @@ BarqlyVault/Decrypted/
 *.age
 !test-fixtures/**/*.age
 
+# Monorepo specific
+# Root level build artifacts
+target/
+Cargo.lock
+# Frontend build outputs (already covered above)
+# dist/
+# dist-ssr/
+
 # Note: docs-private/ is intentionally NOT ignored
 # It contains detailed documentation that's not linked from the main page
 # but is accessible if someone finds the URL (which is fine for a private repo) 

@@ -176,7 +176,7 @@ barqly-vault/
 
 ### Milestone 4: Frontend Foundation
 **Goal**: Build the React/TypeScript frontend structure
-
+- [x] 4.0: Recreate (convert image/photos) mocksup in mermaid
 - [ ] 4.1: Set up React Router for navigation
 - [ ] 4.2: Create base UI components
   - [ ] 4.2.1: Layout components (Header, TabBar, StatusBar)

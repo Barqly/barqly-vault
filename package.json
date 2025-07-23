@@ -1,4 +1,23 @@
 {
+  "name": "barqly-vault",
+  "version": "0.1.0",
+  "description": "Secure file encryption for Bitcoin custody - Desktop Application",
+  "workspaces": [
+    "src-ui"
+  ],
+  "scripts": {
+    "dev": "npm run dev --prefix src-ui",
+    "build": "npm run build --prefix src-ui",
+    "preview": "npm run preview --prefix src-ui",
+    "lint": "npm run lint --prefix src-ui",
+    "tauri:dev": "cd src-tauri && cargo tauri dev",
+    "tauri:build": "cd src-tauri && cargo tauri build",
+    "tauri:preview": "cd src-tauri && cargo tauri preview",
+    "ui:dev": "npm run dev --prefix src-ui",
+    "ui:build": "npm run build --prefix src-ui",
+    "ui:preview": "npm run preview --prefix src-ui",
+    "ui:lint": "npm run lint --prefix src-ui"
+  },
   "devDependencies": {
     "globals": "^16.3.0"
   }
