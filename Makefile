@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure file encryption for Bitcoin custody
 
-.PHONY: help dev ui desktop build ui-build desktop-build preview ui-preview desktop-preview lint fmt rust-lint rust-fmt clean install demo
+.PHONY: help dev ui desktop build ui-build desktop-build preview ui-preview desktop-preview lint fmt rust-lint rust-fmt clean install demo validate
 
 # Default target
 help:
@@ -17,18 +17,20 @@ help:
 	@echo ""
 	@echo "Build:"
 	@echo "  build, ui-build      - Build UI for production"
-	@echo "  desktop-build        - Build desktop app for distribution"
+	@echo "  desktop-build        - Build desktop app"
 	@echo ""
-	@echo "Quality:"
-	@echo "  coverage       - Run UI coverage tests"
-	@echo "  lint           - Lint UI code (ESLint)"
-	@echo "  fmt            - Format UI code (Prettier)"
-	@echo "  rust-lint      - Lint Rust code (clippy)"
-	@echo "  rust-fmt       - Format Rust code (cargo fmt)"
+	@echo "Quality Assurance:"
+	@echo "  validate       - Comprehensive validation (mirrors CI exactly)"
+	@echo "  lint           - Run ESLint on frontend"
+	@echo "  fmt            - Run Prettier on frontend"
+	@echo "  rust-lint      - Run clippy on Rust code"
+	@echo "  rust-fmt       - Run rustfmt on Rust code"
+	@echo ""
+	@echo "Utilities:"
 	@echo "  clean          - Clean build artifacts"
+	@echo "  install        - Install dependencies"
 	@echo ""
-	@echo "Setup:"
-	@echo "  install        - Install all dependencies"
+	@echo "💡 Tip: Run 'make validate' before committing to ensure CI will pass!"
 
 # Development commands
 dev: ui
@@ -65,21 +67,26 @@ coverage:
 	@echo "🔍 Running UI coverage tests..."
 	cd src-ui && npm test -- --run --coverage
 
+# Quality Assurance
+validate:
+	@echo "🔍 Running comprehensive validation (mirrors CI exactly)..."
+	@./scripts/validate.sh
+
 lint:
-	@echo "🔍 Linting UI code..."
-	cd src-ui && npm run lint
+	@echo "🔍 Linting frontend code..."
+	@cd src-ui && npm run lint
 
 fmt:
-	@echo "🎨 Formatting UI code..."
-	cd src-ui && npx prettier --write .
+	@echo "🎨 Formatting frontend code..."
+	@cd src-ui && npm run fmt
 
 rust-lint:
 	@echo "🔍 Linting Rust code..."
-	cd src-tauri && cargo clippy
+	@cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings
 
 rust-fmt:
 	@echo "🎨 Formatting Rust code..."
-	cd src-tauri && cargo fmt
+	@cd src-tauri && cargo fmt
 
 clean:
 	@echo "🧹 Cleaning build artifacts..."

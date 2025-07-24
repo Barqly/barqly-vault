@@ -15,44 +15,44 @@ const ProgressBarDemo: React.FC = () => {
       name: 'File Encryption Progress',
       description: 'Simulates file encryption with progress updates',
       progressUpdate: {
-        current: 0,
-        total: 100,
+        operation_id: 'demo-encryption-001',
+        progress: 0,
         message: 'Starting encryption...',
-        isIndeterminate: false,
-      },
+        timestamp: new Date().toISOString(),
+      } as ProgressUpdate,
       duration: 5000,
     },
     {
       name: 'Key Generation Progress',
       description: 'Shows key generation with indeterminate progress',
       progressUpdate: {
-        current: 0,
-        total: 0,
+        operation_id: 'demo-keygen-001',
+        progress: 0,
         message: 'Generating secure key pair...',
-        isIndeterminate: true,
-      },
+        timestamp: new Date().toISOString(),
+      } as ProgressUpdate,
       duration: 4000,
     },
     {
       name: 'File Upload Progress',
       description: 'Simulates file upload with detailed progress',
       progressUpdate: {
-        current: 0,
-        total: 100,
+        operation_id: 'demo-upload-001',
+        progress: 0,
         message: 'Preparing files for upload...',
-        isIndeterminate: false,
-      },
+        timestamp: new Date().toISOString(),
+      } as ProgressUpdate,
       duration: 6000,
     },
     {
       name: 'System Check Progress',
       description: 'Shows system validation with progress',
       progressUpdate: {
-        current: 0,
-        total: 100,
+        operation_id: 'demo-system-check-001',
+        progress: 0,
         message: 'Validating system requirements...',
-        isIndeterminate: false,
-      },
+        timestamp: new Date().toISOString(),
+      } as ProgressUpdate,
       duration: 3500,
     },
   ];
@@ -62,70 +62,33 @@ const ProgressBarDemo: React.FC = () => {
     setCurrentProgress(scenario.progressUpdate);
     setIsRunning(true);
 
-    if (scenario.progressUpdate.isIndeterminate) {
-      // For indeterminate progress, just update the message
-      const messages = [
-        'Initializing...',
-        'Processing...',
-        'Validating...',
-        'Finalizing...',
-        'Complete!',
-      ];
+    // For determinate progress, update both progress and message
+    const messages = [
+      'Starting operation...',
+      'Processing files...',
+      'Applying encryption...',
+      'Finalizing...',
+      'Operation complete!',
+    ];
 
-      let messageIndex = 0;
-      const interval = setInterval(() => {
-        if (messageIndex < messages.length - 1) {
-          setCurrentProgress((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  message: messages[messageIndex],
-                }
-              : null,
-          );
-          messageIndex++;
-        } else {
-          clearInterval(interval);
-          setIsRunning(false);
-          setCurrentProgress((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  message: messages[messageIndex],
-                }
-              : null,
-          );
-        }
-      }, scenario.duration / messages.length);
-    } else {
-      // For determinate progress, update both progress and message
-      const messages = [
-        'Starting operation...',
-        'Processing files...',
-        'Applying encryption...',
-        'Finalizing...',
-        'Operation complete!',
-      ];
+    let progress = 0;
+    let messageIndex = 0;
+    const interval = setInterval(() => {
+      if (progress < 100) {
+        progress += 100 / (scenario.duration / 100);
+        messageIndex = Math.floor((progress / 100) * (messages.length - 1));
 
-      let progress = 0;
-      let messageIndex = 0;
-      const interval = setInterval(() => {
-        if (progress < 100) {
-          progress += 100 / (scenario.duration / 100);
-          messageIndex = Math.floor((progress / 100) * (messages.length - 1));
-
-          setCurrentProgress({
-            current: Math.min(progress, 100),
-            total: 100,
-            message: messages[Math.min(messageIndex, messages.length - 1)],
-            isIndeterminate: false,
-          });
-        } else {
-          clearInterval(interval);
-          setIsRunning(false);
-        }
-      }, 100);
-    }
+        setCurrentProgress({
+          operation_id: scenario.progressUpdate.operation_id,
+          progress: Math.min(progress, 100) / 100, // Convert to 0.0-1.0 range
+          message: messages[Math.min(messageIndex, messages.length - 1)],
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        clearInterval(interval);
+        setIsRunning(false);
+      }
+    }, 100);
   };
 
   const handleStop = () => {
@@ -178,10 +141,7 @@ const ProgressBarDemo: React.FC = () => {
               <p className="text-sm text-gray-600 mb-3">{scenario.description}</p>
               <div className="flex items-center space-x-2 text-xs text-gray-500">
                 <Loader2 className="w-3 h-3" />
-                <span>
-                  {scenario.progressUpdate.isIndeterminate ? 'Indeterminate' : 'Determinate'} •
-                  {scenario.duration / 1000}s duration
-                </span>
+                <span>Determinate • {scenario.duration / 1000}s duration</span>
               </div>
             </div>
           ))}
@@ -215,9 +175,7 @@ const ProgressBarDemo: React.FC = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Current Progress: {currentScenario}</h3>
             <div className="text-sm text-gray-500">
-              {currentProgress.isIndeterminate
-                ? 'Indeterminate'
-                : `${Math.round(currentProgress.current)}%`}
+              {`${Math.round(currentProgress.progress * 100)}%`}
             </div>
           </div>
 

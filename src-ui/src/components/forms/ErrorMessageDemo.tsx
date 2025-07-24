@@ -14,10 +14,11 @@ const ErrorMessageDemo: React.FC = () => {
       name: 'File Not Found Error',
       description: 'Shows file system error with recovery guidance',
       error: {
-        code: ErrorCode.FileNotFound,
+        code: ErrorCode.FILE_NOT_FOUND,
         message: 'The specified file could not be found',
         details: 'wallet.dat',
-        suggestion: 'Please check the file path and ensure the file exists',
+        recovery_guidance: 'Please check the file path and ensure the file exists',
+        user_actionable: true,
       } as CommandError,
       variant: 'default' as const,
       showRecoveryGuidance: true,
@@ -27,10 +28,11 @@ const ErrorMessageDemo: React.FC = () => {
       name: 'Invalid Passphrase Error',
       description: 'Shows authentication error with retry option',
       error: {
-        code: ErrorCode.InvalidPassphrase,
+        code: ErrorCode.WRONG_PASSPHRASE,
         message: 'The provided passphrase is incorrect',
         details: 'Attempt 3 of 5',
-        suggestion: 'Please verify your passphrase and try again',
+        recovery_guidance: 'Please verify your passphrase and try again',
+        user_actionable: true,
       } as CommandError,
       variant: 'security' as const,
       showRecoveryGuidance: true,
@@ -40,10 +42,11 @@ const ErrorMessageDemo: React.FC = () => {
       name: 'Network Connection Error',
       description: 'Shows network error with retry functionality',
       error: {
-        code: ErrorCode.NetworkError,
+        code: ErrorCode.NETWORK_ERROR,
         message: 'Failed to connect to the server',
         details: 'Connection timeout after 30 seconds',
-        suggestion: 'Please check your internet connection and try again',
+        recovery_guidance: 'Please check your internet connection and try again',
+        user_actionable: true,
       } as CommandError,
       variant: 'warning' as const,
       showRecoveryGuidance: true,
@@ -53,10 +56,11 @@ const ErrorMessageDemo: React.FC = () => {
       name: 'Permission Denied Error',
       description: 'Shows permission error with guidance',
       error: {
-        code: ErrorCode.PermissionDenied,
+        code: ErrorCode.PERMISSION_DENIED,
         message: 'Access denied to the specified directory',
         details: '/usr/local/bin/',
-        suggestion: 'Please run the application with appropriate permissions',
+        recovery_guidance: 'Please run the application with appropriate permissions',
+        user_actionable: true,
       } as CommandError,
       variant: 'default' as const,
       showRecoveryGuidance: true,
@@ -74,10 +78,11 @@ const ErrorMessageDemo: React.FC = () => {
       name: 'Encryption Failed Error',
       description: 'Shows encryption error with technical details',
       error: {
-        code: ErrorCode.EncryptionFailed,
+        code: ErrorCode.ENCRYPTION_FAILED,
         message: 'Failed to encrypt the file',
         details: 'age encryption library error: invalid recipient key format',
-        suggestion: 'Please verify your encryption key and try again',
+        recovery_guidance: 'Please verify your encryption key and try again',
+        user_actionable: true,
       } as CommandError,
       variant: 'security' as const,
       showRecoveryGuidance: true,
@@ -244,7 +249,7 @@ const ErrorMessageDemo: React.FC = () => {
                   <strong>Details:</strong> {currentError.details}
                 </div>
                 <div>
-                  <strong>Suggestion:</strong> {currentError.suggestion}
+                  <strong>Suggestion:</strong> {currentError.recovery_guidance}
                 </div>
               </>
             )}

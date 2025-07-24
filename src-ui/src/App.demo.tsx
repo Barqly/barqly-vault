@@ -1,4 +1,4 @@
-import React, { type ReactElement, Suspense, lazy } from 'react';
+import { lazy, Suspense, type ReactElement } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import SetupPage from './pages/SetupPage';
