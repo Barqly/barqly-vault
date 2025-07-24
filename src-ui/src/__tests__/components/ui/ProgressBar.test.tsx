@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ProgressBar } from '../../../components/ui/progress-bar';
@@ -176,8 +175,8 @@ describe('ProgressBar', () => {
       render(<ProgressBar progressUpdate={encryptionUpdate} />);
 
       expect(screen.getByText('Encrypting...')).toBeInTheDocument();
-      const elements = screen.getAllByText((content, element) => {
-        return element?.textContent?.includes('1MB') && element?.textContent?.includes('5MB');
+      const elements = screen.getAllByText((_content: string, element: Element | null) => {
+        return !!(element?.textContent?.includes('1MB') && element?.textContent?.includes('5MB'));
       });
       expect(elements.length).toBeGreaterThan(0);
     });
@@ -196,8 +195,8 @@ describe('ProgressBar', () => {
       render(<ProgressBar progressUpdate={decryptionUpdate} />);
 
       expect(screen.getByText('Decrypting...')).toBeInTheDocument();
-      const elements = screen.getAllByText((content, element) => {
-        return element?.textContent?.includes('2MB') && element?.textContent?.includes('10MB');
+      const elements = screen.getAllByText((_content: string, element: Element | null) => {
+        return !!(element?.textContent?.includes('2MB') && element?.textContent?.includes('10MB'));
       });
       expect(elements.length).toBeGreaterThan(0);
     });

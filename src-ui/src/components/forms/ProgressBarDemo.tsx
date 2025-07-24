@@ -147,7 +147,7 @@ const ProgressBarDemo: React.FC = () => {
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">API Integration Demo</h3>
           <ProgressBar
-            progressUpdate={apiProgress}
+            progressUpdate={apiProgress || undefined}
             showPercentage
             showStatus
             onComplete={() => console.log('API operation complete!')}
