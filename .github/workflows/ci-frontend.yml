@@ -53,4 +53,4 @@ jobs:
       - name: Run tests
         run: |
           cd src-ui
-          npm test -- --ci --coverage 
+          npm test -- --run --coverage 

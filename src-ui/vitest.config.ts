@@ -17,6 +17,20 @@ export default defineConfig({
     deps: {
       external: ['@tauri-apps/api', '@tauri-apps/plugin-dialog', '@tauri-apps/api/core'],
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'src/__tests__/',
+        'src/test-mocks/',
+        'src/test-setup.ts',
+        '**/*.d.ts',
+        '**/*.config.*',
+        'dist/',
+        'coverage/',
+      ],
+    },
   },
   resolve: {
     alias: {
