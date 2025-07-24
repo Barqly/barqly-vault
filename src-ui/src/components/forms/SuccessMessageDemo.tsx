@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SuccessMessage } from '@/components/ui/success-message';
 import { Button } from '@/components/ui/button';
 import { Copy, Download, FolderOpen, ExternalLink } from 'lucide-react';
+import BackToDemos from '@/components/ui/back-to-demos';
 
 const SuccessMessageDemo: React.FC = () => {
   const [currentMessage, setCurrentMessage] = useState<{
@@ -179,12 +180,19 @@ const SuccessMessageDemo: React.FC = () => {
 
   return (
     <div className="space-y-6 p-6">
+      <BackToDemos className="mb-4" />
+
       <div>
-        <h2 className="text-2xl font-bold mb-2">SuccessMessage Component Demo</h2>
-        <p className="text-gray-600">
-          Interactive demonstration of the SuccessMessage component with various scenarios and
-          features.
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">SuccessMessage Component Demo</h2>
+            <p className="text-gray-600">
+              Interactive demonstration of the SuccessMessage component with various scenarios and
+              features.
+            </p>
+          </div>
+          <div className="text-sm text-gray-500 font-mono">Task 4.2.2.3</div>
+        </div>
       </div>
 
       {/* Demo Controls */}

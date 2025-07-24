@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Use process.env for config-time environment variables
 const host = process.env.VITE_TAURI_DEV_HOST || false;
@@ -10,6 +15,11 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   // Prevent Vite from obscuring Rust errors
   clearScreen: false,
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   // Tauri expects a fixed port, fail if that port is not available
   server: {
     port: 1420,

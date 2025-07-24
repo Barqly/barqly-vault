@@ -19,7 +19,10 @@
     "ui:build": "tsc && vite build",
     "ui:preview": "vite preview",
     "ui:lint": "eslint src --ext .ts,.tsx,.js,.jsx",
-    "ui:fmt": "prettier --write src"
+    "ui:fmt": "prettier --write src",
+    "demo:enable": "node scripts/switch-to-demo.js demo",
+    "demo:disable": "node scripts/switch-to-demo.js production",
+    "demo:dev": "npm run demo:enable && npm run dev"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",

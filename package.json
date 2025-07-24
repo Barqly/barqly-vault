@@ -20,7 +20,11 @@
     "ui:build": "npm run build --prefix src-ui",
     "ui:preview": "npm run preview --prefix src-ui",
     "ui:lint": "npm run lint --prefix src-ui",
-    "ui:fmt": "cd src-ui && npx prettier --write ."
+    "ui:fmt": "cd src-ui && npx prettier --write .",
+    "demo:enable": "node scripts/switch-to-demo.js demo",
+    "demo:disable": "node scripts/switch-to-demo.js production",
+    "demo:dev": "node scripts/switch-to-demo.js demo && npm run dev --prefix src-ui",
+    "demo": "./scripts/automated-dev.sh"
   },
   "devDependencies": {}
 }

@@ -1,223 +1,278 @@
-import React, { useState, useEffect } from 'react';
-import { ProgressBar } from '../ui/progress-bar';
-import { Button } from '../ui/button';
-import { ProgressUpdate } from '../../lib/api-types';
+import React, { useState } from 'react';
+import { ProgressBar } from '@/components/ui/progress-bar';
+import { Button } from '@/components/ui/button';
+import { Play, Pause, RotateCcw, Loader2 } from 'lucide-react';
+import BackToDemos from '@/components/ui/back-to-demos';
+import { ProgressUpdate } from '@/lib/api-types';
 
 const ProgressBarDemo: React.FC = () => {
-  const [determinateProgress, setDeterminateProgress] = useState(0);
-  const [indeterminateActive, setIndeterminateActive] = useState(false);
-  const [apiProgress, setApiProgress] = useState<ProgressUpdate | null>(null);
-  const [demoMode, setDemoMode] = useState<'determinate' | 'indeterminate' | 'api'>('determinate');
+  const [currentProgress, setCurrentProgress] = useState<ProgressUpdate | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
+  const [currentScenario, setCurrentScenario] = useState<string>('');
 
-  // Simulate determinate progress
-  useEffect(() => {
-    if (demoMode === 'determinate' && determinateProgress < 1) {
-      const timer = setTimeout(() => {
-        setDeterminateProgress((prev) => Math.min(prev + 0.1, 1));
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [determinateProgress, demoMode]);
+  const demoScenarios = [
+    {
+      name: 'File Encryption Progress',
+      description: 'Simulates file encryption with progress updates',
+      progressUpdate: {
+        current: 0,
+        total: 100,
+        message: 'Starting encryption...',
+        isIndeterminate: false,
+      },
+      duration: 5000,
+    },
+    {
+      name: 'Key Generation Progress',
+      description: 'Shows key generation with indeterminate progress',
+      progressUpdate: {
+        current: 0,
+        total: 0,
+        message: 'Generating secure key pair...',
+        isIndeterminate: true,
+      },
+      duration: 4000,
+    },
+    {
+      name: 'File Upload Progress',
+      description: 'Simulates file upload with detailed progress',
+      progressUpdate: {
+        current: 0,
+        total: 100,
+        message: 'Preparing files for upload...',
+        isIndeterminate: false,
+      },
+      duration: 6000,
+    },
+    {
+      name: 'System Check Progress',
+      description: 'Shows system validation with progress',
+      progressUpdate: {
+        current: 0,
+        total: 100,
+        message: 'Validating system requirements...',
+        isIndeterminate: false,
+      },
+      duration: 3500,
+    },
+  ];
 
-  // Simulate indeterminate progress
-  useEffect(() => {
-    if (demoMode === 'indeterminate' && indeterminateActive) {
-      const timer = setTimeout(() => {
-        setIndeterminateActive(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [indeterminateActive, demoMode]);
+  const handleStartScenario = (scenario: (typeof demoScenarios)[0]) => {
+    setCurrentScenario(scenario.name);
+    setCurrentProgress(scenario.progressUpdate);
+    setIsRunning(true);
 
-  // Simulate API progress updates
-  useEffect(() => {
-    if (demoMode === 'api') {
-      let progress = 0;
+    if (scenario.progressUpdate.isIndeterminate) {
+      // For indeterminate progress, just update the message
+      const messages = [
+        'Initializing...',
+        'Processing...',
+        'Validating...',
+        'Finalizing...',
+        'Complete!',
+      ];
+
+      let messageIndex = 0;
       const interval = setInterval(() => {
-        progress += 0.1;
-        if (progress <= 1) {
-          const mockProgressUpdate: ProgressUpdate = {
-            operation_id: 'demo-op-123',
-            progress,
-            message: progress >= 1 ? 'Encryption complete!' : 'Encrypting wallet files...',
-            timestamp: new Date().toISOString(),
-            estimated_time_remaining: progress >= 1 ? undefined : Math.max(0, (1 - progress) * 10),
-            details: {
-              type: 'FileOperation',
-              current_file:
-                progress < 0.3
-                  ? 'wallet.dat'
-                  : progress < 0.6
-                    ? 'output_descriptors.json'
-                    : 'backup_keys.txt',
-              total_files: 3,
-              current_file_progress: Math.floor(progress * 3) + 1,
-              current_file_size: 1024 * 1024,
-              total_size: 3 * 1024 * 1024,
-            },
-          };
-          setApiProgress(mockProgressUpdate);
+        if (messageIndex < messages.length - 1) {
+          setCurrentProgress((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  message: messages[messageIndex],
+                }
+              : null,
+          );
+          messageIndex++;
         } else {
           clearInterval(interval);
+          setIsRunning(false);
+          setCurrentProgress((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  message: messages[messageIndex],
+                }
+              : null,
+          );
         }
-      }, 800);
-      return () => clearInterval(interval);
-    }
-  }, [demoMode]);
+      }, scenario.duration / messages.length);
+    } else {
+      // For determinate progress, update both progress and message
+      const messages = [
+        'Starting operation...',
+        'Processing files...',
+        'Applying encryption...',
+        'Finalizing...',
+        'Operation complete!',
+      ];
 
-  const resetDemo = () => {
-    setDeterminateProgress(0);
-    setIndeterminateActive(false);
-    setApiProgress(null);
+      let progress = 0;
+      let messageIndex = 0;
+      const interval = setInterval(() => {
+        if (progress < 100) {
+          progress += 100 / (scenario.duration / 100);
+          messageIndex = Math.floor((progress / 100) * (messages.length - 1));
+
+          setCurrentProgress({
+            current: Math.min(progress, 100),
+            total: 100,
+            message: messages[Math.min(messageIndex, messages.length - 1)],
+            isIndeterminate: false,
+          });
+        } else {
+          clearInterval(interval);
+          setIsRunning(false);
+        }
+      }, 100);
+    }
   };
 
-  const startIndeterminate = () => {
-    setIndeterminateActive(true);
+  const handleStop = () => {
+    setIsRunning(false);
+    setCurrentProgress(null);
+    setCurrentScenario('');
+  };
+
+  const handleReset = () => {
+    setCurrentProgress(null);
+    setCurrentScenario('');
+    setIsRunning(false);
   };
 
   return (
-    <div className="space-y-8 p-6 max-w-2xl mx-auto">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">ProgressBar Component Demo</h2>
-        <p className="text-muted-foreground">
-          Demonstrating different progress bar modes and API integration
-        </p>
+    <div className="space-y-6 p-6">
+      <BackToDemos className="mb-4" />
+
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">ProgressBar Component Demo</h2>
+            <p className="text-gray-600">
+              Interactive demonstration of the ProgressBar component with various progress
+              scenarios.
+            </p>
+          </div>
+          <div className="text-sm text-gray-500 font-mono">Task 4.2.2.1</div>
+        </div>
       </div>
 
-      {/* Mode Selection */}
-      <div className="flex gap-2 justify-center">
-        <Button
-          variant={demoMode === 'determinate' ? 'default' : 'outline'}
-          onClick={() => setDemoMode('determinate')}
-        >
-          Determinate
-        </Button>
-        <Button
-          variant={demoMode === 'indeterminate' ? 'default' : 'outline'}
-          onClick={() => setDemoMode('indeterminate')}
-        >
-          Indeterminate
-        </Button>
-        <Button
-          variant={demoMode === 'api' ? 'default' : 'outline'}
-          onClick={() => setDemoMode('api')}
-        >
-          API Integration
-        </Button>
-        <Button variant="outline" onClick={resetDemo}>
-          Reset
-        </Button>
-      </div>
-
-      {/* Determinate Progress Demo */}
-      {demoMode === 'determinate' && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Determinate Progress</h3>
-          <ProgressBar
-            value={determinateProgress}
-            showPercentage
-            showStatus
-            onComplete={() => console.log('Progress complete!')}
-          />
-          <div className="text-sm text-muted-foreground">
-            Progress: {Math.round(determinateProgress * 100)}%
-          </div>
-        </div>
-      )}
-
-      {/* Indeterminate Progress Demo */}
-      {demoMode === 'indeterminate' && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Indeterminate Progress</h3>
-          <ProgressBar
-            indeterminate={indeterminateActive}
-            showStatus
-            statusMessage={indeterminateActive ? 'Processing...' : 'Ready to start'}
-          />
-          <div className="flex gap-2">
-            <Button onClick={startIndeterminate} disabled={indeterminateActive}>
-              Start Processing
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* API Integration Demo */}
-      {demoMode === 'api' && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">API Integration Demo</h3>
-          <ProgressBar
-            progressUpdate={apiProgress || undefined}
-            showPercentage
-            showStatus
-            onComplete={() => console.log('API operation complete!')}
-          />
-          {apiProgress && (
-            <div className="text-sm text-muted-foreground space-y-1">
-              <div>Operation ID: {apiProgress.operation_id}</div>
-              <div>Progress: {Math.round(apiProgress.progress * 100)}%</div>
-              <div>Message: {apiProgress.message}</div>
-              {apiProgress.estimated_time_remaining && (
-                <div>Time Remaining: {apiProgress.estimated_time_remaining}s</div>
-              )}
+      {/* Demo Controls */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Demo Scenarios</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {demoScenarios.map((scenario, index) => (
+            <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-medium">{scenario.name}</h4>
+                <Button
+                  onClick={() => handleStartScenario(scenario)}
+                  disabled={isRunning}
+                  size="sm"
+                  className="inline-flex items-center space-x-2"
+                >
+                  <Play className="w-4 h-4" />
+                  <span>Start</span>
+                </Button>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">{scenario.description}</p>
+              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                <Loader2 className="w-3 h-3" />
+                <span>
+                  {scenario.progressUpdate.isIndeterminate ? 'Indeterminate' : 'Determinate'} •
+                  {scenario.duration / 1000}s duration
+                </span>
+              </div>
             </div>
-          )}
+          ))}
+        </div>
+      </div>
+
+      {/* Control Buttons */}
+      <div className="flex items-center space-x-4">
+        <Button
+          onClick={handleStop}
+          disabled={!isRunning}
+          variant="outline"
+          className="inline-flex items-center space-x-2"
+        >
+          <Pause className="w-4 h-4" />
+          <span>Stop</span>
+        </Button>
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className="inline-flex items-center space-x-2"
+        >
+          <RotateCcw className="w-4 h-4" />
+          <span>Reset</span>
+        </Button>
+      </div>
+
+      {/* Current Progress Display */}
+      {currentProgress && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Current Progress: {currentScenario}</h3>
+            <div className="text-sm text-gray-500">
+              {currentProgress.isIndeterminate
+                ? 'Indeterminate'
+                : `${Math.round(currentProgress.current)}%`}
+            </div>
+          </div>
+
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
+            <ProgressBar progressUpdate={currentProgress} />
+          </div>
+
+          <div className="text-sm text-gray-600">
+            <strong>Message:</strong> {currentProgress.message}
+          </div>
         </div>
       )}
 
-      {/* Size Variants Demo */}
+      {/* Component Features */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Size Variants</h3>
-        <div className="space-y-2">
-          <div>
-            <label className="text-sm font-medium">Small</label>
-            <ProgressBar value={0.6} size="sm" />
+        <h3 className="text-lg font-semibold">Component Features</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <h4 className="font-medium">Progress Types</h4>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Determinate - Shows exact progress percentage</li>
+              <li>• Indeterminate - Animated loading for unknown duration</li>
+              <li>• Status messages - Dynamic text updates</li>
+              <li>• Progress clamping - Handles out-of-range values</li>
+            </ul>
           </div>
-          <div>
-            <label className="text-sm font-medium">Default</label>
-            <ProgressBar value={0.6} />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Large</label>
-            <ProgressBar value={0.6} size="lg" />
-          </div>
-        </div>
-      </div>
 
-      {/* Color Variants Demo */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Color Variants</h3>
-        <div className="space-y-2">
-          <div>
-            <label className="text-sm font-medium">Default</label>
-            <ProgressBar value={0.7} />
+          <div className="space-y-2">
+            <h4 className="font-medium">Visual Features</h4>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Smooth progress animations</li>
+              <li>• Loading spinner for indeterminate mode</li>
+              <li>• Success checkmark on completion</li>
+              <li>• Responsive design</li>
+            </ul>
           </div>
-          <div>
-            <label className="text-sm font-medium">Success</label>
-            <ProgressBar value={1.0} variant="success" />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Warning</label>
-            <ProgressBar value={0.8} variant="warning" />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Error</label>
-            <ProgressBar value={0.3} variant="error" />
-          </div>
-        </div>
-      </div>
 
-      {/* Accessibility Demo */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Accessibility Features</h3>
-        <div className="space-y-2">
-          <div>
-            <label className="text-sm font-medium">With Status (Screen Reader Friendly)</label>
-            <ProgressBar value={0.45} showStatus statusMessage="Encrypting wallet backup files" />
+          <div className="space-y-2">
+            <h4 className="font-medium">Accessibility</h4>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• ARIA progressbar role</li>
+              <li>• aria-valuenow, aria-valuemin, aria-valuemax</li>
+              <li>• aria-label for screen readers</li>
+              <li>• Keyboard navigation support</li>
+            </ul>
           </div>
-          <div>
-            <label className="text-sm font-medium">Without Status (Minimal)</label>
-            <ProgressBar value={0.45} showStatus={false} showPercentage={false} />
+
+          <div className="space-y-2">
+            <h4 className="font-medium">Integration</h4>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Tauri command integration</li>
+              <li>• ProgressUpdate interface</li>
+              <li>• Real-time progress updates</li>
+              <li>• Error state handling</li>
+            </ul>
           </div>
         </div>
       </div>

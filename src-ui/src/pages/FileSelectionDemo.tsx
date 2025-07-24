@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import FileSelectionButton, { FileFilter } from '../components/forms/FileSelectionButton';
+import BackToDemos from '@/components/ui/back-to-demos';
 
 const FileSelectionDemo: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
@@ -21,9 +22,12 @@ const FileSelectionDemo: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-            FileSelectionButton Demo
-          </h1>
+          <BackToDemos className="mb-6" />
+
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">FileSelectionButton Demo</h1>
+            <div className="text-sm text-gray-500 font-mono">Task 4.2.1.1</div>
+          </div>
 
           <div className="space-y-8">
             {/* Single File Selection */}
