@@ -313,7 +313,7 @@ pub async fn generate_key(input: GenerateKeyInput) -> CommandResponse<GenerateKe
     if existing_keys.iter().any(|k| k.label == input.label) {
         return Err(error_handler.handle_validation_error(
             "label",
-            &format!("A key with label '{}' already exists", input.label),
+            &format!("A key with label '{}' already exists. Please choose a different label or use the existing key.", input.label),
         ));
     }
 

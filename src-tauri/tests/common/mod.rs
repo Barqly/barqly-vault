@@ -6,6 +6,7 @@
 //! - Common test helpers
 //! - Parallel-safe test utilities
 
+pub mod cleanup;
 pub mod fixtures;
 pub mod helpers;
 

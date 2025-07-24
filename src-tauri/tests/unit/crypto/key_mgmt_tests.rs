@@ -8,6 +8,7 @@
 //! - Performance measurement and validation
 //! - Proper integration with hierarchical test structure
 
+use crate::common::cleanup::TestCleanup;
 use crate::common::fixtures::CryptoFixtures;
 use crate::common::helpers::{PerformanceHelper, TestAssertions};
 use barqly_vault_lib::crypto::{
@@ -22,7 +23,8 @@ use secrecy::SecretString;
 
 #[test]
 fn should_generate_valid_key_pair_with_correct_format() {
-    // Given: No prerequisites needed
+    // Given: Test cleanup for any artifacts
+    let _cleanup = TestCleanup::new();
 
     // When: Generating a new key pair
     let keypair =

@@ -9,6 +9,7 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
+use super::common::cleanup::TestSuiteCleanup;
 use super::integration::{IntegrationTestSuite, IntegrationTestSummary};
 use super::smoke::{SmokeTestSuite, SmokeTestSummary};
 use super::unit::{TestSuiteSummary as UnitTestSummary, UnitTestSuite};
@@ -165,6 +166,9 @@ impl TestRunner {
         };
 
         self.print_final_summary(&results);
+
+        // Clean up test artifacts after all tests complete
+        TestSuiteCleanup::cleanup_all();
 
         Ok(results)
     }
