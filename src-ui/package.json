@@ -10,6 +10,8 @@
     "tauri": "tauri",
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
     "fmt": "prettier --write src",
+    "format:check": "prettier --check .",
+    "format:fix": "prettier --write .",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",

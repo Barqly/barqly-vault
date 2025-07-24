@@ -11,8 +11,8 @@ export default defineConfig({
     css: true,
     // Externalize Tauri APIs to prevent resolution errors
     deps: {
-      external: ['@tauri-apps/api', '@tauri-apps/plugin-dialog', '@tauri-apps/api/core']
-    }
+      external: ['@tauri-apps/api', '@tauri-apps/plugin-dialog', '@tauri-apps/api/core'],
+    },
   },
   resolve: {
     alias: {
@@ -22,4 +22,4 @@ export default defineConfig({
       '@tauri-apps/api/core': path.resolve(__dirname, './src/test-mocks/tauri-core.ts'),
     },
   },
-}); 
+});
