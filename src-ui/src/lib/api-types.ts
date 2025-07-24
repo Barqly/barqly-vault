@@ -174,6 +174,12 @@ export interface KeyInfo {
   usage_count: number;
 }
 
+export interface KeyMetadata {
+  label: string;
+  created_at: string; // ISO 8601
+  public_key: string | null;
+}
+
 export interface StorageInfo {
   total_space: number;
   available_space: number;

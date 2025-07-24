@@ -183,7 +183,7 @@ barqly-vault/
     - [x] 4.2.1.1: KeyGenerationForm (key label + passphrase input)
     - [x] 4.2.1.2: PassphraseInput (secure password with validation)
     - [x] 4.2.1.3: FileSelectionButton (file/folder picker trigger)
-    - [ ] 4.2.1.4: KeySelectionDropdown (key picker with metadata)
+    - [x] 4.2.1.4: KeySelectionDropdown (key picker with metadata)
   - [ ] 4.2.2: Feedback Components
     - [ ] 4.2.2.1: ProgressBar (visual progress indicator)
     - [ ] 4.2.2.2: ErrorMessage (structured error display)
