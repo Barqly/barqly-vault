@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure file encryption for Bitcoin custody
 
-.PHONY: help dev ui desktop build ui-build desktop-build preview ui-preview desktop-preview lint fmt rust-lint rust-fmt clean install demo-enable demo-disable demo-dev
+.PHONY: help dev ui desktop build ui-build desktop-build preview ui-preview desktop-preview lint fmt rust-lint rust-fmt clean install demo
 
 # Default target
 help:
@@ -29,11 +29,6 @@ help:
 	@echo ""
 	@echo "Setup:"
 	@echo "  install        - Install all dependencies"
-	@echo ""
-	@echo "Demo System:"
-	@echo "  demo-enable    - Enable demo mode (includes demo routes)"
-	@echo "  demo-disable   - Disable demo mode (clean production)"
-	@echo "  demo-dev       - Enable demo mode and start dev server"
 
 # Development commands
 dev: ui
@@ -96,20 +91,6 @@ install:
 	@echo "📦 Installing dependencies..."
 	cd src-ui && npm install
 	cd src-tauri && cargo build
-
-# Demo system commands
-demo-enable:
-	@echo "🎯 Enabling demo mode..."
-	node scripts/switch-to-demo.js demo
-
-demo-disable:
-	@echo "🚀 Disabling demo mode..."
-	node scripts/switch-to-demo.js production
-
-demo-dev:
-	@echo "🎯 Enabling demo mode and starting dev server..."
-	node scripts/switch-to-demo.js demo
-	cd src-ui && npm run dev
 
 # Automated development command
 demo:
