@@ -19,6 +19,7 @@ help:
 	@echo "  desktop-build        - Build desktop app for distribution"
 	@echo ""
 	@echo "Quality:"
+	@echo "  coverage       - Run UI coverage tests"
 	@echo "  lint           - Lint UI code (ESLint)"
 	@echo "  fmt            - Format UI code (Prettier)"
 	@echo "  rust-lint      - Lint Rust code (clippy)"
@@ -59,6 +60,10 @@ desktop-preview:
 	cd src-tauri && cargo tauri preview
 
 # Quality commands
+coverage:
+	@echo "🔍 Running UI coverage tests..."
+	cd src-ui && npm test -- --run --coverage
+
 lint:
 	@echo "🔍 Linting UI code..."
 	cd src-ui && npm run lint
