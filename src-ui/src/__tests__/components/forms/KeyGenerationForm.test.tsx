@@ -246,6 +246,9 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
     });
 
     it('should handle key generation errors', async () => {
+      // Mock console.error to prevent expected error from polluting test output
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       mockInvoke.mockRejectedValueOnce(new Error('Key generation failed'));
 
       render(<KeyGenerationForm />);
@@ -266,6 +269,12 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       await waitFor(() => {
         expect(screen.getByText(/key generation failed/i)).toBeInTheDocument();
       });
+
+      // Verify that the error was handled gracefully (no unhandled promise rejection)
+      expect(consoleErrorSpy).toHaveBeenCalled();
+
+      // Clean up
+      consoleErrorSpy.mockRestore();
     });
   });
 
