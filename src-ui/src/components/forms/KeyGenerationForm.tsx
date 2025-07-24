@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { Key, AlertCircle, CheckCircle } from 'lucide-react';
+import { Key, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { GenerateKeyInput, GenerateKeyResponse } from '../../lib/api-types';
 import PassphraseInput from './PassphraseInput';
 
@@ -31,6 +31,9 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState<GenerateKeyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showLabelTooltip, setShowLabelTooltip] = useState(false);
+  const labelTooltipRef = useRef<HTMLDivElement>(null);
+  const labelInfoButtonRef = useRef<HTMLButtonElement>(null);
 
   // Validation functions
   const validateKeyLabel = (label: string): string | undefined => {
@@ -99,6 +102,33 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
     return Object.keys(newErrors).length === 0;
   };
 
+  // Handle tooltip visibility for key label
+  const handleLabelTooltipToggle = () => {
+    setShowLabelTooltip(!showLabelTooltip);
+  };
+
+  // Handle click outside to close tooltip
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        labelTooltipRef.current &&
+        !labelTooltipRef.current.contains(event.target as Node) &&
+        labelInfoButtonRef.current &&
+        !labelInfoButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowLabelTooltip(false);
+      }
+    };
+
+    if (showLabelTooltip) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showLabelTooltip]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -153,18 +183,67 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
           <label htmlFor="keyLabel" className="block text-sm font-medium text-gray-700 mb-2">
             Key Label
           </label>
-          <input
-            id="keyLabel"
-            type="text"
-            value={formData.label}
-            onChange={(e) => handleInputChange('label', e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.label ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="e.g., My Backup Key"
-            disabled={isLoading}
-            aria-describedby={errors.label ? 'keyLabel-error' : undefined}
-          />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <input
+                id="keyLabel"
+                type="text"
+                value={formData.label}
+                onChange={(e) => handleInputChange('label', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.label ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="e.g., My Backup Key"
+                disabled={isLoading}
+                aria-describedby={errors.label ? 'keyLabel-error' : undefined}
+              />
+            </div>
+
+            {/* Info icon with tooltip - positioned outside input */}
+            <div className="relative flex-shrink-0">
+              <button
+                ref={labelInfoButtonRef}
+                type="button"
+                onClick={handleLabelTooltipToggle}
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                aria-label="Key label requirements"
+                tabIndex={0}
+              >
+                <Info className="h-4 w-4" />
+              </button>
+
+              {/* Tooltip */}
+              {showLabelTooltip && (
+                <div
+                  ref={labelTooltipRef}
+                  className="absolute z-50 mt-2 w-80 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-lg border border-gray-700"
+                  style={{
+                    left: '0',
+                    top: '100%',
+                  }}
+                >
+                  <div className="space-y-2">
+                    <p className="font-medium text-gray-100">Key Label Requirements:</p>
+                    <ul className="space-y-1 text-gray-300">
+                      <li>• 3-50 characters long</li>
+                      <li>• Letters, numbers, spaces, hyphens, and underscores only</li>
+                      <li>• Used to identify your key in the vault</li>
+                    </ul>
+                  </div>
+
+                  {/* Tooltip arrow */}
+                  <div
+                    className="absolute w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"
+                    style={{
+                      left: '8px',
+                      top: '-4px',
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
           {errors.label && (
             <p
               id="keyLabel-error"
@@ -175,10 +254,6 @@ const KeyGenerationForm: React.FC<KeyGenerationFormProps> = ({ onKeyGenerated })
               {errors.label}
             </p>
           )}
-          <p className="mt-1 text-xs text-gray-500">
-            Key label must be 3-50 characters, letters, numbers, spaces, hyphens, and underscores
-            only
-          </p>
         </div>
 
         {/* Passphrase Input */}

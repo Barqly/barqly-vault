@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Eye, EyeOff, Info } from 'lucide-react';
 
 export interface PassphraseStrength {
   isStrong: boolean;
@@ -58,6 +58,9 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
     score: 0,
   });
   const [hasUserTyped, setHasUserTyped] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const infoButtonRef = useRef<HTMLButtonElement>(null);
 
   // Use controlled value if provided, otherwise use internal state
   const value = controlledValue !== undefined ? controlledValue : internalValue;
@@ -187,6 +190,33 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
     }
   };
 
+  // Handle tooltip visibility
+  const handleTooltipToggle = () => {
+    setShowTooltip(!showTooltip);
+  };
+
+  // Handle click outside to close tooltip
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        tooltipRef.current &&
+        !tooltipRef.current.contains(event.target as Node) &&
+        infoButtonRef.current &&
+        !infoButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowTooltip(false);
+      }
+    };
+
+    if (showTooltip) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showTooltip]);
+
   const displayError = error || validationError;
 
   // For confirmation field, check match status
@@ -196,46 +226,99 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <label htmlFor={id || 'passphrase-input'} className="block text-sm font-medium text-gray-700">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-
-      <div className="relative">
-        <input
-          id={id || 'passphrase-input'}
-          type={showPassphrase ? 'text' : 'password'}
-          value={value}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          placeholder={placeholder}
-          disabled={disabled}
-          required={required}
-          className={`
-            block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-            disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-            ${displayError ? 'border-red-300' : 'border-gray-300'}
-            ${disabled ? 'bg-gray-50' : 'bg-white'}
-          `}
-          aria-describedby={displayError ? `${id || 'passphrase-input'}-error` : undefined}
-        />
-
-        <button
-          type="button"
-          onClick={() => setShowPassphrase(!showPassphrase)}
-          className="absolute inset-y-0 right-0 pr-3 flex items-center"
-          disabled={disabled}
-          tabIndex={-1}
-          aria-label={showPassphrase ? 'Hide password' : 'Show password'}
+      <div className="flex items-center gap-2">
+        <label
+          htmlFor={id || 'passphrase-input'}
+          className="block text-sm font-medium text-gray-700"
         >
-          {showPassphrase ? (
-            <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-          ) : (
-            <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-          )}
-        </button>
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <input
+            id={id || 'passphrase-input'}
+            type={showPassphrase ? 'text' : 'password'}
+            value={value}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
+            placeholder={placeholder}
+            disabled={disabled}
+            required={required}
+            className={`
+              block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+              disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
+              ${displayError ? 'border-red-300' : 'border-gray-300'}
+              ${disabled ? 'bg-gray-50' : 'bg-white'}
+              pr-10
+            `}
+            aria-describedby={displayError ? `${id || 'passphrase-input'}-error` : undefined}
+          />
+
+          <button
+            type="button"
+            onClick={() => setShowPassphrase(!showPassphrase)}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            disabled={disabled}
+            tabIndex={-1}
+            aria-label={showPassphrase ? 'Hide password' : 'Show password'}
+          >
+            {showPassphrase ? (
+              <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+            ) : (
+              <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+            )}
+          </button>
+        </div>
+
+        {/* Info icon with tooltip - only show for first field, positioned outside input */}
+        {showStrength && !isConfirmationField && (
+          <div className="relative flex-shrink-0">
+            <button
+              ref={infoButtonRef}
+              type="button"
+              onClick={handleTooltipToggle}
+              className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+              aria-label="Passphrase requirements"
+              tabIndex={0}
+            >
+              <Info className="h-4 w-4" />
+            </button>
+
+            {/* Tooltip */}
+            {showTooltip && (
+              <div
+                ref={tooltipRef}
+                className="absolute z-50 mt-2 w-80 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-lg border border-gray-700"
+                style={{
+                  left: '0',
+                  top: '100%',
+                }}
+              >
+                <div className="space-y-2">
+                  <p className="font-medium text-gray-100">Passphrase Requirements:</p>
+                  <ul className="space-y-1 text-gray-300">
+                    <li>• Minimum 12 characters</li>
+                    <li>• Must include ALL: uppercase, lowercase, numbers, and symbols</li>
+                  </ul>
+                </div>
+
+                {/* Tooltip arrow */}
+                <div
+                  className="absolute w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"
+                  style={{
+                    left: '8px',
+                    top: '-4px',
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Passphrase strength indicator - Only for first field */}
@@ -264,12 +347,6 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
               </div>
             </>
           )}
-          {/* Security guidance */}
-          <div className="text-xs text-gray-600 space-y-1">
-            <p>• Minimum 12 characters</p>
-            <p>• Must include ALL: uppercase, lowercase, numbers, and symbols</p>
-            <p>• Example: Alice@2024! or MyDog#123</p>
-          </div>
         </div>
       )}
 

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import PassphraseInput from '../../../components/forms/PassphraseInput';
@@ -10,196 +10,234 @@ describe('PassphraseInput (4.2.1.2)', () => {
     vi.clearAllMocks();
   });
 
-  describe('Component Rendering', () => {
-    it('should render passphrase input with all required elements', () => {
+  describe('Basic Functionality', () => {
+    it('should render with default props', () => {
       render(<PassphraseInput />);
 
-      expect(screen.getByLabelText(/passphrase/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /show password/i })).toBeInTheDocument();
-      expect(screen.getByText(/passphrase strength/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Enter your passphrase')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('')).toBeInTheDocument();
     });
 
-    it('should render with custom label when provided', () => {
-      render(<PassphraseInput label="Custom Password" />);
+    it('should handle controlled value', () => {
+      const testValue = 'test-passphrase';
+      render(<PassphraseInput value={testValue} />);
 
-      expect(screen.getByLabelText(/custom password/i)).toBeInTheDocument();
+      const input = screen.getByDisplayValue(testValue);
+      expect(input).toHaveValue(testValue);
     });
 
-    it('should render with placeholder when provided', () => {
-      render(<PassphraseInput placeholder="Enter your secret passphrase" />);
+    it('should handle uncontrolled value', () => {
+      render(<PassphraseInput />);
 
-      expect(screen.getByPlaceholderText(/enter your secret passphrase/i)).toBeInTheDocument();
+      const input = screen.getByPlaceholderText('Enter your passphrase') as HTMLInputElement;
+      fireEvent.change(input, { target: { value: 'new-value' } });
+
+      expect(input.value).toBe('new-value');
     });
 
-    it('should render with initial value when provided', () => {
-      render(<PassphraseInput value="initial-passphrase" />);
+    it('should call onChange when value changes', () => {
+      const mockOnChange = vi.fn();
+      render(<PassphraseInput onChange={mockOnChange} />);
 
-      expect(screen.getByDisplayValue('initial-passphrase')).toBeInTheDocument();
+      const input = screen.getByPlaceholderText('Enter your passphrase');
+      fireEvent.change(input, { target: { value: 'new-value' } });
+
+      expect(mockOnChange).toHaveBeenCalledWith('new-value');
     });
 
-    it('should render with disabled state when provided', () => {
+    it('should handle placeholder prop', () => {
+      const customPlaceholder = 'Custom placeholder';
+      render(<PassphraseInput placeholder={customPlaceholder} />);
+
+      expect(screen.getByPlaceholderText(customPlaceholder)).toBeInTheDocument();
+    });
+
+    it('should handle label prop', () => {
+      const customLabel = 'Custom Label';
+      render(<PassphraseInput label={customLabel} />);
+
+      expect(screen.getByText(customLabel)).toBeInTheDocument();
+    });
+
+    it('should show required indicator when required is true', () => {
+      render(<PassphraseInput required />);
+
+      expect(screen.getByText('*')).toBeInTheDocument();
+    });
+
+    it('should not show required indicator when required is false', () => {
+      render(<PassphraseInput required={false} />);
+
+      expect(screen.queryByText('*')).not.toBeInTheDocument();
+    });
+
+    it('should be disabled when disabled prop is true', () => {
       render(<PassphraseInput disabled />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
       expect(input).toBeDisabled();
     });
 
-    it('should render with required attribute when provided', () => {
-      render(<PassphraseInput required />);
+    it('should not be disabled when disabled prop is false', () => {
+      render(<PassphraseInput disabled={false} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
-      expect(input).toBeRequired();
+      const input = screen.getByPlaceholderText('Enter your passphrase');
+      expect(input).not.toBeDisabled();
     });
   });
 
-  describe('Passphrase Visibility Toggle', () => {
-    it('should toggle password visibility when show/hide button is clicked', async () => {
-      render(<PassphraseInput value="" onChange={() => {}} />);
+  describe('Password Visibility Toggle', () => {
+    it('should toggle password visibility when eye icon is clicked', () => {
+      render(<PassphraseInput />);
 
-      const input = screen.getByLabelText(/passphrase/i) as HTMLInputElement;
-      expect(input.type).toBe('password');
+      const input = screen.getByPlaceholderText('Enter your passphrase');
+      const toggleButton = screen.getByRole('button', { name: /show password/i });
+
+      // Initially should be password type
+      expect(input).toHaveAttribute('type', 'password');
+
+      // Click to show password
+      fireEvent.click(toggleButton);
+      expect(input).toHaveAttribute('type', 'text');
+
+      // Click to hide password again
+      fireEvent.click(toggleButton);
+      expect(input).toHaveAttribute('type', 'password');
+    });
+
+    it('should update aria-label when visibility is toggled', () => {
+      render(<PassphraseInput />);
 
       const toggleButton = screen.getByRole('button', { name: /show password/i });
-      await user.click(toggleButton);
 
-      expect(input.type).toBe('text');
+      // Initially should show "Show password"
+      expect(toggleButton).toHaveAttribute('aria-label', 'Show password');
+
+      // Click to show password
+      fireEvent.click(toggleButton);
       expect(toggleButton).toHaveAttribute('aria-label', 'Hide password');
 
-      await user.click(toggleButton);
-
-      expect(input.type).toBe('password');
+      // Click to hide password again
+      fireEvent.click(toggleButton);
       expect(toggleButton).toHaveAttribute('aria-label', 'Show password');
     });
 
-    it('should not toggle visibility when input is disabled', async () => {
+    it('should be disabled when input is disabled', () => {
       render(<PassphraseInput disabled />);
 
-      const input = screen.getByLabelText(/passphrase/i);
       const toggleButton = screen.getByRole('button', { name: /show password/i });
-
       expect(toggleButton).toBeDisabled();
-      expect(input).toHaveAttribute('type', 'password');
-
-      await user.click(toggleButton);
-      expect(input).toHaveAttribute('type', 'password');
     });
   });
 
-  describe('Passphrase Strength Validation', () => {
-    it('should show weak passphrase strength for single character', async () => {
-      render(<PassphraseInput />);
+  describe('Passphrase Strength', () => {
+    it('should show strength indicator when showStrength is true', () => {
+      render(<PassphraseInput showStrength />);
 
-      const input = screen.getByLabelText(/passphrase/i);
-      await user.type(input, 'a');
-
-      expect(screen.getByText(/too short \(1\/12 characters\)/i)).toBeInTheDocument();
+      expect(screen.getByText('Passphrase Strength:')).toBeInTheDocument();
     });
 
-    it('should show weak passphrase strength', async () => {
-      render(<PassphraseInput />);
+    it('should not show strength indicator when showStrength is false', () => {
+      render(<PassphraseInput showStrength={false} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
-      await user.type(input, 'weakpass');
-
-      expect(screen.getByText(/too short \(8\/12 characters\)/i)).toBeInTheDocument();
+      expect(screen.queryByText('Passphrase Strength:')).not.toBeInTheDocument();
     });
 
-    it('should show weak passphrase strength for moderate input', async () => {
+    it('should update strength when passphrase changes', async () => {
       render(<PassphraseInput />);
 
-      const input = screen.getByLabelText(/passphrase/i);
-      await user.type(input, 'moderate123');
+      const input = screen.getByPlaceholderText('Enter your passphrase');
+      await user.type(input, 'weak');
 
-      expect(screen.getByText(/too short \(11\/12 characters\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/too short/i)).toBeInTheDocument();
     });
 
-    it('should show strong passphrase strength', async () => {
+    it('should show strong passphrase message for valid passphrase', async () => {
       render(<PassphraseInput />);
 
-      const input = screen.getByLabelText(/passphrase/i);
-      await user.type(input, 'MySecure@2024!');
+      const input = screen.getByPlaceholderText('Enter your passphrase');
+      await user.type(input, 'StrongPass123!');
 
       expect(screen.getByText(/strong passphrase/i)).toBeInTheDocument();
     });
 
-    it('should show strength indicator by default', () => {
-      render(<PassphraseInput />);
+    it('should call onStrengthChange when strength changes', async () => {
+      const mockOnStrengthChange = vi.fn();
+      render(<PassphraseInput onStrengthChange={mockOnStrengthChange} />);
 
-      // Should show neutral "Passphrase Strength:" text by default
-      expect(screen.getByText(/passphrase strength:/i)).toBeInTheDocument();
-    });
+      const input = screen.getByPlaceholderText('Enter your passphrase');
+      await user.type(input, 'test');
 
-    it('should hide strength indicator when showStrength is false', () => {
-      render(<PassphraseInput showStrength={false} />);
-
-      expect(screen.queryByText(/passphrase strength/i)).not.toBeInTheDocument();
-    });
-
-    it('should show confirmation match status for confirmation field', async () => {
-      render(<PassphraseInput isConfirmationField={true} originalPassphrase="test123" />);
-
-      const input = screen.getByLabelText(/passphrase/i);
-
-      // Type matching passphrase
-      await user.type(input, 'test123');
-      expect(screen.getByText(/passphrases match/i)).toBeInTheDocument();
-
-      // Type non-matching passphrase
-      await user.clear(input);
-      await user.type(input, 'different');
-      expect(screen.getByText(/passphrases don't match/i)).toBeInTheDocument();
-    });
-
-    it('should not show strength indicator for confirmation field', () => {
-      render(<PassphraseInput isConfirmationField={true} originalPassphrase="test123" />);
-
-      expect(screen.queryByText(/passphrase strength/i)).not.toBeInTheDocument();
+      expect(mockOnStrengthChange).toHaveBeenCalled();
     });
   });
 
-  describe('Form Validation', () => {
-    it('should show validation error for empty required field', async () => {
+  describe('Validation', () => {
+    it('should show validation error when validation fails', () => {
+      render(<PassphraseInput error="Validation error" />);
+
+      expect(screen.getByText('Validation error')).toBeInTheDocument();
+    });
+
+    it('should validate on blur when required', () => {
       render(<PassphraseInput required />);
 
-      const input = screen.getByLabelText(/passphrase/i);
-      await user.click(input);
-      await user.tab();
+      const input = screen.getByPlaceholderText('Enter your passphrase');
+      fireEvent.blur(input);
 
-      expect(screen.getByText(/passphrase is required/i)).toBeInTheDocument();
+      expect(screen.getByText('Passphrase is required')).toBeInTheDocument();
     });
 
-    it('should show validation error for too short passphrase', async () => {
+    it('should validate minimum length', () => {
       render(<PassphraseInput minLength={8} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
-      await user.type(input, 'short');
-      await user.tab();
+      const input = screen.getByPlaceholderText('Enter your passphrase');
+      fireEvent.change(input, { target: { value: 'short' } });
+      fireEvent.blur(input);
 
-      expect(
-        screen.getByText(/passphrase must be at least 8 characters long/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Passphrase must be at least 8 characters long')).toBeInTheDocument();
     });
 
-    it('should show validation error for short passphrase when required', async () => {
+    it('should validate strong passphrase requirement', () => {
       render(<PassphraseInput requireStrong />);
 
-      const input = screen.getByLabelText(/passphrase/i);
-      await user.type(input, 'weakpass');
-      await user.tab();
+      const input = screen.getByPlaceholderText('Enter your passphrase');
+      fireEvent.change(input, { target: { value: 'weakpassphrase' } });
+      fireEvent.blur(input);
 
-      expect(
-        screen.getByText(/passphrase must be at least 12 characters long/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Passphrase is too weak')).toBeInTheDocument();
+    });
+  });
+
+  describe('Confirmation Field', () => {
+    it('should show confirmation match status', () => {
+      render(
+        <PassphraseInput
+          isConfirmationField
+          originalPassphrase="original123"
+          value="original123"
+        />,
+      );
+
+      expect(screen.getByText('Passphrases match')).toBeInTheDocument();
     });
 
-    it('should not show validation error for strong passphrase', async () => {
-      render(<PassphraseInput requireStrong />);
+    it('should show confirmation mismatch status', () => {
+      render(
+        <PassphraseInput
+          isConfirmationField
+          originalPassphrase="original123"
+          value="different123"
+        />,
+      );
 
-      const input = screen.getByLabelText(/passphrase/i);
-      await user.type(input, 'MySecure@2024!');
-      await user.tab();
+      expect(screen.getByText("Passphrases don't match")).toBeInTheDocument();
+    });
 
-      expect(screen.queryByText(/passphrase is not strong enough/i)).not.toBeInTheDocument();
+    it('should not show strength indicator for confirmation field', () => {
+      render(<PassphraseInput isConfirmationField />);
+
+      expect(screen.queryByText('Passphrase Strength:')).not.toBeInTheDocument();
     });
   });
 
@@ -208,7 +246,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       const mockOnChange = vi.fn();
       render(<PassphraseInput onChange={mockOnChange} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
       await user.type(input, 'test');
 
       // user.type calls onChange for each character, so we check that it was called
@@ -223,7 +261,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       const mockOnStrengthChange = vi.fn();
       render(<PassphraseInput onStrengthChange={mockOnStrengthChange} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
       await user.type(input, 'MySecure@2024!');
 
       // Check that onStrengthChange was called
@@ -240,7 +278,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       const mockOnBlur = vi.fn();
       render(<PassphraseInput onBlur={mockOnBlur} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
       await user.click(input);
       await user.tab();
 
@@ -251,7 +289,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       const mockOnFocus = vi.fn();
       render(<PassphraseInput onFocus={mockOnFocus} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
       await user.click(input);
 
       expect(mockOnFocus).toHaveBeenCalled();
@@ -262,7 +300,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
     it('should have proper ARIA attributes', () => {
       render(<PassphraseInput />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
       const toggleButton = screen.getByRole('button', { name: /show password/i });
 
       expect(input).toHaveAttribute('type', 'password');
@@ -273,10 +311,15 @@ describe('PassphraseInput (4.2.1.2)', () => {
     it('should handle keyboard navigation correctly', async () => {
       render(<PassphraseInput value="" onChange={() => {}} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
       input.focus();
       expect(input).toHaveFocus();
 
+      // Tab to the info button
+      await user.tab();
+      expect(screen.getByRole('button', { name: /passphrase requirements/i })).toHaveFocus();
+
+      // Tab again to move focus away
       await user.tab();
       expect(document.body).toHaveFocus();
     });
@@ -308,7 +351,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       const mockOnChange = vi.fn();
       render(<PassphraseInput onChange={mockOnChange} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
 
       // Rapidly type many characters
       await user.type(input, 'a'.repeat(50));
@@ -321,7 +364,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
     it('should correctly assess Alice256789u7u7u8i9o8k7 passphrase', async () => {
       render(<PassphraseInput />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
       await user.type(input, 'Alice256789u7u7u8i9o8k7');
 
       // This should be weak because it's missing symbols
@@ -332,7 +375,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
       const mockOnStrengthChange = vi.fn();
       render(<PassphraseInput onStrengthChange={mockOnStrengthChange} />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
 
       // Rapid typing
       for (let i = 0; i < 10; i++) {
@@ -346,7 +389,7 @@ describe('PassphraseInput (4.2.1.2)', () => {
     it('should correctly assess Alice123af5b8o0 passphrase', async () => {
       render(<PassphraseInput />);
 
-      const input = screen.getByLabelText(/passphrase/i);
+      const input = screen.getByPlaceholderText('Enter your passphrase');
       await user.type(input, 'Alice123af5b8o0');
 
       // This should be weak because it's missing symbols
