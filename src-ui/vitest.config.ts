@@ -15,7 +15,11 @@ export default defineConfig({
     css: true,
     // Externalize Tauri APIs to prevent resolution errors
     deps: {
-      external: ['@tauri-apps/api', '@tauri-apps/plugin-dialog', '@tauri-apps/api/core'],
+      optimizer: {
+        web: {
+          exclude: ['@tauri-apps/api', '@tauri-apps/plugin-dialog', '@tauri-apps/api/core'],
+        },
+      },
     },
     coverage: {
       provider: 'v8',

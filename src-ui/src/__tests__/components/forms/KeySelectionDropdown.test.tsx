@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { KeySelectionDropdown } from '../../../components/forms/KeySelectionDropdown';
@@ -58,8 +58,10 @@ describe('KeySelectionDropdown (4.2.1.4)', () => {
       expect(screen.getByText('Custom placeholder')).toBeInTheDocument();
     });
 
-    it('should show required indicator when required is true', () => {
-      render(<KeySelectionDropdown required />);
+    it('should show required indicator when required is true', async () => {
+      await act(async () => {
+        render(<KeySelectionDropdown required />);
+      });
 
       expect(screen.getByText('*')).toBeInTheDocument();
     });
@@ -215,8 +217,10 @@ describe('KeySelectionDropdown (4.2.1.4)', () => {
       expect(screen.queryByText('My Backup Key')).not.toBeInTheDocument();
     });
 
-    it('should have proper ARIA attributes', () => {
-      render(<KeySelectionDropdown />);
+    it('should have proper ARIA attributes', async () => {
+      await act(async () => {
+        render(<KeySelectionDropdown />);
+      });
 
       const button = screen.getByRole('button');
       expect(button).toHaveAttribute('aria-haspopup', 'listbox');
@@ -225,8 +229,10 @@ describe('KeySelectionDropdown (4.2.1.4)', () => {
   });
 
   describe('Error Handling', () => {
-    it('should display custom error message', () => {
-      render(<KeySelectionDropdown error="Custom error message" />);
+    it('should display custom error message', async () => {
+      await act(async () => {
+        render(<KeySelectionDropdown error="Custom error message" />);
+      });
 
       expect(screen.getByText('Custom error message')).toBeInTheDocument();
     });
@@ -290,8 +296,10 @@ describe('KeySelectionDropdown (4.2.1.4)', () => {
   });
 
   describe('Disabled State', () => {
-    it('should be disabled when disabled prop is true', () => {
-      render(<KeySelectionDropdown disabled />);
+    it('should be disabled when disabled prop is true', async () => {
+      await act(async () => {
+        render(<KeySelectionDropdown disabled />);
+      });
 
       const button = screen.getByRole('button');
       expect(button).toBeDisabled();

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import PassphraseInput from '../../../components/forms/PassphraseInput';
@@ -309,18 +309,26 @@ describe('PassphraseInput (4.2.1.2)', () => {
     });
 
     it('should handle keyboard navigation correctly', async () => {
-      render(<PassphraseInput value="" onChange={() => {}} />);
+      await act(async () => {
+        render(<PassphraseInput value="" onChange={() => {}} />);
+      });
 
       const input = screen.getByPlaceholderText('Enter your passphrase');
-      input.focus();
+      await act(async () => {
+        input.focus();
+      });
       expect(input).toHaveFocus();
 
       // Tab to the info button
-      await user.tab();
+      await act(async () => {
+        await user.tab();
+      });
       expect(screen.getByRole('button', { name: /passphrase requirements/i })).toHaveFocus();
 
       // Tab again to move focus away
-      await user.tab();
+      await act(async () => {
+        await user.tab();
+      });
       expect(document.body).toHaveFocus();
     });
   });
