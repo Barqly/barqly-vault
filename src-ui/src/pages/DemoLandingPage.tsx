@@ -30,7 +30,7 @@ const demos: DemoMetadata[] = [
     taskNumber: '4.2.1.2',
     features: ['Passphrase Validation', 'Strength Indicator', 'Key Preview', 'Secure Generation'],
     route: '/demo/key-generation-demo',
-    status: 'completed',
+    status: 'planned',
   },
   {
     id: 'key-selection',
@@ -39,7 +39,7 @@ const demos: DemoMetadata[] = [
     taskNumber: '4.2.1.4',
     features: ['Search & Filter', 'Key Preview', 'Recent Keys', 'Quick Actions'],
     route: '/demo/key-selection-demo',
-    status: 'completed',
+    status: 'planned',
   },
   {
     id: 'passphrase-input',
@@ -53,7 +53,7 @@ const demos: DemoMetadata[] = [
       'Security Indicators',
     ],
     route: '/demo/passphrase-input-demo',
-    status: 'completed',
+    status: 'planned',
   },
   {
     id: 'progress-bar',
