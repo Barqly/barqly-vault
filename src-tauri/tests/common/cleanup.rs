@@ -7,8 +7,7 @@
 //! ```rust
 //! use crate::tests::common::cleanup::TestCleanup;
 //!
-//! #[test]
-//! fn test_key_generation() {
+//! fn example_usage() {
 //!     let cleanup = TestCleanup::new();
 //!     
 //!     // Your test code here...
@@ -24,6 +23,7 @@ use barqly_vault_lib::storage;
 
 /// Global test cleanup state
 static CLEANUP_INIT: Once = Once::new();
+#[allow(dead_code)]
 static mut TEST_ARTIFACTS: Vec<String> = Vec::new();
 
 /// Test cleanup manager
@@ -52,8 +52,8 @@ impl TestCleanup {
     /// Register a key label for cleanup
     pub fn register_key(&mut self, key_label: &str) {
         if let Ok(keys_dir) = storage::get_keys_directory() {
-            let key_file = keys_dir.join(format!("barqly-{}.agekey.enc", key_label));
-            let meta_file = keys_dir.join(format!("barqly-{}.agekey.meta", key_label));
+            let key_file = keys_dir.join(format!("barqly-{key_label}.agekey.enc"));
+            let meta_file = keys_dir.join(format!("barqly-{key_label}.agekey.meta"));
 
             self.register_artifact(key_file.to_string_lossy().to_string());
             self.register_artifact(meta_file.to_string_lossy().to_string());
@@ -64,10 +64,7 @@ impl TestCleanup {
     pub fn cleanup(&self) {
         for artifact in &self.artifacts {
             if let Err(e) = std::fs::remove_file(artifact) {
-                eprintln!(
-                    "Warning: Failed to clean up test artifact {}: {}",
-                    artifact, e
-                );
+                eprintln!("Warning: Failed to clean up test artifact {artifact}: {e}");
             }
         }
     }
@@ -117,12 +114,9 @@ impl TestSuiteCleanup {
                             || file_name.contains("concurrent")
                         {
                             if let Err(e) = std::fs::remove_file(&path) {
-                                eprintln!(
-                                    "Warning: Failed to clean up test key {}: {}",
-                                    file_name, e
-                                );
+                                eprintln!("Warning: Failed to clean up test key {file_name}: {e}");
                             } else {
-                                println!("  Cleaned up: {}", file_name);
+                                println!("  Cleaned up: {file_name}");
                             }
                         }
                     }
@@ -155,7 +149,7 @@ impl TestSuiteCleanup {
                         || file_name.contains("test_")
                     {
                         if let Err(e) = std::fs::remove_file(path) {
-                            eprintln!("Warning: Failed to clean up temp file {}: {}", file_name, e);
+                            eprintln!("Warning: Failed to clean up temp file {file_name}: {e}");
                         }
                     }
                 }
