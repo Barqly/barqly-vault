@@ -89,7 +89,7 @@ const demos: DemoMetadata[] = [
     taskNumber: '4.2.2.4',
     features: ['Customizable Size', 'Animation Options', 'Accessibility', 'Integration Ready'],
     route: '/demo/loading-spinner-demo',
-    status: 'planned',
+    status: 'completed',
   },
 ];
 

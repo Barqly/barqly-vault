@@ -11,6 +11,7 @@ const FileSelectionDemo = lazy(() => import('./pages/FileSelectionDemo'));
 const SuccessMessageDemo = lazy(() => import('./components/forms/SuccessMessageDemo'));
 const ProgressBarDemo = lazy(() => import('./components/forms/ProgressBarDemo'));
 const ErrorMessageDemo = lazy(() => import('./components/forms/ErrorMessageDemo'));
+const LoadingSpinnerDemo = lazy(() => import('./components/forms/LoadingSpinnerDemo'));
 
 function AppDemo(): ReactElement {
   return (
@@ -68,6 +69,18 @@ function AppDemo(): ReactElement {
                 }
               >
                 <ProgressBarDemo />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/demo/loading-spinner-demo"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-64">Loading demo...</div>
+                }
+              >
+                <LoadingSpinnerDemo />
               </Suspense>
             }
           />
