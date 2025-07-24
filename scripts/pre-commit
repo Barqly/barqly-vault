@@ -52,11 +52,15 @@ print_status "info" "📦 Rust project validation..."
 
 cd src-tauri
 
-# Cargo fmt check
+# Cargo fetch (same as CI)
+print_status "info" "📦 Running cargo fetch..."
+cargo fetch
+
+# Cargo fmt check (EXACTLY like CI)
 print_status "info" "🎨 Running cargo fmt..."
-if ! cargo fmt --check; then
+if ! cargo fmt --all -- --check; then
     print_status "error" "Code formatting issues found!"
-    print_status "info" "💡 Run 'cargo fmt' to fix formatting"
+    print_status "info" "💡 Run 'cargo fmt --all' to fix formatting"
     exit 1
 fi
 print_status "success" "Formatting check passed"
@@ -70,9 +74,18 @@ if ! cargo clippy --all-targets --all-features -- -D warnings; then
 fi
 print_status "success" "Clippy check passed"
 
-# Cargo test
+# Cargo build (EXACTLY like CI)
+print_status "info" "🏗️  Running cargo build..."
+if ! cargo build --release; then
+    print_status "error" "Build failed!"
+    print_status "info" "💡 Fix the build errors above and try again"
+    exit 1
+fi
+print_status "success" "Build passed"
+
+# Cargo test (EXACTLY like CI)
 print_status "info" "🧪 Running tests..."
-if ! cargo test; then
+if ! cargo test --all; then
     print_status "error" "Tests failed!"
     print_status "info" "💡 Fix the failing tests and try again"
     exit 1
@@ -88,13 +101,13 @@ print_status "info" "🌐 Frontend project validation..."
 
 cd src-ui
 
-# Check dependencies
+# Check dependencies (use same method as CI)
 if [ ! -d "node_modules" ]; then
-    print_status "info" "📦 Installing dependencies..."
-    npm install
+    print_status "info" "📦 Installing dependencies (matching CI)..."
+    npm ci --prefer-offline --no-audit
 fi
 
-# Prettier formatting check
+# Prettier formatting check (same as CI)
 print_status "info" "🎨 Running Prettier formatting check..."
 if ! npx prettier --check .; then
     print_status "error" "Code formatting issues found!"
@@ -103,9 +116,9 @@ if ! npx prettier --check .; then
 fi
 print_status "success" "Formatting check passed"
 
-# ESLint
+# ESLint (EXACTLY like CI)
 print_status "info" "🔍 Running ESLint..."
-if ! npm run lint; then
+if ! npx eslint . --max-warnings=0; then
     print_status "error" "ESLint issues found!"
     print_status "info" "💡 Fix the linting issues above and try again"
     exit 1
@@ -130,9 +143,9 @@ if ! npm run build; then
 fi
 print_status "success" "Production build passed"
 
-# Tests
+# Tests (EXACTLY like CI)
 print_status "info" "🧪 Running frontend tests..."
-if ! npm test -- --run; then
+if ! npm test -- --run --coverage; then
     print_status "error" "Frontend tests failed!"
     print_status "info" "💡 Fix the failing tests and try again"
     exit 1
