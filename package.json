@@ -6,25 +6,16 @@
     "src-ui"
   ],
   "scripts": {
-    "dev": "npm run dev --prefix src-ui",
+    "ui": "npm run dev --prefix src-ui",
     "build": "npm run build --prefix src-ui",
     "preview": "npm run preview --prefix src-ui",
     "lint": "npm run lint --prefix src-ui",
     "fmt": "cd src-ui && npx prettier --write .",
-    "tauri:dev": "cd src-tauri && cargo tauri dev",
-    "tauri:build": "cd src-tauri && cargo tauri build",
-    "tauri:preview": "cd src-tauri && cargo tauri preview",
-    "rust:lint": "cd src-tauri && cargo clippy",
-    "rust:fmt": "cd src-tauri && cargo fmt",
-    "ui:dev": "npm run dev --prefix src-ui",
-    "ui:build": "npm run build --prefix src-ui",
-    "ui:preview": "npm run preview --prefix src-ui",
-    "ui:lint": "npm run lint --prefix src-ui",
-    "ui:fmt": "cd src-ui && npx prettier --write .",
-    "demo:enable": "node scripts/switch-to-demo.js demo",
-    "demo:disable": "node scripts/switch-to-demo.js production",
-    "demo:dev": "node scripts/switch-to-demo.js demo && npm run dev --prefix src-ui",
-    "demo": "./scripts/automated-dev.sh"
+    "app": "cd src-tauri && cargo tauri dev",
+    "app-build": "cd src-tauri && cargo tauri build",
+    "app-preview": "cd src-tauri && cargo tauri preview",
+    "rust-lint": "cd src-tauri && cargo clippy",
+    "rust-fmt": "cd src-tauri && cargo fmt"
   },
   "devDependencies": {}
 }

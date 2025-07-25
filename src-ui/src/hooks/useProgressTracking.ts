@@ -11,6 +11,10 @@ export interface ProgressTrackingState {
   isLoading: boolean;
   error: CommandError | null;
   progress: ProgressUpdate | null;
+  isActive: boolean;
+  isComplete: boolean;
+  startTime: Date | null;
+  endTime: Date | null;
 }
 
 export interface ProgressTrackingActions {
@@ -24,43 +28,58 @@ export interface UseProgressTrackingReturn extends ProgressTrackingState, Progre
 
 /**
  * Hook for tracking progress of long-running operations
- * 
+ *
  * Provides a clean interface for monitoring progress with:
  * - Real-time progress updates
  * - Error handling
  * - Automatic cleanup
+ * - Operation timing and completion tracking
  */
 export const useProgressTracking = (): UseProgressTrackingReturn => {
   const [state, setState] = useState<ProgressTrackingState>({
     isLoading: false,
     error: null,
     progress: null,
+    isActive: false,
+    isComplete: false,
+    startTime: null,
+    endTime: null,
   });
 
-  const startTracking = useCallback(async (operationId: string): Promise<void> => {
-    setState(prev => ({
+  const startTracking = useCallback(async (_operationId: string): Promise<void> => {
+    setState((prev) => ({
       ...prev,
       isLoading: true,
       error: null,
       progress: null,
+      isActive: true,
+      isComplete: false,
+      startTime: new Date(),
+      endTime: null,
     }));
 
     try {
       // Create a progress listener
       const unlisten = await listen<ProgressUpdate>('progress', (event) => {
-        setState(prev => ({
+        const isComplete = event.payload.progress >= 1.0;
+        setState((prev) => ({
           ...prev,
           progress: event.payload,
+          isComplete,
+          isActive: !isComplete,
+          endTime: isComplete ? new Date() : prev.endTime,
         }));
       });
 
       // Create an error listener
       const errorUnlisten = await listen<CommandError>('operation-error', (event) => {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           isLoading: false,
           error: event.payload,
           progress: null,
+          isActive: false,
+          endTime: new Date(),
         }));
       });
 
@@ -69,7 +88,6 @@ export const useProgressTracking = (): UseProgressTrackingReturn => {
         unlisten();
         errorUnlisten();
       };
-
     } catch (error) {
       // Handle different types of errors
       let commandError: CommandError;
@@ -87,11 +105,13 @@ export const useProgressTracking = (): UseProgressTrackingReturn => {
         };
       }
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         isLoading: false,
         error: commandError,
         progress: null,
+        isActive: false,
+        endTime: new Date(),
       }));
 
       // Re-throw for components that need to handle errors
@@ -100,10 +120,12 @@ export const useProgressTracking = (): UseProgressTrackingReturn => {
   }, []);
 
   const stopTracking = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       isLoading: false,
       progress: null,
+      isActive: false,
+      endTime: prev.endTime || new Date(),
     }));
   }, []);
 
@@ -112,11 +134,15 @@ export const useProgressTracking = (): UseProgressTrackingReturn => {
       isLoading: false,
       error: null,
       progress: null,
+      isActive: false,
+      isComplete: false,
+      startTime: null,
+      endTime: null,
     });
   }, []);
 
   const clearError = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       error: null,
     }));

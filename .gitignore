@@ -1,3 +1,6 @@
+# Ignore specstory
+.specstory/
+
 # Rust
 target/
 Cargo.lock

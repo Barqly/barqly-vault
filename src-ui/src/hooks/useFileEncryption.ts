@@ -1,12 +1,7 @@
 import { useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import {
-  CommandError,
-  ErrorCode,
-  EncryptionInput,
-  ProgressUpdate,
-} from '../lib/api-types';
+import { CommandError, ErrorCode, EncryptionInput, ProgressUpdate } from '../lib/api-types';
 
 // Define a simplified file selection type for the UI
 interface FileSelection {
@@ -16,61 +11,47 @@ interface FileSelection {
   selection_type: string;
 }
 
+interface FileSelectionResponse {
+  paths: string[];
+  selection_type: string;
+  total_size: number;
+  file_count: number;
+}
+
 interface FileEncryptionState {
   isLoading: boolean;
   error: CommandError | null;
-  success: string | null; // Path to encrypted file
+  selectedFiles: FileSelectionResponse | null;
+  success: string | null;
   progress: ProgressUpdate | null;
-  selectedFiles: FileSelection | null;
 }
 
 export interface FileEncryptionActions {
   selectFiles: (type: 'Files' | 'Folder') => Promise<void>;
-  encryptFiles: (input: Omit<EncryptionInput, 'files'>) => Promise<void>;
+  encryptFiles: (input: EncryptionInput) => Promise<void>;
   reset: () => void;
   clearError: () => void;
+  clearSelection: () => void;
 }
 
 export interface UseFileEncryptionReturn extends FileEncryptionState, FileEncryptionActions {}
 
 /**
- * Hook for managing file encryption workflow
+ * Hook for file encryption operations
  *
- * Provides a clean interface for encrypting files with:
- * - File/folder selection
- * - Loading states
- * - Error handling with recovery guidance
- * - Progress tracking for long operations
- * - Success state management
- *
- * @example
- * ```tsx
- * const {
- *   selectFiles,
- *   encryptFiles,
- *   isLoading,
- *   error,
- *   success,
- *   progress,
- *   selectedFiles
- * } = useFileEncryption();
- *
- * const handleFileSelection = async () => {
- *   await selectFiles('Files');
- * };
- *
- * const handleEncryption = async (keyId: string, outputPath: string) => {
- *   await encryptFiles({ key_id: keyId, output_path: outputPath, compression_level: 6 });
- * };
- * ```
+ * Provides a clean interface for file encryption with:
+ * - File selection (individual files or folders)
+ * - Encryption with progress tracking
+ * - Error handling and recovery
+ * - State management
  */
 export const useFileEncryption = (): UseFileEncryptionReturn => {
   const [state, setState] = useState<FileEncryptionState>({
     isLoading: false,
     error: null,
+    selectedFiles: null,
     success: null,
     progress: null,
-    selectedFiles: null,
   });
 
   const selectFiles = useCallback(async (type: 'Files' | 'Folder'): Promise<void> => {
@@ -90,19 +71,12 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
         // Simulate file selection delay
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Mock file selection result
-        const mockResult: FileSelection = {
-          paths:
-            type === 'Files'
-              ? [
-                  '/Users/demo/Documents/bitcoin-wallet.dat',
-                  '/Users/demo/Documents/seed-phrase.txt',
-                  '/Users/demo/Pictures/private-key.png',
-                ]
-              : ['/Users/demo/Documents/bitcoin-backup/'],
-          total_size: type === 'Files' ? 2048576 : 10485760, // 2MB for files, 10MB for folder
-          file_count: type === 'Files' ? 3 : 15,
+        // Mock success response
+        const mockResult: FileSelectionResponse = {
+          paths: ['/mock/file1.txt', '/mock/file2.txt'],
           selection_type: type,
+          total_size: 2048,
+          file_count: 2,
         };
 
         setState((prev) => ({
@@ -114,8 +88,8 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
         return;
       }
 
-      // Call the backend command to select files (Tauri desktop only)
-      const result = await invoke<FileSelection>('select_files', { selection_type: type });
+      // Call the backend command
+      const result = await invoke<FileSelectionResponse>('select_files', { type });
 
       setState((prev) => ({
         ...prev,
@@ -123,11 +97,14 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
         selectedFiles: result,
       }));
     } catch (error) {
+      // Handle different types of errors
       let commandError: CommandError;
 
       if (error && typeof error === 'object' && 'code' in error) {
+        // This is already a CommandError
         commandError = error as CommandError;
       } else {
+        // Convert generic errors to CommandError
         commandError = {
           code: ErrorCode.INTERNAL_ERROR,
           message: error instanceof Error ? error.message : 'File selection failed',
@@ -143,39 +120,31 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
         error: commandError,
       }));
 
+      // Re-throw for components that need to handle errors
       throw commandError;
     }
   }, []);
 
   const encryptFiles = useCallback(
-    async (input: Omit<EncryptionInput, 'files'>): Promise<void> => {
-      if (!state.selectedFiles || state.selectedFiles.paths.length === 0) {
-        const error: CommandError = {
-          code: ErrorCode.INVALID_INPUT,
-          message: 'No files selected for encryption',
-          recovery_guidance: 'Please select files or folders to encrypt',
-          user_actionable: true,
-        };
-
-        setState((prev) => ({
-          ...prev,
-          error,
-        }));
-
-        throw error;
-      }
-
-      // Reset state for new operation
+    async (input: EncryptionInput): Promise<void> => {
       setState((prev) => ({
         ...prev,
         isLoading: true,
         error: null,
-        success: null,
         progress: null,
       }));
 
       try {
-        // Validate input before sending to backend
+        // Validate inputs
+        if (!state.selectedFiles || state.selectedFiles.paths.length === 0) {
+          throw {
+            code: ErrorCode.INVALID_INPUT,
+            message: 'No files selected for encryption',
+            recovery_guidance: 'Please select files or folders to encrypt',
+            user_actionable: true,
+          } as CommandError;
+        }
+
         if (!input.key_id?.trim()) {
           throw {
             code: ErrorCode.INVALID_INPUT,
@@ -210,40 +179,16 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
           !(window as any).__TAURI__ &&
           typeof process === 'undefined'
         ) {
-          // Simulate encryption progress
-          const progressSteps = [
-            { progress: 0.1, message: 'Validating file selection...' },
-            { progress: 0.2, message: 'Creating archive...' },
-            { progress: 0.4, message: 'Compressing files...' },
-            { progress: 0.6, message: 'Encrypting data...' },
-            { progress: 0.8, message: 'Writing encrypted file...' },
-            { progress: 1.0, message: 'Encryption completed!' },
-          ];
-
-          for (const step of progressSteps) {
-            setState((prev) => ({
-              ...prev,
-              progress: {
-                operation_id: 'mock-encryption',
-                progress: step.progress,
-                message: step.message,
-                timestamp: new Date().toISOString(),
-              },
-            }));
-            await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate delay
-          }
+          // Simulate encryption delay
+          await new Promise((resolve) => setTimeout(resolve, 2000));
 
           // Mock success response
-          const mockResult = {
-            encrypted_file_path: input.output_path || '/path/to/encrypted.age',
-            original_file_count: state.selectedFiles!.file_count,
-            total_size_encrypted: state.selectedFiles!.total_size,
-          };
+          const mockResult = 'encrypted_file.age';
 
           setState((prev) => ({
             ...prev,
             isLoading: false,
-            success: mockResult.encrypted_file_path,
+            success: mockResult,
             progress: null,
           }));
 
@@ -259,14 +204,8 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
         });
 
         try {
-          // Prepare the complete input with selected files
-          const encryptionInput: EncryptionInput = {
-            ...input,
-            files: state.selectedFiles!.paths,
-          };
-
           // Call the backend command
-          const result = await invoke<string>('encrypt_files', { input: encryptionInput });
+          const result = await invoke<string>('encrypt_files', { input });
 
           // Update success state
           setState((prev) => ({
@@ -294,9 +233,8 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
           // Convert generic errors to CommandError
           commandError = {
             code: ErrorCode.INTERNAL_ERROR,
-            message: error instanceof Error ? error.message : 'Encryption failed',
-            recovery_guidance:
-              'Please try again. If the problem persists, check your file permissions.',
+            message: error instanceof Error ? error.message : 'File encryption failed',
+            recovery_guidance: 'Please try again. If the problem persists, check your system.',
             user_actionable: true,
           };
         }
@@ -319,9 +257,9 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
     setState({
       isLoading: false,
       error: null,
+      selectedFiles: null,
       success: null,
       progress: null,
-      selectedFiles: null,
     });
   }, []);
 
@@ -332,11 +270,19 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
     }));
   }, []);
 
+  const clearSelection = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      selectedFiles: null,
+    }));
+  }, []);
+
   return {
     ...state,
     selectFiles,
     encryptFiles,
     reset,
     clearError,
+    clearSelection,
   };
 };

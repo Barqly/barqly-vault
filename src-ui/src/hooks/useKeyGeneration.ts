@@ -51,7 +51,7 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
   });
 
   const generateKey = useCallback(async (input: GenerateKeyInput): Promise<void> => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       isLoading: true,
       error: null,
@@ -59,12 +59,70 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
     }));
 
     try {
+      // Validate input before sending to backend
+      if (!input.label?.trim()) {
+        throw {
+          code: ErrorCode.INVALID_INPUT,
+          message: 'Key label is required',
+          recovery_guidance: 'Please enter a label for your encryption key',
+          user_actionable: true,
+        } as CommandError;
+      }
+
+      if (!input.passphrase?.trim()) {
+        throw {
+          code: ErrorCode.INVALID_INPUT,
+          message: 'Passphrase is required',
+          recovery_guidance: 'Please enter a passphrase to protect your private key',
+          user_actionable: true,
+        } as CommandError;
+      }
+
+      if (input.label.length < 3) {
+        throw {
+          code: ErrorCode.INVALID_KEY_LABEL,
+          message: 'Key label must be at least 3 characters long',
+          recovery_guidance: 'Please enter a longer label for your key',
+          user_actionable: true,
+        } as CommandError;
+      }
+
+      if (input.label.length > 50) {
+        throw {
+          code: ErrorCode.INVALID_KEY_LABEL,
+          message: 'Key label must be less than 50 characters',
+          recovery_guidance: 'Please enter a shorter label for your key',
+          user_actionable: true,
+        } as CommandError;
+      }
+
+      // Validate label format (only letters, numbers, spaces, hyphens, underscores)
+      if (!/^[a-zA-Z0-9\s\-_]+$/.test(input.label)) {
+        throw {
+          code: ErrorCode.INVALID_KEY_LABEL,
+          message: 'Key label contains invalid characters',
+          recovery_guidance: 'Only letters, numbers, spaces, hyphens, and underscores are allowed',
+          user_actionable: true,
+        } as CommandError;
+      }
+
+      if (input.passphrase.length < 8) {
+        throw {
+          code: ErrorCode.WEAK_PASSPHRASE,
+          message: 'Passphrase must be at least 8 characters long',
+          recovery_guidance: 'Please choose a longer passphrase for better security',
+          user_actionable: true,
+        } as CommandError;
+      }
+
       // If in browser environment, use mock data
-      if (typeof window !== 'undefined' && 
-                  !(window as any).__TAURI__ && 
-                  typeof process === 'undefined') {
+      if (
+        typeof window !== 'undefined' &&
+        !(window as any).__TAURI__ &&
+        typeof process === 'undefined'
+      ) {
         // Simulate key generation delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         // Mock success response
         const mockResult: GenerateKeyResponse = {
@@ -73,7 +131,7 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
           key_id: 'key_' + Date.now(),
         };
 
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           isLoading: false,
           success: mockResult,
@@ -85,7 +143,7 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
 
       // Create a progress listener
       const unlisten = await listen<ProgressUpdate>('key-generation-progress', (event) => {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           progress: event.payload,
         }));
@@ -96,7 +154,7 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
         const result = await invoke<GenerateKeyResponse>('generate_key', { input });
 
         // Update success state
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           isLoading: false,
           success: result,
@@ -110,7 +168,6 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
         unlisten();
         throw commandError;
       }
-
     } catch (error) {
       // Handle different types of errors
       let commandError: CommandError;
@@ -123,12 +180,12 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
         commandError = {
           code: ErrorCode.INTERNAL_ERROR,
           message: error instanceof Error ? error.message : 'Key generation failed',
-          recovery_guidance: 'Please try again. If the problem persists, check your system.',
+          recovery_guidance: 'Please try again. If the problem persists, restart the application.',
           user_actionable: true,
         };
       }
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         isLoading: false,
         error: commandError,
