@@ -91,6 +91,44 @@ const demos: DemoMetadata[] = [
     route: '/demo/loading-spinner-demo',
     status: 'completed',
   },
+  // Business Logic Hooks (4.2.3)
+  {
+    id: 'key-generation-hook',
+    title: 'Key Generation Hook',
+    description:
+      'Complete key generation workflow with validation, progress tracking, and error handling',
+    taskNumber: '4.2.3.1',
+    features: ['Input Validation', 'Progress Tracking', 'Error Handling', 'State Management'],
+    route: '/demo/key-generation-hook-demo',
+    status: 'completed',
+  },
+  {
+    id: 'file-encryption-hook',
+    title: 'File Encryption Hook',
+    description: 'File encryption workflow with selection, configuration, and progress monitoring',
+    taskNumber: '4.2.3.2',
+    features: ['File Selection', 'Encryption Config', 'Progress Tracking', 'Error Handling'],
+    route: '/demo/file-encryption-hook-demo',
+    status: 'completed',
+  },
+  {
+    id: 'file-decryption-hook',
+    title: 'File Decryption Hook',
+    description: 'File decryption workflow with encrypted file selection and key configuration',
+    taskNumber: '4.2.3.3',
+    features: ['File Selection', 'Key Config', 'Progress Tracking', 'Error Handling'],
+    route: '/demo/file-decryption-hook-demo',
+    status: 'completed',
+  },
+  {
+    id: 'progress-tracking-hook',
+    title: 'Progress Tracking Hook',
+    description: 'Universal progress tracking for long-running operations with pause/resume',
+    taskNumber: '4.2.3.4',
+    features: ['Operation Tracking', 'Pause/Resume', 'Real-time Updates', 'Error Handling'],
+    route: '/demo/progress-tracking-hook-demo',
+    status: 'completed',
+  },
 ];
 
 const DemoLandingPage: React.FC = () => {

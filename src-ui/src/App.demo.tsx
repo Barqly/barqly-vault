@@ -13,6 +13,12 @@ const ProgressBarDemo = lazy(() => import('./components/forms/ProgressBarDemo'))
 const ErrorMessageDemo = lazy(() => import('./components/forms/ErrorMessageDemo'));
 const LoadingSpinnerDemo = lazy(() => import('./components/forms/LoadingSpinnerDemo'));
 
+// Business Logic Hook Demos
+const KeyGenerationDemo = lazy(() => import('./components/forms/KeyGenerationDemo'));
+const FileEncryptionDemo = lazy(() => import('./components/forms/FileEncryptionDemo'));
+const FileDecryptionDemo = lazy(() => import('./components/forms/FileDecryptionDemo'));
+const ProgressTrackingDemo = lazy(() => import('./components/forms/ProgressTrackingDemo'));
+
 function AppDemo(): ReactElement {
   return (
     <Router>
@@ -93,6 +99,56 @@ function AppDemo(): ReactElement {
                 }
               >
                 <ErrorMessageDemo />
+              </Suspense>
+            }
+          />
+
+          {/* Business Logic Hook Demo Routes */}
+          <Route
+            path="/demo/key-generation-hook-demo"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-64">Loading demo...</div>
+                }
+              >
+                <KeyGenerationDemo />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/demo/file-encryption-hook-demo"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-64">Loading demo...</div>
+                }
+              >
+                <FileEncryptionDemo />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/demo/file-decryption-hook-demo"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-64">Loading demo...</div>
+                }
+              >
+                <FileDecryptionDemo />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/demo/progress-tracking-hook-demo"
+            element={
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-64">Loading demo...</div>
+                }
+              >
+                <ProgressTrackingDemo />
               </Suspense>
             }
           />
