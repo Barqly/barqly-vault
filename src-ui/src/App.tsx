@@ -8,7 +8,6 @@ import DemoLandingPage from './pages/DemoLandingPage';
 
 // Demo Components
 import FileSelectionDemo from './pages/FileSelectionDemo';
-import FileSelectionButton from './components/forms/FileSelectionButton';
 import KeyGenerationForm from './components/forms/KeyGenerationForm';
 import { KeySelectionDropdown } from './components/forms/KeySelectionDropdown';
 import PassphraseInput from './components/forms/PassphraseInput';

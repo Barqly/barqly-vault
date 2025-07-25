@@ -28,8 +28,11 @@ export interface FileDecryptionState {
 
 export interface FileDecryptionActions {
   selectEncryptedFile: () => Promise<void>;
+
   setKeyId: (keyId: string) => void;
+
   setPassphrase: (passphrase: string) => void;
+
   setOutputPath: (path: string) => void;
   decryptFile: () => Promise<void>;
   reset: () => void;

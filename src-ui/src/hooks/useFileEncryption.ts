@@ -3,13 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { CommandError, ErrorCode, EncryptionInput, ProgressUpdate } from '../lib/api-types';
 
-// Define a simplified file selection type for the UI
-interface FileSelection {
-  paths: string[];
-  total_size: number;
-  file_count: number;
-  selection_type: string;
-}
+// FileSelectionResponse interface for backend communication
 
 interface FileSelectionResponse {
   paths: string[];
@@ -28,6 +22,7 @@ interface FileEncryptionState {
 
 export interface FileEncryptionActions {
   selectFiles: (type: 'Files' | 'Folder') => Promise<void>;
+
   encryptFiles: (input: EncryptionInput) => Promise<void>;
   reset: () => void;
   clearError: () => void;

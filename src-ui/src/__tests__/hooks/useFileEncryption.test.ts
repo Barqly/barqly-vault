@@ -1,13 +1,7 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../hooks/useFileEncryption';
-import {
-  EncryptionResult,
-  CommandError,
-  ErrorCode,
-  FileSelection,
-  SelectionType,
-} from '../../lib/api-types';
+import { EncryptionResult, CommandError, ErrorCode, FileSelection } from '../../lib/api-types';
 
 // Mock the Tauri API
 vi.mock('@tauri-apps/api/core', () => ({

@@ -1,11 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { ProgressUpdate, CommandError } from '../lib/api-types';
-
-// Check if we're in a browser environment (not Tauri desktop)
-// In test environment, we should use the real Tauri commands
-const isBrowser =
-  typeof window !== 'undefined' && !(window as any).__TAURI__ && typeof process === 'undefined';
 
 export interface ProgressTrackingState {
   isLoading: boolean;
@@ -46,7 +41,8 @@ export const useProgressTracking = (): UseProgressTrackingReturn => {
     endTime: null,
   });
 
-  const startTracking = useCallback(async (_operationId: string): Promise<void> => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const startTracking = useCallback(async (operationId: string): Promise<void> => {
     setState((prev) => ({
       ...prev,
       isLoading: true,

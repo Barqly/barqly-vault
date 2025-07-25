@@ -1,5 +1,5 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, MockedFunction } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useKeyGeneration } from '../../hooks/useKeyGeneration';
 import { GenerateKeyResponse, CommandError, ErrorCode } from '../../lib/api-types';
 
