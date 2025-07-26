@@ -14,11 +14,7 @@ export type {
 } from './useKeyGeneration';
 
 export { useFileEncryption } from './useFileEncryption';
-export type {
-  FileEncryptionState,
-  FileEncryptionActions,
-  UseFileEncryptionReturn,
-} from './useFileEncryption';
+export type { FileEncryptionActions, UseFileEncryptionReturn } from './useFileEncryption';
 
 export { useFileDecryption } from './useFileDecryption';
 export type {

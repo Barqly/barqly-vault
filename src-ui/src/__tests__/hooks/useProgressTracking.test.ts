@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useProgressTracking, useAutoProgressTracking } from '../../hooks/useProgressTracking';
-import { ProgressUpdate, CommandError } from '../../lib/api-types';
+import { useProgressTracking } from '../../hooks/useProgressTracking';
+import { ProgressUpdate } from '../../lib/api-types';
 
 // Mock the Tauri API
 vi.mock('@tauri-apps/api/event', () => ({
@@ -11,6 +11,8 @@ vi.mock('@tauri-apps/api/event', () => ({
 const mockListen = vi.mocked(await import('@tauri-apps/api/event')).listen;
 
 describe('useProgressTracking (4.2.3.4)', () => {
+  const MOCK_OPERATION_ID = 'test-op-123';
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockListen.mockResolvedValue(() => Promise.resolve());
@@ -18,418 +20,261 @@ describe('useProgressTracking (4.2.3.4)', () => {
 
   describe('Initial State', () => {
     it('should initialize with default state', () => {
-      const { result } = renderHook(() => useProgressTracking());
+      const { result } = renderHook(() => useProgressTracking('test-event'));
 
-      expect(result.current.isActive).toBe(false);
       expect(result.current.progress).toBe(null);
       expect(result.current.error).toBe(null);
-      expect(result.current.isComplete).toBe(false);
-      expect(result.current.startTime).toBe(null);
-      expect(result.current.endTime).toBe(null);
       expect(typeof result.current.startTracking).toBe('function');
       expect(typeof result.current.stopTracking).toBe('function');
       expect(typeof result.current.reset).toBe('function');
-      expect(typeof result.current.clearError).toBe('function');
     });
   });
 
-  describe('Progress Tracking', () => {
-    it('should start tracking successfully', async () => {
-      const { result } = renderHook(() => useProgressTracking());
+  describe('Tracking Lifecycle', () => {
+    it('should start tracking and listen for events', async () => {
+      const { result } = renderHook(() => useProgressTracking('test-event'));
 
       await act(async () => {
-        await result.current.startTracking('test-operation-123');
+        await result.current.startTracking(MOCK_OPERATION_ID);
       });
 
-      expect(result.current.isActive).toBe(true);
-      expect(result.current.startTime).toBeInstanceOf(Date);
-      expect(result.current.endTime).toBe(null);
-      expect(result.current.progress).toBe(null);
-      expect(result.current.error).toBe(null);
-      expect(result.current.isComplete).toBe(false);
+      expect(mockListen).toHaveBeenCalledWith('test-event', expect.any(Function));
     });
 
-    it('should handle progress updates', async () => {
-      const { result } = renderHook(() => useProgressTracking());
+    it('should stop tracking and unlisten from events', async () => {
+      const mockUnlisten = vi.fn();
+      mockListen.mockResolvedValue(mockUnlisten);
 
-      let progressCallback: (event: { payload: ProgressUpdate }) => void;
-      mockListen.mockImplementationOnce((event, callback) => {
-        progressCallback = callback;
-        return Promise.resolve(() => Promise.resolve());
-      });
+      const { result } = renderHook(() => useProgressTracking('test-event'));
 
       await act(async () => {
-        await result.current.startTracking('test-operation-123');
-      });
-
-      // Simulate progress update
-      await act(async () => {
-        progressCallback!({
-          payload: {
-            operation_id: 'test-operation-123',
-            progress: 0.5,
-            message: 'Processing...',
-            timestamp: new Date().toISOString(),
-          },
-        });
-      });
-
-      expect(result.current.progress).toEqual({
-        operation_id: 'test-operation-123',
-        progress: 0.5,
-        message: 'Processing...',
-        timestamp: expect.any(String),
-      });
-      expect(result.current.isComplete).toBe(false);
-    });
-
-    it('should detect completion when progress reaches 1.0', async () => {
-      const { result } = renderHook(() => useProgressTracking());
-
-      let progressCallback: (event: { payload: ProgressUpdate }) => void;
-      mockListen.mockImplementationOnce((event, callback) => {
-        progressCallback = callback;
-        return Promise.resolve(() => Promise.resolve());
-      });
-
-      await act(async () => {
-        await result.current.startTracking('test-operation-123');
-      });
-
-      // Simulate completion
-      await act(async () => {
-        progressCallback!({
-          payload: {
-            operation_id: 'test-operation-123',
-            progress: 1.0,
-            message: 'Complete',
-            timestamp: new Date().toISOString(),
-          },
-        });
-      });
-
-      expect(result.current.progress).toEqual({
-        operation_id: 'test-operation-123',
-        progress: 1.0,
-        message: 'Complete',
-        timestamp: expect.any(String),
-      });
-      expect(result.current.isComplete).toBe(true);
-      expect(result.current.isActive).toBe(false);
-      expect(result.current.endTime).toBeInstanceOf(Date);
-    });
-
-    it('should handle error events', async () => {
-      const { result } = renderHook(() => useProgressTracking());
-
-      let progressCallback: (event: { payload: ProgressUpdate }) => void;
-      let errorCallback: (event: { payload: CommandError }) => void;
-
-      mockListen.mockImplementation((event, callback) => {
-        if (event === 'progress') {
-          progressCallback = callback;
-        } else if (event === 'operation-error') {
-          errorCallback = callback;
-        }
-        return Promise.resolve(() => Promise.resolve());
-      });
-
-      await act(async () => {
-        await result.current.startTracking('test-operation-123');
-      });
-
-      // Simulate error
-      await act(async () => {
-        errorCallback!({
-          payload: {
-            code: 'INTERNAL_ERROR',
-            message: 'Operation failed',
-            recovery_guidance: 'Please try again',
-            user_actionable: true,
-            trace_id: 'test-operation-123',
-          },
-        });
-      });
-
-      expect(result.current.error).toEqual({
-        code: 'INTERNAL_ERROR',
-        message: 'Operation failed',
-        recovery_guidance: 'Please try again',
-        user_actionable: true,
-        trace_id: 'test-operation-123',
-      });
-      expect(result.current.isActive).toBe(false);
-      expect(result.current.endTime).toBeInstanceOf(Date);
-    });
-
-    it('should handle tracking start errors', async () => {
-      const { result } = renderHook(() => useProgressTracking());
-
-      mockListen.mockRejectedValueOnce(new Error('Failed to start tracking'));
-
-      await act(async () => {
-        await result.current.startTracking('test-operation-123');
-      });
-
-      expect(result.current.error).toEqual({
-        code: 'INTERNAL_ERROR',
-        message: 'Failed to start progress tracking',
-        recovery_guidance: 'Please try again',
-        user_actionable: true,
-      });
-      expect(result.current.isActive).toBe(false);
-      expect(result.current.endTime).toBeInstanceOf(Date);
-    });
-  });
-
-  describe('State Management', () => {
-    it('should stop tracking correctly', async () => {
-      const { result } = renderHook(() => useProgressTracking());
-
-      await act(async () => {
-        await result.current.startTracking('test-operation-123');
+        await result.current.startTracking(MOCK_OPERATION_ID);
       });
 
       act(() => {
         result.current.stopTracking();
       });
 
-      expect(result.current.isActive).toBe(false);
-      expect(result.current.endTime).toBeInstanceOf(Date);
+      expect(mockUnlisten).toHaveBeenCalled();
     });
 
-    it('should reset state correctly', async () => {
-      const { result } = renderHook(() => useProgressTracking());
+    it('should handle multiple start calls gracefully', async () => {
+      const mockUnlisten = vi.fn();
+      mockListen.mockResolvedValue(mockUnlisten);
 
-      // Start tracking first
+      const { result } = renderHook(() => useProgressTracking('test-event'));
+
+      // First call to startTracking
       await act(async () => {
-        await result.current.startTracking('test-operation-123');
+        await result.current.startTracking(MOCK_OPERATION_ID);
       });
 
-      act(() => {
-        result.current.reset();
+      // Second call should not create another listener
+      await act(async () => {
+        await result.current.startTracking(MOCK_OPERATION_ID);
       });
 
-      expect(result.current.isActive).toBe(false);
-      expect(result.current.progress).toBe(null);
-      expect(result.current.error).toBe(null);
-      expect(result.current.isComplete).toBe(false);
-      expect(result.current.startTime).toBe(null);
-      expect(result.current.endTime).toBe(null);
+      expect(mockListen).toHaveBeenCalledTimes(1);
+      expect(mockUnlisten).not.toHaveBeenCalled();
     });
 
-    it('should clear error correctly', async () => {
-      const { result } = renderHook(() => useProgressTracking());
-
-      // Create an error first
-      mockListen.mockRejectedValueOnce(new Error('Failed to start tracking'));
-
-      await act(async () => {
-        await result.current.startTracking('test-operation-123');
-      });
-
-      expect(result.current.error).not.toBe(null);
+    it('should handle stop calls without starting', () => {
+      const { result } = renderHook(() => useProgressTracking('test-event'));
+      const mockUnlisten = vi.fn();
+      mockListen.mockResolvedValue(mockUnlisten);
 
       act(() => {
-        result.current.clearError();
+        result.current.stopTracking();
       });
 
-      expect(result.current.error).toBe(null);
+      expect(mockUnlisten).not.toHaveBeenCalled();
     });
   });
 
-  describe('Auto-completion', () => {
-    it('should auto-stop when operation completes', async () => {
-      const { result } = renderHook(() => useProgressTracking());
-
+  describe('Progress Updates', () => {
+    it('should update progress on receiving a valid event', async () => {
+      const { result } = renderHook(() => useProgressTracking('test-event'));
       let progressCallback: (event: { payload: ProgressUpdate }) => void;
-      mockListen.mockImplementationOnce((event, callback) => {
-        progressCallback = callback;
-        return Promise.resolve(() => Promise.resolve());
+
+      mockListen.mockImplementationOnce((_event, callback) => {
+        progressCallback = (event: { payload: ProgressUpdate }) =>
+          callback({ event: 'test-event', id: 1, payload: event.payload });
+        return Promise.resolve(() => {});
       });
 
       await act(async () => {
-        await result.current.startTracking('test-operation-123');
+        await result.current.startTracking(MOCK_OPERATION_ID);
       });
 
-      // Simulate completion
-      await act(async () => {
-        progressCallback!({
-          payload: {
-            operation_id: 'test-operation-123',
-            progress: 1.0,
-            message: 'Complete',
-            timestamp: new Date().toISOString(),
-          },
-        });
-      });
-
-      expect(result.current.isActive).toBe(false);
-      expect(result.current.isComplete).toBe(true);
-      expect(result.current.endTime).toBeInstanceOf(Date);
-    });
-
-    it('should auto-stop when error occurs', async () => {
-      const { result } = renderHook(() => useProgressTracking());
-
-      let errorCallback: (event: { payload: CommandError }) => void;
-      mockListen.mockImplementation((event, callback) => {
-        if (event === 'progress') {
-          return Promise.resolve(() => Promise.resolve());
-        } else if (event === 'operation-error') {
-          errorCallback = callback;
-          return Promise.resolve(() => Promise.resolve());
-        }
-        return Promise.resolve(() => Promise.resolve());
-      });
-
-      await act(async () => {
-        await result.current.startTracking('test-operation-123');
-      });
-
-      // Simulate error
-      await act(async () => {
-        if (errorCallback) {
-          errorCallback({
-            payload: {
-              code: 'INTERNAL_ERROR',
-              message: 'Operation failed',
-              recovery_guidance: 'Please try again',
-              user_actionable: true,
-              trace_id: 'test-operation-123',
-            },
-          });
-        }
-      });
-
-      expect(result.current.isActive).toBe(false);
-      expect(result.current.error).not.toBe(null);
-      expect(result.current.endTime).toBeInstanceOf(Date);
-    });
-  });
-});
-
-describe('useAutoProgressTracking (4.2.3.4)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockListen.mockResolvedValue(() => Promise.resolve());
-  });
-
-  describe('Initial State', () => {
-    it('should initialize with default state', () => {
-      const { result } = renderHook(() => useAutoProgressTracking());
-
-      expect(result.current.isActive).toBe(false);
-      expect(result.current.progress).toBe(null);
-      expect(result.current.error).toBe(null);
-      expect(result.current.isComplete).toBe(false);
-      expect(result.current.startTime).toBe(null);
-      expect(result.current.endTime).toBe(null);
-      expect(result.current.operationId).toBe(null);
-      expect(typeof result.current.startAutoTracking).toBe('function');
-      expect(typeof result.current.stopTracking).toBe('function');
-      expect(typeof result.current.reset).toBe('function');
-      expect(typeof result.current.clearError).toBe('function');
-    });
-  });
-
-  describe('Auto Progress Tracking', () => {
-    it('should generate operation ID and start tracking', async () => {
-      const { result } = renderHook(() => useAutoProgressTracking());
-
-      await act(async () => {
-        await result.current.startAutoTracking();
-      });
-
-      expect(result.current.operationId).toMatch(/^op_\d+_[a-z0-9]+$/);
-      expect(result.current.isActive).toBe(true);
-      expect(result.current.startTime).toBeInstanceOf(Date);
-    });
-
-    it('should reset operation ID when resetting', async () => {
-      const { result } = renderHook(() => useAutoProgressTracking());
-
-      await act(async () => {
-        await result.current.startAutoTracking();
-      });
-
-      expect(result.current.operationId).not.toBe(null);
-
-      act(() => {
-        result.current.reset();
-      });
-
-      expect(result.current.operationId).toBe(null);
-      expect(result.current.isActive).toBe(false);
-      expect(result.current.progress).toBe(null);
-      expect(result.current.error).toBe(null);
-    });
-
-    it('should handle progress updates with auto-generated operation ID', async () => {
-      const { result } = renderHook(() => useAutoProgressTracking());
-
-      let progressCallback: (event: { payload: ProgressUpdate }) => void;
-      mockListen.mockImplementationOnce((event, callback) => {
-        progressCallback = callback;
-        return Promise.resolve(() => Promise.resolve());
-      });
-
-      await act(async () => {
-        await result.current.startAutoTracking();
-      });
-
-      const operationId = result.current.operationId;
-
-      // Simulate progress update
-      await act(async () => {
-        progressCallback!({
-          payload: {
-            operation_id: operationId!,
-            progress: 0.5,
-            message: 'Processing...',
-            timestamp: new Date().toISOString(),
-          },
-        });
-      });
-
-      expect(result.current.progress).toEqual({
-        operation_id: operationId,
+      const progressUpdate: ProgressUpdate = {
+        operation_id: MOCK_OPERATION_ID,
         progress: 0.5,
-        message: 'Processing...',
-        timestamp: expect.any(String),
+        message: 'Halfway there',
+        timestamp: new Date().toISOString(),
+      };
+
+      act(() => {
+        progressCallback({ payload: progressUpdate });
       });
+
+      expect(result.current.progress).toEqual(progressUpdate);
     });
 
-    it('should handle completion with auto-generated operation ID', async () => {
-      const { result } = renderHook(() => useAutoProgressTracking());
-
+    it('should ignore events for different operations', async () => {
+      const { result } = renderHook(() => useProgressTracking('test-event'));
       let progressCallback: (event: { payload: ProgressUpdate }) => void;
-      mockListen.mockImplementationOnce((event, callback) => {
-        progressCallback = callback;
-        return Promise.resolve(() => Promise.resolve());
+
+      mockListen.mockImplementationOnce((_event, callback) => {
+        progressCallback = (event: { payload: any }) =>
+          callback({ event: 'test-event', id: 1, payload: event.payload });
+        return Promise.resolve(() => {});
       });
 
       await act(async () => {
-        await result.current.startAutoTracking();
+        await result.current.startTracking(MOCK_OPERATION_ID);
       });
 
-      const operationId = result.current.operationId;
+      const progressUpdate: ProgressUpdate = {
+        operation_id: 'different-op-id',
+        progress: 0.5,
+        message: 'Halfway there',
+        timestamp: new Date().toISOString(),
+      };
 
-      // Simulate completion
+      act(() => {
+        progressCallback({ payload: progressUpdate });
+      });
+
+      expect(result.current.progress).toBe(null);
+    });
+
+    it('should filter events if a custom filter is provided', async () => {
+      const filter = (payload: ProgressUpdate) => payload.progress > 0.5;
+      const { result } = renderHook(() => useProgressTracking('test-event', filter));
+      let progressCallback: (event: { payload: ProgressUpdate }) => void;
+
+      mockListen.mockImplementationOnce((_event, callback) => {
+        progressCallback = (event: { payload: any }) =>
+          callback({ event: 'test-event', id: 1, payload: event.payload });
+        return Promise.resolve(() => {});
+      });
+
       await act(async () => {
-        progressCallback!({
-          payload: {
-            operation_id: operationId!,
-            progress: 1.0,
-            message: 'Complete',
-            timestamp: new Date().toISOString(),
-          },
-        });
+        await result.current.startTracking(MOCK_OPERATION_ID);
       });
 
-      expect(result.current.isComplete).toBe(true);
-      expect(result.current.isActive).toBe(false);
-      expect(result.current.endTime).toBeInstanceOf(Date);
+      const ignoredUpdate: ProgressUpdate = {
+        operation_id: MOCK_OPERATION_ID,
+        progress: 0.3,
+        message: 'Making progress',
+        timestamp: new Date().toISOString(),
+      };
+      const acceptedUpdate: ProgressUpdate = {
+        operation_id: MOCK_OPERATION_ID,
+        progress: 0.7,
+        message: 'Almost there',
+        timestamp: new Date().toISOString(),
+      };
+
+      act(() => {
+        progressCallback({ payload: ignoredUpdate });
+      });
+      expect(result.current.progress).toBe(null);
+
+      act(() => {
+        progressCallback({ payload: acceptedUpdate });
+      });
+      expect(result.current.progress).toEqual(acceptedUpdate);
+    });
+  });
+
+  describe('State Reset', () => {
+    it('should reset state to initial values', async () => {
+      const { result } = renderHook(() => useProgressTracking('test-event'));
+      let progressCallback: (event: { payload: ProgressUpdate }) => void;
+
+      mockListen.mockImplementationOnce((_event, callback) => {
+        progressCallback = (event: { payload: any }) =>
+          callback({ event: 'test-event', id: 1, payload: event.payload });
+        return Promise.resolve(() => {});
+      });
+
+      await act(async () => {
+        await result.current.startTracking(MOCK_OPERATION_ID);
+      });
+
+      const progressUpdate: ProgressUpdate = {
+        operation_id: MOCK_OPERATION_ID,
+        progress: 0.5,
+        message: 'Halfway there',
+        timestamp: new Date().toISOString(),
+      };
+
+      act(() => {
+        progressCallback({ payload: progressUpdate });
+      });
+
+      expect(result.current.progress).not.toBe(null);
+
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(result.current.progress).toBe(null);
+      expect(result.current.error).toBe(null);
+    });
+
+    it('should stop tracking on reset', async () => {
+      const mockUnlisten = vi.fn();
+      mockListen.mockResolvedValue(mockUnlisten);
+
+      const { result } = renderHook(() => useProgressTracking('test-event'));
+
+      await act(async () => {
+        await result.current.startTracking(MOCK_OPERATION_ID);
+      });
+
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(mockUnlisten).toHaveBeenCalled();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle errors during event listening setup', async () => {
+      const setupError = new Error('Failed to set up listener');
+      mockListen.mockRejectedValue(setupError);
+
+      const { result } = renderHook(() => useProgressTracking('test-event'));
+
+      await act(async () => {
+        await result.current.startTracking(MOCK_OPERATION_ID);
+      });
+
+      expect(result.current.error).toBe(
+        'Failed to set up progress listener: Failed to set up listener',
+      );
+    });
+
+    it('should clear error on reset', async () => {
+      const setupError = new Error('Failed to set up listener');
+      mockListen.mockRejectedValue(setupError);
+
+      const { result } = renderHook(() => useProgressTracking('test-event'));
+
+      await act(async () => {
+        await result.current.startTracking(MOCK_OPERATION_ID);
+      });
+
+      expect(result.current.error).not.toBe(null);
+
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(result.current.error).toBe(null);
     });
   });
 });

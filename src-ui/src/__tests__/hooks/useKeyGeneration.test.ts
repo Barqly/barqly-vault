@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useKeyGeneration } from '../../hooks/useKeyGeneration';
 import { GenerateKeyResponse, CommandError, ErrorCode } from '../../lib/api-types';
@@ -29,20 +29,24 @@ describe('useKeyGeneration (4.2.3.1)', () => {
       expect(result.current.error).toBe(null);
       expect(result.current.success).toBe(null);
       expect(result.current.progress).toBe(null);
+      expect(result.current.label).toBe('');
+      expect(result.current.passphrase).toBe('');
+      expect(typeof result.current.setLabel).toBe('function');
+      expect(typeof result.current.setPassphrase).toBe('function');
       expect(typeof result.current.generateKey).toBe('function');
       expect(typeof result.current.reset).toBe('function');
       expect(typeof result.current.clearError).toBe('function');
     });
   });
 
-  describe('Input Validation', () => {
-    it('should validate required key label', async () => {
+  describe('Key Generation', () => {
+    it('should validate label is provided', async () => {
       const { result } = renderHook(() => useKeyGeneration());
 
       await act(async () => {
         try {
-          await result.current.generateKey({ label: '', passphrase: 'testpass123' });
-        } catch (error) {
+          await result.current.generateKey();
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -50,18 +54,22 @@ describe('useKeyGeneration (4.2.3.1)', () => {
       expect(result.current.error).toEqual({
         code: ErrorCode.INVALID_INPUT,
         message: 'Key label is required',
-        recovery_guidance: 'Please enter a label for your encryption key',
+        recovery_guidance: 'Please provide a unique label for the new key',
         user_actionable: true,
       });
     });
 
-    it('should validate required passphrase', async () => {
+    it('should validate passphrase is provided', async () => {
       const { result } = renderHook(() => useKeyGeneration());
+
+      act(() => {
+        result.current.setLabel('test-key');
+      });
 
       await act(async () => {
         try {
-          await result.current.generateKey({ label: 'Test Key', passphrase: '' });
-        } catch (error) {
+          await result.current.generateKey();
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -69,231 +77,236 @@ describe('useKeyGeneration (4.2.3.1)', () => {
       expect(result.current.error).toEqual({
         code: ErrorCode.INVALID_INPUT,
         message: 'Passphrase is required',
-        recovery_guidance: 'Please enter a passphrase to protect your private key',
+        recovery_guidance: 'Please provide a strong passphrase to protect the key',
         user_actionable: true,
       });
     });
 
-    it('should validate key label minimum length', async () => {
+    it('should validate passphrase is not weak', async () => {
       const { result } = renderHook(() => useKeyGeneration());
+
+      act(() => {
+        result.current.setLabel('test-key');
+        result.current.setPassphrase('weak');
+      });
+
+      // Mock passphrase validation
+      mockInvoke.mockResolvedValueOnce({ is_strong: false, score: 1, feedback: 'Too weak' });
 
       await act(async () => {
         try {
-          await result.current.generateKey({ label: 'ab', passphrase: 'testpass123' });
-        } catch (error) {
-          // Expected to throw
-        }
-      });
-
-      expect(result.current.error).toEqual({
-        code: ErrorCode.INVALID_KEY_LABEL,
-        message: 'Key label must be at least 3 characters long',
-        recovery_guidance: 'Please enter a longer label for your key',
-        user_actionable: true,
-      });
-    });
-
-    it('should validate key label maximum length', async () => {
-      const { result } = renderHook(() => useKeyGeneration());
-
-      const longLabel = 'a'.repeat(51);
-
-      await act(async () => {
-        try {
-          await result.current.generateKey({ label: longLabel, passphrase: 'testpass123' });
-        } catch (error) {
-          // Expected to throw
-        }
-      });
-
-      expect(result.current.error).toEqual({
-        code: ErrorCode.INVALID_KEY_LABEL,
-        message: 'Key label must be less than 50 characters',
-        recovery_guidance: 'Please enter a shorter label for your key',
-        user_actionable: true,
-      });
-    });
-
-    it('should validate key label format', async () => {
-      const { result } = renderHook(() => useKeyGeneration());
-
-      await act(async () => {
-        try {
-          await result.current.generateKey({ label: 'Test@Key', passphrase: 'testpass123' });
-        } catch (error) {
-          // Expected to throw
-        }
-      });
-
-      expect(result.current.error).toEqual({
-        code: ErrorCode.INVALID_KEY_LABEL,
-        message: 'Key label contains invalid characters',
-        recovery_guidance: 'Only letters, numbers, spaces, hyphens, and underscores are allowed',
-        user_actionable: true,
-      });
-    });
-
-    it('should validate passphrase minimum length', async () => {
-      const { result } = renderHook(() => useKeyGeneration());
-
-      await act(async () => {
-        try {
-          await result.current.generateKey({ label: 'Test Key', passphrase: 'short' });
-        } catch (error) {
+          await result.current.generateKey();
+        } catch (_error) {
           // Expected to throw
         }
       });
 
       expect(result.current.error).toEqual({
         code: ErrorCode.WEAK_PASSPHRASE,
-        message: 'Passphrase must be at least 8 characters long',
-        recovery_guidance: 'Please choose a longer passphrase for better security',
+        message: 'Passphrase is too weak',
+        recovery_guidance: 'Please use a stronger passphrase',
         user_actionable: true,
       });
     });
 
-    it('should accept valid input', async () => {
+    it('should generate key successfully', async () => {
       const { result } = renderHook(() => useKeyGeneration());
-      const mockResponse: GenerateKeyResponse = {
-        public_key: 'age1testpublickey',
-        key_label: 'Test Key',
-        key_id: 'test-key-123',
+      const mockKeyResult: GenerateKeyResponse = {
+        key_id: 'test-key-id',
+        public_key: 'age1...',
+        saved_path: '~/.config/barqly-vault/keys/test-key-id.age',
       };
 
-      mockInvoke.mockResolvedValueOnce(mockResponse);
+      mockInvoke
+        .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
+        .mockResolvedValueOnce(mockKeyResult); // generate_key
 
-      await act(async () => {
-        await result.current.generateKey({ label: 'Test Key', passphrase: 'testpass123' });
+      act(() => {
+        result.current.setLabel('test-key');
+        result.current.setPassphrase('StrongP@ssw0rd123!');
       });
 
-      expect(result.current.success).toEqual(mockResponse);
+      await act(async () => {
+        await result.current.generateKey();
+      });
+
+      expect(result.current.success).toEqual(mockKeyResult);
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBe(null);
     });
-  });
 
-  describe('Backend Integration', () => {
-    it('should call generate_key command with valid input', async () => {
+    it('should call generate_key command with correct parameters', async () => {
       const { result } = renderHook(() => useKeyGeneration());
-      const mockResponse: GenerateKeyResponse = {
-        public_key: 'age1testpublickey',
-        key_label: 'Test Key',
-        key_id: 'test-key-123',
+      const mockKeyResult: GenerateKeyResponse = {
+        key_id: 'test-key-id',
+        public_key: 'age1...',
+        saved_path: '~/.config/barqly-vault/keys/test-key-id.age',
       };
 
-      mockInvoke.mockResolvedValueOnce(mockResponse);
+      // Mock passphrase validation and key generation
+      mockInvoke
+        .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
+        .mockResolvedValueOnce(mockKeyResult); // generate_key
+
+      act(() => {
+        result.current.setLabel('test-key');
+        result.current.setPassphrase('StrongP@ssw0rd123!');
+      });
 
       await act(async () => {
-        await result.current.generateKey({ label: 'Test Key', passphrase: 'testpass123' });
+        await result.current.generateKey();
       });
 
       expect(mockInvoke).toHaveBeenCalledWith('generate_key', {
-        input: { label: 'Test Key', passphrase: 'testpass123' },
+        label: 'test-key',
+        passphrase: 'StrongP@ssw0rd123!',
       });
     });
 
-    it('should handle backend errors', async () => {
+    it('should handle key generation errors', async () => {
       const { result } = renderHook(() => useKeyGeneration());
-      const backendError: CommandError = {
-        code: ErrorCode.ENCRYPTION_FAILED,
+      const generationError: CommandError = {
+        code: ErrorCode.KEY_GENERATION_FAILED,
         message: 'Failed to generate key',
         recovery_guidance: 'Please try again',
         user_actionable: true,
       };
 
-      mockInvoke.mockRejectedValueOnce(backendError);
+      act(() => {
+        result.current.setLabel('test-key');
+        result.current.setPassphrase('strong-passphrase-123!');
+      });
+
+      // Mock passphrase validation and key generation
+      mockInvoke
+        .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
+        .mockRejectedValueOnce(generationError); // generate_key fails
 
       await act(async () => {
         try {
-          await result.current.generateKey({ label: 'Test Key', passphrase: 'testpass123' });
-        } catch (error) {
+          await result.current.generateKey();
+        } catch (_error) {
           // Expected to throw
         }
       });
 
-      expect(result.current.error).toEqual(backendError);
+      expect(result.current.error).toEqual(generationError);
       expect(result.current.isLoading).toBe(false);
     });
 
-    it('should handle generic errors', async () => {
+    it('should handle passphrase validation errors', async () => {
       const { result } = renderHook(() => useKeyGeneration());
-      const genericError = new Error('Network error');
 
-      mockInvoke.mockRejectedValueOnce(genericError);
+      act(() => {
+        result.current.setLabel('test-key');
+        result.current.setPassphrase('weak');
+      });
+
+      // Mock passphrase validation to return weak passphrase
+      mockInvoke.mockResolvedValueOnce({ is_valid: false, strength: 'Weak' });
 
       await act(async () => {
         try {
-          await result.current.generateKey({ label: 'Test Key', passphrase: 'testpass123' });
-        } catch (error) {
+          await result.current.generateKey();
+        } catch (_error) {
           // Expected to throw
         }
       });
 
       expect(result.current.error).toEqual({
-        code: ErrorCode.INTERNAL_ERROR,
-        message: 'Network error',
-        recovery_guidance: 'Please try again. If the problem persists, restart the application.',
+        code: ErrorCode.WEAK_PASSPHRASE,
+        message: 'Passphrase is too weak',
+        recovery_guidance: 'Please use a stronger passphrase',
         user_actionable: true,
       });
+      expect(result.current.isLoading).toBe(false);
     });
   });
 
   describe('Progress Tracking', () => {
-    it('should set up progress listener', async () => {
+    it('should set up progress listener for key generation', async () => {
       const { result } = renderHook(() => useKeyGeneration());
-      const mockResponse: GenerateKeyResponse = {
-        public_key: 'age1testpublickey',
-        key_label: 'Test Key',
-        key_id: 'test-key-123',
+      const mockKeyResult: GenerateKeyResponse = {
+        key_id: 'test-key-id',
+        public_key: 'age1...',
+        saved_path: '~/.config/barqly-vault/keys/test-key-id.age',
       };
 
-      mockInvoke.mockResolvedValueOnce(mockResponse);
+      // Mock passphrase validation and key generation
+      mockInvoke
+        .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
+        .mockResolvedValueOnce(mockKeyResult); // generate_key
+
+      act(() => {
+        result.current.setLabel('test-key');
+        result.current.setPassphrase('StrongP@ssw0rd123!');
+      });
 
       await act(async () => {
-        await result.current.generateKey({ label: 'Test Key', passphrase: 'testpass123' });
+        await result.current.generateKey();
       });
 
       expect(mockListen).toHaveBeenCalledWith('key-generation-progress', expect.any(Function));
     });
 
-    it('should handle progress updates', async () => {
+    it('should handle progress updates during key generation', async () => {
       const { result } = renderHook(() => useKeyGeneration());
-      const mockResponse: GenerateKeyResponse = {
-        public_key: 'age1testpublickey',
-        key_label: 'Test Key',
-        key_id: 'test-key-123',
+      const mockKeyResult: GenerateKeyResponse = {
+        key_id: 'test-key-id',
+        public_key: 'age1...',
+        saved_path: '~/.config/barqly-vault/keys/test-key-id.age',
       };
 
-      let progressCallback: (event: { payload: any }) => void;
-      mockListen.mockImplementationOnce((event, callback) => {
-        progressCallback = callback;
+      let progressCallback: ((event: { payload: any }) => void) | undefined;
+      mockListen.mockImplementationOnce((_event, callback) => {
+        progressCallback = (event: { payload: any }) =>
+          callback({ event: 'test-event', id: 1, payload: event.payload });
         return Promise.resolve(() => Promise.resolve());
       });
 
-      mockInvoke.mockResolvedValueOnce(mockResponse);
+      // Mock passphrase validation and key generation
+      mockInvoke
+        .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
+        .mockResolvedValueOnce(mockKeyResult); // generate_key
 
-      // Start the operation
-      await act(async () => {
-        result.current.generateKey({ label: 'Test Key', passphrase: 'testpass123' });
+      act(() => {
+        result.current.setLabel('test-key');
+        result.current.setPassphrase('StrongP@ssw0rd123!');
       });
 
-      // Simulate progress update
+      // Start key generation but don't await it yet
+      const generatePromise = result.current.generateKey();
+
+      // Wait for the listener to be set up
       await act(async () => {
-        progressCallback!({
-          payload: {
-            operation_id: 'test-op',
-            progress: 0.5,
-            message: 'Generating key...',
-            timestamp: new Date().toISOString(),
-          },
-        });
+        await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
+      // Simulate progress update while generation is in progress
+      act(() => {
+        if (progressCallback) {
+          progressCallback({
+            payload: {
+              operation_id: 'test-op',
+              progress: 0.5,
+              message: 'Generating key...',
+              timestamp: new Date().toISOString(),
+            },
+          });
+        }
+      });
+
+      // Check progress before generation completes
       expect(result.current.progress).toEqual({
         operation_id: 'test-op',
         progress: 0.5,
         message: 'Generating key...',
         timestamp: expect.any(String),
+      });
+
+      // Now complete the generation
+      await act(async () => {
+        await generatePromise;
       });
     });
   });
@@ -302,7 +315,6 @@ describe('useKeyGeneration (4.2.3.1)', () => {
     it('should reset state correctly', () => {
       const { result } = renderHook(() => useKeyGeneration());
 
-      // Set some state
       act(() => {
         result.current.reset();
       });
@@ -311,6 +323,8 @@ describe('useKeyGeneration (4.2.3.1)', () => {
       expect(result.current.error).toBe(null);
       expect(result.current.success).toBe(null);
       expect(result.current.progress).toBe(null);
+      expect(result.current.label).toBe('');
+      expect(result.current.passphrase).toBe('');
     });
 
     it('should clear error correctly', async () => {
@@ -319,8 +333,8 @@ describe('useKeyGeneration (4.2.3.1)', () => {
       // First, create an error
       await act(async () => {
         try {
-          await result.current.generateKey({ label: '', passphrase: 'testpass123' });
-        } catch (error) {
+          await result.current.generateKey();
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -334,39 +348,55 @@ describe('useKeyGeneration (4.2.3.1)', () => {
 
       expect(result.current.error).toBe(null);
     });
+  });
 
-    it('should set loading state during operation', async () => {
+  describe('Error Handling', () => {
+    it('should set loading state during operations', async () => {
       const { result } = renderHook(() => useKeyGeneration());
-      const mockResponse: GenerateKeyResponse = {
-        public_key: 'age1testpublickey',
-        key_label: 'Test Key',
-        key_id: 'test-key-123',
-      };
 
-      mockInvoke.mockImplementationOnce(
-        () => new Promise((resolve) => setTimeout(() => resolve(mockResponse), 100)),
-      );
+      mockInvoke
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) =>
+              setTimeout(() => resolve({ is_valid: true, strength: 'Strong' }), 100),
+            ),
+        )
+        .mockResolvedValueOnce({
+          key_id: 'test-key-id',
+          public_key: 'age1...',
+          saved_path: '~/.config/barqly-vault/keys/test-key-id.age',
+        });
 
       act(() => {
-        result.current.generateKey({ label: 'Test Key', passphrase: 'testpass123' });
+        result.current.setLabel('test-key');
+        result.current.setPassphrase('StrongP@ssw0rd123!');
+      });
+
+      // Start generating without await to check loading state
+      let generatePromise: Promise<void>;
+      act(() => {
+        generatePromise = result.current.generateKey();
       });
 
       expect(result.current.isLoading).toBe(true);
+
+      // Wait for the promise to complete
+      await act(async () => {
+        await generatePromise;
+      });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
     });
-  });
 
-  describe('Error Handling', () => {
     it('should handle validation errors without calling backend', async () => {
       const { result } = renderHook(() => useKeyGeneration());
 
       await act(async () => {
         try {
-          await result.current.generateKey({ label: '', passphrase: 'testpass123' });
-        } catch (error) {
+          await result.current.generateKey();
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -377,26 +407,34 @@ describe('useKeyGeneration (4.2.3.1)', () => {
 
     it('should re-throw errors for component handling', async () => {
       const { result } = renderHook(() => useKeyGeneration());
-      const backendError: CommandError = {
-        code: ErrorCode.ENCRYPTION_FAILED,
+      const generationError: CommandError = {
+        code: ErrorCode.KEY_GENERATION_FAILED,
         message: 'Failed to generate key',
         recovery_guidance: 'Please try again',
         user_actionable: true,
       };
 
-      mockInvoke.mockRejectedValueOnce(backendError);
+      // Mock passphrase validation and key generation
+      mockInvoke
+        .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
+        .mockRejectedValueOnce(generationError); // generate_key fails
+
+      act(() => {
+        result.current.setLabel('test-key');
+        result.current.setPassphrase('StrongP@ssw0rd123!');
+      });
 
       let thrownError: CommandError | null = null;
 
       await act(async () => {
         try {
-          await result.current.generateKey({ label: 'Test Key', passphrase: 'testpass123' });
+          await result.current.generateKey();
         } catch (error) {
           thrownError = error as CommandError;
         }
       });
 
-      expect(thrownError).toEqual(backendError);
+      expect(thrownError).toEqual(generationError);
     });
   });
 });

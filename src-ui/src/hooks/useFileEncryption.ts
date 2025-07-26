@@ -1,29 +1,30 @@
 import { useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { CommandError, ErrorCode, EncryptionInput, ProgressUpdate } from '../lib/api-types';
+import {
+  CommandError,
+  ErrorCode,
+  EncryptDataInput,
+  ProgressUpdate,
+  FileSelection,
+} from '../lib/api-types';
 
-// FileSelectionResponse interface for backend communication
-
-interface FileSelectionResponse {
-  paths: string[];
-  selection_type: string;
-  total_size: number;
-  file_count: number;
-}
+// Check if we're in a browser environment (not Tauri desktop)
+// In test environment, we should use the real Tauri commands
+const isBrowser =
+  typeof window !== 'undefined' && !(window as any).__TAURI__ && typeof process === 'undefined';
 
 interface FileEncryptionState {
   isLoading: boolean;
   error: CommandError | null;
-  selectedFiles: FileSelectionResponse | null;
-  success: string | null;
+  selectedFiles: FileSelection | null;
+  success: string | null; // Backend returns string path
   progress: ProgressUpdate | null;
 }
 
 export interface FileEncryptionActions {
-  selectFiles: (type: 'Files' | 'Folder') => Promise<void>;
-
-  encryptFiles: (input: EncryptionInput) => Promise<void>;
+  selectFiles: (selectionType: 'Files' | 'Folder') => Promise<void>;
+  encryptFiles: (keyId: string, outputPath: string, outputName?: string) => Promise<void>;
   reset: () => void;
   clearError: () => void;
   clearSelection: () => void;
@@ -49,7 +50,7 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
     progress: null,
   });
 
-  const selectFiles = useCallback(async (type: 'Files' | 'Folder'): Promise<void> => {
+  const selectFiles = useCallback(async (selectionType: 'Files' | 'Folder'): Promise<void> => {
     setState((prev) => ({
       ...prev,
       isLoading: true,
@@ -58,18 +59,14 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
 
     try {
       // If in browser environment, use mock data
-      if (
-        typeof window !== 'undefined' &&
-        !(window as any).__TAURI__ &&
-        typeof process === 'undefined'
-      ) {
+      if (isBrowser) {
         // Simulate file selection delay
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         // Mock success response
-        const mockResult: FileSelectionResponse = {
+        const mockResult: FileSelection = {
           paths: ['/mock/file1.txt', '/mock/file2.txt'],
-          selection_type: type,
+          selection_type: selectionType,
           total_size: 2048,
           file_count: 2,
         };
@@ -84,7 +81,9 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
       }
 
       // Call the backend command
-      const result = await invoke<FileSelectionResponse>('select_files', { type });
+      const result = await invoke<FileSelection>('select_files', {
+        selection_type: selectionType,
+      });
 
       setState((prev) => ({
         ...prev,
@@ -121,7 +120,7 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
   }, []);
 
   const encryptFiles = useCallback(
-    async (input: EncryptionInput): Promise<void> => {
+    async (keyId: string, outputPath: string, outputName?: string): Promise<void> => {
       setState((prev) => ({
         ...prev,
         isLoading: true,
@@ -140,7 +139,7 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
           } as CommandError;
         }
 
-        if (!input.key_id?.trim()) {
+        if (!keyId?.trim()) {
           throw {
             code: ErrorCode.INVALID_INPUT,
             message: 'Encryption key is required',
@@ -149,7 +148,7 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
           } as CommandError;
         }
 
-        if (!input.output_path?.trim()) {
+        if (!outputPath?.trim()) {
           throw {
             code: ErrorCode.INVALID_INPUT,
             message: 'Output path is required',
@@ -158,27 +157,13 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
           } as CommandError;
         }
 
-        if (input.compression_level < 0 || input.compression_level > 9) {
-          throw {
-            code: ErrorCode.INVALID_INPUT,
-            message: 'Compression level must be between 0 and 9',
-            recovery_guidance:
-              'Please choose a compression level between 0 (no compression) and 9 (maximum compression)',
-            user_actionable: true,
-          } as CommandError;
-        }
-
         // If in browser environment, use mock data
-        if (
-          typeof window !== 'undefined' &&
-          !(window as any).__TAURI__ &&
-          typeof process === 'undefined'
-        ) {
+        if (isBrowser) {
           // Simulate encryption delay
           await new Promise((resolve) => setTimeout(resolve, 2000));
 
-          // Mock success response
-          const mockResult = 'encrypted_file.age';
+          // Mock success response - backend returns just the path
+          const mockResult = '/mock/encrypted.age';
 
           setState((prev) => ({
             ...prev,
@@ -199,8 +184,15 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
         });
 
         try {
+          // Prepare the input for the backend command
+          const encryptInput: EncryptDataInput = {
+            key_id: keyId,
+            file_paths: state.selectedFiles.paths,
+            output_name: outputName,
+          };
+
           // Call the backend command
-          const result = await invoke<string>('encrypt_files', { input });
+          const result = await invoke<string>('encrypt_files', { ...encryptInput });
 
           // Update success state
           setState((prev) => ({

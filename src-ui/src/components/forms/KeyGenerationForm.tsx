@@ -5,7 +5,6 @@ import { GenerateKeyInput, GenerateKeyResponse } from '../../lib/api-types';
 import PassphraseInput from './PassphraseInput';
 
 interface KeyGenerationFormProps {
-  // eslint-disable-next-line no-unused-vars
   onKeyGenerated?: (key: GenerateKeyResponse) => void;
 }
 

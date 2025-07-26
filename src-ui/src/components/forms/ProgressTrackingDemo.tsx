@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useProgressTracking } from '@/hooks/useProgressTracking';
-import { Play, Pause, Square, RefreshCw, Activity } from 'lucide-react';
+import { Play, RefreshCw, Activity, Square } from 'lucide-react';
 
 const ProgressTrackingDemo: React.FC = () => {
   const [operationId, setOperationId] = useState('');
@@ -8,14 +8,17 @@ const ProgressTrackingDemo: React.FC = () => {
     'encryption' | 'decryption' | 'key-generation'
   >('encryption');
 
-  const { startTracking, stopTracking, isActive, progress, error, clearError, reset } =
-    useProgressTracking();
+  const { startTracking, stopTracking, progress, error, reset } =
+    useProgressTracking('demo-progress');
+
+  const [isActive, setIsActive] = useState(false);
 
   const handleStartTracking = async () => {
     try {
       const id = operationId || `demo-${operationType}-${Date.now()}`;
       await startTracking(id);
-    } catch (error) {
+      setIsActive(true);
+    } catch (_error) {
       // Error is handled by the hook
     }
   };
@@ -23,7 +26,8 @@ const ProgressTrackingDemo: React.FC = () => {
   const handleStopTracking = async () => {
     try {
       stopTracking();
-    } catch (error) {
+      setIsActive(false);
+    } catch (_error) {
       // Error is handled by the hook
     }
   };
@@ -191,9 +195,9 @@ const ProgressTrackingDemo: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="text-sm font-medium text-red-800">Error</h4>
-                    <p className="text-sm text-red-700 mt-1">{error.message}</p>
+                    <p className="text-sm text-red-700 mt-1">{error}</p>
                   </div>
-                  <button onClick={clearError} className="text-red-400 hover:text-red-600">
+                  <button onClick={reset} className="text-red-400 hover:text-red-600">
                     ×
                   </button>
                 </div>

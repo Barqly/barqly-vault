@@ -32,10 +32,12 @@ const SetupPage: React.FC = () => {
     }
 
     try {
-      await generateKey({
-        label: keyLabel.trim(),
-        passphrase: passphrase,
-      });
+      // Set the state first
+      setKeyLabel(keyLabel.trim());
+      setPassphrase(passphrase);
+
+      // Then generate the key
+      await generateKey();
     } catch (err) {
       // Error is already handled by the hook
       console.error('Key generation error:', err);

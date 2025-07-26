@@ -5,7 +5,6 @@ import { FileText, Folder, Lock, RefreshCw } from 'lucide-react';
 const FileEncryptionDemo: React.FC = () => {
   const [keyId, setKeyId] = useState('');
   const [outputPath, setOutputPath] = useState('');
-  const [compressionLevel, setCompressionLevel] = useState(6);
 
   const {
     selectFiles,
@@ -23,19 +22,15 @@ const FileEncryptionDemo: React.FC = () => {
   const handleFileSelection = async (type: 'Files' | 'Folder') => {
     try {
       await selectFiles(type);
-    } catch (error) {
+    } catch (_error) {
       // Error is handled by the hook
     }
   };
 
   const handleEncryption = async () => {
     try {
-      await encryptFiles({
-        key_id: keyId,
-        output_path: outputPath,
-        compression_level: compressionLevel,
-      });
-    } catch (error) {
+      await encryptFiles(keyId, outputPath);
+    } catch (_error) {
       // Error is handled by the hook
     }
   };
@@ -43,7 +38,6 @@ const FileEncryptionDemo: React.FC = () => {
   const handleReset = () => {
     setKeyId('');
     setOutputPath('');
-    setCompressionLevel(6);
     reset();
   };
 
@@ -184,31 +178,6 @@ const FileEncryptionDemo: React.FC = () => {
                   className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-
-              <div>
-                <label
-                  htmlFor="compressionLevel"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Compression Level
-                </label>
-                <div className="flex items-center gap-2 mt-1">
-                  <input
-                    type="range"
-                    id="compressionLevel"
-                    min="0"
-                    max="9"
-                    value={compressionLevel}
-                    onChange={(e) => setCompressionLevel(Number(e.target.value))}
-                    disabled={isLoading}
-                    className="flex-1"
-                  />
-                  <span className="text-sm text-gray-600 w-8">{compressionLevel}</span>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  0 = no compression, 9 = maximum compression
-                </div>
-              </div>
             </div>
 
             {/* Action Buttons */}
@@ -282,7 +251,7 @@ const FileEncryptionDemo: React.FC = () => {
                       Files Encrypted Successfully!
                     </h4>
                     <p className="text-sm text-green-700 mt-1">
-                      Encrypted file saved to: {success.encrypted_file_path}
+                      Encrypted file saved to: {success}
                     </p>
                   </div>
                   <button

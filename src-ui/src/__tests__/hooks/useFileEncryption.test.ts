@@ -1,7 +1,7 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../hooks/useFileEncryption';
-import { EncryptionResult, CommandError, ErrorCode, FileSelection } from '../../lib/api-types';
+import { CommandError, ErrorCode, FileSelection } from '../../lib/api-types';
 
 // Mock the Tauri API
 vi.mock('@tauri-apps/api/core', () => ({
@@ -73,7 +73,7 @@ describe('useFileEncryption (4.2.3.2)', () => {
       await act(async () => {
         try {
           await result.current.selectFiles('Files');
-        } catch (error) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -91,7 +91,7 @@ describe('useFileEncryption (4.2.3.2)', () => {
       await act(async () => {
         try {
           await result.current.selectFiles('Files');
-        } catch (error) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -112,12 +112,8 @@ describe('useFileEncryption (4.2.3.2)', () => {
 
       await act(async () => {
         try {
-          await result.current.encryptFiles({
-            key_id: '',
-            output_path: '/output',
-            compression_level: 6,
-          });
-        } catch (error) {
+          await result.current.encryptFiles('', '/output');
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -149,12 +145,8 @@ describe('useFileEncryption (4.2.3.2)', () => {
 
       await act(async () => {
         try {
-          await result.current.encryptFiles({
-            key_id: '',
-            output_path: '/output',
-            compression_level: 6,
-          });
-        } catch (error) {
+          await result.current.encryptFiles('', '/output');
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -186,12 +178,8 @@ describe('useFileEncryption (4.2.3.2)', () => {
 
       await act(async () => {
         try {
-          await result.current.encryptFiles({
-            key_id: 'test-key',
-            output_path: '',
-            compression_level: 6,
-          });
-        } catch (error) {
+          await result.current.encryptFiles('test-key', '');
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -204,47 +192,14 @@ describe('useFileEncryption (4.2.3.2)', () => {
       });
     });
 
-    it('should validate compression level range', async () => {
-      const { result } = renderHook(() => useFileEncryption());
-
-      // First select files to set up the state
-      const mockFileSelection: FileSelection = {
-        paths: ['/path/to/file.txt'],
-        selection_type: 'Files',
-        total_size: 1024,
-        file_count: 1,
-      };
-
-      mockInvoke.mockResolvedValueOnce(mockFileSelection);
-
-      await act(async () => {
-        await result.current.selectFiles('Files');
-      });
-
-      await act(async () => {
-        try {
-          await result.current.encryptFiles({
-            key_id: 'test-key',
-            output_path: '/output',
-            compression_level: 10,
-          });
-        } catch (error) {
-          // Expected to throw
-        }
-      });
-
-      expect(result.current.error).toEqual({
-        code: ErrorCode.INVALID_INPUT,
-        message: 'Compression level must be between 0 and 9',
-        recovery_guidance:
-          'Please choose a compression level between 0 (no compression) and 9 (maximum compression)',
-        user_actionable: true,
-      });
+    // Compression level is no longer part of the API, so this test is removed
+    it.skip('should validate compression level range', async () => {
+      // This test is skipped because compression level is not part of the new API
     });
 
     it('should encrypt files successfully', async () => {
       const { result } = renderHook(() => useFileEncryption());
-      const mockEncryptionResult: EncryptionResult = {
+      const mockEncryptionResult = {
         encrypted_file_path: '/output/encrypted.age',
         original_file_count: 2,
         total_size_encrypted: 2048,
@@ -268,11 +223,7 @@ describe('useFileEncryption (4.2.3.2)', () => {
       });
 
       await act(async () => {
-        await result.current.encryptFiles({
-          key_id: 'test-key',
-          output_path: '/output',
-          compression_level: 6,
-        });
+        await result.current.encryptFiles('test-key', '/output');
       });
 
       expect(result.current.success).toEqual(mockEncryptionResult);
@@ -282,7 +233,7 @@ describe('useFileEncryption (4.2.3.2)', () => {
 
     it('should call encrypt_files command with correct parameters', async () => {
       const { result } = renderHook(() => useFileEncryption());
-      const mockEncryptionResult: EncryptionResult = {
+      const mockEncryptionResult = {
         encrypted_file_path: '/output/encrypted.age',
         original_file_count: 1,
         total_size_encrypted: 1024,
@@ -306,20 +257,13 @@ describe('useFileEncryption (4.2.3.2)', () => {
       });
 
       await act(async () => {
-        await result.current.encryptFiles({
-          key_id: 'test-key',
-          output_path: '/output',
-          compression_level: 6,
-        });
+        await result.current.encryptFiles('test-key', '/output');
       });
 
       expect(mockInvoke).toHaveBeenCalledWith('encrypt_files', {
-        input: {
-          files: ['/path/to/file.txt'],
-          key_id: 'test-key',
-          output_path: '/output',
-          compression_level: 6,
-        },
+        file_paths: ['/path/to/file.txt'],
+        key_id: 'test-key',
+        output_name: undefined,
       });
     });
 
@@ -349,12 +293,8 @@ describe('useFileEncryption (4.2.3.2)', () => {
 
       await act(async () => {
         try {
-          await result.current.encryptFiles({
-            key_id: 'test-key',
-            output_path: '/output',
-            compression_level: 6,
-          });
-        } catch (error) {
+          await result.current.encryptFiles('test-key', '/output');
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -367,7 +307,7 @@ describe('useFileEncryption (4.2.3.2)', () => {
   describe('Progress Tracking', () => {
     it('should set up progress listener for encryption', async () => {
       const { result } = renderHook(() => useFileEncryption());
-      const mockEncryptionResult: EncryptionResult = {
+      const mockEncryptionResult = {
         encrypted_file_path: '/output/encrypted.age',
         original_file_count: 1,
         total_size_encrypted: 1024,
@@ -391,11 +331,7 @@ describe('useFileEncryption (4.2.3.2)', () => {
       });
 
       await act(async () => {
-        await result.current.encryptFiles({
-          key_id: 'test-key',
-          output_path: '/output',
-          compression_level: 6,
-        });
+        await result.current.encryptFiles('test-key', '/output');
       });
 
       expect(mockListen).toHaveBeenCalledWith('encryption-progress', expect.any(Function));
@@ -403,7 +339,7 @@ describe('useFileEncryption (4.2.3.2)', () => {
 
     it('should handle progress updates during encryption', async () => {
       const { result } = renderHook(() => useFileEncryption());
-      const mockEncryptionResult: EncryptionResult = {
+      const mockEncryptionResult = {
         encrypted_file_path: '/output/encrypted.age',
         original_file_count: 1,
         total_size_encrypted: 1024,
@@ -412,8 +348,9 @@ describe('useFileEncryption (4.2.3.2)', () => {
       };
 
       let progressCallback: (event: { payload: any }) => void;
-      mockListen.mockImplementationOnce((event, callback) => {
-        progressCallback = callback;
+      mockListen.mockImplementationOnce((_event, callback) => {
+        progressCallback = (event: { payload: any }) =>
+          callback({ event: 'test-event', id: 1, payload: event.payload });
         return Promise.resolve(() => Promise.resolve());
       });
 
@@ -433,11 +370,7 @@ describe('useFileEncryption (4.2.3.2)', () => {
       });
 
       await act(async () => {
-        result.current.encryptFiles({
-          key_id: 'test-key',
-          output_path: '/output',
-          compression_level: 6,
-        });
+        result.current.encryptFiles('test-key', '/output');
       });
 
       // Simulate progress update
@@ -482,12 +415,8 @@ describe('useFileEncryption (4.2.3.2)', () => {
       // First, create an error
       await act(async () => {
         try {
-          await result.current.encryptFiles({
-            key_id: '',
-            output_path: '/output',
-            compression_level: 6,
-          });
-        } catch (error) {
+          await result.current.encryptFiles('', '/output');
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -557,12 +486,8 @@ describe('useFileEncryption (4.2.3.2)', () => {
 
       await act(async () => {
         try {
-          await result.current.encryptFiles({
-            key_id: '',
-            output_path: '/output',
-            compression_level: 6,
-          });
-        } catch (error) {
+          await result.current.encryptFiles('', '/output');
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -599,11 +524,7 @@ describe('useFileEncryption (4.2.3.2)', () => {
 
       await act(async () => {
         try {
-          await result.current.encryptFiles({
-            key_id: 'test-key',
-            output_path: '/output',
-            compression_level: 6,
-          });
+          await result.current.encryptFiles('test-key', '/output');
         } catch (error) {
           thrownError = error as CommandError;
         }

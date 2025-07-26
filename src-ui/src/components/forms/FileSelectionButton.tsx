@@ -9,9 +9,8 @@ export interface FileFilter {
 export type SelectionMode = 'files' | 'folder';
 
 export interface FileSelectionButtonProps {
-  // eslint-disable-next-line no-unused-vars
   onSelectionChange: (selectedPaths: string[]) => void;
-  // eslint-disable-next-line no-unused-vars
+
   onError?: (error: Error) => void;
   mode?: SelectionMode;
   multiple?: boolean;

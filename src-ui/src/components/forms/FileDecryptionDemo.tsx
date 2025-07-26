@@ -5,7 +5,7 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { SuccessMessage } from '@/components/ui/success-message';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { FileText, Unlock, RefreshCw, FolderOpen } from 'lucide-react';
+import { FileText, Unlock, RefreshCw } from 'lucide-react';
 import BackToDemos from '@/components/ui/back-to-demos';
 
 const FileDecryptionDemo: React.FC = () => {
@@ -31,7 +31,7 @@ const FileDecryptionDemo: React.FC = () => {
   const handleFileSelection = async () => {
     try {
       await selectEncryptedFile();
-    } catch (error) {
+    } catch (_error) {
       // Error is handled by the hook
     }
   };
@@ -42,7 +42,7 @@ const FileDecryptionDemo: React.FC = () => {
       setDecryptionPassphrase(passphrase);
       setDecryptionOutputPath(outputPath);
       await decryptFile();
-    } catch (error) {
+    } catch (_error) {
       // Error is handled by the hook
     }
   };
@@ -213,7 +213,7 @@ const FileDecryptionDemo: React.FC = () => {
                 actions={[
                   {
                     label: 'Open Folder',
-                    onClick: () => console.log('Open output folder'),
+                    action: () => console.log('Open output folder'),
                     variant: 'primary',
                   },
                 ]}

@@ -91,14 +91,14 @@ const DecryptPage: React.FC = () => {
             {success && (
               <SuccessMessage
                 title="Decryption Successful"
-                message={`Successfully decrypted ${success.total_files} files!`}
+                message={`Successfully decrypted ${success.extracted_files.length} files!`}
                 showCloseButton={true}
                 onClose={handleReset}
                 details={
                   <div className="mt-2 text-sm">
-                    <p>Total files extracted: {success.total_files}</p>
-                    <p>Total size: {(success.total_size / 1024 / 1024).toFixed(2)} MB</p>
-                    <p>Files extracted to: {outputPath}</p>
+                    <p>Total files extracted: {success.extracted_files.length}</p>
+                    <p>Files extracted to: {success.output_dir}</p>
+                    <p>Manifest verified: {success.manifest_verified ? 'Yes' : 'No'}</p>
                   </div>
                 }
                 showDetails={true}

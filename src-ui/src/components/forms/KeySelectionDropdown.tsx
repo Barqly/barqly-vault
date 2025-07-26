@@ -7,7 +7,7 @@ export interface KeySelectionDropdownProps {
   /** Currently selected key label */
   value?: string;
   /** Callback when a key is selected */
-  onChange?: (keyLabel: string) => void; // eslint-disable-line no-unused-vars
+  onChange?: (keyLabel: string) => void;
   /** Whether the dropdown is disabled */
   disabled?: boolean;
   /** Whether to show the public key preview */
@@ -23,9 +23,9 @@ export interface KeySelectionDropdownProps {
   /** Additional CSS classes */
   className?: string;
   /** Callback when keys are loaded */
-  onKeysLoaded?: (keys: KeyMetadata[]) => void; // eslint-disable-line no-unused-vars
+  onKeysLoaded?: (keys: KeyMetadata[]) => void;
   /** Callback when loading state changes */
-  onLoadingChange?: (loading: boolean) => void; // eslint-disable-line no-unused-vars
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({

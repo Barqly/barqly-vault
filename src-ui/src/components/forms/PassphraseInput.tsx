@@ -9,9 +9,9 @@ export interface PassphraseStrength {
 
 export interface PassphraseInputProps {
   value?: string;
-  // eslint-disable-next-line no-unused-vars
+
   onChange?: (value: string) => void;
-  // eslint-disable-next-line no-unused-vars
+
   onStrengthChange?: (strength: PassphraseStrength) => void;
   onBlur?: () => void;
   onFocus?: () => void;

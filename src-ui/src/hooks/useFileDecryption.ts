@@ -4,10 +4,10 @@ import { listen } from '@tauri-apps/api/event';
 import {
   CommandError,
   ErrorCode,
-  DecryptionResponse,
-  DecryptionInput,
+  DecryptionResult,
+  DecryptDataInput,
   ProgressUpdate,
-  FileSelectionResponse,
+  FileSelection,
 } from '../lib/api-types';
 
 // Check if we're in a browser environment (not Tauri desktop)
@@ -18,7 +18,7 @@ const isBrowser =
 export interface FileDecryptionState {
   isLoading: boolean;
   error: CommandError | null;
-  success: DecryptionResponse | null;
+  success: DecryptionResult | null;
   progress: ProgressUpdate | null;
   selectedFile: string | null;
   selectedKeyId: string | null;
@@ -28,11 +28,8 @@ export interface FileDecryptionState {
 
 export interface FileDecryptionActions {
   selectEncryptedFile: () => Promise<void>;
-
   setKeyId: (keyId: string) => void;
-
   setPassphrase: (passphrase: string) => void;
-
   setOutputPath: (path: string) => void;
   decryptFile: () => Promise<void>;
   reset: () => void;
@@ -120,7 +117,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
       }
 
       // Call the backend command to select encrypted file (Tauri desktop only)
-      const result = await invoke<FileSelectionResponse>('select_files', {
+      const result = await invoke<FileSelection>('select_files', {
         selection_type: 'Files',
       });
 
@@ -311,14 +308,14 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
         }
 
         // Mock success response
-        const mockResult: DecryptionResponse = {
+        const mockResult: DecryptionResult = {
           extracted_files: [
-            'bitcoin-wallet.dat',
-            'seed-phrase.txt',
-            'private-key.png',
-            'manifest.json',
+            '/Users/demo/Documents/bitcoin-wallet.dat',
+            '/Users/demo/Documents/seed-phrase.txt',
+            '/Users/demo/Documents/private-key.png',
+            '/Users/demo/Documents/manifest.json',
           ],
-          output_dir: state.outputPath!,
+          output_dir: '/Users/demo/Documents',
           manifest_verified: true,
         };
 
@@ -342,15 +339,15 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
 
       try {
         // Prepare the decryption input
-        const decryptionInput: DecryptionInput = {
+        const decryptionInput: DecryptDataInput = {
           encrypted_file: state.selectedFile,
-          key_id: state.selectedKeyId,
+          key_id: state.selectedKeyId || '',
           passphrase: state.passphrase,
-          output_dir: state.outputPath,
+          output_dir: state.outputPath || '',
         };
 
         // Call the backend command
-        const result = await invoke<DecryptionResponse>('decrypt_data', { input: decryptionInput });
+        const result = await invoke<DecryptionResult>('decrypt_data', { ...decryptionInput });
 
         // Update success state
         setState((prev) => ({
@@ -430,9 +427,9 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
   return {
     ...state,
     selectEncryptedFile,
-    setKeyId,
-    setPassphrase,
-    setOutputPath,
+    setKeyId: (keyId: string) => setKeyId(keyId),
+    setPassphrase: (passphrase: string) => setPassphrase(passphrase),
+    setOutputPath: (path: string) => setOutputPath(path),
     decryptFile,
     reset,
     clearError,

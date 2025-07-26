@@ -196,7 +196,6 @@ describe('FileSelectionButton (4.2.1.3)', () => {
 
   describe('Loading States', () => {
     it('should show loading state during file selection', async () => {
-      // eslint-disable-next-line no-unused-vars
       let resolvePromise: ((value: string[]) => void) | undefined;
       const promise = new Promise<string[]>((resolve) => {
         resolvePromise = resolve;
@@ -223,7 +222,6 @@ describe('FileSelectionButton (4.2.1.3)', () => {
     });
 
     it('should handle loading state with custom loading text', async () => {
-      // eslint-disable-next-line no-unused-vars
       let resolvePromise: ((value: string[]) => void) | undefined;
       const promise = new Promise<string[]>((resolve) => {
         resolvePromise = resolve;
@@ -315,7 +313,7 @@ describe('FileSelectionButton (4.2.1.3)', () => {
   describe('Performance', () => {
     it('should handle rapid clicks gracefully', async () => {
       // Create a promise that we control
-      // eslint-disable-next-line no-unused-vars
+
       let resolvePromise: ((value: string[]) => void) | undefined;
       const promise = new Promise<string[]>((resolve) => {
         resolvePromise = resolve;

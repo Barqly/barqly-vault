@@ -24,8 +24,8 @@ const KeyGenerationDemo: React.FC = () => {
     }
 
     try {
-      await generateKey({ label, passphrase });
-    } catch (error) {
+      await generateKey();
+    } catch (_error) {
       // Error is handled by the hook
     }
   };

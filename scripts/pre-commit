@@ -176,48 +176,14 @@ else
 fi
 
 # ============================================================================
-# SMART DEMO MODE PIPELINE (Existing functionality)
+# DEMO MODE INTEGRATED INTO APP (No longer needs external switching)
 # ============================================================================
 echo ""
-echo "🤖 Smart Demo Mode Pipeline"
-echo "=========================="
-
-# Detect if we're in a development context
-IS_DEV_CONTEXT=false
-if [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    # Check if we're on a development machine (not CI)
-    if [ -n "$USER" ] && [ "$USER" != "runner" ] && [ "$USER" != "ubuntu" ] && [ "$USER" != "circleci" ]; then
-        IS_DEV_CONTEXT=true
-    fi
-fi
-
-# Check if demo mode is enabled
-DEMO_ENABLED=false
-if [ -f "src-ui/src/App.production.tsx" ]; then
-    DEMO_ENABLED=true
-fi
-
-echo "🔍 Context Analysis:"
-echo "   Development Environment: $IS_DEV_CONTEXT"
-echo "   Demo Mode Enabled: $DEMO_ENABLED"
-
-# Smart decision making
-if [ "$IS_DEV_CONTEXT" = true ] && [ "$DEMO_ENABLED" = true ]; then
-    echo "✅ Development + Demo Mode: Perfect for development workflow"
-    echo "💡 Keeping demo mode enabled for continued development"
-elif [ "$IS_DEV_CONTEXT" = true ] && [ "$DEMO_ENABLED" = false ]; then
-    echo "⚠️  Development + Production Mode: Switching to demo mode for development"
-    echo "🔄 Enabling demo mode for better development experience..."
-    node scripts/switch-to-demo.js demo
-    echo "✅ Demo mode enabled for development"
-elif [ "$IS_DEV_CONTEXT" = false ] && [ "$DEMO_ENABLED" = true ]; then
-    echo "🚨 CI/Production + Demo Mode: CRITICAL - Switching to production mode"
-    echo "🔄 Automatically switching to production mode for safety..."
-    node scripts/switch-to-demo.js production
-    echo "✅ Production mode enforced for CI/Production environment"
-else
-    echo "✅ CI/Production + Production Mode: Perfect for deployment"
-fi
+echo "🎯 Demo Mode Status"
+echo "=================="
+echo "✅ Demo functionality is now integrated directly into the app"
+echo "💡 No external demo mode switching required"
+echo "🚀 Demo routes available at /demo/*"
 
 print_status "success" "🎉 All validation checks passed!"
 print_status "info" "🚀 Shift-Left: Your code is ready for commit and CI will pass!"

@@ -1,155 +1,83 @@
 import { useState, useCallback } from 'react';
 import { listen } from '@tauri-apps/api/event';
-import { ProgressUpdate, CommandError } from '../lib/api-types';
+import { ProgressUpdate } from '../lib/api-types';
 
 export interface ProgressTrackingState {
-  isLoading: boolean;
-  error: CommandError | null;
   progress: ProgressUpdate | null;
-  isActive: boolean;
-  isComplete: boolean;
-  startTime: Date | null;
-  endTime: Date | null;
+  error: string | null;
 }
 
 export interface ProgressTrackingActions {
   startTracking: (operationId: string) => Promise<void>;
   stopTracking: () => void;
   reset: () => void;
-  clearError: () => void;
 }
 
 export interface UseProgressTrackingReturn extends ProgressTrackingState, ProgressTrackingActions {}
 
 /**
- * Hook for tracking progress of long-running operations
+ * Hook for tracking progress of long-running operations.
  *
- * Provides a clean interface for monitoring progress with:
- * - Real-time progress updates
- * - Error handling
- * - Automatic cleanup
- * - Operation timing and completion tracking
+ * @param eventName The name of the Tauri event to listen for.
+ * @param filter Optional function to filter incoming progress events.
  */
-export const useProgressTracking = (): UseProgressTrackingReturn => {
+export const useProgressTracking = (
+  eventName: string,
+  filter?: (payload: ProgressUpdate) => boolean,
+): UseProgressTrackingReturn => {
   const [state, setState] = useState<ProgressTrackingState>({
-    isLoading: false,
-    error: null,
     progress: null,
-    isActive: false,
-    isComplete: false,
-    startTime: null,
-    endTime: null,
+    error: null,
   });
+  const [unlisten, setUnlisten] = useState<(() => void) | null>(null);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const startTracking = useCallback(async (operationId: string): Promise<void> => {
-    setState((prev) => ({
-      ...prev,
-      isLoading: true,
-      error: null,
-      progress: null,
-      isActive: true,
-      isComplete: false,
-      startTime: new Date(),
-      endTime: null,
-    }));
-
-    try {
-      // Create a progress listener
-      const unlisten = await listen<ProgressUpdate>('progress', (event) => {
-        const isComplete = event.payload.progress >= 1.0;
-        setState((prev) => ({
-          ...prev,
-          progress: event.payload,
-          isComplete,
-          isActive: !isComplete,
-          endTime: isComplete ? new Date() : prev.endTime,
-        }));
-      });
-
-      // Create an error listener
-      const errorUnlisten = await listen<CommandError>('operation-error', (event) => {
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error: event.payload,
-          progress: null,
-          isActive: false,
-          endTime: new Date(),
-        }));
-      });
-
-      // Set up cleanup on unmount
-      return () => {
-        unlisten();
-        errorUnlisten();
-      };
-    } catch (error) {
-      // Handle different types of errors
-      let commandError: CommandError;
-
-      if (error && typeof error === 'object' && 'code' in error) {
-        // This is already a CommandError
-        commandError = error as CommandError;
-      } else {
-        // Convert generic errors to CommandError
-        commandError = {
-          code: 'INTERNAL_ERROR',
-          message: error instanceof Error ? error.message : 'Failed to start progress tracking',
-          recovery_guidance: 'Please try again. If the problem persists, restart the application.',
-          user_actionable: true,
-        };
+  const startTracking = useCallback(
+    async (operationId: string) => {
+      if (unlisten) {
+        return; // Already listening
       }
 
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: commandError,
-        progress: null,
-        isActive: false,
-        endTime: new Date(),
-      }));
+      try {
+        const unsubscribe = await listen<ProgressUpdate>(eventName, (event) => {
+          if (event.payload.operation_id === operationId) {
+            if (!filter || filter(event.payload)) {
+              setState((prev) => ({ ...prev, progress: event.payload }));
+            }
+          }
+        });
 
-      // Re-throw for components that need to handle errors
-      throw commandError;
-    }
-  }, []);
+        setUnlisten(() => unsubscribe);
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        setState((prev) => ({
+          ...prev,
+          error: `Failed to set up progress listener: ${errorMessage}`,
+        }));
+      }
+    },
+    [eventName, filter, unlisten],
+  );
 
   const stopTracking = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      isLoading: false,
-      progress: null,
-      isActive: false,
-      endTime: prev.endTime || new Date(),
-    }));
-  }, []);
+    if (unlisten) {
+      unlisten();
+      setUnlisten(null);
+    }
+  }, [unlisten]);
 
   const reset = useCallback(() => {
+    stopTracking();
     setState({
-      isLoading: false,
-      error: null,
       progress: null,
-      isActive: false,
-      isComplete: false,
-      startTime: null,
-      endTime: null,
-    });
-  }, []);
-
-  const clearError = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
       error: null,
-    }));
-  }, []);
+    });
+  }, [stopTracking]);
 
   return {
     ...state,
     startTracking,
     stopTracking,
     reset,
-    clearError,
   };
 };
 
@@ -161,7 +89,7 @@ export const useProgressTracking = (): UseProgressTrackingReturn => {
  */
 export const useAutoProgressTracking = () => {
   const [operationId, setOperationId] = useState<string | null>(null);
-  const progressTracking = useProgressTracking();
+  const progressTracking = useProgressTracking('auto-progress');
 
   const startAutoTracking = useCallback(() => {
     const newOperationId = `op_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

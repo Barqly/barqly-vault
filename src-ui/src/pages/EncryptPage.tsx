@@ -46,12 +46,7 @@ const EncryptPage: React.FC = () => {
     }
 
     try {
-      await encryptFiles({
-        key_id: selectedKeyId,
-        output_path: outputPath,
-        compression_level: 6, // Default compression level
-        archive_name: archiveName || undefined,
-      });
+      await encryptFiles(selectedKeyId, outputPath, archiveName || undefined);
     } catch (err) {
       // Error is already handled by the hook
       console.error('Encryption error:', err);
