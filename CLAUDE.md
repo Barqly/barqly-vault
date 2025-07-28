@@ -11,6 +11,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # IMPORTANT: Always run validation before committing
 make validate            # Comprehensive validation (mirrors CI exactly)
 
+# Faster validation when working on specific parts:
+make validate-ui         # Frontend only: lint, format, types, tests (~30s)
+make validate-rust       # Rust only: fmt, clippy, tests (~1-2min)
+
 # Development
 make ui                  # Start UI development server
 make app                 # Start Tauri desktop app
@@ -22,7 +26,12 @@ npm run app              # Desktop app (cd src-tauri && cargo tauri dev)
 
 ### Testing
 ```zsh
-# Frontend tests
+# Quick test commands
+make test                # Run all tests (frontend + backend)
+make test-ui             # Run frontend tests only (~10-20s)
+make test-rust           # Run Rust tests only (~1-2min)
+
+# Frontend tests (detailed)
 cd src-ui && npm test                    # Run tests in watch mode
 cd src-ui && npm run test:run           # Run tests once
 cd src-ui && npm run test:ui            # Run tests with UI
@@ -30,7 +39,7 @@ cd src-ui && npm run test:ui            # Run tests with UI
 # Run a single test file
 cd src-ui && npm test -- FileSelectionButton.test.tsx
 
-# Backend tests
+# Backend tests (detailed)
 cd src-tauri && cargo test              # Run all tests
 cd src-tauri && cargo test crypto::     # Run module tests
 cd src-tauri && cargo test test_name    # Run specific test
@@ -223,3 +232,19 @@ Before pushing code, ensure:
 - [ ] Cross-platform compatibility verified
 - [ ] Documentation updated if needed
 - [ ] Commit message follows conventions
+
+## Development Workflow Optimization
+
+### When to use each validation command:
+- **Frontend-only changes**: Use `make validate-ui` (~30s)
+- **Rust-only changes**: Use `make validate-rust` (~1-2min)
+- **Mixed changes or pre-commit**: Use `make validate` (full validation)
+- **Quick test during development**: Use `make test-ui` or `make test-rust`
+
+### Time-saving tips:
+1. Use `make test-ui` frequently during frontend development
+2. Run `make validate-ui` before committing frontend changes
+3. Only run full `make validate` for:
+   - Changes affecting both frontend and backend
+   - Final validation before pushing
+   - When unsure about the scope of changes

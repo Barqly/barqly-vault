@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure file encryption for Bitcoin custody
 
-.PHONY: help ui app build app-build preview app-preview lint fmt rust-lint rust-fmt clean install validate
+.PHONY: help ui app build app-build preview app-preview lint fmt rust-lint rust-fmt clean install validate test test-ui test-rust validate-ui validate-rust
 
 # Default target
 help:
@@ -21,10 +21,17 @@ help:
 	@echo ""
 	@echo "Quality Assurance:"
 	@echo "  validate      - Comprehensive validation (mirrors CI exactly)"
+	@echo "  validate-ui   - Validate frontend only (lint, format, types, tests)"
+	@echo "  validate-rust - Validate Rust only (fmt, clippy, tests)"
 	@echo "  lint          - Run ESLint on frontend"
 	@echo "  fmt           - Run Prettier on frontend"
 	@echo "  rust-lint     - Run clippy on Rust code"
 	@echo "  rust-fmt      - Run rustfmt on Rust code"
+	@echo ""
+	@echo "Testing:"
+	@echo "  test          - Run all tests (frontend + backend)"
+	@echo "  test-ui       - Run frontend tests only"
+	@echo "  test-rust     - Run Rust tests only"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  clean         - Clean build artifacts"
@@ -89,4 +96,57 @@ clean:
 install:
 	@echo "📦 Installing dependencies..."
 	cd src-ui && npm install
-	cd src-tauri && cargo build 
+	cd src-tauri && cargo build
+
+# Testing commands
+test:
+	@echo "🧪 Running all tests..."
+	@$(MAKE) test-rust
+	@$(MAKE) test-ui
+
+test-ui:
+	@echo "🧪 Running frontend tests..."
+	@cd src-ui && npm run test:run
+
+test-rust:
+	@echo "🧪 Running Rust tests..."
+	@cd src-tauri && cargo test
+
+# Validation commands
+validate-ui:
+	@echo "🔍 Running frontend validation..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "1️⃣  Prettier formatting check..."
+	@cd src-ui && npx prettier --check . || (echo "❌ Format errors found. Run 'make fmt' to fix." && exit 1)
+	@echo "✅ Formatting check passed"
+	@echo ""
+	@echo "2️⃣  ESLint check..."
+	@cd src-ui && npm run lint || (echo "❌ Linting errors found." && exit 1)
+	@echo "✅ ESLint check passed"
+	@echo ""
+	@echo "3️⃣  TypeScript type check..."
+	@cd src-ui && npx tsc --noEmit || (echo "❌ Type errors found." && exit 1)
+	@echo "✅ TypeScript check passed"
+	@echo ""
+	@echo "4️⃣  Running tests..."
+	@cd src-ui && npm run test:run || (echo "❌ Tests failed." && exit 1)
+	@echo "✅ All frontend tests passed"
+	@echo ""
+	@echo "🎉 Frontend validation complete!"
+
+validate-rust:
+	@echo "🔍 Running Rust validation..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "1️⃣  Rust formatting check..."
+	@cd src-tauri && cargo fmt --check || (echo "❌ Format errors found. Run 'make rust-fmt' to fix." && exit 1)
+	@echo "✅ Formatting check passed"
+	@echo ""
+	@echo "2️⃣  Clippy check..."
+	@cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings || (echo "❌ Clippy errors found." && exit 1)
+	@echo "✅ Clippy check passed"
+	@echo ""
+	@echo "3️⃣  Running tests..."
+	@cd src-tauri && cargo test || (echo "❌ Tests failed." && exit 1)
+	@echo "✅ All Rust tests passed"
+	@echo ""
+	@echo "🎉 Rust validation complete!" 
