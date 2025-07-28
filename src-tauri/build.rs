@@ -49,6 +49,8 @@ fn generate_typescript_content() -> String {
  * Generated on: {timestamp}
  */
 
+import { invoke } from '@tauri-apps/api/core';
+
 // Core command response types
 export type CommandResult<T> = 
   | { status: 'success'; data: T }
@@ -279,18 +281,17 @@ export async function invokeCommand<T>(
   cmd: string,
   args?: any
 ): Promise<T> {
-  const { invoke } = await import('@tauri-apps/api/core');
   const result = await invoke<CommandResult<T>>(cmd, args);
   
   if (result.status === 'error') {
-    throw new CommandError(result.data);
+    throw new CommandErrorClass(result.data);
   }
   
   return result.data;
 }
 
 // Custom error class for better error handling
-export class CommandError extends Error {
+export class CommandErrorClass extends Error {
   public code: ErrorCode;
   public details?: string;
   public recovery_guidance?: string;

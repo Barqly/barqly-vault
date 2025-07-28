@@ -275,7 +275,10 @@ describe('useKeyGeneration (4.2.3.1)', () => {
       });
 
       // Start key generation but don't await it yet
-      const generatePromise = result.current.generateKey();
+      let generatePromise: Promise<void>;
+      act(() => {
+        generatePromise = result.current.generateKey();
+      });
 
       // Wait for the listener to be set up
       await act(async () => {
