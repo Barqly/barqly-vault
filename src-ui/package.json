@@ -15,11 +15,6 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "ui:dev": "vite",
-    "ui:build": "tsc && vite build",
-    "ui:preview": "vite preview",
-    "ui:lint": "eslint src --ext .ts,.tsx,.js,.jsx",
-    "ui:fmt": "prettier --write src",
     "demo:dev": "vite --config vite.demo.config.ts",
     "demo:build": "vite build --config vite.demo.config.ts",
     "demo:preview": "vite preview --config vite.demo.config.ts"

@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure file encryption for Bitcoin custody
 
-.PHONY: help ui app build app-build preview app-preview lint fmt rust-lint rust-fmt clean install validate test test-ui test-rust validate-ui validate-rust
+.PHONY: help ui app demo demo-build build app-build preview app-preview lint fmt rust-lint rust-fmt clean install validate test test-ui test-rust validate-ui validate-rust
 
 # Default target
 help:
@@ -10,10 +10,12 @@ help:
 	@echo "Development:"
 	@echo "  ui            - Start UI development server"
 	@echo "  app           - Start Tauri desktop app"
+	@echo "  demo          - Start demo server in browser"
 	@echo ""
 	@echo "Build:"
 	@echo "  build         - Build UI for production"
 	@echo "  app-build     - Build desktop app"
+	@echo "  demo-build    - Build demo site"
 	@echo ""
 	@echo "Preview:"
 	@echo "  preview       - Preview UI build"
@@ -48,6 +50,10 @@ app:
 	@echo "🖥️  Starting Tauri desktop app..."
 	cd src-tauri && cargo tauri dev
 
+demo:
+	@echo "🌐 Starting demo server in browser..."
+	cd src-ui && npm run demo:dev
+
 # Build commands
 build:
 	@echo "🔨 Building UI for production..."
@@ -56,6 +62,10 @@ build:
 app-build:
 	@echo "📦 Building desktop app for distribution..."
 	cd src-tauri && cargo tauri build
+
+demo-build:
+	@echo "🌐 Building demo site..."
+	cd src-ui && npm run demo:build
 
 # Preview commands
 preview:
@@ -89,7 +99,7 @@ rust-fmt:
 
 clean:
 	@echo "🧹 Cleaning build artifacts..."
-	cd src-ui && rm -rf dist node_modules/.vite
+	cd src-ui && rm -rf dist dist-demo node_modules/.vite
 	cd src-tauri && cargo clean
 
 # Setup commands
