@@ -6,8 +6,8 @@
  */
 
 import { useState, useCallback } from 'react';
-import { FileEncryptionState, UseFileEncryptionReturn } from '../../src/hooks/useFileEncryption';
-import { FileSelection, ProgressUpdate } from '../../src/lib/api-types';
+import { FileEncryptionState, UseFileEncryptionReturn } from '@/hooks/useFileEncryption';
+import { FileSelection, ProgressUpdate } from '@/lib/api-types';
 import { MOCK_FILE_PATHS, DEMO_DELAYS } from '../data/mock-data';
 
 /**

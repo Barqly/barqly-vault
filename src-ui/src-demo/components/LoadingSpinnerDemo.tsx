@@ -289,10 +289,8 @@ const LoadingSpinnerDemo: React.FC = () => {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Loading Spinner Component
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Loading Spinner Component</h1>
+        <p className="text-gray-600">
           Comprehensive loading state indicators with customizable animations, sizes, and
           accessibility features
         </p>
@@ -325,7 +323,7 @@ const LoadingSpinnerDemo: React.FC = () => {
         </div>
 
         {isRunning && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+          <div className="bg-blue-50 p-4 rounded-lg">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-600">Interactive demo is running</span>
@@ -336,7 +334,7 @@ const LoadingSpinnerDemo: React.FC = () => {
 
       {/* Interactive Demo */}
       {isRunning && activeDemo === 'interactive' && (
-        <div className="mb-8 p-6 border rounded-lg bg-gray-50 dark:bg-gray-900/20">
+        <div className="mb-8 p-6 border rounded-lg bg-gray-50">
           <h3 className="text-lg font-semibold mb-4">Interactive Demo</h3>
           <div className="flex items-center justify-center h-32">
             <LoadingSpinner
@@ -355,10 +353,8 @@ const LoadingSpinnerDemo: React.FC = () => {
         {demoScenarios.map((scenario) => (
           <div key={scenario.id} className="border rounded-lg p-6">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                {scenario.name}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">{scenario.description}</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{scenario.name}</h3>
+              <p className="text-gray-600">{scenario.description}</p>
             </div>
             {scenario.component}
           </div>
@@ -366,7 +362,7 @@ const LoadingSpinnerDemo: React.FC = () => {
       </div>
 
       {/* Component Features */}
-      <div className="mt-8 p-6 border rounded-lg bg-gray-50 dark:bg-gray-900/20">
+      <div className="mt-8 p-6 border rounded-lg bg-gray-50">
         <h3 className="text-lg font-semibold mb-4">Component Features</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PassphraseInput from '../../src/components/forms/PassphraseInput';
+import PassphraseInput from '@/components/forms/PassphraseInput';
 import { DemoPageWrapper, DemoSection } from './shared';
 
 const PassphraseInputDemo: React.FC = () => {

@@ -6,14 +6,14 @@
  */
 
 import { useState, useCallback } from 'react';
-import { FileDecryptionState, UseFileDecryptionReturn } from '../../src/hooks/useFileDecryption';
+import { FileDecryptionState, UseFileDecryptionReturn } from '@/hooks/useFileDecryption';
 import {
   MOCK_ENCRYPTED_FILE,
   MOCK_DECRYPTION_RESULT,
   DEMO_FILE_SELECTION_DELAY,
   simulateDecryptionProgress,
 } from '../data/decryption';
-import { createValidationError } from '../../src/lib/errors/command-error';
+import { createValidationError } from '@/lib/errors/command-error';
 
 /**
  * Demo version of useFileDecryption hook

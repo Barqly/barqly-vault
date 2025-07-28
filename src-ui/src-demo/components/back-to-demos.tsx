@@ -12,8 +12,8 @@ const BackToDemos: React.FC<BackToDemosProps> = ({ className = '', variant = 'de
   if (variant === 'minimal') {
     return (
       <Link
-        to="/demo"
-        className={`inline-flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors ${className}`}
+        to="/demos"
+        className={`inline-flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-900 transition-colors ${className}`}
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to Demos</span>
@@ -23,7 +23,7 @@ const BackToDemos: React.FC<BackToDemosProps> = ({ className = '', variant = 'de
 
   return (
     <div className={`flex items-center justify-between ${className}`}>
-      <Link to="/demo">
+      <Link to="/demos">
         <Button variant="outline" size="sm" className="inline-flex items-center space-x-2">
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Demos</span>

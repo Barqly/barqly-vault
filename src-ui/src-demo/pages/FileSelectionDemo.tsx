@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import FileSelectionButton, { FileFilter } from '../../src/components/forms/FileSelectionButton';
+import FileSelectionButton, { FileFilter } from '@/components/forms/FileSelectionButton';
 import BackToDemos from '../components/back-to-demos';
 
 const FileSelectionDemo: React.FC = () => {

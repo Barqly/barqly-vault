@@ -145,10 +145,7 @@ const ErrorMessageDemo: React.FC = () => {
           {demoScenarios.map((scenario, index) => {
             const Icon = getErrorIcon(scenario.variant);
             return (
-              <div
-                key={index}
-                className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-              >
+              <div key={index} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <Icon className="w-4 h-4 text-gray-500" />
@@ -223,7 +220,7 @@ const ErrorMessageDemo: React.FC = () => {
             </div>
           </div>
 
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
+          <div className="border border-gray-200 rounded-lg p-6 bg-white">
             <ErrorMessage
               error={currentError}
               showRecoveryGuidance={true}

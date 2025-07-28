@@ -20,7 +20,7 @@ const demos: DemoMetadata[] = [
     description: 'Interactive file and folder selection with drag-and-drop support',
     taskNumber: '4.2.1.1',
     features: ['Drag & Drop', 'Multi-file Selection', 'Folder Selection', 'File Validation'],
-    route: '/demo/file-selection-demo',
+    route: '/demos/file-selection',
     status: 'completed',
   },
   {
@@ -29,7 +29,7 @@ const demos: DemoMetadata[] = [
     description: 'Secure key generation with passphrase strength validation',
     taskNumber: '4.2.1.2',
     features: ['Passphrase Validation', 'Strength Indicator', 'Key Preview', 'Secure Generation'],
-    route: '/demo/key-generation-demo',
+    route: '/demos/key-generation',
     status: 'planned',
   },
   {
@@ -38,7 +38,7 @@ const demos: DemoMetadata[] = [
     description: 'Dynamic key selection with search and filtering capabilities',
     taskNumber: '4.2.1.4',
     features: ['Search & Filter', 'Key Preview', 'Recent Keys', 'Quick Actions'],
-    route: '/demo/key-selection-demo',
+    route: '/demos/key-selection',
     status: 'planned',
   },
   {
@@ -52,7 +52,7 @@ const demos: DemoMetadata[] = [
       'Real-time Feedback',
       'Security Indicators',
     ],
-    route: '/demo/passphrase-input-demo',
+    route: '/demos/passphrase-input',
     status: 'planned',
   },
   {
@@ -61,7 +61,7 @@ const demos: DemoMetadata[] = [
     description: 'Visual progress tracking for long-running operations',
     taskNumber: '4.2.2.1',
     features: ['Progress Tracking', 'Indeterminate Mode', 'Status Messages', 'Accessibility'],
-    route: '/demo/progress-bar-demo',
+    route: '/demos/progress-bar',
     status: 'completed',
   },
   {
@@ -70,7 +70,7 @@ const demos: DemoMetadata[] = [
     description: 'Structured error display with recovery guidance and actions',
     taskNumber: '4.2.2.2',
     features: ['Error Types', 'Recovery Guidance', 'Retry Actions', 'Technical Details'],
-    route: '/demo/error-message-demo',
+    route: '/demos/error-message',
     status: 'completed',
   },
   {
@@ -79,7 +79,7 @@ const demos: DemoMetadata[] = [
     description: 'Positive feedback with action buttons and auto-hide functionality',
     taskNumber: '4.2.2.3',
     features: ['Action Buttons', 'Auto-hide', 'Multiple Variants', 'Interactive Demos'],
-    route: '/demo/success-message-demo',
+    route: '/demos/success-message',
     status: 'completed',
   },
   {
@@ -88,7 +88,7 @@ const demos: DemoMetadata[] = [
     description: 'Loading state indicators with customizable animations',
     taskNumber: '4.2.2.4',
     features: ['Customizable Size', 'Animation Options', 'Accessibility', 'Integration Ready'],
-    route: '/demo/loading-spinner-demo',
+    route: '/demos/loading-spinner',
     status: 'completed',
   },
   // Business Logic Hooks (4.2.3)
@@ -99,7 +99,7 @@ const demos: DemoMetadata[] = [
       'Complete key generation workflow with validation, progress tracking, and error handling',
     taskNumber: '4.2.3.1',
     features: ['Input Validation', 'Progress Tracking', 'Error Handling', 'State Management'],
-    route: '/demo/key-generation-hook-demo',
+    route: '/demos/key-generation',
     status: 'completed',
   },
   {
@@ -108,7 +108,7 @@ const demos: DemoMetadata[] = [
     description: 'File encryption workflow with selection, configuration, and progress monitoring',
     taskNumber: '4.2.3.2',
     features: ['File Selection', 'Encryption Config', 'Progress Tracking', 'Error Handling'],
-    route: '/demo/file-encryption-hook-demo',
+    route: '/demos/file-encryption',
     status: 'completed',
   },
   {
@@ -117,7 +117,7 @@ const demos: DemoMetadata[] = [
     description: 'File decryption workflow with encrypted file selection and key configuration',
     taskNumber: '4.2.3.3',
     features: ['File Selection', 'Key Config', 'Progress Tracking', 'Error Handling'],
-    route: '/demo/file-decryption-hook-demo',
+    route: '/demos/file-decryption',
     status: 'completed',
   },
   {
@@ -126,7 +126,7 @@ const demos: DemoMetadata[] = [
     description: 'Universal progress tracking for long-running operations with pause/resume',
     taskNumber: '4.2.3.4',
     features: ['Operation Tracking', 'Pause/Resume', 'Real-time Updates', 'Error Handling'],
-    route: '/demo/progress-tracking-hook-demo',
+    route: '/demos/progress-tracking',
     status: 'completed',
   },
 ];
@@ -162,8 +162,8 @@ const DemoLandingPage: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Component Demos</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <h1 className="text-3xl font-bold text-gray-900">Component Demos</h1>
+            <p className="text-gray-600 mt-2">
               Interactive demonstrations of Barqly Vault UI components
             </p>
           </div>
@@ -192,23 +192,23 @@ const DemoLandingPage: React.FC = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">
               {demos.filter((d) => d.status === 'completed').length}
             </div>
-            <div className="text-sm text-blue-600 dark:text-blue-400">Completed</div>
+            <div className="text-sm text-blue-600">Completed</div>
           </div>
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+          <div className="bg-yellow-50 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-yellow-600">
               {demos.filter((d) => d.status === 'in-progress').length}
             </div>
-            <div className="text-sm text-yellow-600 dark:text-yellow-400">In Progress</div>
+            <div className="text-sm text-yellow-600">In Progress</div>
           </div>
-          <div className="bg-gray-50 dark:bg-gray-900/20 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-gray-600">
               {demos.filter((d) => d.status === 'planned').length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Planned</div>
+            <div className="text-sm text-gray-600">Planned</div>
           </div>
         </div>
       </div>
@@ -219,7 +219,7 @@ const DemoLandingPage: React.FC = () => {
           {demos.map((demo) => (
             <div
               key={demo.id}
-              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow"
+              className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-2">
@@ -233,11 +233,9 @@ const DemoLandingPage: React.FC = () => {
                 <span className="text-xs text-gray-500 font-mono">Task {demo.taskNumber}</span>
               </div>
 
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                {demo.title}
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{demo.title}</h3>
 
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{demo.description}</p>
+              <p className="text-gray-600 text-sm mb-4">{demo.description}</p>
 
               <div className="mb-4">
                 <div className="text-xs font-medium text-gray-500 mb-2">Features:</div>
@@ -245,7 +243,7 @@ const DemoLandingPage: React.FC = () => {
                   {demo.features.map((feature) => (
                     <span
                       key={feature}
-                      className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded"
+                      className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
                     >
                       {feature}
                     </span>
@@ -270,10 +268,7 @@ const DemoLandingPage: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {demos.map((demo) => (
-            <div
-              key={demo.id}
-              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-            >
+            <div key={demo.id} className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
@@ -286,10 +281,8 @@ const DemoLandingPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {demo.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm">{demo.description}</p>
+                    <h3 className="text-lg font-semibold text-gray-900">{demo.title}</h3>
+                    <p className="text-gray-600 text-sm">{demo.description}</p>
                     <div className="flex items-center space-x-4 mt-1">
                       <span className="text-xs text-gray-500 font-mono">
                         Task {demo.taskNumber}
@@ -298,7 +291,7 @@ const DemoLandingPage: React.FC = () => {
                         {demo.features.slice(0, 3).map((feature) => (
                           <span
                             key={feature}
-                            className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded"
+                            className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
                           >
                             {feature}
                           </span>

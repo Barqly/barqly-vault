@@ -8,7 +8,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import DemoApp from './DemoApp';
-import '../src/index.css'; // Reuse production styles
+import '../src/globals.css'; // Reuse production styles
 
 // Only render if we're in a browser environment
 if (typeof window !== 'undefined' && !(window as any).__TAURI__) {
