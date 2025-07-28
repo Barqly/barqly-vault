@@ -133,7 +133,7 @@ describe('useFileDecryption - File Selection', () => {
       } catch (error) {
         expect(error).toMatchObject({
           code: ErrorCode.INVALID_FILE_FORMAT,
-          message: 'Selected file is not an encrypted .age file',
+          message: 'Selected file is not a valid .age encrypted file',
         });
       }
     });

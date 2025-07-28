@@ -9,11 +9,19 @@ import {
   ProgressUpdate,
   FileSelection,
 } from '../lib/api-types';
-
-// Check if we're in a browser environment (not Tauri desktop)
-// In test environment, we should use the real Tauri commands
-const isBrowser =
-  typeof window !== 'undefined' && !(window as any).__TAURI__ && typeof process === 'undefined';
+import { isBrowser } from '../lib/environment/platform';
+import {
+  MOCK_ENCRYPTED_FILE,
+  MOCK_DECRYPTION_RESULT,
+  DEMO_FILE_SELECTION_DELAY,
+  simulateDecryptionProgress,
+} from '../lib/demo/decryption';
+import {
+  createValidationError,
+  createFileSelectionError,
+  createFileFormatError,
+  toCommandError,
+} from '../lib/errors/command-error';
 
 export interface FileDecryptionState {
   isLoading: boolean;
@@ -100,17 +108,14 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
 
     try {
       // If in browser environment, use mock data
-      if (isBrowser) {
+      if (isBrowser()) {
         // Simulate file selection delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Mock encrypted file selection
-        const selectedFile = '/Users/demo/Documents/bitcoin-backup-encrypted.age';
+        await new Promise((resolve) => setTimeout(resolve, DEMO_FILE_SELECTION_DELAY));
 
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          selectedFile,
+          selectedFile: MOCK_ENCRYPTED_FILE,
         }));
 
         return;
@@ -123,33 +128,24 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
 
       // For decryption, we expect only one .age file
       if (result.paths.length === 0) {
-        throw {
-          code: ErrorCode.INVALID_INPUT,
-          message: 'No file selected',
-          recovery_guidance: 'Please select an encrypted .age file to decrypt',
-          user_actionable: true,
-        } as CommandError;
+        throw createFileSelectionError(
+          'No file selected',
+          'Please select an encrypted .age file to decrypt',
+        );
       }
 
       if (result.paths.length > 1) {
-        throw {
-          code: ErrorCode.INVALID_INPUT,
-          message: 'Multiple files selected',
-          recovery_guidance: 'Please select only one encrypted .age file to decrypt',
-          user_actionable: true,
-        } as CommandError;
+        throw createFileSelectionError(
+          'Multiple files selected',
+          'Please select only one encrypted .age file to decrypt',
+        );
       }
 
       const selectedFile = result.paths[0];
 
       // Validate that the selected file is a .age file
       if (!selectedFile.toLowerCase().endsWith('.age')) {
-        throw {
-          code: ErrorCode.INVALID_FILE_FORMAT,
-          message: 'Selected file is not an encrypted .age file',
-          recovery_guidance: 'Please select a valid .age encrypted file',
-          user_actionable: true,
-        } as CommandError;
+        throw createFileFormatError('.age encrypted');
       }
 
       setState((prev) => ({
@@ -158,19 +154,12 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
         selectedFile,
       }));
     } catch (error) {
-      let commandError: CommandError;
-
-      if (error && typeof error === 'object' && 'code' in error) {
-        commandError = error as CommandError;
-      } else {
-        commandError = {
-          code: ErrorCode.INTERNAL_ERROR,
-          message: error instanceof Error ? error.message : 'File selection failed',
-          recovery_guidance:
-            'Please try selecting the file again. If the problem persists, restart the application.',
-          user_actionable: true,
-        };
-      }
+      const commandError = toCommandError(
+        error,
+        ErrorCode.INTERNAL_ERROR,
+        'File selection failed',
+        'Please try selecting the file again. If the problem persists, restart the application.',
+      );
 
       setState((prev) => ({
         ...prev,
@@ -209,66 +198,38 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
   const decryptFile = useCallback(async (): Promise<void> => {
     // Validate all required inputs
     if (!state.selectedFile) {
-      const error: CommandError = {
-        code: ErrorCode.INVALID_INPUT,
-        message: 'No encrypted file selected',
-        recovery_guidance: 'Please select an encrypted .age file to decrypt',
-        user_actionable: true,
-      };
-
-      setState((prev) => ({
-        ...prev,
-        error,
-      }));
-
+      const error = createValidationError(
+        'Encrypted file',
+        'Please select an encrypted .age file to decrypt',
+      );
+      setState((prev) => ({ ...prev, error }));
       throw error;
     }
 
     if (!state.selectedKeyId) {
-      const error: CommandError = {
-        code: ErrorCode.INVALID_INPUT,
-        message: 'No decryption key selected',
-        recovery_guidance: 'Please select the key that was used to encrypt this file',
-        user_actionable: true,
-      };
-
-      setState((prev) => ({
-        ...prev,
-        error,
-      }));
-
+      const error = createValidationError(
+        'Decryption key',
+        'Please select the key that was used to encrypt this file',
+      );
+      setState((prev) => ({ ...prev, error }));
       throw error;
     }
 
     if (!state.passphrase.trim()) {
-      const error: CommandError = {
-        code: ErrorCode.INVALID_INPUT,
-        message: 'Passphrase is required',
-        recovery_guidance: 'Please enter the passphrase for the selected key',
-        user_actionable: true,
-      };
-
-      setState((prev) => ({
-        ...prev,
-        error,
-      }));
-
+      const error = createValidationError(
+        'Passphrase',
+        'Please enter the passphrase for the selected key',
+      );
+      setState((prev) => ({ ...prev, error }));
       throw error;
     }
 
     if (!state.outputPath) {
-      const error: CommandError = {
-        code: ErrorCode.INVALID_INPUT,
-        message: 'Output directory is required',
-        recovery_guidance: 'Please select where to save the decrypted files',
-        user_actionable: true,
-      };
-
-      setState((prev) => ({
-        ...prev,
-        error,
-      }));
-
+      const error = createValidationError(
+        'Output directory',
+        'Please select where to save the decrypted files',
+      );
+      setState((prev) => ({ ...prev, error }));
       throw error;
     }
 
@@ -283,46 +244,16 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
 
     try {
       // If in browser environment, use mock data
-      if (isBrowser) {
+      if (isBrowser()) {
         // Simulate decryption progress
-        const progressSteps = [
-          { progress: 0.1, message: 'Loading encrypted file...' },
-          { progress: 0.2, message: 'Validating key and passphrase...' },
-          { progress: 0.4, message: 'Decrypting data...' },
-          { progress: 0.6, message: 'Extracting archive...' },
-          { progress: 0.8, message: 'Verifying file integrity...' },
-          { progress: 1.0, message: 'Decryption completed!' },
-        ];
-
-        for (const step of progressSteps) {
-          setState((prev) => ({
-            ...prev,
-            progress: {
-              operation_id: 'mock-decryption',
-              progress: step.progress,
-              message: step.message,
-              timestamp: new Date().toISOString(),
-            },
-          }));
-          await new Promise((resolve) => setTimeout(resolve, 700)); // Simulate delay
-        }
-
-        // Mock success response
-        const mockResult: DecryptionResult = {
-          extracted_files: [
-            '/Users/demo/Documents/bitcoin-wallet.dat',
-            '/Users/demo/Documents/seed-phrase.txt',
-            '/Users/demo/Documents/private-key.png',
-            '/Users/demo/Documents/manifest.json',
-          ],
-          output_dir: '/Users/demo/Documents',
-          manifest_verified: true,
-        };
+        await simulateDecryptionProgress((update) => {
+          setState((prev) => ({ ...prev, progress: update }));
+        });
 
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          success: mockResult,
+          success: MOCK_DECRYPTION_RESULT,
           progress: null,
         }));
 
@@ -366,21 +297,12 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
       }
     } catch (error) {
       // Handle different types of errors
-      let commandError: CommandError;
-
-      if (error && typeof error === 'object' && 'code' in error) {
-        // This is already a CommandError
-        commandError = error as CommandError;
-      } else {
-        // Convert generic errors to CommandError
-        commandError = {
-          code: ErrorCode.DECRYPTION_FAILED,
-          message: error instanceof Error ? error.message : 'File decryption failed',
-          recovery_guidance:
-            'Please check your key, passphrase, and file. If the problem persists, restart the application.',
-          user_actionable: true,
-        };
-      }
+      const commandError = toCommandError(
+        error,
+        ErrorCode.DECRYPTION_FAILED,
+        'File decryption failed',
+        'Please check your key, passphrase, and file. If the problem persists, restart the application.',
+      );
 
       setState((prev) => ({
         ...prev,

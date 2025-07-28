@@ -34,7 +34,7 @@ describe('useFileDecryption - Decryption Validation', () => {
 
     expect(result.current.error).toEqual({
       code: ErrorCode.INVALID_INPUT,
-      message: 'No encrypted file selected',
+      message: 'Encrypted file is required',
       recovery_guidance: 'Please select an encrypted .age file to decrypt',
       user_actionable: true,
     });
@@ -67,7 +67,7 @@ describe('useFileDecryption - Decryption Validation', () => {
 
     expect(result.current.error).toEqual({
       code: ErrorCode.INVALID_INPUT,
-      message: 'No decryption key selected',
+      message: 'Decryption key is required',
       recovery_guidance: 'Please select the key that was used to encrypt this file',
       user_actionable: true,
     });
