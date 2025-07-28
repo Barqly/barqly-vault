@@ -4,7 +4,7 @@
  * Provides consistent mock data across all demo pages
  */
 
-import { KeyMetadata } from '../api-types';
+import { KeyMetadata } from '../../src/lib/api-types';
 
 /**
  * Mock encryption keys for demos

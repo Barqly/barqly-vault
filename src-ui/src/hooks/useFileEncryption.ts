@@ -9,12 +9,7 @@ import {
   FileSelection,
 } from '../lib/api-types';
 
-// Check if we're in a browser environment (not Tauri desktop)
-// In test environment, we should use the real Tauri commands
-const isBrowser =
-  typeof window !== 'undefined' && !(window as any).__TAURI__ && typeof process === 'undefined';
-
-interface FileEncryptionState {
+export interface FileEncryptionState {
   isLoading: boolean;
   error: CommandError | null;
   selectedFiles: FileSelection | null;
@@ -58,28 +53,6 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
     }));
 
     try {
-      // If in browser environment, use mock data
-      if (isBrowser) {
-        // Simulate file selection delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Mock success response
-        const mockResult: FileSelection = {
-          paths: ['/mock/file1.txt', '/mock/file2.txt'],
-          selection_type: selectionType,
-          total_size: 2048,
-          file_count: 2,
-        };
-
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          selectedFiles: mockResult,
-        }));
-
-        return;
-      }
-
       // Call the backend command
       const result = await invoke<FileSelection>('select_files', {
         selection_type: selectionType,
@@ -155,24 +128,6 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
             recovery_guidance: 'Please specify where to save the encrypted file',
             user_actionable: true,
           } as CommandError;
-        }
-
-        // If in browser environment, use mock data
-        if (isBrowser) {
-          // Simulate encryption delay
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-
-          // Mock success response - backend returns just the path
-          const mockResult = '/mock/encrypted.age';
-
-          setState((prev) => ({
-            ...prev,
-            isLoading: false,
-            success: mockResult,
-            progress: null,
-          }));
-
-          return;
         }
 
         // Create a progress listener

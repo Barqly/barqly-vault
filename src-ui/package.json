@@ -20,7 +20,9 @@
     "ui:preview": "vite preview",
     "ui:lint": "eslint src --ext .ts,.tsx,.js,.jsx",
     "ui:fmt": "prettier --write src",
-    "demo:dev": "npm run dev"
+    "demo:dev": "vite --config vite.demo.config.ts",
+    "demo:build": "vite build --config vite.demo.config.ts",
+    "demo:preview": "vite preview --config vite.demo.config.ts"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import FileSelectionButton, { FileFilter } from '../components/forms/FileSelectionButton';
-import BackToDemos from '@/components/ui/back-to-demos';
+import FileSelectionButton, { FileFilter } from '../../src/components/forms/FileSelectionButton';
+import BackToDemos from '../components/back-to-demos';
 
 const FileSelectionDemo: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);

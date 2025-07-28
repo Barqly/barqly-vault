@@ -9,13 +9,6 @@ import {
   ProgressUpdate,
   FileSelection,
 } from '../lib/api-types';
-import { isBrowser } from '../lib/environment/platform';
-import {
-  MOCK_ENCRYPTED_FILE,
-  MOCK_DECRYPTION_RESULT,
-  DEMO_FILE_SELECTION_DELAY,
-  simulateDecryptionProgress,
-} from '../lib/demo/decryption';
 import {
   createValidationError,
   createFileSelectionError,
@@ -107,21 +100,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
     }));
 
     try {
-      // If in browser environment, use mock data
-      if (isBrowser()) {
-        // Simulate file selection delay
-        await new Promise((resolve) => setTimeout(resolve, DEMO_FILE_SELECTION_DELAY));
-
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          selectedFile: MOCK_ENCRYPTED_FILE,
-        }));
-
-        return;
-      }
-
-      // Call the backend command to select encrypted file (Tauri desktop only)
+      // Call the backend command to select encrypted file
       const result = await invoke<FileSelection>('select_files', {
         selection_type: 'Files',
       });
@@ -243,24 +222,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
     }));
 
     try {
-      // If in browser environment, use mock data
-      if (isBrowser()) {
-        // Simulate decryption progress
-        await simulateDecryptionProgress((update) => {
-          setState((prev) => ({ ...prev, progress: update }));
-        });
-
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          success: MOCK_DECRYPTION_RESULT,
-          progress: null,
-        }));
-
-        return;
-      }
-
-      // Set up progress listener for decryption (Tauri desktop only)
+      // Set up progress listener for decryption
       const unlisten = await listen<ProgressUpdate>('decryption-progress', (event) => {
         setState((prev) => ({
           ...prev,

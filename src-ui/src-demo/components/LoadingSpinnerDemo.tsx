@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, Zap, Clock } from 'lucide-react';
-import BackToDemos from '@/components/ui/back-to-demos';
+import BackToDemos from './back-to-demos';
 
 const LoadingSpinnerDemo: React.FC = () => {
   const [activeDemo, setActiveDemo] = useState<string>('');

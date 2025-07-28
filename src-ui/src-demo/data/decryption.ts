@@ -4,7 +4,7 @@
  * Provides mock data and simulated behaviors for demo/browser environments
  */
 
-import { DecryptionResult, ProgressUpdate } from '../api-types';
+import { DecryptionResult, ProgressUpdate } from '../../src/lib/api-types';
 
 /**
  * Mock encrypted file path for demo

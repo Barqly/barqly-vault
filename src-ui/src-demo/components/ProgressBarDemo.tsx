@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, Loader2 } from 'lucide-react';
-import BackToDemos from '@/components/ui/back-to-demos';
+import BackToDemos from './back-to-demos';
 import { ProgressUpdate } from '@/lib/api-types';
 
 const ProgressBarDemo: React.FC = () => {

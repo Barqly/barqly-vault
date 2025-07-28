@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, AlertCircle, Info, Shield, RefreshCw } from 'lucide-react';
-import BackToDemos from '@/components/ui/back-to-demos';
+import BackToDemos from './back-to-demos';
 import { CommandError, ErrorCode } from '@/lib/api-types';
 
 const ErrorMessageDemo: React.FC = () => {

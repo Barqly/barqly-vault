@@ -6,7 +6,7 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { SuccessMessage } from '@/components/ui/success-message';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Key, RefreshCw, Copy, CheckCircle } from 'lucide-react';
-import BackToDemos from '@/components/ui/back-to-demos';
+import BackToDemos from './back-to-demos';
 
 const KeyGenerationDemo: React.FC = () => {
   const [label, setLabel] = useState('');

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useFileEncryption } from '@/hooks/useFileEncryption';
+import { useFileEncryptionDemo } from '../hooks/useFileEncryptionDemo';
 import { FileText, Folder, Lock, RefreshCw } from 'lucide-react';
-import { DemoPageWrapper, DemoSection } from '@/components/demo';
-import { MOCK_KEYS } from '@/lib/demo/mock-data';
+import { DemoPageWrapper, DemoSection } from './shared';
+import { MOCK_KEYS } from '../data/mock-data';
 
 const FileEncryptionDemo: React.FC = () => {
   const [keyId, setKeyId] = useState('');
@@ -19,7 +19,7 @@ const FileEncryptionDemo: React.FC = () => {
     reset,
     clearError,
     clearSelection,
-  } = useFileEncryption();
+  } = useFileEncryptionDemo();
 
   const handleFileSelection = async (type: 'Files' | 'Folder') => {
     try {

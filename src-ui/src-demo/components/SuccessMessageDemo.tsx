@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SuccessMessage } from '@/components/ui/success-message';
 import { Button } from '@/components/ui/button';
 import { Copy, Download, FolderOpen, ExternalLink } from 'lucide-react';
-import BackToDemos from '@/components/ui/back-to-demos';
+import BackToDemos from './back-to-demos';
 
 const SuccessMessageDemo: React.FC = () => {
   const [currentMessage, setCurrentMessage] = useState<{
