@@ -1,6 +1,7 @@
 # Developer Guide – Barqly Vault
 
 ## Prerequisites
+
 - **Node.js** v22.17.0+
 - **Rust** 1.87.0+
 - **Tauri CLI** v2.x
@@ -11,19 +12,25 @@
 ## Running the App
 
 ### Development Mode
+
 Run the app with hot reload and devtools (default config):
+
 ```sh
 cargo tauri dev
 ```
 
 ### UAT Mode (User Acceptance Testing)
+
 Run the app with UAT config (devtools enabled, strict CSP):
+
 ```sh
 cargo tauri dev --config src-tauri/tauri.uat.conf.json
 ```
 
 ### Production Build
+
 Build the app for production (devtools disabled, strictest security):
+
 ```sh
 cargo tauri build --config src-tauri/tauri.prod.conf.json
 ```
@@ -31,7 +38,9 @@ cargo tauri build --config src-tauri/tauri.prod.conf.json
 ---
 
 ## Building the Frontend Only
+
 Build the React frontend for production:
+
 ```sh
 npm run build --prefix src-ui
 ```
@@ -39,6 +48,7 @@ npm run build --prefix src-ui
 ---
 
 ## Environment-Specific Configs
+
 - **Default/dev:** `src-tauri/tauri.conf.json`
 - **UAT:** `src-tauri/tauri.uat.conf.json`
 - **Production:** `src-tauri/tauri.prod.conf.json`
@@ -48,6 +58,7 @@ Use the `--config` flag to select the appropriate config at build or run time. N
 ---
 
 ## Security & Validation
+
 - Always validate security posture in a production build (CSP, capabilities, etc.).
 - See [validation_checklist.md](zenai/validation_checklist.md) for manual and automated security checks.
 - See [Validation System & Pre-commit Hook](docs/VALIDATION_SYSTEM.md) for local validation and commit hygiene.
@@ -68,6 +79,7 @@ Use the `--config` flag to select the appropriate config at build or run time. N
 ---
 
 ## Project Rituals & References
+
 - [ZenAI Programming Rituals](zenai/README.md)
 - [Project Plan](project-plan.md)
 - [Validation Checklist](zenai/validation_checklist.md)
@@ -80,4 +92,4 @@ _Keep this guide up to date as the project evolves!_
 
 ---
 
-If you find a better way or spot an error in our onboarding or validation process, **please update the docs for the next engineer!** 
+If you find a better way or spot an error in our onboarding or validation process, **please update the docs for the next engineer!**

@@ -54,4 +54,4 @@ Take the security of professional-grade encryption and make it as easy to use as
 
 ---
 
-*Built with ❤️ for the Bitcoin community* 
+_Built with ❤️ for the Bitcoin community_

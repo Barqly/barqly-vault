@@ -3,12 +3,12 @@ name: CI Frontend
 on:
   push:
     paths:
-      - 'src-ui/**'
-      - '.github/workflows/ci-frontend.yml'
+      - "src-ui/**"
+      - ".github/workflows/ci-frontend.yml"
   pull_request:
     paths:
-      - 'src-ui/**'
-      - '.github/workflows/ci-frontend.yml'
+      - "src-ui/**"
+      - ".github/workflows/ci-frontend.yml"
 
 jobs:
   build:
@@ -20,7 +20,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: "22.x"
 
       - name: Install dependencies
         run: |
@@ -53,4 +53,4 @@ jobs:
       - name: Run tests
         run: |
           cd src-ui
-          npm test -- --run --coverage 
+          npm test -- --run --coverage

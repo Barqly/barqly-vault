@@ -5,6 +5,7 @@ Barqly Vault is a cross-platform desktop application for secure file encryption,
 ---
 
 ## Features
+
 - Secure file and folder encryption using `age`
 - Cross-platform: macOS, Windows, Linux
 - Simple, intuitive interface
@@ -15,11 +16,13 @@ Barqly Vault is a cross-platform desktop application for secure file encryption,
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js v22.17.0 LTS or higher
 - Rust (latest stable)
 - Tauri CLI
 
 ### Setup
+
 ```bash
 # Install all dependencies (from project root)
 npm install          # Installs frontend dependencies
@@ -27,6 +30,7 @@ cargo build          # Builds backend dependencies
 ```
 
 ### Running the App (Development)
+
 ```bash
 # From project root - choose your preferred method:
 
@@ -35,7 +39,7 @@ make dev             # Start UI development server
 make desktop         # Start Tauri desktop app
 
 # Option 2: npm scripts
-npm run dev          # Start UI development server  
+npm run dev          # Start UI development server
 npm run tauri:dev    # Start Tauri desktop app
 
 # Option 3: Direct commands
@@ -46,6 +50,7 @@ cd src-tauri && cargo tauri dev    # Desktop app
 ---
 
 ## Project Structure
+
 ```
 barqly-vault/
 ├── src-ui/          # React/TypeScript frontend
@@ -63,6 +68,7 @@ barqly-vault/
 ```
 
 ### Package Management
+
 - **Frontend packages**: Install from root with `npm install <package>` or from `src-ui/` directory
 - **Backend packages**: Install from root with `cargo add <package>` or from `src-tauri/` directory
 - **Workspace setup**: Both npm and Cargo workspaces are configured for seamless development
@@ -70,9 +76,11 @@ barqly-vault/
 ---
 
 ## Contributing
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
 ## License
+
 MIT

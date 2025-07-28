@@ -1,9 +1,11 @@
 # Barqly Vault Project Plan
 
 ## Project Overview
+
 Barqly Vault is a cross-platform desktop application for secure file encryption using the `age` encryption standard, built with Tauri and Rust.
 
 ## Development Principles
+
 - **Security First**: All cryptographic operations must be audited and follow best practices
 - **User Experience**: Simple, intuitive interface hiding complexity
 - **Cross-Platform**: Consistent behavior across macOS, Windows, and Linux
@@ -12,6 +14,7 @@ Barqly Vault is a cross-platform desktop application for secure file encryption 
 - **Modularity**: Clean separation of concerns with well-defined interfaces
 
 ## Technology Stack
+
 - **Frontend**: Tauri + React + TypeScript
 - **Backend**: Rust
 - **Encryption**: age (via Rust crate or CLI)
@@ -22,6 +25,7 @@ Barqly Vault is a cross-platform desktop application for secure file encryption 
 - **CI/CD**: GitHub Actions
 
 ## Project Structure
+
 ```
 barqly-vault/
 ├── src-tauri/          # Rust backend
@@ -50,16 +54,19 @@ barqly-vault/
 ## Design Decisions & Clarifications
 
 ### Key Management UX
+
 - **Dropdown Display**: Show only key labels in the dropdown for clean UX
 - **Key Selection Feedback**: Display full public key below dropdown when a key is selected
 - **Future Enhancement**: Add QR code display in the right panel for easy key sharing
 
 ### Manifest File Strategy
+
 - **Dual Storage**: Manifest stored both inside encrypted bundle AND optionally outside
 - **Purpose**: Contains metadata and content hashes for pre-decryption integrity verification
 - **Future Enhancement**: Add digital signatures for tamper detection
 
 ### Error Handling Approach
+
 - **User-Friendly Messages**: Clear, actionable error messages for common scenarios:
   - "Wrong key selected - please choose the correct encryption key"
   - "File appears corrupted - integrity check failed"
@@ -67,6 +74,7 @@ barqly-vault/
 - **Recovery Guidance**: Provide next steps for each error type
 
 ### File Selection UX Design
+
 - **Dual Mode Selection**:
   - **Folder Mode**: User selects entire folder for encryption (no individual files allowed)
   - **File Mode**: User selects individual files (no folders allowed)
@@ -75,6 +83,7 @@ barqly-vault/
 - **Consistency**: Maintains folder structure across platforms for reliable restoration
 
 ### Progress Indication
+
 - **Lightweight Progress**: Simple progress bar for encryption/decryption operations
 - **Size Constraints**: Optimized for Bitcoin custody files (typically <100MB total)
 - **Use Case**: Primarily for wallet restoration scenarios, not bulk file storage
@@ -82,6 +91,7 @@ barqly-vault/
 ## Milestones
 
 ### Milestone 0: Product Documentation & Website
+
 **Goal**: Establish clear product vision and professional documentation
 
 - [x] 0.1: Product Requirements Document
@@ -109,6 +119,7 @@ barqly-vault/
   - [x] 0.4.4: Feedback system testing
 
 ### Milestone 1: Project Foundation & Setup
+
 **Goal**: Establish project structure, development environment, and core architecture
 
 - [x] 1.1: Initialize Tauri project with React + TypeScript template
@@ -121,6 +132,7 @@ barqly-vault/
 - [x] 1.8: Implement basic logging infrastructure
 
 ### Milestone 2: Core Rust Modules
+
 **Goal**: Build the foundational Rust modules for crypto, storage, and file operations
 
 - [x] 2.1: Create crypto module with age integration
@@ -153,6 +165,7 @@ barqly-vault/
 - [x] 2.6: Create module documentation with examples
 
 ### Milestone 3: Tauri Command Bridge
+
 **Goal**: Create the API layer between frontend and backend
 
 - [x] 3.1: Design Tauri command interface
@@ -175,7 +188,9 @@ barqly-vault/
 - [x] 3.7: Write integration tests for all commands
 
 ### Milestone 4: Frontend Foundation
+
 **Goal**: Build the React/TypeScript frontend structure
+
 - [x] 4.0: Recreate (convert image/photos) mocksup in mermaid
 - [x] 4.1: Set up React Router for navigation
 - [ ] 4.2: Create base UI components with full test coverage
@@ -211,6 +226,7 @@ barqly-vault/
 - [ ] 4.8: Write component tests with React Testing Library
 
 ### Milestone 5: Setup Tab Implementation
+
 **Goal**: Complete the key generation and setup workflow
 
 - [ ] 5.1: Create Setup page component structure
@@ -230,6 +246,7 @@ barqly-vault/
 - [ ] 5.7: Write end-to-end tests for setup flow
 
 ### Milestone 6: Encrypt Tab Implementation
+
 **Goal**: Build the file encryption workflow
 
 - [ ] 6.1: Create Encrypt page component structure
@@ -252,6 +269,7 @@ barqly-vault/
 - [ ] 6.7: Write end-to-end tests for encryption flow
 
 ### Milestone 7: Decrypt Tab Implementation
+
 **Goal**: Build the file decryption workflow
 
 - [ ] 7.1: Create Decrypt page component structure
@@ -273,6 +291,7 @@ barqly-vault/
 - [ ] 7.8: Write end-to-end tests for decryption flow
 
 ### Milestone 8: Polish & Error Handling
+
 **Goal**: Refine UX and handle edge cases
 
 - [ ] 8.1: Implement comprehensive error handling
@@ -288,6 +307,7 @@ barqly-vault/
 - [ ] 8.8: Performance optimization
 
 ### Milestone 9: Test Strategy Implementation
+
 **Goal**: Establish comprehensive, hierarchical test framework following ZenAI Programming Rituals
 
 - [x] 9.1: Implement hierarchical test structure
@@ -321,6 +341,7 @@ barqly-vault/
   - [ ] 9.6.3: Implement test result aggregation and reporting
 
 ### Milestone 10: Testing & Security Audit
+
 **Goal**: Ensure reliability and security
 
 - [x] 10.1: Complete unit test coverage (>80%)
@@ -336,6 +357,7 @@ barqly-vault/
 - [ ] 10.7: Create test documentation
 
 ### Milestone 11: Documentation & Release
+
 **Goal**: Prepare for public release
 
 - [ ] 10.1: Write user documentation
@@ -361,16 +383,19 @@ barqly-vault/
 ## Testing Strategy
 
 ### Unit Tests
+
 - Rust: Built-in test framework with `cargo test`
 - TypeScript: Jest with React Testing Library
 - Coverage target: >80%
 
 ### Integration Tests
+
 - Tauri command testing
 - End-to-end workflows
 - Cross-platform behavior
 
 ### Security Tests
+
 - Fuzzing for input validation
 - Timing attack analysis
 - Memory safety verification
@@ -429,4 +454,4 @@ barqly-vault/
 2. Begin Milestone 0 (Product Documentation & Website)
 3. Set up development environment
 4. Begin Milestone 1 implementation
-5. Establish weekly progress reviews 
+5. Establish weekly progress reviews
