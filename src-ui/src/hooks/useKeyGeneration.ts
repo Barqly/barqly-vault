@@ -10,6 +10,7 @@ import {
   ValidatePassphraseInput,
   ValidatePassphraseResponse,
 } from '../lib/api-types';
+import { validateField } from '../lib/validation';
 
 export interface KeyGenerationState {
   isLoading: boolean;
@@ -77,11 +78,16 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
   }, []);
 
   const generateKey = useCallback(async (): Promise<void> => {
-    // Validate inputs
-    if (!state.label.trim()) {
+    // Validate inputs using utility functions
+    const labelValidation = validateField(state.label, 'Key label', {
+      required: true,
+      safeLabel: true,
+    });
+
+    if (!labelValidation.isValid) {
       const error: CommandError = {
         code: ErrorCode.INVALID_INPUT,
-        message: 'Key label is required',
+        message: labelValidation.error!,
         recovery_guidance: 'Please provide a unique label for the new key',
         user_actionable: true,
       };
@@ -89,10 +95,14 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
       throw error;
     }
 
-    if (!state.passphrase.trim()) {
+    const passphraseValidation = validateField(state.passphrase, 'Passphrase', {
+      required: true,
+    });
+
+    if (!passphraseValidation.isValid) {
       const error: CommandError = {
         code: ErrorCode.INVALID_INPUT,
-        message: 'Passphrase is required',
+        message: passphraseValidation.error!,
         recovery_guidance: 'Please provide a strong passphrase to protect the key',
         user_actionable: true,
       };

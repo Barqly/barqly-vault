@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import PassphraseValidationFeedback, {
-  ConfirmationMatch,
-} from '../../../components/forms/PassphraseValidationFeedback';
+import PassphraseValidationFeedback from '../../../components/forms/PassphraseValidationFeedback';
+import { type ConfirmationMatch } from '../../../lib/validation';
 
 describe('PassphraseValidationFeedback', () => {
   it('should show error message when error prop is provided', () => {

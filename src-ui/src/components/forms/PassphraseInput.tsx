@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import PassphraseStrengthIndicator, { PassphraseStrength } from './PassphraseStrengthIndicator';
+import PassphraseStrengthIndicator from './PassphraseStrengthIndicator';
 import PassphraseVisibilityToggle from './PassphraseVisibilityToggle';
-import PassphraseValidationFeedback, { ConfirmationMatch } from './PassphraseValidationFeedback';
+import PassphraseValidationFeedback from './PassphraseValidationFeedback';
 import PassphraseRequirementsTooltip from './PassphraseRequirementsTooltip';
+import {
+  checkPassphraseStrength,
+  checkConfirmationMatch,
+  validatePassphrase,
+  type PassphraseStrength,
+  type ConfirmationMatch,
+} from '../../lib/validation';
 
 export type { PassphraseStrength };
 
@@ -62,87 +69,16 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   // Use controlled value if provided, otherwise use internal state
   const value = controlledValue !== undefined ? controlledValue : internalValue;
 
-  // Check passphrase strength with clear Bitcoin custody requirements
-  const checkPassphraseStrength = useCallback((passphrase: string): PassphraseStrength => {
-    if (!passphrase) {
-      return { isStrong: false, message: 'Enter a passphrase', score: 0 };
-    }
-
-    // Clear security requirements - ALL must be true for strong passphrase
-    const hasUppercase = /[A-Z]/.test(passphrase);
-    const hasLowercase = /[a-z]/.test(passphrase);
-    const hasNumbers = /\d/.test(passphrase);
-    const hasSymbols = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(passphrase);
-    const isLongEnough = passphrase.length >= 12;
-
-    // Count how many character types are present
-    const charTypes = [hasUppercase, hasLowercase, hasNumbers, hasSymbols].filter(Boolean).length;
-
-    // For Bitcoin custody: MUST have 12+ chars AND all 4 character types
-    const isStrong = isLongEnough && charTypes === 4;
-
-    let message = '';
-    let score = 0;
-
-    if (isStrong) {
-      message = 'Strong passphrase';
-      score = 12; // Full score for progress bar
-    } else {
-      // Provide specific feedback on what's missing
-      if (!isLongEnough) {
-        message = `Too short (${passphrase.length}/12 characters)`;
-        score = Math.min((passphrase.length / 12) * 8, 8); // Partial score based on length
-      } else {
-        // Length is good, but missing character types
-        const missing = [];
-        if (!hasUppercase) missing.push('uppercase');
-        if (!hasLowercase) missing.push('lowercase');
-        if (!hasNumbers) missing.push('numbers');
-        if (!hasSymbols) missing.push('symbols');
-
-        message = `Add ${missing.join(', ')}`;
-        score = 8 + (charTypes - 1); // 8 for length + 1 point per character type
-      }
-    }
-
-    // Remove debug code
-    return {
-      isStrong,
-      message,
-      score,
-    };
-  }, []);
-
-  // Check if confirmation matches
-  const checkConfirmationMatch = useCallback(
-    (confirmation: string, original: string): ConfirmationMatch => {
-      if (!confirmation) return { matches: false, message: '' };
-      if (confirmation === original) {
-        return { matches: true, message: 'Passphrases match' };
-      }
-      return { matches: false, message: "Passphrases don't match" };
-    },
-    [],
-  );
-
-  // Validate passphrase
-  const validatePassphrase = useCallback(
+  // Validate passphrase using utility function
+  const validateCurrentPassphrase = useCallback(
     (passphrase: string): string => {
-      if (required && !passphrase) {
-        return 'Passphrase is required';
-      }
-      if (passphrase && passphrase.length < minLength) {
-        return `Passphrase must be at least ${minLength} characters long`;
-      }
-      if (requireStrong && passphrase) {
-        const strength = checkPassphraseStrength(passphrase);
-        if (!strength.isStrong) {
-          return 'Passphrase is too weak';
-        }
-      }
-      return '';
+      return validatePassphrase(passphrase, {
+        required,
+        minLength,
+        requireStrong,
+      });
     },
-    [required, minLength, requireStrong, checkPassphraseStrength],
+    [required, minLength, requireStrong],
   );
 
   // Update strength when value changes
@@ -173,7 +109,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
 
   // Handle blur
   const handleBlur = () => {
-    const error = validatePassphrase(value);
+    const error = validateCurrentPassphrase(value);
     setValidationError(error);
 
     if (onBlur) {
@@ -198,7 +134,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   const displayError = error || validationError;
 
   // For confirmation field, check match status
-  const confirmationMatch = isConfirmationField
+  const confirmationMatch: ConfirmationMatch | null = isConfirmationField
     ? checkConfirmationMatch(value, originalPassphrase)
     : null;
 

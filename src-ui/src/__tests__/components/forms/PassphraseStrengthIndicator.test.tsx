@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import PassphraseStrengthIndicator, {
-  PassphraseStrength,
-} from '../../../components/forms/PassphraseStrengthIndicator';
+import PassphraseStrengthIndicator from '../../../components/forms/PassphraseStrengthIndicator';
+import { type PassphraseStrength } from '../../../lib/validation';
 
 describe('PassphraseStrengthIndicator', () => {
   const mockStrength: PassphraseStrength = {

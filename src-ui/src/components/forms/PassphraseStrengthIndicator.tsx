@@ -1,10 +1,5 @@
 import React from 'react';
-
-export interface PassphraseStrength {
-  isStrong: boolean;
-  message: string;
-  score: number;
-}
+import { type PassphraseStrength } from '../../lib/validation';
 
 export interface PassphraseStrengthIndicatorProps {
   strength: PassphraseStrength;

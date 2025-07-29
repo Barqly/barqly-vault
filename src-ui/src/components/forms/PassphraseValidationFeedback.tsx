@@ -1,9 +1,5 @@
 import React from 'react';
-
-export interface ConfirmationMatch {
-  matches: boolean;
-  message: string;
-}
+import { type ConfirmationMatch } from '../../lib/validation';
 
 export interface PassphraseValidationFeedbackProps {
   error?: string;
