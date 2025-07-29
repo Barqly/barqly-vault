@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Eye, EyeOff, Info } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import PassphraseStrengthIndicator, { PassphraseStrength } from './PassphraseStrengthIndicator';
+import PassphraseVisibilityToggle from './PassphraseVisibilityToggle';
+import PassphraseValidationFeedback, { ConfirmationMatch } from './PassphraseValidationFeedback';
+import PassphraseRequirementsTooltip from './PassphraseRequirementsTooltip';
 
-export interface PassphraseStrength {
-  isStrong: boolean;
-  message: string;
-  score: number;
-}
+export type { PassphraseStrength };
 
 export interface PassphraseInputProps {
   value?: string;
@@ -59,8 +58,6 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   });
   const [hasUserTyped, setHasUserTyped] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const infoButtonRef = useRef<HTMLButtonElement>(null);
 
   // Use controlled value if provided, otherwise use internal state
   const value = controlledValue !== undefined ? controlledValue : internalValue;
@@ -117,13 +114,16 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   }, []);
 
   // Check if confirmation matches
-  const checkConfirmationMatch = useCallback((confirmation: string, original: string) => {
-    if (!confirmation) return { matches: false, message: '' };
-    if (confirmation === original) {
-      return { matches: true, message: 'Passphrases match' };
-    }
-    return { matches: false, message: "Passphrases don't match" };
-  }, []);
+  const checkConfirmationMatch = useCallback(
+    (confirmation: string, original: string): ConfirmationMatch => {
+      if (!confirmation) return { matches: false, message: '' };
+      if (confirmation === original) {
+        return { matches: true, message: 'Passphrases match' };
+      }
+      return { matches: false, message: "Passphrases don't match" };
+    },
+    [],
+  );
 
   // Validate passphrase
   const validatePassphrase = useCallback(
@@ -195,28 +195,6 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
     setShowTooltip(!showTooltip);
   };
 
-  // Handle click outside to close tooltip
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        tooltipRef.current &&
-        !tooltipRef.current.contains(event.target as Node) &&
-        infoButtonRef.current &&
-        !infoButtonRef.current.contains(event.target as Node)
-      ) {
-        setShowTooltip(false);
-      }
-    };
-
-    if (showTooltip) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showTooltip]);
-
   const displayError = error || validationError;
 
   // For confirmation field, check match status
@@ -259,114 +237,32 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
             aria-describedby={displayError ? `${id || 'passphrase-input'}-error` : undefined}
           />
 
-          <button
-            type="button"
-            onClick={() => setShowPassphrase(!showPassphrase)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+          <PassphraseVisibilityToggle
+            isVisible={showPassphrase}
+            onToggle={() => setShowPassphrase(!showPassphrase)}
             disabled={disabled}
-            tabIndex={-1}
-            aria-label={showPassphrase ? 'Hide password' : 'Show password'}
-          >
-            {showPassphrase ? (
-              <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-            ) : (
-              <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-            )}
-          </button>
+          />
         </div>
 
         {/* Info icon with tooltip - only show for first field, positioned outside input */}
         {showStrength && !isConfirmationField && (
-          <div className="relative flex-shrink-0">
-            <button
-              ref={infoButtonRef}
-              type="button"
-              onClick={handleTooltipToggle}
-              className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-              aria-label="Passphrase requirements"
-              tabIndex={0}
-            >
-              <Info className="h-4 w-4" />
-            </button>
-
-            {/* Tooltip */}
-            {showTooltip && (
-              <div
-                ref={tooltipRef}
-                className="absolute z-50 mt-2 w-80 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-lg border border-gray-700"
-                style={{
-                  left: '0',
-                  top: '100%',
-                }}
-              >
-                <div className="space-y-2">
-                  <p className="font-medium text-gray-100">Passphrase Requirements:</p>
-                  <ul className="space-y-1 text-gray-300">
-                    <li>• Minimum 12 characters</li>
-                    <li>• Must include ALL: uppercase, lowercase, numbers, and symbols</li>
-                  </ul>
-                </div>
-
-                {/* Tooltip arrow */}
-                <div
-                  className="absolute w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"
-                  style={{
-                    left: '8px',
-                    top: '-4px',
-                  }}
-                />
-              </div>
-            )}
-          </div>
+          <PassphraseRequirementsTooltip show={showTooltip} onToggle={handleTooltipToggle} />
         )}
       </div>
 
       {/* Passphrase strength indicator - Only for first field */}
       {showStrength && !isConfirmationField && (
-        <div className="space-y-2" id="passphrase-strength">
-          {!hasUserTyped ? (
-            // Default state - show neutral message
-            <p className="text-sm font-medium text-gray-500">Passphrase Strength:</p>
-          ) : (
-            // User has typed - show strength with color and progress bar
-            <>
-              <p
-                className={`text-sm font-medium ${
-                  passphraseStrength.isStrong ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                Passphrase Strength: {passphraseStrength.message}
-              </p>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    passphraseStrength.isStrong ? 'bg-green-500' : 'bg-red-500'
-                  }`}
-                  style={{ width: `${Math.min((passphraseStrength.score / 12) * 100, 100)}%` }}
-                />
-              </div>
-            </>
-          )}
-        </div>
+        <PassphraseStrengthIndicator strength={passphraseStrength} hasUserTyped={hasUserTyped} />
       )}
 
-      {/* Confirmation Match Indicator - Only for confirmation field */}
-      {isConfirmationField && value && (
-        <div id="passphrase-confirmation" className="space-y-2">
-          <p
-            className={`text-sm font-medium ${confirmationMatch?.matches ? 'text-green-600' : 'text-red-600'}`}
-          >
-            {confirmationMatch?.message}
-          </p>
-        </div>
-      )}
-
-      {/* Error Message */}
-      {displayError && (
-        <p id={`${id || 'passphrase-input'}-error`} className="text-sm text-red-600" role="alert">
-          {displayError}
-        </p>
-      )}
+      {/* Validation Feedback */}
+      <PassphraseValidationFeedback
+        error={displayError}
+        isConfirmationField={isConfirmationField}
+        confirmationMatch={confirmationMatch}
+        value={value}
+        inputId={id}
+      />
     </div>
   );
 };
