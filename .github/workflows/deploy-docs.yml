@@ -1,0 +1,54 @@
+name: Deploy Public Documentation
+
+on:
+  push:
+    branches: ["main"]
+    paths: ["public-docs/**"]  # Only trigger when docs change
+  workflow_dispatch:  # Allow manual deployment
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Validate content exists
+        run: |
+          if [ ! -d "public-docs" ]; then
+            echo "Error: public-docs directory not found"
+            exit 1
+          fi
+          echo "Found documentation files:"
+          find public-docs -type f -name "*.html" -o -name "*.md" | head -10
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      
+      - name: Disable Jekyll processing
+        run: touch public-docs/.nojekyll
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './public-docs'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
