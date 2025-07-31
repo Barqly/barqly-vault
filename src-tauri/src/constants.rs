@@ -113,3 +113,16 @@ pub const KEY_CACHE_TTL_SECONDS: u64 = 300; // 5 minutes
 
 /// Cache TTL in seconds for directory metadata
 pub const DIRECTORY_CACHE_TTL_SECONDS: u64 = 60; // 1 minute
+
+// ============================================================================
+// Progress Debouncing Constants
+// ============================================================================
+
+/// Progress update debounce interval in milliseconds
+pub const PROGRESS_DEBOUNCE_INTERVAL_MS: u64 = 100;
+
+/// Minimum progress change to force immediate emission (10%)
+pub const PROGRESS_FORCE_EMIT_THRESHOLD: f32 = 0.1;
+
+/// Progress values that should never be debounced (start/end)
+pub const PROGRESS_IMMEDIATE_EMIT_VALUES: &[f32] = &[0.0, 1.0];
