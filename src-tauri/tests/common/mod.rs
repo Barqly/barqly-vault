@@ -39,6 +39,8 @@ pub struct TestSuiteConfig {
     pub temp_dir: TempDir,
     /// Whether tests should run in parallel
     pub parallel: bool,
+    /// Temporary key storage directory for test isolation  
+    pub keys_dir: Option<PathBuf>,
 }
 
 impl Default for TestSuiteConfig {
@@ -62,6 +64,7 @@ impl TestSuiteConfig {
             test_id,
             temp_dir: tempdir().expect("Failed to create temp directory"),
             parallel: true,
+            keys_dir: None,
         }
     }
 
@@ -75,6 +78,21 @@ impl TestSuiteConfig {
     /// Get the temporary directory path
     pub fn temp_path(&self) -> PathBuf {
         self.temp_dir.path().to_path_buf()
+    }
+
+    /// Get or create an isolated keys directory for this test
+    pub fn isolated_keys_dir(&mut self) -> &PathBuf {
+        if self.keys_dir.is_none() {
+            let keys_path = self.unique_path("keys");
+            std::fs::create_dir_all(&keys_path).expect("Failed to create isolated keys directory");
+            self.keys_dir = Some(keys_path);
+        }
+        self.keys_dir.as_ref().unwrap()
+    }
+
+    /// Get the isolated keys directory if it exists
+    pub fn get_keys_dir(&self) -> Option<&PathBuf> {
+        self.keys_dir.as_ref()
     }
 }
 

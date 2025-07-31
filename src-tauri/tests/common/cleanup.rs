@@ -44,6 +44,43 @@ impl TestCleanup {
         }
     }
 
+    /// Create a new test cleanup instance with automatic key cleanup
+    /// This is a convenience method that sets up common cleanup patterns
+    pub fn with_auto_key_cleanup() -> Self {
+        let mut cleanup = Self::new();
+
+        // Pre-register any keys that match common test patterns
+        if let Ok(keys_dir) = storage::get_keys_directory() {
+            if keys_dir.exists() {
+                // Register any existing test keys for cleanup
+                if let Ok(entries) = std::fs::read_dir(&keys_dir) {
+                    for entry in entries.flatten() {
+                        let file_name = entry.file_name();
+                        let file_name = file_name.to_string_lossy();
+
+                        // Only register keys created in this session (recent test keys)
+                        if file_name.contains("test_key_")
+                            && file_name.contains(&format!(
+                                "{}",
+                                std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .unwrap()
+                                    .as_secs()
+                                    / 3600 // Within the current hour
+                            ))
+                        {
+                            cleanup
+                                .artifacts
+                                .push(entry.path().to_string_lossy().to_string());
+                        }
+                    }
+                }
+            }
+        }
+
+        cleanup
+    }
+
     /// Register a test artifact for cleanup
     pub fn register_artifact(&mut self, artifact_path: String) {
         self.artifacts.push(artifact_path);

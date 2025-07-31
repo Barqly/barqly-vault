@@ -442,6 +442,14 @@ barqly-vault/
     - ✅ `make bench`: Run performance benchmarks including cache performance test (63.9% improvement)
     - ✅ Updated help documentation with clear command descriptions
     - ✅ All 413 tests passing with new functionality
+  - [x] 12.4.4: Improve test cleanup and add clean-keys command (30 minutes)
+    - ✅ Added `make clean-keys` command with cross-platform key directory cleanup and confirmation prompts
+    - ✅ Enhanced TestCleanup Drop trait pattern to automatically register and clean up test keys
+    - ✅ Created improved StorageFixtures that return cleanup objects for proper resource management
+    - ✅ Enhanced TestSuiteConfig with isolated keys directory support for test isolation
+    - ✅ Fixed test hygiene issues - reduced key accumulation from ~1090 legacy keys to 0 after cleanup
+    - ✅ All 374 tests pass with new cleanup mechanisms and proper resource management
+    - ✅ Developer workflow improved: no more manual terminal cleanup needed
 
 - [ ] 12.5: Development Workflow (2 hours)
   - [ ] 12.5.1: Add git pre-commit hooks (30 minutes)

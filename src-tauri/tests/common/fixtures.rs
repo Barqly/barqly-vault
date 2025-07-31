@@ -132,10 +132,16 @@ pub struct StorageFixtures;
 
 impl StorageFixtures {
     /// Create a test key store with sample keys
-    pub fn create_test_key_store(_config: &TestSuiteConfig) -> Vec<KeyInfo> {
+    /// Returns tuple of (key_infos, cleanup) where cleanup should be kept alive for the test duration
+    pub fn create_test_key_store(
+        _config: &TestSuiteConfig,
+    ) -> (Vec<KeyInfo>, super::cleanup::TestCleanup) {
+        use super::cleanup::TestCleanup;
+
         // Create test keys and save them
         let test_keys = CryptoFixtures::create_test_key_pairs(3);
         let mut key_infos = Vec::new();
+        let mut cleanup = TestCleanup::new();
 
         for (i, key_pair) in test_keys.iter().enumerate() {
             let key_name = format!(
@@ -153,6 +159,9 @@ impl StorageFixtures {
                 save_encrypted_key(&key_name, encrypted_key, Some(key_pair.public_key.as_str()))
                     .expect("Failed to save test key");
 
+            // Register the key for cleanup
+            cleanup.register_key(&key_name);
+
             // Create key info using the actual saved path
             key_infos.push(KeyInfo::new(
                 key_name,
@@ -161,6 +170,15 @@ impl StorageFixtures {
             ));
         }
 
+        (key_infos, cleanup)
+    }
+
+    /// Create a test key store with sample keys (legacy version for backward compatibility)
+    /// This version automatically cleans up but doesn't return the cleanup object
+    /// Use create_test_key_store for better control
+    pub fn create_test_key_store_auto_cleanup(_config: &TestSuiteConfig) -> Vec<KeyInfo> {
+        let (key_infos, _cleanup) = Self::create_test_key_store(_config);
+        // _cleanup will be dropped at the end of this function, cleaning up the keys
         key_infos
     }
 
@@ -340,9 +358,10 @@ mod tests {
     #[test]
     fn test_storage_fixtures_create_key_store() {
         let config = TestSuiteConfig::new();
-        let key_infos = StorageFixtures::create_test_key_store(&config);
+        let (key_infos, _cleanup) = StorageFixtures::create_test_key_store(&config);
 
         assert_eq!(key_infos.len(), 3);
+        // _cleanup will automatically clean up when it goes out of scope
     }
 
     #[test]

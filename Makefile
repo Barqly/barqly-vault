@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure file encryption for Bitcoin custody
 
-.PHONY: help ui app demo demo-build build app-build preview app-preview lint fmt rust-lint rust-fmt clean install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench
+.PHONY: help ui app demo demo-build build app-build preview app-preview lint fmt rust-lint rust-fmt clean install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys
 
 # Default target
 help:
@@ -43,6 +43,7 @@ help:
 	@echo "  dev-reset     - Reset development environment (keys, logs, cache)"
 	@echo "  dev-keys      - Generate sample keys and test data for development"
 	@echo "  bench         - Run performance benchmarks"
+	@echo "  clean-keys    - Clean application keys directory (with confirmation)"
 	@echo ""
 	@echo "💡 Tip: Run 'make validate' before committing to ensure CI will pass!"
 
@@ -196,4 +197,8 @@ bench:
 		echo "ℹ️  Memory usage test not available. Monitor with system tools during operations."
 	@echo ""
 	@echo "✅ Benchmark suite complete!"
-	@echo "💡 Tip: Run benchmarks after making performance changes to measure impact." 
+	@echo "💡 Tip: Run benchmarks after making performance changes to measure impact."
+
+clean-keys:
+	@echo "🧹 Cleaning application keys directory..."
+	@cd src-tauri && cargo run --example clean_keys 
