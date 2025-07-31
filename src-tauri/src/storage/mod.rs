@@ -36,12 +36,14 @@
 //! }
 //! ```
 
+pub mod cache;
 pub mod errors;
 pub mod key_store;
 pub mod paths;
 
 use std::path::PathBuf;
 
+pub use cache::{get_cache, CacheMetrics, StorageCache};
 pub use errors::StorageError;
 pub use key_store::{
     delete_key, get_key_info, key_exists, list_keys, load_encrypted_key, save_encrypted_key,

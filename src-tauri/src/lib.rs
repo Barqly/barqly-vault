@@ -12,6 +12,7 @@ use commands::{
     encrypt_files,
     // Crypto commands
     generate_key,
+    get_cache_metrics,
     get_config,
     get_encryption_status,
     get_file_info,
@@ -51,6 +52,7 @@ pub fn run() {
             delete_key_command,
             get_config,
             update_config,
+            get_cache_metrics,
             // File commands
             select_files,
             get_file_info,

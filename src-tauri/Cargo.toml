@@ -47,6 +47,8 @@ hex = "0.4"
 tempfile = "3.8"
 tracing = "0.1"
 tauri-plugin-dialog = "2.3.1"
+# Caching dependency
+lru = "0.12"
 
 [dev-dependencies]
 serial_test = "2.0"

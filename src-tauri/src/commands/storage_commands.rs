@@ -5,7 +5,7 @@
 
 use super::types::{CommandResponse, ErrorCode, ErrorHandler};
 use crate::logging::{log_operation, SpanContext};
-use crate::storage::{delete_key, list_keys};
+use crate::storage::{delete_key, get_cache, list_keys, CacheMetrics};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::instrument;
@@ -215,4 +215,52 @@ pub async fn update_config(config: AppConfigUpdate) -> CommandResponse<()> {
     );
 
     Ok(())
+}
+
+/// Get cache performance metrics
+#[tauri::command]
+#[instrument]
+pub async fn get_cache_metrics() -> CommandResponse<CacheMetrics> {
+    // Create span context for operation tracing
+    let span_context = SpanContext::new("get_cache_metrics");
+
+    // Log operation start with structured context
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Starting cache metrics retrieval",
+        &span_context,
+        HashMap::new(),
+    );
+
+    // Get cache metrics
+    let cache = get_cache();
+    let metrics = cache.get_metrics();
+
+    // Log operation completion with metrics
+    let mut completion_attributes = HashMap::new();
+    completion_attributes.insert(
+        "hit_rate".to_string(),
+        format!("{:.2}%", metrics.hit_rate() * 100.0),
+    );
+    completion_attributes.insert(
+        "key_list_hit_rate".to_string(),
+        format!("{:.2}%", metrics.key_list_hit_rate() * 100.0),
+    );
+    completion_attributes.insert(
+        "total_requests".to_string(),
+        metrics.total_requests.to_string(),
+    );
+    completion_attributes.insert(
+        "cache_invalidations".to_string(),
+        metrics.cache_invalidations.to_string(),
+    );
+
+    log_operation(
+        crate::logging::LogLevel::Info,
+        "Cache metrics retrieval completed successfully",
+        &span_context,
+        completion_attributes,
+    );
+
+    Ok(metrics)
 }

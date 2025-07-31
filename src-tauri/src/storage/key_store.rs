@@ -1,8 +1,9 @@
 //! Key storage operations for Barqly Vault.
 //!
 //! This module handles the storage, retrieval, and management of encrypted keys
-//! with associated metadata.
+//! with associated metadata. Includes LRU caching for improved performance.
 
+use crate::storage::cache::get_cache;
 use crate::storage::errors::StorageError;
 use crate::storage::paths::{get_key_file_path, get_key_metadata_path};
 use chrono::{DateTime, Utc};
@@ -12,7 +13,7 @@ use std::fs;
 use std::path::PathBuf;
 
 /// Information about a stored key
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct KeyInfo {
     /// User-friendly label for the key
     pub label: String,
@@ -114,6 +115,10 @@ pub fn save_encrypted_key(
         fs::set_permissions(&meta_path, perms).map_err(StorageError::IoError)?;
     }
 
+    // Invalidate key list cache since we added a new key
+    let cache = get_cache();
+    cache.invalidate_key_list();
+
     Ok(key_path)
 }
 
@@ -122,13 +127,27 @@ pub fn save_encrypted_key(
 /// # Returns
 /// Vector of KeyInfo for all stored keys, sorted by creation time (newest first)
 ///
+/// # Performance
+/// This function uses LRU caching to improve performance for repeated calls.
+/// Cache entries are valid for 5 minutes and automatically invalidated when keys are modified.
+///
 /// # Errors
 /// - `StorageError::IoError` if directory operations fail
 /// - `StorageError::InvalidMetadata` if metadata files are corrupted
 pub fn list_keys() -> Result<Vec<KeyInfo>, StorageError> {
     use crate::storage::paths::get_keys_dir;
 
+    // Generate cache key based on keys directory path for cache isolation
     let keys_dir = get_keys_dir()?;
+    let cache_key = format!("key_list_{}", keys_dir.to_string_lossy());
+
+    // Try to get from cache first
+    let cache = get_cache();
+    if let Some(cached_keys) = cache.get_key_list(&cache_key) {
+        return Ok(cached_keys);
+    }
+
+    // Cache miss - perform directory scan
     let mut keys = Vec::new();
 
     // Read all metadata files
@@ -153,6 +172,9 @@ pub fn list_keys() -> Result<Vec<KeyInfo>, StorageError> {
 
     // Sort by creation time (newest first)
     keys.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+
+    // Cache the result for future calls
+    cache.cache_key_list(cache_key, keys.clone());
 
     Ok(keys)
 }
@@ -250,6 +272,10 @@ pub fn delete_key(label: &str) -> Result<(), StorageError> {
     if meta_path.exists() {
         fs::remove_file(&meta_path).map_err(StorageError::IoError)?;
     }
+
+    // Invalidate key list cache since we deleted a key
+    let cache = get_cache();
+    cache.invalidate_key_list();
 
     Ok(())
 }

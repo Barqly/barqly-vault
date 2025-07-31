@@ -100,3 +100,16 @@ pub const LOG_FILE_SUFFIX_LENGTH: usize = 12;
 
 /// SHA-256 is used for file integrity checking
 pub const HASH_ALGORITHM: &str = "SHA-256";
+
+// ============================================================================
+// Cache Constants
+// ============================================================================
+
+/// Default size for LRU caches (number of entries)
+pub const DEFAULT_CACHE_SIZE: usize = 100;
+
+/// Cache TTL in seconds for key listing operations
+pub const KEY_CACHE_TTL_SECONDS: u64 = 300; // 5 minutes
+
+/// Cache TTL in seconds for directory metadata
+pub const DIRECTORY_CACHE_TTL_SECONDS: u64 = 60; // 1 minute
