@@ -360,25 +360,108 @@ barqly-vault/
 
 **Goal**: Prepare for public release
 
-- [ ] 10.1: Write user documentation
-  - [ ] 10.1.1: Getting started guide
-  - [ ] 10.1.2: Feature documentation
-  - [ ] 10.1.3: Troubleshooting guide
-- [ ] 10.2: Create developer documentation
-  - [ ] 10.2.1: Architecture overview
-  - [ ] 10.2.2: API documentation
-  - [ ] 10.2.3: Contributing guidelines
-- [ ] 10.3: Set up release automation
-  - [ ] 10.3.1: Version bumping scripts
-  - [ ] 10.3.2: Changelog generation
-  - [ ] 10.3.3: Binary signing setup
-- [ ] 10.4: Create distribution packages
-  - [ ] 10.4.1: macOS .dmg with notarization
-  - [ ] 10.4.2: Windows .exe with signing
-  - [ ] 10.4.3: Linux AppImage/deb/rpm
-- [ ] 10.5: Set up update mechanism
-- [ ] 10.6: Create marketing materials
-- [ ] 10.7: Prepare GitHub repository for open source
+- [ ] 11.1: Write user documentation
+  - [ ] 11.1.1: Getting started guide
+  - [ ] 11.1.2: Feature documentation
+  - [ ] 11.1.3: Troubleshooting guide
+- [ ] 11.2: Create developer documentation
+  - [ ] 11.2.1: Architecture overview
+  - [ ] 11.2.2: API documentation
+  - [ ] 11.2.3: Contributing guidelines
+- [ ] 11.3: Set up release automation
+  - [ ] 11.3.1: Version bumping scripts
+  - [ ] 11.3.2: Changelog generation
+  - [ ] 11.3.3: Binary signing setup
+- [ ] 11.4: Create distribution packages
+  - [ ] 11.4.1: macOS .dmg with notarization
+  - [ ] 11.4.2: Windows .exe with signing
+  - [ ] 11.4.3: Linux AppImage/deb/rpm
+- [ ] 11.5: Set up update mechanism
+- [ ] 11.6: Create marketing materials
+- [ ] 11.7: Prepare GitHub repository for open source
+
+### Milestone 12: Refactoring & Quick Wins
+
+**Goal**: Implement low-effort, high-impact improvements to enhance security, performance, and maintainability
+
+**Total Estimated Effort**: 2-3 developer days
+
+#### Critical Priority - Do Today (2 hours total)
+
+- [ ] 12.1: Security Hardening (1 hour)
+  - [ ] 12.1.1: Disable DevTools in production (15 minutes)
+    - Update `src-tauri/tauri.conf.json` to set `"devtools": false`
+  - [ ] 12.1.2: Add enhanced security headers (30 minutes)
+    - Update CSP with additional protections
+    - Add `dangerousDisableAssetCspModification: false` and `freezePrototype: true`
+  - [ ] 12.1.3: Add password visibility toggle delay (15 minutes)
+    - Implement 500ms delay in `PassphraseVisibilityToggle.tsx` to prevent shoulder surfing
+
+- [ ] 12.2: Code Quality Foundations (1 hour)
+  - [ ] 12.2.1: Extract magic numbers to constants (30 minutes)
+    - Create `src-tauri/src/constants.rs` with crypto, storage, and validation constants
+  - [ ] 12.2.2: Add debug assertions (15 minutes)
+    - Add debug assertions throughout Rust codebase for development debugging
+  - [ ] 12.2.3: Add README badges (15 minutes)
+    - Add CI, license, Rust, and TypeScript badges to README
+
+#### High Priority - This Week (1 day total)
+
+- [ ] 12.3: User Experience Improvements (3 hours)
+  - [ ] 12.3.1: Improve error messages with recovery guidance (2 hours)
+    - Extend `CommandError` with recovery guidance functionality
+    - Update error messages to provide actionable next steps
+  - [ ] 12.3.2: Add simple response caching (1 hour)
+    - Implement LRU cache for key listing operations
+    - Cache frequently accessed data to improve performance by 10-20%
+
+- [ ] 12.4: Performance Optimizations (2 hours)
+  - [ ] 12.4.1: Implement lazy loading for components (1 hour)
+    - Convert SetupPage, EncryptPage, DecryptPage to lazy-loaded components
+    - Add loading fallbacks for faster initial render
+  - [ ] 12.4.2: Add progress debouncing (30 minutes)
+    - Debounce progress updates to prevent UI thrashing
+  - [ ] 12.4.3: Add development commands (30 minutes)
+    - Add `dev-reset`, `dev-keys`, and `bench` commands to Makefile
+
+- [ ] 12.5: Development Workflow (2 hours)
+  - [ ] 12.5.1: Add git pre-commit hooks (30 minutes)
+    - Create hooks to prevent committing sensitive data
+    - Run quick validation before commits
+  - [ ] 12.5.2: Add VSCode tasks (30 minutes)
+    - Create tasks.json for quick testing and dev server
+  - [ ] 12.5.3: Create troubleshooting guide (1 hour)
+    - Document common issues and solutions
+
+#### Medium Priority - Next Sprint (4 hours total)
+
+- [ ] 12.6: Testing Infrastructure (2 hours)
+  - [ ] 12.6.1: Add test data generators (2 hours)
+    - Create `TestDataBuilder` with fake data generation
+    - Implement generators for keys, passphrases, and file paths
+
+- [ ] 12.7: Quality Assurance (2 hours)
+  - [ ] 12.7.1: Add snapshot tests for UI components (1 hour)
+    - Create snapshot tests for KeyGenerationForm and ErrorMessage
+  - [ ] 12.7.2: Add performance benchmarks (1 hour)
+    - Create Criterion benchmarks for encryption operations
+    - Track performance regressions
+
+#### Future Enhancements (Deferred)
+
+- [ ] 12.8: Documentation Improvements
+  - [ ] 12.8.1: Add architecture diagram (1 hour)
+    - Create Mermaid diagram showing system components
+  - [ ] 12.8.2: Complete configuration module (addresses missing Milestone 2.4)
+    - Implement configuration schema and persistence
+    - Add migration support for future updates
+
+**Expected Impact**:
+- **Security**: Immediate hardening against common attacks
+- **Performance**: 10-20% improvement in perceived speed  
+- **Developer Experience**: 30% faster development workflow
+- **Code Quality**: Fewer bugs, easier maintenance
+- **User Experience**: Clearer errors, smoother interactions
 
 ## Testing Strategy
 

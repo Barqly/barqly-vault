@@ -91,11 +91,21 @@
 - `docs/architecture/specs/backend/` - Implementation specifications to follow
 - `docs/architecture/api-contracts.md` - API interfaces to implement
 - `docs/research/` - Technology recommendations and best practices
+- `docs/zenmaster/` - Task assignments and project coordination
+- `docs/common/rust-coding-standards.md` - Language-specific coding patterns and conventions
+- `docs/common/rust-quality-standards.md` - Testing, CI/CD, and quality gate requirements
+- `docs/evaluation/security-audit.md` - Security requirements and vulnerability assessments (when available)
+- `docs/product/` - Business requirements and user story acceptance criteria
 
 **Outputs (Writes To):**
 - `docs/engineering/backend/` - Implementation notes, technical decisions, progress updates
+- `docs/engineering/backend/api-documentation.md` - API endpoint documentation and usage examples
+- `docs/engineering/backend/performance-benchmarks.md` - Performance testing results and optimization notes
+- `docs/engineering/backend/integration-notes.md` - Cross-service integration documentation and troubleshooting
+- `docs/architecture/` - Implementation feedback and architectural improvement suggestions (when appropriate)
+- Source code, tests, and technical documentation in project codebase
 
-### ux-engineer
+### frontend-engineer
 **Inputs (Reads From):**
 - `docs/architecture/specs/frontend/` - Implementation specifications to follow
 - `docs/architecture/api-contracts.md` - API interfaces to implement
