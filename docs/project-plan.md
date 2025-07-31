@@ -388,29 +388,32 @@ barqly-vault/
 
 #### Critical Priority - Do Today (2 hours total)
 
-- [ ] 12.1: Security Hardening (1 hour)
-  - [ ] 12.1.1: Disable DevTools in production (15 minutes)
+- [x] 12.1: Security Hardening (1 hour)
+  - [x] 12.1.1: Disable DevTools in production (15 minutes)
     - Update `src-tauri/tauri.conf.json` to set `"devtools": false`
-  - [ ] 12.1.2: Add enhanced security headers (30 minutes)
+  - [x] 12.1.2: Add enhanced security headers (30 minutes)
     - Update CSP with additional protections
     - Add `dangerousDisableAssetCspModification: false` and `freezePrototype: true`
-  - [ ] 12.1.3: Add password visibility toggle delay (15 minutes)
+  - [x] 12.1.3: Add password visibility toggle delay (15 minutes)
     - Implement 500ms delay in `PassphraseVisibilityToggle.tsx` to prevent shoulder surfing
 
-- [ ] 12.2: Code Quality Foundations (1 hour)
-  - [ ] 12.2.1: Extract magic numbers to constants (30 minutes)
+- [x] 12.2: Code Quality Foundations (1 hour)
+  - [x] 12.2.1: Extract magic numbers to constants (30 minutes)
     - Create `src-tauri/src/constants.rs` with crypto, storage, and validation constants
-  - [ ] 12.2.2: Add debug assertions (15 minutes)
+  - [x] 12.2.2: Add debug assertions (15 minutes)
     - Add debug assertions throughout Rust codebase for development debugging
-  - [ ] 12.2.3: Add README badges (15 minutes)
+  - [x] 12.2.3: Add README badges (15 minutes)
     - Add CI, license, Rust, and TypeScript badges to README
 
 #### High Priority - This Week (1 day total)
 
 - [ ] 12.3: User Experience Improvements (3 hours)
-  - [ ] 12.3.1: Improve error messages with recovery guidance (2 hours)
-    - Extend `CommandError` with recovery guidance functionality
-    - Update error messages to provide actionable next steps
+  - [x] 12.3.1: Improve error messages with recovery guidance (2 hours)
+    - Extended `CommandError` with enhanced recovery guidance functionality
+    - Updated error messages to provide specific, actionable next steps for each error scenario
+    - Added operation-specific recovery guidance for Bitcoin custody use cases
+    - Enhanced validation messages with detailed requirements and examples
+    - All 374+ tests passing with improved error handling
   - [ ] 12.3.2: Add simple response caching (1 hour)
     - Implement LRU cache for key listing operations
     - Cache frequently accessed data to improve performance by 10-20%
