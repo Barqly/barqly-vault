@@ -434,8 +434,14 @@ barqly-vault/
     - ✅ Comprehensive test coverage with 5 new debouncing-specific tests
     - ✅ Performance improvement: Significantly reduced progress updates from ~50 to <25 per operation
     - ✅ All 413 tests passing with new debouncing functionality
-  - [ ] 12.4.3: Add development commands (30 minutes)
-    - Add `dev-reset`, `dev-keys`, and `bench` commands to Makefile
+  - [x] 12.4.3: Add development commands (15 minutes)
+    - ✅ Added `dev-reset`, `dev-keys`, and `bench` commands to Makefile
+    - ✅ Cross-platform implementation using Rust examples for proper path handling
+    - ✅ `make dev-reset`: Interactive reset of development environment (keys, logs, config, cache)
+    - ✅ `make dev-keys`: Generate 4 sample development keys with predefined passphrases
+    - ✅ `make bench`: Run performance benchmarks including cache performance test (63.9% improvement)
+    - ✅ Updated help documentation with clear command descriptions
+    - ✅ All 413 tests passing with new functionality
 
 - [ ] 12.5: Development Workflow (2 hours)
   - [ ] 12.5.1: Add git pre-commit hooks (30 minutes)

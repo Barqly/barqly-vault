@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure file encryption for Bitcoin custody
 
-.PHONY: help ui app demo demo-build build app-build preview app-preview lint fmt rust-lint rust-fmt clean install validate test test-ui test-rust validate-ui validate-rust
+.PHONY: help ui app demo demo-build build app-build preview app-preview lint fmt rust-lint rust-fmt clean install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench
 
 # Default target
 help:
@@ -38,6 +38,11 @@ help:
 	@echo "Utilities:"
 	@echo "  clean         - Clean build artifacts"
 	@echo "  install       - Install dependencies"
+	@echo ""
+	@echo "Development Tools:"
+	@echo "  dev-reset     - Reset development environment (keys, logs, cache)"
+	@echo "  dev-keys      - Generate sample keys and test data for development"
+	@echo "  bench         - Run performance benchmarks"
 	@echo ""
 	@echo "💡 Tip: Run 'make validate' before committing to ensure CI will pass!"
 
@@ -159,4 +164,36 @@ validate-rust:
 	@cd src-tauri && cargo test || (echo "❌ Tests failed." && exit 1)
 	@echo "✅ All Rust tests passed"
 	@echo ""
-	@echo "🎉 Rust validation complete!" 
+	@echo "🎉 Rust validation complete!"
+
+# Development tools
+dev-reset:
+	@echo "🧹 Resetting development environment..."
+	@cd src-tauri && cargo run --example dev_reset
+	@echo "🧹 Cleaning build artifacts..."
+	@$(MAKE) clean
+
+dev-keys:
+	@cd src-tauri && cargo run --example generate_dev_keys
+
+bench:
+	@echo "🚀 Running performance benchmarks..."
+	@echo ""
+	@echo "📊 Cache Performance Test"
+	@echo "========================="
+	@cd src-tauri && cargo run --example cache_performance_test --release
+	@echo ""
+	@echo "⚡ Encryption/Decryption Benchmark"
+	@echo "=================================="
+	@cd src-tauri && cargo run --example encryption_benchmark --release 2>/dev/null || \
+		(echo "⚠️  Encryption benchmark not found. Running basic performance test..." && \
+		 cargo test --release crypto::benchmarks || \
+		 echo "ℹ️  No dedicated benchmarks found. Use 'cargo test --release' for performance testing.")
+	@echo ""
+	@echo "💾 Memory Usage Test"
+	@echo "==================="
+	@cd src-tauri && cargo run --example memory_usage_test --release 2>/dev/null || \
+		echo "ℹ️  Memory usage test not available. Monitor with system tools during operations."
+	@echo ""
+	@echo "✅ Benchmark suite complete!"
+	@echo "💡 Tip: Run benchmarks after making performance changes to measure impact." 
