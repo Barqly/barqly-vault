@@ -1,5 +1,6 @@
 //! File and folder selection logic
 
+use crate::constants::*;
 use crate::file_ops::validation::{validate_file_size, validate_paths};
 use crate::file_ops::{FileInfo, FileOpsConfig, FileOpsError, Result};
 use serde::{Deserialize, Serialize};
@@ -214,7 +215,7 @@ fn calculate_file_hash(path: &Path) -> Result<String> {
     })?;
 
     let mut hasher = Sha256::new();
-    let mut buffer = [0; 8192];
+    let mut buffer = [0; IO_BUFFER_SIZE];
 
     loop {
         let n = file

@@ -1,5 +1,11 @@
 # Barqly Vault
 
+[![CI](https://github.com/barqly/barqly-vault/actions/workflows/ci.yml/badge.svg)](https://github.com/barqly/barqly-vault/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=flat&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tauri](https://img.shields.io/badge/tauri-%2324C8DB.svg?style=flat&logo=tauri&logoColor=%23FFFFFF)](https://tauri.app/)
+
 Barqly Vault is a cross-platform desktop application for secure file encryption, designed for Bitcoin custody backup and restoration. Built with Tauri (Rust backend) and React/TypeScript (frontend), it uses the audited `age` encryption standard for maximum security.
 
 ---

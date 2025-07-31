@@ -1,5 +1,6 @@
 //! Staging area management for secure temporary file operations
 
+use crate::constants::*;
 use crate::file_ops::{FileInfo, FileOpsError, FileSelection, Result};
 use std::fs;
 #[cfg(unix)]
@@ -75,6 +76,9 @@ impl StagingArea {
 
     /// Stage a single file
     fn stage_single_file(&mut self, source: &Path) -> Result<()> {
+        debug_assert!(source.exists(), "Source file must exist: {source:?}");
+        debug_assert!(!self.cleaned, "Cannot stage files after cleanup");
+
         let file_name = source
             .file_name()
             .ok_or_else(|| FileOpsError::PathValidationFailed {
@@ -259,7 +263,7 @@ fn calculate_file_hash(path: &Path) -> Result<String> {
     })?;
 
     let mut hasher = Sha256::new();
-    let mut buffer = [0; 8192];
+    let mut buffer = [0; IO_BUFFER_SIZE];
 
     loop {
         let n = file

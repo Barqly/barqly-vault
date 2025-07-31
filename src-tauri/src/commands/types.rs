@@ -22,6 +22,7 @@
 //! - Error messages don't leak sensitive information
 //! - All input is validated before processing
 
+use crate::constants::*;
 use crate::logging::{log_error_with_context, SpanContext};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -420,7 +421,7 @@ impl ValidationHelper {
     pub fn validate_file_size(path: &str, max_size_mb: u64) -> Result<(), Box<CommandError>> {
         let path_buf = std::path::Path::new(path);
         if let Ok(metadata) = std::fs::metadata(path_buf) {
-            let size_mb = metadata.len() / (1024 * 1024);
+            let size_mb = metadata.len() / BYTES_PER_MB;
             if size_mb > max_size_mb {
                 return Err(Box::new(
                     CommandError::operation(
@@ -451,11 +452,14 @@ impl ValidationHelper {
 
     /// Validate passphrase strength
     pub fn validate_passphrase_strength(passphrase: &str) -> Result<(), Box<CommandError>> {
-        if passphrase.len() < 8 {
+        if passphrase.len() < MIN_PASSPHRASE_LENGTH_BASIC {
             return Err(Box::new(
                 CommandError::operation(
                     ErrorCode::WeakPassphrase,
-                    "Passphrase is too short (minimum 8 characters)",
+                    format!(
+                        "Passphrase is too short (minimum {MIN_PASSPHRASE_LENGTH_BASIC} characters)"
+                    )
+                    .as_str(),
                 )
                 .with_recovery_guidance("Use a longer passphrase"),
             ));
@@ -959,7 +963,8 @@ impl ProgressManager {
     /// Get current progress percentage
     pub fn progress_percentage(&self) -> u8 {
         if self.total_work > 0 {
-            ((self.completed_work as f32 / self.total_work as f32) * 100.0) as u8
+            ((self.completed_work as f32 / self.total_work as f32) * PROGRESS_PERCENTAGE_MULTIPLIER)
+                as u8
         } else {
             0
         }

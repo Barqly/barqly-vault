@@ -5,6 +5,7 @@
 //! - **Windows**: `%APPDATA%\barqly-vault\`
 //! - **Linux**: `~/.config/barqly-vault/`
 
+use crate::constants::*;
 use crate::storage::errors::StorageError;
 use directories::ProjectDirs;
 use std::path::{Path, PathBuf};
@@ -230,7 +231,7 @@ fn is_safe_label(label: &str) -> bool {
     }
 
     // Check length (reasonable limit)
-    if label.len() > 100 {
+    if label.len() > MAX_KEY_LABEL_LENGTH {
         return false;
     }
 

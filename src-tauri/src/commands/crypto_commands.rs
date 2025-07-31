@@ -7,6 +7,7 @@ use super::types::{
     CommandError, CommandResponse, ErrorCode, ErrorHandler, ProgressDetails, ProgressManager,
     ValidateInput, ValidationHelper,
 };
+use crate::constants::*;
 use crate::crypto::{encrypt_private_key, generate_keypair};
 use crate::file_ops;
 use crate::logging::{log_operation, SpanContext};
@@ -200,13 +201,14 @@ impl ValidateInput for EncryptDataInput {
         }
 
         // Validate file count limit
-        if self.file_paths.len() > 1000 {
+        if self.file_paths.len() > MAX_FILES_PER_OPERATION {
             return Err(Box::new(
                 CommandError::operation(
                     ErrorCode::TooManyFiles,
                     format!(
-                        "Too many files selected: {} (maximum 1000)",
-                        self.file_paths.len()
+                        "Too many files selected: {} (maximum {})",
+                        self.file_paths.len(),
+                        MAX_FILES_PER_OPERATION
                     ),
                 )
                 .with_recovery_guidance("Please select fewer files"),
@@ -239,7 +241,12 @@ impl ValidateInput for DecryptDataInput {
 impl ValidateInput for GetEncryptionStatusInput {
     fn validate(&self) -> Result<(), Box<CommandError>> {
         ValidationHelper::validate_not_empty(&self.operation_id, "Operation ID")?;
-        ValidationHelper::validate_length(&self.operation_id, "Operation ID", 1, 100)?;
+        ValidationHelper::validate_length(
+            &self.operation_id,
+            "Operation ID",
+            1,
+            MAX_OPERATION_ID_LENGTH,
+        )?;
         Ok(())
     }
 }
@@ -273,7 +280,12 @@ impl ValidateInput for VerifyManifestInput {
 impl ValidateInput for GetProgressInput {
     fn validate(&self) -> Result<(), Box<CommandError>> {
         ValidationHelper::validate_not_empty(&self.operation_id, "Operation ID")?;
-        ValidationHelper::validate_length(&self.operation_id, "Operation ID", 1, 100)?;
+        ValidationHelper::validate_length(
+            &self.operation_id,
+            "Operation ID",
+            1,
+            MAX_OPERATION_ID_LENGTH,
+        )?;
         Ok(())
     }
 }
@@ -396,11 +408,14 @@ pub async fn validate_passphrase(
 
     let passphrase = &input.passphrase;
 
-    // Check minimum length (12 characters as per security principles)
-    if passphrase.len() < 12 {
+    // Check minimum length as per security principles
+    if passphrase.len() < MIN_PASSPHRASE_LENGTH {
         let mut failure_attributes = HashMap::new();
         failure_attributes.insert("reason".to_string(), "insufficient_length".to_string());
-        failure_attributes.insert("required_length".to_string(), "12".to_string());
+        failure_attributes.insert(
+            "required_length".to_string(),
+            MIN_PASSPHRASE_LENGTH.to_string(),
+        );
         failure_attributes.insert("actual_length".to_string(), passphrase.len().to_string());
         log_operation(
             crate::logging::LogLevel::Warn,
@@ -410,7 +425,7 @@ pub async fn validate_passphrase(
         );
         return Ok(ValidatePassphraseResponse {
             is_valid: false,
-            message: "Passphrase must be at least 12 characters long".to_string(),
+            message: format!("Passphrase must be at least {MIN_PASSPHRASE_LENGTH} characters long"),
         });
     }
 
@@ -501,7 +516,7 @@ pub async fn validate_passphrase(
 
 /// Check for sequential patterns in passphrase
 fn contains_sequential_pattern(passphrase: &str) -> bool {
-    if passphrase.len() < 3 {
+    if passphrase.len() < MIN_LENGTH_FOR_SEQUENCE_CHECK {
         return false;
     }
 
@@ -563,7 +578,7 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
         "encrypt_{timestamp}",
         timestamp = chrono::Utc::now().timestamp()
     );
-    let mut progress_manager = ProgressManager::new(operation_id.clone(), 100);
+    let mut progress_manager = ProgressManager::new(operation_id.clone(), PROGRESS_TOTAL_WORK);
 
     // Log operation start with structured context
     let mut attributes = HashMap::new();
@@ -579,11 +594,17 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     info!("Starting encryption for {} files", input.file_paths.len());
 
     // Report initial progress
-    progress_manager.set_progress(0.05, "Initializing encryption operation...");
+    progress_manager.set_progress(
+        PROGRESS_ENCRYPT_INIT,
+        "Initializing encryption operation...",
+    );
     update_global_progress(&operation_id, progress_manager.get_current_update());
 
     // Get the public key for encryption with structured error handling
-    progress_manager.set_progress(0.10, "Retrieving encryption key...");
+    progress_manager.set_progress(
+        PROGRESS_ENCRYPT_KEY_RETRIEVAL,
+        "Retrieving encryption key...",
+    );
     update_global_progress(&operation_id, progress_manager.get_current_update());
 
     let keys = error_handler.handle_operation_error(
@@ -613,7 +634,10 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     let public_key = crate::crypto::PublicKey::from(public_key_str.clone());
 
     // Create file selection from input paths with atomic validation
-    progress_manager.set_progress(0.15, "Validating file selection...");
+    progress_manager.set_progress(
+        PROGRESS_ENCRYPT_FILE_VALIDATION,
+        "Validating file selection...",
+    );
     update_global_progress(&operation_id, progress_manager.get_current_update());
 
     let file_selection = create_file_selection_atomic(&input.file_paths, &error_handler)?;
@@ -637,7 +661,7 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     let config = file_ops::FileOpsConfig::default();
 
     // Create archive with progress reporting
-    progress_manager.set_progress(0.20, "Creating archive...");
+    progress_manager.set_progress(PROGRESS_ENCRYPT_ARCHIVE_START, "Creating archive...");
     update_global_progress(&operation_id, progress_manager.get_current_update());
 
     // Create archive with progress reporting
@@ -647,11 +671,14 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
         ErrorCode::EncryptionFailed,
     )?;
 
-    progress_manager.set_progress(0.60, "Archive created successfully");
+    progress_manager.set_progress(
+        PROGRESS_ENCRYPT_ARCHIVE_COMPLETE,
+        "Archive created successfully",
+    );
     update_global_progress(&operation_id, progress_manager.get_current_update());
 
     // Read the archive file with streaming for large files
-    progress_manager.set_progress(0.70, "Reading archive file...");
+    progress_manager.set_progress(PROGRESS_ENCRYPT_READ_ARCHIVE, "Reading archive file...");
     update_global_progress(&operation_id, progress_manager.get_current_update());
 
     let archive_data = error_handler.handle_operation_error(
@@ -661,7 +688,7 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     )?;
 
     // Encrypt the archive data
-    progress_manager.set_progress(0.80, "Encrypting data...");
+    progress_manager.set_progress(PROGRESS_ENCRYPT_ENCRYPTING, "Encrypting data...");
     update_global_progress(&operation_id, progress_manager.get_current_update());
 
     let encrypted_data = error_handler.handle_operation_error(
@@ -671,7 +698,7 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     )?;
 
     // Write encrypted data to final output file
-    progress_manager.set_progress(0.90, "Writing encrypted file...");
+    progress_manager.set_progress(PROGRESS_ENCRYPT_WRITING, "Writing encrypted file...");
     update_global_progress(&operation_id, progress_manager.get_current_update());
 
     let encrypted_path = output_path.with_extension("age");
@@ -682,7 +709,7 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     )?;
 
     // Clean up temporary archive file with proper error handling
-    progress_manager.set_progress(0.95, "Cleaning up temporary files...");
+    progress_manager.set_progress(PROGRESS_ENCRYPT_CLEANUP, "Cleaning up temporary files...");
     update_global_progress(&operation_id, progress_manager.get_current_update());
     cleanup_temp_file(&archive_operation.archive_path, &error_handler);
 
@@ -779,8 +806,8 @@ fn read_archive_file_safely(
         ErrorCode::EncryptionFailed,
     )?;
 
-    const MAX_ARCHIVE_SIZE: u64 = 100 * 1024 * 1024; // 100MB limit
-    if metadata.len() > MAX_ARCHIVE_SIZE {
+    // Use constant from constants module
+    if metadata.len() > crate::constants::MAX_ARCHIVE_SIZE {
         return Err(error_handler.handle_validation_error(
             "archive_size",
             &format!(
@@ -947,7 +974,7 @@ fn calculate_file_hash_simple(
     })?;
 
     let mut hasher = Sha256::new();
-    let mut buffer = [0; 8192];
+    let mut buffer = [0; IO_BUFFER_SIZE];
 
     loop {
         let n = file.read(&mut buffer).map_err(|e| {
@@ -987,7 +1014,7 @@ pub async fn decrypt_data(
         "decrypt_{timestamp}",
         timestamp = chrono::Utc::now().timestamp()
     );
-    let mut progress_manager = ProgressManager::new(operation_id.clone(), 100);
+    let mut progress_manager = ProgressManager::new(operation_id.clone(), PROGRESS_TOTAL_WORK);
 
     // Validate input
     input
@@ -1007,10 +1034,13 @@ pub async fn decrypt_data(
     );
 
     // Report initial progress
-    progress_manager.set_progress(0.05, "Initializing decryption operation...");
+    progress_manager.set_progress(
+        PROGRESS_DECRYPT_INIT,
+        "Initializing decryption operation...",
+    );
 
     // Load the encrypted private key
-    progress_manager.set_progress(0.10, "Loading encryption key...");
+    progress_manager.set_progress(PROGRESS_DECRYPT_KEY_LOAD, "Loading encryption key...");
 
     let encrypted_key = error_handler.handle_operation_error(
         storage::load_encrypted_key(&input.key_id),
@@ -1019,7 +1049,7 @@ pub async fn decrypt_data(
     )?;
 
     // Decrypt the private key with the passphrase
-    progress_manager.set_progress(0.20, "Decrypting private key...");
+    progress_manager.set_progress(PROGRESS_DECRYPT_KEY_DECRYPT, "Decrypting private key...");
 
     let private_key = error_handler.handle_operation_error(
         crate::crypto::decrypt_private_key(&encrypted_key, SecretString::from(input.passphrase)),
@@ -1028,7 +1058,7 @@ pub async fn decrypt_data(
     )?;
 
     // Read the encrypted file
-    progress_manager.set_progress(0.30, "Reading encrypted file...");
+    progress_manager.set_progress(PROGRESS_DECRYPT_READ_FILE, "Reading encrypted file...");
 
     let encrypted_data = error_handler.handle_operation_error(
         std::fs::read(&input.encrypted_file),
@@ -1037,7 +1067,7 @@ pub async fn decrypt_data(
     )?;
 
     // Decrypt the data
-    progress_manager.set_progress(0.50, "Decrypting data...");
+    progress_manager.set_progress(PROGRESS_DECRYPT_DECRYPTING, "Decrypting data...");
 
     let decrypted_data = error_handler.handle_operation_error(
         crate::crypto::decrypt_data(&encrypted_data, &private_key),
@@ -1068,7 +1098,7 @@ pub async fn decrypt_data(
     )?;
 
     // Extract the archive
-    progress_manager.set_progress(0.70, "Extracting archive...");
+    progress_manager.set_progress(PROGRESS_DECRYPT_EXTRACT, "Extracting archive...");
 
     let config = file_ops::FileOpsConfig::default();
     let extracted_files = error_handler.handle_operation_error(
@@ -1078,11 +1108,11 @@ pub async fn decrypt_data(
     )?;
 
     // Clean up temporary file
-    progress_manager.set_progress(0.90, "Cleaning up temporary files...");
+    progress_manager.set_progress(PROGRESS_DECRYPT_CLEANUP, "Cleaning up temporary files...");
     cleanup_temp_file(&temp_archive_path, &error_handler);
 
     // Try to verify manifest if it exists
-    progress_manager.set_progress(0.95, "Verifying manifest...");
+    progress_manager.set_progress(PROGRESS_DECRYPT_VERIFY, "Verifying manifest...");
     let manifest_verified =
         verify_manifest_if_exists(&extracted_files, output_path, &error_handler);
 
@@ -1234,7 +1264,7 @@ pub async fn verify_manifest(
         "verify_{timestamp}",
         timestamp = chrono::Utc::now().timestamp()
     );
-    let mut progress_manager = ProgressManager::new(operation_id.clone(), 100);
+    let mut progress_manager = ProgressManager::new(operation_id.clone(), PROGRESS_TOTAL_WORK);
 
     // Create error handler with span context
     let error_handler = ErrorHandler::new().with_span(span_context.clone());
@@ -1259,10 +1289,13 @@ pub async fn verify_manifest(
     );
 
     // Report initial progress
-    progress_manager.set_progress(0.10, "Initializing manifest verification...");
+    progress_manager.set_progress(
+        PROGRESS_VERIFY_INIT,
+        "Initializing manifest verification...",
+    );
 
     // Load the manifest
-    progress_manager.set_progress(0.30, "Loading manifest file...");
+    progress_manager.set_progress(PROGRESS_VERIFY_LOAD, "Loading manifest file...");
 
     let manifest = error_handler.handle_operation_error(
         file_ops::manifest::Manifest::load(std::path::Path::new(&input.manifest_path)),
@@ -1271,7 +1304,7 @@ pub async fn verify_manifest(
     )?;
 
     // Get file information for extracted files
-    progress_manager.set_progress(0.50, "Scanning extracted files...");
+    progress_manager.set_progress(PROGRESS_VERIFY_SCAN, "Scanning extracted files...");
 
     let extracted_files = error_handler.handle_operation_error(
         get_extracted_files_info(&input.extracted_files_dir),
@@ -1280,7 +1313,7 @@ pub async fn verify_manifest(
     )?;
 
     // Verify the manifest
-    progress_manager.set_progress(0.70, "Verifying file integrity...");
+    progress_manager.set_progress(PROGRESS_VERIFY_CHECK, "Verifying file integrity...");
 
     let verification_result = file_ops::verify_manifest(
         &manifest,

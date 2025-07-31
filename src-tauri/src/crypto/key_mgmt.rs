@@ -1,5 +1,5 @@
 use age::x25519::Identity;
-use secrecy::SecretString;
+use secrecy::{ExposeSecret, SecretString};
 use std::io::Write;
 
 use super::{CryptoError, KeyPair, PrivateKey, PublicKey, Result};
@@ -79,6 +79,12 @@ pub fn encrypt_private_key(private_key: &PrivateKey, passphrase: SecretString) -
 /// - Validates passphrase before returning key
 /// - Returns error on wrong passphrase
 pub fn decrypt_private_key(encrypted_key: &[u8], passphrase: SecretString) -> Result<PrivateKey> {
+    debug_assert!(!encrypted_key.is_empty(), "Encrypted key cannot be empty");
+    debug_assert!(
+        !passphrase.expose_secret().is_empty(),
+        "Passphrase cannot be empty"
+    );
+
     // Create decryptor with passphrase
     let decryptor = age::Decryptor::new(encrypted_key)
         .map_err(|e| CryptoError::DecryptionFailed(e.to_string()))?;

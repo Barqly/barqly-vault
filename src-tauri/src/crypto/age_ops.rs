@@ -16,6 +16,8 @@ use super::{CryptoError, PrivateKey, PublicKey, Result};
 /// - Uses age's streaming encryption
 /// - Suitable for large files
 pub fn encrypt_data(data: &[u8], recipient: &PublicKey) -> Result<Vec<u8>> {
+    debug_assert!(!recipient.as_str().is_empty(), "Public key cannot be empty");
+
     // Parse recipient as age::x25519::Recipient
     let recipient_key =
         Recipient::from_str(recipient.as_str()).map_err(|_e| CryptoError::InvalidRecipient)?;
@@ -49,6 +51,11 @@ pub fn encrypt_data(data: &[u8], recipient: &PublicKey) -> Result<Vec<u8>> {
 /// - Validates age format before decryption
 /// - Returns specific error for wrong key
 pub fn decrypt_data(encrypted_data: &[u8], private_key: &PrivateKey) -> Result<Vec<u8>> {
+    debug_assert!(
+        !private_key.expose_secret().is_empty(),
+        "Private key cannot be empty"
+    );
+
     // Parse private_key as age::x25519::Identity
     let identity = Identity::from_str(private_key.expose_secret())
         .map_err(|e| CryptoError::InvalidKeyFormat(e.to_string()))?;

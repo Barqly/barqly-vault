@@ -1,5 +1,6 @@
 //! Manifest generation and verification for archive integrity
 
+use crate::constants::*;
 use crate::file_ops::archive::extract_archive;
 use crate::file_ops::{ArchiveOperation, FileInfo, FileOpsConfig, FileOpsError, Result};
 use chrono::{DateTime, Utc};
@@ -385,7 +386,7 @@ fn calculate_file_hash(path: &Path) -> Result<String> {
     })?;
 
     let mut hasher = Sha256::new();
-    let mut buffer = [0; 8192];
+    let mut buffer = [0; IO_BUFFER_SIZE];
 
     loop {
         let n = file

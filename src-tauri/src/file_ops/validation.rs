@@ -1,5 +1,6 @@
 //! Path validation and security checks
 
+use crate::constants::*;
 use crate::file_ops::{FileOpsError, Result};
 use std::path::{Path, PathBuf};
 use tracing::{info, warn};
@@ -73,7 +74,7 @@ pub fn validate_file_size(path: &Path, max_size: u64) -> Result<()> {
         warn!(
             "Large file detected: {} ({:.1} MB)",
             path.display(),
-            file_size as f64 / (1024.0 * 1024.0)
+            file_size as f64 / BYTES_PER_MB_F64
         );
     }
 
@@ -173,6 +174,8 @@ pub fn get_relative_path(path: &Path, base: &Path) -> Result<PathBuf> {
 
 /// Validate archive path for security
 pub fn validate_archive_path(path: &Path) -> Result<()> {
+    debug_assert!(!path.as_os_str().is_empty(), "Archive path cannot be empty");
+
     // Check if path is absolute
     if !path.is_absolute() {
         return Err(FileOpsError::PathValidationFailed {

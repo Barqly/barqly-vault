@@ -1,5 +1,6 @@
 //! Error types for file operations module
 
+use crate::constants::*;
 use std::path::PathBuf;
 use thiserror::Error;
 
@@ -111,8 +112,8 @@ impl FileOpsError {
                 format!("Directory not found: {}", path.display())
             }
             FileOpsError::FileTooLarge { path, size, max } => {
-                let size_mb = *size as f64 / (1024.0 * 1024.0);
-                let max_mb = *max as f64 / (1024.0 * 1024.0);
+                let size_mb = *size as f64 / BYTES_PER_MB_F64;
+                let max_mb = *max as f64 / BYTES_PER_MB_F64;
                 format!(
                     "File '{}' is too large ({:.1} MB). Maximum allowed size is {:.1} MB.",
                     path.display(),

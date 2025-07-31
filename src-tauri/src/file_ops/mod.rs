@@ -26,6 +26,7 @@ pub mod selection;
 pub mod staging;
 pub mod validation;
 
+use crate::constants::*;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -59,8 +60,8 @@ pub struct FileOpsConfig {
 impl Default for FileOpsConfig {
     fn default() -> Self {
         Self {
-            max_file_size: 100 * 1024 * 1024,     // 100MB
-            max_archive_size: 1024 * 1024 * 1024, // 1GB
+            max_file_size: MAX_FILE_SIZE,
+            max_archive_size: MAX_TOTAL_ARCHIVE_SIZE,
             preserve_permissions: true,
             compression_level: 6,
         }

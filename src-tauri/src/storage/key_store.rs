@@ -176,6 +176,8 @@ pub fn list_keys() -> Result<Vec<KeyInfo>, StorageError> {
 /// - `StorageError::IoError` if file operations fail
 /// - `StorageError::FileCorruption` if the file appears corrupted
 pub fn load_encrypted_key(label: &str) -> Result<Vec<u8>, StorageError> {
+    debug_assert!(!label.is_empty(), "Key label cannot be empty");
+
     let key_path = get_key_file_path(label)?;
 
     // Check if key file exists
@@ -221,6 +223,8 @@ pub fn load_encrypted_key(label: &str) -> Result<Vec<u8>, StorageError> {
 /// - `StorageError::KeyNotFound` if the key doesn't exist
 /// - `StorageError::IoError` if file operations fail
 pub fn delete_key(label: &str) -> Result<(), StorageError> {
+    debug_assert!(!label.is_empty(), "Key label cannot be empty");
+
     let key_path = get_key_file_path(label)?;
     let meta_path = get_key_metadata_path(label)?;
 

@@ -1,5 +1,6 @@
 //! TAR archive creation and extraction with GZIP compression
 
+use crate::constants::*;
 use crate::file_ops::staging::StagingArea;
 use crate::file_ops::validation::validate_archive_path;
 use crate::file_ops::{
@@ -23,6 +24,15 @@ pub fn create_archive(
     output_path: &Path,
     config: &FileOpsConfig,
 ) -> Result<ArchiveOperation> {
+    debug_assert!(
+        !output_path.as_os_str().is_empty(),
+        "Output path cannot be empty"
+    );
+    debug_assert!(
+        config.max_archive_size > 0,
+        "Max archive size must be positive"
+    );
+
     info!(
         "Creating archive: {} -> {}",
         match selection {
@@ -112,6 +122,15 @@ pub fn extract_archive(
     output_dir: &Path,
     config: &FileOpsConfig,
 ) -> Result<Vec<FileInfo>> {
+    debug_assert!(
+        !archive_path.as_os_str().is_empty(),
+        "Archive path cannot be empty"
+    );
+    debug_assert!(
+        !output_dir.as_os_str().is_empty(),
+        "Output directory cannot be empty"
+    );
+
     info!(
         "Extracting archive: {} -> {}",
         archive_path.display(),
@@ -363,6 +382,11 @@ fn create_tar_gz_with_progress(
 
 /// Calculate SHA-256 hash of a file
 fn calculate_file_hash(path: &Path) -> Result<String> {
+    debug_assert!(
+        !path.as_os_str().is_empty(),
+        "Path cannot be empty for hash calculation"
+    );
+
     use sha2::{Digest, Sha256};
 
     let mut file = File::open(path).map_err(|_e| FileOpsError::FileNotFound {
@@ -370,7 +394,7 @@ fn calculate_file_hash(path: &Path) -> Result<String> {
     })?;
 
     let mut hasher = Sha256::new();
-    let mut buffer = [0; 8192];
+    let mut buffer = [0; IO_BUFFER_SIZE];
 
     loop {
         let n = file

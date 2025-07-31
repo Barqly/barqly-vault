@@ -10,6 +10,8 @@
 mod logger;
 mod platform;
 
+#[cfg(test)]
+use crate::constants::LOG_FILE_SUFFIX_LENGTH;
 use crate::logging::logger::Logger;
 use once_cell::sync::OnceCell;
 use std::collections::HashMap;
@@ -180,7 +182,7 @@ mod tests {
     fn get_unique_id() -> String {
         rand::thread_rng()
             .sample_iter(&Alphanumeric)
-            .take(12)
+            .take(LOG_FILE_SUFFIX_LENGTH)
             .map(char::from)
             .collect()
     }
