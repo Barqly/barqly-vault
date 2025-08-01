@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useKeyGeneration } from '../hooks/useKeyGeneration';
-import PassphraseInput from '../components/forms/PassphraseInput';
 import { ProgressBar } from '../components/ui/progress-bar';
 import { ErrorMessage } from '../components/ui/error-message';
 import { SuccessMessage } from '../components/ui/success-message';
-import { LoadingSpinner } from '../components/ui/loading-spinner';
+import SetupHeader from '../components/layout/SetupHeader';
+import TrustIndicators from '../components/ui/TrustIndicators';
+import PrimaryButton from '../components/ui/PrimaryButton';
+import CollapsibleHelp from '../components/ui/CollapsibleHelp';
+import ProgressContext from '../components/ui/ProgressContext';
+import EnhancedInput from '../components/forms/EnhancedInput';
+import PassphraseField from '../components/forms/PassphraseField';
+import FormSection from '../components/forms/FormSection';
 
 const SetupPage: React.FC = () => {
   const { generateKey, isLoading, error, success, progress, reset, clearError } =
@@ -55,18 +61,22 @@ const SetupPage: React.FC = () => {
     keyLabel.trim() && passphrase && confirmPassphrase && passphrase === confirmPassphrase;
 
   return (
-    <div className="p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Setup Barqly Vault</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Generate your first encryption key to get started with secure file encryption for
-            Bitcoin custody backup.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Compact Header with Trust Building */}
+      <SetupHeader />
 
-        <div className="bg-white rounded-lg shadow-sm border p-8">
-          <div className="space-y-6">
+      <div className="p-4 sm:p-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Trust Indicators */}
+          <TrustIndicators />
+
+          {/* Progress Context */}
+          {!success && !isLoading && <ProgressContext variant="quick" estimatedTime={90} />}
+
+          <FormSection
+            title="Create Your Encryption Identity"
+            subtitle="Set up your secure identity with a memorable label and strong passphrase"
+          >
             {/* Error Display */}
             {error && (
               <ErrorMessage error={error} showRecoveryGuidance={true} onClose={clearError} />
@@ -74,65 +84,63 @@ const SetupPage: React.FC = () => {
 
             {/* Success Display */}
             {success && (
-              <SuccessMessage
-                title="Key Generated Successfully!"
-                message="Your encryption keypair has been created and securely stored."
-                showCloseButton={true}
-                onClose={handleReset}
-                details={
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Your Public Key:</p>
-                    <div className="bg-gray-50 p-3 rounded font-mono text-xs break-all">
-                      {success.public_key}
+              <div className="animate-in slide-in-from-top-4 duration-500 ease-out">
+                <SuccessMessage
+                  title="🎉 Key Generated Successfully!"
+                  message="Your encryption keypair has been created and securely stored."
+                  showCloseButton={true}
+                  onClose={handleReset}
+                  details={
+                    <div className="mt-4">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Your Public Key:</p>
+                      <div className="bg-gray-50 p-3 rounded font-mono text-xs break-all border transition-colors hover:bg-gray-100">
+                        {success.public_key}
+                      </div>
+                      <p className="mt-2 text-xs text-gray-600">
+                        💡 Share this public key with others who need to encrypt files for you.
+                      </p>
                     </div>
-                    <p className="mt-2 text-xs text-gray-600">
-                      Share this public key with others who need to encrypt files for you.
-                    </p>
-                  </div>
-                }
-                showDetails={true}
-              />
+                  }
+                  showDetails={true}
+                />
+              </div>
             )}
 
             {/* Progress Display */}
             {progress && (
               <div className="border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Generating Key...</h3>
-                <ProgressBar
-                  value={progress.progress}
-                  statusMessage={progress.message}
-                  showPercentage={true}
-                  showStatus={true}
+                <ProgressContext
+                  variant="secure"
+                  customMessage="Generating strong encryption keys..."
                 />
+                <div className="mt-4">
+                  <ProgressBar
+                    value={progress.progress}
+                    statusMessage={progress.message}
+                    showPercentage={true}
+                    showStatus={true}
+                  />
+                </div>
               </div>
             )}
 
             {/* Key Generation Form */}
             {!success && !isLoading && (
               <>
-                {/* Key Label Input */}
-                <div>
-                  <label
-                    htmlFor="key-label"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Key Label <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="key-label"
-                    type="text"
-                    value={keyLabel}
-                    onChange={(e) => setKeyLabel(e.target.value)}
-                    placeholder="e.g., My Bitcoin Vault Key"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    A descriptive name to identify this key
-                  </p>
-                </div>
+                {/* Key Label Input - Enhanced */}
+                <EnhancedInput
+                  id="key-label"
+                  label="Key Label"
+                  value={keyLabel}
+                  onChange={(e) => setKeyLabel(e.target.value)}
+                  placeholder="e.g., My Bitcoin Vault Key"
+                  helper="A descriptive name to identify this key"
+                  required={true}
+                  size="large"
+                  success={keyLabel.trim().length > 0}
+                />
 
-                {/* Passphrase Input */}
+                {/* Passphrase Input - Enhanced */}
                 <div>
                   <label
                     htmlFor="passphrase"
@@ -140,16 +148,17 @@ const SetupPage: React.FC = () => {
                   >
                     Passphrase <span className="text-red-500">*</span>
                   </label>
-                  <PassphraseInput
+                  <PassphraseField
                     id="passphrase"
                     value={passphrase}
                     onChange={setPassphrase}
                     placeholder="Enter a strong passphrase"
                     showStrength={true}
+                    required={true}
                   />
                 </div>
 
-                {/* Confirm Passphrase */}
+                {/* Confirm Passphrase - Enhanced */}
                 <div>
                   <label
                     htmlFor="confirm-passphrase"
@@ -157,16 +166,15 @@ const SetupPage: React.FC = () => {
                   >
                     Confirm Passphrase <span className="text-red-500">*</span>
                   </label>
-                  <PassphraseInput
+                  <PassphraseField
                     id="confirm-passphrase"
                     value={confirmPassphrase}
                     onChange={setConfirmPassphrase}
                     placeholder="Re-enter your passphrase"
                     showStrength={false}
+                    matchValue={passphrase}
+                    required={true}
                   />
-                  {confirmPassphrase && passphrase !== confirmPassphrase && (
-                    <p className="mt-1 text-xs text-red-600">Passphrases do not match</p>
-                  )}
                 </div>
 
                 {/* Action Buttons */}
@@ -174,56 +182,32 @@ const SetupPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                   >
                     Clear
                   </button>
-                  <button
-                    type="button"
+                  <PrimaryButton
                     onClick={handleKeyGeneration}
-                    disabled={!isFormValid || isLoading}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!isFormValid}
+                    loading={isLoading}
+                    loadingText="Creating Key..."
+                    size="large"
                   >
-                    {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <LoadingSpinner size="sm" />
-                        Generating...
-                      </span>
-                    ) : (
-                      'Generate Key'
-                    )}
-                  </button>
+                    Create Security Identity
+                  </PrimaryButton>
                 </div>
               </>
             )}
-          </div>
-        </div>
+          </FormSection>
 
-        {/* What happens next section */}
-        {!success && (
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-blue-900 mb-3">What happens next?</h2>
-            <div className="grid md:grid-cols-3 gap-4 text-sm text-blue-800">
-              <div>
-                <h3 className="font-medium mb-2">1. Key Generation</h3>
-                <p>Your encryption keypair is created and securely stored on your device.</p>
-              </div>
-              <div>
-                <h3 className="font-medium mb-2">2. File Encryption</h3>
-                <p>
-                  Use your key to encrypt important files like wallet backups and recovery
-                  information.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium mb-2">3. Secure Storage</h3>
-                <p>
-                  Store encrypted files safely and share the public key with trusted family members.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+          {/* Collapsible Help Section */}
+          {!success && (
+            <CollapsibleHelp
+              triggerText="Learn how Bitcoin legacy protection works"
+              detailed={true}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
