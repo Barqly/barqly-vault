@@ -58,7 +58,7 @@ const EnhancedInput = forwardRef<HTMLInputElement, EnhancedInputProps>(
       } else if (success) {
         return `${baseClasses} border-green-500 focus:ring-green-500`;
       } else {
-        return `${baseClasses} border-gray-300`;
+        return `${baseClasses} border-gray-400`;
       }
     };
 

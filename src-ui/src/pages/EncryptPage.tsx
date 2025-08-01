@@ -185,7 +185,7 @@ const EncryptPage: React.FC = () => {
                           value={outputPath}
                           onChange={(e) => setOutputPath(e.target.value)}
                           placeholder="Enter output directory path"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           required
                         />
                       </div>
@@ -202,7 +202,7 @@ const EncryptPage: React.FC = () => {
                           value={archiveName}
                           onChange={(e) => setArchiveName(e.target.value)}
                           placeholder="Leave empty for auto-generated name"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <p className="mt-1 text-xs text-gray-500">
                           The encrypted file will have a .age extension
@@ -218,7 +218,7 @@ const EncryptPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleReset}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-400 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
                       Cancel
                     </button>

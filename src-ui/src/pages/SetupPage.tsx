@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Shield, Lock } from 'lucide-react';
 import { useKeyGeneration } from '../hooks/useKeyGeneration';
 import { ProgressBar } from '../components/ui/progress-bar';
 import { ErrorMessage } from '../components/ui/error-message';
 import { SuccessMessage } from '../components/ui/success-message';
-import SetupHeader from '../components/layout/SetupHeader';
-import TrustIndicators from '../components/ui/TrustIndicators';
+import CompactSetupHeader from '../components/layout/CompactSetupHeader';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import ProgressContext from '../components/ui/ProgressContext';
@@ -19,15 +19,19 @@ const SetupPage: React.FC = () => {
   const [keyLabel, setKeyLabel] = useState<string>('');
   const [passphrase, setPassphrase] = useState<string>('');
   const [confirmPassphrase, setConfirmPassphrase] = useState<string>('');
+  const successMessageRef = useRef<HTMLDivElement>(null);
 
-  // Reset state when component unmounts
-  useEffect(() => {
-    return () => {
-      reset();
-    };
+  const isFormValid =
+    keyLabel.trim() && passphrase && confirmPassphrase && passphrase === confirmPassphrase;
+
+  const handleReset = useCallback(() => {
+    reset();
+    setKeyLabel('');
+    setPassphrase('');
+    setConfirmPassphrase('');
   }, [reset]);
 
-  const handleKeyGeneration = async () => {
+  const handleKeyGeneration = useCallback(async () => {
     // Validate inputs
     if (!keyLabel.trim()) {
       return;
@@ -48,35 +52,67 @@ const SetupPage: React.FC = () => {
       // Error is already handled by the hook
       console.error('Key generation error:', err);
     }
-  };
+  }, [keyLabel, passphrase, confirmPassphrase, generateKey]);
 
-  const handleReset = () => {
-    reset();
-    setKeyLabel('');
-    setPassphrase('');
-    setConfirmPassphrase('');
-  };
+  // Reset state when component unmounts
+  useEffect(() => {
+    return () => {
+      reset();
+    };
+  }, [reset]);
 
-  const isFormValid =
-    keyLabel.trim() && passphrase && confirmPassphrase && passphrase === confirmPassphrase;
+  // Focus management for success state
+  useEffect(() => {
+    if (success && successMessageRef.current) {
+      // Set focus to the success message for screen reader users
+      successMessageRef.current.focus();
+    }
+  }, [success]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape key clears form
+      if (e.key === 'Escape' && !success && !isLoading) {
+        e.preventDefault();
+        handleReset();
+      }
+
+      // Enter key submits form when valid (and not in an input field)
+      if (
+        e.key === 'Enter' &&
+        isFormValid &&
+        !isLoading &&
+        !success &&
+        !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
+      ) {
+        e.preventDefault();
+        handleKeyGeneration();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isFormValid, isLoading, success, handleReset, handleKeyGeneration]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Compact Header with Trust Building */}
-      <SetupHeader />
+      <CompactSetupHeader />
 
-      <div className="p-4 sm:p-6">
-        <div className="max-w-4xl mx-auto">
-          {/* Trust Indicators */}
-          <TrustIndicators />
-
-          {/* Progress Context */}
-          {!success && !isLoading && <ProgressContext variant="quick" estimatedTime={90} />}
-
+      {/* Main content - fills remaining height */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl">
           <FormSection
-            title="Create Your Encryption Identity"
-            subtitle="Set up your secure identity with a memorable label and strong passphrase"
+            title="Create Your Security Identity"
+            subtitle=""
+            showTrustBadges={true}
+            className="h-[85vh] max-h-[700px]"
           >
+            {/* Skip navigation target */}
+            <div id="main-form" tabIndex={-1} className="sr-only">
+              Main form content
+            </div>
             {/* Error Display */}
             {error && (
               <ErrorMessage error={error} showRecoveryGuidance={true} onClose={clearError} />
@@ -84,9 +120,14 @@ const SetupPage: React.FC = () => {
 
             {/* Success Display */}
             {success && (
-              <div className="animate-in slide-in-from-top-4 duration-500 ease-out">
+              <div
+                className="animate-in slide-in-from-top-4 duration-500 ease-out"
+                ref={successMessageRef}
+                tabIndex={-1}
+                aria-label="Key generation success notification"
+              >
                 <SuccessMessage
-                  title="🎉 Key Generated Successfully!"
+                  title="Key Generated Successfully!"
                   message="Your encryption keypair has been created and securely stored."
                   showCloseButton={true}
                   onClose={handleReset}
@@ -97,7 +138,7 @@ const SetupPage: React.FC = () => {
                         {success.public_key}
                       </div>
                       <p className="mt-2 text-xs text-gray-600">
-                        💡 Share this public key with others who need to encrypt files for you.
+                        Share this public key with others who need to encrypt files for you.
                       </p>
                     </div>
                   }
@@ -133,11 +174,12 @@ const SetupPage: React.FC = () => {
                   label="Key Label"
                   value={keyLabel}
                   onChange={(e) => setKeyLabel(e.target.value)}
-                  placeholder="e.g., My Bitcoin Vault Key"
-                  helper="A descriptive name to identify this key"
+                  placeholder="e.g., Family Bitcoin Vault"
+                  helper="Choose a memorable name to identify this key"
                   required={true}
                   size="large"
                   success={keyLabel.trim().length > 0}
+                  autoFocus={true}
                 />
 
                 {/* Passphrase Input - Enhanced */}
@@ -156,6 +198,10 @@ const SetupPage: React.FC = () => {
                     showStrength={true}
                     required={true}
                   />
+                  <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                    <Shield className="w-3 h-3" />
+                    <span>Encrypted locally on your device</span>
+                  </div>
                 </div>
 
                 {/* Confirm Passphrase - Enhanced */}
@@ -178,34 +224,51 @@ const SetupPage: React.FC = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end gap-4 pt-4 border-t">
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                  >
-                    Clear
-                  </button>
-                  <PrimaryButton
-                    onClick={handleKeyGeneration}
-                    disabled={!isFormValid}
-                    loading={isLoading}
-                    loadingText="Creating Key..."
-                    size="large"
-                  >
-                    Create Security Identity
-                  </PrimaryButton>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-3 h-3" />
+                      <span>Your keys never leave this device</span>
+                    </div>
+                    <div>
+                      <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded">
+                        Esc
+                      </kbd>{' '}
+                      to clear •{' '}
+                      <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded">
+                        Enter
+                      </kbd>{' '}
+                      to submit
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-4 pt-4 border-t">
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-400 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    >
+                      Clear
+                    </button>
+                    <PrimaryButton
+                      onClick={handleKeyGeneration}
+                      disabled={!isFormValid}
+                      loading={isLoading}
+                      loadingText="Creating Key..."
+                      size="large"
+                    >
+                      Create Key
+                    </PrimaryButton>
+                  </div>
                 </div>
               </>
             )}
           </FormSection>
 
-          {/* Collapsible Help Section */}
+          {/* Collapsible Help Section - Minimal */}
           {!success && (
-            <CollapsibleHelp
-              triggerText="Learn how Bitcoin legacy protection works"
-              detailed={true}
-            />
+            <div className="mt-4 text-center">
+              <CollapsibleHelp triggerText="How does this work?" detailed={false} />
+            </div>
           )}
         </div>
       </div>

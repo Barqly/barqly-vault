@@ -14,6 +14,14 @@ const SetupHeader: React.FC<SetupHeaderProps> = ({
 }) => {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
+      {/* Skip Navigation Link - Hidden until focused */}
+      <a
+        href="#main-form"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-md z-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        Skip to main form
+      </a>
+
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3">
           {/* Shield Icon */}

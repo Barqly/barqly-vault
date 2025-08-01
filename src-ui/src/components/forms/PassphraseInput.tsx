@@ -166,7 +166,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
               block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
               disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-              ${displayError ? 'border-red-300' : 'border-gray-300'}
+              ${displayError ? 'border-red-400' : 'border-gray-400'}
               ${disabled ? 'bg-gray-50' : 'bg-white'}
               pr-10
             `}

@@ -52,7 +52,7 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
         : `${baseClasses} border-red-400 bg-red-50 focus:ring-red-500`;
     }
 
-    return `${baseClasses} border-gray-300`;
+    return `${baseClasses} border-gray-400`;
   };
 
   return (

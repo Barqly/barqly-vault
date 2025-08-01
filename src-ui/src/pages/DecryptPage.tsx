@@ -211,7 +211,7 @@ const DecryptPage: React.FC = () => {
                             id="output-path"
                             type="text"
                             placeholder="Enter output directory path"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' && e.currentTarget.value) {
                                 setOutputPath(e.currentTarget.value);
@@ -242,7 +242,7 @@ const DecryptPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleReset}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-400 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
                     >
                       Cancel
                     </button>
