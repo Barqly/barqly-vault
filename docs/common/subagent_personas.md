@@ -43,37 +43,24 @@ This document provides a quick overview of all personas in the ZenAI framework. 
 *Develops server-side services and APIs, implements business logic, handles database interactions, and ensures scalable backend architecture.*
 
 **10. DevOps Engineer**  
-*Manages infrastructure-as-code, handles container orchestration, provisions cloud resources, and implements deployment automation.*
+*Manages infrastructure-as-code, development automation, CI/CD pipelines, deployment strategies, release management, and production operations from code commit to system maintenance.*
 
 ### Quality & Security
 **11. QA Engineer**  
-*Designs comprehensive testing strategies, performs quality assurance validation, creates test cases, and ensures acceptance criteria are met.*
+*Designs comprehensive testing strategies, performs quality assurance validation, creates test cases, conducts load testing and performance profiling, identifies bottlenecks, and ensures acceptance criteria and SLA requirements are met.*
 
 **12. Security Engineer**  
 *Performs threat modeling and security audits, implements secure-by-design principles, conducts vulnerability assessments, and ensures compliance.*
 
-**13. Performance Engineer**  
-*Specializes in application optimization, conducts load testing and profiling, identifies bottlenecks, and ensures systems meet SLA requirements.*
-
-### Operations & Release
-**14. Release Engineer**  
-*Manages CI/CD pipelines and deployment strategies, handles version tagging, orchestrates releases, and implements rollback procedures.*
-
-**15. Site Reliability Engineer**  
-*Monitors system health and incident response, implements observability solutions, maintains uptime, and handles production issue resolution.*
-
 ### Documentation & Communication
-**16. Technical Writer**  
-*Creates comprehensive documentation, maintains API references and user guides, writes architectural decision records, and manages knowledge transfer.*
-
-**17. Content Strategist**  
-*Manages external communication and social media, creates technical content, handles developer relations, and builds community engagement.*
+**13. Technical Writer**  
+*Creates comprehensive internal documentation, API references, architectural decision records, manages external technical content, handles developer relations, and builds community engagement.*
 
 ---
 
 ## Usage Notes
 
-- **Total Personas:** 17 (1 human + 16 AI SubAgents)
+- **Total Personas:** 13 (1 human + 12 AI SubAgents)
 - **I/O Contracts:** Detailed input/output specifications for each persona are maintained in `docs/common/documentation-standards.md`
 - **Coordination:** All AI personas are orchestrated through ZenMaster, with human Manager providing approval gates
 - **Scalability:** This persona structure supports projects from small teams to enterprise-scale development
