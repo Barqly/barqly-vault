@@ -4,7 +4,7 @@ import { useKeyGeneration } from '../hooks/useKeyGeneration';
 import { ProgressBar } from '../components/ui/progress-bar';
 import { ErrorMessage } from '../components/ui/error-message';
 import { SuccessMessage } from '../components/ui/success-message';
-import CompactSetupHeader from '../components/layout/CompactSetupHeader';
+// CompactSetupHeader removed - functionality integrated into FormSection
 import PrimaryButton from '../components/ui/PrimaryButton';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import ProgressContext from '../components/ui/ProgressContext';
@@ -96,18 +96,16 @@ const SetupPage: React.FC = () => {
   }, [isFormValid, isLoading, success, handleReset, handleKeyGeneration]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Compact Header with Trust Building */}
-      <CompactSetupHeader />
-
-      {/* Main content - fills remaining height */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
+    <div className="min-h-screen bg-gray-50">
+      {/* Main content with integrated header */}
+      <div className="p-4">
+        <div className="w-full max-w-2xl mx-auto">
           <FormSection
             title="Create Your Security Identity"
             subtitle=""
             showTrustBadges={true}
-            className="h-[85vh] max-h-[700px]"
+            showNavigation={true}
+            showBrandHeader={true}
           >
             {/* Skip navigation target */}
             <div id="main-form" tabIndex={-1} className="sr-only">

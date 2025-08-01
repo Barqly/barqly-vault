@@ -38,8 +38,8 @@ const EnhancedInput = forwardRef<HTMLInputElement, EnhancedInputProps>(
     ref,
   ) => {
     const sizeClasses = {
-      default: 'h-10 px-3 text-sm',
-      large: 'h-12 px-4 text-base',
+      default: 'h-10 px-3 py-2.5 text-sm',
+      large: 'h-11 px-3.5 py-2.5 text-base',
     };
 
     const getInputClasses = () => {

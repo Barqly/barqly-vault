@@ -39,7 +39,7 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
 
   const getInputClasses = () => {
     const baseClasses = `
-      w-full h-12 pr-12 pl-4 text-base
+      w-full h-11 pr-12 pl-3.5 py-2.5 text-base
       border rounded-md transition-all duration-200
       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
       hover:border-gray-400

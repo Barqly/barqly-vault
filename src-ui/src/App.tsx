@@ -11,16 +11,28 @@ const DecryptPage = lazy(() => import('./pages/DecryptPage'));
 function App(): ReactElement {
   return (
     <Router>
-      <MainLayout>
-        <Suspense fallback={<LoadingSpinner centered showText text="Loading page..." />}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/setup" replace />} />
-            <Route path="/setup" element={<SetupPage />} />
-            <Route path="/encrypt" element={<EncryptPage />} />
-            <Route path="/decrypt" element={<DecryptPage />} />
-          </Routes>
-        </Suspense>
-      </MainLayout>
+      <Suspense fallback={<LoadingSpinner centered showText text="Loading page..." />}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/setup" replace />} />
+          <Route path="/setup" element={<SetupPage />} />
+          <Route
+            path="/encrypt"
+            element={
+              <MainLayout>
+                <EncryptPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/decrypt"
+            element={
+              <MainLayout>
+                <DecryptPage />
+              </MainLayout>
+            }
+          />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

@@ -66,7 +66,7 @@ describe('EnhancedInput', () => {
     expect(screen.getByTestId('enhanced-input')).toHaveClass('h-10');
 
     rerender(<EnhancedInput {...defaultProps} size="large" />);
-    expect(screen.getByTestId('enhanced-input')).toHaveClass('h-12');
+    expect(screen.getByTestId('enhanced-input')).toHaveClass('h-11');
   });
 
   it('handles onChange events', () => {
