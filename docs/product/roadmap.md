@@ -19,7 +19,7 @@ This roadmap outlines the planned features and enhancements for Barqly Vault, or
 
 ## Phase 1: MVP (Current)
 
-**Timeline:** Q3-Q4 2024
+**Timeline:** Q3-Q4 2025
 
 ### **Core Features:**
 - ✅ **Basic Setup**: Key generation and passphrase protection
@@ -44,7 +44,7 @@ This roadmap outlines the planned features and enhancements for Barqly Vault, or
 
 ## Phase 2: Enhanced Security & Usability
 
-**Timeline:** Q1 2025
+**Timeline:** Q1 2026
 
 ### **🔐 Advanced Security Features**
 
@@ -90,7 +90,7 @@ This roadmap outlines the planned features and enhancements for Barqly Vault, or
 
 ## Phase 3: Bitcoin Ecosystem Integration
 
-**Timeline:** Q2-Q3 2025
+**Timeline:** Q2-Q3 2026
 
 ### **₿ Bitcoin-Specific Features**
 
@@ -130,7 +130,7 @@ This roadmap outlines the planned features and enhancements for Barqly Vault, or
 
 ## Phase 4: Advanced Features & Enterprise
 
-**Timeline:** Q4 2025
+**Timeline:** Q4 2026
 
 ### **🏢 Enterprise Features**
 
