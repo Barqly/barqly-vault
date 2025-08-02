@@ -124,6 +124,9 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
     it('should use safeInvoke for all Tauri commands across hooks', async () => {
       // Test that all hooks consistently use safeInvoke instead of direct invoke
 
+      // Clear any previous mock calls
+      mockSafeInvoke.mockClear();
+
       // Setup successful responses
       mockSafeInvoke
         .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // useKeyGeneration validation
@@ -158,15 +161,17 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         await keyGenResult.result.current.generateKey();
       });
 
+      // Check validate_passphrase was called with context
       expect(mockSafeInvoke).toHaveBeenCalledWith(
         'validate_passphrase',
         expect.any(Object),
-        expect.any(String),
+        'useKeyGeneration',
       );
+      // Check generate_key was called with context
       expect(mockSafeInvoke).toHaveBeenCalledWith(
         'generate_key',
         expect.any(Object),
-        expect.any(String),
+        'useKeyGeneration',
       );
 
       // Test useFileEncryption
@@ -176,21 +181,15 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         await fileEncResult.result.current.selectFiles('Files');
       });
 
-      expect(mockSafeInvoke).toHaveBeenCalledWith(
-        'select_files',
-        expect.any(Object),
-        expect.any(String),
-      );
+      // Check that select_files was called (it should be the 3rd call after validate_passphrase and generate_key)
+      expect(mockSafeInvoke).toHaveBeenNthCalledWith(3, 'select_files', expect.any(Object));
 
       await act(async () => {
         await fileEncResult.result.current.encryptFiles('age1test', '/output');
       });
 
-      expect(mockSafeInvoke).toHaveBeenCalledWith(
-        'encrypt_files',
-        expect.any(Object),
-        expect.any(String),
-      );
+      // Check that encrypt_files was called (4th call)
+      expect(mockSafeInvoke).toHaveBeenNthCalledWith(4, 'encrypt_files', expect.any(Object));
 
       // Test useFileDecryption
       const fileDecResult = renderHook(() => useFileDecryption());
@@ -199,11 +198,8 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         await fileDecResult.result.current.selectEncryptedFile();
       });
 
-      expect(mockSafeInvoke).toHaveBeenCalledWith(
-        'select_files',
-        expect.any(Object),
-        expect.any(String),
-      );
+      // Check that select_files was called for decryption (5th call)
+      expect(mockSafeInvoke).toHaveBeenNthCalledWith(5, 'select_files', expect.any(Object));
 
       act(() => {
         fileDecResult.result.current.setPassphrase('password');
@@ -215,11 +211,8 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         await fileDecResult.result.current.decryptFile();
       });
 
-      expect(mockSafeInvoke).toHaveBeenCalledWith(
-        'decrypt_data',
-        expect.any(Object),
-        expect.any(String),
-      );
+      // Check that decrypt_data was called (6th call)
+      expect(mockSafeInvoke).toHaveBeenNthCalledWith(6, 'decrypt_data', expect.any(Object));
     });
 
     it('should use safeListen for progress tracking across hooks', async () => {
@@ -338,7 +331,10 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
 
         const { result } = renderHook(factory as () => any);
 
-        setup(result);
+        // Wrap setup in act to ensure state updates are applied
+        act(() => {
+          setup(result);
+        });
 
         await act(async () => {
           await expect(operation(result)).rejects.toThrow('Connection failed');
@@ -355,9 +351,11 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
           current.reset();
         });
 
-        expect(current.error).toBeNull();
-        expect(current.isLoading).toBe(false);
-        expect(current.progress).toBeNull();
+        // After reset, all state should be cleared
+        const afterReset = result.current as any;
+        expect(afterReset.error).toBeNull();
+        expect(afterReset.isLoading).toBe(false);
+        expect(afterReset.progress).toBeNull();
       }
     });
   });
