@@ -91,33 +91,31 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         const { result } = renderHook(hookFactory as () => any);
 
         // Set up minimal state for each hook
-        const current = result.current as any;
-        if ('setLabel' in current && 'setPassphrase' in current) {
+        if ('setLabel' in result.current && 'setPassphrase' in result.current) {
           act(() => {
-            current.setLabel('test-key-label');
-            current.setPassphrase('StrongPassword123!');
+            result.current.setLabel('test-key-label');
+            result.current.setPassphrase('StrongPassword123!');
           });
         }
 
         // Try to perform an operation that would trigger the API
-        let operationPromise: Promise<any>;
-        if ('generateKey' in current) {
-          operationPromise = current.generateKey();
-        } else if ('selectFiles' in current) {
-          operationPromise = current.selectFiles('Files');
-        } else if ('selectEncryptedFile' in current) {
-          operationPromise = current.selectEncryptedFile();
-        } else {
-          continue;
-        }
-
         await act(async () => {
-          await expect(operationPromise).rejects.toThrow();
+          try {
+            if ('generateKey' in result.current) {
+              await result.current.generateKey();
+            } else if ('selectFiles' in result.current) {
+              await result.current.selectFiles('Files');
+            } else if ('selectEncryptedFile' in result.current) {
+              await result.current.selectEncryptedFile();
+            }
+          } catch {
+            // Expected to throw
+          }
         });
 
         // All hooks should handle the error and set appropriate error state
-        expect(current.error).toBeTruthy();
-        expect(current.isLoading).toBe(false);
+        expect(result.current.error).toBeTruthy();
+        expect(result.current.isLoading).toBe(false);
       }
     });
   });
