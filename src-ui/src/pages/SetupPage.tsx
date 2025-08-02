@@ -11,13 +11,25 @@ import ProgressContext from '../components/ui/ProgressContext';
 import EnhancedInput from '../components/forms/EnhancedInput';
 import PassphraseField from '../components/forms/PassphraseField';
 import FormSection from '../components/forms/FormSection';
+import { logger } from '../lib/logger';
 
 const SetupPage: React.FC = () => {
-  const { generateKey, isLoading, error, success, progress, reset, clearError } =
-    useKeyGeneration();
+  logger.logComponentLifecycle('SetupPage', 'Mount');
+
+  const {
+    generateKey,
+    isLoading,
+    error,
+    success,
+    progress,
+    reset,
+    clearError,
+    setLabel,
+    setPassphrase,
+  } = useKeyGeneration();
 
   const [keyLabel, setKeyLabel] = useState<string>('');
-  const [passphrase, setPassphrase] = useState<string>('');
+  const [passphrase, setLocalPassphrase] = useState<string>('');
   const [confirmPassphrase, setConfirmPassphrase] = useState<string>('');
   const successMessageRef = useRef<HTMLDivElement>(null);
 
@@ -27,32 +39,52 @@ const SetupPage: React.FC = () => {
   const handleReset = useCallback(() => {
     reset();
     setKeyLabel('');
-    setPassphrase('');
+    setLocalPassphrase('');
     setConfirmPassphrase('');
   }, [reset]);
 
   const handleKeyGeneration = useCallback(async () => {
+    logger.logComponentLifecycle('SetupPage', 'handleKeyGeneration started', {
+      keyLabel,
+      passphraseLength: passphrase.length,
+      confirmPassphraseLength: confirmPassphrase.length,
+    });
+
     // Validate inputs
     if (!keyLabel.trim()) {
+      logger.warn('SetupPage', 'Key generation aborted: empty key label');
       return;
     }
 
     if (passphrase !== confirmPassphrase) {
+      logger.warn('SetupPage', 'Key generation aborted: passphrase mismatch');
       return;
     }
 
     try {
-      // Set the state first
-      setKeyLabel(keyLabel.trim());
+      logger.info('SetupPage', 'Setting hook state for key generation', {
+        keyLabel: keyLabel.trim(),
+      });
+
+      // Set the hook's state
+      setLabel(keyLabel.trim());
       setPassphrase(passphrase);
 
+      logger.info('SetupPage', 'Calling generateKey function');
       // Then generate the key
       await generateKey();
+
+      logger.info('SetupPage', 'generateKey completed successfully');
     } catch (err) {
       // Error is already handled by the hook
-      console.error('Key generation error:', err);
+      logger.error(
+        'SetupPage',
+        'Key generation error caught in component',
+        err instanceof Error ? err : new Error(String(err)),
+        { error: err },
+      );
     }
-  }, [keyLabel, passphrase, confirmPassphrase, generateKey]);
+  }, [keyLabel, passphrase, confirmPassphrase, generateKey, setLabel, setPassphrase]);
 
   // Reset state when component unmounts
   useEffect(() => {
@@ -77,23 +109,11 @@ const SetupPage: React.FC = () => {
         e.preventDefault();
         handleReset();
       }
-
-      // Enter key submits form when valid (and not in an input field)
-      if (
-        e.key === 'Enter' &&
-        isFormValid &&
-        !isLoading &&
-        !success &&
-        !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
-      ) {
-        e.preventDefault();
-        handleKeyGeneration();
-      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isFormValid, isLoading, success, handleReset, handleKeyGeneration]);
+  }, [success, isLoading, handleReset]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -165,13 +185,21 @@ const SetupPage: React.FC = () => {
 
             {/* Key Generation Form */}
             {!success && !isLoading && (
-              <>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleKeyGeneration();
+                }}
+              >
                 {/* Key Label Input - Enhanced */}
                 <EnhancedInput
                   id="key-label"
                   label="Key Label"
                   value={keyLabel}
-                  onChange={(e) => setKeyLabel(e.target.value)}
+                  onChange={(e) => {
+                    setKeyLabel(e.target.value);
+                    setLabel(e.target.value);
+                  }}
                   placeholder="e.g., Family Bitcoin Vault"
                   helper="Choose a memorable name to identify this key"
                   required={true}
@@ -191,7 +219,10 @@ const SetupPage: React.FC = () => {
                   <PassphraseField
                     id="passphrase"
                     value={passphrase}
-                    onChange={setPassphrase}
+                    onChange={(value) => {
+                      setLocalPassphrase(value);
+                      setPassphrase(value);
+                    }}
                     placeholder="Enter a strong passphrase"
                     showStrength={true}
                     required={true}
@@ -248,7 +279,7 @@ const SetupPage: React.FC = () => {
                       Clear
                     </button>
                     <PrimaryButton
-                      onClick={handleKeyGeneration}
+                      type="submit"
                       disabled={!isFormValid}
                       loading={isLoading}
                       loadingText="Creating Key..."
@@ -258,7 +289,7 @@ const SetupPage: React.FC = () => {
                     </PrimaryButton>
                   </div>
                 </div>
-              </>
+              </form>
             )}
           </FormSection>
 

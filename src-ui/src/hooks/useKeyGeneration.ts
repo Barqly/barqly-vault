@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
+import { safeInvoke, safeListen } from '../lib/tauri-safe';
 import {
   GenerateKeyInput,
   GenerateKeyResponse,
@@ -11,6 +10,7 @@ import {
   ValidatePassphraseResponse,
 } from '../lib/api-types';
 import { validateField } from '../lib/validation';
+import { logger } from '../lib/logger';
 
 export interface KeyGenerationState {
   isLoading: boolean;
@@ -70,18 +70,30 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
   });
 
   const setLabel = useCallback((label: string) => {
+    logger.logHook('useKeyGeneration', 'setLabel', { label });
     setState((prev) => ({ ...prev, label, error: null }));
   }, []);
 
   const setPassphrase = useCallback((passphrase: string) => {
+    logger.logHook('useKeyGeneration', 'setPassphrase', { length: passphrase.length });
     setState((prev) => ({ ...prev, passphrase, error: null }));
   }, []);
 
   const generateKey = useCallback(async (): Promise<void> => {
+    logger.logHook('useKeyGeneration', 'generateKey started', {
+      label: state.label,
+      passphraseLength: state.passphrase.length,
+    });
+
     // Validate inputs using utility functions
     const labelValidation = validateField(state.label, 'Key label', {
       required: true,
       safeLabel: true,
+    });
+
+    logger.debug('useKeyGeneration', 'Label validation result', {
+      isValid: labelValidation.isValid,
+      error: labelValidation.error,
     });
 
     if (!labelValidation.isValid) {
@@ -91,12 +103,23 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
         recovery_guidance: 'Please provide a unique label for the new key',
         user_actionable: true,
       };
+      logger.error(
+        'useKeyGeneration',
+        'Label validation failed',
+        new Error(labelValidation.error!),
+        { error },
+      );
       setState((prev) => ({ ...prev, error }));
       throw error;
     }
 
     const passphraseValidation = validateField(state.passphrase, 'Passphrase', {
       required: true,
+    });
+
+    logger.debug('useKeyGeneration', 'Passphrase validation result', {
+      isValid: passphraseValidation.isValid,
+      error: passphraseValidation.error,
     });
 
     if (!passphraseValidation.isValid) {
@@ -106,6 +129,12 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
         recovery_guidance: 'Please provide a strong passphrase to protect the key',
         user_actionable: true,
       };
+      logger.error(
+        'useKeyGeneration',
+        'Passphrase validation failed',
+        new Error(passphraseValidation.error!),
+        { error },
+      );
       setState((prev) => ({ ...prev, error }));
       throw error;
     }
@@ -118,25 +147,45 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
     }));
 
     try {
+      logger.info('useKeyGeneration', 'Starting key generation process', { label: state.label });
+
       // First, validate the passphrase strength
       const validationInput: ValidatePassphraseInput = {
         passphrase: state.passphrase,
       };
-      const validationResult = await invoke<ValidatePassphraseResponse>('validate_passphrase', {
-        ...validationInput,
+
+      logger.debug('useKeyGeneration', 'Calling validate_passphrase command', {
+        passphraseLength: state.passphrase.length,
+      });
+
+      const validationResult = await safeInvoke<ValidatePassphraseResponse>(
+        'validate_passphrase',
+        validationInput,
+        'useKeyGeneration',
+      );
+
+      logger.info('useKeyGeneration', 'Passphrase validation complete', {
+        isValid: validationResult.is_valid,
+        message: validationResult.message,
       });
 
       if (!validationResult.is_valid) {
-        throw {
+        const error: CommandError = {
           code: ErrorCode.WEAK_PASSPHRASE,
           message: 'Passphrase is too weak',
           recovery_guidance: 'Please use a stronger passphrase',
           user_actionable: true,
-        } as CommandError;
+        };
+        logger.error('useKeyGeneration', 'Weak passphrase detected', new Error('Weak passphrase'), {
+          message: validationResult.message,
+        });
+        throw error;
       }
 
       // If passphrase is valid, proceed with key generation
-      const unlisten = await listen<ProgressUpdate>('key-generation-progress', (event) => {
+      logger.debug('useKeyGeneration', 'Setting up progress listener');
+      const unlisten = await safeListen<ProgressUpdate>('key-generation-progress', (event) => {
+        logger.debug('useKeyGeneration', 'Progress update received', event.payload);
         setState((prev) => ({
           ...prev,
           progress: event.payload,
@@ -148,7 +197,23 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
           label: state.label,
           passphrase: state.passphrase,
         };
-        const result = await invoke<GenerateKeyResponse>('generate_key', { ...keyInput });
+
+        logger.info('useKeyGeneration', 'Calling generate_key command', {
+          label: keyInput.label,
+          timestamp: new Date().toISOString(),
+        });
+
+        const result = await safeInvoke<GenerateKeyResponse>(
+          'generate_key',
+          keyInput,
+          'useKeyGeneration',
+        );
+
+        logger.info('useKeyGeneration', 'Key generation successful', {
+          publicKey: result.public_key.substring(0, 20) + '...',
+          keyId: result.key_id,
+          savedPath: result.saved_path,
+        });
 
         setState((prev) => ({
           ...prev,
@@ -159,10 +224,26 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
 
         unlisten();
       } catch (commandError) {
+        logger.error(
+          'useKeyGeneration',
+          'Key generation command failed',
+          commandError instanceof Error ? commandError : new Error(String(commandError)),
+          { commandError },
+        );
         unlisten();
         throw commandError;
       }
     } catch (error) {
+      logger.error(
+        'useKeyGeneration',
+        'Key generation process failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          errorType: error?.constructor?.name,
+          errorDetails: error,
+        },
+      );
+
       let commandError: CommandError;
 
       if (error && typeof error === 'object' && 'code' in error) {

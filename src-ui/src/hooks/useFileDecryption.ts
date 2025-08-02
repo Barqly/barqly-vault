@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
+import { safeInvoke, safeListen } from '../lib/tauri-safe';
 import {
   CommandError,
   ErrorCode,
@@ -101,7 +100,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
 
     try {
       // Call the backend command to select encrypted file
-      const result = await invoke<FileSelection>('select_files', {
+      const result = await safeInvoke<FileSelection>('select_files', {
         selection_type: 'Files',
       });
 
@@ -223,7 +222,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
 
     try {
       // Set up progress listener for decryption
-      const unlisten = await listen<ProgressUpdate>('decryption-progress', (event) => {
+      const unlisten = await safeListen<ProgressUpdate>('decryption-progress', (event) => {
         setState((prev) => ({
           ...prev,
           progress: event.payload,
@@ -240,7 +239,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
         };
 
         // Call the backend command
-        const result = await invoke<DecryptionResult>('decrypt_data', { ...decryptionInput });
+        const result = await safeInvoke<DecryptionResult>('decrypt_data', { ...decryptionInput });
 
         // Update success state
         setState((prev) => ({

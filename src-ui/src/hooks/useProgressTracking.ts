@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { listen } from '@tauri-apps/api/event';
+import { safeListen } from '../lib/tauri-safe';
 import { ProgressUpdate } from '../lib/api-types';
 
 export interface ProgressTrackingState {
@@ -38,7 +38,7 @@ export const useProgressTracking = (
       }
 
       try {
-        const unsubscribe = await listen<ProgressUpdate>(eventName, (event) => {
+        const unsubscribe = await safeListen<ProgressUpdate>(eventName, (event) => {
           if (event.payload.operation_id === operationId) {
             if (!filter || filter(event.payload)) {
               setState((prev) => ({ ...prev, progress: event.payload }));

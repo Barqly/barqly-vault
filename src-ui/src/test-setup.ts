@@ -24,5 +24,11 @@ vi.mock('@tauri-apps/api', () => ({
   },
 }));
 
+// Mock tauri-safe module
+vi.mock('./lib/tauri-safe', () => ({
+  safeInvoke: vi.fn(),
+  safeListen: vi.fn().mockResolvedValue(() => Promise.resolve()),
+}));
+
 // Export mocks for use in tests
 export { mockOpen, mockInvoke };
