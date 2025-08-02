@@ -133,7 +133,12 @@ const SetupPage: React.FC = () => {
             </div>
             {/* Error Display */}
             {error && (
-              <ErrorMessage error={error} showRecoveryGuidance={true} onClose={clearError} />
+              <ErrorMessage
+                error={error}
+                showRecoveryGuidance={true}
+                showCloseButton={true}
+                onClose={clearError}
+              />
             )}
 
             {/* Success Display */}
