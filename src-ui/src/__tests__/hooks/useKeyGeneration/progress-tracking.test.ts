@@ -3,22 +3,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useKeyGeneration } from '../../../hooks/useKeyGeneration';
 import { GenerateKeyResponse } from '../../../lib/api-types';
 
-// Mock the Tauri API
-vi.mock('@tauri-apps/api/core', () => ({
-  invoke: vi.fn(),
+// Mock the tauri-safe module
+vi.mock('../../../lib/tauri-safe', () => ({
+  safeInvoke: vi.fn(),
+  safeListen: vi.fn(),
 }));
 
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: vi.fn(),
-}));
-
-const mockInvoke = vi.mocked(await import('@tauri-apps/api/core')).invoke;
-const mockListen = vi.mocked(await import('@tauri-apps/api/event')).listen;
+const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
+const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useKeyGeneration - Progress Tracking', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListen.mockResolvedValue(() => Promise.resolve());
+    mockSafeListen.mockResolvedValue(() => Promise.resolve());
   });
 
   it('should handle progress updates during key generation', async () => {
@@ -30,14 +27,13 @@ describe('useKeyGeneration - Progress Tracking', () => {
     };
 
     let progressCallback: ((event: { payload: any }) => void) | undefined;
-    mockListen.mockImplementationOnce((_event, callback) => {
-      progressCallback = (event: { payload: any }) =>
-        callback({ event: 'test-event', id: 1, payload: event.payload });
+    mockSafeListen.mockImplementationOnce((_event, callback) => {
+      progressCallback = callback;
       return Promise.resolve(() => Promise.resolve());
     });
 
     // Mock passphrase validation and key generation
-    mockInvoke
+    mockSafeInvoke
       .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
       .mockResolvedValueOnce(mockKeyResult); // generate_key
 

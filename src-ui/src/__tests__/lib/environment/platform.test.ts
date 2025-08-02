@@ -378,22 +378,16 @@ describe('platform detection', () => {
         },
       ];
 
-      testCases.forEach((setup, index) => {
+      testCases.forEach((setup, _index) => {
         setup();
 
         const browserResult = isBrowser();
         const tauriResult = isTauri();
         const testResult = isTest();
 
-        expect(typeof browserResult).toBe(
-          'boolean',
-          `isBrowser should return boolean in case ${index}`,
-        );
-        expect(typeof tauriResult).toBe(
-          'boolean',
-          `isTauri should return boolean in case ${index}`,
-        );
-        expect(typeof testResult).toBe('boolean', `isTest should return boolean in case ${index}`);
+        expect(typeof browserResult).toBe('boolean');
+        expect(typeof tauriResult).toBe('boolean');
+        expect(typeof testResult).toBe('boolean');
       });
     });
   });

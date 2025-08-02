@@ -3,22 +3,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
 import { FileSelection } from '../../../lib/api-types';
 
-// Mock the Tauri API
-vi.mock('@tauri-apps/api/core', () => ({
-  invoke: vi.fn(),
+// Mock the tauri-safe module
+vi.mock('../../../lib/tauri-safe', () => ({
+  safeInvoke: vi.fn(),
+  safeListen: vi.fn(),
 }));
 
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: vi.fn(),
-}));
-
-const mockInvoke = vi.mocked(await import('@tauri-apps/api/core')).invoke;
-const mockListen = vi.mocked(await import('@tauri-apps/api/event')).listen;
+const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
+const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useFileEncryption - Progress Tracking', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListen.mockResolvedValue(() => Promise.resolve());
+    mockSafeListen.mockResolvedValue(() => Promise.resolve());
   });
 
   it('should handle progress updates during encryption', async () => {
@@ -32,9 +29,8 @@ describe('useFileEncryption - Progress Tracking', () => {
     };
 
     let progressCallback: (event: { payload: any }) => void;
-    mockListen.mockImplementationOnce((_event, callback) => {
-      progressCallback = (event: { payload: any }) =>
-        callback({ event: 'test-event', id: 1, payload: event.payload });
+    mockSafeListen.mockImplementationOnce((_event, callback) => {
+      progressCallback = callback;
       return Promise.resolve(() => Promise.resolve());
     });
 
@@ -46,8 +42,8 @@ describe('useFileEncryption - Progress Tracking', () => {
       file_count: 1,
     };
 
-    mockInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     await act(async () => {
       await result.current.selectFiles('Files');

@@ -68,7 +68,7 @@ export async function safeInvoke<T>(
     });
 
     // Execute the command
-    const result = await invoke<T>(command, args);
+    const result = (await invoke(command, args)) as T;
 
     const duration = performance.now() - startTime;
 

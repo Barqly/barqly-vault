@@ -2,22 +2,19 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useKeyGeneration } from '../../../hooks/useKeyGeneration';
 
-// Mock the Tauri API
-vi.mock('@tauri-apps/api/core', () => ({
-  invoke: vi.fn(),
+// Mock the tauri-safe module
+vi.mock('../../../lib/tauri-safe', () => ({
+  safeInvoke: vi.fn(),
+  safeListen: vi.fn(),
 }));
 
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: vi.fn(),
-}));
-
-const mockInvoke = vi.mocked(await import('@tauri-apps/api/core')).invoke;
-const mockListen = vi.mocked(await import('@tauri-apps/api/event')).listen;
+const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
+const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useKeyGeneration - State Management', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListen.mockResolvedValue(() => Promise.resolve());
+    mockSafeListen.mockResolvedValue(() => Promise.resolve());
   });
 
   it('should reset state correctly', () => {
@@ -38,7 +35,7 @@ describe('useKeyGeneration - State Management', () => {
   it('should set loading state during operations', async () => {
     const { result } = renderHook(() => useKeyGeneration());
 
-    mockInvoke
+    mockSafeInvoke
       .mockImplementationOnce(
         () =>
           new Promise((resolve) =>

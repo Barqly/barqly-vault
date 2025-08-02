@@ -68,7 +68,7 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
       const fileDecResult = renderHook(() => useFileDecryption());
 
       await act(async () => {
-        await expect(fileDecResult.result.current.selectArchive()).rejects.toEqual(
+        await expect(fileDecResult.result.current.selectEncryptedFile()).rejects.toEqual(
           webEnvironmentError,
         );
       });
@@ -88,24 +88,25 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
       ];
 
       for (const hookFactory of hooks) {
-        const { result } = renderHook(hookFactory);
+        const { result } = renderHook(hookFactory as () => any);
 
         // Set up minimal state for each hook
-        if ('setLabel' in result.current && 'setPassphrase' in result.current) {
+        const current = result.current as any;
+        if ('setLabel' in current && 'setPassphrase' in current) {
           act(() => {
-            result.current.setLabel('test');
-            result.current.setPassphrase('test123');
+            current.setLabel('test-key-label');
+            current.setPassphrase('StrongPassword123!');
           });
         }
 
         // Try to perform an operation that would trigger the API
         let operationPromise: Promise<any>;
-        if ('generateKey' in result.current) {
-          operationPromise = result.current.generateKey();
-        } else if ('selectFiles' in result.current) {
-          operationPromise = result.current.selectFiles('Files');
-        } else if ('selectArchive' in result.current) {
-          operationPromise = result.current.selectArchive();
+        if ('generateKey' in current) {
+          operationPromise = current.generateKey();
+        } else if ('selectFiles' in current) {
+          operationPromise = current.selectFiles('Files');
+        } else if ('selectEncryptedFile' in current) {
+          operationPromise = current.selectEncryptedFile();
         } else {
           continue;
         }
@@ -115,8 +116,8 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         });
 
         // All hooks should handle the error and set appropriate error state
-        expect(result.current.error).toBeTruthy();
-        expect(result.current.isLoading).toBe(false);
+        expect(current.error).toBeTruthy();
+        expect(current.isLoading).toBe(false);
       }
     });
   });
@@ -136,13 +137,22 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
           file_count: 1,
         }) // useFileEncryption select
         .mockResolvedValueOnce({ output_path: '/encrypted.age', file_size: 200 }) // useFileEncryption encrypt
-        .mockResolvedValueOnce({ path: '/test.age', size: 200 }) // useFileDecryption select
-        .mockResolvedValueOnce({ output_dir: '/decrypted', extracted_files: ['file.txt'] }); // useFileDecryption decrypt
+        .mockResolvedValueOnce({
+          paths: ['/test.age'],
+          selection_type: 'Files',
+          total_size: 200,
+          file_count: 1,
+        }) // useFileDecryption select
+        .mockResolvedValueOnce({
+          output_dir: '/decrypted',
+          extracted_files: ['file.txt'],
+          manifest_verified: true,
+        }); // useFileDecryption decrypt
 
       // Test useKeyGeneration
       const keyGenResult = renderHook(() => useKeyGeneration());
       act(() => {
-        keyGenResult.result.current.setLabel('test');
+        keyGenResult.result.current.setLabel('test-key-label');
         keyGenResult.result.current.setPassphrase('StrongPassword123!');
       });
 
@@ -150,8 +160,16 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         await keyGenResult.result.current.generateKey();
       });
 
-      expect(mockSafeInvoke).toHaveBeenCalledWith('validate_passphrase', expect.any(Object));
-      expect(mockSafeInvoke).toHaveBeenCalledWith('generate_key', expect.any(Object));
+      expect(mockSafeInvoke).toHaveBeenCalledWith(
+        'validate_passphrase',
+        expect.any(Object),
+        expect.any(String),
+      );
+      expect(mockSafeInvoke).toHaveBeenCalledWith(
+        'generate_key',
+        expect.any(Object),
+        expect.any(String),
+      );
 
       // Test useFileEncryption
       const fileEncResult = renderHook(() => useFileEncryption());
@@ -160,53 +178,69 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         await fileEncResult.result.current.selectFiles('Files');
       });
 
-      expect(mockSafeInvoke).toHaveBeenCalledWith('select_files', expect.any(Object));
-
-      fileEncResult.result.current.setRecipient('age1test');
-      fileEncResult.result.current.setOutputLocation('/output');
+      expect(mockSafeInvoke).toHaveBeenCalledWith(
+        'select_files',
+        expect.any(Object),
+        expect.any(String),
+      );
 
       await act(async () => {
-        await fileEncResult.result.current.encryptFiles();
+        await fileEncResult.result.current.encryptFiles('age1test', '/output');
       });
 
-      expect(mockSafeInvoke).toHaveBeenCalledWith('encrypt_files', expect.any(Object));
+      expect(mockSafeInvoke).toHaveBeenCalledWith(
+        'encrypt_files',
+        expect.any(Object),
+        expect.any(String),
+      );
 
       // Test useFileDecryption
       const fileDecResult = renderHook(() => useFileDecryption());
 
       await act(async () => {
-        await fileDecResult.result.current.selectArchive();
+        await fileDecResult.result.current.selectEncryptedFile();
       });
 
-      expect(mockSafeInvoke).toHaveBeenCalledWith('select_archive', expect.any(Object));
+      expect(mockSafeInvoke).toHaveBeenCalledWith(
+        'select_files',
+        expect.any(Object),
+        expect.any(String),
+      );
 
-      fileDecResult.result.current.setPassphrase('password');
-      fileDecResult.result.current.setOutputLocation('/output');
+      act(() => {
+        fileDecResult.result.current.setPassphrase('password');
+        fileDecResult.result.current.setOutputPath('/output');
+        fileDecResult.result.current.setKeyId('age1test');
+      });
 
       await act(async () => {
-        await fileDecResult.result.current.decryptArchive();
+        await fileDecResult.result.current.decryptFile();
       });
 
-      expect(mockSafeInvoke).toHaveBeenCalledWith('decrypt_archive', expect.any(Object));
+      expect(mockSafeInvoke).toHaveBeenCalledWith(
+        'decrypt_data',
+        expect.any(Object),
+        expect.any(String),
+      );
     });
 
     it('should use safeListen for progress tracking across hooks', async () => {
       let progressHandlers: Array<(event: { payload: any }) => void> = [];
 
-      mockSafeListen.mockImplementation(async (event, handler) => {
+      mockSafeListen.mockImplementation(async (_event, handler) => {
         progressHandlers.push(handler);
         return () => Promise.resolve();
       });
 
       // Mock successful operations
       mockSafeInvoke
-        .mockResolvedValue({ is_valid: true, strength: 'Strong' })
-        .mockResolvedValue({ key_id: 'test', public_key: 'age1test', saved_path: '/path' });
+        .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' })
+        .mockResolvedValueOnce({ key_id: 'test', public_key: 'age1test', saved_path: '/path' });
 
       const keyGenResult = renderHook(() => useKeyGeneration());
 
       act(() => {
-        keyGenResult.result.current.setLabel('test');
+        keyGenResult.result.current.setLabel('test-key-label');
         keyGenResult.result.current.setPassphrase('StrongPassword123!');
       });
 
@@ -246,7 +280,7 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
       const keyGenResult = renderHook(() => useKeyGeneration());
 
       act(() => {
-        keyGenResult.result.current.setLabel('test');
+        keyGenResult.result.current.setLabel('test-key-label');
         keyGenResult.result.current.setPassphrase('StrongPassword123!');
       });
 
@@ -284,7 +318,7 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         {
           factory: () => useKeyGeneration(),
           setup: (result: any) => {
-            result.current.setLabel('test');
+            result.current.setLabel('test-key-label');
             result.current.setPassphrase('StrongPassword123!');
           },
           operation: (result: any) => result.current.generateKey(),
@@ -297,14 +331,14 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         {
           factory: () => useFileDecryption(),
           setup: () => {},
-          operation: (result: any) => result.current.selectArchive(),
+          operation: (result: any) => result.current.selectEncryptedFile(),
         },
       ];
 
       for (const { factory, setup, operation } of hooks) {
         mockSafeInvoke.mockRejectedValueOnce(networkError);
 
-        const { result } = renderHook(factory);
+        const { result } = renderHook(factory as () => any);
 
         setup(result);
 
@@ -313,18 +347,19 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         });
 
         // All hooks should have consistent error state handling
-        expect(result.current.error).toBeTruthy();
-        expect(result.current.isLoading).toBe(false);
-        expect(result.current.progress).toBeNull();
+        const current = result.current as any;
+        expect(current.error).toBeTruthy();
+        expect(current.isLoading).toBe(false);
+        expect(current.progress).toBeNull();
 
         // Reset should clear all error state
         act(() => {
-          result.current.reset();
+          current.reset();
         });
 
-        expect(result.current.error).toBeNull();
-        expect(result.current.isLoading).toBe(false);
-        expect(result.current.progress).toBeNull();
+        expect(current.error).toBeNull();
+        expect(current.isLoading).toBe(false);
+        expect(current.progress).toBeNull();
       }
     });
   });
@@ -342,7 +377,7 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
       const keyGenResult = renderHook(() => useKeyGeneration());
 
       act(() => {
-        keyGenResult.result.current.setLabel('test');
+        keyGenResult.result.current.setLabel('test-key-label');
         keyGenResult.result.current.setPassphrase('StrongPassword123!');
       });
 

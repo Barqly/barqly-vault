@@ -3,22 +3,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
 import { CommandError, ErrorCode, FileSelection } from '../../../lib/api-types';
 
-// Mock the Tauri API
-vi.mock('@tauri-apps/api/core', () => ({
-  invoke: vi.fn(),
+// Mock the tauri-safe module
+vi.mock('../../../lib/tauri-safe', () => ({
+  safeInvoke: vi.fn(),
+  safeListen: vi.fn(),
 }));
 
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: vi.fn(),
-}));
-
-const mockInvoke = vi.mocked(await import('@tauri-apps/api/core')).invoke;
-const mockListen = vi.mocked(await import('@tauri-apps/api/event')).listen;
+const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
+const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useFileEncryption - Encryption Failure', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListen.mockResolvedValue(() => Promise.resolve());
+    mockSafeListen.mockResolvedValue(() => Promise.resolve());
   });
 
   it('should handle encryption errors', async () => {
@@ -38,8 +35,8 @@ describe('useFileEncryption - Encryption Failure', () => {
       file_count: 1,
     };
 
-    mockInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockInvoke.mockRejectedValueOnce(encryptionError);
+    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mockSafeInvoke.mockRejectedValueOnce(encryptionError);
 
     await act(async () => {
       await result.current.selectFiles('Files');
@@ -74,8 +71,8 @@ describe('useFileEncryption - Encryption Failure', () => {
       file_count: 1,
     };
 
-    mockInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockInvoke.mockRejectedValueOnce(encryptionError);
+    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mockSafeInvoke.mockRejectedValueOnce(encryptionError);
 
     await act(async () => {
       await result.current.selectFiles('Files');

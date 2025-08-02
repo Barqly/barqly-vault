@@ -27,16 +27,20 @@ export const isTauri = (): boolean => {
   const windowAny = window as any;
 
   // Log detailed window properties for debugging
-  if (import.meta.env.DEV) {
-    console.log('[Platform Detection] Window properties:', {
-      __TAURI_INTERNALS__: !!windowAny?.__TAURI_INTERNALS__,
-      isTauri: !!windowAny?.isTauri,
-      __TAURI_IPC__: !!windowAny?.__TAURI_IPC__,
-      __TAURI__: !!windowAny?.__TAURI__,
-      __TAURI_CORE__: !!windowAny?.__TAURI_CORE__,
-      userAgent: navigator?.userAgent,
-      windowKeys: Object.keys(windowAny).filter((key) => key.includes('TAURI')),
-    });
+  try {
+    if (import.meta.env?.DEV) {
+      console.log('[Platform Detection] Window properties:', {
+        __TAURI_INTERNALS__: !!windowAny?.__TAURI_INTERNALS__,
+        isTauri: !!windowAny?.isTauri,
+        __TAURI_IPC__: !!windowAny?.__TAURI_IPC__,
+        __TAURI__: !!windowAny?.__TAURI__,
+        __TAURI_CORE__: !!windowAny?.__TAURI_CORE__,
+        userAgent: navigator?.userAgent,
+        windowKeys: Object.keys(windowAny).filter((key) => key.includes('TAURI')),
+      });
+    }
+  } catch {
+    // Ignore errors in test environment when import.meta.env is not available
   }
 
   // Primary detection methods for Tauri v2:

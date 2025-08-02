@@ -3,22 +3,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
 import { FileSelection } from '../../../lib/api-types';
 
-// Mock the Tauri API
-vi.mock('@tauri-apps/api/core', () => ({
-  invoke: vi.fn(),
+// Mock the tauri-safe module
+vi.mock('../../../lib/tauri-safe', () => ({
+  safeInvoke: vi.fn(),
+  safeListen: vi.fn(),
 }));
 
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: vi.fn(),
-}));
-
-const mockInvoke = vi.mocked(await import('@tauri-apps/api/core')).invoke;
-const mockListen = vi.mocked(await import('@tauri-apps/api/event')).listen;
+const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
+const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useFileEncryption - Encryption Success', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListen.mockResolvedValue(() => Promise.resolve());
+    mockSafeListen.mockResolvedValue(() => Promise.resolve());
   });
 
   it('should encrypt files successfully', async () => {
@@ -39,8 +36,8 @@ describe('useFileEncryption - Encryption Success', () => {
       file_count: 2,
     };
 
-    mockInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     await act(async () => {
       await result.current.selectFiles('Files');
@@ -73,8 +70,8 @@ describe('useFileEncryption - Encryption Success', () => {
       file_count: 1,
     };
 
-    mockInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     await act(async () => {
       await result.current.selectFiles('Files');
@@ -84,7 +81,7 @@ describe('useFileEncryption - Encryption Success', () => {
       await result.current.encryptFiles('test-key', '/output');
     });
 
-    expect(mockInvoke).toHaveBeenCalledWith('encrypt_files', {
+    expect(mockSafeInvoke).toHaveBeenNthCalledWith(2, 'encrypt_files', {
       file_paths: ['/path/to/file.txt'],
       key_id: 'test-key',
       output_name: undefined,
@@ -109,8 +106,8 @@ describe('useFileEncryption - Encryption Success', () => {
       file_count: 1,
     };
 
-    mockInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     await act(async () => {
       await result.current.selectFiles('Files');
@@ -120,6 +117,6 @@ describe('useFileEncryption - Encryption Success', () => {
       await result.current.encryptFiles('test-key', '/output');
     });
 
-    expect(mockListen).toHaveBeenCalledWith('encryption-progress', expect.any(Function));
+    expect(mockSafeListen).toHaveBeenCalledWith('encryption-progress', expect.any(Function));
   });
 });

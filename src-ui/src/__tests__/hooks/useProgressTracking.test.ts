@@ -3,19 +3,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useProgressTracking } from '../../hooks/useProgressTracking';
 import { ProgressUpdate } from '../../lib/api-types';
 
-// Mock the Tauri API
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: vi.fn(),
+// Mock the tauri-safe module
+vi.mock('../../lib/tauri-safe', () => ({
+  safeListen: vi.fn(),
 }));
 
-const mockListen = vi.mocked(await import('@tauri-apps/api/event')).listen;
+const mockSafeListen = vi.mocked(await import('../../lib/tauri-safe')).safeListen;
 
 describe('useProgressTracking (4.2.3.4)', () => {
   const MOCK_OPERATION_ID = 'test-op-123';
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListen.mockResolvedValue(() => Promise.resolve());
+    mockSafeListen.mockResolvedValue(() => Promise.resolve());
   });
 
   describe('Initial State', () => {
@@ -38,12 +38,12 @@ describe('useProgressTracking (4.2.3.4)', () => {
         await result.current.startTracking(MOCK_OPERATION_ID);
       });
 
-      expect(mockListen).toHaveBeenCalledWith('test-event', expect.any(Function));
+      expect(mockSafeListen).toHaveBeenCalledWith('test-event', expect.any(Function));
     });
 
     it('should stop tracking and unlisten from events', async () => {
       const mockUnlisten = vi.fn();
-      mockListen.mockResolvedValue(mockUnlisten);
+      mockSafeListen.mockResolvedValue(mockUnlisten);
 
       const { result } = renderHook(() => useProgressTracking('test-event'));
 
@@ -60,7 +60,7 @@ describe('useProgressTracking (4.2.3.4)', () => {
 
     it('should handle multiple start calls gracefully', async () => {
       const mockUnlisten = vi.fn();
-      mockListen.mockResolvedValue(mockUnlisten);
+      mockSafeListen.mockResolvedValue(mockUnlisten);
 
       const { result } = renderHook(() => useProgressTracking('test-event'));
 
@@ -74,14 +74,14 @@ describe('useProgressTracking (4.2.3.4)', () => {
         await result.current.startTracking(MOCK_OPERATION_ID);
       });
 
-      expect(mockListen).toHaveBeenCalledTimes(1);
+      expect(mockSafeListen).toHaveBeenCalledTimes(1);
       expect(mockUnlisten).not.toHaveBeenCalled();
     });
 
     it('should handle stop calls without starting', () => {
       const { result } = renderHook(() => useProgressTracking('test-event'));
       const mockUnlisten = vi.fn();
-      mockListen.mockResolvedValue(mockUnlisten);
+      mockSafeListen.mockResolvedValue(mockUnlisten);
 
       act(() => {
         result.current.stopTracking();
@@ -96,9 +96,8 @@ describe('useProgressTracking (4.2.3.4)', () => {
       const { result } = renderHook(() => useProgressTracking('test-event'));
       let progressCallback: (event: { payload: ProgressUpdate }) => void;
 
-      mockListen.mockImplementationOnce((_event, callback) => {
-        progressCallback = (event: { payload: ProgressUpdate }) =>
-          callback({ event: 'test-event', id: 1, payload: event.payload });
+      mockSafeListen.mockImplementationOnce((_event, callback) => {
+        progressCallback = callback;
         return Promise.resolve(() => {});
       });
 
@@ -124,9 +123,8 @@ describe('useProgressTracking (4.2.3.4)', () => {
       const { result } = renderHook(() => useProgressTracking('test-event'));
       let progressCallback: (event: { payload: ProgressUpdate }) => void;
 
-      mockListen.mockImplementationOnce((_event, callback) => {
-        progressCallback = (event: { payload: any }) =>
-          callback({ event: 'test-event', id: 1, payload: event.payload });
+      mockSafeListen.mockImplementationOnce((_event, callback) => {
+        progressCallback = callback;
         return Promise.resolve(() => {});
       });
 
@@ -153,9 +151,8 @@ describe('useProgressTracking (4.2.3.4)', () => {
       const { result } = renderHook(() => useProgressTracking('test-event', filter));
       let progressCallback: (event: { payload: ProgressUpdate }) => void;
 
-      mockListen.mockImplementationOnce((_event, callback) => {
-        progressCallback = (event: { payload: any }) =>
-          callback({ event: 'test-event', id: 1, payload: event.payload });
+      mockSafeListen.mockImplementationOnce((_event, callback) => {
+        progressCallback = callback;
         return Promise.resolve(() => {});
       });
 
@@ -193,9 +190,8 @@ describe('useProgressTracking (4.2.3.4)', () => {
       const { result } = renderHook(() => useProgressTracking('test-event'));
       let progressCallback: (event: { payload: ProgressUpdate }) => void;
 
-      mockListen.mockImplementationOnce((_event, callback) => {
-        progressCallback = (event: { payload: any }) =>
-          callback({ event: 'test-event', id: 1, payload: event.payload });
+      mockSafeListen.mockImplementationOnce((_event, callback) => {
+        progressCallback = callback;
         return Promise.resolve(() => {});
       });
 
@@ -226,7 +222,7 @@ describe('useProgressTracking (4.2.3.4)', () => {
 
     it('should stop tracking on reset', async () => {
       const mockUnlisten = vi.fn();
-      mockListen.mockResolvedValue(mockUnlisten);
+      mockSafeListen.mockResolvedValue(mockUnlisten);
 
       const { result } = renderHook(() => useProgressTracking('test-event'));
 
@@ -245,7 +241,7 @@ describe('useProgressTracking (4.2.3.4)', () => {
   describe('Error Handling', () => {
     it('should handle errors during event listening setup', async () => {
       const setupError = new Error('Failed to set up listener');
-      mockListen.mockRejectedValue(setupError);
+      mockSafeListen.mockRejectedValue(setupError);
 
       const { result } = renderHook(() => useProgressTracking('test-event'));
 
@@ -260,7 +256,7 @@ describe('useProgressTracking (4.2.3.4)', () => {
 
     it('should clear error on reset', async () => {
       const setupError = new Error('Failed to set up listener');
-      mockListen.mockRejectedValue(setupError);
+      mockSafeListen.mockRejectedValue(setupError);
 
       const { result } = renderHook(() => useProgressTracking('test-event'));
 

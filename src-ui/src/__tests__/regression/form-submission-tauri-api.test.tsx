@@ -397,7 +397,7 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
         clearError: mockClearError,
       });
 
-      const { rerender } = render(<SetupPage />);
+      const { rerender } = renderWithRouter(<SetupPage />);
 
       // Error should be displayed
       expect(screen.getByText('First attempt failed')).toBeInTheDocument();

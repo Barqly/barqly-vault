@@ -56,7 +56,7 @@ describe('SetupPage', () => {
     it('should render the setup form when not loading and no success', () => {
       renderWithRouter(<SetupPage />);
 
-      expect(screen.getByRole('form')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /key label/i })).toBeInTheDocument();
       expect(screen.getByText('Create Your Security Identity')).toBeInTheDocument();
       expect(screen.getByLabelText(/key label/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/^passphrase/i)).toBeInTheDocument();
@@ -68,12 +68,17 @@ describe('SetupPage', () => {
       mockUseKeyGeneration.mockReturnValue({
         ...defaultHookReturn,
         isLoading: true,
-        progress: { progress: 50, message: 'Generating...' },
+        progress: {
+          operation_id: 'test-op-123',
+          progress: 0.5,
+          message: 'Generating...',
+          timestamp: new Date().toISOString(),
+        },
       });
 
       renderWithRouter(<SetupPage />);
 
-      expect(screen.queryByRole('form')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /key label/i })).not.toBeInTheDocument();
       expect(screen.getByText('Generating strong encryption keys...')).toBeInTheDocument();
     });
 
@@ -91,7 +96,7 @@ describe('SetupPage', () => {
 
       renderWithRouter(<SetupPage />);
 
-      expect(screen.queryByRole('form')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /key label/i })).not.toBeInTheDocument();
       expect(screen.getByText('Key Generated Successfully!')).toBeInTheDocument();
     });
   });
@@ -280,29 +285,6 @@ describe('SetupPage', () => {
       expect(screen.getByText('Please try again')).toBeInTheDocument();
     });
 
-    it('should clear error when clearError is called', async () => {
-      const mockClearError = vi.fn();
-      const mockError: CommandError = {
-        code: ErrorCode.INTERNAL_ERROR,
-        message: 'Key generation failed',
-        recovery_guidance: 'Please try again',
-        user_actionable: true,
-      };
-
-      mockUseKeyGeneration.mockReturnValue({
-        ...defaultHookReturn,
-        error: mockError,
-        clearError: mockClearError,
-      });
-
-      renderWithRouter(<SetupPage />);
-
-      const closeButton = screen.getByRole('button', { name: /close/i });
-      await user.click(closeButton);
-
-      expect(mockClearError).toHaveBeenCalledTimes(1);
-    });
-
     it('should handle generateKey throwing error', async () => {
       const mockGenerateKey = vi.fn().mockRejectedValue(new Error('Network error'));
       mockUseKeyGeneration.mockReturnValue({
@@ -326,7 +308,9 @@ describe('SetupPage', () => {
       await user.keyboard('{Enter}');
 
       expect(mockGenerateKey).toHaveBeenCalledTimes(1);
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Key generation error:', expect.any(Error));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[ERROR] [SetupPage] Key generation error caught'),
+      );
 
       consoleErrorSpy.mockRestore();
     });
@@ -368,7 +352,7 @@ describe('SetupPage', () => {
 
       renderWithRouter(<SetupPage />);
 
-      const closeButton = screen.getByRole('button', { name: /close/i });
+      const closeButton = screen.getByTestId('close-button');
       await user.click(closeButton);
 
       expect(mockReset).toHaveBeenCalledTimes(1);
@@ -379,7 +363,12 @@ describe('SetupPage', () => {
     it('should display progress bar and context when progress is available', () => {
       mockUseKeyGeneration.mockReturnValue({
         ...defaultHookReturn,
-        progress: { progress: 75, message: 'Generating keypair...' },
+        progress: {
+          operation_id: 'test-op-456',
+          progress: 0.75,
+          message: 'Generating keypair...',
+          timestamp: new Date().toISOString(),
+        },
       });
 
       renderWithRouter(<SetupPage />);

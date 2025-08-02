@@ -4,22 +4,19 @@ import { useFileDecryption } from '../../../hooks/useFileDecryption';
 import { FileSelection, DecryptionResult } from '../../../lib/api-types';
 import { Event } from '@tauri-apps/api/event';
 
-// Mock the Tauri API
-vi.mock('@tauri-apps/api/core', () => ({
-  invoke: vi.fn(),
+// Mock the tauri-safe module
+vi.mock('../../../lib/tauri-safe', () => ({
+  safeInvoke: vi.fn(),
+  safeListen: vi.fn(),
 }));
 
-vi.mock('@tauri-apps/api/event', () => ({
-  listen: vi.fn(),
-}));
-
-const mockInvoke = vi.mocked(await import('@tauri-apps/api/core')).invoke;
-const mockListen = vi.mocked(await import('@tauri-apps/api/event')).listen;
+const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
+const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useFileDecryption - Progress Tracking', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListen.mockResolvedValue(() => Promise.resolve());
+    mockSafeListen.mockResolvedValue(() => Promise.resolve());
   });
 
   it('should handle progress updates during decryption', async () => {
@@ -31,7 +28,7 @@ describe('useFileDecryption - Progress Tracking', () => {
     };
 
     let progressCallback: (event: Event<unknown>) => void;
-    mockListen.mockImplementationOnce((_event, callback) => {
+    mockSafeListen.mockImplementationOnce((_event, callback) => {
       progressCallback = callback as (event: Event<unknown>) => void;
       return Promise.resolve(() => Promise.resolve());
     });
@@ -44,8 +41,8 @@ describe('useFileDecryption - Progress Tracking', () => {
       selection_type: 'Files',
     };
 
-    mockInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockInvoke.mockResolvedValueOnce(mockDecryptionResult);
+    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mockSafeInvoke.mockResolvedValueOnce(mockDecryptionResult);
 
     await act(async () => {
       await result.current.selectEncryptedFile();
