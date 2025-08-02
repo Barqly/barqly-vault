@@ -383,8 +383,31 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
       const mockClearError = vi.fn();
       const mockReset = vi.fn();
 
-      // Initially show error state
-      mockUseKeyGeneration.mockReturnValueOnce({
+      // Start with clean state, then simulate first failure
+      mockUseKeyGeneration.mockReturnValue({
+        ...defaultHookReturn,
+        generateKey: mockGenerateKey,
+        clearError: mockClearError,
+        reset: mockReset,
+      });
+
+      const { rerender } = renderWithRouter(<SetupPage />);
+
+      // Simulate first attempt that fails
+      const keyLabelInput = screen.getByLabelText(/key label/i);
+      const passphraseInput = screen.getByLabelText(/^passphrase/i);
+      const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
+
+      await user.type(keyLabelInput, 'Test Key');
+      await user.type(passphraseInput, 'Password123!');
+      await user.type(confirmPassphraseInput, 'Password123!');
+
+      // First attempt - this should fail
+      await user.keyboard('{Enter}');
+      expect(mockGenerateKey).toHaveBeenCalledTimes(1);
+
+      // Now re-render with error state from the failed attempt
+      mockUseKeyGeneration.mockReturnValue({
         ...defaultHookReturn,
         generateKey: mockGenerateKey,
         error: {
@@ -394,9 +417,14 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
           user_actionable: true,
         },
         clearError: mockClearError,
+        reset: mockReset,
       });
 
-      const { rerender } = renderWithRouter(<SetupPage />);
+      rerender(
+        <BrowserRouter>
+          <SetupPage />
+        </BrowserRouter>,
+      );
 
       // Error should be displayed
       expect(screen.getByText('First attempt failed')).toBeInTheDocument();
@@ -420,10 +448,10 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
         </BrowserRouter>,
       );
 
-      // Form should be functional again
-      const keyLabelInput = screen.getByLabelText(/key label/i);
-      const passphraseInput = screen.getByLabelText(/^passphrase/i);
-      const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
+      // Form should be functional again - clear and refill
+      await user.clear(keyLabelInput);
+      await user.clear(passphraseInput);
+      await user.clear(confirmPassphraseInput);
 
       await user.type(keyLabelInput, 'Retry Key');
       await user.type(passphraseInput, 'RetryPassword123!');
