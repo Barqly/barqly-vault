@@ -406,8 +406,9 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
       });
 
       // Start long-running operation
-      const generatePromise = act(async () => {
-        return result.current.generateKey().catch(() => {
+      let generatePromise: Promise<void>;
+      act(() => {
+        generatePromise = result.current.generateKey().catch(() => {
           // Operation might be cancelled/rejected on unmount
         });
       });
@@ -423,7 +424,7 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
       });
 
       // Should not cause errors or memory leaks
-      await generatePromise;
+      await generatePromise!;
     });
   });
 });
