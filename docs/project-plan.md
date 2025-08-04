@@ -459,31 +459,31 @@ barqly-vault/
     - ✅ Hooks run full validation suite (make validate) with shift-left principles
     - ✅ Perfect CI alignment prevents integration surprises
     - ✅ Leverages existing automation infrastructure (Option A approach)
-  - [ ] 12.5.2: Add VSCode tasks (30 minutes) - Deffered
+  - [d] 12.5.2: Add VSCode tasks (30 minutes) - Deffered
     - Create tasks.json for quick testing and dev server
-  - [ ] 12.5.3: Create troubleshooting guide (1 hour) - Deffered
+  - [d] 12.5.3: Create troubleshooting guide (1 hour) - Deffered
     - Document common issues and solutions
 
 #### Medium Priority - Next Sprint (4 hours total)- Deffered
 
-- [ ] 12.6: Testing Infrastructure (2 hours)
-  - [ ] 12.6.1: Add test data generators (2 hours)
+- [d] 12.6: Testing Infrastructure (2 hours)
+  - [d] 12.6.1: Add test data generators (2 hours)
     - Create `TestDataBuilder` with fake data generation
     - Implement generators for keys, passphrases, and file paths
 
-- [ ] 12.7: Quality Assurance (2 hours)
-  - [ ] 12.7.1: Add snapshot tests for UI components (1 hour)
+- [d] 12.7: Quality Assurance (2 hours)
+  - [d] 12.7.1: Add snapshot tests for UI components (1 hour)
     - Create snapshot tests for KeyGenerationForm and ErrorMessage
-  - [ ] 12.7.2: Add performance benchmarks (1 hour)
+  - [d] 12.7.2: Add performance benchmarks (1 hour)
     - Create Criterion benchmarks for encryption operations
     - Track performance regressions
 
 #### Future Enhancements (Deferred)- Deffered
 
-- [ ] 12.8: Documentation Improvements
-  - [ ] 12.8.1: Add architecture diagram (1 hour)
+- [d] 12.8: Documentation Improvements
+  - [d] 12.8.1: Add architecture diagram (1 hour)
     - Create Mermaid diagram showing system components
-  - [ ] 12.8.2: Complete configuration module (addresses missing Milestone 2.4)
+  - [d] 12.8.2: Complete configuration module (addresses missing Milestone 2.4)
     - Implement configuration schema and persistence
     - Add migration support for future updates
 
