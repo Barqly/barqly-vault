@@ -18,44 +18,17 @@ describe('FileDropZone', () => {
   });
 
   describe('Initial State', () => {
-    it('should render with mode selection prompt when no mode is selected', () => {
+    it('should render with file/folder drop prompt', () => {
       render(
         <FileDropZone
-          mode={null}
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={null}
           onClearFiles={mockOnClearFiles}
         />,
       );
 
-      expect(screen.getByText('Select a mode first')).toBeInTheDocument();
-    });
-
-    it('should render file drop prompt when files mode is selected', () => {
-      render(
-        <FileDropZone
-          mode="files"
-          onFilesSelected={mockOnFilesSelected}
-          selectedFiles={null}
-          onClearFiles={mockOnClearFiles}
-        />,
-      );
-
-      expect(screen.getByText('Drop files here to select')).toBeInTheDocument();
+      expect(screen.getByText('Drop files or folders here to encrypt')).toBeInTheDocument();
       expect(screen.getByText('(Dropping files will open the file dialog)')).toBeInTheDocument();
-    });
-
-    it('should render folder drop prompt when folder mode is selected', () => {
-      render(
-        <FileDropZone
-          mode="folder"
-          onFilesSelected={mockOnFilesSelected}
-          selectedFiles={null}
-          onClearFiles={mockOnClearFiles}
-        />,
-      );
-
-      expect(screen.getByText('Drop a folder here to select')).toBeInTheDocument();
     });
   });
 
@@ -65,7 +38,6 @@ describe('FileDropZone', () => {
 
       render(
         <FileDropZone
-          mode="files"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={null}
           onClearFiles={mockOnClearFiles}
@@ -81,10 +53,10 @@ describe('FileDropZone', () => {
           directory: false,
           title: 'Select Files to Encrypt',
         });
-        expect(mockOnFilesSelected).toHaveBeenCalledWith([
-          '/path/to/file1.txt',
-          '/path/to/file2.txt',
-        ]);
+        expect(mockOnFilesSelected).toHaveBeenCalledWith(
+          ['/path/to/file1.txt', '/path/to/file2.txt'],
+          'files',
+        );
       });
     });
 
@@ -93,7 +65,6 @@ describe('FileDropZone', () => {
 
       render(
         <FileDropZone
-          mode="folder"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={null}
           onClearFiles={mockOnClearFiles}
@@ -109,32 +80,17 @@ describe('FileDropZone', () => {
           directory: true,
           title: 'Select Folder to Encrypt',
         });
-        expect(mockOnFilesSelected).toHaveBeenCalledWith(['/path/to/folder']);
+        expect(mockOnFilesSelected).toHaveBeenCalledWith(['/path/to/folder'], 'folder');
       });
     });
 
     it('should disable browse buttons when disabled prop is true', () => {
       render(
         <FileDropZone
-          mode="files"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={null}
           onClearFiles={mockOnClearFiles}
           disabled={true}
-        />,
-      );
-
-      const browseButton = screen.getByText('Browse Files');
-      expect(browseButton).toBeDisabled();
-    });
-
-    it('should disable browse buttons when no mode is selected', () => {
-      render(
-        <FileDropZone
-          mode={null}
-          onFilesSelected={mockOnFilesSelected}
-          selectedFiles={null}
-          onClearFiles={mockOnClearFiles}
         />,
       );
 
@@ -149,7 +105,6 @@ describe('FileDropZone', () => {
     it('should show drag state when files are dragged over', () => {
       const { container } = render(
         <FileDropZone
-          mode="files"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={null}
           onClearFiles={mockOnClearFiles}
@@ -174,7 +129,6 @@ describe('FileDropZone', () => {
 
       const { container } = render(
         <FileDropZone
-          mode="files"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={null}
           onClearFiles={mockOnClearFiles}
@@ -199,14 +153,13 @@ describe('FileDropZone', () => {
           directory: false,
           title: 'Select the files you just dropped',
         });
-        expect(mockOnFilesSelected).toHaveBeenCalledWith(['/path/to/dropped.txt']);
+        expect(mockOnFilesSelected).toHaveBeenCalledWith(['/path/to/dropped.txt'], 'files');
       });
     });
 
     it('should not handle drop when disabled', async () => {
       const { container } = render(
         <FileDropZone
-          mode="files"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={null}
           onClearFiles={mockOnClearFiles}
@@ -237,7 +190,6 @@ describe('FileDropZone', () => {
     it('should display selected files information', () => {
       render(
         <FileDropZone
-          mode="files"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={{
             paths: ['/path/to/file1.txt', '/path/to/file2.pdf'],
@@ -258,7 +210,6 @@ describe('FileDropZone', () => {
     it('should handle single file display correctly', () => {
       render(
         <FileDropZone
-          mode="files"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={{
             paths: ['/path/to/file.txt'],
@@ -275,7 +226,6 @@ describe('FileDropZone', () => {
     it('should call onClearFiles when Clear button is clicked', () => {
       render(
         <FileDropZone
-          mode="files"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={{
             paths: ['/path/to/file.txt'],
@@ -303,7 +253,6 @@ describe('FileDropZone', () => {
       testCases.forEach(({ size, expected }) => {
         const { rerender } = render(
           <FileDropZone
-            mode="files"
             onFilesSelected={mockOnFilesSelected}
             selectedFiles={{
               paths: ['/test.txt'],
@@ -326,7 +275,6 @@ describe('FileDropZone', () => {
     it('should have proper ARIA labels', () => {
       render(
         <FileDropZone
-          mode="files"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={{
             paths: ['/file.txt'],
@@ -344,7 +292,6 @@ describe('FileDropZone', () => {
     it('should be keyboard navigable', () => {
       render(
         <FileDropZone
-          mode="files"
           onFilesSelected={mockOnFilesSelected}
           selectedFiles={null}
           onClearFiles={mockOnClearFiles}

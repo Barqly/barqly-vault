@@ -57,9 +57,12 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
       const fileEncResult = renderHook(() => useFileEncryption());
 
       await act(async () => {
-        await expect(fileEncResult.result.current.selectFiles('Files')).rejects.toEqual(
-          webEnvironmentError,
-        );
+        await expect(
+          fileEncResult.result.current.selectFiles(
+            ['/mock/path/file1.txt', '/mock/path/file2.txt'],
+            'Files',
+          ),
+        ).rejects.toEqual(webEnvironmentError);
       });
 
       expect(fileEncResult.result.current.error).toEqual(webEnvironmentError);
@@ -104,7 +107,10 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
             if ('generateKey' in result.current) {
               await result.current.generateKey();
             } else if ('selectFiles' in result.current) {
-              await result.current.selectFiles('Files');
+              await result.current.selectFiles(
+                ['/mock/path/file1.txt', '/mock/path/file2.txt'],
+                'Files',
+              );
             } else if ('selectEncryptedFile' in result.current) {
               await result.current.selectEncryptedFile();
             }
@@ -178,7 +184,10 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
       const fileEncResult = renderHook(() => useFileEncryption());
 
       await act(async () => {
-        await fileEncResult.result.current.selectFiles('Files');
+        await fileEncResult.result.current.selectFiles(
+          ['/mock/path/file1.txt', '/mock/path/file2.txt'],
+          'Files',
+        );
       });
 
       // Check that select_files was called (it should be the 3rd call after validate_passphrase and generate_key)
@@ -332,7 +341,8 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         {
           factory: () => useFileEncryption(),
           setup: () => {},
-          operation: (result: any) => result.current.selectFiles('Files'),
+          operation: (result: any) =>
+            result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files'),
         },
         {
           factory: () => useFileDecryption(),

@@ -23,7 +23,8 @@ const FileEncryptionDemo: React.FC = () => {
 
   const handleFileSelection = async (type: 'Files' | 'Folder') => {
     try {
-      await selectFiles(type);
+      // Pass empty array to use demo defaults
+      await selectFiles([], type);
     } catch (_error) {
       // Error is handled by the hook
     }

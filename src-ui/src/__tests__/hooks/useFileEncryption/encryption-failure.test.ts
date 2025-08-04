@@ -39,7 +39,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     mockSafeInvoke.mockRejectedValueOnce(encryptionError);
 
     await act(async () => {
-      await result.current.selectFiles('Files');
+      await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
     });
 
     await act(async () => {
@@ -75,7 +75,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     mockSafeInvoke.mockRejectedValueOnce(encryptionError);
 
     await act(async () => {
-      await result.current.selectFiles('Files');
+      await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
     });
 
     let thrownError: CommandError | null = null;

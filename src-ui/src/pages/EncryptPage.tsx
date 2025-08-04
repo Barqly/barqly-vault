@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, Lock, Zap, FileText, FolderOpen, Check, Info } from 'lucide-react';
+import { Shield, Lock, Zap, Check, Info } from 'lucide-react';
 import { useFileEncryption } from '../hooks/useFileEncryption';
 import { KeySelectionDropdown } from '../components/forms/KeySelectionDropdown';
 import { ErrorMessage } from '../components/ui/error-message';
@@ -24,7 +24,6 @@ const EncryptPage: React.FC = () => {
   } = useFileEncryption();
 
   // Component state
-  const [mode, setMode] = useState<'files' | 'folder' | null>(null);
   const [selectedKeyId, setSelectedKeyId] = useState<string>('');
   const [outputPath, setOutputPath] = useState<string>('');
   const [archiveName, setArchiveName] = useState<string>('');
@@ -50,25 +49,16 @@ const EncryptPage: React.FC = () => {
 
   // Handle file selection
   const handleFilesSelected = useCallback(
-    async (_paths: string[]) => {
+    async (paths: string[], selectionType: 'files' | 'folder') => {
       try {
-        // This is a workaround - we need to call the backend's select_files
-        // to properly register the selection
-        if (mode === 'files' || mode === 'folder') {
-          await selectFiles(mode === 'files' ? 'Files' : 'Folder');
-        }
+        // Pass the actual file paths to the selectFiles function
+        await selectFiles(paths, selectionType === 'files' ? 'Files' : 'Folder');
       } catch (err) {
         console.error('File selection error:', err);
       }
     },
-    [mode, selectFiles],
+    [selectFiles],
   );
-
-  // Handle mode change
-  const handleModeChange = (newMode: 'files' | 'folder') => {
-    setMode(newMode);
-    clearSelection();
-  };
 
   // Handle encryption
   const handleEncrypt = async () => {
@@ -100,7 +90,6 @@ const EncryptPage: React.FC = () => {
   // Handle reset
   const handleReset = () => {
     reset();
-    setMode(null);
     setSelectedKeyId('');
     setOutputPath('');
     setArchiveName('');
@@ -243,10 +232,7 @@ const EncryptPage: React.FC = () => {
                 </h3>
                 {selectedFiles && (
                   <button
-                    onClick={() => {
-                      clearSelection();
-                      setMode(null);
-                    }}
+                    onClick={clearSelection}
                     className="ml-auto text-sm text-gray-500 hover:text-gray-700"
                   >
                     Change
@@ -255,51 +241,15 @@ const EncryptPage: React.FC = () => {
               </div>
 
               {!selectedFiles && (
-                <>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Choose how you want to select files for encryption:
-                  </p>
-                  <div className="flex gap-3 mb-6">
-                    <button
-                      onClick={() => handleModeChange('files')}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                        mode === 'files'
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                      }`}
-                    >
-                      <FileText className="w-5 h-5" />
-                      <div className="text-left">
-                        <div className="font-medium">Files</div>
-                        <div className="text-xs text-gray-500">Select specific documents</div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleModeChange('folder')}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                        mode === 'folder'
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                      }`}
-                    >
-                      <FolderOpen className="w-5 h-5" />
-                      <div className="text-left">
-                        <div className="font-medium">Folder</div>
-                        <div className="text-xs text-gray-500">Encrypt entire folder structure</div>
-                      </div>
-                    </button>
-                  </div>
-                </>
+                <p className="text-sm text-gray-600 mb-4">
+                  Select files or folders to encrypt - drag & drop or browse:
+                </p>
               )}
 
               <FileDropZone
-                mode={mode}
                 onFilesSelected={handleFilesSelected}
                 selectedFiles={selectedFiles}
-                onClearFiles={() => {
-                  clearSelection();
-                  setMode(null);
-                }}
+                onClearFiles={clearSelection}
                 disabled={isLoading}
               />
             </div>

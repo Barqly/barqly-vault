@@ -30,7 +30,7 @@ describe('useFileEncryption - File Selection', () => {
     mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
 
     await act(async () => {
-      await result.current.selectFiles('Files');
+      await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
     });
 
     expect(result.current.selectedFiles).toEqual(mockFileSelection);
@@ -51,7 +51,7 @@ describe('useFileEncryption - File Selection', () => {
 
     await act(async () => {
       try {
-        await result.current.selectFiles('Files');
+        await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
       } catch (_error) {
         // Expected to throw
       }
@@ -69,7 +69,7 @@ describe('useFileEncryption - File Selection', () => {
 
     await act(async () => {
       try {
-        await result.current.selectFiles('Files');
+        await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
       } catch (_error) {
         // Expected to throw
       }
@@ -98,7 +98,7 @@ describe('useFileEncryption - File Selection', () => {
     mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
 
     await act(async () => {
-      await result.current.selectFiles('Files');
+      await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
     });
 
     act(() => {

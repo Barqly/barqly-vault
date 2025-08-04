@@ -23,28 +23,36 @@ export const useFileEncryptionDemo = (): UseFileEncryptionReturn => {
     selectedFiles: null,
   });
 
-  const selectFiles = useCallback(async (selectionType: 'Files' | 'Folder'): Promise<void> => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+  const selectFiles = useCallback(
+    async (paths: string[], selectionType: 'Files' | 'Folder'): Promise<void> => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-    // Simulate file selection delay
-    await new Promise((resolve) => setTimeout(resolve, DEMO_DELAYS.fileSelection));
+      // Simulate file selection delay
+      await new Promise((resolve) => setTimeout(resolve, DEMO_DELAYS.fileSelection));
 
-    const mockSelection: FileSelection = {
-      paths:
-        selectionType === 'Files'
-          ? MOCK_FILE_PATHS.toEncrypt
-          : ['/Users/demo/Documents/BitcoinBackup'],
-      total_size: selectionType === 'Files' ? 1048576 : 5242880,
-      file_count: selectionType === 'Files' ? 3 : 12,
-      selection_type: selectionType,
-    };
+      // Use provided paths or fall back to defaults for demo
+      const actualPaths =
+        paths.length > 0
+          ? paths
+          : selectionType === 'Files'
+            ? MOCK_FILE_PATHS.toEncrypt
+            : ['/Users/demo/Documents/BitcoinBackup'];
 
-    setState((prev) => ({
-      ...prev,
-      isLoading: false,
-      selectedFiles: mockSelection,
-    }));
-  }, []);
+      const mockSelection: FileSelection = {
+        paths: actualPaths,
+        total_size: selectionType === 'Files' ? 1048576 : 5242880,
+        file_count: actualPaths.length,
+        selection_type: selectionType,
+      };
+
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        selectedFiles: mockSelection,
+      }));
+    },
+    [],
+  );
 
   const encryptFiles = useCallback(async (_keyId: string, outputName?: string): Promise<void> => {
     setState((prev) => ({ ...prev, isLoading: true, error: null, success: null }));

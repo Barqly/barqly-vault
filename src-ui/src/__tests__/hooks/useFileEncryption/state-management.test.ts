@@ -46,7 +46,7 @@ describe('useFileEncryption - State Management', () => {
     );
 
     act(() => {
-      result.current.selectFiles('Files');
+      result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
     });
 
     expect(result.current.isLoading).toBe(true);

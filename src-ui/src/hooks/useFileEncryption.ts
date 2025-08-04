@@ -17,7 +17,7 @@ export interface FileEncryptionState {
 }
 
 export interface FileEncryptionActions {
-  selectFiles: (selectionType: 'Files' | 'Folder') => Promise<void>;
+  selectFiles: (paths: string[], selectionType: 'Files' | 'Folder') => Promise<void>;
   encryptFiles: (keyId: string, outputName?: string, outputPath?: string) => Promise<void>;
   reset: () => void;
   clearError: () => void;
@@ -44,50 +44,66 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
     progress: null,
   });
 
-  const selectFiles = useCallback(async (selectionType: 'Files' | 'Folder'): Promise<void> => {
-    setState((prev) => ({
-      ...prev,
-      isLoading: true,
-      error: null,
-    }));
-
-    try {
-      // Call the backend command - pass the selection type string directly
-      const result = await safeInvoke<FileSelection>('select_files', selectionType);
-
+  const selectFiles = useCallback(
+    async (paths: string[], selectionType: 'Files' | 'Folder'): Promise<void> => {
       setState((prev) => ({
         ...prev,
-        isLoading: false,
-        selectedFiles: result,
+        isLoading: true,
+        error: null,
       }));
-    } catch (error) {
-      // Handle different types of errors
-      let commandError: CommandError;
 
-      if (error && typeof error === 'object' && 'code' in error) {
-        // This is already a CommandError
-        commandError = error as CommandError;
-      } else {
-        // Convert generic errors to CommandError
-        commandError = {
-          code: ErrorCode.INTERNAL_ERROR,
-          message: error instanceof Error ? error.message : 'File selection failed',
-          recovery_guidance:
-            'Please try selecting files again. If the problem persists, restart the application.',
-          user_actionable: true,
+      try {
+        // Create a FileSelection object from the provided paths
+        // Calculate total size and file count
+        let totalSize = 0;
+        let fileCount = paths.length;
+
+        // For now, we'll use placeholder sizes since we can't access file system from browser context
+        // In a real implementation, this would be calculated from actual file metadata
+        totalSize = fileCount * 1024 * 100; // Placeholder: 100KB per file average
+
+        const result: FileSelection = {
+          paths,
+          total_size: totalSize,
+          file_count: fileCount,
+          selection_type: selectionType,
         };
+
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          selectedFiles: result,
+        }));
+      } catch (error) {
+        // Handle different types of errors
+        let commandError: CommandError;
+
+        if (error && typeof error === 'object' && 'code' in error) {
+          // This is already a CommandError
+          commandError = error as CommandError;
+        } else {
+          // Convert generic errors to CommandError
+          commandError = {
+            code: ErrorCode.INTERNAL_ERROR,
+            message: error instanceof Error ? error.message : 'File selection failed',
+            recovery_guidance:
+              'Please try selecting files again. If the problem persists, restart the application.',
+            user_actionable: true,
+          };
+        }
+
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: commandError,
+        }));
+
+        // Re-throw for components that need to handle errors
+        throw commandError;
       }
-
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: commandError,
-      }));
-
-      // Re-throw for components that need to handle errors
-      throw commandError;
-    }
-  }, []);
+    },
+    [],
+  );
 
   const encryptFiles = useCallback(
     async (keyId: string, outputName?: string, outputPath?: string): Promise<void> => {
