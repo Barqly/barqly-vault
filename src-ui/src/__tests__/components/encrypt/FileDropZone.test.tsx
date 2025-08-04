@@ -249,8 +249,8 @@ describe('FileDropZone', () => {
       );
 
       expect(screen.getByText('Selected:')).toBeInTheDocument();
-      expect(screen.getByText(/2\s+files/)).toBeInTheDocument();
-      expect(screen.getByText(/2\.00 MB/)).toBeInTheDocument();
+      // 2048576 bytes = 1.95 MB
+      expect(screen.getByText(/2 files, 1\.95 MB/)).toBeInTheDocument();
       expect(screen.getByText('file1.txt')).toBeInTheDocument();
       expect(screen.getByText('file2.pdf')).toBeInTheDocument();
     });
@@ -269,8 +269,7 @@ describe('FileDropZone', () => {
         />,
       );
 
-      expect(screen.getByText(/1\s+file/)).toBeInTheDocument();
-      expect(screen.getByText(/1\.0 KB/)).toBeInTheDocument();
+      expect(screen.getByText(/1 file, 1\.0 KB/)).toBeInTheDocument();
     });
 
     it('should call onClearFiles when Clear button is clicked', () => {
@@ -315,8 +314,9 @@ describe('FileDropZone', () => {
           />,
         );
 
-        expect(screen.getByText(/1\s+file/)).toBeInTheDocument();
-        expect(screen.getByText(new RegExp(expected.replace('.', '\\.')))).toBeInTheDocument();
+        expect(
+          screen.getByText(new RegExp(`1 file, ${expected.replace('.', '\\.')}`)),
+        ).toBeInTheDocument();
         rerender(<div />); // Clear for next test
       });
     });

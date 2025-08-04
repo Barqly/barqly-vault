@@ -18,7 +18,7 @@ export interface FileEncryptionState {
 
 export interface FileEncryptionActions {
   selectFiles: (selectionType: 'Files' | 'Folder') => Promise<void>;
-  encryptFiles: (keyId: string, outputName?: string) => Promise<void>;
+  encryptFiles: (keyId: string, outputName?: string, outputPath?: string) => Promise<void>;
   reset: () => void;
   clearError: () => void;
   clearSelection: () => void;
@@ -90,7 +90,7 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
   }, []);
 
   const encryptFiles = useCallback(
-    async (keyId: string, outputName?: string): Promise<void> => {
+    async (keyId: string, outputName?: string, outputPath?: string): Promise<void> => {
       setState((prev) => ({
         ...prev,
         isLoading: true,
@@ -132,6 +132,7 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
             keyId: keyId,
             filePaths: state.selectedFiles.paths,
             outputName: outputName,
+            outputPath: outputPath, // Now supported by backend!
           };
 
           // Call the backend command - the safeInvoke will wrap it in 'input' parameter

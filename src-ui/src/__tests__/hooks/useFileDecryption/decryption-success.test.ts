@@ -91,12 +91,17 @@ describe('useFileDecryption - Decryption Success', () => {
       await result.current.decryptFile();
     });
 
-    expect(mockSafeInvoke).toHaveBeenCalledWith('decrypt_data', {
-      encrypted_file: '/path/to/encrypted.age',
-      key_id: 'test-key',
-      output_dir: '/output',
-      passphrase: 'test-passphrase',
-    });
+    expect(mockSafeInvoke).toHaveBeenNthCalledWith(
+      2,
+      'decrypt_data',
+      {
+        encryptedFile: '/path/to/encrypted.age',
+        keyId: 'test-key',
+        output_dir: '/output',
+        passphrase: 'test-passphrase',
+      },
+      'useFileDecryption',
+    );
   });
 
   it('should set up progress listener for decryption', async () => {

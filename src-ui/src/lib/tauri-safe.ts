@@ -99,7 +99,7 @@ export async function safeInvoke<T>(
       get_cache_metrics: null, // No parameters
 
       // File commands
-      select_files: 'selectionType', // Takes the selection type wrapped in selectionType parameter
+      select_files: 'selectionType', // Takes SelectionType wrapped in 'selectionType' parameter
       get_file_info: 'paths',
       create_manifest: 'file_paths',
     };
@@ -107,12 +107,12 @@ export async function safeInvoke<T>(
     let invokeArgs = args;
     const paramName = commandParameterMap[cmd];
 
-    // Special handling for delete_key_command which takes a string directly
+    // Special handling for commands that take strings directly
     if (cmd === 'delete_key_command' && typeof args === 'object' && 'key_id' in args) {
       invokeArgs = args.key_id;
     } else if (paramName && args) {
       // If the command expects a specific parameter name and args don't already have it
-      if (!(paramName in args)) {
+      if (typeof args !== 'object' || !(paramName in args)) {
         invokeArgs = { [paramName]: args };
       }
     } else if (paramName === null && !args) {

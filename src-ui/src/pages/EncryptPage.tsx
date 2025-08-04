@@ -72,14 +72,12 @@ const EncryptPage: React.FC = () => {
 
   // Handle encryption
   const handleEncrypt = async () => {
-    // Note: outputPath is collected but not used yet - backend doesn't support it
-    // This will be fixed when backend adds outputPath support
     if (!selectedKeyId || !selectedFiles) return;
 
     try {
       setStartTime(Date.now());
-      // TODO: Pass outputPath when backend supports it
-      await encryptFiles(selectedKeyId, archiveName || undefined);
+      // Pass outputPath to backend (now supported!)
+      await encryptFiles(selectedKeyId, archiveName || undefined, outputPath || undefined);
 
       // Create result for success component
       const duration = Math.round((Date.now() - startTime) / 1000);
@@ -366,16 +364,9 @@ const EncryptPage: React.FC = () => {
                   </h3>
                 </div>
 
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 mb-4">
                   Where should your encrypted vault be saved?
                 </p>
-
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Note:</strong> Output path selection is currently for preview only.
-                    Files will be saved to the default location until backend support is added.
-                  </p>
-                </div>
 
                 <DestinationSelector
                   outputPath={outputPath}

@@ -1,6 +1,8 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, FileText, FolderOpen } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-dialog';
+import { listen } from '@tauri-apps/api/event';
+import { isTauri } from '../../lib/environment/platform';
 
 interface FileDropZoneProps {
   mode: 'files' | 'folder' | null;
@@ -18,12 +20,72 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
   disabled = false,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isOverDropZone, setIsOverDropZone] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  // Native Tauri file-drop listener for better drag-and-drop experience
+  useEffect(() => {
+    if (!isTauri() || disabled || !mode) return;
+
+    let unlisten: (() => void) | undefined;
+
+    const setupListener = async () => {
+      try {
+        // Listen for Tauri's native file-drop events
+        unlisten = await listen<string[]>('tauri://file-drop', async (event) => {
+          // Check if the drop happened over our drop zone
+          if (isOverDropZone && event.payload && event.payload.length > 0) {
+            const paths = event.payload;
+
+            // Validate based on mode
+            if (mode === 'folder') {
+              // For folder mode, we should only accept one path
+              onFilesSelected([paths[0]]);
+            } else {
+              // For files mode, accept all paths
+              onFilesSelected(paths);
+            }
+
+            setIsDragging(false);
+            setIsOverDropZone(false);
+          }
+        });
+
+        // Also listen for drag events to show visual feedback
+        const dragOverUnlisten = await listen('tauri://drag-enter', () => {
+          setIsDragging(true);
+        });
+
+        const dragLeaveUnlisten = await listen('tauri://drag-leave', () => {
+          if (!isOverDropZone) {
+            setIsDragging(false);
+          }
+        });
+
+        // Combine unlisteners
+        const originalUnlisten = unlisten;
+        unlisten = () => {
+          originalUnlisten?.();
+          dragOverUnlisten?.();
+          dragLeaveUnlisten?.();
+        };
+      } catch (error) {
+        console.error('Failed to setup Tauri file-drop listener:', error);
+      }
+    };
+
+    setupListener();
+
+    return () => {
+      unlisten?.();
+    };
+  }, [mode, disabled, isOverDropZone, onFilesSelected]);
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
+    setIsOverDropZone(true);
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
@@ -31,6 +93,7 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
     e.stopPropagation();
     if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
       setIsDragging(false);
+      setIsOverDropZone(false);
     }
   }, []);
 
@@ -44,38 +107,37 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
+      setIsOverDropZone(false);
 
       if (disabled || !mode) return;
 
-      // In Tauri desktop apps, drag and drop from the file system doesn't provide
-      // full file paths through the web drag API for security reasons.
-      // We need to use the native file dialog instead.
+      // In non-Tauri environments or as fallback, use the dialog
+      if (!isTauri()) {
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+          // Fallback: open file dialog
+          console.log('Using fallback file dialog for file selection...');
 
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0) {
-        // Since we can't get the actual file paths from the drag event,
-        // we'll open the file dialog for the user to select the files
-        // This is a limitation of the web security model in Tauri
-        console.log('Files were dropped, opening file dialog for proper selection...');
+          try {
+            const result = await open({
+              multiple: mode === 'files',
+              directory: mode === 'folder',
+              title:
+                mode === 'files'
+                  ? 'Select the files you just dropped'
+                  : 'Select the folder you just dropped',
+            });
 
-        try {
-          const result = await open({
-            multiple: mode === 'files',
-            directory: mode === 'folder',
-            title:
-              mode === 'files'
-                ? 'Select the files you just dropped'
-                : 'Select the folder you just dropped',
-          });
-
-          if (result) {
-            const paths = Array.isArray(result) ? result : [result];
-            onFilesSelected(paths);
+            if (result) {
+              const paths = Array.isArray(result) ? result : [result];
+              onFilesSelected(paths);
+            }
+          } catch (error) {
+            console.error('File selection error:', error);
           }
-        } catch (error) {
-          console.error('File selection error:', error);
         }
       }
+      // If in Tauri, the native listener will handle the drop event
     },
     [disabled, mode, onFilesSelected],
   );
@@ -186,7 +248,9 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
       </p>
       <p className="text-sm text-gray-500 mb-1">- or -</p>
       <p className="text-xs text-gray-400 mb-3">
-        {mode && '(Dropping files will open the file dialog)'}
+        {mode && isTauri()
+          ? 'Drop files directly to add them'
+          : mode && '(Dropping files will open the file dialog)'}
       </p>
       <div className="flex gap-3">
         <button

@@ -146,6 +146,7 @@ export interface EncryptDataInput {
   keyId: string;
   filePaths: string[];
   outputName?: string;
+  outputPath?: string; // Optional output directory path
 }
 
 export interface DecryptDataInput {

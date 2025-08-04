@@ -100,9 +100,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
 
     try {
       // Call the backend command to select encrypted file
-      const result = await safeInvoke<FileSelection>('select_files', {
-        selection_type: 'Files',
-      });
+      const result = await safeInvoke<FileSelection>('select_files', 'Files', 'useFileDecryption');
 
       // For decryption, we expect only one .age file
       if (result.paths.length === 0) {
@@ -239,7 +237,11 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
         };
 
         // Call the backend command
-        const result = await safeInvoke<DecryptionResult>('decrypt_data', { ...decryptionInput });
+        const result = await safeInvoke<DecryptionResult>(
+          'decrypt_data',
+          { ...decryptionInput },
+          'useFileDecryption',
+        );
 
         // Update success state
         setState((prev) => ({
