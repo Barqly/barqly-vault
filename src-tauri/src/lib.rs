@@ -19,6 +19,7 @@ use commands::{
     get_progress,
     // Storage commands
     list_keys_command,
+    select_directory,
     // File commands
     select_files,
     update_config,
@@ -55,6 +56,7 @@ pub fn run() {
             get_cache_metrics,
             // File commands
             select_files,
+            select_directory,
             get_file_info,
             create_manifest,
         ])

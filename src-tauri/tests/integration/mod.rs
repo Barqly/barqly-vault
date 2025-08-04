@@ -11,6 +11,7 @@ pub mod decryption_integration_tests;
 pub mod encryption_integration_tests;
 pub mod file_ops_integration_tests;
 pub mod logging_integration_tests;
+pub mod output_path_integration_tests;
 pub mod workflows;
 
 use super::common::{TestSuite, TestSuiteConfig};

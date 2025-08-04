@@ -114,6 +114,7 @@ fn should_complete_encrypt_files_workflow_successfully() {
             file3.to_string_lossy().to_string(),
         ],
         output_name: Some("test_encrypted.age".to_string()),
+        output_path: None,
     };
 
     // When: Validating input
@@ -152,6 +153,7 @@ fn should_handle_encrypt_files_with_folder_selection() {
         key_id: key_id.clone(),
         file_paths: vec![folder_path.to_string_lossy().to_string()],
         output_name: None, // Use default naming
+        output_path: None,
     };
 
     // When: Validating input
@@ -180,6 +182,7 @@ fn should_handle_encrypt_files_key_not_found_error() {
         key_id: "non-existent-key".to_string(),
         file_paths: vec![file1.to_string_lossy().to_string()],
         output_name: None,
+        output_path: None,
     };
 
     // When: Validating input
@@ -348,6 +351,7 @@ fn should_complete_full_encryption_workflow_integration() {
             file2.to_string_lossy().to_string(),
         ],
         output_name: Some("workflow_test.age".to_string()),
+        output_path: None,
     };
 
     // Step 2: Prepare create_manifest input
@@ -410,6 +414,7 @@ fn should_handle_invalid_file_paths_in_encryption_workflow() {
             "/non/existent/file2.txt".to_string(),
         ],
         output_name: None,
+        output_path: None,
     };
 
     // When: Validating input
@@ -442,6 +447,7 @@ fn should_handle_large_file_list_in_encryption_workflow() {
         key_id: key_id.clone(),
         file_paths: file_paths.clone(),
         output_name: None,
+        output_path: None,
     };
 
     // When: Validating input
@@ -470,6 +476,7 @@ fn should_validate_encryption_workflow_performance() {
                 key_id: format!("key-{i}"),
                 file_paths: vec![format!("/path/to/file_{i}.txt")],
                 output_name: None,
+                output_path: None,
             };
             let _ = input.validate();
         }

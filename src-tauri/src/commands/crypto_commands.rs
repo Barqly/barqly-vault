@@ -80,6 +80,7 @@ pub struct EncryptDataInput {
     pub key_id: String,
     pub file_paths: Vec<String>,
     pub output_name: Option<String>,
+    pub output_path: Option<String>, // NEW: Optional directory path for output
 }
 
 /// Input for decryption command
@@ -649,13 +650,31 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
         ErrorCode::InvalidInput,
     )?;
 
-    // Determine output path
+    // Determine output directory and filename
+    let output_dir = if let Some(ref path) = input.output_path {
+        // Validate and use provided output directory
+        let dir_path = Path::new(path);
+        error_handler.handle_operation_error(
+            validate_output_directory(dir_path),
+            "validate_output_directory",
+            ErrorCode::InvalidPath,
+        )?;
+        dir_path.to_path_buf()
+    } else {
+        // Use current directory as fallback
+        error_handler.handle_operation_error(
+            std::env::current_dir(),
+            "get_current_directory",
+            ErrorCode::InternalError,
+        )?
+    };
+
     let output_name = input.output_name.unwrap_or_else(|| {
         let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-        format!("encrypted_{timestamp}.age")
+        format!("encrypted_{timestamp}") // Note: .age extension added later
     });
 
-    let output_path = determine_output_path(&output_name, &error_handler)?;
+    let output_path = output_dir.join(&output_name);
 
     // Create file operations config
     let config = file_ops::FileOpsConfig::default();
@@ -775,7 +794,41 @@ fn create_file_selection_atomic(
     }
 }
 
-/// Determine output path with proper validation
+/// Validate output directory exists and is writable
+fn validate_output_directory(path: &Path) -> Result<(), std::io::Error> {
+    // Check if directory exists
+    if !path.exists() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("Output directory does not exist: {}", path.display()),
+        ));
+    }
+
+    // Check if it's actually a directory
+    if !path.is_dir() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("Output path is not a directory: {}", path.display()),
+        ));
+    }
+
+    // Check write permissions by attempting to create a temporary test file
+    let test_file = path.join(format!(".barqly_write_test_{}", std::process::id()));
+    match std::fs::write(&test_file, b"test") {
+        Ok(_) => {
+            // Clean up test file
+            let _ = std::fs::remove_file(test_file);
+            Ok(())
+        }
+        Err(e) => Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            format!("Cannot write to output directory: {e}"),
+        )),
+    }
+}
+
+/// Determine output path with proper validation (DEPRECATED - kept for backwards compatibility)
+#[allow(dead_code)]
 fn determine_output_path(
     output_name: &str,
     error_handler: &ErrorHandler,
@@ -788,7 +841,7 @@ fn determine_output_path(
             "get_current_directory",
             ErrorCode::InternalError,
         )?;
-        Ok(output_path.join(&current_dir))
+        Ok(current_dir.join(output_path)) // FIX: Corrected path joining order
     } else {
         Ok(output_path.to_path_buf())
     }

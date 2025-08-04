@@ -7,6 +7,7 @@
 //! - Error code mapping and formatting
 //! - Progress update structures
 
+pub mod output_path_tests;
 pub mod types_tests;
 pub mod validation_tests;
 

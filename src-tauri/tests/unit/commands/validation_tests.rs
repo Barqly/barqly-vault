@@ -118,6 +118,7 @@ mod crypto_validation_tests {
                 "/path/to/file2.txt".to_string(),
             ],
             output_name: Some("encrypted_output".to_string()),
+            output_path: None,
         };
 
         let result = input.validate();
@@ -130,6 +131,7 @@ mod crypto_validation_tests {
             key_id: "".to_string(),
             file_paths: vec!["/path/to/file.txt".to_string()],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -149,6 +151,7 @@ mod crypto_validation_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec![],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -552,6 +555,7 @@ mod task_3_3_command_tests {
                 "/path/to/file2.txt".to_string(),
             ],
             output_name: Some("encrypted_output.age".to_string()),
+            output_path: None,
         };
 
         let result = input.validate();
@@ -567,6 +571,7 @@ mod task_3_3_command_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec!["/path/to/folder".to_string()],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -579,6 +584,7 @@ mod task_3_3_command_tests {
             key_id: "".to_string(),
             file_paths: vec!["/path/to/file.txt".to_string()],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -598,6 +604,7 @@ mod task_3_3_command_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec![],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -617,6 +624,7 @@ mod task_3_3_command_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec!["/path/to/file.txt".to_string()],
             output_name: Some("custom_output.age".to_string()),
+            output_path: None,
         };
 
         let result = input.validate();
@@ -777,6 +785,7 @@ mod task_3_3_command_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec![long_path],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -793,6 +802,7 @@ mod task_3_3_command_tests {
             key_id: "test-key-id".to_string(),
             file_paths: many_files,
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -850,6 +860,7 @@ mod security_tests {
                 key_id: "test-key-id".to_string(),
                 file_paths: vec![malicious_path.to_string()],
                 output_name: None,
+                output_path: None,
             };
 
             let result = input.validate();
@@ -868,6 +879,7 @@ mod security_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec!["/tmp/symlink_to_sensitive".to_string()],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -893,6 +905,7 @@ mod security_tests {
                 key_id: "test-key-id".to_string(),
                 file_paths: vec![restricted_path.to_string()],
                 output_name: None,
+                output_path: None,
             };
 
             let result = input.validate();
@@ -919,6 +932,7 @@ mod security_tests {
             key_id: "test-key-id".to_string(),
             file_paths: large_file_list,
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -937,6 +951,7 @@ mod security_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec![long_path],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -955,12 +970,14 @@ mod security_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec!["/path/to/file1.txt".to_string()],
             output_name: None,
+            output_path: None,
         };
 
         let input2 = EncryptDataInput {
             key_id: "test-key-id-2".to_string(),
             file_paths: vec!["/path/to/file2.txt".to_string()],
             output_name: None,
+            output_path: None,
         };
 
         // Both inputs should validate successfully
@@ -981,6 +998,7 @@ mod security_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec!["/path/to/large_file.bin".to_string()],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -1001,6 +1019,7 @@ mod security_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec!["/root/protected_file.txt".to_string()],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -1017,6 +1036,7 @@ mod security_tests {
             key_id: "test-key-id".to_string(),
             file_paths: vec!["/mnt/nfs/unavailable/file.txt".to_string()],
             output_name: None,
+            output_path: None,
         };
 
         let result = input.validate();
@@ -1039,16 +1059,19 @@ mod security_tests {
                 key_id: "".to_string(), // Empty key_id
                 file_paths: vec!["/path/to/file.txt".to_string()],
                 output_name: None,
+                output_path: None,
             },
             EncryptDataInput {
                 key_id: "a".to_string(), // Single character
                 file_paths: vec!["/path/to/file.txt".to_string()],
                 output_name: None,
+                output_path: None,
             },
             EncryptDataInput {
                 key_id: "test-key-id".to_string(),
                 file_paths: vec![], // Empty file list
                 output_name: None,
+                output_path: None,
             },
         ];
 
@@ -1085,6 +1108,7 @@ mod security_tests {
                 key_id: "test-key-id".to_string(),
                 file_paths: vec![unicode_path.to_string()],
                 output_name: None,
+                output_path: None,
             };
 
             let result = input.validate();
