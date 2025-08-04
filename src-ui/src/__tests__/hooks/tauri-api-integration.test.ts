@@ -53,16 +53,22 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
 
       expect(keyGenResult.result.current.error).toEqual(webEnvironmentError);
 
-      // Test useFileEncryption
+      // Test useFileEncryption - selectFiles no longer calls backend, test encryptFiles instead
       const fileEncResult = renderHook(() => useFileEncryption());
 
+      // First select files (client-side, won't fail)
       await act(async () => {
-        await expect(
-          fileEncResult.result.current.selectFiles(
-            ['/mock/path/file1.txt', '/mock/path/file2.txt'],
-            'Files',
-          ),
-        ).rejects.toEqual(webEnvironmentError);
+        await fileEncResult.result.current.selectFiles(
+          ['/mock/path/file1.txt', '/mock/path/file2.txt'],
+          'Files',
+        );
+      });
+
+      // Now try to encrypt (this will call backend and fail)
+      await act(async () => {
+        await expect(fileEncResult.result.current.encryptFiles('test-key')).rejects.toEqual(
+          webEnvironmentError,
+        );
       });
 
       expect(fileEncResult.result.current.error).toEqual(webEnvironmentError);
@@ -106,11 +112,13 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
           try {
             if ('generateKey' in result.current) {
               await result.current.generateKey();
-            } else if ('selectFiles' in result.current) {
+            } else if ('selectFiles' in result.current && 'encryptFiles' in result.current) {
+              // selectFiles is client-side now, so test encryptFiles instead
               await result.current.selectFiles(
                 ['/mock/path/file1.txt', '/mock/path/file2.txt'],
                 'Files',
               );
+              await result.current.encryptFiles('test-key');
             } else if ('selectEncryptedFile' in result.current) {
               await result.current.selectEncryptedFile();
             }

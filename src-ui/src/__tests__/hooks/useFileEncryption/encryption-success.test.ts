@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
-import { FileSelection } from '../../../lib/api-types';
+import { ProgressUpdate } from '../../../lib/api-types';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -20,29 +20,21 @@ describe('useFileEncryption - Encryption Success', () => {
 
   it('should encrypt files successfully', async () => {
     const { result } = renderHook(() => useFileEncryption());
-    const mockEncryptionResult = {
-      encrypted_file_path: '/output/encrypted.age',
-      original_file_count: 2,
-      total_size_encrypted: 2048,
-      compression_ratio: 0.8,
-      encryption_time_ms: 1500,
-    };
+    const mockEncryptionResult = '/output/encrypted.age';
 
-    // First select files to set up the state
-    const mockFileSelection: FileSelection = {
-      paths: ['/path/to/file1.txt', '/path/to/file2.txt'],
-      selection_type: 'Files',
-      total_size: 1024,
-      file_count: 2,
-    };
-
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
+    // Mock the encryption result
     mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
+    // First select files using the new signature
     await act(async () => {
-      await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
+      await result.current.selectFiles(['/path/to/file1.txt', '/path/to/file2.txt'], 'Files');
     });
 
+    // Verify files were selected
+    expect(result.current.selectedFiles).toBeTruthy();
+    expect(result.current.selectedFiles?.file_count).toBe(2);
+
+    // Now encrypt
     await act(async () => {
       await result.current.encryptFiles('test-key');
     });
@@ -52,42 +44,60 @@ describe('useFileEncryption - Encryption Success', () => {
     expect(result.current.error).toBe(null);
   });
 
-  it('should call encrypt_files command with correct parameters', async () => {
+  it('should call encrypt_files command with correct snake_case parameters', async () => {
     const { result } = renderHook(() => useFileEncryption());
-    const mockEncryptionResult = {
-      encrypted_file_path: '/output/encrypted.age',
-      original_file_count: 1,
-      total_size_encrypted: 1024,
-      compression_ratio: 0.8,
-      encryption_time_ms: 1000,
-    };
+    const mockEncryptionResult = '/output/encrypted.age';
+    const testPaths = ['/path/to/file.txt'];
 
-    // First select files to set up the state
-    const mockFileSelection: FileSelection = {
-      paths: ['/path/to/file.txt'],
-      selection_type: 'Files',
-      total_size: 1024,
-      file_count: 1,
-    };
-
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
     mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
+    // Select files first
     await act(async () => {
-      await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
+      await result.current.selectFiles(testPaths, 'Files');
     });
 
+    // Encrypt with all parameters
+    await act(async () => {
+      await result.current.encryptFiles('test-key', 'my-archive', '/output/path');
+    });
+
+    // Check that encrypt_files was called with snake_case field names
+    expect(mockSafeInvoke).toHaveBeenCalledWith(
+      'encrypt_files',
+      {
+        key_id: 'test-key', // snake_case
+        file_paths: testPaths, // snake_case
+        output_name: 'my-archive', // snake_case
+        output_path: '/output/path', // snake_case
+      },
+      'useFileEncryption',
+    );
+  });
+
+  it('should handle optional parameters correctly', async () => {
+    const { result } = renderHook(() => useFileEncryption());
+    const mockEncryptionResult = '/output/encrypted.age';
+
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+
+    // Select files
+    await act(async () => {
+      await result.current.selectFiles(['/file.txt'], 'Files');
+    });
+
+    // Encrypt without optional parameters
     await act(async () => {
       await result.current.encryptFiles('test-key');
     });
 
-    expect(mockSafeInvoke).toHaveBeenNthCalledWith(
-      2,
+    // Verify undefined optional parameters are passed
+    expect(mockSafeInvoke).toHaveBeenCalledWith(
       'encrypt_files',
       {
-        keyId: 'test-key',
-        filePaths: ['/path/to/file.txt'],
-        outputName: undefined,
+        key_id: 'test-key',
+        file_paths: ['/file.txt'],
+        output_name: undefined,
+        output_path: undefined,
       },
       'useFileEncryption',
     );
@@ -95,33 +105,109 @@ describe('useFileEncryption - Encryption Success', () => {
 
   it('should set up progress listener for encryption', async () => {
     const { result } = renderHook(() => useFileEncryption());
-    const mockEncryptionResult = {
-      encrypted_file_path: '/output/encrypted.age',
-      original_file_count: 1,
-      total_size_encrypted: 1024,
-      compression_ratio: 0.8,
-      encryption_time_ms: 1000,
+    const mockEncryptionResult = '/output/encrypted.age';
+    const mockProgressUpdate: ProgressUpdate = {
+      operation_id: 'encrypt-123',
+      progress: 0.5,
+      message: 'Encrypting...',
+      timestamp: new Date().toISOString(),
     };
 
-    // First select files to set up the state
-    const mockFileSelection: FileSelection = {
-      paths: ['/path/to/file.txt'],
-      selection_type: 'Files',
-      total_size: 1024,
-      file_count: 1,
-    };
-
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
-
-    await act(async () => {
-      await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
+    // Mock the progress listener
+    let progressCallback: ((event: any) => void) | null = null;
+    mockSafeListen.mockImplementationOnce(async (_event, callback) => {
+      progressCallback = callback;
+      return () => Promise.resolve();
     });
 
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+
+    // Select files
     await act(async () => {
+      await result.current.selectFiles(['/file.txt'], 'Files');
+    });
+
+    // Start encryption
+    const encryptPromise = act(async () => {
       await result.current.encryptFiles('test-key');
     });
 
+    // Simulate progress update
+    if (progressCallback) {
+      act(() => {
+        progressCallback!({ payload: mockProgressUpdate });
+      });
+    }
+
+    await encryptPromise;
+
+    // Verify progress listener was set up
     expect(mockSafeListen).toHaveBeenCalledWith('encryption-progress', expect.any(Function));
+    expect(result.current.success).toEqual(mockEncryptionResult);
+  });
+
+  it('should handle encryption with multiple files', async () => {
+    const { result } = renderHook(() => useFileEncryption());
+    const mockEncryptionResult = '/output/encrypted.age';
+    const multiplePaths = ['/path/to/file1.txt', '/path/to/file2.txt', '/path/to/file3.txt'];
+
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+
+    // Select multiple files
+    await act(async () => {
+      await result.current.selectFiles(multiplePaths, 'Files');
+    });
+
+    expect(result.current.selectedFiles?.file_count).toBe(3);
+
+    // Encrypt
+    await act(async () => {
+      await result.current.encryptFiles('test-key', 'multi-file-archive');
+    });
+
+    // Verify all paths were included
+    expect(mockSafeInvoke).toHaveBeenCalledWith(
+      'encrypt_files',
+      expect.objectContaining({
+        key_id: 'test-key',
+        file_paths: multiplePaths,
+        output_name: 'multi-file-archive',
+      }),
+      'useFileEncryption',
+    );
+
+    expect(result.current.success).toEqual(mockEncryptionResult);
+  });
+
+  it('should handle folder encryption', async () => {
+    const { result } = renderHook(() => useFileEncryption());
+    const mockEncryptionResult = '/output/encrypted.age';
+    const folderPath = ['/path/to/folder'];
+
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+
+    // Select a folder
+    await act(async () => {
+      await result.current.selectFiles(folderPath, 'Folder');
+    });
+
+    expect(result.current.selectedFiles?.selection_type).toBe('Folder');
+
+    // Encrypt the folder
+    await act(async () => {
+      await result.current.encryptFiles('test-key', 'folder-archive');
+    });
+
+    expect(mockSafeInvoke).toHaveBeenCalledWith(
+      'encrypt_files',
+      expect.objectContaining({
+        key_id: 'test-key',
+        file_paths: folderPath,
+        output_name: 'folder-archive',
+      }),
+      'useFileEncryption',
+    );
+
+    expect(result.current.success).toEqual(mockEncryptionResult);
   });
 });

@@ -4,7 +4,6 @@ import {
   CommandError,
   ErrorCode,
   DecryptionResult,
-  DecryptDataInput,
   ProgressUpdate,
   FileSelection,
 } from '../lib/api-types';
@@ -229,9 +228,10 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
 
       try {
         // Prepare the decryption input
-        const decryptionInput: DecryptDataInput = {
-          encryptedFile: state.selectedFile,
-          keyId: state.selectedKeyId || '',
+        // Backend expects snake_case fields
+        const decryptionInput = {
+          encrypted_file: state.selectedFile,
+          key_id: state.selectedKeyId || '',
           passphrase: state.passphrase,
           output_dir: state.outputPath || '',
         };

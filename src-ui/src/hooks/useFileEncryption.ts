@@ -1,12 +1,6 @@
 import { useState, useCallback } from 'react';
 import { safeInvoke, safeListen } from '../lib/tauri-safe';
-import {
-  CommandError,
-  ErrorCode,
-  EncryptDataInput,
-  ProgressUpdate,
-  FileSelection,
-} from '../lib/api-types';
+import { CommandError, ErrorCode, ProgressUpdate, FileSelection } from '../lib/api-types';
 
 export interface FileEncryptionState {
   isLoading: boolean;
@@ -144,11 +138,12 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
 
         try {
           // Prepare the input for the backend command
-          const encryptInput: EncryptDataInput = {
-            keyId: keyId,
-            filePaths: state.selectedFiles.paths,
-            outputName: outputName,
-            outputPath: outputPath, // Now supported by backend!
+          // Backend expects snake_case fields
+          const encryptInput = {
+            key_id: keyId,
+            file_paths: state.selectedFiles.paths,
+            output_name: outputName,
+            output_path: outputPath, // Now supported by backend!
           };
 
           // Call the backend command - the safeInvoke will wrap it in 'input' parameter

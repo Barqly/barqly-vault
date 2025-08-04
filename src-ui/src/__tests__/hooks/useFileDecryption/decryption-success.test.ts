@@ -95,8 +95,8 @@ describe('useFileDecryption - Decryption Success', () => {
       2,
       'decrypt_data',
       {
-        encryptedFile: '/path/to/encrypted.age',
-        keyId: 'test-key',
+        encrypted_file: '/path/to/encrypted.age', // snake_case
+        key_id: 'test-key', // snake_case
         output_dir: '/output',
         passphrase: 'test-passphrase',
       },

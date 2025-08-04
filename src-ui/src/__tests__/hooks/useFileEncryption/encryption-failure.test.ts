@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
-import { CommandError, ErrorCode, FileSelection } from '../../../lib/api-types';
+import { CommandError, ErrorCode } from '../../../lib/api-types';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -27,24 +27,18 @@ describe('useFileEncryption - Encryption Failure', () => {
       user_actionable: true,
     };
 
-    // First select files to set up the state
-    const mockFileSelection: FileSelection = {
-      paths: ['/path/to/file.txt'],
-      selection_type: 'Files',
-      total_size: 1024,
-      file_count: 1,
-    };
-
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockSafeInvoke.mockRejectedValueOnce(encryptionError);
-
+    // Select files first (no backend call needed)
     await act(async () => {
-      await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
+      await result.current.selectFiles(['/path/to/file.txt'], 'Files');
     });
 
+    // Mock the encryption to fail
+    mockSafeInvoke.mockRejectedValueOnce(encryptionError);
+
+    // Try to encrypt
     await act(async () => {
       try {
-        await result.current.encryptFiles('test-key', '/output');
+        await result.current.encryptFiles('test-key', 'output');
       } catch (_error) {
         // Expected to throw
       }
@@ -52,6 +46,7 @@ describe('useFileEncryption - Encryption Failure', () => {
 
     expect(result.current.error).toEqual(encryptionError);
     expect(result.current.isLoading).toBe(false);
+    expect(result.current.success).toBe(null);
   });
 
   it('should re-throw errors for component handling', async () => {
@@ -63,53 +58,170 @@ describe('useFileEncryption - Encryption Failure', () => {
       user_actionable: true,
     };
 
-    // First select files to set up the state
-    const mockFileSelection: FileSelection = {
-      paths: ['/path/to/file.txt'],
-      selection_type: 'Files',
-      total_size: 1024,
-      file_count: 1,
-    };
+    // Select files first
+    await act(async () => {
+      await result.current.selectFiles(['/path/to/file.txt'], 'Files');
+    });
 
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
+    // Mock the encryption to fail
     mockSafeInvoke.mockRejectedValueOnce(encryptionError);
 
-    await act(async () => {
-      await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
-    });
-
-    let thrownError: CommandError | null = null;
-
-    await act(async () => {
-      try {
-        await result.current.encryptFiles('test-key', '/output');
-      } catch (error) {
-        thrownError = error as CommandError;
-      }
-    });
-
-    expect(thrownError).toEqual(encryptionError);
+    // Verify the error is thrown
+    await expect(
+      act(async () => {
+        await result.current.encryptFiles('test-key');
+      }),
+    ).rejects.toEqual(encryptionError);
   });
 
-  it('should clear error correctly', async () => {
+  it('should handle generic errors and convert them to CommandError', async () => {
     const { result } = renderHook(() => useFileEncryption());
+    const genericError = new Error('Something went wrong');
 
-    // First, create an error
+    // Select files first
+    await act(async () => {
+      await result.current.selectFiles(['/path/to/file.txt'], 'Files');
+    });
+
+    // Mock encryption to fail with generic error
+    mockSafeInvoke.mockRejectedValueOnce(genericError);
+
     await act(async () => {
       try {
-        await result.current.encryptFiles('', '/output');
+        await result.current.encryptFiles('test-key');
       } catch (_error) {
         // Expected to throw
       }
     });
 
-    expect(result.current.error).not.toBe(null);
+    // Should convert generic error to CommandError
+    expect(result.current.error).toEqual({
+      code: ErrorCode.INTERNAL_ERROR,
+      message: 'Something went wrong',
+      recovery_guidance: 'Please try again. If the problem persists, check your system.',
+      user_actionable: true,
+    });
+  });
 
-    // Clear the error
+  it('should validate that files are selected before encryption', async () => {
+    const { result } = renderHook(() => useFileEncryption());
+
+    // Try to encrypt without selecting files
+    await act(async () => {
+      try {
+        await result.current.encryptFiles('test-key');
+      } catch (_error) {
+        // Expected to throw
+      }
+    });
+
+    expect(result.current.error).toEqual({
+      code: ErrorCode.INVALID_INPUT,
+      message: 'No files selected for encryption',
+      recovery_guidance: 'Please select files or folders to encrypt',
+      user_actionable: true,
+    });
+  });
+
+  it('should validate that key is provided', async () => {
+    const { result } = renderHook(() => useFileEncryption());
+
+    // Select files first
+    await act(async () => {
+      await result.current.selectFiles(['/path/to/file.txt'], 'Files');
+    });
+
+    // Try to encrypt without key
+    await act(async () => {
+      try {
+        await result.current.encryptFiles('');
+      } catch (_error) {
+        // Expected to throw
+      }
+    });
+
+    expect(result.current.error).toEqual({
+      code: ErrorCode.INVALID_INPUT,
+      message: 'Encryption key is required',
+      recovery_guidance: 'Please select an encryption key',
+      user_actionable: true,
+    });
+  });
+
+  it('should clean up progress listener on error', async () => {
+    const { result } = renderHook(() => useFileEncryption());
+    const encryptionError = new Error('Encryption failed');
+
+    // Mock the listener to return an unlisten function
+    const mockUnlisten = vi.fn();
+    mockSafeListen.mockResolvedValueOnce(mockUnlisten);
+
+    // Select files
+    await act(async () => {
+      await result.current.selectFiles(['/file.txt'], 'Files');
+    });
+
+    // Mock encryption to fail
+    mockSafeInvoke.mockRejectedValueOnce(encryptionError);
+
+    await act(async () => {
+      try {
+        await result.current.encryptFiles('test-key');
+      } catch (_error) {
+        // Expected to throw
+      }
+    });
+
+    // Verify the listener was cleaned up
+    expect(mockUnlisten).toHaveBeenCalled();
+    expect(result.current.error).toBeTruthy();
+  });
+
+  it('should handle errors during different stages of encryption', async () => {
+    const { result } = renderHook(() => useFileEncryption());
+
+    // Test 1: Error when files are empty array
+    await act(async () => {
+      await result.current.selectFiles([], 'Files');
+    });
+
+    await act(async () => {
+      try {
+        await result.current.encryptFiles('test-key');
+      } catch (_error) {
+        // Expected to throw
+      }
+    });
+
+    expect(result.current.error?.code).toBe(ErrorCode.INVALID_INPUT);
+
+    // Clear error
     act(() => {
       result.current.clearError();
     });
 
-    expect(result.current.error).toBe(null);
+    // Test 2: Successful file selection but encryption fails
+    await act(async () => {
+      await result.current.selectFiles(['/valid/file.txt'], 'Files');
+    });
+
+    const networkError: CommandError = {
+      code: ErrorCode.INTERNAL_ERROR,
+      message: 'Network error',
+      recovery_guidance: 'Check your connection',
+      user_actionable: true,
+    };
+
+    mockSafeInvoke.mockRejectedValueOnce(networkError);
+
+    await act(async () => {
+      try {
+        await result.current.encryptFiles('test-key');
+      } catch (_error) {
+        // Expected to throw
+      }
+    });
+
+    expect(result.current.error).toEqual(networkError);
   });
 });

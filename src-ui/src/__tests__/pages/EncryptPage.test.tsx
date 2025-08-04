@@ -21,12 +21,12 @@ vi.mock('../../components/forms/KeySelectionDropdown', () => ({
 }));
 
 vi.mock('../../components/encrypt/FileDropZone', () => ({
-  default: vi.fn(({ mode, onFilesSelected, selectedFiles, onClearFiles }) => (
+  default: vi.fn(({ onFilesSelected, selectedFiles, onClearFiles }) => (
     <div data-testid="file-drop-zone">
-      {!selectedFiles && mode && (
+      {!selectedFiles && (
         <>
-          <button onClick={() => onFilesSelected(['/test/file.txt'])}>Browse Files</button>
-          <button onClick={() => onFilesSelected(['/test/folder'])}>Browse Folder</button>
+          <button onClick={() => onFilesSelected(['/test/file.txt'], 'files')}>Browse Files</button>
+          <button onClick={() => onFilesSelected(['/test/folder'], 'folder')}>Browse Folder</button>
         </>
       )}
       {selectedFiles && (
@@ -127,11 +127,11 @@ describe('EncryptPage', () => {
       expect(screen.getByText('Set Destination')).toBeInTheDocument();
     });
 
-    it('should render file selection mode buttons', () => {
+    it('should render file drop zone for file selection', () => {
       renderEncryptPage();
 
-      expect(screen.getByText('Files')).toBeInTheDocument();
-      expect(screen.getByText('Folder')).toBeInTheDocument();
+      // The FileDropZone is always rendered without mode selection
+      expect(screen.getByTestId('file-drop-zone')).toBeInTheDocument();
     });
 
     it('should render help section', () => {
@@ -143,44 +143,40 @@ describe('EncryptPage', () => {
   });
 
   describe('File Selection', () => {
-    it('should handle file mode selection', async () => {
+    it('should handle file selection', async () => {
       renderEncryptPage();
 
-      // First click the Files mode button to set the mode
-      const filesModeButton = screen.getByText('Files');
-      fireEvent.click(filesModeButton);
-
-      await waitFor(() => {
-        expect(screen.getByTestId('file-drop-zone')).toBeInTheDocument();
-      });
-    });
-
-    it('should handle folder mode selection', async () => {
-      renderEncryptPage();
-
-      // First click the Folder mode button to set the mode
-      const folderModeButton = screen.getByText('Folder');
-      fireEvent.click(folderModeButton);
-
-      await waitFor(() => {
-        expect(screen.getByTestId('file-drop-zone')).toBeInTheDocument();
-      });
-    });
-
-    it('should call selectFiles when files are selected', async () => {
-      // Start with no files selected so mode buttons are shown
-      renderEncryptPage();
-
-      // First set the mode to files
-      const filesModeButton = screen.getByText('Files');
-      fireEvent.click(filesModeButton);
-
-      // Now click Browse Files which triggers file selection
+      // FileDropZone is always present, click Browse Files directly
       const browseButton = screen.getByRole('button', { name: 'Browse Files' });
       fireEvent.click(browseButton);
 
       await waitFor(() => {
-        expect(mockSelectFiles).toHaveBeenCalledWith('Files');
+        expect(mockSelectFiles).toHaveBeenCalledWith(['/test/file.txt'], 'Files');
+      });
+    });
+
+    it('should handle folder selection', async () => {
+      renderEncryptPage();
+
+      // FileDropZone is always present, click Browse Folder directly
+      const browseButton = screen.getByRole('button', { name: 'Browse Folder' });
+      fireEvent.click(browseButton);
+
+      await waitFor(() => {
+        expect(mockSelectFiles).toHaveBeenCalledWith(['/test/folder'], 'Folder');
+      });
+    });
+
+    it('should call selectFiles when files are selected', async () => {
+      renderEncryptPage();
+
+      // Click Browse Files directly (no mode selection needed)
+      const browseButton = screen.getByRole('button', { name: 'Browse Files' });
+      fireEvent.click(browseButton);
+
+      await waitFor(() => {
+        // selectFiles now expects (paths, selectionType)
+        expect(mockSelectFiles).toHaveBeenCalledWith(['/test/file.txt'], 'Files');
       });
     });
 

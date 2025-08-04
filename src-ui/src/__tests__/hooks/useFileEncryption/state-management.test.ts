@@ -1,7 +1,6 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
-import { FileSelection } from '../../../lib/api-types';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -32,27 +31,89 @@ describe('useFileEncryption - State Management', () => {
     expect(result.current.selectedFiles).toBe(null);
   });
 
-  it('should set loading state during operations', async () => {
+  it('should manage state during file selection', async () => {
     const { result } = renderHook(() => useFileEncryption());
-    const mockFileSelection: FileSelection = {
-      paths: ['/path/to/file.txt'],
-      selection_type: 'Files',
-      total_size: 1024,
-      file_count: 1,
-    };
+    const testPaths = ['/mock/path/file1.txt', '/mock/path/file2.txt'];
 
-    mockSafeInvoke.mockImplementationOnce(
-      () => new Promise((resolve) => setTimeout(() => resolve(mockFileSelection), 100)),
-    );
+    // The new selectFiles implementation is synchronous after the initial state update
+    await act(async () => {
+      await result.current.selectFiles(testPaths, 'Files');
+    });
 
+    // After the operation completes, loading should be false
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.selectedFiles).toBeTruthy();
+    expect(result.current.selectedFiles?.file_count).toBe(2);
+    expect(result.current.selectedFiles?.paths).toEqual(testPaths);
+  });
+
+  it('should clear error when clearError is called', async () => {
+    const { result } = renderHook(() => useFileEncryption());
+
+    // First, set up state with selected files
+    await act(async () => {
+      await result.current.selectFiles(['/test.txt'], 'Files');
+    });
+
+    // Mock an error for encryption
+    const mockError = new Error('Encryption failed');
+    mockSafeInvoke.mockRejectedValueOnce(mockError);
+
+    // Try to encrypt (will fail)
+    await act(async () => {
+      try {
+        await result.current.encryptFiles('test-key', 'output');
+      } catch {
+        // Expected to fail
+      }
+    });
+
+    expect(result.current.error).toBeTruthy();
+
+    // Clear the error
     act(() => {
-      result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
+      result.current.clearError();
     });
 
-    expect(result.current.isLoading).toBe(true);
+    expect(result.current.error).toBe(null);
+  });
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+  it('should maintain state consistency through multiple operations', async () => {
+    const { result } = renderHook(() => useFileEncryption());
+
+    // Initial state
+    expect(result.current.selectedFiles).toBe(null);
+    expect(result.current.isLoading).toBe(false);
+
+    // Select files
+    await act(async () => {
+      await result.current.selectFiles(['/file1.txt', '/file2.txt'], 'Files');
     });
+
+    expect(result.current.selectedFiles).toBeTruthy();
+    expect(result.current.selectedFiles?.file_count).toBe(2);
+
+    // Clear selection
+    act(() => {
+      result.current.clearSelection();
+    });
+
+    expect(result.current.selectedFiles).toBe(null);
+
+    // Select different files
+    await act(async () => {
+      await result.current.selectFiles(['/file3.txt'], 'Files');
+    });
+
+    expect(result.current.selectedFiles?.file_count).toBe(1);
+
+    // Reset everything
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(result.current.selectedFiles).toBe(null);
+    expect(result.current.error).toBe(null);
+    expect(result.current.success).toBe(null);
   });
 });
