@@ -143,14 +143,14 @@ export interface ValidatePassphraseResponse {
 }
 
 export interface EncryptDataInput {
-  key_id: string;
-  file_paths: string[];
-  output_name?: string;
+  keyId: string;
+  filePaths: string[];
+  outputName?: string;
 }
 
 export interface DecryptDataInput {
-  encrypted_file: string;
-  key_id: string;
+  encryptedFile: string;
+  keyId: string;
   passphrase: string;
   output_dir: string;
 }

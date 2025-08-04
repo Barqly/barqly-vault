@@ -18,7 +18,14 @@ function App(): ReactElement {
         <Suspense fallback={<LoadingSpinner centered showText text="Loading page..." />}>
           <Routes>
             <Route path="/" element={<Navigate to="/setup" replace />} />
-            <Route path="/setup" element={<SetupPage />} />
+            <Route
+              path="/setup"
+              element={
+                <MainLayout>
+                  <SetupPage />
+                </MainLayout>
+              }
+            />
             <Route
               path="/encrypt"
               element={

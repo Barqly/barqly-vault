@@ -44,7 +44,7 @@ describe('useFileEncryption - Encryption Success', () => {
     });
 
     await act(async () => {
-      await result.current.encryptFiles('test-key', '/output');
+      await result.current.encryptFiles('test-key');
     });
 
     expect(result.current.success).toEqual(mockEncryptionResult);
@@ -78,14 +78,19 @@ describe('useFileEncryption - Encryption Success', () => {
     });
 
     await act(async () => {
-      await result.current.encryptFiles('test-key', '/output');
+      await result.current.encryptFiles('test-key');
     });
 
-    expect(mockSafeInvoke).toHaveBeenNthCalledWith(2, 'encrypt_files', {
-      file_paths: ['/path/to/file.txt'],
-      key_id: 'test-key',
-      output_name: undefined,
-    });
+    expect(mockSafeInvoke).toHaveBeenNthCalledWith(
+      2,
+      'encrypt_files',
+      {
+        keyId: 'test-key',
+        filePaths: ['/path/to/file.txt'],
+        outputName: undefined,
+      },
+      'useFileEncryption',
+    );
   });
 
   it('should set up progress listener for encryption', async () => {
@@ -114,7 +119,7 @@ describe('useFileEncryption - Encryption Success', () => {
     });
 
     await act(async () => {
-      await result.current.encryptFiles('test-key', '/output');
+      await result.current.encryptFiles('test-key');
     });
 
     expect(mockSafeListen).toHaveBeenCalledWith('encryption-progress', expect.any(Function));

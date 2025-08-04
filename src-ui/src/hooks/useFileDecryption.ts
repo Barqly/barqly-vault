@@ -232,8 +232,8 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
       try {
         // Prepare the decryption input
         const decryptionInput: DecryptDataInput = {
-          encrypted_file: state.selectedFile,
-          key_id: state.selectedKeyId || '',
+          encryptedFile: state.selectedFile,
+          keyId: state.selectedKeyId || '',
           passphrase: state.passphrase,
           output_dir: state.outputPath || '',
         };

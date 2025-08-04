@@ -18,7 +18,7 @@ export interface FileEncryptionState {
 
 export interface FileEncryptionActions {
   selectFiles: (selectionType: 'Files' | 'Folder') => Promise<void>;
-  encryptFiles: (keyId: string, outputPath: string, outputName?: string) => Promise<void>;
+  encryptFiles: (keyId: string, outputName?: string) => Promise<void>;
   reset: () => void;
   clearError: () => void;
   clearSelection: () => void;
@@ -52,10 +52,8 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
     }));
 
     try {
-      // Call the backend command
-      const result = await safeInvoke<FileSelection>('select_files', {
-        selection_type: selectionType,
-      });
+      // Call the backend command - pass the selection type string directly
+      const result = await safeInvoke<FileSelection>('select_files', selectionType);
 
       setState((prev) => ({
         ...prev,
@@ -92,7 +90,7 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
   }, []);
 
   const encryptFiles = useCallback(
-    async (keyId: string, outputPath: string, outputName?: string): Promise<void> => {
+    async (keyId: string, outputName?: string): Promise<void> => {
       setState((prev) => ({
         ...prev,
         isLoading: true,
@@ -120,15 +118,6 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
           } as CommandError;
         }
 
-        if (!outputPath?.trim()) {
-          throw {
-            code: ErrorCode.INVALID_INPUT,
-            message: 'Output path is required',
-            recovery_guidance: 'Please specify where to save the encrypted file',
-            user_actionable: true,
-          } as CommandError;
-        }
-
         // Create a progress listener
         const unlisten = await safeListen<ProgressUpdate>('encryption-progress', (event) => {
           setState((prev) => ({
@@ -140,13 +129,17 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
         try {
           // Prepare the input for the backend command
           const encryptInput: EncryptDataInput = {
-            key_id: keyId,
-            file_paths: state.selectedFiles.paths,
-            output_name: outputName,
+            keyId: keyId,
+            filePaths: state.selectedFiles.paths,
+            outputName: outputName,
           };
 
-          // Call the backend command
-          const result = await safeInvoke<string>('encrypt_files', { ...encryptInput });
+          // Call the backend command - the safeInvoke will wrap it in 'input' parameter
+          const result = await safeInvoke<string>(
+            'encrypt_files',
+            encryptInput,
+            'useFileEncryption',
+          );
 
           // Update success state
           setState((prev) => ({

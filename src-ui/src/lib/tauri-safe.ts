@@ -85,7 +85,7 @@ export async function safeInvoke<T>(
       // Crypto commands with 'input' parameter
       generate_key: 'input',
       validate_passphrase: 'input',
-      encrypt_files: 'input',
+      encrypt_files: 'input', // Takes EncryptDataInput wrapped in 'input'
       decrypt_data: 'input',
       get_encryption_status: 'input',
       verify_manifest: 'input',
@@ -99,7 +99,7 @@ export async function safeInvoke<T>(
       get_cache_metrics: null, // No parameters
 
       // File commands
-      select_files: 'selection_type',
+      select_files: 'selectionType', // Takes the selection type wrapped in selectionType parameter
       get_file_info: 'paths',
       create_manifest: 'file_paths',
     };

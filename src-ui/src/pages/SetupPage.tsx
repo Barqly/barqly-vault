@@ -117,15 +117,15 @@ const SetupPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Main content with integrated header */}
+      {/* Main content */}
       <div className="p-4">
         <div className="w-full max-w-2xl mx-auto">
           <FormSection
             title="Create Your Security Identity"
             subtitle=""
             showTrustBadges={true}
-            showNavigation={true}
-            showBrandHeader={true}
+            showNavigation={false}
+            showBrandHeader={false}
           >
             {/* Skip navigation target */}
             <div id="main-form" tabIndex={-1} className="sr-only">
