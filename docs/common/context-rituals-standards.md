@@ -1,5 +1,5 @@
 # Context Management Strategy for Agent-Driven Development
-*A Comprehensive Design Document and Implementation Guide*
+* Lean Context Management - A Comprehensive Design Document and Implementation Guide*
 
 ## Executive Summary
 

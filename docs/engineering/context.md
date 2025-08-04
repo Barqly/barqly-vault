@@ -233,6 +233,7 @@ src-ui/src/App.demo.tsx        # Demo system entry point
 scripts/automated-dev.sh       # Smart development automation
 scripts/pre-commit             # Quality gates
 Makefile                       # All commands in one place
+docs/engineering/desktop-app-debugging-guide.md  # Desktop app troubleshooting
 ```
 
 ### Recovery Commands

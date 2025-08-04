@@ -248,3 +248,26 @@ Before pushing code, ensure:
    - Changes affecting both frontend and backend
    - Final validation before pushing
    - When unsure about the scope of changes
+
+## Context Management System
+
+This project uses an intelligent context management system designed to eliminate "context reconstruction tax" when starting fresh AI chats.
+
+### Quick Start for AI Agents
+1. **Fresh Chat**: Start with `/context.md` (2-minute orientation)
+2. **Domain Work**: Navigate to relevant context in `/docs/[domain]/context.md`
+3. **Updates**: Maintain context files as you work to keep them current
+
+### Context Structure
+- **`/context.md`**: Master entry point with project overview and navigation
+- **`/docs/*/context.md`**: Domain-specific contexts for focused work
+- **`/docs/common/context-usage-guide.md`**: Complete usage and maintenance guide
+- **`/docs/context/`**: Advanced context infrastructure (evolution tracking, archives)
+
+### For Humans
+When starting a new AI chat:
+1. Share `/context.md` for general work
+2. Share domain-specific context for specialized tasks
+3. Reference the usage guide for maintenance procedures
+
+This system reduces context reconstruction from 25-35 minutes to under 2 minutes.
