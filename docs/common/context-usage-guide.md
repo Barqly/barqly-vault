@@ -1,7 +1,7 @@
 # Context Usage Guide
 *Practical instructions for using and maintaining the Barqly Vault context management system*
 
-## Quick Start: Your First 5 Minutes
+## Quick Onboarding: Your First 5 Minutes
 
 ### For AI Agents Starting Fresh
 1. **Read `/context.md`** (2 minutes) - Get project overview and current state

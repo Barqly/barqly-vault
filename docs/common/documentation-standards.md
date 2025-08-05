@@ -9,7 +9,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 ## Context Management Integration
 - **Master Context**: `/context.md` - 2-minute project orientation
 - **Domain Contexts**: `/docs/[domain]/context.md` - Domain-specific entry points
-- **Context Usage**: See `/docs/common/context-usage-guide.md` for maintenance procedures
+- **Context Usage**: See `/docs/common/context-usage.ai.md` for maintenance procedures
 
 ## Agent Input/Output Declarations
 

@@ -25,6 +25,7 @@ help:
 	@echo "  validate      - Comprehensive validation (mirrors CI exactly)"
 	@echo "  validate-ui   - Validate frontend only (lint, format, types, tests)"
 	@echo "  validate-rust - Validate Rust only (fmt, clippy, tests)"
+	@echo "  validate-docs - Check documentation updates (definition of done)"
 	@echo "  lint          - Run ESLint on frontend"
 	@echo "  fmt           - Run Prettier on frontend"
 	@echo "  rust-lint     - Run clippy on Rust code"
@@ -166,6 +167,10 @@ validate-rust:
 	@echo "✅ All Rust tests passed"
 	@echo ""
 	@echo "🎉 Rust validation complete!"
+
+validate-docs:
+	@echo "📝 Checking documentation updates..."
+	@./scripts/validate-docs.sh
 
 # Development tools
 dev-reset:
