@@ -40,6 +40,15 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
 
   const selectFiles = useCallback(
     async (paths: string[], selectionType: 'Files' | 'Folder'): Promise<void> => {
+      // Comprehensive logging at entry point
+      console.log('[useFileEncryption] selectFiles called with:', {
+        paths,
+        selectionType,
+        timestamp: Date.now(),
+        pathCount: paths.length,
+        firstPath: paths[0],
+      });
+
       setState((prev) => ({
         ...prev,
         isLoading: true,
@@ -48,6 +57,9 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
 
       try {
         // Call the backend to get actual file information
+        console.log('[useFileEncryption] Calling backend get_file_info with paths:', paths);
+        const startTime = Date.now();
+
         const fileInfos = await safeInvoke<
           Array<{
             path: string;
@@ -59,24 +71,57 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
           }>
         >('get_file_info', paths, 'useFileEncryption.selectFiles');
 
+        const backendTime = Date.now() - startTime;
+        console.log('[useFileEncryption] Backend get_file_info response:', {
+          fileInfos,
+          responseTime: `${backendTime}ms`,
+          fileCount: fileInfos.length,
+          timestamp: Date.now(),
+        });
+
         // Calculate total size and file count from actual file info
         let totalSize = 0;
         let fileCount = 0;
+
+        console.log('[useFileEncryption] Processing file info for size calculation...');
 
         for (const fileInfo of fileInfos) {
           totalSize += fileInfo.size;
 
           if (fileInfo.is_file) {
             fileCount += 1;
+            console.log('[useFileEncryption] Processing file:', {
+              name: fileInfo.name,
+              size: fileInfo.size,
+              path: fileInfo.path,
+            });
           } else if (fileInfo.is_directory && fileInfo.file_count !== null) {
             // Use the actual file count from the backend for directories
             fileCount += fileInfo.file_count;
+            console.log('[useFileEncryption] Processing directory with file count:', {
+              name: fileInfo.name,
+              size: fileInfo.size,
+              fileCount: fileInfo.file_count,
+              path: fileInfo.path,
+            });
           } else if (fileInfo.is_directory) {
             // Fallback: estimate if file_count is not provided
             const estimatedFiles = Math.max(1, Math.round(fileInfo.size / (100 * 1024)));
             fileCount += estimatedFiles;
+            console.log('[useFileEncryption] Processing directory (estimated):', {
+              name: fileInfo.name,
+              size: fileInfo.size,
+              estimatedFiles,
+              path: fileInfo.path,
+            });
           }
         }
+
+        console.log('[useFileEncryption] File info processing complete:', {
+          totalSize,
+          fileCount,
+          timestamp: Date.now(),
+        });
 
         const result: FileSelection = {
           paths,
@@ -85,12 +130,26 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
           selection_type: selectionType,
         };
 
+        console.log('[useFileEncryption] File selection result prepared:', {
+          result,
+          timestamp: Date.now(),
+        });
+
         setState((prev) => ({
           ...prev,
           isLoading: false,
           selectedFiles: result,
         }));
+
+        console.log('[useFileEncryption] State updated successfully with selected files');
       } catch (error) {
+        console.error('[useFileEncryption] Error in selectFiles:', {
+          error,
+          errorType: typeof error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          timestamp: Date.now(),
+        });
+
         // Handle different types of errors
         let commandError: CommandError;
 

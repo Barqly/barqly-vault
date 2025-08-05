@@ -8,6 +8,8 @@ import DestinationSelector from '../components/encrypt/DestinationSelector';
 import EncryptionProgress from '../components/encrypt/EncryptionProgress';
 import EncryptionSuccess from '../components/encrypt/EncryptionSuccess';
 import TrustBadge from '../components/ui/TrustBadge';
+import { useToast } from '../hooks/useToast';
+import ToastContainer from '../components/ui/ToastContainer';
 
 const EncryptPage: React.FC = () => {
   const {
@@ -23,51 +25,156 @@ const EncryptPage: React.FC = () => {
     clearSelection,
   } = useFileEncryption();
 
+  // Toast notifications
+  const { toasts, showError, showSuccess, showWarning, removeToast } = useToast();
+
   // Component state
   const [selectedKeyId, setSelectedKeyId] = useState<string>('');
   const [outputPath, setOutputPath] = useState<string>('');
   const [archiveName, setArchiveName] = useState<string>('');
   const [encryptionResult, setEncryptionResult] = useState<any>(null);
   const [startTime, setStartTime] = useState<number>(0);
+  const [retryCount, setRetryCount] = useState<number>(0);
 
   // Step tracking
   const [currentStep, setCurrentStep] = useState(1);
 
   // Update current step based on state
   useEffect(() => {
+    const prevStep = currentStep;
+    let newStep = 1;
+
     if (selectedFiles && selectedKeyId) {
-      setCurrentStep(3);
+      newStep = 3;
     } else if (selectedFiles) {
-      setCurrentStep(2);
+      newStep = 2;
     } else {
-      setCurrentStep(1);
+      newStep = 1;
     }
-  }, [selectedFiles, selectedKeyId]);
+
+    if (prevStep !== newStep) {
+      console.log('[EncryptPage] Step changed:', {
+        from: prevStep,
+        to: newStep,
+        hasSelectedFiles: !!selectedFiles,
+        hasSelectedKey: !!selectedKeyId,
+        timestamp: Date.now(),
+      });
+      setCurrentStep(newStep);
+    }
+  }, [selectedFiles, selectedKeyId, currentStep]);
 
   // Check if ready to encrypt - outputPath is optional for now
   const isReadyToEncrypt = selectedFiles && selectedKeyId;
 
   // Handle file selection
   const handleFilesSelected = useCallback(
-    async (paths: string[], selectionType: 'files' | 'folder') => {
+    async (paths: string[], selectionType: 'Files' | 'Folder') => {
+      console.log('[EncryptPage] handleFilesSelected called:', {
+        paths,
+        selectionType,
+        timestamp: Date.now(),
+        pathCount: paths.length,
+      });
+
       try {
         // Pass the actual file paths to the selectFiles function
-        await selectFiles(paths, selectionType === 'files' ? 'Files' : 'Folder');
+        console.log('[EncryptPage] Calling selectFiles hook...');
+        const startTime = Date.now();
+
+        await selectFiles(paths, selectionType);
+
+        const duration = Date.now() - startTime;
+        console.log('[EncryptPage] selectFiles completed successfully:', {
+          duration: `${duration}ms`,
+          timestamp: Date.now(),
+        });
+
+        // Show success notification
+        showSuccess(
+          'Files selected',
+          `${paths.length} ${paths.length === 1 ? 'item' : 'items'} ready for encryption`,
+        );
+
+        // Reset retry count on successful selection
+        setRetryCount(0);
       } catch (err) {
-        console.error('File selection error:', err);
+        console.error('[EncryptPage] File selection error:', {
+          error: err,
+          errorType: typeof err,
+          errorMessage: err instanceof Error ? err.message : String(err),
+          timestamp: Date.now(),
+        });
+
+        // Show error with retry option
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        showError('File selection failed', errorMessage, {
+          action: {
+            label: 'Retry',
+            onClick: () => {
+              setRetryCount((prev) => prev + 1);
+              // Retry the file selection
+              handleFilesSelected(paths, selectionType);
+            },
+          },
+        });
       }
     },
-    [selectFiles],
+    [selectFiles, showSuccess, showError, showWarning],
+  );
+
+  // Handle FileDropZone errors
+  const handleDropZoneError = useCallback(
+    (error: Error) => {
+      console.error('[EncryptPage] FileDropZone error:', error);
+
+      // Check if this is a transient error that might benefit from retry
+      const isTransientError =
+        error.message.includes('backend') || error.message.includes('failed to process');
+
+      if (isTransientError && retryCount < 3) {
+        showWarning('Drop operation failed', `${error.message}. This might be a temporary issue.`, {
+          duration: 6000,
+        });
+      } else {
+        showError('Unable to process dropped files', error.message, {
+          action: {
+            label: 'Try browse instead',
+            onClick: () => {
+              // This will be handled by the browse buttons in FileDropZone
+              console.log('[EncryptPage] User opted to use browse instead of drag-drop');
+            },
+          },
+        });
+      }
+    },
+    [showError, showWarning, retryCount],
   );
 
   // Handle encryption
   const handleEncrypt = async () => {
-    if (!selectedKeyId || !selectedFiles) return;
+    console.log('[EncryptPage] handleEncrypt called:', {
+      selectedKeyId,
+      selectedFiles,
+      archiveName,
+      outputPath,
+      timestamp: Date.now(),
+    });
+
+    if (!selectedKeyId || !selectedFiles) {
+      console.log('[EncryptPage] Encryption aborted - missing required data');
+      showWarning('Cannot encrypt', 'Please select files and an encryption key first');
+      return;
+    }
 
     try {
       setStartTime(Date.now());
+      console.log('[EncryptPage] Starting encryption...');
+
       // Pass outputPath to backend (now supported!)
       await encryptFiles(selectedKeyId, archiveName || undefined, outputPath || undefined);
+
+      console.log('[EncryptPage] Encryption completed successfully');
 
       // Create result for success component
       const duration = Math.round((Date.now() - startTime) / 1000);
@@ -82,13 +189,41 @@ const EncryptPage: React.FC = () => {
         duration,
         keyUsed: selectedKeyId,
       });
+
+      // Show success notification
+      showSuccess(
+        'Encryption successful',
+        `Your vault has been created successfully in ${duration} seconds`,
+      );
     } catch (err) {
-      console.error('Encryption error:', err);
+      console.error('[EncryptPage] Encryption error:', {
+        error: err,
+        errorType: typeof err,
+        errorMessage: err instanceof Error ? err.message : String(err),
+        timestamp: Date.now(),
+      });
+
+      // Show error with retry option
+      const errorMessage = err instanceof Error ? err.message : 'Encryption failed';
+      showError('Encryption failed', errorMessage, {
+        action: {
+          label: 'Retry',
+          onClick: () => {
+            // Retry encryption with the same parameters
+            handleEncrypt();
+          },
+        },
+        duration: 10000, // Keep error visible longer for encryption failures
+      });
     }
   };
 
   // Handle reset
   const handleReset = () => {
+    console.log('[EncryptPage] Resetting all state:', {
+      timestamp: Date.now(),
+    });
+
     reset();
     setSelectedKeyId('');
     setOutputPath('');
@@ -111,6 +246,8 @@ const EncryptPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
       {/* Page Header with Trust Indicators */}
       <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
         <div className="flex items-center gap-2 mb-2">
@@ -250,6 +387,7 @@ const EncryptPage: React.FC = () => {
                 onFilesSelected={handleFilesSelected}
                 selectedFiles={selectedFiles}
                 onClearFiles={clearSelection}
+                onError={handleDropZoneError}
                 disabled={isLoading}
               />
             </div>
@@ -284,7 +422,13 @@ const EncryptPage: React.FC = () => {
 
                 <KeySelectionDropdown
                   value={selectedKeyId}
-                  onChange={setSelectedKeyId}
+                  onChange={(keyId) => {
+                    console.log('[EncryptPage] Key selected:', {
+                      keyId,
+                      timestamp: Date.now(),
+                    });
+                    setSelectedKeyId(keyId);
+                  }}
                   placeholder="Select an encryption key..."
                 />
 
@@ -320,9 +464,21 @@ const EncryptPage: React.FC = () => {
 
                 <DestinationSelector
                   outputPath={outputPath}
-                  onPathChange={setOutputPath}
+                  onPathChange={(path) => {
+                    console.log('[EncryptPage] Output path changed:', {
+                      path,
+                      timestamp: Date.now(),
+                    });
+                    setOutputPath(path);
+                  }}
                   archiveName={archiveName}
-                  onNameChange={setArchiveName}
+                  onNameChange={(name) => {
+                    console.log('[EncryptPage] Archive name changed:', {
+                      name,
+                      timestamp: Date.now(),
+                    });
+                    setArchiveName(name);
+                  }}
                   disabled={isLoading}
                 />
               </div>

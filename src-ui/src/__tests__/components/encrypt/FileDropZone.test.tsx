@@ -55,7 +55,7 @@ describe('FileDropZone', () => {
         });
         expect(mockOnFilesSelected).toHaveBeenCalledWith(
           ['/path/to/file1.txt', '/path/to/file2.txt'],
-          'files',
+          'Files',
         );
       });
     });
@@ -80,7 +80,7 @@ describe('FileDropZone', () => {
           directory: true,
           title: 'Select Folder to Encrypt',
         });
-        expect(mockOnFilesSelected).toHaveBeenCalledWith(['/path/to/folder'], 'folder');
+        expect(mockOnFilesSelected).toHaveBeenCalledWith(['/path/to/folder'], 'Folder');
       });
     });
 
@@ -153,7 +153,7 @@ describe('FileDropZone', () => {
           directory: false,
           title: 'Select the files you just dropped',
         });
-        expect(mockOnFilesSelected).toHaveBeenCalledWith(['/path/to/dropped.txt'], 'files');
+        expect(mockOnFilesSelected).toHaveBeenCalledWith(['/path/to/dropped.txt'], 'Files');
       });
     });
 

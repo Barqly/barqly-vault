@@ -25,8 +25,8 @@ vi.mock('../../components/encrypt/FileDropZone', () => ({
     <div data-testid="file-drop-zone">
       {!selectedFiles && (
         <>
-          <button onClick={() => onFilesSelected(['/test/file.txt'], 'files')}>Browse Files</button>
-          <button onClick={() => onFilesSelected(['/test/folder'], 'folder')}>Browse Folder</button>
+          <button onClick={() => onFilesSelected(['/test/file.txt'], 'Files')}>Browse Files</button>
+          <button onClick={() => onFilesSelected(['/test/folder'], 'Folder')}>Browse Folder</button>
         </>
       )}
       {selectedFiles && (

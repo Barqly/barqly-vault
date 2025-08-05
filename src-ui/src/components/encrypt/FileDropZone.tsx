@@ -3,11 +3,14 @@ import { Upload, FileText } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { listen } from '@tauri-apps/api/event';
 import { isTauri } from '../../lib/environment/platform';
+import { safeInvoke } from '../../lib/tauri-safe';
+import { withRetry } from '../../utils/retry';
 
 interface FileDropZoneProps {
-  onFilesSelected: (paths: string[], selectionType: 'files' | 'folder') => void;
+  onFilesSelected: (paths: string[], selectionType: 'Files' | 'Folder') => void;
   selectedFiles: { paths: string[]; file_count: number; total_size: number } | null;
   onClearFiles: () => void;
+  onError?: (error: Error) => void; // New prop for error handling
   disabled?: boolean;
 }
 
@@ -15,6 +18,7 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
   onFilesSelected,
   selectedFiles,
   onClearFiles,
+  onError,
   disabled = false,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -44,26 +48,130 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
       try {
         // Listen for Tauri's native file-drop events
         unlisten = await listen<string[]>('tauri://file-drop', async (event) => {
-          // Process the dropped files
           if (event.payload && event.payload.length > 0) {
             const paths = event.payload;
 
-            // Auto-detect if it's a folder or files
-            // If single path and it's a directory, treat as folder
-            // Otherwise treat as files
-            const selectionType = paths.length === 1 && paths[0].endsWith('/') ? 'folder' : 'files';
-
-            console.log('[FileDropZone] Calling onFilesSelected with:', {
+            console.log('[FileDropZone] Received file-drop event:', {
+              timestamp: Date.now(),
               paths,
-              selectionType,
+              pathCount: paths.length,
+              firstPath: paths[0],
             });
 
             try {
+              // Call backend to get actual file information
+              console.log('[FileDropZone] Querying backend for file metadata...');
+              const backendStartTime = Date.now();
+
+              let fileInfos;
+              let selectionType: 'Files' | 'Folder' = 'Files';
+
+              try {
+                // Try with retry logic for transient failures
+                fileInfos = await withRetry(
+                  () =>
+                    safeInvoke<
+                      Array<{
+                        path: string;
+                        is_file: boolean;
+                        is_directory: boolean;
+                        name: string;
+                        size: number;
+                        file_count?: number;
+                      }>
+                    >('get_file_info', paths, 'FileDropZone'),
+                  {
+                    maxAttempts: 2,
+                    initialDelay: 500,
+                    onRetry: (error, attempt) => {
+                      console.log(
+                        `[FileDropZone] Retrying get_file_info (attempt ${attempt}):`,
+                        error.message,
+                      );
+                    },
+                  },
+                );
+
+                const backendTime = Date.now() - backendStartTime;
+                console.log('[FileDropZone] Received file info from backend:', {
+                  fileInfos,
+                  responseTime: `${backendTime}ms`,
+                  timestamp: Date.now(),
+                });
+
+                // Determine selection type from actual file system data
+                if (fileInfos && fileInfos.length > 0) {
+                  // If we have a single path and it's a directory, it's a folder selection
+                  // Otherwise it's a files selection (even if multiple directories)
+                  if (paths.length === 1 && fileInfos[0].is_directory) {
+                    selectionType = 'Folder';
+                  } else {
+                    selectionType = 'Files';
+                  }
+                } else {
+                  throw new Error('No file information received from backend');
+                }
+              } catch (backendError) {
+                // Fallback mechanism: if get_file_info fails, try alternative detection
+                console.warn(
+                  '[FileDropZone] Backend call failed, using fallback detection:',
+                  backendError,
+                );
+
+                // Fallback: assume folder if single path, files if multiple
+                // This is a reasonable heuristic for drag-drop scenarios
+                selectionType = paths.length === 1 ? 'Folder' : 'Files';
+
+                console.warn('[FileDropZone] Using fallback selection type:', {
+                  selectionType,
+                  pathCount: paths.length,
+                  reasoning:
+                    paths.length === 1
+                      ? 'Single path - assuming Folder'
+                      : 'Multiple paths - assuming Files',
+                });
+              }
+
+              console.log('[FileDropZone] Detected drop with type:', {
+                paths,
+                selectionType,
+                fileInfos,
+                timestamp: Date.now(),
+              });
+
               // Use the ref to ensure we always have the latest callback
+              console.log('[FileDropZone] Calling onFilesSelected callback...');
+              const callbackStartTime = Date.now();
+
               await onFilesSelectedRef.current(paths, selectionType);
-              console.log('[FileDropZone] onFilesSelected completed successfully');
+
+              const callbackTime = Date.now() - callbackStartTime;
+              console.log('[FileDropZone] Files selected successfully:', {
+                callbackTime: `${callbackTime}ms`,
+                timestamp: Date.now(),
+              });
             } catch (error) {
-              console.error('[FileDropZone] Error in onFilesSelected:', error);
+              console.error('[FileDropZone] Failed to process dropped files:', error);
+
+              // Create a proper Error object with user-friendly message
+              const errorObj = error instanceof Error ? error : new Error(String(error));
+              const userError = new Error(
+                `Failed to process dropped files: ${errorObj.message}. Please try again or use the browse buttons.`,
+              );
+
+              // Call the error callback if provided
+              if (onError) {
+                onError(userError);
+              }
+
+              // Log detailed error information for debugging
+              console.error('[FileDropZone] Error details:', {
+                error,
+                errorType: typeof error,
+                errorMessage: errorObj.message,
+                paths,
+                timestamp: Date.now(),
+              });
             }
 
             setIsDragging(false);
@@ -73,10 +181,17 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
 
         // Also listen for drag events to show visual feedback
         const dragOverUnlisten = await listen('tauri://drag-enter', () => {
+          console.log('[FileDropZone] Tauri drag-enter event received:', {
+            timestamp: Date.now(),
+          });
           setIsDragging(true);
         });
 
         const dragLeaveUnlisten = await listen('tauri://drag-leave', () => {
+          console.log('[FileDropZone] Tauri drag-leave event received:', {
+            timestamp: Date.now(),
+            isOverDropZoneRef: isOverDropZoneRef.current,
+          });
           // Only clear dragging state if not over the drop zone
           if (!isOverDropZoneRef.current) {
             setIsDragging(false);
@@ -105,6 +220,15 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    console.log('[FileDropZone] DragEnter event:', {
+      timestamp: Date.now(),
+      isDragging: true,
+      isOverDropZone: true,
+      dataTransferTypes: e.dataTransfer?.types,
+      dataTransferItemsCount: e.dataTransfer?.items?.length,
+    });
+
     setIsDragging(true);
     setIsOverDropZone(true);
     isOverDropZoneRef.current = true;
@@ -113,27 +237,58 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+
+    const isLeavingDropZone =
+      dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node);
+
+    console.log('[FileDropZone] DragLeave event:', {
+      timestamp: Date.now(),
+      isLeavingDropZone,
+      relatedTarget: (e.relatedTarget as HTMLElement)?.nodeName || null,
+      currentTarget: e.currentTarget?.nodeName,
+    });
+
+    if (isLeavingDropZone) {
       setIsDragging(false);
       setIsOverDropZone(false);
       isOverDropZoneRef.current = false;
+      console.log('[FileDropZone] Clearing drag state - left drop zone');
     }
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // Log only occasionally to avoid spam
+    if (Math.random() < 0.1) {
+      console.log('[FileDropZone] DragOver event (sampled 10%):', {
+        timestamp: Date.now(),
+      });
+    }
   }, []);
 
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
+
+      console.log('[FileDropZone] Drop event received:', {
+        timestamp: Date.now(),
+        disabled,
+        isTauri: isTauri(),
+        dataTransferTypes: e.dataTransfer?.types,
+        dataTransferFilesCount: e.dataTransfer?.files?.length,
+        dataTransferItemsCount: e.dataTransfer?.items?.length,
+      });
+
       setIsDragging(false);
       setIsOverDropZone(false);
       isOverDropZoneRef.current = false;
 
-      if (disabled) return;
+      if (disabled) {
+        console.log('[FileDropZone] Drop ignored - component is disabled');
+        return;
+      }
 
       // In non-Tauri environments or as fallback, use the dialog
       if (!isTauri()) {
@@ -152,10 +307,14 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
 
             if (result) {
               const paths = Array.isArray(result) ? result : [result];
-              onFilesSelectedRef.current(paths, 'files');
+              onFilesSelectedRef.current(paths, 'Files');
             }
           } catch (error) {
             console.error('File selection error:', error);
+            const errorObj = error instanceof Error ? error : new Error(String(error));
+            if (onError) {
+              onError(new Error(`File selection failed: ${errorObj.message}`));
+            }
           }
         }
       }
@@ -167,6 +326,10 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
   const handleBrowseFiles = useCallback(async () => {
     if (disabled) return;
 
+    console.log('[FileDropZone] Browse Files button clicked:', {
+      timestamp: Date.now(),
+    });
+
     try {
       const result = await open({
         multiple: true,
@@ -176,15 +339,28 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
 
       if (result) {
         const paths = Array.isArray(result) ? result : [result];
-        onFilesSelectedRef.current(paths, 'files');
+        console.log('[FileDropZone] Files selected from dialog:', {
+          paths,
+          pathCount: paths.length,
+          timestamp: Date.now(),
+        });
+        onFilesSelectedRef.current(paths, 'Files');
       }
     } catch (error) {
       console.error('File selection error:', error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      if (onError) {
+        onError(new Error(`Failed to open file browser: ${errorObj.message}`));
+      }
     }
-  }, [disabled]); // Fixed: using ref instead
+  }, [disabled, onError]); // Fixed: using ref instead
 
   const handleBrowseFolder = useCallback(async () => {
     if (disabled) return;
+
+    console.log('[FileDropZone] Browse Folder button clicked:', {
+      timestamp: Date.now(),
+    });
 
     try {
       const result = await open({
@@ -195,12 +371,21 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
 
       if (result) {
         const paths = Array.isArray(result) ? result : [result];
-        onFilesSelectedRef.current(paths, 'folder');
+        console.log('[FileDropZone] Folder selected from dialog:', {
+          paths,
+          pathCount: paths.length,
+          timestamp: Date.now(),
+        });
+        onFilesSelectedRef.current(paths, 'Folder');
       }
     } catch (error) {
       console.error('File selection error:', error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      if (onError) {
+        onError(new Error(`Failed to open file browser: ${errorObj.message}`));
+      }
     }
-  }, [disabled]); // Fixed: using ref instead
+  }, [disabled, onError]); // Fixed: using ref instead
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
