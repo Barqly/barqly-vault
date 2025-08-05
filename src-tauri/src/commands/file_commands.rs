@@ -36,6 +36,7 @@ pub struct FileInfo {
     pub size: u64,
     pub is_file: bool,
     pub is_directory: bool,
+    pub file_count: Option<usize>, // For directories, the number of files inside
 }
 
 /// Manifest for encrypted archives
@@ -143,9 +144,6 @@ pub async fn select_directory(_title: Option<String>, _window: Window) -> Comman
 pub async fn get_file_info(paths: Vec<String>) -> CommandResponse<Vec<FileInfo>> {
     info!("Getting file info for {} paths", paths.len());
 
-    // TODO: Implement actual file system operations
-    // For now, return placeholder file info
-
     let file_infos: Vec<FileInfo> = paths
         .into_iter()
         .map(|path| {
@@ -155,6 +153,28 @@ pub async fn get_file_info(paths: Vec<String>) -> CommandResponse<Vec<FileInfo>>
             let metadata = std::fs::metadata(&path_buf)
                 .map_err(|e| CommandError::operation(ErrorCode::FileNotFound, e.to_string()))?;
 
+            // Calculate size and file count - for directories, calculate recursively
+            let (size, file_count) = if metadata.is_dir() {
+                // Calculate total size and count of all files in directory recursively
+                let mut total_size = 0u64;
+                let mut total_count = 0usize;
+
+                for entry in walkdir::WalkDir::new(&path_buf)
+                    .into_iter()
+                    .filter_map(|e| e.ok())
+                    .filter(|e| e.file_type().is_file())
+                {
+                    if let Ok(m) = entry.metadata() {
+                        total_size += m.len();
+                        total_count += 1;
+                    }
+                }
+
+                (total_size, Some(total_count))
+            } else {
+                (metadata.len(), None)
+            };
+
             Ok(FileInfo {
                 path: path.clone(),
                 name: path_buf
@@ -162,9 +182,10 @@ pub async fn get_file_info(paths: Vec<String>) -> CommandResponse<Vec<FileInfo>>
                     .unwrap_or_default()
                     .to_string_lossy()
                     .to_string(),
-                size: metadata.len(),
+                size,
                 is_file: metadata.is_file(),
                 is_directory: metadata.is_dir(),
+                file_count,
             })
         })
         .collect::<Result<Vec<FileInfo>, CommandError>>()?;
@@ -269,6 +290,7 @@ pub async fn create_manifest(file_paths: Vec<String>) -> CommandResponse<Manifes
             size: entry.size,
             is_file: true,
             is_directory: false,
+            file_count: None,
         })
         .collect();
 

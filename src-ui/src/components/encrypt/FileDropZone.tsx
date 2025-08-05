@@ -20,6 +20,19 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isOverDropZone, setIsOverDropZone] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+  // Use a ref to track the drop zone state for the Tauri listener
+  const isOverDropZoneRef = useRef(false);
+  // Use a ref to always have the latest callback
+  const onFilesSelectedRef = useRef(onFilesSelected);
+
+  // Update the refs whenever they change
+  useEffect(() => {
+    isOverDropZoneRef.current = isOverDropZone;
+  }, [isOverDropZone]);
+
+  useEffect(() => {
+    onFilesSelectedRef.current = onFilesSelected;
+  }, [onFilesSelected]);
 
   // Native Tauri file-drop listener for better drag-and-drop experience
   useEffect(() => {
@@ -31,15 +44,27 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
       try {
         // Listen for Tauri's native file-drop events
         unlisten = await listen<string[]>('tauri://file-drop', async (event) => {
-          // Check if the drop happened over our drop zone
-          if (isOverDropZone && event.payload && event.payload.length > 0) {
+          // Process the dropped files
+          if (event.payload && event.payload.length > 0) {
             const paths = event.payload;
 
             // Auto-detect if it's a folder or files
             // If single path and it's a directory, treat as folder
             // Otherwise treat as files
             const selectionType = paths.length === 1 && paths[0].endsWith('/') ? 'folder' : 'files';
-            onFilesSelected(paths, selectionType);
+
+            console.log('[FileDropZone] Calling onFilesSelected with:', {
+              paths,
+              selectionType,
+            });
+
+            try {
+              // Use the ref to ensure we always have the latest callback
+              await onFilesSelectedRef.current(paths, selectionType);
+              console.log('[FileDropZone] onFilesSelected completed successfully');
+            } catch (error) {
+              console.error('[FileDropZone] Error in onFilesSelected:', error);
+            }
 
             setIsDragging(false);
             setIsOverDropZone(false);
@@ -52,7 +77,8 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
         });
 
         const dragLeaveUnlisten = await listen('tauri://drag-leave', () => {
-          if (!isOverDropZone) {
+          // Only clear dragging state if not over the drop zone
+          if (!isOverDropZoneRef.current) {
             setIsDragging(false);
           }
         });
@@ -74,13 +100,14 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
     return () => {
       unlisten?.();
     };
-  }, [disabled, isOverDropZone, onFilesSelected]);
+  }, [disabled]); // Remove onFilesSelected from deps since we use ref
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
     setIsOverDropZone(true);
+    isOverDropZoneRef.current = true;
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
@@ -89,6 +116,7 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
     if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
       setIsDragging(false);
       setIsOverDropZone(false);
+      isOverDropZoneRef.current = false;
     }
   }, []);
 
@@ -103,6 +131,7 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
       e.stopPropagation();
       setIsDragging(false);
       setIsOverDropZone(false);
+      isOverDropZoneRef.current = false;
 
       if (disabled) return;
 
@@ -123,7 +152,7 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
 
             if (result) {
               const paths = Array.isArray(result) ? result : [result];
-              onFilesSelected(paths, 'files');
+              onFilesSelectedRef.current(paths, 'files');
             }
           } catch (error) {
             console.error('File selection error:', error);
@@ -132,7 +161,7 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
       }
       // If in Tauri, the native listener will handle the drop event
     },
-    [disabled, onFilesSelected],
+    [disabled], // Fixed: using ref instead
   );
 
   const handleBrowseFiles = useCallback(async () => {
@@ -147,12 +176,12 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
 
       if (result) {
         const paths = Array.isArray(result) ? result : [result];
-        onFilesSelected(paths, 'files');
+        onFilesSelectedRef.current(paths, 'files');
       }
     } catch (error) {
       console.error('File selection error:', error);
     }
-  }, [disabled, onFilesSelected]);
+  }, [disabled]); // Fixed: using ref instead
 
   const handleBrowseFolder = useCallback(async () => {
     if (disabled) return;
@@ -166,12 +195,12 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
 
       if (result) {
         const paths = Array.isArray(result) ? result : [result];
-        onFilesSelected(paths, 'folder');
+        onFilesSelectedRef.current(paths, 'folder');
       }
     } catch (error) {
       console.error('File selection error:', error);
     }
-  }, [disabled, onFilesSelected]);
+  }, [disabled]); // Fixed: using ref instead
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;

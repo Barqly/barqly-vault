@@ -27,7 +27,19 @@ describe('useFileEncryption - Encryption Failure', () => {
       user_actionable: true,
     };
 
-    // Select files first (no backend call needed)
+    // Mock get_file_info for file selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/path/to/file.txt',
+        name: 'file.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
+
+    // Select files first
     await act(async () => {
       await result.current.selectFiles(['/path/to/file.txt'], 'Files');
     });
@@ -58,6 +70,18 @@ describe('useFileEncryption - Encryption Failure', () => {
       user_actionable: true,
     };
 
+    // Mock get_file_info for file selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/path/to/file.txt',
+        name: 'file.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
+
     // Select files first
     await act(async () => {
       await result.current.selectFiles(['/path/to/file.txt'], 'Files');
@@ -77,6 +101,18 @@ describe('useFileEncryption - Encryption Failure', () => {
   it('should handle generic errors and convert them to CommandError', async () => {
     const { result } = renderHook(() => useFileEncryption());
     const genericError = new Error('Something went wrong');
+
+    // Mock get_file_info for file selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/path/to/file.txt',
+        name: 'file.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
 
     // Select files first
     await act(async () => {
@@ -126,6 +162,18 @@ describe('useFileEncryption - Encryption Failure', () => {
   it('should validate that key is provided', async () => {
     const { result } = renderHook(() => useFileEncryption());
 
+    // Mock get_file_info for file selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/path/to/file.txt',
+        name: 'file.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
+
     // Select files first
     await act(async () => {
       await result.current.selectFiles(['/path/to/file.txt'], 'Files');
@@ -156,6 +204,18 @@ describe('useFileEncryption - Encryption Failure', () => {
     const mockUnlisten = vi.fn();
     mockSafeListen.mockResolvedValueOnce(mockUnlisten);
 
+    // Mock get_file_info for file selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/file.txt',
+        name: 'file.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
+
     // Select files
     await act(async () => {
       await result.current.selectFiles(['/file.txt'], 'Files');
@@ -180,6 +240,9 @@ describe('useFileEncryption - Encryption Failure', () => {
   it('should handle errors during different stages of encryption', async () => {
     const { result } = renderHook(() => useFileEncryption());
 
+    // Mock get_file_info for empty selection
+    mockSafeInvoke.mockResolvedValueOnce([]);
+
     // Test 1: Error when files are empty array
     await act(async () => {
       await result.current.selectFiles([], 'Files');
@@ -199,6 +262,18 @@ describe('useFileEncryption - Encryption Failure', () => {
     act(() => {
       result.current.clearError();
     });
+
+    // Mock get_file_info for second selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/valid/file.txt',
+        name: 'file.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
 
     // Test 2: Successful file selection but encryption fails
     await act(async () => {

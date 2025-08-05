@@ -1,7 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
-import { FileSelection } from '../../../lib/api-types';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -34,20 +33,32 @@ describe('useFileEncryption - Progress Tracking', () => {
       return Promise.resolve(() => Promise.resolve());
     });
 
-    // First select files to set up the state
-    const mockFileSelection: FileSelection = {
-      paths: ['/path/to/file.txt'],
-      selection_type: 'Files',
-      total_size: 1024,
-      file_count: 1,
-    };
-
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    // Mock get_file_info for file selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/mock/path/file1.txt',
+        name: 'file1.txt',
+        size: 512,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+      {
+        path: '/mock/path/file2.txt',
+        name: 'file2.txt',
+        size: 512,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
 
     await act(async () => {
       await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
     });
+
+    // Mock the encryption result
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     await act(async () => {
       result.current.encryptFiles('test-key', '/output');

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FolderOpen, Info } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-dialog';
-import { homeDir, join } from '@tauri-apps/api/path';
+import { documentDir, join } from '@tauri-apps/api/path';
 
 interface DestinationSelectorProps {
   outputPath: string;
@@ -25,8 +25,9 @@ const DestinationSelector: React.FC<DestinationSelectorProps> = ({
   useEffect(() => {
     const setDefault = async () => {
       try {
-        const home = await homeDir();
-        const vaultsPath = await join(home, 'Documents', 'Barqly-Vaults');
+        // Use documentDir for cross-platform compatibility
+        const docsPath = await documentDir();
+        const vaultsPath = await join(docsPath, 'Barqly-Vaults');
         setDefaultPath(vaultsPath);
         if (!outputPath) {
           onPathChange(vaultsPath);

@@ -51,20 +51,18 @@ mod output_path_validation_tests {
         let test_file = temp_dir.path().join("test.txt");
         fs::write(&test_file, "test content").expect("Failed to create test file");
 
-        let non_existent_path = "/tmp/non_existent_test_dir_12345";
+        let non_existent_path = temp_dir.path().join("new_created_dir");
 
         let input = EncryptDataInput {
             key_id: "test-key".to_string(),
             file_paths: vec![test_file.to_string_lossy().to_string()],
             output_name: Some("output.age".to_string()),
-            output_path: Some(non_existent_path.to_string()),
+            output_path: Some(non_existent_path.to_string_lossy().to_string()),
         };
 
-        // Note: Input validation may not check if directory exists
-        // The actual error would occur during encryption execution
+        // Input validation should pass - directory will be created during execution
         let result = input.validate();
-        // Just ensure it doesn't panic - actual directory check happens at runtime
-        let _ = result;
+        assert!(result.is_ok(), "Valid input should pass validation even with non-existent output directory (will be created)");
     }
 
     #[test]

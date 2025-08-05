@@ -35,7 +35,27 @@ describe('useFileEncryption - State Management', () => {
     const { result } = renderHook(() => useFileEncryption());
     const testPaths = ['/mock/path/file1.txt', '/mock/path/file2.txt'];
 
-    // The new selectFiles implementation is synchronous after the initial state update
+    // Mock get_file_info response
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: testPaths[0],
+        name: 'file1.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+      {
+        path: testPaths[1],
+        name: 'file2.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
+
+    // The new selectFiles implementation calls backend for file info
     await act(async () => {
       await result.current.selectFiles(testPaths, 'Files');
     });
@@ -49,6 +69,18 @@ describe('useFileEncryption - State Management', () => {
 
   it('should clear error when clearError is called', async () => {
     const { result } = renderHook(() => useFileEncryption());
+
+    // Mock get_file_info for file selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/test.txt',
+        name: 'test.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
 
     // First, set up state with selected files
     await act(async () => {
@@ -85,6 +117,26 @@ describe('useFileEncryption - State Management', () => {
     expect(result.current.selectedFiles).toBe(null);
     expect(result.current.isLoading).toBe(false);
 
+    // Mock get_file_info for file selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/file1.txt',
+        name: 'file1.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+      {
+        path: '/file2.txt',
+        name: 'file2.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
+
     // Select files
     await act(async () => {
       await result.current.selectFiles(['/file1.txt', '/file2.txt'], 'Files');
@@ -99,6 +151,18 @@ describe('useFileEncryption - State Management', () => {
     });
 
     expect(result.current.selectedFiles).toBe(null);
+
+    // Mock get_file_info for second selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/file3.txt',
+        name: 'file3.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
 
     // Select different files
     await act(async () => {

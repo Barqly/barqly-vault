@@ -173,24 +173,28 @@ mod encryption_with_output_path_tests {
         let test_file = temp_dir.path().join("test.txt");
         fs::write(&test_file, "Test content").expect("Failed to write test file");
 
-        // Use non-existent path for output
-        let non_existent = "/totally/non/existent/path/that/should/not/exist";
+        // Use non-existent but creatable path for output
+        let non_existent = temp_dir.path().join("auto_created_dir");
 
         let encrypt_input = EncryptDataInput {
             key_id: "test-key".to_string(),
             file_paths: vec![test_file.to_string_lossy().to_string()],
-            output_name: Some("will_fail".to_string()),
-            output_path: Some(non_existent.to_string()),
+            output_name: Some("test_output".to_string()),
+            output_path: Some(non_existent.to_string_lossy().to_string()),
         };
 
-        // Input validation might pass, actual error would occur during encryption
+        // Directory should not exist initially
         assert!(
-            !Path::new(non_existent).exists(),
-            "Non-existent path should not exist"
+            !non_existent.exists(),
+            "Directory should not exist initially"
         );
 
-        // Validation at input level may not check directory existence
-        let _ = encrypt_input.validate();
+        // Validation should pass - directory will be created during encryption
+        let validation_result = encrypt_input.validate();
+        assert!(
+            validation_result.is_ok(),
+            "Validation should pass even with non-existent directory (will be auto-created)"
+        );
     }
 
     #[test]

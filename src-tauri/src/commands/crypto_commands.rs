@@ -794,21 +794,31 @@ fn create_file_selection_atomic(
     }
 }
 
-/// Validate output directory exists and is writable
+/// Validate output directory and create it if necessary
 fn validate_output_directory(path: &Path) -> Result<(), std::io::Error> {
-    // Check if directory exists
+    // If directory doesn't exist, try to create it
     if !path.exists() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            format!("Output directory does not exist: {}", path.display()),
-        ));
+        // Attempt to create the directory (including parent directories)
+        std::fs::create_dir_all(path).map_err(|e| {
+            std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                format!(
+                    "Failed to create output directory '{}': {}",
+                    path.display(),
+                    e
+                ),
+            )
+        })?;
     }
 
     // Check if it's actually a directory
     if !path.is_dir() {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
-            format!("Output path is not a directory: {}", path.display()),
+            format!(
+                "Output path exists but is not a directory: {}",
+                path.display()
+            ),
         ));
     }
 

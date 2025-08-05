@@ -47,14 +47,36 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
       }));
 
       try {
-        // Create a FileSelection object from the provided paths
-        // Calculate total size and file count
-        let totalSize = 0;
-        let fileCount = paths.length;
+        // Call the backend to get actual file information
+        const fileInfos = await safeInvoke<
+          Array<{
+            path: string;
+            name: string;
+            size: number;
+            is_file: boolean;
+            is_directory: boolean;
+            file_count: number | null; // For directories, the number of files inside
+          }>
+        >('get_file_info', paths, 'useFileEncryption.selectFiles');
 
-        // For now, we'll use placeholder sizes since we can't access file system from browser context
-        // In a real implementation, this would be calculated from actual file metadata
-        totalSize = fileCount * 1024 * 100; // Placeholder: 100KB per file average
+        // Calculate total size and file count from actual file info
+        let totalSize = 0;
+        let fileCount = 0;
+
+        for (const fileInfo of fileInfos) {
+          totalSize += fileInfo.size;
+
+          if (fileInfo.is_file) {
+            fileCount += 1;
+          } else if (fileInfo.is_directory && fileInfo.file_count !== null) {
+            // Use the actual file count from the backend for directories
+            fileCount += fileInfo.file_count;
+          } else if (fileInfo.is_directory) {
+            // Fallback: estimate if file_count is not provided
+            const estimatedFiles = Math.max(1, Math.round(fileInfo.size / (100 * 1024)));
+            fileCount += estimatedFiles;
+          }
+        }
 
         const result: FileSelection = {
           paths,
@@ -96,7 +118,7 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
         throw commandError;
       }
     },
-    [],
+    [], // Empty deps is OK - setState is stable
   );
 
   const encryptFiles = useCallback(

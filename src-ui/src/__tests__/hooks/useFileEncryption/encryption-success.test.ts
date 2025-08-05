@@ -21,18 +21,39 @@ describe('useFileEncryption - Encryption Success', () => {
   it('should encrypt files successfully', async () => {
     const { result } = renderHook(() => useFileEncryption());
     const mockEncryptionResult = '/output/encrypted.age';
+    const testPaths = ['/path/to/file1.txt', '/path/to/file2.txt'];
 
-    // Mock the encryption result
-    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    // Mock the get_file_info response for file selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: testPaths[0],
+        name: 'file1.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+      {
+        path: testPaths[1],
+        name: 'file2.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
 
     // First select files using the new signature
     await act(async () => {
-      await result.current.selectFiles(['/path/to/file1.txt', '/path/to/file2.txt'], 'Files');
+      await result.current.selectFiles(testPaths, 'Files');
     });
 
     // Verify files were selected
     expect(result.current.selectedFiles).toBeTruthy();
     expect(result.current.selectedFiles?.file_count).toBe(2);
+
+    // Mock the encryption result
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     // Now encrypt
     await act(async () => {
@@ -49,12 +70,25 @@ describe('useFileEncryption - Encryption Success', () => {
     const mockEncryptionResult = '/output/encrypted.age';
     const testPaths = ['/path/to/file.txt'];
 
-    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    // Mock get_file_info for file selection
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: testPaths[0],
+        name: 'file.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
 
     // Select files first
     await act(async () => {
       await result.current.selectFiles(testPaths, 'Files');
     });
+
+    // Mock encryption result
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     // Encrypt with all parameters
     await act(async () => {
@@ -78,12 +112,25 @@ describe('useFileEncryption - Encryption Success', () => {
     const { result } = renderHook(() => useFileEncryption());
     const mockEncryptionResult = '/output/encrypted.age';
 
-    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    // Mock get_file_info
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/file.txt',
+        name: 'file.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
 
     // Select files
     await act(async () => {
       await result.current.selectFiles(['/file.txt'], 'Files');
     });
+
+    // Mock encryption result
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     // Encrypt without optional parameters
     await act(async () => {
@@ -113,6 +160,23 @@ describe('useFileEncryption - Encryption Success', () => {
       timestamp: new Date().toISOString(),
     };
 
+    // Mock get_file_info
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: '/file.txt',
+        name: 'file.txt',
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      },
+    ]);
+
+    // Select files
+    await act(async () => {
+      await result.current.selectFiles(['/file.txt'], 'Files');
+    });
+
     // Mock the progress listener
     let progressCallback: ((event: any) => void) | null = null;
     mockSafeListen.mockImplementationOnce(async (_event, callback) => {
@@ -121,11 +185,6 @@ describe('useFileEncryption - Encryption Success', () => {
     });
 
     mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
-
-    // Select files
-    await act(async () => {
-      await result.current.selectFiles(['/file.txt'], 'Files');
-    });
 
     // Start encryption
     const encryptPromise = act(async () => {
@@ -151,7 +210,17 @@ describe('useFileEncryption - Encryption Success', () => {
     const mockEncryptionResult = '/output/encrypted.age';
     const multiplePaths = ['/path/to/file1.txt', '/path/to/file2.txt', '/path/to/file3.txt'];
 
-    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    // Mock get_file_info for multiple files
+    mockSafeInvoke.mockResolvedValueOnce(
+      multiplePaths.map((path, index) => ({
+        path,
+        name: `file${index + 1}.txt`,
+        size: 102400,
+        is_file: true,
+        is_directory: false,
+        file_count: null,
+      })),
+    );
 
     // Select multiple files
     await act(async () => {
@@ -159,6 +228,9 @@ describe('useFileEncryption - Encryption Success', () => {
     });
 
     expect(result.current.selectedFiles?.file_count).toBe(3);
+
+    // Mock encryption result
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     // Encrypt
     await act(async () => {
@@ -184,7 +256,17 @@ describe('useFileEncryption - Encryption Success', () => {
     const mockEncryptionResult = '/output/encrypted.age';
     const folderPath = ['/path/to/folder'];
 
-    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    // Mock get_file_info for folder
+    mockSafeInvoke.mockResolvedValueOnce([
+      {
+        path: folderPath[0],
+        name: 'folder',
+        size: 1024000, // 1MB folder
+        is_file: false,
+        is_directory: true,
+        file_count: 10, // 10 files in folder
+      },
+    ]);
 
     // Select a folder
     await act(async () => {
@@ -192,6 +274,9 @@ describe('useFileEncryption - Encryption Success', () => {
     });
 
     expect(result.current.selectedFiles?.selection_type).toBe('Folder');
+
+    // Mock encryption result
+    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     // Encrypt the folder
     await act(async () => {
