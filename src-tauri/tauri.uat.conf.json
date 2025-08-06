@@ -2,7 +2,8 @@
   "app": {
     "windows": [
       {
-        "devtools": true
+        "devtools": true,
+        "dragDropEnabled": true
       }
     ],
     "security": {

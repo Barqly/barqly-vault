@@ -28,7 +28,7 @@ describe('FileDropZone', () => {
       );
 
       expect(screen.getByText('Drop files or folders here to encrypt')).toBeInTheDocument();
-      expect(screen.getByText('(Dropping files will open the file dialog)')).toBeInTheDocument();
+      expect(screen.getByText('Drag and drop files or folders directly')).toBeInTheDocument();
     });
   });
 
@@ -124,9 +124,7 @@ describe('FileDropZone', () => {
       expect(dropZone).toHaveClass('border-blue-500', 'bg-blue-50');
     });
 
-    it('should handle file drop by opening file dialog', async () => {
-      mockOpen.mockResolvedValueOnce(['/path/to/dropped.txt']);
-
+    it('should handle HTML5 drop event but rely on Tauri webview API for file processing', async () => {
       const { container } = render(
         <FileDropZone
           onFilesSelected={mockOnFilesSelected}
@@ -137,6 +135,13 @@ describe('FileDropZone', () => {
 
       const dropZone = container.querySelector('.border-dashed');
 
+      // Set initial dragging state
+      fireEvent.dragEnter(dropZone!, {
+        dataTransfer: { files: [], types: ['Files'] },
+      });
+
+      expect(dropZone).toHaveClass('border-blue-500');
+
       // Create a mock file
       const file = new File(['content'], 'test.txt', { type: 'text/plain' });
       const dataTransfer = {
@@ -144,17 +149,18 @@ describe('FileDropZone', () => {
         types: ['Files'],
       };
 
-      // Simulate drop
+      // Simulate drop - in Tauri environment, this just clears visual state
+      // The actual file processing happens via webview.onDragDropEvent()
       fireEvent.drop(dropZone!, { dataTransfer });
 
-      await waitFor(() => {
-        expect(mockOpen).toHaveBeenCalledWith({
-          multiple: true,
-          directory: false,
-          title: 'Select the files you just dropped',
-        });
-        expect(mockOnFilesSelected).toHaveBeenCalledWith(['/path/to/dropped.txt'], 'Files');
-      });
+      // Should clear dragging state
+      expect(dropZone).not.toHaveClass('border-blue-500');
+
+      // Should NOT open file dialog (webview API handles files natively)
+      expect(mockOpen).not.toHaveBeenCalled();
+
+      // Note: In real Tauri environment, webview.onDragDropEvent() would
+      // provide file paths directly without needing HTML5 dataTransfer
     });
 
     it('should not handle drop when disabled', async () => {
