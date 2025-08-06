@@ -10,6 +10,9 @@
 
 ## Critical Agent Rules
 
+### Before ANY Coding Task
+**MANDATORY**: Read `/docs/architecture/context.md` for tech stack, check existing patterns with `rg`, then WebFetch official docs if unclear or working on any bug fix.
+
 ### Before ANY Commit
 ```bash
 make validate  # MUST PASS - mirrors CI exactly

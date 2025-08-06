@@ -19,7 +19,7 @@
 
 | Task Domain | Context Location | Key Focus |
 |------------|------------------|-----------|
-| Architecture & Design | `/docs/architecture/context.md` | Technology decisions, security model |
+| Architecture & Design | `/docs/architecture/context.md` | Technology stack, security model |
 | Features & UX | `/docs/product/context.md` | User journeys, Bitcoin workflows |
 | Code Implementation | `/docs/engineering/context.md` | Development patterns, testing |
 | CI/CD & Operations | `/docs/operations/context.md` | GitHub Actions, releases |
