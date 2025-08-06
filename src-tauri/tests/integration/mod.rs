@@ -7,6 +7,7 @@
 //! - Test result aggregation
 
 pub mod crypto_integration_tests;
+pub mod decrypt_directory_tests;
 pub mod decryption_integration_tests;
 pub mod encryption_integration_tests;
 pub mod file_ops_integration_tests;

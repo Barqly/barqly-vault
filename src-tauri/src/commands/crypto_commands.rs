@@ -231,9 +231,8 @@ impl ValidateInput for DecryptDataInput {
         ValidationHelper::validate_path_exists(&self.encrypted_file, "Encrypted file")?;
         ValidationHelper::validate_is_file(&self.encrypted_file, "Encrypted file")?;
 
-        // Validate output directory exists and is a directory
-        ValidationHelper::validate_path_exists(&self.output_dir, "Output directory")?;
-        ValidationHelper::validate_is_directory(&self.output_dir, "Output directory")?;
+        // Note: We don't validate output directory exists here because we'll create it if needed
+        // This provides feature parity with encrypt_files command
 
         Ok(())
     }
@@ -1138,12 +1137,12 @@ pub async fn decrypt_data(
         ErrorCode::DecryptionFailed,
     )?;
 
-    // Create output directory if it doesn't exist
+    // Validate and create output directory if it doesn't exist (same as encrypt_files)
     let output_path = std::path::Path::new(&input.output_dir);
     error_handler.handle_operation_error(
-        std::fs::create_dir_all(output_path),
-        "create_output_directory",
-        ErrorCode::PermissionDenied,
+        validate_output_directory(output_path),
+        "validate_output_directory",
+        ErrorCode::InvalidPath,
     )?;
 
     // Write decrypted data to temporary file
