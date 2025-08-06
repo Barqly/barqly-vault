@@ -48,7 +48,7 @@ describe('SetupPage', () => {
   });
 
   // Helper function to render component with router
-  const renderWithRouter = (component: React.ReactElement) => {
+  const renderWithRouter = (component: React.JSX.Element) => {
     return render(<BrowserRouter>{component}</BrowserRouter>);
   };
 

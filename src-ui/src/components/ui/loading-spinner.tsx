@@ -68,89 +68,86 @@ export interface LoadingSpinnerProps
   fullScreen?: boolean;
   overlay?: boolean;
   onComplete?: () => void;
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-const LoadingSpinner = React.forwardRef<HTMLDivElement, LoadingSpinnerProps>(
-  (
+function LoadingSpinner({
+  className,
+  size,
+  animation,
+  variant,
+  text,
+  showText = false,
+  centered = false,
+  fullScreen = false,
+  overlay = false,
+  onComplete,
+  ref,
+  ...props
+}: LoadingSpinnerProps) {
+  const [isVisible, setIsVisible] = React.useState(true);
+
+  // Handle completion callback
+  React.useEffect(() => {
+    if (onComplete && !isVisible) {
+      onComplete();
+    }
+  }, [isVisible, onComplete]);
+
+  // Auto-hide after delay if text is provided (for temporary loading states)
+  React.useEffect(() => {
+    if (text && showText && !fullScreen) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 5000); // Auto-hide after 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [text, showText, fullScreen]);
+
+  if (!isVisible) return null;
+
+  const containerClasses = cn(
+    'inline-flex items-center',
     {
-      className,
-      size,
-      animation,
-      variant,
-      text,
-      showText = false,
-      centered = false,
-      fullScreen = false,
-      overlay = false,
-      onComplete,
-      ...props
+      'justify-center w-full h-full': centered || fullScreen,
+      'fixed inset-0 z-50 bg-background/80 backdrop-blur-sm': fullScreen,
+      'absolute inset-0 z-10 bg-background/50': overlay && !fullScreen,
+      relative: !centered && !fullScreen && !overlay,
     },
-    ref,
-  ) => {
-    const [isVisible, setIsVisible] = React.useState(true);
+    className,
+  );
 
-    // Handle completion callback
-    React.useEffect(() => {
-      if (onComplete && !isVisible) {
-        onComplete();
-      }
-    }, [isVisible, onComplete]);
+  const spinnerClasses = cn(loadingSpinnerVariants({ size, animation, variant }), {
+    'animate-spin': animation === 'spin',
+    'animate-pulse': animation === 'pulse',
+    'animate-bounce': animation === 'bounce',
+  });
 
-    // Auto-hide after delay if text is provided (for temporary loading states)
-    React.useEffect(() => {
-      if (text && showText && !fullScreen) {
-        const timer = setTimeout(() => {
-          setIsVisible(false);
-        }, 5000); // Auto-hide after 5 seconds
+  const textClasses = cn(textVariants({ size, variant }), {
+    hidden: !showText || !text,
+  });
 
-        return () => clearTimeout(timer);
-      }
-    }, [text, showText, fullScreen]);
-
-    if (!isVisible) return null;
-
-    const containerClasses = cn(
-      'inline-flex items-center',
-      {
-        'justify-center w-full h-full': centered || fullScreen,
-        'fixed inset-0 z-50 bg-background/80 backdrop-blur-sm': fullScreen,
-        'absolute inset-0 z-10 bg-background/50': overlay && !fullScreen,
-        relative: !centered && !fullScreen && !overlay,
-      },
-      className,
-    );
-
-    const spinnerClasses = cn(loadingSpinnerVariants({ size, animation, variant }), {
-      'animate-spin': animation === 'spin',
-      'animate-pulse': animation === 'pulse',
-      'animate-bounce': animation === 'bounce',
-    });
-
-    const textClasses = cn(textVariants({ size, variant }), {
-      hidden: !showText || !text,
-    });
-
-    return (
-      <div
-        ref={ref}
-        role="status"
-        aria-live="polite"
-        aria-label={text || 'Loading'}
-        className={containerClasses}
-        {...props}
-      >
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className={spinnerClasses} data-testid="loading-spinner" />
-          {showText && text && (
-            <span className={textClasses} data-testid="loading-text">
-              {text}
-            </span>
-          )}
-        </div>
+  return (
+    <div
+      ref={ref}
+      role="status"
+      aria-live="polite"
+      aria-label={text || 'Loading'}
+      className={containerClasses}
+      {...props}
+    >
+      <div className="flex flex-col items-center gap-2">
+        <Loader2 className={spinnerClasses} data-testid="loading-spinner" />
+        {showText && text && (
+          <span className={textClasses} data-testid="loading-text">
+            {text}
+          </span>
+        )}
       </div>
-    );
-  },
-);
+    </div>
+  );
+}
 
 LoadingSpinner.displayName = 'LoadingSpinner';
 

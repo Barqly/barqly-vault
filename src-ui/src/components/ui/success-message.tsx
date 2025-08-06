@@ -68,132 +68,129 @@ export interface SuccessMessageProps
   autoHide?: boolean;
   autoHideDelay?: number; // milliseconds
   className?: string;
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-const SuccessMessage = React.forwardRef<HTMLDivElement, SuccessMessageProps>(
-  (
-    {
-      className,
-      variant,
-      size,
-      title,
-      message,
-      showIcon = true,
-      showCloseButton = false,
-      onClose,
-      actions = [],
-      details,
-      showDetails = false,
-      autoHide = false,
-      autoHideDelay = 5000,
-      ...props
-    },
-    ref,
-  ) => {
-    const [isVisible, setIsVisible] = React.useState(true);
+function SuccessMessage({
+  className,
+  variant,
+  size,
+  title,
+  message,
+  showIcon = true,
+  showCloseButton = false,
+  onClose,
+  actions = [],
+  details,
+  showDetails = false,
+  autoHide = false,
+  autoHideDelay = 5000,
+  ref,
+  ...props
+}: SuccessMessageProps) {
+  const [isVisible, setIsVisible] = React.useState(true);
 
-    // Auto-hide functionality
-    React.useEffect(() => {
-      if (autoHide && autoHideDelay > 0) {
-        const timer = setTimeout(() => {
-          setIsVisible(false);
-          onClose?.();
-        }, autoHideDelay);
+  // Auto-hide functionality
+  React.useEffect(() => {
+    if (autoHide && autoHideDelay > 0) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        onClose?.();
+      }, autoHideDelay);
 
-        return () => clearTimeout(timer);
-      }
-    }, [autoHide, autoHideDelay, onClose]);
+      return () => clearTimeout(timer);
+    }
+  }, [autoHide, autoHideDelay, onClose]);
 
-    // Don't render if not visible
-    if (!isVisible) return null;
+  // Don't render if not visible
+  if (!isVisible) return null;
 
-    const handleClose = () => {
-      setIsVisible(false);
-      onClose?.();
-    };
+  const handleClose = () => {
+    setIsVisible(false);
+    onClose?.();
+  };
 
-    return (
-      <div
-        ref={ref}
-        role="status"
-        aria-live="polite"
-        className={cn(successMessageVariants({ variant, size, className }))}
-        {...props}
-      >
-        <div className="flex items-start gap-3">
-          {/* Icon */}
-          {showIcon && (
-            <CheckCircle
-              className={cn(iconVariants({ variant, size }))}
-              aria-hidden="true"
-              data-testid="success-icon"
-            />
-          )}
+  return (
+    <div
+      ref={ref}
+      role="status"
+      aria-live="polite"
+      className={cn(successMessageVariants({ variant, size, className }))}
+      {...props}
+    >
+      <div className="flex items-start gap-3">
+        {/* Icon */}
+        {showIcon && (
+          <CheckCircle
+            className={cn(iconVariants({ variant, size }))}
+            aria-hidden="true"
+            data-testid="success-icon"
+          />
+        )}
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            {/* Title */}
-            {title && <h4 className="font-semibold leading-tight mb-1">{title}</h4>}
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Title */}
+          {title && <h4 className="font-semibold leading-tight mb-1">{title}</h4>}
 
-            {/* Message */}
-            {message && <p className="text-sm leading-relaxed">{message}</p>}
+          {/* Message */}
+          {message && <p className="text-sm leading-relaxed">{message}</p>}
 
-            {/* Details */}
-            {showDetails && details && <div className="mt-3">{details}</div>}
+          {/* Details */}
+          {showDetails && details && <div className="mt-3">{details}</div>}
 
-            {/* Action Buttons */}
-            {actions.length > 0 && (
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                {actions.map((action, index) => {
-                  const IconComponent = action.icon;
-                  const buttonVariant = action.variant || 'primary';
+          {/* Action Buttons */}
+          {actions.length > 0 && (
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              {actions.map((action, index) => {
+                const IconComponent = action.icon;
+                const buttonVariant = action.variant || 'primary';
 
-                  const buttonClasses = cn(
-                    'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
-                    {
-                      'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500':
-                        buttonVariant === 'primary',
-                      'bg-green-100 text-green-800 hover:bg-green-200 focus:ring-green-500':
-                        buttonVariant === 'secondary',
-                      'border border-green-300 bg-transparent text-green-700 hover:bg-green-50 focus:ring-green-500':
-                        buttonVariant === 'outline',
-                    },
-                  );
+                const buttonClasses = cn(
+                  'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
+                  {
+                    'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500':
+                      buttonVariant === 'primary',
+                    'bg-green-100 text-green-800 hover:bg-green-200 focus:ring-green-500':
+                      buttonVariant === 'secondary',
+                    'border border-green-300 bg-transparent text-green-700 hover:bg-green-50 focus:ring-green-500':
+                      buttonVariant === 'outline',
+                  },
+                );
 
-                  return (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={action.action}
-                      className={buttonClasses}
-                      data-testid={`success-action-${index}`}
-                    >
-                      {IconComponent && <IconComponent className="size-3" />}
-                      {action.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Close Button */}
-          {showCloseButton && onClose && (
-            <button
-              type="button"
-              onClick={handleClose}
-              className="flex-shrink-0 p-1 rounded-md opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-opacity"
-              aria-label="Close success message"
-              data-testid="close-button"
-            >
-              <X className="size-4" aria-hidden="true" />
-            </button>
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={action.action}
+                    className={buttonClasses}
+                    data-testid={`success-action-${index}`}
+                  >
+                    {IconComponent && <IconComponent className="size-3" />}
+                    {action.label}
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
+
+        {/* Close Button */}
+        {showCloseButton && onClose && (
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex-shrink-0 p-1 rounded-md opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-opacity"
+            aria-label="Close success message"
+            data-testid="close-button"
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        )}
       </div>
-    );
-  },
-);
+    </div>
+  );
+}
 
 SuccessMessage.displayName = 'SuccessMessage';
 

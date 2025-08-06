@@ -19,7 +19,7 @@ const PassphraseStrengthIndicator: React.FC<PassphraseStrengthIndicatorProps> = 
         <p className="text-sm font-medium text-gray-500">Passphrase Strength:</p>
       ) : (
         // User has typed - show strength with color and progress bar
-        <>
+        <React.Fragment>
           <p
             className={`text-sm font-medium ${
               strength.isStrong ? 'text-green-600' : 'text-red-600'
@@ -35,7 +35,7 @@ const PassphraseStrengthIndicator: React.FC<PassphraseStrengthIndicatorProps> = 
               style={{ width: `${Math.min((strength.score / 12) * 100, 100)}%` }}
             />
           </div>
-        </>
+        </React.Fragment>
       )}
     </div>
   );
