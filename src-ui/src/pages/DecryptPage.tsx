@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Lock, Clock, CheckCircle, Unlock } from 'lucide-react';
+import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileDecryption } from '../hooks/useFileDecryption';
 import { KeySelectionDropdown } from '../components/forms/KeySelectionDropdown';
 import PassphraseInput from '../components/forms/PassphraseInput';
@@ -43,6 +44,7 @@ const DecryptPage: React.FC = () => {
   const [passphraseAttempts, setPassphraseAttempts] = useState(0);
   const [currentStep, setCurrentStep] = useState(1);
   const [isDecrypting, setIsDecrypting] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [vaultMetadata, setVaultMetadata] = useState<{
     creationDate?: string;
     keyLabel?: string;
@@ -53,15 +55,12 @@ const DecryptPage: React.FC = () => {
     let newStep = 1;
     if (selectedFile) {
       newStep = 2;
-      if (selectedKeyId) {
+      if (selectedKeyId && passphrase) {
         newStep = 3;
-        if (passphrase && outputPath) {
-          newStep = 4;
-        }
       }
     }
     setCurrentStep(newStep);
-  }, [selectedFile, selectedKeyId, passphrase, outputPath]);
+  }, [selectedFile, selectedKeyId, passphrase]);
 
   // Handle file selection through FileDropZone
   const handleFileSelected = useCallback(
@@ -115,10 +114,28 @@ const DecryptPage: React.FC = () => {
 
     setIsDecrypting(true);
     try {
+      // Note: The backend decrypt_data command should create the directory if it doesn't exist
+      // Similar to how encrypt_files creates the Barqly-Vaults directory
       await decryptFile();
       showSuccess('Decryption successful', 'Your files have been recovered');
     } catch (err) {
       console.error('[DecryptPage] Decryption error:', err);
+
+      // Special handling for directory not found error
+      // This suggests the backend isn't creating directories yet
+      if (
+        err &&
+        typeof err === 'object' &&
+        'message' in err &&
+        typeof (err as any).message === 'string' &&
+        (err as any).message.toLowerCase().includes('directory not found')
+      ) {
+        showError(
+          'Backend Update Needed',
+          'The decrypt_data command needs to create directories like encrypt_files does',
+        );
+        return;
+      }
 
       // Track passphrase attempts for wrong passphrase errors
       if (
@@ -152,23 +169,47 @@ const DecryptPage: React.FC = () => {
     showInfo('Ready for new decryption', 'Select another vault file to decrypt');
   }, [handleReset, showInfo]);
 
-  // Generate default output path
-  const getDefaultOutputPath = () => {
-    const date = new Date().toISOString().split('T')[0];
-    return `~/Desktop/Barqly-Recovery-${date}/`;
-  };
+  // Generate default output path - parallel to Barqly-Vaults for consistency
+  const getDefaultOutputPath = useCallback(async () => {
+    try {
+      const docsPath = await documentDir();
+      const date = new Date().toISOString().split('T')[0];
+      const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '');
+      // Use Documents/Barqly-Recovery for consistency with Barqly-Vaults
+      // The backend should create this directory if it doesn't exist (like encrypt_files does)
+      const recoveryPath = await join(docsPath, 'Barqly-Recovery', `${date}_${time}`);
+      return recoveryPath;
+    } catch (error) {
+      console.error('Error getting default path:', error);
+      // Fallback to simple path if Tauri APIs fail
+      return `~/Documents/Barqly-Recovery/${new Date().toISOString().split('T')[0]}`;
+    }
+  }, []);
 
   // Set default output path when file is selected
   useEffect(() => {
     if (selectedFile && !outputPath) {
-      setOutputPath(getDefaultOutputPath());
+      getDefaultOutputPath().then(setOutputPath);
     }
-  }, [selectedFile, outputPath, setOutputPath]);
+  }, [selectedFile, outputPath, setOutputPath, getDefaultOutputPath]);
 
   // Calculate progress percentage for step indicator
   const getStepProgress = () => {
-    const totalSteps = 4;
+    const totalSteps = 3;
     return ((currentStep - 1) / (totalSteps - 1)) * 100;
+  };
+
+  // Format path for display
+  const formatPathDisplay = (path: string): string => {
+    // Replace home directory with ~
+    if (path.startsWith('/Users/')) {
+      return path.replace(/^\/Users\/[^/]+/, '~');
+    }
+    if (path.startsWith('C:\\Users\\')) {
+      const simplified = path.replace(/^C:\\Users\\[^\\]+/, '~');
+      return simplified.replace(/\\/g, '/'); // Use forward slashes for display
+    }
+    return path;
   };
 
   return (
@@ -209,13 +250,10 @@ const DecryptPage: React.FC = () => {
             </span>
             <span className={currentStep >= 2 ? 'text-blue-600 font-medium' : ''}>
               {currentStep > 2 ? <CheckCircle className="inline w-3 h-3 mr-1" /> : null}
-              Step 2: Enter Passphrase
+              Step 2: Unlock with Key
             </span>
             <span className={currentStep >= 3 ? 'text-blue-600 font-medium' : ''}>
-              {currentStep > 3 ? <CheckCircle className="inline w-3 h-3 mr-1" /> : null}
-              Step 3: Choose Destination
-            </span>
-            <span className={currentStep >= 4 ? 'text-blue-600 font-medium' : ''}>
+              <CheckCircle className="inline w-3 h-3 mr-1" />
               Ready to Decrypt
             </span>
           </div>
@@ -340,27 +378,43 @@ const DecryptPage: React.FC = () => {
                 </FormSection>
               )}
 
-              {/* Step 3: Destination Selection */}
-              {selectedFile && selectedKeyId && passphrase && (
-                <FormSection
-                  title="Choose Recovery Location"
-                  subtitle="Where to save your decrypted files"
-                >
-                  <DestinationSelector
-                    outputPath={outputPath}
-                    onPathChange={setOutputPath}
-                    disabled={isLoading}
-                    requiredSpace={1800000} // Would get actual size from backend
-                  />
-                </FormSection>
-              )}
-
-              {/* Action area */}
+              {/* Action area - Ready to decrypt */}
               {selectedFile && selectedKeyId && passphrase && outputPath && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">
                     Ready to Decrypt Your Vault
                   </h3>
+
+                  {/* Simple output location display */}
+                  <div className="bg-white border border-gray-200 rounded-md p-3 mb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-500 mb-1">Files will be recovered to:</p>
+                        <p className="text-sm font-mono text-gray-700">
+                          {formatPathDisplay(outputPath)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                        className="text-xs text-blue-600 hover:text-blue-700 ml-3"
+                      >
+                        {showAdvancedOptions ? 'Hide' : 'Change location'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Advanced options - only show if toggled */}
+                  {showAdvancedOptions && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-md p-4 mb-4">
+                      <DestinationSelector
+                        outputPath={outputPath}
+                        onPathChange={setOutputPath}
+                        disabled={isLoading}
+                        requiredSpace={1800000} // Would get actual size from backend
+                      />
+                    </div>
+                  )}
+
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <CheckCircle className="w-4 h-4 text-green-600" />
@@ -368,19 +422,20 @@ const DecryptPage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Passphrase entered</span>
+                      <span>Key and passphrase verified</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span>Destination folder selected</span>
+                      <span>Recovery location ready</span>
                     </div>
                   </div>
+
                   <div className="flex justify-between items-center">
                     <button
                       onClick={handleReset}
                       className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                     >
-                      Clear Form
+                      Start Over
                     </button>
                     <PrimaryButton
                       onClick={handleDecryption}
@@ -388,7 +443,7 @@ const DecryptPage: React.FC = () => {
                       className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700"
                     >
                       <Unlock className="w-4 h-4 mr-2" />
-                      Begin Decryption
+                      Decrypt Now
                     </PrimaryButton>
                   </div>
                 </div>
