@@ -24,11 +24,11 @@ Barqly Vault is a security-focused desktop application designed specifically for
 - **Memory Safety**: zeroize for clearing sensitive data
 
 ### Frontend (TypeScript/React)
-- **UI Framework**: React 18 LTS  
+- **UI Framework**: React 19.1 (latest stable)
 - **Language**: TypeScript 5.x (strict mode)
 - **Styling**: Tailwind CSS v4 + Shadcn/ui components
 - **State Management**: Zustand (lightweight, TypeScript-friendly)
-- **Routing**: React Router v6
+- **Routing**: React Router v7
 - **Build Tool**: Vite with @tailwindcss/vite plugin
 - **Node.js**: v22.17.0 LTS
 - **Design System**: OKLCH colors, CSS variables, dark mode support

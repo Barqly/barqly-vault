@@ -28,7 +28,7 @@
 
 ## Technical Stack
 ```yaml
-frontend: "React 18 + TypeScript + Tailwind CSS + Shadcn/ui"
+frontend: "React 19.1 + TypeScript + Tailwind CSS + Shadcn/ui"
 backend: "Rust + Tauri v2 + age-encryption"
 testing: "Vitest (frontend) + Rust tests (backend)"
 platform: "Desktop (macOS, Windows, Linux)"

@@ -32,7 +32,7 @@ The Architecture domain serves as the technical foundation for Barqly Vault, def
 
 #### System Foundation
 - **[system-architecture.md](./system-architecture.md)** - Complete technical architecture
-  - Technology stack: Tauri v2 + Rust + React
+  - Technology stack: Tauri v2 + Rust + React 19.1
   - Module architecture: crypto, storage, file_ops
   - Data flow: encryption/decryption workflows
   - Security considerations and threat model
@@ -157,11 +157,11 @@ interface CommandError {
 - **Memory Safety**: zeroize
 
 ### Frontend Stack
-- **Framework**: React 18 LTS
+- **Framework**: React 19.1 (latest stable)
 - **Language**: TypeScript 5.x (strict mode)
 - **Styling**: Tailwind CSS v4 + Shadcn/ui
 - **State**: Zustand (lightweight, TypeScript-friendly)
-- **Routing**: React Router v6
+- **Routing**: React Router v7
 - **Build**: Vite with Tauri integration
 
 ## Quick Reference
