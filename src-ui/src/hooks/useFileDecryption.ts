@@ -27,6 +27,7 @@ export interface FileDecryptionState {
 
 export interface FileDecryptionActions {
   selectEncryptedFile: () => Promise<void>;
+  setSelectedFile: (path: string) => void;
   setKeyId: (keyId: string) => void;
   setPassphrase: (passphrase: string) => void;
   setOutputPath: (path: string) => void;
@@ -144,6 +145,14 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
 
       throw commandError;
     }
+  }, []);
+
+  const setSelectedFile = useCallback((path: string) => {
+    setState((prev) => ({
+      ...prev,
+      selectedFile: path,
+      error: null, // Clear any previous errors when user makes changes
+    }));
   }, []);
 
   const setKeyId = useCallback((keyId: string) => {
@@ -312,6 +321,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
   return {
     ...state,
     selectEncryptedFile,
+    setSelectedFile,
     setKeyId: (keyId: string) => setKeyId(keyId),
     setPassphrase: (passphrase: string) => setPassphrase(passphrase),
     setOutputPath: (path: string) => setOutputPath(path),

@@ -3,7 +3,7 @@ import { Shield, Lock, Zap, Check, Info } from 'lucide-react';
 import { useFileEncryption } from '../hooks/useFileEncryption';
 import { KeySelectionDropdown } from '../components/forms/KeySelectionDropdown';
 import { ErrorMessage } from '../components/ui/error-message';
-import FileDropZone from '../components/encrypt/FileDropZone';
+import FileDropZone from '../components/common/FileDropZone';
 import DestinationSelector from '../components/encrypt/DestinationSelector';
 import EncryptionProgress from '../components/encrypt/EncryptionProgress';
 import EncryptionSuccess from '../components/encrypt/EncryptionSuccess';

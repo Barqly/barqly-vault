@@ -44,6 +44,10 @@ export const useFileDecryptionDemo = (): UseFileDecryptionReturn => {
     }));
   }, []);
 
+  const setSelectedFile = useCallback((path: string) => {
+    setState((prev) => ({ ...prev, selectedFile: path, error: null }));
+  }, []);
+
   const setKeyId = useCallback((keyId: string) => {
     setState((prev) => ({ ...prev, selectedKeyId: keyId, error: null }));
   }, []);
@@ -139,6 +143,7 @@ export const useFileDecryptionDemo = (): UseFileDecryptionReturn => {
   return {
     ...state,
     selectEncryptedFile,
+    setSelectedFile,
     setKeyId,
     setPassphrase,
     setOutputPath,
