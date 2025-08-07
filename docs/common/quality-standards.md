@@ -158,6 +158,39 @@ fn prop_encrypt_decrypt_roundtrip(data: Vec<u8>) -> bool {
 4. **Verify** - Confirm improvement
 5. **Standardize** - Update practices
 
+## Code Organization Standards
+
+### File Size Guidelines
+**Purpose**: Maintain readable, maintainable, and testable code by limiting file complexity.
+
+| File Type | Optimal Lines | Warning | Maximum | Action Required |
+|-----------|--------------|---------|---------|-----------------|
+| **Source Code** | 150-200 | 200-300 | 300 | Split into modules |
+| **Test Files** | 200-300 | 300-500 | 500 | Group by feature |
+| **Config Files** | No limit | - | - | Keep organized |
+| **Generated Code** | No limit | - | - | Exclude from analysis |
+
+### When to Split Files
+**Split immediately when:**
+- File exceeds 300 lines (hard limit)
+- Multiple unrelated responsibilities present
+- Scrolling required to understand logic flow
+- New developers struggle to understand purpose
+
+**Refactoring Strategies:**
+- **Extract modules** - Group related functions
+- **Separate concerns** - Split by responsibility
+- **Create utilities** - Extract common helpers
+- **Use traits/interfaces** - Define contracts separately
+
+### AI Agent Directive
+```yaml
+before_coding:
+  - check: "Will this change push file over 200 lines?"
+  - if_yes: "Plan refactoring BEFORE adding code"
+  - if_over_300: "MUST split file - no exceptions"
+```
+
 ## Code Review Standards
 
 ### Review Checklist
@@ -168,6 +201,7 @@ fn prop_encrypt_decrypt_roundtrip(data: Vec<u8>) -> bool {
 - [ ] Code follows project standards
 - [ ] Documentation updated
 - [ ] No obvious technical debt introduced
+- [ ] **Files under 300 lines** (split if exceeded)
 
 ### Review Philosophy
 - **Constructive** - Focus on code, not person

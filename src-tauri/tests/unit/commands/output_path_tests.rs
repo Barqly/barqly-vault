@@ -9,7 +9,7 @@
 //! Note: Since validate_output_directory and determine_output_path are private functions,
 //! we test them indirectly through the public encrypt_files API and EncryptDataInput validation.
 
-use barqly_vault_lib::commands::crypto_commands::EncryptDataInput;
+use barqly_vault_lib::commands::crypto::EncryptDataInput;
 use barqly_vault_lib::commands::types::ValidateInput;
 use std::fs;
 use std::path::Path;

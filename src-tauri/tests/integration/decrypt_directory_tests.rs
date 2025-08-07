@@ -3,9 +3,7 @@
 //! This module tests the directory creation functionality for the decrypt_data command,
 //! ensuring feature parity with the encrypt_files command.
 
-use barqly_vault_lib::{
-    commands::crypto_commands::DecryptDataInput, commands::types::ValidateInput,
-};
+use barqly_vault_lib::{commands::crypto::DecryptDataInput, commands::types::ValidateInput};
 use std::{fs, path::Path};
 use tempfile::TempDir;
 

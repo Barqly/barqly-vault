@@ -8,7 +8,7 @@
 //! - Edge cases and error conditions
 
 use barqly_vault_lib::commands::{
-    crypto_commands::{
+    crypto::{
         DecryptDataInput, EncryptDataInput, GenerateKeyInput, GetEncryptionStatusInput,
         ValidatePassphraseInput,
     },
@@ -1123,9 +1123,8 @@ mod security_tests {
 #[cfg(test)]
 mod task_3_4_command_tests {
     use super::*;
-    use barqly_vault_lib::commands::crypto_commands::{
-        DecryptDataInput, VerifyManifestInput, VerifyManifestResponse,
-    };
+    use barqly_vault_lib::commands::crypto::DecryptDataInput;
+    use barqly_vault_lib::commands::crypto::{VerifyManifestInput, VerifyManifestResponse};
 
     #[test]
     fn test_decrypt_data_input_empty_encrypted_file() {

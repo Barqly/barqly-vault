@@ -9,7 +9,7 @@
 //! Note: These tests focus on the EncryptDataInput validation and structure.
 //! Full encryption workflow tests with Window context would require Tauri test harness.
 
-use barqly_vault_lib::commands::crypto_commands::EncryptDataInput;
+use barqly_vault_lib::commands::crypto::EncryptDataInput;
 use barqly_vault_lib::commands::types::ValidateInput;
 use std::fs;
 use std::path::Path;
