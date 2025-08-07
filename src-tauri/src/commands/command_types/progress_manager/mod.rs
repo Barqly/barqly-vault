@@ -2,49 +2,44 @@
 //!
 //! This module provides the ProgressManager for efficient progress reporting.
 
+mod debouncer;
+mod utils;
+
+use self::debouncer::ProgressDebouncer;
+use self::utils::{create_progress_update, progress_to_fraction, progress_to_percentage};
 use super::{ProgressCallback, ProgressDetails, ProgressUpdate};
-use crate::constants::*;
 
 /// Progress manager for tracking and reporting operation progress with debouncing
 pub struct ProgressManager {
     operation_id: String,
     start_time: chrono::DateTime<chrono::Utc>,
     last_update: chrono::DateTime<chrono::Utc>,
-    callback: Option<ProgressCallback>,
     total_work: u64,
     completed_work: u64,
     current_message: String,
     current_details: Option<ProgressDetails>,
-    // Debouncing fields
-    last_emit_time: std::time::Instant,
-    last_emit_progress: f32,
-    pending_update: Option<ProgressUpdate>,
+    debouncer: ProgressDebouncer,
 }
 
 impl ProgressManager {
     /// Create a new progress manager with debouncing support
     pub fn new(operation_id: String, total_work: u64) -> Self {
         let now = chrono::Utc::now();
-        let now_instant = std::time::Instant::now();
         Self {
             operation_id,
             start_time: now,
             last_update: now,
-            callback: None,
             total_work,
             completed_work: 0,
             current_message: "Starting operation...".to_string(),
             current_details: None,
-            // Initialize debouncing fields
-            last_emit_time: now_instant,
-            last_emit_progress: 0.0,
-            pending_update: None,
+            debouncer: ProgressDebouncer::new(),
         }
     }
 
     /// Set the progress callback
     pub fn with_callback(mut self, callback: ProgressCallback) -> Self {
-        self.callback = Some(callback);
+        self.debouncer.set_callback(callback);
         self
     }
 
@@ -95,136 +90,44 @@ impl ProgressManager {
 
     /// Report current progress to callback with debouncing
     fn report_progress(&mut self) {
-        let progress = if self.total_work > 0 {
-            self.completed_work as f32 / self.total_work as f32
-        } else {
-            0.0
-        };
+        let update = create_progress_update(
+            &self.operation_id,
+            self.completed_work,
+            self.total_work,
+            &self.current_message,
+            self.current_details.as_ref(),
+            self.start_time,
+        );
 
-        let estimated_time_remaining = self.calculate_eta();
-
-        let update = ProgressUpdate {
-            operation_id: self.operation_id.clone(),
-            progress,
-            message: self.current_message.clone(),
-            details: self.current_details.clone(),
-            timestamp: chrono::Utc::now(),
-            estimated_time_remaining,
-        };
-
-        // Check if we should emit immediately or debounce
-        if self.should_emit_immediately(progress) {
-            self.emit_progress_update(update);
-        } else {
-            // Store as pending update for debouncing
-            self.pending_update = Some(update);
-
-            // Check if enough time has passed to emit pending update
-            self.try_emit_pending_update();
-        }
-
+        self.debouncer.process_update(update);
         self.last_update = chrono::Utc::now();
-    }
-
-    /// Determine if progress update should be emitted immediately
-    fn should_emit_immediately(&self, current_progress: f32) -> bool {
-        // Always emit start (0%) and completion (100%)
-        if PROGRESS_IMMEDIATE_EMIT_VALUES.contains(&current_progress) {
-            return true;
-        }
-
-        // Emit if progress change is significant (>10%)
-        let progress_change = (current_progress - self.last_emit_progress).abs();
-        if progress_change >= PROGRESS_FORCE_EMIT_THRESHOLD {
-            return true;
-        }
-
-        false
-    }
-
-    /// Try to emit pending update if debounce interval has passed
-    fn try_emit_pending_update(&mut self) {
-        if let Some(pending) = &self.pending_update {
-            let now = std::time::Instant::now();
-            let elapsed_ms = now.duration_since(self.last_emit_time).as_millis() as u64;
-
-            if elapsed_ms >= PROGRESS_DEBOUNCE_INTERVAL_MS {
-                let update = pending.clone();
-                self.emit_progress_update(update);
-                self.pending_update = None;
-            }
-        }
-    }
-
-    /// Emit progress update to callback and update tracking state
-    fn emit_progress_update(&mut self, update: ProgressUpdate) {
-        // Update global progress tracker
-        if let Some(callback) = &self.callback {
-            callback(update.clone());
-        }
-
-        // Update debouncing state
-        self.last_emit_time = std::time::Instant::now();
-        self.last_emit_progress = update.progress;
     }
 
     /// Force emit any pending update (call before operation completion)
     pub fn flush_pending_update(&mut self) {
-        if let Some(pending) = self.pending_update.take() {
-            self.emit_progress_update(pending);
-        }
-    }
-
-    /// Calculate estimated time remaining
-    fn calculate_eta(&self) -> Option<u64> {
-        if self.completed_work == 0 || self.total_work == 0 {
-            return None;
-        }
-
-        let elapsed = (chrono::Utc::now() - self.start_time).num_seconds() as u64;
-        if elapsed == 0 {
-            return None;
-        }
-
-        let rate = self.completed_work as f64 / elapsed as f64;
-        let remaining_work = self.total_work - self.completed_work;
-        let eta = (remaining_work as f64 / rate) as u64;
-
-        Some(eta)
+        self.debouncer.flush_pending_update();
     }
 
     /// Get current progress percentage
     pub fn progress_percentage(&self) -> u8 {
-        if self.total_work > 0 {
-            ((self.completed_work as f32 / self.total_work as f32) * PROGRESS_PERCENTAGE_MULTIPLIER)
-                as u8
-        } else {
-            0
-        }
+        progress_to_percentage(self.completed_work, self.total_work)
     }
 
     /// Get current progress as fraction
     pub fn progress_fraction(&self) -> f32 {
-        if self.total_work > 0 {
-            self.completed_work as f32 / self.total_work as f32
-        } else {
-            0.0
-        }
+        progress_to_fraction(self.completed_work, self.total_work)
     }
 
     /// Get current progress update
     pub fn get_current_update(&self) -> ProgressUpdate {
-        let progress = self.progress_fraction();
-        let estimated_time_remaining = self.calculate_eta();
-
-        ProgressUpdate {
-            operation_id: self.operation_id.clone(),
-            progress,
-            message: self.current_message.clone(),
-            details: self.current_details.clone(),
-            timestamp: chrono::Utc::now(),
-            estimated_time_remaining,
-        }
+        create_progress_update(
+            &self.operation_id,
+            self.completed_work,
+            self.total_work,
+            &self.current_message,
+            self.current_details.as_ref(),
+            self.start_time,
+        )
     }
 }
 

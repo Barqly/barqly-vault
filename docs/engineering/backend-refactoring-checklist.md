@@ -86,14 +86,14 @@ Several backend files significantly exceed our 300-line maximum standard. This d
 #### 7. `src/commands/file_commands.rs` - **388 lines**
 **Current State**: 29% over limit
 **Refactoring Strategy**:
-- [ ] Split into file selection and file operation commands (~194 lines each)
-- [ ] Target: Two files under 200 lines each
+- [x] Split into file selection and file operation commands (~194 lines each)
+- [x] Target: Two files under 200 lines each
 
 #### 8. `src/storage/paths.rs` - **333 lines**
 **Current State**: 11% over limit
 **Refactoring Strategy**:
-- [ ] Extract validation logic to separate validator (~100 lines)
-- [ ] Target: ~233 lines remaining
+- [x] Extract validation logic to separate validator (~100 lines)
+- [x] Target: ~233 lines remaining
 
 ### ✅ ACCEPTABLE - Files Within Limits (No Action Required)
 
@@ -129,18 +129,18 @@ Several backend files significantly exceed our 300-line maximum standard. This d
 ## Implementation Priority
 
 ### Phase 1 - Critical (Sprint 1)
-1. [ ] Refactor `crypto_commands.rs` (1435 lines)
-2. [ ] Refactor `types.rs` (1297 lines)
+1. [x] Refactor `crypto_commands.rs` (1435 lines)
+2. [x] Refactor `types.rs` (1297 lines)
 
 ### Phase 2 - High Priority (Sprint 2)
 3. [x] Refactor `manifest.rs` (537 lines) - COMPLETED
-4. [ ] Refactor `archive.rs` (499 lines)
-5. [ ] Refactor `cache.rs` (405 lines)
+4. [x] Refactor `archive.rs` (499 lines)
+5. [x] Refactor `cache.rs` (405 lines)
 
 ### Phase 3 - Medium Priority (Sprint 3)
-6. [ ] Refactor `key_store.rs` (393 lines)
-7. [ ] Refactor `file_commands.rs` (388 lines)
-8. [ ] Refactor `paths.rs` (333 lines)
+6. [x] Refactor `key_store.rs` (393 lines)
+7. [x] Refactor `file_commands.rs` (388 lines)
+8. [x] Refactor `paths.rs` (333 lines)
 
 ### Phase 4 - Test Cleanup (Sprint 4)
 9. [ ] Refactor test files over 500 lines
