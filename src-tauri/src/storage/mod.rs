@@ -39,7 +39,7 @@
 pub mod cache;
 pub mod errors;
 pub mod key_store;
-pub mod paths;
+pub mod path_management;
 
 use std::path::PathBuf;
 
@@ -49,7 +49,7 @@ pub use key_store::{
     delete_key, get_key_info, key_exists, list_keys, load_encrypted_key, save_encrypted_key,
     KeyInfo,
 };
-pub use paths::{get_key_file_path, get_key_metadata_path};
+pub use path_management::{get_key_file_path, get_key_metadata_path};
 
 /// Result type for storage operations
 pub type Result<T> = std::result::Result<T, StorageError>;
@@ -100,7 +100,7 @@ pub fn get_logs_directory() -> Result<PathBuf> {
 }
 
 // Internal function imports for the public API functions above
-use paths::{get_app_dir, get_keys_dir, get_logs_dir};
+use path_management::{get_app_dir, get_keys_dir, get_logs_dir};
 
 #[cfg(test)]
 mod tests {

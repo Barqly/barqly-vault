@@ -3,7 +3,7 @@
 //! This utility provides a cross-platform way to clean the application keys directory,
 //! with confirmation prompts and safe operation.
 
-use barqly_vault_lib::storage::paths::get_keys_dir;
+use barqly_vault_lib::storage::path_management::get_keys_dir;
 use std::fs;
 use std::io::{self, Write};
 

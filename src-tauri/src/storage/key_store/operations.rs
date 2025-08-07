@@ -6,7 +6,7 @@
 use super::{update_key_metadata_access_time, validate_key_file, KeyInfo};
 use crate::storage::cache::get_cache;
 use crate::storage::errors::StorageError;
-use crate::storage::paths::{get_key_file_path, get_key_metadata_path};
+use crate::storage::path_management::{get_key_file_path, get_key_metadata_path};
 use rand::Rng;
 use std::fs;
 use std::path::PathBuf;

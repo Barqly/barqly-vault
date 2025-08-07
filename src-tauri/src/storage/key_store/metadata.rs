@@ -6,7 +6,7 @@
 use super::KeyInfo;
 use crate::storage::cache::get_cache;
 use crate::storage::errors::StorageError;
-use crate::storage::paths::{get_key_metadata_path, get_keys_dir};
+use crate::storage::path_management::{get_key_metadata_path, get_keys_dir};
 use std::fs;
 
 /// List all available keys

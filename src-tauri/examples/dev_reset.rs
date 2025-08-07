@@ -3,7 +3,9 @@
 //! This utility clears all development data including keys, logs, config,
 //! and caches to provide a clean development environment.
 
-use barqly_vault_lib::storage::paths::{get_app_dir, get_config_dir, get_keys_dir, get_logs_dir};
+use barqly_vault_lib::storage::path_management::{
+    get_app_dir, get_config_dir, get_keys_dir, get_logs_dir,
+};
 use std::fs;
 use std::io::{self, Write};
 
