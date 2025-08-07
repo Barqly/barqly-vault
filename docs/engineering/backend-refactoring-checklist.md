@@ -72,9 +72,9 @@ Several backend files significantly exceed our 300-line maximum standard. This d
 #### 6. `src/storage/cache.rs` - **405 lines**
 **Current State**: 35% over limit
 **Refactoring Strategy**:
-- [ ] Split LRU implementation to generic utility (~150 lines)
-- [ ] Extract metrics collection (~100 lines)
-- [ ] Target: ~155 lines remaining
+- [x] Split LRU implementation to generic utility (~150 lines)
+- [x] Extract metrics collection (~100 lines)
+- [x] Target: ~155 lines remaining
 
 #### 6. `src/storage/key_store.rs` - **393 lines**
 **Current State**: 31% over limit
