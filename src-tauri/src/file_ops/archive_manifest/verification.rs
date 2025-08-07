@@ -4,12 +4,8 @@
 //! and calculating hashes for integrity checking.
 
 use super::types::Manifest;
-use crate::constants::IO_BUFFER_SIZE;
 use crate::file_ops::{FileInfo, FileOpsConfig, FileOpsError, Result};
 use sha2::{Digest, Sha256};
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
 use tracing::{info, warn};
 
 /// Verify manifest against extracted files
@@ -106,32 +102,5 @@ pub fn calculate_manifest_hash(manifest: &Manifest) -> Result<String> {
     hasher.update(json.as_bytes());
     let result = hasher.finalize();
 
-    Ok(hex::encode(result))
-}
-
-/// Calculate SHA-256 hash of a file
-pub fn calculate_file_hash(path: &Path) -> Result<String> {
-    let mut file = File::open(path).map_err(|_e| FileOpsError::FileNotFound {
-        path: path.to_path_buf(),
-    })?;
-
-    let mut hasher = Sha256::new();
-    let mut buffer = [0; IO_BUFFER_SIZE];
-
-    loop {
-        let n = file
-            .read(&mut buffer)
-            .map_err(|e| FileOpsError::HashCalculationFailed {
-                message: format!("Failed to read file: {e}"),
-            })?;
-
-        if n == 0 {
-            break;
-        }
-
-        hasher.update(&buffer[..n]);
-    }
-
-    let result = hasher.finalize();
     Ok(hex::encode(result))
 }

@@ -13,4 +13,4 @@ pub use operations::{
     create_manifest_for_archive, create_manifest_from_archive, extract_and_verify_archive,
 };
 pub use types::{ArchiveManifest, FileManifestEntry, Manifest};
-pub use verification::{calculate_file_hash, calculate_manifest_hash, verify_manifest};
+pub use verification::{calculate_manifest_hash, verify_manifest};

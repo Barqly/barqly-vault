@@ -48,9 +48,13 @@ Several backend files significantly exceed our 300-line maximum standard. This d
 #### 4. `src/file_ops/archive.rs` - **499 lines**
 **Current State**: 66% over limit
 **Refactoring Strategy**:
-- [ ] Extract compression logic to separate module (~150 lines)
-- [ ] Move progress tracking to shared utility (~100 lines)
-- [ ] Target: ~249 lines remaining
+- [x] Renamed to archive_operations for clarity (vs archive_manifest)
+- [x] Split into focused modules:
+  - [x] `archive_operations/creation.rs` (259 lines)
+  - [x] `archive_operations/extraction.rs` (134 lines)
+  - [x] `archive_operations/mod.rs` (11 lines)
+- [x] Extracted shared `calculate_file_hash` to `utils.rs` (43 lines)
+- [x] Moved tests to `tests/unit/file_ops/archive_tests.rs` (81 lines)
 
 #### 5. `src/storage/cache.rs` - **405 lines**
 **Current State**: 35% over limit

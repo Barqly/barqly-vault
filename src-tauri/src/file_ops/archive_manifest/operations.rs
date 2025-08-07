@@ -4,8 +4,9 @@
 //! archive manifests.
 
 use super::types::{ArchiveManifest, FileManifestEntry, Manifest};
-use super::verification::{calculate_file_hash, calculate_manifest_hash};
-use crate::file_ops::archive::extract_archive;
+use super::verification::calculate_manifest_hash;
+use crate::file_ops::archive_operations::extract_archive;
+use crate::file_ops::utils::calculate_file_hash;
 use crate::file_ops::{ArchiveOperation, FileInfo, FileOpsConfig, FileOpsError, Result};
 use chrono::Utc;
 use std::fs;
