@@ -89,6 +89,21 @@ describe('DecryptPage', () => {
   };
 
   beforeEach(() => {
+    // Reset mock functions but keep the same object references
+    vi.clearAllMocks();
+
+    // Reset mock state to defaults
+    Object.assign(mockDecryptionHook, {
+      isLoading: false,
+      error: null,
+      success: null,
+      progress: null,
+      selectedFile: null,
+      selectedKeyId: null,
+      passphrase: '',
+      outputPath: null,
+    });
+
     mockUseFileDecryption.mockReturnValue(mockDecryptionHook);
     mockUseToast.mockReturnValue(mockToastHook);
   });
@@ -246,6 +261,7 @@ describe('DecryptPage', () => {
       mockDecryptionHook.selectedFile = '/path/to/vault.age';
       mockDecryptionHook.selectedKeyId = 'test-key-id';
       mockDecryptionHook.passphrase = 'test-passphrase';
+      mockDecryptionHook.outputPath = '/output/path'; // Required for "Ready to Decrypt" state
     });
 
     it('should show destination selector after passphrase entry', () => {
@@ -512,17 +528,24 @@ describe('DecryptPage', () => {
 
     it('should validate all required fields before enabling decrypt button', () => {
       // Initially, decrypt button should not be visible when fields are empty
-      renderWithRouter(<DecryptPage />);
+      const { rerender } = renderWithRouter(<DecryptPage />);
       expect(screen.queryByText('Decrypt Now')).not.toBeInTheDocument();
 
-      // Setup mock with all fields filled
-      mockDecryptionHook.selectedFile = '/path/to/vault.age';
-      mockDecryptionHook.selectedKeyId = 'test-key-id';
-      mockDecryptionHook.passphrase = 'test-passphrase';
-      mockDecryptionHook.outputPath = '/output/path';
+      // Update the mock with all fields filled
+      mockUseFileDecryption.mockReturnValue({
+        ...mockDecryptionHook,
+        selectedFile: '/path/to/vault.age',
+        selectedKeyId: 'test-key-id',
+        passphrase: 'test-passphrase',
+        outputPath: '/output/path',
+      });
 
       // Re-render with complete data
-      renderWithRouter(<DecryptPage />);
+      rerender(
+        <BrowserRouter>
+          <DecryptPage />
+        </BrowserRouter>,
+      );
 
       // Now the decrypt button should be visible
       expect(screen.getByText('Decrypt Now')).toBeInTheDocument();
