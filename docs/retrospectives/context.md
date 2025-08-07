@@ -1,182 +1,114 @@
 # Retrospectives Domain Context
 
-**Purpose:** This document captures the ZenAI team's collective learning journey, preserving hard-won insights and demonstrating the evolution of our capability through the Barqly Vault project.
+> **Purpose**: Capture learnings, decisions, and evolution of the project  
+> **Value**: Prevent repeating mistakes, preserve institutional knowledge  
+> **Last Updated**: January 2025
 
-## Domain Overview
+## Overview
 
-The Retrospectives domain serves as our organizational memory - transforming individual experiences into team wisdom. Each retrospective captures not just what happened, but WHY it happened and HOW we grew from it. This is where process meets progress, where mistakes become methodology improvements, and where the ADD/ZenAI framework evolves through practical application.
+This domain contains the accumulated wisdom from our development journey. Each retrospective captures not just what went wrong, but more importantly, what we learned and how we adapted.
 
-## Learning Evolution Timeline
+## Key Learnings Summary
 
-### Phase 1: Foundation Building (Milestone 2)
-**Focus:** Establishing core security modules and discovering optimal patterns
+### Technical Learnings
 
-#### Key Discoveries:
-- **Blueprint Validation Critical:** Architecture review before coding prevented technical debt
-- **Security-First Design:** Building security into the foundation (memory zeroization, input validation) made modules production-ready from day one
-- **Test Architecture Planning:** Learned that upfront test planning beats "test as we go" - integration tests provide better coverage for complex modules
-- **Framework Research Matters:** Thorough API validation before implementation prevents cascading fixes
+#### Testing Patterns
+- **Mock isolation is critical** - Async operations must be properly mocked to prevent test flakiness
+- **Context providers need validation** - React Context can fail silently without proper error boundaries
+- **Test organization matters** - Hierarchical structure (unit/integration/smoke) beats embedded tests
 
-#### Pattern Emergence:
-The team discovered that modular architecture with clear separation of concerns (crypto → storage → file_ops) creates natural boundaries for parallel development and testing.
+#### Performance Optimizations
+- **Debouncing is powerful** - 80-90% IPC reduction with simple timer-based debouncing
+- **Lazy loading pays off** - Component lazy loading improves initial load significantly
+- **Cache strategically** - LRU cache with TTL provided 86.7% performance improvement
 
-### Phase 2: Test Strategy Maturation (Milestone 2.3 & 9)
-**Focus:** Evolving from embedded tests to comprehensive test framework
+### Process Learnings
 
-#### Key Transformations:
-- **From Embedded to Structured:** Shifted from `#[cfg(test)]` blocks to dedicated test modules (unit/integration/smoke)
-- **Test Organization as Architecture:** Proper test structure proved as critical as test coverage
-- **Enhanced Assertions:** Custom assertion helpers with context-rich messages improved debugging efficiency
-- **Two-Phase Pyramid:** Developed pre-release comprehensive testing + post-production smoke tests strategy
+#### Documentation as Code
+- **Context system works** - 5-minute onboarding vs 25-35 minute reconstruction
+- **Definition of Done matters** - Mandatory documentation updates ensure knowledge preservation
+- **Archive incrementally** - Move completed work to archive to keep active docs lean
 
-#### Critical Learning:
-"Test-cases-as-documentation" approach created living documentation that serves both quality assurance and knowledge transfer.
+#### Development Workflow
+- **Demo-first development** - Building in demo system first enables rapid iteration
+- **Validation mirrors CI** - Local validation matching CI prevents integration surprises
+- **Pre-commit hooks save time** - Catching issues before commit reduces rework
 
-### Phase 3: Interface Design Excellence (Milestone 3)
-**Focus:** Building command architecture and API documentation
+## Milestone Evolution
 
-#### Architectural Achievements:
-- **Command-Only Access Pattern:** UI layer only needs Tauri commands, not internal Rust modules
-- **Progress Reporting System:** Global state management for long-running operations improved UX significantly
-- **Structured Logging:** OpenTelemetry-compliant logging provided production-grade observability
-- **Error Categorization:** Comprehensive error types guide user behavior and recovery
+### Milestone 2: Core Modules
+- Successfully implemented crypto, storage, and file_ops modules
+- Age encryption library integration proved straightforward
+- Rust's type system prevented many potential bugs
 
-#### Documentation Breakthrough:
-Three-tier documentation system (Onboarding → Quick Reference → Detailed) with user journey focus proved more effective than technical categorization.
+### Milestone 3: Tauri Bridge
+- Command-based architecture scaled well
+- TypeScript type generation from Rust invaluable
+- Progress tracking required debouncing optimization
 
-### Phase 4: Frontend Integration (Milestone 4)
-**Focus:** UI development with shift-left validation
+### Milestone 4: UI Implementation
+- Three-screen approach (Setup/Encrypt/Decrypt) validated
+- 90-second setup goal achieved through UX optimization
+- Drag-and-drop implementation required Context API expertise
 
-#### Revolutionary Changes:
-- **Shift-Left Validation:** Pre-commit hooks mirroring CI eliminated 80% build failure rate
-- **API Contract Alignment:** Perfect frontend-backend type alignment prevented refactoring cycles
-- **Component Architecture:** CVA (class-variance-authority) pattern enabled consistent, maintainable styling
-- **Monorepo Complexity:** Discovered dependency co-location criticality for environment consistency
+### Milestone 12: Quick Wins
+- Security hardening completed (DevTools disabled, CSP enhanced)
+- Performance optimizations yielded major improvements
+- Development workflow automation reduced friction
 
-#### Developer Experience Wins:
-Command consistency (`ui:*` scripts) working from any directory removed context-switching friction.
+## Critical Decisions That Shaped the Project
 
-## Cross-Cutting Patterns & Themes
+1. **Tauri v2 over Electron** - Smaller bundle, better security, native performance
+2. **Age over GPG** - Simpler API, audited library, perfect for our use case
+3. **React 19.1 + TypeScript** - Type safety crucial for financial security software
+4. **Demo-first development** - Rapid iteration without breaking main app
+5. **Context system** - Eliminated context reconstruction overhead
 
-### 1. Sequential → Parallel Evolution
-**Early Approach:** Sequential task completion, one agent at a time
-**Evolved Approach:** Parallel agent coordination with clear handoff points
-**Impact:** 40% faster milestone completion, better cross-functional integration
+## Failure Recovery Patterns
 
-### 2. Reactive → Proactive Quality
-**Early Approach:** Fix issues after CI failures
-**Evolved Approach:** Shift-left validation preventing issues before commit
-**Impact:** 80% reduction in CI failures, faster development cycles
+### Test Suite Recovery
+When tests drift from implementation:
+1. Create baseline snapshot
+2. Fix one test at a time
+3. Validate incrementally
+4. Full validation before declaring victory
 
-### 3. Technical → User-Centric Documentation
-**Early Approach:** Technical categorization of information
-**Evolved Approach:** User journey-based documentation architecture
-**Impact:** New team members productive 50% faster
+### Context Drift Recovery
+When documentation falls behind:
+1. Review Definition of Done
+2. Update project-plan.md first
+3. Update domain contexts
+4. Archive completed work
 
-### 4. Isolated → Integrated Testing
-**Early Approach:** Embedded unit tests in source files
-**Evolved Approach:** Hierarchical test organization with clear separation
-**Impact:** Better test maintainability, clearer coverage understanding
+## Future Considerations
 
-### 5. Assumption → Validation Culture
-**Early Approach:** Assume framework APIs work as expected
-**Evolved Approach:** Validate everything before implementation
-**Impact:** 90% reduction in API-related refactoring
-
-## Actionable Lessons for Future Work
-
-### Architecture & Design
-1. **Always validate blueprints** before implementation - prevents architectural debt
-2. **Design for parallel development** - clear module boundaries enable team scaling
-3. **Security must be foundational** not retrofitted - build it in from day one
-4. **Interface-first development** enables independent team progress
-
-### Testing & Quality
-1. **Plan test architecture upfront** - integration tests for workflows, unit tests for logic
-2. **Implement shift-left validation immediately** - mirror CI in pre-commit hooks
-3. **Use test-cases-as-documentation** - descriptive names serve as living documentation
-4. **Enhanced assertions pay dividends** - context-rich errors accelerate debugging
-
-### Documentation & Knowledge
-1. **User journey trumps information architecture** - organize by how people learn
-2. **Three-tier documentation works** - Onboarding → Quick Reference → Detailed
-3. **API contracts are sacred** - validate alignment before building dependencies
-4. **Retrospectives are investments** - capture WHY not just WHAT
-
-### Process & Collaboration
-1. **One-unit-at-a-time refactoring** prevents cascading issues
-2. **Environment parity is non-negotiable** - local must match CI/CD
-3. **Command consistency matters** - work from any directory without friction
-4. **Framework research time pays off** - understand before implementing
-
-## ADD/ZenAI Methodology Evolution
-
-### Agent Coordination Improvements
-- **Role Clarity:** Each agent's retrospective shows clear ownership and expertise boundaries
-- **Handoff Excellence:** Clean transitions between agents with validated deliverables
-- **Parallel Execution:** Multiple agents working simultaneously when dependencies allow
-- **Quality Gates:** Definition of Done enforced at each transition point
-
-### Learning Integration Process
-1. **Capture:** Immediate retrospectives after milestone completion
-2. **Analyze:** Extract patterns and anti-patterns across retrospectives
-3. **Synthesize:** Convert individual lessons into team practices
-4. **Apply:** Integrate learnings into next milestone planning
-5. **Validate:** Measure improvement metrics in subsequent work
-
-### Success Metrics Evolution
-- **Initial Focus:** Task completion and test passing
-- **Evolved Focus:** Developer experience, maintainability, knowledge transfer
-- **Current State:** Balanced scorecard of quality, velocity, and sustainability
-
-## Impact on Other Domains
-
-### Architecture Domain
-- Retrospectives validated modular design decisions
-- Blueprint review process emerged from early mistakes
-- Interface-first approach proven through experience
-
-### Validation Domain
-- Shift-left strategy emerged from CI failure patterns
-- Test organization insights drove framework selection
-- Enhanced assertions pattern standardized across codebase
-
-### Project Management Domain
-- Milestone planning incorporates retrospective learnings
-- Task estimation improved through pattern recognition
-- Risk management enhanced by mistake pattern analysis
-
-## Future Application Guidelines
-
-### For New Projects
-1. Start with retrospective templates from day one
-2. Implement shift-left validation before first commit
-3. Design test architecture during planning phase
-4. Create three-tier documentation structure upfront
-5. Establish environment parity requirements immediately
-
-### For Existing Projects
-1. Conduct baseline retrospective to capture current state
-2. Gradually introduce improvements based on patterns
-3. Focus on highest-impact changes first (usually validation)
-4. Document the journey for future team members
-5. Celebrate improvement metrics to reinforce learning culture
-
-## Key Insight Synthesis
-
-The retrospectives reveal that **process evolution is as important as code evolution**. The team's growth from reactive to proactive, from sequential to parallel, and from technical to user-centric thinking represents the real value delivered beyond the codebase itself.
-
-The ADD/ZenAI methodology has proven that AI agents can not only execute tasks but also learn, adapt, and improve their collaboration patterns over time. The retrospectives serve as the mechanism for this continuous improvement, turning individual agent experiences into collective team wisdom.
-
-Most importantly, the retrospectives show that **mistakes are investments in future excellence** when properly captured, analyzed, and integrated into team practices. This learning repository ensures that every challenge faced makes the team stronger for the next project.
-
----
-
-*"In the realm of code and collaboration, retrospection transforms experience into expertise, mistakes into methodology, and lessons into legacy."* - The ZenAI Team
+Based on our learnings, future development should:
+- Maintain the demo-first development pattern
+- Continue aggressive documentation archiving
+- Preserve test isolation patterns
+- Extend performance optimizations to backend
 
 ## Navigation
 
-- [All Retrospectives](./README.md) - Complete list of milestone retrospectives
-- [Project Plan](../project-management/project-plan.md) - See how learnings influence planning
-- [Validation Strategy](../validation/comprehensive-test-strategy.md) - Test evolution story
-- [Architecture Decisions](../architecture/README.md) - Design patterns that emerged
+### Key Retrospectives by Topic
+
+**Testing & Quality**
+- `milestone-4-task-1.md` - UI component testing
+- `milestone-4-task-2.md` - Integration testing
+- `drag-drop-context-failure.md` - Context API learnings
+
+**Architecture & Design**
+- `milestone-2-task-1.md` - Core module design
+- `milestone-3-task-api.md` - API design decisions
+- `milestone-3-retrospective.md` - Tauri bridge learnings
+
+**Process & Workflow**
+- `milestone-9-task-1.md` - Documentation system
+- `milestone-2-task-2.md` - Development workflow
+- `milestone-2-task-3.md` - Testing strategy
+
+## Conclusion
+
+Every retrospective represents a step forward in our understanding. The patterns we've discovered, the mistakes we've made, and the solutions we've found all contribute to a stronger, more maintainable system.
+
+The key insight: **invest in developer experience and documentation early** - it pays compound dividends throughout the project lifecycle.

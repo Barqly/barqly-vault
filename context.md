@@ -8,12 +8,13 @@
 **Core Mission**: Enable secure Bitcoin key storage in under 90 seconds, recoverable decades later.
 
 ## Current State (January 2025)
+- ✅ **Alpha Release Complete** - Three functional screens (Setup, Encrypt, Decrypt)
 - ✅ **Core encryption** - Age encryption with passphrase protection
 - ✅ **Key management** - Generate, store, manage encryption keys
-- ✅ **File operations** - Encrypt files/folders into `.age` archives
-- ✅ **Cross-platform** - macOS, Windows, Linux via Tauri
-- 🚧 **In progress** - Batch operations, key backup workflows
-- 📋 **Next up** - Hardware wallet integration, cloud backup
+- ✅ **File operations** - Encrypt/decrypt files and folders with manifest preservation
+- ✅ **Cross-platform** - macOS, Windows, Linux via Tauri v2
+- ✅ **UI/UX Implementation** - All three core screens with 90-second setup goal achieved
+- 📋 **Next up** - Testing & QA, performance optimization, hardware wallet integration
 
 ## Navigation Map
 
@@ -85,8 +86,9 @@ make app            # Start Tauri desktop app
 | `/docs/engineering/api-reference.md` | API reference |
 
 ## Active Development
-- **Current Sprint**: Batch operations and key backup workflows
-- **Next Milestone**: v1.0 with complete Bitcoin custody workflow
+- **Current Phase**: Alpha release with core functionality complete
+- **Recent Achievement**: All three functional screens implemented and tested
+- **Next Milestone**: Testing & QA (4.2.5) - Unit, integration, E2E, accessibility
 - **Project Tracking**: `/docs/project-plan.md`
 
 ---

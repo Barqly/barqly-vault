@@ -7,11 +7,14 @@
 ### Directory Structure
 ```
 archive/
-├── sprints/           # Completed sprint contexts
-│   ├── 2024-12/      # December 2024 sprints
-│   └── 2025-01/      # January 2025 sprints
-├── decisions/         # Superseded technical decisions
-└── milestones/        # Completed milestone contexts
+├── completed-sprints/    # Completed sprint contexts
+├── completed-milestones/ # Completed milestone blueprints & contexts
+├── decision-chains/      # Superseded technical decisions
+├── superseded/          # Outdated documentation
+└── ux-design-iterations/ # Historical UX design iterations
+    ├── setup-screen/    # Setup screen design evolution
+    ├── encrypt-screen/  # Encrypt screen design evolution
+    └── decrypt-screen/  # Decrypt screen design evolution
 ```
 
 ## When to Archive
@@ -67,14 +70,21 @@ milestones/milestone-{number}-{name}.md
 
 ## Current Archive Contents
 
+### Completed Milestones (August 2025)
+- **7 milestone blueprints** archived with implementation references
+- See `/completed-milestones/README.md` for implementation locations
+
+### UX Design Iterations (August 2025)
+- **Setup Screen**: 14 iteration documents from initial requirements to final spec
+- **Encrypt Screen**: 4 iteration documents tracking design evolution
+- **Decrypt Screen**: 4 iteration documents including backend requirements
+- All iterations preserved for design decision traceability
+
 ### Recent Sprints
-*None archived yet - project in active development*
+*Active development - sprints not yet formalized*
 
 ### Superseded Decisions
-*None archived yet - all decisions current*
-
-### Completed Milestones
-*Will be populated as milestones complete*
+*All technical decisions currently active*
 
 ## Search Tips
 
@@ -136,5 +146,5 @@ As the project grows, consider:
 
 ---
 
-*Archive updated: 2025-08-04*  
-*Next review: When first content is archived*
+*Archive updated: 2025-08-07*  
+*Next review: After next major milestone completion*

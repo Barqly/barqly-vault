@@ -37,17 +37,17 @@ The Architecture domain serves as the technical foundation for Barqly Vault, def
   - Data flow: encryption/decryption workflows
   - Security considerations and threat model
 
-#### Backend Architecture
-- **[Backend Blueprints](./backend/)** - Rust module specifications
-  - **Milestone 2**: Core module implementations
-    - [blueprint-milestone2.md](./backend/blueprint-milestone2.md) - Rust modules overview
-    - [blueprint-milestone2-task3.md](./backend/blueprint-milestone2-task3.md) - File operations detail
-  - **Milestone 3**: Tauri command bridge
-    - [blueprint-milestone3.md](./backend/blueprint-milestone3.md) - Bridge architecture
-    - [Setup commands](./backend/blueprint-milestone3-task3.1.md)
-    - [Encryption commands](./backend/blueprint-milestone3-task3.2.md)
-    - [Decryption commands](./backend/blueprint-milestone3-task3.3.md)
-    - [Integration testing](./backend/blueprint-milestone3-task3.4.md)
+#### Backend Architecture (Implemented)
+- **Core Modules** - Fully implemented in Rust
+  - Crypto module with age encryption
+  - Storage module for key management
+  - File operations with manifest support
+- **Tauri Command Bridge** - Complete and tested
+  - Setup commands for key generation
+  - Encryption commands with progress tracking
+  - Decryption commands with error recovery
+  - All commands fully integrated and tested
+- **Archived Blueprints**: See `/docs/context/archive/completed-milestones/`
 
 #### Frontend Architecture
 - **[Frontend Specifications](./frontend/)** - TypeScript/React patterns

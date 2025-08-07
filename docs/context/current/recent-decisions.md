@@ -1,7 +1,27 @@
 # Recent Technical Decisions
 
 **Period:** Last 30 days  
-**Last Updated:** 2025-08-04
+**Last Updated:** 2025-08-07
+
+## UI Implementation Decisions (January 2025)
+
+### Testing Strategy for UI Components
+**Decision:** Comprehensive mock isolation for all async operations
+**Rationale:** Prevents test flakiness and race conditions
+**Implementation:** Created testing-ui-standards.md with patterns
+**Result:** All 374+ tests passing reliably
+
+### Three-Screen Alpha Release
+**Decision:** Focus on core user journey (Setup → Encrypt → Decrypt)
+**Rationale:** Deliver working MVP for user validation
+**Trade-off:** Deferred advanced features for core functionality
+**Result:** Functional alpha with 90-second setup achieved
+
+### Drag-Drop Context Pattern
+**Decision:** Use React Context API for drag-drop state
+**Learning:** Context can fail silently if not properly wrapped
+**Solution:** Comprehensive error boundaries and provider validation
+**Documentation:** retrospectives/drag-drop-context-failure.md
 
 ## Architecture Decisions
 

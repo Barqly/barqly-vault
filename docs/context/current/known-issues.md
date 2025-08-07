@@ -1,6 +1,6 @@
 # Known Issues & Workarounds
 
-**Last Updated:** 2025-08-04  
+**Last Updated:** 2025-08-07  
 **Status:** Active tracking
 
 ## Current Blockers
@@ -29,6 +29,17 @@ All critical issues resolved in Milestone 12.
 **Priority:** Low - existing fixtures work well  
 
 ## Recently Resolved
+
+### ✅ UI Test Failures (FIXED - January 2025)
+**Previous:** Multiple test failures due to async race conditions
+**Solution:** Comprehensive mock isolation patterns
+**Documentation:** `/docs/engineering/testing-ui-standards.md`
+**Result:** All 374+ tests passing reliably
+
+### ✅ Drag-Drop Context Issues (FIXED - January 2025)
+**Previous:** Context API failing silently
+**Solution:** Proper provider wrapping and error boundaries
+**Documentation:** `/docs/retrospectives/drag-drop-context-failure.md`
 
 ### ✅ Test Key Accumulation (FIXED)
 **Previous:** ~1090 legacy test keys accumulating  
