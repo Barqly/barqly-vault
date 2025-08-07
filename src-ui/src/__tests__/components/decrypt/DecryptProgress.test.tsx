@@ -4,6 +4,13 @@ import DecryptProgress from '../../../components/decrypt/DecryptProgress';
 import { ProgressUpdate } from '../../../lib/api-types';
 import '@testing-library/jest-dom';
 
+// Mock the ProgressBar component
+vi.mock('../../../components/ui/progress-bar', () => ({
+  default: vi.fn(({ value, showPercentage }) => (
+    <div data-testid="progress-bar">{showPercentage && <span>{Math.round(value)}%</span>}</div>
+  )),
+}));
+
 describe('DecryptProgress', () => {
   const createProgress = (value: number, message?: string): ProgressUpdate => ({
     operation_id: 'test-op-id',
