@@ -2,8 +2,8 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { AlertCircle, X, AlertTriangle, Info, Shield } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
-import { CommandError, ErrorCode } from '@/lib/api-types';
+import { cn } from '../../lib/utils';
+import { CommandError, ErrorCode } from '../../lib/api-types';
 
 const errorMessageVariants = cva(
   'relative w-full rounded-lg border p-4 transition-all duration-200',

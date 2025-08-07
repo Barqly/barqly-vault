@@ -190,7 +190,7 @@ export const logError = (context: string, message: string, error?: Error, data?:
   logger.error(context, message, error, data);
 
 // Development helpers
-if (import.meta.env.DEV) {
+if (import.meta.env.DEV && typeof window !== 'undefined') {
   // Expose logger to window for debugging
   (window as any).__barqlyLogger = logger;
   console.log('Barqly Logger available at window.__barqlyLogger');

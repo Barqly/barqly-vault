@@ -85,7 +85,7 @@ describe('DecryptProgress', () => {
       render(<DecryptProgress progress={progress} />);
 
       // The ProgressBar component should render the percentage
-      expect(screen.getByText(/42/)).toBeInTheDocument();
+      expect(screen.getByText('42%')).toBeInTheDocument();
     });
 
     it('should display the progress message', () => {

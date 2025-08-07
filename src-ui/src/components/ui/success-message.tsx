@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { CheckCircle, X } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 const successMessageVariants = cva(
   'relative w-full rounded-lg border p-4 transition-all duration-200',

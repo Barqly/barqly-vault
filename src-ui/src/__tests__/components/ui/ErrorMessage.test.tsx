@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { ErrorMessage } from '@/components/ui/error-message';
-import { CommandError, ErrorCode } from '@/lib/api-types';
+import { ErrorMessage } from '../../../components/ui/error-message';
+import { CommandError, ErrorCode } from '../../../lib/api-types';
 
 describe('ErrorMessage', () => {
   describe('Basic Rendering', () => {

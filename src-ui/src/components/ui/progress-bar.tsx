@@ -2,8 +2,8 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2, CheckCircle } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
-import { ProgressUpdate } from '@/lib/api-types';
+import { cn } from '../../lib/utils';
+import { ProgressUpdate } from '../../lib/api-types';
 
 const progressBarVariants = cva('relative w-full overflow-hidden rounded-full bg-secondary', {
   variants: {
