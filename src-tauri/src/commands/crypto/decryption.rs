@@ -3,6 +3,7 @@
 //! This module provides the Tauri command for decrypting files that were
 //! previously encrypted with age encryption.
 
+use super::file_helpers;
 use crate::commands::types::{
     CommandError, CommandResponse, ErrorCode, ErrorHandler, ProgressManager, ValidateInput,
     ValidationHelper,
@@ -142,7 +143,7 @@ pub async fn decrypt_data(
     // Validate and create output directory if it doesn't exist
     let output_path = Path::new(&input.output_dir);
     error_handler.handle_operation_error(
-        super::encryption::validate_output_directory(output_path),
+        file_helpers::validate_output_directory(output_path),
         "validate_output_directory",
         ErrorCode::InvalidPath,
     )?;
@@ -175,7 +176,7 @@ pub async fn decrypt_data(
     // Clean up temporary file
     progress_manager.set_progress(PROGRESS_DECRYPT_CLEANUP, "Cleaning up temporary files...");
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
-    super::encryption::cleanup_temp_file(&temp_archive_path, &error_handler);
+    file_helpers::cleanup_temp_file(&temp_archive_path, &error_handler);
 
     // Try to verify manifest if it exists
     progress_manager.set_progress(PROGRESS_DECRYPT_VERIFY, "Verifying manifest...");

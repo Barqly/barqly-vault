@@ -35,7 +35,7 @@ Several backend files significantly exceed our 300-line maximum standard. This d
 
 ### 🟡 WARNING - Files Over 300 Lines (Action Required)
 
-#### 3. `src/file_ops/manifest.rs` - **537 lines**
+#### 3. `src/file_ops/manifest.rs` - **537 lines** ✅ COMPLETED
 **Current State**: 79% over limit
 **Refactoring Strategy**:
 - [x] Split into archive_manifest module:
@@ -45,7 +45,7 @@ Several backend files significantly exceed our 300-line maximum standard. This d
   - [x] `archive_manifest/tests.rs` (129 lines)
   - [x] `archive_manifest/mod.rs` (20 lines)
 
-#### 4. `src/file_ops/archive.rs` - **499 lines**
+#### 4. `src/file_ops/archive.rs` - **499 lines** ✅ COMPLETED
 **Current State**: 66% over limit
 **Refactoring Strategy**:
 - [x] Renamed to archive_operations for clarity (vs archive_manifest)
@@ -56,7 +56,20 @@ Several backend files significantly exceed our 300-line maximum standard. This d
 - [x] Extracted shared `calculate_file_hash` to `utils.rs` (43 lines)
 - [x] Moved tests to `tests/unit/file_ops/archive_tests.rs` (81 lines)
 
-#### 5. `src/storage/cache.rs` - **405 lines**
+#### 5. `src/commands/crypto/encryption.rs` - **410 lines** ✅ COMPLETED (August 7, 2025)
+**Previous State**: 37% over limit
+**Refactoring Strategy**:
+- [x] Split shared utilities into `file_helpers.rs` module:
+  - [x] `file_helpers.rs` (136 lines) - Shared file operation utilities
+  - [x] `encryption.rs` (293 lines) - Core encryption command (now under 300!)
+- [x] Functions moved to file_helpers:
+  - [x] `create_file_selection_atomic` (also eliminates duplication with file_commands.rs)
+  - [x] `validate_output_directory` (already used by decryption)
+  - [x] `read_archive_file_safely`
+  - [x] `cleanup_temp_file` (already used by decryption)
+- [x] Updated decryption.rs to use shared file_helpers module
+
+#### 6. `src/storage/cache.rs` - **405 lines**
 **Current State**: 35% over limit
 **Refactoring Strategy**:
 - [ ] Split LRU implementation to generic utility (~150 lines)

@@ -5,6 +5,7 @@
 
 pub mod decryption;
 pub mod encryption;
+pub mod file_helpers;
 pub mod key_generation;
 pub mod manifest;
 pub mod progress;
