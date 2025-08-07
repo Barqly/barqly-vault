@@ -25,13 +25,13 @@ Several backend files significantly exceed our 300-line maximum standard. This d
 **Current State**: 332% over limit  
 **Issues**: All command types in single file
 **Refactoring Strategy**:
-- [ ] Split by domain:
-  - [ ] `types/error_types.rs` (~250 lines)
-  - [ ] `types/crypto_types.rs` (~300 lines)
-  - [ ] `types/file_types.rs` (~250 lines)
-  - [ ] `types/storage_types.rs` (~200 lines)
-  - [ ] `types/progress_types.rs` (~200 lines)
-  - [ ] Keep common types in `types/mod.rs` (~97 lines)
+- [x] Split by domain:
+  - [x] `types/error_types.rs` (~250 lines)
+  - [x] `types/crypto_types.rs` (~300 lines)
+  - [x] `types/file_types.rs` (~250 lines)
+  - [x] `types/storage_types.rs` (~200 lines)
+  - [x] `types/progress_types.rs` (~200 lines)
+  - [x] Keep common types in `types/mod.rs` (~97 lines)
 
 ### 🟡 WARNING - Files Over 300 Lines (Action Required)
 
