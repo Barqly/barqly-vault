@@ -79,9 +79,9 @@ Several backend files significantly exceed our 300-line maximum standard. This d
 #### 6. `src/storage/key_store.rs` - **393 lines**
 **Current State**: 31% over limit
 **Refactoring Strategy**:
-- [ ] Extract key validation logic (~100 lines)
-- [ ] Move metadata handling to separate module (~100 lines)
-- [ ] Target: ~193 lines remaining
+- [x] Extract key validation logic (~100 lines)
+- [x] Move metadata handling to separate module (~100 lines)
+- [x] Target: ~193 lines remaining
 
 #### 7. `src/commands/file_commands.rs` - **388 lines**
 **Current State**: 29% over limit
