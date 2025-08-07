@@ -234,7 +234,7 @@ fn verify_manifest_if_exists(
         let manifest_path = output_path.join(&manifest_info.path);
 
         // Try to load and verify the manifest
-        match file_ops::manifest::Manifest::load(&manifest_path) {
+        match file_ops::archive_manifest::Manifest::load(&manifest_path) {
             Ok(manifest) => {
                 match file_ops::verify_manifest(
                     &manifest,

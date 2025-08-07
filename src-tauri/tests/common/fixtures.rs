@@ -199,8 +199,8 @@ impl ManifestFixtures {
     /// Create a test manifest with sample file entries
     pub fn create_test_manifest(
         config: &TestSuiteConfig,
-    ) -> barqly_vault_lib::file_ops::manifest::Manifest {
-        use barqly_vault_lib::file_ops::manifest::Manifest;
+    ) -> barqly_vault_lib::file_ops::archive_manifest::Manifest {
+        use barqly_vault_lib::file_ops::archive_manifest::Manifest;
         use barqly_vault_lib::file_ops::{ArchiveOperation, FileInfo};
         use chrono::Utc;
         use std::path::PathBuf;

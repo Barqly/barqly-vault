@@ -105,7 +105,7 @@ pub async fn verify_manifest(
     progress_manager.set_progress(PROGRESS_VERIFY_LOAD, "Loading manifest file...");
 
     let manifest = error_handler.handle_operation_error(
-        file_ops::manifest::Manifest::load(std::path::Path::new(&input.manifest_path)),
+        file_ops::archive_manifest::Manifest::load(std::path::Path::new(&input.manifest_path)),
         "load_manifest",
         ErrorCode::FileNotFound,
     )?;

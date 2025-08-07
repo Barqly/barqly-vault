@@ -20,8 +20,8 @@
 //! ```
 
 pub mod archive;
+pub mod archive_manifest;
 pub mod errors;
-pub mod manifest;
 pub mod selection;
 pub mod staging;
 pub mod validation;
@@ -32,8 +32,8 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 pub use archive::{create_archive, extract_archive};
+pub use archive_manifest::{verify_manifest, Manifest};
 pub use errors::FileOpsError;
-pub use manifest::{verify_manifest, Manifest};
 pub use selection::{FileSelection, SelectionType};
 pub use staging::StagingArea;
 pub use validation::{validate_file_size, validate_paths};
@@ -116,6 +116,6 @@ pub struct ArchiveOperation {
 
 // Re-export main functions for convenience
 pub use archive::create_archive_with_progress;
-pub use manifest::create_manifest_for_archive;
+pub use archive_manifest::create_manifest_for_archive;
 pub use selection::validate_selection;
 pub use staging::create_staging_area;

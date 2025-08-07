@@ -7,6 +7,7 @@
 //! - Archive operations
 //! - Manifest operations
 
+pub mod manifest_tests;
 pub mod selection_tests;
 pub mod staging_tests;
 pub mod validation_tests;
