@@ -309,7 +309,7 @@ describe('SetupPage', () => {
 
       expect(mockGenerateKey).toHaveBeenCalledTimes(1);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[ERROR] [SetupPage] Key generation error caught'),
+        expect.stringContaining('[ERROR] [useSetupWorkflow] Key generation error caught'),
       );
 
       consoleErrorSpy.mockRestore();
