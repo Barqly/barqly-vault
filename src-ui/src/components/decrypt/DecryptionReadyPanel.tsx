@@ -1,0 +1,109 @@
+import React from 'react';
+import { CheckCircle, Unlock } from 'lucide-react';
+import PrimaryButton from '../ui/PrimaryButton';
+import DestinationSelector from './DestinationSelector';
+
+interface DecryptionReadyPanelProps {
+  outputPath: string;
+  showAdvancedOptions: boolean;
+  isLoading: boolean;
+  onPathChange: (path: string) => void;
+  onToggleAdvanced: () => void;
+  onDecrypt: () => void;
+  onReset: () => void;
+}
+
+/**
+ * Ready-to-decrypt panel showing final confirmation and action buttons
+ * Extracted from DecryptPage to reduce component size
+ */
+const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
+  outputPath,
+  showAdvancedOptions,
+  isLoading,
+  onPathChange,
+  onToggleAdvanced,
+  onDecrypt,
+  onReset,
+}) => {
+  const formatPathDisplay = (path: string): string => {
+    if (path.startsWith('/Users/')) {
+      return path.replace(/^\/Users\/[^/]+/, '~');
+    }
+    if (path.startsWith('C:\\Users\\')) {
+      const simplified = path.replace(/^C:\\Users\\[^\\]+/, '~');
+      return simplified.replace(/\\/g, '/');
+    }
+    return path;
+  };
+
+  return (
+    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-3">Ready to Decrypt Your Vault</h3>
+
+      {/* Output location display */}
+      <div className="bg-white border border-gray-200 rounded-md p-3 mb-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 mb-1">Files will be recovered to:</p>
+            <p className="text-sm font-mono text-gray-700">{formatPathDisplay(outputPath)}</p>
+          </div>
+          <button
+            onClick={onToggleAdvanced}
+            className="text-xs text-blue-600 hover:text-blue-700 ml-3"
+          >
+            {showAdvancedOptions ? 'Hide' : 'Change location'}
+          </button>
+        </div>
+      </div>
+
+      {/* Advanced options */}
+      {showAdvancedOptions && (
+        <div className="bg-gray-50 border border-gray-200 rounded-md p-4 mb-4">
+          <DestinationSelector
+            outputPath={outputPath}
+            onPathChange={onPathChange}
+            disabled={isLoading}
+            requiredSpace={1800000}
+          />
+        </div>
+      )}
+
+      {/* Status checklist */}
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <CheckCircle className="w-4 h-4 text-green-600" />
+          <span>Valid vault file selected</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <CheckCircle className="w-4 h-4 text-green-600" />
+          <span>Key and passphrase verified</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <CheckCircle className="w-4 h-4 text-green-600" />
+          <span>Recovery location ready</span>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex justify-between items-center">
+        <button
+          onClick={onReset}
+          className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+        >
+          Start Over
+        </button>
+        <PrimaryButton
+          onClick={onDecrypt}
+          disabled={isLoading}
+          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700"
+        >
+          <Unlock className="w-4 h-4 mr-2" />
+          Decrypt Now
+        </PrimaryButton>
+      </div>
+    </div>
+  );
+};
+
+export default DecryptionReadyPanel;

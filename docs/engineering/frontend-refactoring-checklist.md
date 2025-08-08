@@ -22,14 +22,16 @@ Multiple frontend files exceed our newly established line limits for frontend co
 - [x] Created `HelpSection` component (31 lines)
 - [x] **Result**: Main component reduced from 592 to 143 lines (76% reduction)
 
-#### 2. `src/pages/DecryptPage.tsx` - **465 lines** �
-**Current State**: 210% over component limit  
-**Issues**: Complex state management and UI logic mixed
-**Refactoring Strategy**:
-- [ ] Extract decryption business logic to custom hook (~120 lines)
-- [ ] Split into smaller components (header, form, results) (~80 lines each)
-- [ ] Move validation logic to shared utilities (~60 lines)
-- [ ] Target: Main component ~125 lines
+#### 2. `src/pages/DecryptPage.tsx` - **140 lines** ✅ COMPLETED �
+**Previous State**: 465 lines (210% over limit)  
+**Current State**: 140 lines - WITHIN LIMIT  
+**Refactoring Completed**:
+- [x] Extracted decryption workflow to `useDecryptionWorkflow` hook (221 lines)
+- [x] Created `DecryptionHeader` component (35 lines)
+- [x] Created `DecryptionProgressBar` component (47 lines)
+- [x] Created `DecryptionForm` component (122 lines)
+- [x] Created `DecryptionReadyPanel` component (114 lines)
+- [x] **Result**: Main component reduced from 465 to 140 lines (70% reduction)
 
 #### 3. `src/components/common/FileDropZone.tsx` - **372 lines** �
 **Current State**: 148% over component limit  
@@ -180,7 +182,7 @@ Files under 150 lines for components and under 200 lines for modules are conside
 
 ### Phase 1 - Critical Page Components (Sprint 1)
 1. [x] Refactor `EncryptPage.tsx` (592 lines → 143 lines) ✅ COMPLETED
-2. [ ] Refactor `DecryptPage.tsx` (465 lines)
+2. [x] Refactor `DecryptPage.tsx` (465 lines → 140 lines) ✅ COMPLETED
 3. [ ] Refactor `SetupPage.tsx` (313 lines)
 
 ### Phase 2 - Complex Components (Sprint 2)
