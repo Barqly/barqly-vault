@@ -180,7 +180,7 @@ fn prop_encrypt_decrypt_roundtrip(data: Vec<u8>) -> bool {
 | **Service/API Files** | 150-200 | 200-300 | 300 | Separate endpoints |
 | **Utility/Helper Files** | 100-200 | 200-300 | 300 | Group by functionality |
 | **Type Definitions** | No limit | - | - | Keep organized |
-| **Test Files** | 200-400 | 400-600 | 600 | Split by feature/component |
+| **Test Files** | 100-200 | 200-300 | 300 | Split by test suite |
 | **CSS/SCSS Files** | Performance-based | - | - | Split by route/feature |
 | **Tailwind Components** | 50-100 | 100-150 | 150 | Use composition |
 
