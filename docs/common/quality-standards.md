@@ -160,7 +160,7 @@ fn prop_encrypt_decrypt_roundtrip(data: Vec<u8>) -> bool {
 
 ## Code Organization Standards
 
-### File Size Guidelines
+### Backend File Size Guidelines
 **Purpose**: Maintain readable, maintainable, and testable code by limiting file complexity.
 
 | File Type | Optimal Lines | Warning | Maximum | Action Required |
@@ -169,6 +169,26 @@ fn prop_encrypt_decrypt_roundtrip(data: Vec<u8>) -> bool {
 | **Test Files** | 200-300 | 300-500 | 500 | Group by feature |
 | **Config Files** | No limit | - | - | Keep organized |
 | **Generated Code** | No limit | - | - | Exclude from analysis |
+
+### Frontend File Size Guidelines
+**Purpose**: Optimize component-based architecture for readability, reusability, and performance.
+
+| File Type | Optimal Lines | Warning | Maximum | Action Required |
+|-----------|--------------|---------|---------|-----------------|
+| **React Components (TSX/JSX)** | 40-80 | 80-150 | 150 | Extract child components |
+| **TypeScript Modules** | 100-150 | 150-250 | 250 | Split by concern |
+| **Service/API Files** | 150-200 | 200-300 | 300 | Separate endpoints |
+| **Utility/Helper Files** | 100-200 | 200-300 | 300 | Group by functionality |
+| **Type Definitions** | No limit | - | - | Keep organized |
+| **Test Files** | 200-400 | 400-600 | 600 | Split by feature/component |
+| **CSS/SCSS Files** | Performance-based | - | - | Split by route/feature |
+| **Tailwind Components** | 50-100 | 100-150 | 150 | Use composition |
+
+**Special Considerations:**
+- **Hooks**: Custom hooks should be 20-50 lines, extract complex logic
+- **Context Providers**: Keep under 100 lines, delegate logic to hooks
+- **Styled Components**: Focus on performance over line count
+- **Index Files**: Exports only, no logic
 
 ### When to Split Files
 **Split immediately when:**
