@@ -21,3 +21,11 @@ export {
   combineValidationResults,
   type ValidationResult,
 } from './form-validation';
+
+// Key generation validation
+export {
+  validateKeyLabel,
+  validateKeyPassphrase,
+  validateConfirmPassphrase,
+  validateKeyGenerationForm,
+} from './key-generation-validation';
