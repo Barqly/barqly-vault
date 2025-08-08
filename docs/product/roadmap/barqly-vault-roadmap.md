@@ -22,7 +22,30 @@ Secure, user-friendly file encryption for Bitcoin custody and sensitive data pro
 
 ---
 
-### 📋 MVP 2: Manifest & Digital Signatures (Next)
+### 💾 MVP 2: Key Backup & Restore (Next)
+**Goal**: Ensure users never lose access to their encrypted data
+
+#### Features
+- **Export Keys to USB**: Structured backup to external drives
+- **Printable Backup Cards**: QR codes with manual entry fallback
+- **Backup Verification**: Ensure backups work before needed
+- **Passphrase Hints**: Optional hints for recovery under stress
+- **File Organization**: Clear structure for vault and key storage
+
+#### Timeline
+- Development: 3-4 weeks
+- Testing: 1 week
+- Release: Q1 2025
+
+#### Key Benefits
+- Multiple backup methods for different scenarios
+- Reduced support burden from lost keys
+- Peace of mind for long-term storage
+- Clear recovery procedures
+
+---
+
+### 📋 MVP 3: Manifest & Digital Signatures
 **Goal**: Verify file integrity and authenticity years later
 
 #### Features
@@ -34,7 +57,7 @@ Secure, user-friendly file encryption for Bitcoin custody and sensitive data pro
 #### Timeline
 - Development: 4-6 weeks
 - Testing: 2 weeks
-- Release: Q1 2025
+- Release: Q1-Q2 2025
 
 #### Key Benefits
 - Detect file corruption before critical recovery
@@ -43,7 +66,7 @@ Secure, user-friendly file encryption for Bitcoin custody and sensitive data pro
 
 ---
 
-### 🔑 MVP 3: YubiKey Integration (Future)
+### 🔑 MVP 4: YubiKey Integration
 **Goal**: Hardware security key support for enhanced protection
 
 #### Features
@@ -65,26 +88,50 @@ Secure, user-friendly file encryption for Bitcoin custody and sensitive data pro
 
 ---
 
+### 🔐 MVP 5: Shamir Secret Sharing
+**Goal**: Split keys among multiple trustees for inheritance/recovery
+
+#### Features
+- **Key Splitting**: Divide keys into N shares with M-of-N threshold
+- **Trustee Management**: Distribute shares to designated trustees
+- **Recovery Workflow**: Combine shares to reconstruct keys
+- **Share Verification**: Verify shares without revealing secrets
+
+#### Timeline
+- Development: 6-8 weeks
+- Testing: 2 weeks
+- Release: Q3 2025
+
+#### Key Benefits
+- Inheritance planning for Bitcoin custody
+- Corporate key escrow solutions
+- Eliminate single points of failure
+- Social recovery mechanisms
+
+---
+
 ## Post-MVP Features (Backlog)
 
 ### Enhanced Features
-- **Key Backup & Export**: USB/QR code backup workflows
 - **Cloud Integration**: Optional secure cloud backup
 - **Batch Operations**: Encrypt/decrypt multiple vaults
 - **Scheduled Encryption**: Automatic backup workflows
 - **Vault Collections**: Organize related vaults
+- **Vault Sync**: Sync vaults across devices
 
 ### Enterprise Features
 - **Team Management**: Shared vaults with access control
 - **Audit Logging**: Compliance and tracking
 - **Policy Enforcement**: Mandatory backup requirements
 - **SSO Integration**: Corporate authentication
+- **Role-Based Access**: Granular permissions
 
 ### Advanced Security
-- **Shamir Secret Sharing**: Split keys among trustees
 - **Hardware Wallet Support**: Ledger, Trezor integration
 - **Plausible Deniability**: Hidden vaults
 - **Quantum-Resistant**: Post-quantum cryptography
+- **Multi-Party Computation**: Secure collaborative decryption
+- **Time-Locked Encryption**: Vaults that unlock after specific date
 
 ---
 
@@ -96,14 +143,24 @@ Secure, user-friendly file encryption for Bitcoin custody and sensitive data pro
 - ✅ Cross-platform compatibility: 3 OS
 
 ### MVP 2 (Target)
+- Backup completion rate: >95%
+- Recovery success rate: >99%
+- Support tickets for lost keys: <1%
+
+### MVP 3 (Target)
 - Manifest generation: <2 seconds
 - Signature verification: <500ms
 - Zero false positives on integrity checks
 
-### MVP 3 (Target)
+### MVP 4 (Target)
 - YubiKey setup: <5 minutes
 - Hardware key adoption: 20% of users
 - Recovery success rate: >99%
+
+### MVP 5 (Target)
+- Share generation: <5 seconds
+- Recovery from shares: <30 seconds
+- Trustee onboarding: <10 minutes
 
 ---
 
@@ -149,13 +206,13 @@ Secure, user-friendly file encryption for Bitcoin custody and sensitive data pro
 
 ```
 2024 Q4: MVP 1 Development ✅
-2025 Q1: MVP 1 Polish & MVP 2 Development
-2025 Q2: MVP 2 Release & MVP 3 Development
-2025 Q3: MVP 3 Release & Enhancement Phase
-2025 Q4: Enterprise Features
+2025 Q1: MVP 2 (Key Backup) & MVP 3 (Manifest) Development
+2025 Q2: MVP 4 (YubiKey) Development
+2025 Q3: MVP 5 (Shamir) Development
+2025 Q4: Enhancement & Enterprise Features
 ```
 
 ---
 
 *Last Updated: January 2025*
-*Status: MVP 1 Complete, MVP 2 In Planning*
+*Status: MVP 1 Complete, MVP 2 (Key Backup & Restore) In Planning*
