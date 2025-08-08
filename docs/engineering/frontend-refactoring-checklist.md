@@ -99,12 +99,16 @@ Multiple frontend files exceed our newly established line limits for frontend co
 - [ ] Move error handling (~40 lines)
 - [ ] Target: ~197 lines remaining
 
-#### 10. `src/components/forms/KeySelectionDropdown.tsx` - **267 lines**
-**Current State**: 78% over component limit
-**Refactoring Strategy**:
-- [ ] Extract dropdown logic to custom hook (~80 lines)
-- [ ] Create separate option components (~40 lines)
-- [ ] Target: Main component ~140 lines
+#### 10. `src/components/forms/KeySelectionDropdown.tsx` - **136 lines** ✅ COMPLETED
+**Previous State**: 267 lines (78% over component limit)  
+**Current State**: 136 lines - WITHIN LIMIT  
+**Refactoring Completed**:
+- [x] Extracted dropdown logic to `useKeySelection` hook (131 lines)
+- [x] Created `KeyOption` component (41 lines)
+- [x] Created `PublicKeyPreview` component (36 lines)
+- [x] Created `DropdownButton` component (72 lines)
+- [x] Created `ErrorMessage` component (31 lines)
+- [x] **Result**: Main component reduced from 267 to 136 lines (49% reduction)
 
 #### 11. `src/components/ui/error-message.tsx` - **265 lines**
 **Current State**: 77% over component limit
@@ -193,10 +197,10 @@ Files under 150 lines for components and under 200 lines for modules are conside
 2. [x] Refactor `DecryptPage.tsx` (465 lines → 140 lines) ✅ COMPLETED
 3. [x] Refactor `SetupPage.tsx` (313 lines → 100 lines) ✅ COMPLETED
 
-### Phase 2 - Complex Components (Sprint 2)
+### Phase 2 - Complex Components (Sprint 2) ✅ COMPLETED
 4. [x] Refactor `FileDropZone.tsx` (372 lines → 97 lines) ✅ COMPLETED
-5. [x] Refactor `KeyGenerationForm.tsx` (340 lines) ✅
-6. [ ] Refactor `KeySelectionDropdown.tsx` (267 lines)
+5. [x] Refactor `KeyGenerationForm.tsx` (340 lines → 106 lines) ✅ COMPLETED
+6. [x] Refactor `KeySelectionDropdown.tsx` (267 lines → 136 lines) ✅ COMPLETED
 
 ### Phase 3 - Hooks and Services (Sprint 3)
 7. [ ] Refactor `useFileDecryption.ts` (333 lines)

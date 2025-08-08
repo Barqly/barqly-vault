@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { ChevronDown, Key, Calendar, Eye, EyeOff } from 'lucide-react';
-import { KeyMetadata, CommandError } from '../../lib/api-types';
+import React from 'react';
+import { KeyMetadata } from '../../lib/api-types';
+import { useKeySelection } from '../../hooks/useKeySelection';
+import { KeyOption } from './KeyOption';
+import { PublicKeyPreview } from './PublicKeyPreview';
+import { DropdownButton } from './DropdownButton';
+import { ErrorMessage } from './ErrorMessage';
 
 export interface KeySelectionDropdownProps {
   /** Currently selected key label */
@@ -41,79 +44,25 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
   onKeysLoaded,
   onLoadingChange,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [keys, setKeys] = useState<KeyMetadata[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [showPublicKeyPreview, setShowPublicKeyPreview] = useState(showPublicKey);
+  const {
+    keys,
+    loading,
+    error: loadError,
+    isOpen,
+    selectedKey,
+    showPublicKeyPreview,
+    setShowPublicKeyPreview,
+    handleToggle,
+    handleKeySelect,
+    handleKeyDown,
+    formatDate,
+    truncatePublicKey,
+  } = useKeySelection(value, onChange, disabled, showPublicKey, {
+    onKeysLoaded,
+    onLoadingChange,
+  });
 
-  // Load available keys
-  useEffect(() => {
-    const loadKeys = async () => {
-      setLoading(true);
-      onLoadingChange?.(true);
-      setErrorMessage('');
-
-      try {
-        const result = await invoke<KeyMetadata[]>('list_keys_command');
-        setKeys(result);
-        onKeysLoaded?.(result);
-      } catch (err) {
-        const commandError = err as CommandError;
-        setErrorMessage(commandError.message || 'Failed to load keys');
-      } finally {
-        setLoading(false);
-        onLoadingChange?.(false);
-      }
-    };
-
-    loadKeys();
-  }, [onKeysLoaded, onLoadingChange]);
-
-  // Get selected key data
-  const selectedKey = keys.find((key) => key.label === value);
-
-  // Format creation date
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return 'Unknown date';
-    }
-  };
-
-  // Truncate public key for display
-  const truncatePublicKey = (publicKey: string) => {
-    if (publicKey.length <= 20) return publicKey;
-    return `${publicKey.substring(0, 10)}...${publicKey.substring(publicKey.length - 10)}`;
-  };
-
-  const handleKeySelect = (keyLabel: string) => {
-    onChange?.(keyLabel);
-    setIsOpen(false);
-  };
-
-  const handleToggle = () => {
-    if (!disabled && !loading) {
-      setIsOpen(!isOpen);
-    }
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      handleToggle();
-    } else if (event.key === 'Escape') {
-      setIsOpen(false);
-    }
-  };
+  const errorMessage = error || loadError;
 
   return (
     <div className={`space-y-2 ${className}`}>
@@ -128,49 +77,16 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
       {/* Dropdown Container */}
       <div className="relative">
         {/* Main Button */}
-        <button
-          type="button"
+        <DropdownButton
+          selectedKey={selectedKey}
+          loading={loading}
+          disabled={disabled}
+          isOpen={isOpen}
+          placeholder={placeholder}
+          errorMessage={errorMessage}
           onClick={handleToggle}
           onKeyDown={handleKeyDown}
-          disabled={disabled || loading}
-          className={`
-            w-full px-3 py-2 border rounded-md shadow-sm text-left
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-            disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-            ${error || errorMessage ? 'border-red-400' : 'border-gray-400'}
-            ${disabled ? 'bg-gray-50' : 'bg-white'}
-            ${loading ? 'cursor-wait' : 'cursor-pointer'}
-          `}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
-          aria-labelledby="key-selection-label"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="text-gray-500">Loading keys...</span>
-                </div>
-              ) : selectedKey ? (
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <Key className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  <span className="truncate">{selectedKey.label}</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Key className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-500">{placeholder}</span>
-                </div>
-              )}
-            </div>
-            <ChevronDown
-              className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
-                isOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </div>
-        </button>
+        />
 
         {/* Dropdown Menu */}
         {isOpen && (
@@ -182,27 +98,13 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
             ) : (
               <ul role="listbox" className="py-1">
                 {keys.map((key) => (
-                  <li
+                  <KeyOption
                     key={key.label}
-                    role="option"
-                    aria-selected={key.label === value}
-                    className={`
-                      px-3 py-2 cursor-pointer hover:bg-blue-50
-                      ${key.label === value ? 'bg-blue-100 text-blue-900' : 'text-gray-900'}
-                    `}
-                    onClick={() => handleKeySelect(key.label)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Key className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium truncate">{key.label}</div>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <Calendar className="h-3 w-3" />
-                          <span>{formatDate(key.created_at)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
+                    keyData={key}
+                    isSelected={key.label === value}
+                    onSelect={handleKeySelect}
+                    formatDate={formatDate}
+                  />
                 ))}
               </ul>
             )}
@@ -212,52 +114,19 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
 
       {/* Public Key Preview */}
       {selectedKey && selectedKey.public_key && showPublicKey && (
-        <div className="mt-2 p-3 bg-gray-50 rounded-md">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Public Key</span>
-            <button
-              type="button"
-              onClick={() => setShowPublicKeyPreview(!showPublicKeyPreview)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label={showPublicKeyPreview ? 'Hide public key' : 'Show public key'}
-            >
-              {showPublicKeyPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-          {showPublicKeyPreview && (
-            <div className="text-xs font-mono text-gray-600 break-all">
-              {truncatePublicKey(selectedKey.public_key)}
-            </div>
-          )}
-        </div>
+        <PublicKeyPreview
+          publicKey={selectedKey.public_key}
+          showPreview={showPublicKeyPreview}
+          onTogglePreview={() => setShowPublicKeyPreview(!showPublicKeyPreview)}
+          truncateKey={truncatePublicKey}
+        />
       )}
 
       {/* Error Messages */}
-      {(error || errorMessage) && (
-        <p className="text-sm text-red-600 flex items-center">
-          <svg
-            aria-hidden="true"
-            className="lucide lucide-circle-alert w-4 h-4 mr-1"
-            fill="none"
-            height="24"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-            width="24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" x2="12" y1="8" y2="12" />
-            <line x1="12" x2="12.01" y1="16" y2="16" />
-          </svg>
-          {error || errorMessage}
-        </p>
-      )}
+      {errorMessage && <ErrorMessage message={errorMessage} />}
 
       {/* Empty State */}
-      {!loading && keys.length === 0 && !error && !errorMessage && (
+      {!loading && keys.length === 0 && !errorMessage && (
         <p className="text-sm text-gray-500">
           No encryption keys found. Generate a key to get started.
         </p>
