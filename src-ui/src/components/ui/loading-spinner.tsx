@@ -138,12 +138,8 @@ function LoadingSpinner({
       {...props}
     >
       <div className="flex flex-col items-center gap-2">
-        <Loader2 className={spinnerClasses} data-testid="loading-spinner" />
-        {showText && text && (
-          <span className={textClasses} data-testid="loading-text">
-            {text}
-          </span>
-        )}
+        <Loader2 className={spinnerClasses} />
+        {showText && text && <span className={textClasses}>{text}</span>}
       </div>
     </div>
   );

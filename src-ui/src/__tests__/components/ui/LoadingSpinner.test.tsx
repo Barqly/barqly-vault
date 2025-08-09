@@ -7,7 +7,8 @@ describe('LoadingSpinner', () => {
     it('renders loading spinner with default props', () => {
       render(<LoadingSpinner />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toBeInTheDocument();
       expect(spinner).toHaveClass('h-6', 'w-6', 'animate-spin');
     });
@@ -31,35 +32,40 @@ describe('LoadingSpinner', () => {
     it('renders xs size correctly', () => {
       render(<LoadingSpinner size="xs" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('h-3', 'w-3');
     });
 
     it('renders sm size correctly', () => {
       render(<LoadingSpinner size="sm" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('h-4', 'w-4');
     });
 
     it('renders md size correctly', () => {
       render(<LoadingSpinner size="md" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('h-6', 'w-6');
     });
 
     it('renders lg size correctly', () => {
       render(<LoadingSpinner size="lg" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('h-8', 'w-8');
     });
 
     it('renders xl size correctly', () => {
       render(<LoadingSpinner size="xl" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('h-12', 'w-12');
     });
   });
@@ -68,28 +74,32 @@ describe('LoadingSpinner', () => {
     it('renders spin animation correctly', () => {
       render(<LoadingSpinner animation="spin" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('animate-spin');
     });
 
     it('renders pulse animation correctly', () => {
       render(<LoadingSpinner animation="pulse" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('animate-pulse');
     });
 
     it('renders bounce animation correctly', () => {
       render(<LoadingSpinner animation="bounce" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('animate-bounce');
     });
 
     it('renders wave animation correctly', () => {
       render(<LoadingSpinner animation="wave" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('animate-pulse');
     });
   });
@@ -98,42 +108,48 @@ describe('LoadingSpinner', () => {
     it('renders default variant correctly', () => {
       render(<LoadingSpinner variant="default" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('text-primary');
     });
 
     it('renders muted variant correctly', () => {
       render(<LoadingSpinner variant="muted" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('text-muted-foreground');
     });
 
     it('renders white variant correctly', () => {
       render(<LoadingSpinner variant="white" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('text-white');
     });
 
     it('renders blue variant correctly', () => {
       render(<LoadingSpinner variant="blue" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('text-blue-600');
     });
 
     it('renders green variant correctly', () => {
       render(<LoadingSpinner variant="green" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('text-green-600');
     });
 
     it('renders red variant correctly', () => {
       render(<LoadingSpinner variant="red" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('text-red-600');
     });
   });
@@ -142,33 +158,34 @@ describe('LoadingSpinner', () => {
     it('does not show text by default', () => {
       render(<LoadingSpinner text="Loading..." />);
 
-      expect(screen.queryByTestId('loading-text')).not.toBeInTheDocument();
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
 
     it('shows text when showText is true', () => {
       render(<LoadingSpinner text="Loading..." showText />);
 
-      const text = screen.getByTestId('loading-text');
+      const text = screen.getByText('Loading...');
       expect(text).toBeInTheDocument();
-      expect(text).toHaveTextContent('Loading...');
     });
 
     it('hides text when showText is false', () => {
       render(<LoadingSpinner text="Loading..." showText={false} />);
 
-      expect(screen.queryByTestId('loading-text')).not.toBeInTheDocument();
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
 
     it('hides text when no text is provided', () => {
       render(<LoadingSpinner showText />);
 
-      expect(screen.queryByTestId('loading-text')).not.toBeInTheDocument();
+      const status = screen.getByRole('status');
+      const textElement = status.querySelector('span');
+      expect(textElement).not.toBeInTheDocument();
     });
 
     it('applies correct text size based on spinner size', () => {
       render(<LoadingSpinner size="lg" text="Loading..." showText />);
 
-      const text = screen.getByTestId('loading-text');
+      const text = screen.getByText('Loading...');
       expect(text).toHaveClass('text-base');
     });
   });
@@ -248,19 +265,25 @@ describe('LoadingSpinner', () => {
     it('does not auto-hide when fullScreen is true', () => {
       render(<LoadingSpinner text="Loading..." showText fullScreen />);
 
-      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
+      expect(spinner).toBeInTheDocument();
     });
 
     it('does not auto-hide when showText is false', () => {
       render(<LoadingSpinner text="Loading..." showText={false} />);
 
-      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
+      expect(spinner).toBeInTheDocument();
     });
 
     it('does not auto-hide when no text is provided', () => {
       render(<LoadingSpinner showText />);
 
-      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
+      expect(spinner).toBeInTheDocument();
     });
   });
 
@@ -278,7 +301,8 @@ describe('LoadingSpinner', () => {
     it('renders button-sized loading spinner', () => {
       render(<LoadingSpinner size="sm" variant="white" />);
 
-      const spinner = screen.getByTestId('loading-spinner');
+      const status = screen.getByRole('status');
+      const spinner = status.querySelector('svg');
       expect(spinner).toHaveClass('h-4', 'w-4', 'text-white');
     });
 
@@ -286,8 +310,8 @@ describe('LoadingSpinner', () => {
       render(<LoadingSpinner size="xl" text="Loading application..." showText centered />);
 
       const container = screen.getByRole('status');
-      const spinner = screen.getByTestId('loading-spinner');
-      const text = screen.getByTestId('loading-text');
+      const spinner = container.querySelector('svg');
+      const text = screen.getByText('Loading application...');
 
       expect(container).toHaveClass('justify-center', 'w-full', 'h-full');
       expect(spinner).toHaveClass('h-12', 'w-12');
@@ -298,8 +322,8 @@ describe('LoadingSpinner', () => {
       render(<LoadingSpinner size="lg" text="Processing..." showText overlay variant="blue" />);
 
       const container = screen.getByRole('status');
-      const spinner = screen.getByTestId('loading-spinner');
-      const text = screen.getByTestId('loading-text');
+      const spinner = container.querySelector('svg');
+      const text = screen.getByText('Processing...');
 
       expect(container).toHaveClass('absolute', 'inset-0', 'z-10');
       expect(spinner).toHaveClass('h-8', 'w-8', 'text-blue-600');
