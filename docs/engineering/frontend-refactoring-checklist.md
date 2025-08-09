@@ -118,12 +118,13 @@ Multiple frontend files exceed our newly established line limits for frontend co
 - [x] Created `ErrorMessage` component (31 lines)
 - [x] **Result**: Main component reduced from 267 to 136 lines (49% reduction)
 
-#### 11. `src/components/ui/error-message.tsx` - **265 lines**
-**Current State**: 77% over component limit
-**Refactoring Strategy**:
-- [ ] Extract error formatting logic (~70 lines)
-- [ ] Create error type components (~50 lines each)
-- [ ] Target: Main component ~145 lines
+#### 11. `src/components/ui/error-message.tsx` - **✅ COMPLETED**
+**Previous State**: 265 lines (77% over component limit)
+**Current State**: 147 lines (within target of ~145 lines)
+**Refactoring Completed**:
+- [x] Extracted error formatting logic to `/lib/errors/error-formatting.ts` (95 lines)
+- [x] Created `ErrorMessageContent` component (74 lines)
+- [x] **Result**: Main component reduced from 265 to 147 lines (44% reduction)
 
 #### 12. `src/components/encrypt/FileDropZone.tsx` - **DELETED** ✅ COMPLETED
 **Previous State**: 260 lines (73% over component limit)  
@@ -220,8 +221,8 @@ Files under 150 lines for components and under 200 lines for modules are conside
 10. [x] Switch `api-types.ts` to auto-generation ✅ COMPLETED
 
 ### Phase 4 - UI Components (Sprint 4)
-11. [ ] Refactor `error-message.tsx` (265 lines)
-12. [ ] Refactor `FileDropZone.tsx` in encrypt folder (260 lines)
+11. [x] Refactor `error-message.tsx` (265 lines → 147 lines)
+12. [x] Refactor `FileDropZone.tsx` in encrypt folder (260 lines)
 13. [ ] Monitor and refactor warning-zone components
 
 ### Phase 5 - Test Cleanup (Sprint 5)
