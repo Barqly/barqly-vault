@@ -56,7 +56,7 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
   };
 
   return (
-    <div className="space-y-2" data-testid="passphrase-field">
+    <div className="space-y-2">
       <div className="relative">
         <input
           id={id}
@@ -66,7 +66,6 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
           placeholder={placeholder}
           className={`${getInputClasses()} ${className}`}
           required={required}
-          data-testid="passphrase-input"
           aria-describedby={showStrength ? `${id}-strength` : undefined}
         />
 
@@ -75,7 +74,6 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded transition-colors"
           aria-label={showPassword ? 'Hide passphrase' : 'Show passphrase'}
-          data-testid="visibility-toggle"
         >
           {showPassword ? (
             <EyeOff className="h-5 w-5" aria-hidden="true" />
@@ -87,14 +85,14 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
 
       {/* Strength Indicator */}
       {showStrength && strength && (
-        <div id={`${id}-strength`} data-testid="strength-indicator">
+        <div id={`${id}-strength`}>
           <PassphraseStrengthIndicator strength={strength} hasUserTyped={value.length > 0} />
         </div>
       )}
 
       {/* Match Validation */}
       {isMatch !== null && value && (
-        <div className="flex items-center gap-1.5 text-xs" data-testid="match-indicator">
+        <div className="flex items-center gap-1.5 text-xs">
           {isMatch ? (
             <>
               <Check className="h-4 w-4 text-green-500" aria-hidden="true" />
