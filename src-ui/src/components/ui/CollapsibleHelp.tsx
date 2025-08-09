@@ -42,20 +42,18 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
   ];
 
   return (
-    <div className="mt-6" data-testid="collapsible-help">
+    <div className="mt-6">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
         aria-expanded={isOpen}
         aria-controls="help-content"
-        data-testid="help-trigger"
       >
         <Info className="h-4 w-4" aria-hidden="true" />
         <span>{triggerText}</span>
         <ChevronDown
           className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           aria-hidden="true"
-          data-testid="chevron-icon"
         />
       </button>
 
@@ -66,7 +64,6 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
           ${isOpen ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'}
         `}
         aria-hidden={!isOpen}
-        data-testid="help-content"
       >
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-blue-900 mb-4">

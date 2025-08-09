@@ -52,22 +52,13 @@ const ProgressContext: React.FC<ProgressContextProps> = ({
       className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-4"
       role="status"
       aria-live="polite"
-      data-testid="progress-context"
     >
-      {showIcon && (
-        <Icon
-          className={`h-4 w-4 ${config.iconColor}`}
-          aria-hidden="true"
-          data-testid="progress-icon"
-        />
-      )}
-      <span className="font-medium" data-testid="progress-label">
-        {config.label}
-      </span>
+      {showIcon && <Icon className={`h-4 w-4 ${config.iconColor}`} aria-hidden="true" />}
+      <span className="font-medium">{config.label}</span>
       <span className="text-gray-400" aria-hidden="true">
         •
       </span>
-      <span data-testid="progress-message">{config.message}</span>
+      <span>{config.message}</span>
     </div>
   );
 };
