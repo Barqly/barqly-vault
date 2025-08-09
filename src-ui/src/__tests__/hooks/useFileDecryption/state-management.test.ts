@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useFileDecryption } from '../../../hooks/useFileDecryption';
 import { FileSelection } from '../../../lib/api-types';
 
@@ -9,13 +9,32 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeListen: vi.fn(),
 }));
 
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
-const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
+// Mock environment detection
+vi.mock('../../../lib/environment/platform', () => ({
+  isTauri: vi.fn().mockReturnValue(true),
+  isWeb: vi.fn().mockReturnValue(false),
+}));
+
+// Import after mocking
+import { safeInvoke, safeListen } from '../../../lib/tauri-safe';
+
+const mockSafeInvoke = vi.mocked(safeInvoke);
+const mockSafeListen = vi.mocked(safeListen);
+
+// Convenience references for consistency with new pattern
+const mocks = {
+  safeInvoke: mockSafeInvoke,
+  safeListen: mockSafeListen,
+};
 
 describe('useFileDecryption - State Management', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSafeListen.mockResolvedValue(() => Promise.resolve());
+    mocks.safeListen.mockResolvedValue(() => Promise.resolve());
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
   it('should set key ID correctly', () => {
@@ -108,7 +127,7 @@ describe('useFileDecryption - State Management', () => {
       selection_type: 'Files',
     };
 
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mocks.safeInvoke.mockResolvedValueOnce(mockFileSelection);
 
     await act(async () => {
       await result.current.selectEncryptedFile();

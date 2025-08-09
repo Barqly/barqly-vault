@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useKeyGeneration } from '../../../hooks/useKeyGeneration';
 import { GenerateKeyResponse } from '../../../lib/api-types';
 
@@ -9,13 +9,34 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeListen: vi.fn(),
 }));
 
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
-const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
+// Mock environment detection
+vi.mock('../../../lib/environment/platform', () => ({
+  isTauri: vi.fn().mockReturnValue(true),
+  isWeb: vi.fn().mockReturnValue(false),
+  isTest: vi.fn().mockReturnValue(true),
+  isBrowser: vi.fn().mockReturnValue(false),
+}));
+
+// Import after mocking
+import { safeInvoke, safeListen } from '../../../lib/tauri-safe';
+
+const mockSafeInvoke = vi.mocked(safeInvoke);
+const mockSafeListen = vi.mocked(safeListen);
+
+// Convenience references for consistency with new pattern
+const mocks = {
+  safeInvoke: mockSafeInvoke,
+  safeListen: mockSafeListen,
+};
 
 describe('useKeyGeneration - Key Generation Success', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSafeListen.mockResolvedValue(() => Promise.resolve());
+    mocks.safeListen.mockResolvedValue(() => Promise.resolve());
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
   it('should generate key successfully', async () => {
@@ -26,7 +47,7 @@ describe('useKeyGeneration - Key Generation Success', () => {
       saved_path: '~/.config/barqly-vault/keys/test-key-id.age',
     };
 
-    mockSafeInvoke
+    mocks.safeInvoke
       .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
       .mockResolvedValueOnce(mockKeyResult); // generate_key
 
@@ -53,7 +74,7 @@ describe('useKeyGeneration - Key Generation Success', () => {
     };
 
     // Mock passphrase validation and key generation
-    mockSafeInvoke
+    mocks.safeInvoke
       .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
       .mockResolvedValueOnce(mockKeyResult); // generate_key
 
@@ -85,7 +106,7 @@ describe('useKeyGeneration - Key Generation Success', () => {
     };
 
     // Mock passphrase validation and key generation
-    mockSafeInvoke
+    mocks.safeInvoke
       .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
       .mockResolvedValueOnce(mockKeyResult); // generate_key
 
@@ -98,6 +119,6 @@ describe('useKeyGeneration - Key Generation Success', () => {
       await result.current.generateKey();
     });
 
-    expect(mockSafeListen).toHaveBeenCalledWith('key-generation-progress', expect.any(Function));
+    expect(mocks.safeListen).toHaveBeenCalledWith('key-generation-progress', expect.any(Function));
   });
 });

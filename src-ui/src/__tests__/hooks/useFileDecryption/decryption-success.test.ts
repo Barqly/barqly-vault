@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useFileDecryption } from '../../../hooks/useFileDecryption';
 import { FileSelection, DecryptionResult } from '../../../lib/api-types';
 
@@ -9,13 +9,32 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeListen: vi.fn(),
 }));
 
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
-const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
+// Mock environment detection
+vi.mock('../../../lib/environment/platform', () => ({
+  isTauri: vi.fn().mockReturnValue(true),
+  isWeb: vi.fn().mockReturnValue(false),
+}));
+
+// Import after mocking
+import { safeInvoke, safeListen } from '../../../lib/tauri-safe';
+
+const mockSafeInvoke = vi.mocked(safeInvoke);
+const mockSafeListen = vi.mocked(safeListen);
+
+// Convenience references for consistency with new pattern
+const mocks = {
+  safeInvoke: mockSafeInvoke,
+  safeListen: mockSafeListen,
+};
 
 describe('useFileDecryption - Decryption Success', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSafeListen.mockResolvedValue(() => Promise.resolve());
+    mocks.safeListen.mockResolvedValue(() => Promise.resolve());
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
   it('should decrypt file successfully', async () => {
@@ -34,8 +53,8 @@ describe('useFileDecryption - Decryption Success', () => {
       selection_type: 'Files',
     };
 
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockSafeInvoke.mockResolvedValueOnce(mockDecryptionResult);
+    mocks.safeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mocks.safeInvoke.mockResolvedValueOnce(mockDecryptionResult);
 
     await act(async () => {
       await result.current.selectEncryptedFile();
@@ -73,8 +92,8 @@ describe('useFileDecryption - Decryption Success', () => {
       selection_type: 'Files',
     };
 
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockSafeInvoke.mockResolvedValueOnce(mockDecryptionResult);
+    mocks.safeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mocks.safeInvoke.mockResolvedValueOnce(mockDecryptionResult);
 
     await act(async () => {
       await result.current.selectEncryptedFile();
@@ -120,8 +139,8 @@ describe('useFileDecryption - Decryption Success', () => {
       selection_type: 'Files',
     };
 
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
-    mockSafeInvoke.mockResolvedValueOnce(mockDecryptionResult);
+    mocks.safeInvoke.mockResolvedValueOnce(mockFileSelection);
+    mocks.safeInvoke.mockResolvedValueOnce(mockDecryptionResult);
 
     await act(async () => {
       await result.current.selectEncryptedFile();
@@ -138,6 +157,6 @@ describe('useFileDecryption - Decryption Success', () => {
       await result.current.decryptFile();
     });
 
-    expect(mockSafeListen).toHaveBeenCalledWith('decryption-progress', expect.any(Function));
+    expect(mocks.safeListen).toHaveBeenCalledWith('decryption-progress', expect.any(Function));
   });
 });
