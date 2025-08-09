@@ -63,18 +63,13 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
     >
       {loading ? (
         <>
-          <Loader2
-            className="h-5 w-5 animate-spin"
-            aria-hidden="true"
-          />
+          <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
           <span>{loadingText}</span>
         </>
       ) : (
         <>
           <span>{children}</span>
-          {showIcon && (
-            <ArrowRight className="h-5 w-5" aria-hidden="true" />
-          )}
+          {showIcon && <ArrowRight className="h-5 w-5" aria-hidden="true" />}
         </>
       )}
     </button>

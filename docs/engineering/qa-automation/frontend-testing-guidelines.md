@@ -4,12 +4,6 @@
 
 Build resilient frontend test suites that enable confidence in production releases while minimizing friction during development. Tests should focus on user behavior and outcomes rather than implementation details.
 
-## Test Pyramid Strategy
-
-- **Unit Tests (70%)**: Test business logic, utilities, pure functions separately from UI
-- **Integration Tests (20%)**: Test component interactions and user workflows  
-- **E2E Tests (10%)**: Critical user journeys only
-
 ## Key Principles
 
 ### 1. Test Behavior, Not Implementation
