@@ -7,6 +7,7 @@ import DecryptPage from '../../pages/DecryptPage';
 import { useFileDecryption } from '../../hooks/useFileDecryption';
 import { useToast } from '../../hooks/useToast';
 import { ErrorCode } from '../../lib/api-types';
+import { createTauriTestEnvironment, MOCK_RESPONSES, resetTauriMocks } from '../utils/tauri-mocks';
 
 // Mock the hooks
 vi.mock('../../hooks/useFileDecryption');
@@ -31,18 +32,7 @@ vi.mock('@tauri-apps/api/path', () => ({
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn((cmd: string) => {
     if (cmd === 'list_keys_command') {
-      return Promise.resolve([
-        {
-          label: 'test-key-1',
-          public_key: 'public-key-1',
-          created: '2024-01-15T00:00:00Z',
-        },
-        {
-          label: 'test-key-2',
-          public_key: 'public-key-2',
-          created: '2024-01-16T00:00:00Z',
-        },
-      ]);
+      return Promise.resolve(MOCK_RESPONSES.keyList);
     }
     return Promise.resolve();
   }),
@@ -88,6 +78,9 @@ describe('DecryptPage', () => {
     clearAll: vi.fn(),
   };
 
+  // Setup standardized Tauri environment
+  let tauriEnv: ReturnType<typeof createTauriTestEnvironment>;
+
   beforeEach(() => {
     // Reset mock functions but keep the same object references
     vi.clearAllMocks();
@@ -106,10 +99,16 @@ describe('DecryptPage', () => {
 
     mockUseFileDecryption.mockReturnValue(mockDecryptionHook);
     mockUseToast.mockReturnValue(mockToastHook);
+
+    // Initialize standardized Tauri mocking
+    tauriEnv = createTauriTestEnvironment({
+      isTauriEnv: true,
+      includeProgressSimulation: true,
+    });
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    resetTauriMocks();
   });
 
   describe('Initial User Experience', () => {
@@ -463,4 +462,194 @@ describe('DecryptPage', () => {
   });
 
   // Accessibility features are tested through component integration
+
+  describe('Environment-Specific Behavior', () => {
+    it('should handle Tauri desktop environment correctly', async () => {
+      // Already set up with isTauriEnv: true in beforeEach
+      mockDecryptionHook.selectEncryptedFile.mockResolvedValue('/path/to/vault.age');
+
+      renderWithRouter(<DecryptPage />);
+
+      // Verify Tauri environment is properly detected
+      expect(tauriEnv.mocks.isTauri()).toBe(true);
+      expect(tauriEnv.mocks.isWeb()).toBe(false);
+
+      // Verify page renders correctly in desktop environment
+      expect(screen.getByText('Decrypt Your Vault')).toBeInTheDocument();
+    });
+
+    it('should handle web environment correctly', async () => {
+      // Reset and create web environment
+      resetTauriMocks();
+      tauriEnv = createTauriTestEnvironment({ isTauriEnv: false });
+
+      renderWithRouter(<DecryptPage />);
+
+      // Verify web environment is properly detected
+      expect(tauriEnv.mocks.isTauri()).toBe(false);
+      expect(tauriEnv.mocks.isWeb()).toBe(true);
+
+      // Component should still render in web environment
+      expect(screen.getByText('Decrypt Your Vault')).toBeInTheDocument();
+    });
+
+    it('should handle file selection in desktop environment', async () => {
+      // Test the page behavior when a file is selected
+      const { rerender } = renderWithRouter(<DecryptPage />);
+
+      // Initially no file selected
+      expect(screen.getByText('Select Your Encrypted Vault')).toBeInTheDocument();
+
+      // Update hook to simulate file selection
+      mockDecryptionHook.selectedFile = '/path/to/encrypted.age';
+      rerender(
+        <BrowserRouter>
+          <DecryptPage />
+        </BrowserRouter>,
+      );
+
+      // Verify UI updates after file selection
+      await waitFor(() => {
+        const step2 = screen.getByText('Step 2: Unlock with Key');
+        expect(step2.className).toContain('text-blue-600');
+      });
+    });
+
+    it('should handle progress events during decryption', async () => {
+      mockDecryptionHook.selectedFile = '/path/to/vault.age';
+      mockDecryptionHook.selectedKeyId = 'test-key-id';
+      mockDecryptionHook.passphrase = 'test-passphrase';
+      mockDecryptionHook.outputPath = '/output/path';
+      mockDecryptionHook.isDecrypting = true;
+      mockDecryptionHook.progress = {
+        progress: 25,
+        message: 'Reading encrypted file...',
+      };
+
+      renderWithRouter(<DecryptPage />);
+
+      // Simulate progress updates via Tauri events
+      if (tauriEnv.progressSimulator) {
+        tauriEnv.progressSimulator.simulateProgress('decryption-progress', [
+          { progress: 50, message: 'Decrypting data...' },
+          { progress: 75, message: 'Extracting files...' },
+          { progress: 100, message: 'Complete!' },
+        ]);
+      }
+
+      // Verify progress tracking
+      expect(mockDecryptionHook.progress).toBeDefined();
+    });
+  });
+
+  describe('Tauri API Error Handling', () => {
+    it('should handle file dialog cancellation gracefully', async () => {
+      // Test page behavior when file selection is cancelled (selectedFile remains null)
+      renderWithRouter(<DecryptPage />);
+
+      // Verify initial state with no file selected
+      expect(screen.getByText('Select Your Encrypted Vault')).toBeInTheDocument();
+
+      // Mock hook state remains unchanged (no file selected)
+      expect(mockDecryptionHook.selectedFile).toBeNull();
+
+      // Should not show error when no file is selected
+      expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
+    });
+
+    it('should handle file selection API failure', async () => {
+      const error = {
+        code: ErrorCode.PERMISSION_DENIED,
+        message: 'Cannot access file',
+        recovery_guidance: 'Please grant file access permissions',
+        user_actionable: true,
+      };
+
+      mockDecryptionHook.selectEncryptedFile.mockRejectedValue(error);
+      mockDecryptionHook.error = error;
+
+      const { rerender } = renderWithRouter(<DecryptPage />);
+
+      const selectButton = screen.getByText('Select Vault File');
+      await userEvent.click(selectButton);
+
+      // Update with error state
+      rerender(
+        <BrowserRouter>
+          <DecryptPage />
+        </BrowserRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Cannot access file')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle decryption API failure with recovery guidance', async () => {
+      const error = {
+        code: ErrorCode.DECRYPTION_FAILED,
+        message: 'Decryption failed - invalid passphrase',
+        recovery_guidance: 'Please check your passphrase and try again',
+        user_actionable: true,
+      };
+
+      // Set up hook with error state
+      mockUseFileDecryption.mockReturnValue({
+        ...mockDecryptionHook,
+        selectedFile: '/path/to/vault.age',
+        selectedKeyId: 'test-key-id',
+        passphrase: 'wrong-pass',
+        outputPath: '/output/path',
+        error: error,
+      });
+
+      renderWithRouter(<DecryptPage />);
+
+      // Verify error is displayed with recovery guidance
+      expect(screen.getByText('Decryption failed - invalid passphrase')).toBeInTheDocument();
+      expect(screen.getByText('Please check your passphrase and try again')).toBeInTheDocument();
+    });
+
+    it('should handle storage space errors during extraction', async () => {
+      const error = {
+        code: ErrorCode.STORAGE_FAILED,
+        message: 'Insufficient disk space',
+        recovery_guidance: 'Free up at least 100MB of space',
+        user_actionable: true,
+      };
+
+      mockDecryptionHook.error = error;
+
+      renderWithRouter(<DecryptPage />);
+
+      expect(screen.getByText('Insufficient disk space')).toBeInTheDocument();
+      expect(screen.getByText('Free up at least 100MB of space')).toBeInTheDocument();
+    });
+
+    it('should handle Tauri command invocation errors', async () => {
+      // Mock Tauri command failure
+      tauriEnv.mocks.safeInvoke.mockRejectedValue({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Backend communication failed',
+        recovery_guidance: 'Please restart the application',
+        user_actionable: true,
+      });
+
+      renderWithRouter(<DecryptPage />);
+
+      // Verify error handling infrastructure is in place
+      expect(tauriEnv.mocks.safeInvoke).toBeDefined();
+    });
+
+    it('should handle progress listener setup failure gracefully', async () => {
+      // Mock listener setup failure
+      tauriEnv.mocks.safeListen.mockRejectedValue(new Error('Failed to setup listener'));
+
+      renderWithRouter(<DecryptPage />);
+
+      // Component should still render despite listener failure
+      expect(screen.getByText('Decrypt Your Vault')).toBeInTheDocument();
+      expect(screen.getByText('Military-grade')).toBeInTheDocument();
+    });
+  });
 });

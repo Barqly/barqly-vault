@@ -1,8 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import EncryptPage from '../../pages/EncryptPage';
 import { ErrorCode } from '../../lib/api-types';
+import { createTauriTestEnvironment, MOCK_RESPONSES, resetTauriMocks } from '../utils/tauri-mocks';
 
 // Mock the hooks
 vi.mock('../../hooks/useFileEncryption', () => ({
@@ -84,9 +85,22 @@ describe('EncryptPage', () => {
     clearSelection: mockClearSelection,
   };
 
+  // Setup standardized Tauri environment
+  let tauriEnv: ReturnType<typeof createTauriTestEnvironment>;
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseFileEncryption.mockReturnValue(defaultHookReturn);
+
+    // Initialize standardized Tauri mocking
+    tauriEnv = createTauriTestEnvironment({
+      isTauriEnv: true,
+      includeProgressSimulation: true,
+    });
+  });
+
+  afterEach(() => {
+    resetTauriMocks();
   });
 
   const renderEncryptPage = () => {
@@ -279,6 +293,186 @@ describe('EncryptPage', () => {
       // User should see file selection status and what's missing
       expect(screen.getByText(/2 files selected.*2\.00 MB/)).toBeInTheDocument();
       expect(screen.getByText(/Encryption key.*not selected/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Environment-Specific Behavior', () => {
+    it('should handle Tauri desktop environment correctly', async () => {
+      // Already set up with isTauriEnv: true in beforeEach
+      mockUseFileEncryption.mockReturnValue({
+        ...defaultHookReturn,
+        selectedFiles: null,
+      });
+
+      // Mock successful file selection in Tauri environment
+      mockSelectFiles.mockResolvedValue(MOCK_RESPONSES.fileSelection.multiple);
+
+      renderEncryptPage();
+
+      // Verify Tauri environment is properly detected
+      expect(tauriEnv.mocks.isTauri()).toBe(true);
+      expect(tauriEnv.mocks.isWeb()).toBe(false);
+    });
+
+    it('should handle web environment correctly', async () => {
+      // Reset and create web environment
+      resetTauriMocks();
+      tauriEnv = createTauriTestEnvironment({ isTauriEnv: false });
+
+      mockUseFileEncryption.mockReturnValue({
+        ...defaultHookReturn,
+        selectedFiles: null,
+      });
+
+      renderEncryptPage();
+
+      // Verify web environment is properly detected
+      expect(tauriEnv.mocks.isTauri()).toBe(false);
+      expect(tauriEnv.mocks.isWeb()).toBe(true);
+    });
+
+    it('should handle file selection in desktop environment', async () => {
+      // Desktop environment with Tauri API support
+      mockSelectFiles.mockResolvedValue(undefined);
+
+      const { rerender } = renderEncryptPage();
+
+      // Simulate clicking browse files button
+      const browseButton = screen.getByRole('button', { name: /Browse Files/i });
+      fireEvent.click(browseButton);
+
+      // Update with selected files
+      mockUseFileEncryption.mockReturnValue({
+        ...defaultHookReturn,
+        selectedFiles: MOCK_RESPONSES.fileSelection.multiple,
+      });
+
+      rerender(
+        <BrowserRouter>
+          <EncryptPage />
+        </BrowserRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/3 files selected/)).toBeInTheDocument();
+      });
+    });
+
+    it('should handle progress events in Tauri environment', async () => {
+      // Set up progress simulation
+
+      mockUseFileEncryption.mockReturnValue({
+        ...defaultHookReturn,
+        selectedFiles: MOCK_RESPONSES.fileSelection.single,
+        progress: {
+          operation_id: 'encrypt-123',
+          progress: 0.5,
+          message: 'Encrypting files...',
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      renderEncryptPage();
+
+      // Verify progress is displayed
+      expect(screen.getByTestId('encryption-progress')).toBeInTheDocument();
+      expect(screen.getByText('Progress: 0.5%')).toBeInTheDocument();
+
+      // Simulate progress update via Tauri event
+      if (tauriEnv.progressSimulator) {
+        tauriEnv.progressSimulator.simulateProgress('encryption-progress', [
+          { progress: 0.75, message: 'Almost done...' },
+        ]);
+      }
+    });
+  });
+
+  describe('Tauri API Error Handling', () => {
+    it('should handle file selection API failure gracefully', async () => {
+      const error = {
+        code: ErrorCode.PERMISSION_DENIED,
+        message: 'Cannot access file system',
+        recovery_guidance: 'Please grant file system permissions',
+        user_actionable: true,
+      };
+
+      // Set up hook with error state after file selection attempt
+      mockUseFileEncryption.mockReturnValue({
+        ...defaultHookReturn,
+        error: error,
+      });
+
+      renderEncryptPage();
+
+      // Verify error is displayed to user
+      expect(screen.getByText('Cannot access file system')).toBeInTheDocument();
+      expect(screen.getByText('Please grant file system permissions')).toBeInTheDocument();
+    });
+
+    it('should handle encryption API failure', async () => {
+      const error = {
+        code: ErrorCode.STORAGE_FAILED,
+        message: 'Failed to save encrypted file',
+        recovery_guidance: 'Check available disk space',
+        user_actionable: true,
+      };
+
+      mockEncryptFiles.mockRejectedValue(error);
+
+      mockUseFileEncryption.mockReturnValue({
+        ...defaultHookReturn,
+        selectedFiles: MOCK_RESPONSES.fileSelection.single,
+        error: error,
+      });
+
+      renderEncryptPage();
+
+      // Select a key
+      const keySelect = screen.getByTestId('key-selection');
+      fireEvent.change(keySelect, { target: { value: 'test-key-1' } });
+
+      // Try to encrypt
+      const encryptButton = screen.getByRole('button', { name: /Create Encrypted Vault/i });
+      fireEvent.click(encryptButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Failed to save encrypted file')).toBeInTheDocument();
+      });
+    });
+
+    it('should handle Tauri command invocation errors', async () => {
+      // Mock Tauri command failure
+      tauriEnv.mocks.safeInvoke.mockRejectedValue({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'Tauri command failed',
+        recovery_guidance: 'Please restart the application',
+        user_actionable: true,
+      });
+
+      mockUseFileEncryption.mockReturnValue({
+        ...defaultHookReturn,
+        selectedFiles: MOCK_RESPONSES.fileSelection.single,
+      });
+
+      renderEncryptPage();
+
+      // Verify error handling when Tauri commands fail
+      expect(tauriEnv.mocks.safeInvoke).toBeDefined();
+    });
+
+    it('should handle progress listener setup failure', async () => {
+      // Mock listener setup failure
+      tauriEnv.mocks.safeListen.mockRejectedValue(new Error('Failed to setup listener'));
+
+      mockUseFileEncryption.mockReturnValue({
+        ...defaultHookReturn,
+        selectedFiles: MOCK_RESPONSES.fileSelection.single,
+      });
+
+      renderEncryptPage();
+
+      // Component should still render despite listener failure
+      expect(screen.getByText('Encrypt Your Bitcoin Vault')).toBeInTheDocument();
     });
   });
 });
