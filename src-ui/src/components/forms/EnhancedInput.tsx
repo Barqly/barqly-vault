@@ -62,12 +62,8 @@ function EnhancedInput({
   };
 
   return (
-    <div className="space-y-1" data-testid="enhanced-input-container">
-      <label
-        htmlFor={id}
-        className="block text-sm font-medium text-gray-700"
-        data-testid="input-label"
-      >
+    <div className="space-y-1">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700">
         {label}{' '}
         {required && (
           <span className="text-red-500" aria-label="required">
@@ -81,29 +77,21 @@ function EnhancedInput({
           ref={ref}
           id={id}
           className={`${getInputClasses()} ${className}`}
-          data-testid="enhanced-input"
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={helper || error ? `${id}-description` : undefined}
+          required={required}
           {...props}
         />
 
         {success && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <Check
-              className="h-5 w-5 text-green-500"
-              aria-hidden="true"
-              data-testid="success-icon"
-            />
+            <Check className="h-5 w-5 text-green-500" aria-hidden="true" />
           </div>
         )}
 
         {error && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <AlertCircle
-              className="h-5 w-5 text-red-500"
-              aria-hidden="true"
-              data-testid="error-icon"
-            />
+            <AlertCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
           </div>
         )}
       </div>
@@ -111,15 +99,11 @@ function EnhancedInput({
       {(helper || error) && (
         <div id={`${id}-description`} className="space-y-1">
           {error && (
-            <p className="text-xs text-red-600" role="alert" data-testid="error-message">
+            <p className="text-xs text-red-600" role="alert">
               {error}
             </p>
           )}
-          {helper && !error && (
-            <p className="text-xs text-gray-500" data-testid="helper-text">
-              {helper}
-            </p>
-          )}
+          {helper && !error && <p className="text-xs text-gray-500">{helper}</p>}
         </div>
       )}
     </div>
