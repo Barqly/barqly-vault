@@ -54,9 +54,13 @@ describe('useFileEncryption - Environment Specific Tests', () => {
         }
       });
 
-      expect(result.current.error).toBeTruthy();
-      expect(result.current.error?.code).toBe(ErrorCode.INTERNAL_ERROR);
-      expect(result.current.error?.message).toContain('desktop application');
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: expect.stringContaining('desktop application'),
+        recovery_guidance: expect.stringContaining('desktop version'),
+        user_actionable: true,
+      });
       expect(result.current.selectedFiles).toBeNull();
     });
 
@@ -98,9 +102,13 @@ describe('useFileEncryption - Environment Specific Tests', () => {
         }
       });
 
-      expect(result.current.error).toBeTruthy();
-      expect(result.current.error?.code).toBe(ErrorCode.INTERNAL_ERROR);
-      expect(result.current.error?.user_actionable).toBe(true);
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: expect.stringContaining('desktop application'),
+        recovery_guidance: expect.stringContaining('desktop version'),
+        user_actionable: true,
+      });
       expect(result.current.success).toBeNull();
     });
 
@@ -115,9 +123,13 @@ describe('useFileEncryption - Environment Specific Tests', () => {
         }
       });
 
-      expect(result.current.error?.recovery_guidance).toBeTruthy();
-      expect(result.current.error?.recovery_guidance).toContain('desktop version');
-      expect(result.current.error?.user_actionable).toBe(true);
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        recovery_guidance: expect.stringContaining('desktop version'),
+        user_actionable: true,
+        code: ErrorCode.INTERNAL_ERROR,
+        message: expect.stringContaining('desktop application'),
+      });
     });
   });
 
@@ -147,8 +159,13 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       });
 
       expect(result.current.error).toBeNull();
-      expect(result.current.selectedFiles).toBeTruthy();
-      expect(result.current.selectedFiles?.file_count).toBe(1);
+      expect(result.current.selectedFiles).not.toBeNull();
+      expect(result.current.selectedFiles).toMatchObject({
+        paths: ['/test/file.txt'],
+        selection_type: 'Files',
+        file_count: 1,
+        total_size: 1024,
+      });
     });
 
     it('should handle Tauri API failures gracefully', async () => {
@@ -170,9 +187,13 @@ describe('useFileEncryption - Environment Specific Tests', () => {
         }
       });
 
-      expect(result.current.error).toBeTruthy();
-      expect(result.current.error?.code).toBe(ErrorCode.FILE_NOT_FOUND);
-      expect(result.current.error?.message).toContain('File not found');
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.FILE_NOT_FOUND,
+        message: expect.stringContaining('File not found'),
+        recovery_guidance: expect.stringContaining('check the file path'),
+        user_actionable: true,
+      });
     });
 
     it('should successfully encrypt in desktop environment', async () => {
@@ -203,7 +224,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       });
 
       expect(result.current.error).toBeNull();
-      expect(result.current.success).toBe(mockEncryptionResult);
+      expect(result.current.success).toBe('/output/encrypted.age');
       expect(result.current.isLoading).toBe(false);
     });
   });
@@ -229,8 +250,13 @@ describe('useFileEncryption - Environment Specific Tests', () => {
         }
       });
 
-      expect(result.current.error).toBeTruthy();
-      expect(result.current.error?.code).toBe(ErrorCode.INTERNAL_ERROR);
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: expect.stringContaining('desktop application'),
+        recovery_guidance: expect.stringContaining('desktop version'),
+        user_actionable: true,
+      });
     });
 
     it('should handle environment change mid-operation', async () => {
@@ -255,7 +281,13 @@ describe('useFileEncryption - Environment Specific Tests', () => {
         await result.current.selectFiles(['/test/file.txt'], 'Files');
       });
 
-      expect(result.current.selectedFiles).toBeTruthy();
+      expect(result.current.selectedFiles).not.toBeNull();
+      expect(result.current.selectedFiles).toMatchObject({
+        paths: ['/test/file.txt'],
+        selection_type: 'Files',
+        file_count: 1,
+        total_size: 1024,
+      });
 
       // Now simulate environment becoming unavailable
       mockIsTauri.mockReturnValue(false);
@@ -275,8 +307,14 @@ describe('useFileEncryption - Environment Specific Tests', () => {
         }
       });
 
-      expect(result.current.error).toBeTruthy();
-      expect(result.current.error?.code).toBe(ErrorCode.INTERNAL_ERROR);
+      // The error message may be transformed, so just check key properties
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        user_actionable: true,
+      });
+      expect(result.current.error?.message).toBeDefined();
+      expect(result.current.error?.recovery_guidance).toBeDefined();
       expect(result.current.success).toBeNull();
     });
   });

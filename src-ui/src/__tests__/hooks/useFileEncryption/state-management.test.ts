@@ -62,9 +62,13 @@ describe('useFileEncryption - State Management', () => {
 
     // After the operation completes, loading should be false
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.selectedFiles).toBeTruthy();
-    expect(result.current.selectedFiles?.file_count).toBe(2);
-    expect(result.current.selectedFiles?.paths).toEqual(testPaths);
+    expect(result.current.selectedFiles).not.toBeNull();
+    expect(result.current.selectedFiles).toMatchObject({
+      paths: testPaths,
+      selection_type: 'Files',
+      file_count: 2,
+      total_size: 204800,
+    });
   });
 
   it('should clear error when clearError is called', async () => {
@@ -100,7 +104,11 @@ describe('useFileEncryption - State Management', () => {
       }
     });
 
-    expect(result.current.error).toBeTruthy();
+    expect(result.current.error).not.toBeNull();
+    expect(result.current.error).toMatchObject({
+      code: expect.any(String),
+      message: expect.stringContaining('Encryption failed'),
+    });
 
     // Clear the error
     act(() => {
@@ -142,8 +150,13 @@ describe('useFileEncryption - State Management', () => {
       await result.current.selectFiles(['/file1.txt', '/file2.txt'], 'Files');
     });
 
-    expect(result.current.selectedFiles).toBeTruthy();
-    expect(result.current.selectedFiles?.file_count).toBe(2);
+    expect(result.current.selectedFiles).not.toBeNull();
+    expect(result.current.selectedFiles).toMatchObject({
+      paths: ['/file1.txt', '/file2.txt'],
+      selection_type: 'Files',
+      file_count: 2,
+      total_size: 204800,
+    });
 
     // Clear selection
     act(() => {
@@ -169,7 +182,13 @@ describe('useFileEncryption - State Management', () => {
       await result.current.selectFiles(['/file3.txt'], 'Files');
     });
 
-    expect(result.current.selectedFiles?.file_count).toBe(1);
+    expect(result.current.selectedFiles).not.toBeNull();
+    expect(result.current.selectedFiles).toMatchObject({
+      paths: ['/file3.txt'],
+      selection_type: 'Files',
+      file_count: 1,
+      total_size: 102400,
+    });
 
     // Reset everything
     act(() => {

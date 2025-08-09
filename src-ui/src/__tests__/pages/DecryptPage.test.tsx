@@ -275,7 +275,10 @@ describe('DecryptPage', () => {
       // When isDecrypting is true and progress exists, DecryptProgress component is shown
       // This test just validates that the decryption state is properly handled
       expect(mockDecryptionHook.isDecrypting).toBe(true);
-      expect(mockDecryptionHook.progress).toBeDefined();
+      expect(mockDecryptionHook.progress).toMatchObject({
+        progress: 50,
+        message: 'Decrypting files...',
+      });
     });
 
     it('should handle decryption errors gracefully', async () => {
@@ -538,7 +541,10 @@ describe('DecryptPage', () => {
       }
 
       // Verify progress tracking
-      expect(mockDecryptionHook.progress).toBeDefined();
+      expect(mockDecryptionHook.progress).toMatchObject({
+        progress: expect.any(Number),
+        message: expect.any(String),
+      });
     });
   });
 
@@ -638,7 +644,8 @@ describe('DecryptPage', () => {
       renderWithRouter(<DecryptPage />);
 
       // Verify error handling infrastructure is in place
-      expect(tauriEnv.mocks.safeInvoke).toBeDefined();
+      expect(tauriEnv.mocks.safeInvoke).not.toBeNull();
+      expect(typeof tauriEnv.mocks.safeInvoke).toBe('function');
     });
 
     it('should handle progress listener setup failure gracefully', async () => {

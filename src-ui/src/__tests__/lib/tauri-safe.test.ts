@@ -153,7 +153,7 @@ describe('tauri-safe', () => {
 
         // Should not throw, should return gracefully
         const unlisten = await safeListen('test-event', mockHandler);
-        expect(unlisten).toBeDefined();
+        expect(unlisten).not.toBeNull();
         expect(typeof unlisten).toBe('function');
       });
 
@@ -164,8 +164,10 @@ describe('tauri-safe', () => {
         const unlisten1 = await safeListen('event1', handler1);
         const unlisten2 = await safeListen('event2', handler2);
 
-        expect(unlisten1).toBeDefined();
-        expect(unlisten2).toBeDefined();
+        expect(unlisten1).not.toBeNull();
+        expect(typeof unlisten1).toBe('function');
+        expect(unlisten2).not.toBeNull();
+        expect(typeof unlisten2).toBe('function');
 
         // Both should be no-op functions
         await expect(unlisten1()).resolves.toBeUndefined();

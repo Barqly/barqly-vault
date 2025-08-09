@@ -47,9 +47,13 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
       });
 
       // Should handle the error gracefully and set appropriate error state
-      expect(result.current.error).toBeTruthy();
-      expect(result.current.error?.code).toBe(ErrorCode.INTERNAL_ERROR);
-      expect(result.current.error?.user_actionable).toBe(true);
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        user_actionable: true,
+        message: expect.any(String),
+        recovery_guidance: expect.any(String),
+      });
       expect(result.current.isLoading).toBe(false);
     });
 
@@ -98,7 +102,11 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
         );
       });
 
-      expect(result.current.error).toBeTruthy();
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: expect.stringContaining('Failed to set up progress listener'),
+      });
       expect(result.current.isLoading).toBe(false);
     });
 
@@ -122,7 +130,11 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
 
       // Verify unlisten was called despite the error
       expect(mockUnlisten).toHaveBeenCalledTimes(1);
-      expect(result.current.error).toBeTruthy();
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: expect.stringContaining('Key generation failed'),
+      });
       expect(result.current.isLoading).toBe(false);
     });
   });
@@ -179,7 +191,11 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
 
       // Should clean up properly
       expect(mockUnlisten).toHaveBeenCalledTimes(1);
-      expect(result.current.error).toBeTruthy();
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: expect.stringContaining('Crypto operation failed'),
+      });
       expect(result.current.progress).toBeNull();
     });
   });
@@ -232,7 +248,12 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
 
       await generatePromise;
 
-      expect(result.current.success).toBeTruthy();
+      expect(result.current.success).not.toBeNull();
+      expect(result.current.success).toMatchObject({
+        key_id: 'test-key',
+        public_key: 'age1test',
+        saved_path: '/path',
+      });
       expect(result.current.progress).toBeNull(); // Should clear on completion
     });
 
@@ -328,7 +349,12 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
 
       // Should no longer be loading
       expect(result.current.isLoading).toBe(false);
-      expect(result.current.success).toBeTruthy();
+      expect(result.current.success).not.toBeNull();
+      expect(result.current.success).toMatchObject({
+        key_id: 'test-key',
+        public_key: 'age1test',
+        saved_path: '/path',
+      });
     });
 
     it('should handle generateKey calls gracefully', async () => {
@@ -363,8 +389,12 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
 
       // Operation should complete successfully
       expect(result.current.isLoading).toBe(false);
-      expect(result.current.success).toBeTruthy();
-      expect(result.current.success?.key_id).toBe('test-key');
+      expect(result.current.success).not.toBeNull();
+      expect(result.current.success).toMatchObject({
+        key_id: 'test-key',
+        public_key: 'age1test',
+        saved_path: '/path',
+      });
       expect(result.current.error).toBeNull();
     });
   });
@@ -386,11 +416,19 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
           await result.current.generateKey();
         } catch (error) {
           // Expected to throw - error might be wrapped in CommandError
-          expect(error).toBeTruthy();
+          expect(error).toBeDefined();
+          expect(error).toMatchObject({
+            code: ErrorCode.INTERNAL_ERROR,
+            message: expect.any(String),
+          });
         }
       });
 
-      expect(result.current.error).toBeTruthy();
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: expect.any(String),
+      });
       expect(result.current.isLoading).toBe(false);
 
       // Clear error and retry
@@ -414,7 +452,12 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
       });
 
       expect(result.current.error).toBeNull();
-      expect(result.current.success).toBeTruthy();
+      expect(result.current.success).not.toBeNull();
+      expect(result.current.success).toMatchObject({
+        key_id: 'test-key',
+        public_key: 'age1test',
+        saved_path: '/path',
+      });
     });
 
     it('should maintain state consistency during error recovery', async () => {
@@ -436,14 +479,22 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
           await result.current.generateKey();
         } catch (error) {
           // Expected to throw
-          expect(error).toBeTruthy();
+          expect(error).toBeDefined();
+          expect(error).toMatchObject({
+            code: ErrorCode.INTERNAL_ERROR,
+            message: expect.stringContaining('Generation failed'),
+          });
         }
       });
 
       // State should be preserved after error
       expect(result.current.label).toBe('original-key');
       expect(result.current.passphrase).toBe('OriginalP@ssw0rd123!');
-      expect(result.current.error).toBeTruthy();
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: expect.stringContaining('Generation failed'),
+      });
 
       // Modify state and retry
       act(() => {
@@ -467,7 +518,12 @@ describe('useKeyGeneration - Tauri Integration & Regression Prevention', () => {
         await result.current.generateKey();
       });
 
-      expect(result.current.success?.key_id).toBe('modified-key');
+      expect(result.current.success).not.toBeNull();
+      expect(result.current.success).toMatchObject({
+        key_id: 'modified-key',
+        public_key: 'age1modified',
+        saved_path: '/modified/path',
+      });
       expect(result.current.error).toBeNull();
     });
   });

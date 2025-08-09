@@ -457,7 +457,8 @@ describe('EncryptPage', () => {
       renderEncryptPage();
 
       // Verify error handling when Tauri commands fail
-      expect(tauriEnv.mocks.safeInvoke).toBeDefined();
+      expect(tauriEnv.mocks.safeInvoke).not.toBeNull();
+      expect(typeof tauriEnv.mocks.safeInvoke).toBe('function');
     });
 
     it('should handle progress listener setup failure', async () => {

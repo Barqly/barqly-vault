@@ -141,7 +141,11 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         });
 
         // All hooks should handle the error and set appropriate error state
-        expect(result.current.error).toBeTruthy();
+        expect(result.current.error).not.toBeNull();
+        expect(result.current.error).toMatchObject({
+          code: ErrorCode.INTERNAL_ERROR,
+          message: expect.any(String),
+        });
         expect(result.current.isLoading).toBe(false);
       }
     });
@@ -302,7 +306,12 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
       await generatePromise;
 
       // Similar pattern should work for other hooks
-      expect(keyGenResult.result.current.success).toBeTruthy();
+      expect(keyGenResult.result.current.success).not.toBeNull();
+      expect(keyGenResult.result.current.success).toMatchObject({
+        key_id: 'test',
+        public_key: 'age1test',
+        saved_path: '/path',
+      });
     });
   });
 
@@ -324,7 +333,11 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         await expect(keyGenResult.result.current.generateKey()).rejects.toThrow();
       });
 
-      expect(keyGenResult.result.current.error).toBeTruthy();
+      expect(keyGenResult.result.current.error).not.toBeNull();
+      expect(keyGenResult.result.current.error).toMatchObject({
+        code: ErrorCode.INTERNAL_ERROR,
+        message: expect.stringContaining('Network error'),
+      });
 
       // Clear error and retry
       act(() => {
@@ -342,7 +355,12 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
         await keyGenResult.result.current.generateKey();
       });
 
-      expect(keyGenResult.result.current.success).toBeTruthy();
+      expect(keyGenResult.result.current.success).not.toBeNull();
+      expect(keyGenResult.result.current.success).toMatchObject({
+        key_id: 'test',
+        public_key: 'age1test',
+        saved_path: '/path',
+      });
       expect(keyGenResult.result.current.error).toBeNull();
     });
 
@@ -388,7 +406,11 @@ describe('Hooks Tauri API Integration - Regression Prevention', () => {
 
         // All hooks should have consistent error state handling
         const current = result.current as any;
-        expect(current.error).toBeTruthy();
+        expect(current.error).not.toBeNull();
+        expect(current.error).toMatchObject({
+          code: ErrorCode.INTERNAL_ERROR,
+          message: expect.stringContaining('Connection failed'),
+        });
         expect(current.isLoading).toBe(false);
         expect(current.progress).toBeNull();
 

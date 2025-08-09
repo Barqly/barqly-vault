@@ -162,8 +162,13 @@ describe('useFileEncryption - File Selection', () => {
       await result.current.selectFiles(['/path/to/file.txt'], 'Files');
     });
 
-    expect(result.current.selectedFiles).toBeTruthy();
-    expect(result.current.selectedFiles?.paths).toHaveLength(1);
+    expect(result.current.selectedFiles).not.toBeNull();
+    expect(result.current.selectedFiles).toMatchObject({
+      paths: ['/path/to/file.txt'],
+      selection_type: 'Files',
+      total_size: 102400,
+      file_count: 1,
+    });
 
     // Clear the selection
     act(() => {
