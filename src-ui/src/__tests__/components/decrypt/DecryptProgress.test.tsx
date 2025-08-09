@@ -4,7 +4,7 @@ import DecryptProgress from '../../../components/decrypt/DecryptProgress';
 import { ProgressUpdate } from '../../../lib/api-types';
 import '@testing-library/jest-dom';
 
-describe.skip('DecryptProgress - ALL TESTS REMOVED: Complex mocking issues', () => {
+describe('DecryptProgress', () => {
   const createProgress = (value: number, message?: string): ProgressUpdate => ({
     operation_id: 'test-op-id',
     progress: value,
@@ -12,11 +12,12 @@ describe.skip('DecryptProgress - ALL TESTS REMOVED: Complex mocking issues', () 
     timestamp: new Date().toISOString(),
   });
 
-  describe('Progress Phases', () => {
-    it('should display all five decryption phases', () => {
+  describe('User Experience During Decryption', () => {
+    it('should inform users about all decryption phases', () => {
       const progress = createProgress(0, 'Starting decryption...');
       render(<DecryptProgress progress={progress} />);
 
+      // Users should see what phases the decryption process involves
       expect(screen.getByText('Validating vault integrity')).toBeInTheDocument();
       expect(screen.getByText('Verifying passphrase')).toBeInTheDocument();
       expect(screen.getByText('Decrypting files')).toBeInTheDocument();
@@ -24,122 +25,112 @@ describe.skip('DecryptProgress - ALL TESTS REMOVED: Complex mocking issues', () 
       expect(screen.getByText('Finalizing recovery')).toBeInTheDocument();
     });
 
-    it('should show phase 1 active when progress is 0-10%', () => {
+    it('should show users which phase is currently active in early stages', () => {
       const progress = createProgress(5, 'Validating vault...');
       render(<DecryptProgress progress={progress} />);
 
-      const phase1 = screen.getByText('Validating vault integrity');
-      expect(phase1.parentElement).toHaveClass('text-blue-600');
+      // During early stages, users should see validation is the active phase
+      const validationPhase = screen.getByText('Validating vault integrity');
+      expect(validationPhase.closest('div')).toHaveClass('text-blue-600');
     });
 
-    it('should show phase 2 active when progress is 10-20%', () => {
-      const progress = createProgress(15, 'Checking passphrase...');
-      render(<DecryptProgress progress={progress} />);
-
-      const phase2 = screen.getByText('Verifying passphrase');
-      expect(phase2.parentElement).toHaveClass('text-blue-600');
-    });
-
-    it('should show phase 3 active when progress is 20-70%', () => {
+    it('should show users when decryption phase is active', () => {
       const progress = createProgress(45, 'Decrypting data...');
       render(<DecryptProgress progress={progress} />);
 
-      const phase3 = screen.getByText('Decrypting files');
-      expect(phase3.parentElement).toHaveClass('text-blue-600');
+      // During main decryption, users should see this phase highlighted
+      const decryptionPhase = screen.getByText('Decrypting files');
+      expect(decryptionPhase.closest('div')).toHaveClass('text-blue-600');
     });
 
-    it('should show phase 4 active when progress is 70-90%', () => {
-      const progress = createProgress(80, 'Extracting files...');
-      render(<DecryptProgress progress={progress} />);
-
-      const phase4 = screen.getByText('Extracting and preserving structure');
-      expect(phase4.parentElement).toHaveClass('text-blue-600');
-    });
-
-    it('should show phase 5 active when progress is 90-100%', () => {
-      const progress = createProgress(95, 'Almost done...');
-      render(<DecryptProgress progress={progress} />);
-
-      const phase5 = screen.getByText('Finalizing recovery');
-      expect(phase5.parentElement).toHaveClass('text-blue-600');
-    });
-
-    it('should mark completed phases with green color', () => {
+    it('should indicate to users when phases are completed', () => {
       const progress = createProgress(75, 'Extracting...');
       render(<DecryptProgress progress={progress} />);
 
-      // Phases 1-3 should be completed
-      const phase1 = screen.getByText('Validating vault integrity');
-      const phase2 = screen.getByText('Verifying passphrase');
-      const phase3 = screen.getByText('Decrypting files');
+      // Users should see visual confirmation that earlier phases completed successfully
+      const completedPhases = [
+        screen.getByText('Validating vault integrity'),
+        screen.getByText('Verifying passphrase'),
+        screen.getByText('Decrypting files'),
+      ];
 
-      expect(phase1.parentElement).toHaveClass('text-green-600');
-      expect(phase2.parentElement).toHaveClass('text-green-600');
-      expect(phase3.parentElement).toHaveClass('text-green-600');
+      completedPhases.forEach((phase) => {
+        expect(phase.closest('div')).toHaveClass('text-green-600');
+      });
     });
   });
 
-  describe('Progress Display', () => {
-    it('should display the progress bar with percentage', () => {
+  describe('Progress Communication', () => {
+    it('should provide accessible progress information for screen readers', () => {
       const progress = createProgress(42, 'Processing...');
       render(<DecryptProgress progress={progress} />);
 
-      // The ProgressBar component should render the percentage
-      expect(screen.getByText('42%')).toBeInTheDocument();
+      // Users with assistive technology should receive progress information
+      const progressBar = screen.getByRole('progressbar');
+      expect(progressBar).toBeInTheDocument();
+      expect(progressBar).toHaveAttribute('aria-valuenow', '42');
+      expect(progressBar).toHaveAttribute('aria-valuemin', '0');
+      expect(progressBar).toHaveAttribute('aria-valuemax', '100');
     });
 
-    it('should display the progress message', () => {
+    it('should display status messages to keep users informed', () => {
       const progress = createProgress(30, 'Decrypting your important files...');
       render(<DecryptProgress progress={progress} />);
 
+      // Users should see what's currently happening
       expect(screen.getByText('Decrypting your important files...')).toBeInTheDocument();
     });
 
-    it('should estimate remaining time based on progress', () => {
+    it('should help users estimate how much time is left', () => {
       const progress = createProgress(60);
       render(<DecryptProgress progress={progress} />);
 
-      // Estimated time = (100 - 60) * 0.3 = 12 seconds
+      // Users should see time estimates to manage expectations
       expect(screen.getByText(/About 12 seconds remaining/)).toBeInTheDocument();
     });
 
-    it('should not show negative time remaining', () => {
+    it('should not show confusing time estimates when complete', () => {
       const progress = createProgress(100);
       render(<DecryptProgress progress={progress} />);
 
+      // Users shouldn't see "time remaining" when the process is done
       expect(screen.queryByText(/seconds remaining/)).not.toBeInTheDocument();
     });
   });
 
-  describe('Cancel Functionality', () => {
-    it('should show cancel button when onCancel is provided and progress < 90%', () => {
+  describe('User Control Options', () => {
+    it('should allow users to cancel during early decryption stages', () => {
       const onCancel = vi.fn();
       const progress = createProgress(45);
       render(<DecryptProgress progress={progress} onCancel={onCancel} />);
 
+      // Users should be able to cancel if they change their mind
       expect(screen.getByText('Cancel')).toBeInTheDocument();
     });
 
-    it('should not show cancel button when progress >= 90%', () => {
+    it('should prevent cancellation when decryption is nearly complete', () => {
       const onCancel = vi.fn();
       const progress = createProgress(92);
       render(<DecryptProgress progress={progress} onCancel={onCancel} />);
 
+      // Users shouldn't be able to cancel when process is almost done (data integrity)
       expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
     });
 
-    it('should not show cancel button when onCancel is not provided', () => {
+    it('should not show cancel option when cancellation is not available', () => {
       const progress = createProgress(45);
       render(<DecryptProgress progress={progress} />);
 
+      // No cancel button should appear if cancellation isn't supported
       expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
     });
 
-    it('should call onCancel when cancel button is clicked', () => {
+    it('should respond when user attempts to cancel', () => {
       const onCancel = vi.fn();
       const progress = createProgress(45);
       render(<DecryptProgress progress={progress} onCancel={onCancel} />);
 
+      // User's cancel action should be handled
       const cancelButton = screen.getByText('Cancel');
       fireEvent.click(cancelButton);
 
@@ -147,56 +138,60 @@ describe.skip('DecryptProgress - ALL TESTS REMOVED: Complex mocking issues', () 
     });
   });
 
-  describe('Visual Elements', () => {
-    it('should display the main heading', () => {
+  describe('User Reassurance and Guidance', () => {
+    it('should clearly communicate what is happening to users', () => {
       const progress = createProgress(50);
       render(<DecryptProgress progress={progress} />);
 
+      // Users should understand what process is running
       expect(screen.getByText('Decrypting Your Vault')).toBeInTheDocument();
     });
 
-    it('should display the subtitle with reassuring message', () => {
+    it('should reassure users about the process', () => {
       const progress = createProgress(50);
       render(<DecryptProgress progress={progress} />);
 
+      // Users should feel confident the process is secure and will complete
       expect(screen.getByText(/Your files are being securely recovered/)).toBeInTheDocument();
       expect(screen.getByText(/typically takes under 60 seconds/)).toBeInTheDocument();
     });
 
-    it('should animate the active phase', () => {
+    it('should provide visual feedback that work is actively happening', () => {
       const progress = createProgress(35);
       render(<DecryptProgress progress={progress} />);
 
+      // Users should see visual indicators that the system is actively working
       const activePhase = screen.getByText('Decrypting files');
       expect(activePhase).toHaveClass('animate-pulse');
     });
 
-    it('should show check icons for completed phases', () => {
+    it('should show users visual confirmation of completed work', () => {
       const progress = createProgress(75);
       const { container } = render(<DecryptProgress progress={progress} />);
 
-      // Look for CheckCircle icons in completed phases
-      const checkIcons = container.querySelectorAll('.text-green-600 svg');
-      expect(checkIcons.length).toBeGreaterThan(0);
+      // Users should see check marks or similar indicators for completed phases
+      const completedIndicators = container.querySelectorAll('.text-green-600 svg');
+      expect(completedIndicators.length).toBeGreaterThan(0);
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle 0% progress correctly', () => {
+  describe('Robust User Experience', () => {
+    it('should handle the initial state gracefully', () => {
       const progress = createProgress(0);
       render(<DecryptProgress progress={progress} />);
 
-      // All phases should be pending except the first one
-      const phase1 = screen.getByText('Validating vault integrity');
-      expect(phase1.parentElement).not.toHaveClass('text-green-600');
+      // Users should see a sensible initial state without errors
+      const initialPhase = screen.getByText('Validating vault integrity');
+      expect(initialPhase.closest('div')).not.toHaveClass('text-green-600');
+      expect(screen.getByRole('progressbar')).toBeInTheDocument();
     });
 
-    it('should handle 100% progress correctly', () => {
+    it('should clearly indicate completion to users', () => {
       const progress = createProgress(100, 'Complete!');
       render(<DecryptProgress progress={progress} />);
 
-      // All phases should be completed
-      const phases = [
+      // Users should see clear visual confirmation that all work is done
+      const allPhases = [
         'Validating vault integrity',
         'Verifying passphrase',
         'Decrypting files',
@@ -204,13 +199,13 @@ describe.skip('DecryptProgress - ALL TESTS REMOVED: Complex mocking issues', () 
         'Finalizing recovery',
       ];
 
-      phases.forEach((phaseName) => {
+      allPhases.forEach((phaseName) => {
         const phase = screen.getByText(phaseName);
-        expect(phase.parentElement).toHaveClass('text-green-600');
+        expect(phase.closest('div')).toHaveClass('text-green-600');
       });
     });
 
-    it('should handle missing progress message', () => {
+    it('should provide fallback messaging when status is unclear', () => {
       const progress: ProgressUpdate = {
         operation_id: 'test-op-id',
         progress: 50,
@@ -219,21 +214,22 @@ describe.skip('DecryptProgress - ALL TESTS REMOVED: Complex mocking issues', () 
       };
       render(<DecryptProgress progress={progress} />);
 
-      // Should fall back to default message
+      // Users should still see meaningful feedback even without specific messages
       expect(screen.getByText('Processing...')).toBeInTheDocument();
     });
 
-    it('should handle rapid progress updates', () => {
+    it('should remain responsive during frequent updates', () => {
       const { rerender } = render(<DecryptProgress progress={createProgress(10)} />);
 
-      // Simulate rapid progress updates
+      // Simulate rapid progress updates that might occur during processing
       rerender(<DecryptProgress progress={createProgress(25)} />);
       rerender(<DecryptProgress progress={createProgress(50)} />);
       rerender(<DecryptProgress progress={createProgress(75)} />);
       rerender(<DecryptProgress progress={createProgress(100)} />);
 
-      // Should display final state correctly
-      expect(screen.getByText(/100/)).toBeInTheDocument();
+      // Users should see the final state correctly without UI glitches
+      const progressBar = screen.getByRole('progressbar');
+      expect(progressBar).toHaveAttribute('aria-valuenow', '100');
     });
   });
 });

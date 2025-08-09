@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
-import { ErrorCode, FileSelection } from '../../../lib/api-types';
+import { ErrorCode } from '../../../lib/api-types';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -80,23 +80,10 @@ describe('useFileEncryption - Encryption Validation', () => {
     });
   });
 
-  it.skip('should validate output path is provided - backend does not support output path yet', async () => {
+  it('should validate file selection exists before encryption', async () => {
     const { result } = renderHook(() => useFileEncryption());
 
-    // First select files to set up the state
-    const mockFileSelection: FileSelection = {
-      paths: ['/path/to/file.txt'],
-      selection_type: 'Files',
-      total_size: 1024,
-      file_count: 1,
-    };
-
-    mockSafeInvoke.mockResolvedValueOnce(mockFileSelection);
-
-    await act(async () => {
-      await result.current.selectFiles(['/mock/path/file1.txt', '/mock/path/file2.txt'], 'Files');
-    });
-
+    // Try to encrypt without selecting files first
     await act(async () => {
       try {
         await result.current.encryptFiles('test-key');
@@ -105,13 +92,39 @@ describe('useFileEncryption - Encryption Validation', () => {
       }
     });
 
-    // This test is skipped until backend supports output path
-    expect(result.current.error).toBe(null);
+    expect(result.current.error).toEqual({
+      code: ErrorCode.INVALID_INPUT,
+      message: 'No files selected for encryption',
+      recovery_guidance: 'Please select files or folders to encrypt',
+      user_actionable: true,
+    });
+
+    // Ensure backend encrypt command was never called
+    expect(mockSafeInvoke).not.toHaveBeenCalledWith('encrypt_files', expect.anything());
   });
 
-  // Compression level is no longer part of the API, so this test is removed
-  it.skip('should validate compression level range', async () => {
-    // This test is skipped because compression level is not part of the new API
+  it('should handle multiple validation errors appropriately', async () => {
+    const { result } = renderHook(() => useFileEncryption());
+
+    // Try to encrypt with both missing files and missing key
+    await act(async () => {
+      try {
+        await result.current.encryptFiles('');
+      } catch (_error) {
+        // Expected to throw
+      }
+    });
+
+    // Should prioritize the first validation error (no files selected)
+    expect(result.current.error).toEqual({
+      code: ErrorCode.INVALID_INPUT,
+      message: 'No files selected for encryption',
+      recovery_guidance: 'Please select files or folders to encrypt',
+      user_actionable: true,
+    });
+
+    // Ensure no backend calls were made due to validation failure
+    expect(mockSafeInvoke).not.toHaveBeenCalledWith('encrypt_files', expect.anything());
   });
 
   it('should handle validation errors without calling backend', async () => {

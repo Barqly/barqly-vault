@@ -66,7 +66,7 @@ const DecryptProgress: React.FC<DecryptProgressProps> = ({ progress, onCancel })
       {/* Main progress bar */}
       <div className="mb-6">
         <ProgressBar
-          value={progress.progress}
+          value={progress.progress / 100}
           showPercentage={true}
           showStatus={false}
           className="h-3"
