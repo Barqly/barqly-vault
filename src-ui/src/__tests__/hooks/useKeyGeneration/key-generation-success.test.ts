@@ -72,7 +72,7 @@ describe('useKeyGeneration - Key Generation Success', () => {
         label: 'test-key',
         passphrase: 'StrongP@ssw0rd123!',
       },
-      'useKeyGeneration',
+      'key-generation-workflow',
     );
   });
 

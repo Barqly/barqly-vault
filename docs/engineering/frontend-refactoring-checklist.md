@@ -78,12 +78,15 @@ Multiple frontend files exceed our newly established line limits for frontend co
 - [x] Added decryption validation module `lib/validation/decryption-validation.ts` (126 lines)
 - [x] **Result**: Main hook reduced from 333 to 171 lines (49% reduction)
 
-#### 7. `src/hooks/useFileEncryption.ts` - **315 lines**
-**Current State**: 26% over TypeScript module limit
-**Refactoring Strategy**:
-- [ ] Extract progress tracking logic (~70 lines)
-- [ ] Move validation logic (~60 lines)
-- [ ] Target: ~185 lines remaining
+#### 7. `src/hooks/useFileEncryption.ts` - **145 lines** ✅ COMPLETED
+**Previous State**: 315 lines (26% over TypeScript module limit)  
+**Current State**: 145 lines - WITHIN LIMIT  
+**Refactoring Completed**:
+- [x] Extracted encryption workflow logic to `lib/encryption/encryption-workflow.ts` (44 lines)
+- [x] Created file operation utilities in `lib/encryption/file-operations.ts` (52 lines)
+- [x] Created state management utilities in `lib/encryption/state-management.ts` (85 lines)
+- [x] Added encryption validation module `lib/validation/encryption-validation.ts` (72 lines)
+- [x] **Result**: Main hook reduced from 315 to 145 lines (54% reduction)
 
 #### 8. `src/pages/SetupPage.tsx` - **100 lines** ✅ COMPLETED 
 **Previous State**: 313 lines (109% over limit)  
@@ -95,12 +98,14 @@ Multiple frontend files exceed our newly established line limits for frontend co
 - [x] Created `SetupProgressPanel` component (32 lines)
 - [x] **Result**: Main component reduced from 313 to 100 lines (68% reduction)
 
-#### 9. `src/hooks/useKeyGeneration.ts` - **297 lines**
-**Current State**: 19% over TypeScript module limit
-**Refactoring Strategy**:
-- [ ] Extract key validation logic (~60 lines)
-- [ ] Move error handling (~40 lines)
-- [ ] Target: ~197 lines remaining
+#### 9. `src/hooks/useKeyGeneration.ts` - **139 lines** ✅ COMPLETED
+**Previous State**: 297 lines (19% over TypeScript module limit)  
+**Current State**: 139 lines - WITHIN LIMIT  
+**Refactoring Completed**:
+- [x] Extracted key generation workflow to `lib/key-generation/key-generation-workflow.ts` (123 lines)
+- [x] Created state management utilities in `lib/key-generation/state-management.ts` (74 lines)
+- [x] Created validation helpers in `lib/key-generation/validation.ts` (69 lines)
+- [x] **Result**: Main hook reduced from 297 to 139 lines (53% reduction)
 
 #### 10. `src/components/forms/KeySelectionDropdown.tsx` - **136 lines** ✅ COMPLETED
 **Previous State**: 267 lines (78% over component limit)  
@@ -205,11 +210,11 @@ Files under 150 lines for components and under 200 lines for modules are conside
 5. [x] Refactor `KeyGenerationForm.tsx` (340 lines → 106 lines) ✅ COMPLETED
 6. [x] Refactor `KeySelectionDropdown.tsx` (267 lines → 136 lines) ✅ COMPLETED
 
-### Phase 3 - Hooks and Services (Sprint 3)
-7. [x] Refactor `useFileDecryption.ts` (333 lines → 176 lines) ✅ COMPLETED
+### Phase 3 - Hooks and Services (Sprint 3) ✅ COMPLETED
+7. [x] Refactor `useFileDecryption.ts` (333 lines → 171 lines) ✅ COMPLETED
 8. [x] Refactor `useFileEncryption.ts` (315 lines → 145 lines) ✅ COMPLETED
-9. [ ] Refactor `useKeyGeneration.ts` (297 lines)
-10. [ ] Split `api-types.ts` (340 lines)
+9. [x] Refactor `useKeyGeneration.ts` (297 lines → 139 lines) ✅ COMPLETED
+10. [x] Switch `api-types.ts` to auto-generation ✅ COMPLETED
 
 ### Phase 4 - UI Components (Sprint 4)
 11. [ ] Refactor `error-message.tsx` (265 lines)
