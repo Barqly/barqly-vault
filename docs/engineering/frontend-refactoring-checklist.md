@@ -220,10 +220,10 @@ Files under 150 lines for components and under 200 lines for modules are conside
 9. [x] Refactor `useKeyGeneration.ts` (297 lines → 139 lines) ✅ COMPLETED
 10. [x] Switch `api-types.ts` to auto-generation ✅ COMPLETED
 
-### Phase 4 - UI Components (Sprint 4)
-11. [x] Refactor `error-message.tsx` (265 lines → 147 lines)
-12. [x] Refactor `FileDropZone.tsx` in encrypt folder (260 lines)
-13. [ ] Monitor and refactor warning-zone components
+### Phase 4 - UI Components (Sprint 4) ✅ COMPLETED
+11. [x] Refactor `error-message.tsx` (265 lines → 147 lines) ✅
+12. [x] Refactor `FileDropZone.tsx` in encrypt folder (deleted duplicate) ✅
+13. [x] Monitor and refactor warning-zone components (reviewed - no refactoring needed) ✅
 
 ### Phase 5 - Test Cleanup (Sprint 5)
 14. [ ] Refactor test files over 300 lines
