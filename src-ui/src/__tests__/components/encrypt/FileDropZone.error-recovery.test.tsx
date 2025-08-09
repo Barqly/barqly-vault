@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import FileDropZone from '../../../components/encrypt/FileDropZone';
+import FileDropZone from '../../../components/common/FileDropZone';
 import { safeInvoke } from '../../../lib/tauri-safe';
 
 // Mock dependencies
@@ -10,6 +10,12 @@ vi.mock('@tauri-apps/plugin-dialog', () => ({
 
 vi.mock('@tauri-apps/api/event', () => ({
   listen: vi.fn(() => Promise.resolve(() => {})),
+}));
+
+vi.mock('@tauri-apps/api/webview', () => ({
+  getCurrentWebview: vi.fn(() => ({
+    onDragDropEvent: vi.fn(() => Promise.resolve(() => {})),
+  })),
 }));
 
 vi.mock('../../../lib/environment/platform', () => ({

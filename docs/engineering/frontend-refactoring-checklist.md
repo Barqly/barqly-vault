@@ -125,12 +125,15 @@ Multiple frontend files exceed our newly established line limits for frontend co
 - [ ] Create error type components (~50 lines each)
 - [ ] Target: Main component ~145 lines
 
-#### 12. `src/components/encrypt/FileDropZone.tsx` - **260 lines**
-**Current State**: 73% over component limit
-**Refactoring Strategy**:
-- [ ] Extract file handling to custom hook (~80 lines)
-- [ ] Split UI components (~40 lines each)
-- [ ] Target: Main component ~140 lines
+#### 12. `src/components/encrypt/FileDropZone.tsx` - **DELETED** ✅ COMPLETED
+**Previous State**: 260 lines (73% over component limit)  
+**Current State**: Component removed - functionality consolidated  
+**Refactoring Completed**:
+- [x] Identified component was unused (duplicate of common/FileDropZone)
+- [x] Deleted unused encrypt-specific FileDropZone component
+- [x] Updated tests to use common/FileDropZone instead
+- [x] All functionality preserved through common/FileDropZone
+- [x] **Result**: Removed 260 lines of duplicate code
 
 ### � MONITOR - Files Approaching Limits
 

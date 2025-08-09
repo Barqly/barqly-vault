@@ -1,10 +1,20 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import FileDropZone from '../../../components/encrypt/FileDropZone';
+import FileDropZone from '../../../components/common/FileDropZone';
 
-// Mock the Tauri dialog API
+// Mock the Tauri APIs
 vi.mock('@tauri-apps/plugin-dialog', () => ({
   open: vi.fn(),
+}));
+
+vi.mock('@tauri-apps/api/webview', () => ({
+  getCurrentWebview: vi.fn(() => ({
+    onDragDropEvent: vi.fn(() => Promise.resolve(() => {})),
+  })),
+}));
+
+vi.mock('../../../lib/environment/platform', () => ({
+  isTauri: vi.fn(() => true),
 }));
 
 const mockOpen = vi.mocked(await import('@tauri-apps/plugin-dialog')).open;
@@ -27,8 +37,8 @@ describe('FileDropZone', () => {
         />,
       );
 
-      expect(screen.getByText('Drop files or folders here to encrypt')).toBeInTheDocument();
-      expect(screen.getByText('Drag and drop files or folders directly')).toBeInTheDocument();
+      expect(screen.getByText('Drop files here')).toBeInTheDocument();
+      expect(screen.getByText('Browse Files')).toBeInTheDocument();
     });
   });
 
@@ -51,7 +61,8 @@ describe('FileDropZone', () => {
         expect(mockOpen).toHaveBeenCalledWith({
           multiple: true,
           directory: false,
-          title: 'Select Files to Encrypt',
+          title: 'Select Files',
+          filters: undefined,
         });
         expect(mockOnFilesSelected).toHaveBeenCalledWith(
           ['/path/to/file1.txt', '/path/to/file2.txt'],
@@ -78,7 +89,7 @@ describe('FileDropZone', () => {
         expect(mockOpen).toHaveBeenCalledWith({
           multiple: false,
           directory: true,
-          title: 'Select Folder to Encrypt',
+          title: 'Select Folder',
         });
         expect(mockOnFilesSelected).toHaveBeenCalledWith(['/path/to/folder'], 'Folder');
       });
@@ -291,7 +302,7 @@ describe('FileDropZone', () => {
         />,
       );
 
-      const clearButton = screen.getByLabelText('Clear all files');
+      const clearButton = screen.getByLabelText('Clear selection');
       expect(clearButton).toBeInTheDocument();
     });
 
