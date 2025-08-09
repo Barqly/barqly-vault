@@ -16,12 +16,10 @@ const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
     {
       icon: Lock,
       text: 'Your keys never leave your device',
-      testId: 'trust-local-keys',
     },
     {
       icon: BookOpen,
       text: 'Open-source audited',
-      testId: 'trust-open-source',
     },
   ];
 
@@ -29,7 +27,6 @@ const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
     indicators.push({
       icon: Shield,
       text: 'Military-grade encryption',
-      testId: 'trust-encryption',
     });
   }
 
@@ -45,14 +42,13 @@ const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
       className="bg-gray-50 border border-gray-200 rounded-md px-4 py-3 mb-6"
       role="region"
       aria-label="Security indicators"
-      data-testid="trust-indicators"
     >
       <div className={`${containerClasses} ${layout === 'vertical' ? 'sm:flex-row sm:gap-6' : ''}`}>
         {indicators.map((indicator, index) => (
-          <React.Fragment key={indicator.testId}>
+          <React.Fragment key={indicator.text}>
             <div className="flex items-center gap-1.5">
               <indicator.icon className="h-4 w-4 text-gray-500" aria-hidden="true" />
-              <span data-testid={indicator.testId}>{indicator.text}</span>
+              <span>{indicator.text}</span>
             </div>
             {index < indicators.length - 1 && (
               <div

@@ -6,30 +6,28 @@ describe('TrustIndicators', () => {
   it('renders default horizontal layout with basic indicators', () => {
     render(<TrustIndicators />);
 
-    expect(screen.getByTestId('trust-indicators')).toBeInTheDocument();
-    expect(screen.getByTestId('trust-local-keys')).toHaveTextContent(
-      'Your keys never leave your device',
-    );
-    expect(screen.getByTestId('trust-open-source')).toHaveTextContent('Open-source audited');
+    expect(screen.getByRole('region', { name: 'Security indicators' })).toBeInTheDocument();
+    expect(screen.getByText('Your keys never leave your device')).toBeInTheDocument();
+    expect(screen.getByText('Open-source audited')).toBeInTheDocument();
   });
 
   it('renders vertical layout when specified', () => {
     render(<TrustIndicators layout="vertical" />);
 
-    const container = screen.getByTestId('trust-indicators');
+    const container = screen.getByRole('region', { name: 'Security indicators' });
     expect(container.querySelector('div')).toHaveClass('flex', 'flex-col');
   });
 
   it('renders extended indicators when enabled', () => {
     render(<TrustIndicators extended={true} />);
 
-    expect(screen.getByTestId('trust-encryption')).toHaveTextContent('Military-grade encryption');
+    expect(screen.getByText('Military-grade encryption')).toBeInTheDocument();
   });
 
   it('has proper accessibility attributes', () => {
     render(<TrustIndicators />);
 
-    const container = screen.getByTestId('trust-indicators');
+    const container = screen.getByRole('region', { name: 'Security indicators' });
     expect(container).toHaveAttribute('role', 'region');
     expect(container).toHaveAttribute('aria-label', 'Security indicators');
   });
@@ -38,9 +36,8 @@ describe('TrustIndicators', () => {
     render(<TrustIndicators />);
 
     // Should have 1 divider between 2 indicators
-    const dividers = screen
-      .getByTestId('trust-indicators')
-      .querySelectorAll('[aria-hidden="true"]');
+    const container = screen.getByRole('region', { name: 'Security indicators' });
+    const dividers = container.querySelectorAll('[aria-hidden="true"]');
     expect(dividers.length).toBeGreaterThan(0);
   });
 
@@ -48,8 +45,8 @@ describe('TrustIndicators', () => {
     render(<TrustIndicators extended={true} />);
 
     // Should have all 3 trust indicators
-    expect(screen.getByTestId('trust-local-keys')).toBeInTheDocument();
-    expect(screen.getByTestId('trust-open-source')).toBeInTheDocument();
-    expect(screen.getByTestId('trust-encryption')).toBeInTheDocument();
+    expect(screen.getByText('Your keys never leave your device')).toBeInTheDocument();
+    expect(screen.getByText('Open-source audited')).toBeInTheDocument();
+    expect(screen.getByText('Military-grade encryption')).toBeInTheDocument();
   });
 });
