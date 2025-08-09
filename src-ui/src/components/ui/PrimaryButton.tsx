@@ -59,7 +59,6 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
         ${className}
       `}
       disabled={isDisabled}
-      data-testid="primary-button"
       {...props}
     >
       {loading ? (
@@ -67,15 +66,14 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
           <Loader2
             className="h-5 w-5 animate-spin"
             aria-hidden="true"
-            data-testid="loading-spinner"
           />
-          <span data-testid="loading-text">{loadingText}</span>
+          <span>{loadingText}</span>
         </>
       ) : (
         <>
-          <span data-testid="button-text">{children}</span>
+          <span>{children}</span>
           {showIcon && (
-            <ArrowRight className="h-5 w-5" aria-hidden="true" data-testid="arrow-icon" />
+            <ArrowRight className="h-5 w-5" aria-hidden="true" />
           )}
         </>
       )}
