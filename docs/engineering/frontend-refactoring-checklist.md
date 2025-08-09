@@ -206,8 +206,8 @@ Files under 150 lines for components and under 200 lines for modules are conside
 6. [x] Refactor `KeySelectionDropdown.tsx` (267 lines → 136 lines) ✅ COMPLETED
 
 ### Phase 3 - Hooks and Services (Sprint 3)
-7. [x] Refactor `useFileDecryption.ts` (333 lines → 171 lines) ✅ COMPLETED
-8. [ ] Refactor `useFileEncryption.ts` (315 lines)
+7. [x] Refactor `useFileDecryption.ts` (333 lines → 176 lines) ✅ COMPLETED
+8. [x] Refactor `useFileEncryption.ts` (315 lines → 145 lines) ✅ COMPLETED
 9. [ ] Refactor `useKeyGeneration.ts` (297 lines)
 10. [ ] Split `api-types.ts` (340 lines)
 
