@@ -26,13 +26,18 @@ describe('SuccessMessage', () => {
 
       expect(screen.getByText('Operation Complete')).toBeInTheDocument();
       expect(screen.getByText('Your files have been encrypted successfully.')).toBeInTheDocument();
-      expect(screen.getByTestId('success-icon')).toBeInTheDocument();
+      // Check for success icon by looking for SVG within the status role
+      const status = screen.getByRole('status');
+      const icon = status.querySelector('svg[aria-hidden="true"]');
+      expect(icon).toBeInTheDocument();
     });
 
     it('should render without icon when showIcon is false', () => {
       render(<SuccessMessage title="Success" message="Operation completed" showIcon={false} />);
 
-      expect(screen.queryByTestId('success-icon')).not.toBeInTheDocument();
+      const status = screen.getByRole('status');
+      const icon = status.querySelector('svg[aria-hidden="true"]');
+      expect(icon).not.toBeInTheDocument();
     });
 
     it('should render with custom className', () => {
@@ -98,7 +103,7 @@ describe('SuccessMessage', () => {
         />,
       );
 
-      const closeButton = screen.getByTestId('close-button');
+      const closeButton = screen.getByLabelText('Close success message');
       expect(closeButton).toBeInTheDocument();
       expect(closeButton).toHaveAttribute('aria-label', 'Close success message');
     });
@@ -114,7 +119,7 @@ describe('SuccessMessage', () => {
         />,
       );
 
-      fireEvent.click(screen.getByTestId('close-button'));
+      fireEvent.click(screen.getByLabelText('Close success message'));
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
@@ -123,7 +128,7 @@ describe('SuccessMessage', () => {
         <SuccessMessage title="Success" message="Operation completed" showCloseButton={false} />,
       );
 
-      expect(screen.queryByTestId('close-button')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Close success message')).not.toBeInTheDocument();
     });
   });
 
@@ -149,8 +154,8 @@ describe('SuccessMessage', () => {
 
       expect(screen.getByText('Copy Key')).toBeInTheDocument();
       expect(screen.getByText('Download')).toBeInTheDocument();
-      expect(screen.getByTestId('success-action-0')).toBeInTheDocument();
-      expect(screen.getByTestId('success-action-1')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /copy key/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument();
     });
 
     it('should call action when button is clicked', () => {
@@ -290,7 +295,7 @@ describe('SuccessMessage', () => {
         />,
       );
 
-      const closeButton = screen.getByTestId('close-button');
+      const closeButton = screen.getByLabelText('Close success message');
       expect(closeButton).toHaveAttribute('aria-label', 'Close success message');
       expect(closeButton).toHaveAttribute('type', 'button');
     });
@@ -306,7 +311,7 @@ describe('SuccessMessage', () => {
 
       render(<SuccessMessage title="Success" message="Operation completed" actions={actions} />);
 
-      const actionButton = screen.getByTestId('success-action-0');
+      const actionButton = screen.getByRole('button', { name: /copy key/i });
       expect(actionButton).toHaveAttribute('type', 'button');
       expect(actionButton).toHaveClass('focus:outline-none', 'focus:ring-2');
     });

@@ -352,7 +352,7 @@ describe('SetupPage', () => {
 
       renderWithRouter(<SetupPage />);
 
-      const closeButton = screen.getByTestId('close-button');
+      const closeButton = screen.getByLabelText('Close success message');
       await user.click(closeButton);
 
       expect(mockReset).toHaveBeenCalledTimes(1);

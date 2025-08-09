@@ -121,11 +121,7 @@ function SuccessMessage({
       <div className="flex items-start gap-3">
         {/* Icon */}
         {showIcon && (
-          <CheckCircle
-            className={cn(iconVariants({ variant, size }))}
-            aria-hidden="true"
-            data-testid="success-icon"
-          />
+          <CheckCircle className={cn(iconVariants({ variant, size }))} aria-hidden="true" />
         )}
 
         {/* Content */}
@@ -164,7 +160,6 @@ function SuccessMessage({
                     type="button"
                     onClick={action.action}
                     className={buttonClasses}
-                    data-testid={`success-action-${index}`}
                   >
                     {IconComponent && <IconComponent className="size-3" />}
                     {action.label}
@@ -182,7 +177,6 @@ function SuccessMessage({
             onClick={handleClose}
             className="flex-shrink-0 p-1 rounded-md opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-opacity"
             aria-label="Close success message"
-            data-testid="close-button"
           >
             <X className="size-4" aria-hidden="true" />
           </button>
