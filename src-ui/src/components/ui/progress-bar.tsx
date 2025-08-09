@@ -182,9 +182,9 @@ function ProgressBar({
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             {isIndeterminate ? (
-              <Loader2 className="h-4 w-4 animate-spin" data-testid="loader-2" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : isComplete ? (
-              <CheckCircle className="h-4 w-4 text-green-500" data-testid="check-circle" />
+              <CheckCircle className="h-4 w-4 text-green-500" />
             ) : (
               <div className="h-4 w-4" />
             )}

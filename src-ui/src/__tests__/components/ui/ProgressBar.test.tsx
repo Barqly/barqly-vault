@@ -70,7 +70,11 @@ describe('ProgressBar', () => {
       render(<ProgressBar value={1.0} />);
 
       expect(screen.getByText('Complete')).toBeInTheDocument();
-      expect(screen.getByTestId('check-circle')).toBeInTheDocument();
+      // Check for success icon by looking for SVG with check appearance
+      const statusElement = screen.getByText('Complete').parentElement;
+      const icon = statusElement?.querySelector('svg');
+      expect(icon).toBeInTheDocument();
+      expect(icon).toHaveClass('text-green-500');
     });
 
     it('clamps value between 0 and 1', () => {
@@ -93,7 +97,10 @@ describe('ProgressBar', () => {
     it('shows loading spinner in indeterminate mode', () => {
       render(<ProgressBar indeterminate />);
 
-      expect(screen.getByTestId('loader-2')).toBeInTheDocument();
+      // Check for loading spinner by looking for SVG with animate-spin class
+      const statusElement = screen.getByText('Processing...').parentElement;
+      const spinner = statusElement?.querySelector('svg.animate-spin');
+      expect(spinner).toBeInTheDocument();
     });
 
     it('hides percentage in indeterminate mode', () => {
