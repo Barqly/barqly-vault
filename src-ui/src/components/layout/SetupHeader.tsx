@@ -26,11 +26,7 @@ const SetupHeader: React.FC<SetupHeaderProps> = ({
         <div className="flex items-center gap-3">
           {/* Shield Icon */}
           <div className="flex-shrink-0">
-            <Shield
-              className="w-6 h-6 text-blue-600"
-              aria-hidden="true"
-              data-testid="setup-header-shield"
-            />
+            <Shield className="w-6 h-6 text-blue-600" aria-hidden="true" />
           </div>
 
           {/* Title and Subtitle */}
