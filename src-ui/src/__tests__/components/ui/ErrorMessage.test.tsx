@@ -116,23 +116,33 @@ describe('ErrorMessage', () => {
   describe('Icons', () => {
     it('should show default icon by default', () => {
       render(<ErrorMessage error="Test error" />);
-      expect(screen.getByTestId('error-icon')).toBeInTheDocument();
+      const alert = screen.getByRole('alert');
+      const icon = alert.querySelector('[aria-hidden="true"]');
+      expect(icon).toBeInTheDocument();
     });
 
     it('should hide icon when showIcon is false', () => {
       render(<ErrorMessage error="Test error" showIcon={false} />);
-      expect(screen.queryByTestId('error-icon')).not.toBeInTheDocument();
+      const alert = screen.getByRole('alert');
+      const icon = alert.querySelector('[aria-hidden="true"]');
+      expect(icon).not.toBeInTheDocument();
     });
 
     it('should show appropriate icon for each variant', () => {
       const { rerender } = render(<ErrorMessage error="Test error" variant="warning" />);
-      expect(screen.getByTestId('error-icon')).toBeInTheDocument();
+      let alert = screen.getByRole('alert');
+      let icon = alert.querySelector('[aria-hidden="true"]');
+      expect(icon).toBeInTheDocument();
 
       rerender(<ErrorMessage error="Test error" variant="info" />);
-      expect(screen.getByTestId('error-icon')).toBeInTheDocument();
+      alert = screen.getByRole('alert');
+      icon = alert.querySelector('[aria-hidden="true"]');
+      expect(icon).toBeInTheDocument();
 
       rerender(<ErrorMessage error="Test error" variant="security" />);
-      expect(screen.getByTestId('error-icon')).toBeInTheDocument();
+      alert = screen.getByRole('alert');
+      icon = alert.querySelector('[aria-hidden="true"]');
+      expect(icon).toBeInTheDocument();
     });
   });
 
@@ -253,7 +263,7 @@ describe('ErrorMessage', () => {
       const onRetry = vi.fn();
       render(<ErrorMessage error={error} onRetry={onRetry} />);
 
-      const retryButton = screen.getByTestId('retry-button');
+      const retryButton = screen.getByRole('button', { name: /retry/i });
       expect(retryButton).toBeInTheDocument();
       expect(retryButton).toHaveTextContent('Retry');
     });
@@ -268,7 +278,7 @@ describe('ErrorMessage', () => {
       const onRetry = vi.fn();
       render(<ErrorMessage error={error} onRetry={onRetry} />);
 
-      expect(screen.queryByTestId('retry-button')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument();
     });
 
     it('should call onRetry when retry button is clicked', () => {
@@ -281,7 +291,7 @@ describe('ErrorMessage', () => {
       const onRetry = vi.fn();
       render(<ErrorMessage error={error} onRetry={onRetry} />);
 
-      fireEvent.click(screen.getByTestId('retry-button'));
+      fireEvent.click(screen.getByRole('button', { name: /retry/i }));
       expect(onRetry).toHaveBeenCalledTimes(1);
     });
 
@@ -295,28 +305,28 @@ describe('ErrorMessage', () => {
       const onRetry = vi.fn();
       render(<ErrorMessage error={error} onRetry={onRetry} retryLabel="Try Again" />);
 
-      expect(screen.getByTestId('retry-button')).toHaveTextContent('Try Again');
+      expect(screen.getByRole('button', { name: /try again/i })).toHaveTextContent('Try Again');
     });
   });
 
   describe('Close Button', () => {
     it('should not show close button by default', () => {
       render(<ErrorMessage error="Test error" />);
-      expect(screen.queryByTestId('close-button')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/close/i)).not.toBeInTheDocument();
     });
 
     it('should show close button when showCloseButton is true and onClose is provided', () => {
       const onClose = vi.fn();
       render(<ErrorMessage error="Test error" showCloseButton={true} onClose={onClose} />);
 
-      expect(screen.getByTestId('close-button')).toBeInTheDocument();
+      expect(screen.getByLabelText('Close error message')).toBeInTheDocument();
     });
 
     it('should call onClose when close button is clicked', () => {
       const onClose = vi.fn();
       render(<ErrorMessage error="Test error" showCloseButton={true} onClose={onClose} />);
 
-      fireEvent.click(screen.getByTestId('close-button'));
+      fireEvent.click(screen.getByLabelText('Close error message'));
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
@@ -324,7 +334,7 @@ describe('ErrorMessage', () => {
       const onClose = vi.fn();
       render(<ErrorMessage error="Test error" showCloseButton={true} onClose={onClose} />);
 
-      const closeButton = screen.getByTestId('close-button');
+      const closeButton = screen.getByLabelText('Close error message');
       expect(closeButton).toHaveAttribute('aria-label', 'Close error message');
     });
   });
@@ -340,7 +350,7 @@ describe('ErrorMessage', () => {
       const onClose = vi.fn();
       render(<ErrorMessage error="Test error" showCloseButton={true} onClose={onClose} />);
 
-      const closeButton = screen.getByTestId('close-button');
+      const closeButton = screen.getByLabelText('Close error message');
       expect(closeButton).toHaveAttribute('type', 'button');
     });
 
@@ -354,7 +364,7 @@ describe('ErrorMessage', () => {
       const onRetry = vi.fn();
       render(<ErrorMessage error={error} onRetry={onRetry} />);
 
-      const retryButton = screen.getByTestId('retry-button');
+      const retryButton = screen.getByRole('button', { name: /retry/i });
       expect(retryButton).toHaveAttribute('type', 'button');
     });
   });

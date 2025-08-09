@@ -111,7 +111,6 @@ function ErrorMessage({
           <IconComponent
             className={cn(iconVariants({ variant: currentVariant, size }))}
             aria-hidden="true"
-            data-testid="error-icon"
           />
         )}
 
@@ -132,7 +131,6 @@ function ErrorMessage({
             onClick={onClose}
             className="flex-shrink-0 p-1 rounded-md opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-opacity"
             aria-label="Close error message"
-            data-testid="close-button"
           >
             <X className="size-4" aria-hidden="true" />
           </button>

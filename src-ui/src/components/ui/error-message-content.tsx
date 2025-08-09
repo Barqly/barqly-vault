@@ -60,7 +60,6 @@ export function ErrorMessageContent({
             type="button"
             onClick={onRetry}
             className="text-xs font-medium underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-offset-2 rounded"
-            data-testid="retry-button"
           >
             {retryLabel}
           </button>
