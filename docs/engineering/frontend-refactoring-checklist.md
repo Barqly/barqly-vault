@@ -68,12 +68,15 @@ Multiple frontend files exceed our newly established line limits for frontend co
 
 ### =� WARNING - Files Exceeding Optimal Limits (Action Required)
 
-#### 6. `src/hooks/useFileDecryption.ts` - **333 lines**
-**Current State**: 33% over TypeScript module limit (250 lines)
-**Refactoring Strategy**:
-- [ ] Extract error handling logic (~80 lines)
-- [ ] Move file operations to utility (~80 lines)
-- [ ] Target: ~170 lines remaining
+#### 6. `src/hooks/useFileDecryption.ts` - **171 lines** ✅ COMPLETED
+**Previous State**: 333 lines (33% over TypeScript module limit)  
+**Current State**: 171 lines - WITHIN LIMIT  
+**Refactoring Completed**:
+- [x] Extracted decryption workflow logic to `lib/decryption/decryption-workflow.ts` (144 lines)
+- [x] Created file operation utilities in `lib/decryption/file-operations.ts` (92 lines)
+- [x] Created state management utilities in `lib/decryption/state-management.ts` (146 lines)
+- [x] Added decryption validation module `lib/validation/decryption-validation.ts` (126 lines)
+- [x] **Result**: Main hook reduced from 333 to 171 lines (49% reduction)
 
 #### 7. `src/hooks/useFileEncryption.ts` - **315 lines**
 **Current State**: 26% over TypeScript module limit
@@ -203,7 +206,7 @@ Files under 150 lines for components and under 200 lines for modules are conside
 6. [x] Refactor `KeySelectionDropdown.tsx` (267 lines → 136 lines) ✅ COMPLETED
 
 ### Phase 3 - Hooks and Services (Sprint 3)
-7. [ ] Refactor `useFileDecryption.ts` (333 lines)
+7. [x] Refactor `useFileDecryption.ts` (333 lines → 171 lines) ✅ COMPLETED
 8. [ ] Refactor `useFileEncryption.ts` (315 lines)
 9. [ ] Refactor `useKeyGeneration.ts` (297 lines)
 10. [ ] Split `api-types.ts` (340 lines)

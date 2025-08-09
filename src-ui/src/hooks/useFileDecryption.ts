@@ -1,29 +1,20 @@
 import { useState, useCallback } from 'react';
-import { safeInvoke, safeListen } from '../lib/tauri-safe';
+import { CommandError, ErrorCode } from '../lib/api-types';
+import { toCommandError } from '../lib/errors/command-error';
+import { selectEncryptedFileForDecryption } from '../lib/decryption/file-operations';
 import {
-  CommandError,
-  ErrorCode,
-  DecryptionResult,
-  ProgressUpdate,
-  FileSelection,
-} from '../lib/api-types';
+  validateDecryptionInputs,
+  prepareDecryptionInput,
+} from '../lib/validation/decryption-validation';
+import { executeDecryptionWithProgress } from '../lib/decryption/decryption-workflow';
 import {
-  createValidationError,
-  createFileSelectionError,
-  createFileFormatError,
-  toCommandError,
-} from '../lib/errors/command-error';
+  FileDecryptionState,
+  createInitialDecryptionState,
+  decryptionStateUpdates,
+} from '../lib/decryption/state-management';
 
-export interface FileDecryptionState {
-  isLoading: boolean;
-  error: CommandError | null;
-  success: DecryptionResult | null;
-  progress: ProgressUpdate | null;
-  selectedFile: string | null;
-  selectedKeyId: string | null;
-  passphrase: string;
-  outputPath: string | null;
-}
+// Re-export FileDecryptionState for consumers
+export type { FileDecryptionState };
 
 export interface FileDecryptionActions {
   selectEncryptedFile: () => Promise<void>;
@@ -80,55 +71,19 @@ export interface UseFileDecryptionReturn extends FileDecryptionState, FileDecryp
  * ```
  */
 export const useFileDecryption = (): UseFileDecryptionReturn => {
-  const [state, setState] = useState<FileDecryptionState>({
-    isLoading: false,
-    error: null,
-    success: null,
-    progress: null,
-    selectedFile: null,
-    selectedKeyId: null,
-    passphrase: '',
-    outputPath: null,
-  });
+  const [state, setState] = useState<FileDecryptionState>(createInitialDecryptionState());
 
   const selectEncryptedFile = useCallback(async (): Promise<void> => {
-    setState((prev) => ({
-      ...prev,
-      isLoading: true,
-      error: null,
-    }));
+    setState(decryptionStateUpdates.startLoading);
 
     try {
-      // Call the backend command to select encrypted file
-      const result = await safeInvoke<FileSelection>('select_files', 'Files', 'useFileDecryption');
-
-      // For decryption, we expect only one .age file
-      if (result.paths.length === 0) {
-        throw createFileSelectionError(
-          'No file selected',
-          'Please select an encrypted .age file to decrypt',
-        );
-      }
-
-      if (result.paths.length > 1) {
-        throw createFileSelectionError(
-          'Multiple files selected',
-          'Please select only one encrypted .age file to decrypt',
-        );
-      }
-
-      const selectedFile = result.paths[0];
-
-      // Validate that the selected file is a .age file
-      if (!selectedFile.toLowerCase().endsWith('.age')) {
-        throw createFileFormatError('.age encrypted');
-      }
-
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        selectedFile,
-      }));
+      const selectedFile = await selectEncryptedFileForDecryption();
+      setState((prev) =>
+        decryptionStateUpdates.setSelectedFile(
+          decryptionStateUpdates.stopLoading(prev),
+          selectedFile,
+        ),
+      );
     } catch (error) {
       const commandError = toCommandError(
         error,
@@ -137,185 +92,73 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
         'Please try selecting the file again. If the problem persists, restart the application.',
       );
 
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: commandError,
-      }));
-
+      setState((prev) => decryptionStateUpdates.setError(prev, commandError));
       throw commandError;
     }
   }, []);
 
   const setSelectedFile = useCallback((path: string) => {
-    setState((prev) => ({
-      ...prev,
-      selectedFile: path,
-      error: null, // Clear any previous errors when user makes changes
-    }));
+    setState((prev) => decryptionStateUpdates.setSelectedFile(prev, path));
   }, []);
 
   const setKeyId = useCallback((keyId: string) => {
-    setState((prev) => ({
-      ...prev,
-      selectedKeyId: keyId,
-      error: null, // Clear any previous errors when user makes changes
-    }));
+    setState((prev) => decryptionStateUpdates.setKeyId(prev, keyId));
   }, []);
 
   const setPassphrase = useCallback((passphrase: string) => {
-    setState((prev) => ({
-      ...prev,
-      passphrase,
-      error: null, // Clear any previous errors when user makes changes
-    }));
+    setState((prev) => decryptionStateUpdates.setPassphrase(prev, passphrase));
   }, []);
 
   const setOutputPath = useCallback((path: string) => {
-    setState((prev) => ({
-      ...prev,
-      outputPath: path,
-      error: null, // Clear any previous errors when user makes changes
-    }));
+    setState((prev) => decryptionStateUpdates.setOutputPath(prev, path));
   }, []);
 
   const decryptFile = useCallback(async (): Promise<void> => {
     // Validate all required inputs
-    if (!state.selectedFile) {
-      const error = createValidationError(
-        'Encrypted file',
-        'Please select an encrypted .age file to decrypt',
-      );
-      setState((prev) => ({ ...prev, error }));
-      throw error;
+    const validation = validateDecryptionInputs(state);
+
+    if (!validation.isValid) {
+      setState((prev) => decryptionStateUpdates.setError(prev, validation.error!));
+      throw validation.error;
     }
 
-    if (!state.selectedKeyId) {
-      const error = createValidationError(
-        'Decryption key',
-        'Please select the key that was used to encrypt this file',
-      );
-      setState((prev) => ({ ...prev, error }));
-      throw error;
-    }
-
-    if (!state.passphrase.trim()) {
-      const error = createValidationError(
-        'Passphrase',
-        'Please enter the passphrase for the selected key',
-      );
-      setState((prev) => ({ ...prev, error }));
-      throw error;
-    }
-
-    if (!state.outputPath) {
-      const error = createValidationError(
-        'Output directory',
-        'Please select where to save the decrypted files',
-      );
-      setState((prev) => ({ ...prev, error }));
-      throw error;
-    }
-
-    // Reset state for new operation
-    setState((prev) => ({
-      ...prev,
-      isLoading: true,
-      error: null,
-      success: null,
-      progress: null,
-    }));
+    setState(decryptionStateUpdates.startDecryption);
 
     try {
-      // Set up progress listener for decryption
-      const unlisten = await safeListen<ProgressUpdate>('decryption-progress', (event) => {
-        setState((prev) => ({
-          ...prev,
-          progress: event.payload,
-        }));
-      });
-
-      try {
-        // Prepare the decryption input
-        // Backend expects snake_case fields
-        const decryptionInput = {
-          encrypted_file: state.selectedFile,
-          key_id: state.selectedKeyId || '',
-          passphrase: state.passphrase,
-          output_dir: state.outputPath || '',
-        };
-
-        // Call the backend command
-        const result = await safeInvoke<DecryptionResult>(
-          'decrypt_data',
-          { ...decryptionInput },
-          'useFileDecryption',
-        );
-
-        // Update success state
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          success: result,
-          progress: null,
-        }));
-
-        // Clean up progress listener
-        unlisten();
-      } catch (commandError) {
-        // Clean up progress listener on error
-        unlisten();
-        throw commandError;
-      }
-    } catch (error) {
-      // Handle different types of errors
-      const commandError = toCommandError(
-        error,
-        ErrorCode.DECRYPTION_FAILED,
-        'File decryption failed',
-        'Please check your key, passphrase, and file. If the problem persists, restart the application.',
+      // Prepare and execute decryption
+      const decryptionInput = prepareDecryptionInput(state);
+      const result = await executeDecryptionWithProgress(decryptionInput, (progress) =>
+        setState((prev) => decryptionStateUpdates.updateProgress(prev, progress)),
       );
 
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: commandError,
-        progress: null,
-      }));
+      setState((prev) => decryptionStateUpdates.setSuccess(prev, result));
+    } catch (error) {
+      // Handle errors - they're already properly formatted by executeDecryption
+      const commandError =
+        error instanceof Object && 'code' in error
+          ? (error as CommandError)
+          : toCommandError(
+              error,
+              ErrorCode.DECRYPTION_FAILED,
+              'File decryption failed',
+              'Please check your key, passphrase, and file. If the problem persists, restart the application.',
+            );
 
-      // Re-throw for components that need to handle errors
+      setState((prev) => decryptionStateUpdates.setError(prev, commandError));
       throw commandError;
     }
-  }, [state.selectedFile, state.selectedKeyId, state.passphrase, state.outputPath]);
+  }, [state]);
 
   const reset = useCallback(() => {
-    setState({
-      isLoading: false,
-      error: null,
-      success: null,
-      progress: null,
-      selectedFile: null,
-      selectedKeyId: null,
-      passphrase: '',
-      outputPath: null,
-    });
+    setState(createInitialDecryptionState());
   }, []);
 
   const clearError = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      error: null,
-    }));
+    setState(decryptionStateUpdates.clearError);
   }, []);
 
   const clearSelection = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      selectedFile: null,
-      selectedKeyId: null,
-      passphrase: '',
-      outputPath: null,
-    }));
+    setState(decryptionStateUpdates.clearSelection);
   }, []);
 
   return {
