@@ -15,7 +15,10 @@
     "app-build": "cd src-tauri && cargo tauri build",
     "app-preview": "cd src-tauri && cargo tauri preview",
     "rust-lint": "cd src-tauri && cargo clippy",
-    "rust-fmt": "cd src-tauri && cargo fmt"
+    "rust-fmt": "cd src-tauri && cargo fmt",
+    "ui:capture": "node scripts/ui-capture/capture-ui.js",
+    "ui:capture:setup": "cd scripts/ui-capture && npm install",
+    "ui:analyze": "node scripts/ui-capture/capture-ui.js --analyze-only"
   },
   "devDependencies": {},
   "overrides": {

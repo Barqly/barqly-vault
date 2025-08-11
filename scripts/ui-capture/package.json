@@ -1,0 +1,30 @@
+{
+  "name": "barqly-vault-ui-capture",
+  "version": "1.0.0",
+  "description": "On-demand desktop UI screenshot capture and analysis tool for Barqly Vault",
+  "main": "capture-ui.js",
+  "private": true,
+  "scripts": {
+    "capture": "node capture-ui.js",
+    "install-deps": "npm install"
+  },
+  "keywords": [
+    "screenshot",
+    "ui-testing", 
+    "design-analysis",
+    "desktop-app"
+  ],
+  "dependencies": {
+    "screenshot-desktop": "^1.12.7"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/barqly-vault.git",
+    "directory": "scripts/ui-capture"
+  },
+  "author": "Barqly Vault Team",
+  "license": "MIT"
+}

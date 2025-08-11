@@ -134,4 +134,7 @@ Cargo.lock
 
 # Note: docs-private/ is intentionally NOT ignored
 # It contains detailed documentation that's not linked from the main page
-# but is accessible if someone finds the URL (which is fine for a private repo) 
+# but is accessible if someone finds the URL (which is fine for a private repo)
+
+# UI Capture Tool - Screenshots only (keep analysis results)
+docs/ui-captures/sessions/ 

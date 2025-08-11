@@ -46,6 +46,10 @@ help:
 	@echo "  bench         - Run performance benchmarks"
 	@echo "  clean-keys    - Clean application keys directory (with confirmation)"
 	@echo ""
+	@echo "UI Capture & Analysis:"
+	@echo "  ui-capture    - Start on-demand UI screenshot capture session"
+	@echo "  ui-analyze    - Generate analysis prompt for latest capture session"
+	@echo ""
 	@echo "💡 Tip: Run 'make validate' before committing to ensure CI will pass!"
 
 # Development commands
@@ -207,3 +211,12 @@ bench:
 clean-keys:
 	@echo "🧹 Cleaning application keys directory..."
 	@cd src-tauri && cargo run --example clean_keys 
+
+# UI Capture and Analysis
+ui-capture:
+	@echo "📸 Starting on-demand UI capture session..."
+	@npm run ui:capture
+
+ui-analyze:
+	@echo "🤖 Generating analysis prompt for latest capture session..."
+	@npm run ui:analyze
