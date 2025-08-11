@@ -63,7 +63,7 @@ describe('SetupPage', () => {
       renderWithRouter(<SetupPage />);
 
       expect(screen.getByRole('textbox', { name: /key label/i })).toBeInTheDocument();
-      expect(screen.getByText('Create Your Security Identity')).toBeInTheDocument();
+      expect(screen.getByText('Secure Your Bitcoin Legacy')).toBeInTheDocument();
       expect(screen.getByLabelText(/key label/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/^passphrase/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/confirm passphrase/i)).toBeInTheDocument();
@@ -481,7 +481,7 @@ describe('SetupPage', () => {
       expect(tauriEnv.mocks.isWeb()).toBe(false);
 
       // Verify page renders correctly in desktop environment
-      expect(screen.getByText('Create Your Security Identity')).toBeInTheDocument();
+      expect(screen.getByText('Secure Your Bitcoin Legacy')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
     });
 
@@ -499,7 +499,7 @@ describe('SetupPage', () => {
       expect(tauriEnv.mocks.isWeb()).toBe(true);
 
       // Component should still render in web environment
-      expect(screen.getByText('Create Your Security Identity')).toBeInTheDocument();
+      expect(screen.getByText('Secure Your Bitcoin Legacy')).toBeInTheDocument();
     });
 
     it('should handle key generation with progress events', async () => {
@@ -617,7 +617,7 @@ describe('SetupPage', () => {
       renderWithRouter(<SetupPage />);
 
       // Component should still render despite listener failure
-      expect(screen.getByText('Create Your Security Identity')).toBeInTheDocument();
+      expect(screen.getByText('Secure Your Bitcoin Legacy')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /key label/i })).toBeInTheDocument();
     });
 

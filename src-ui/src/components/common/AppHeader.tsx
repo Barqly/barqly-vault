@@ -1,0 +1,170 @@
+import React from 'react';
+import { LucideIcon, Shield, Lock, Unlock, Zap, Clock } from 'lucide-react';
+import TrustBadge from '../ui/TrustBadge';
+
+/**
+ * Configuration for a trust badge
+ */
+export interface TrustBadgeConfig {
+  icon: LucideIcon;
+  label: string;
+  tooltip: string;
+}
+
+/**
+ * Props for the unified AppHeader component
+ */
+export interface AppHeaderProps {
+  /** The screen type determines default values and styling */
+  screen: 'setup' | 'encrypt' | 'decrypt';
+  /** Optional custom title override */
+  title?: string;
+  /** Optional custom subtitle (only shown on setup screen) */
+  subtitle?: string;
+  /** Optional custom icon override */
+  icon?: LucideIcon;
+  /** Optional trust badges to display */
+  trustBadges?: TrustBadgeConfig[];
+  /** Additional CSS classes for the container */
+  className?: string;
+  /** Whether to include skip navigation link (for accessibility) */
+  includeSkipNav?: boolean;
+  /** Skip navigation target ID */
+  skipNavTarget?: string;
+}
+
+/**
+ * Default configurations for each screen type
+ */
+const screenDefaults: Record<
+  AppHeaderProps['screen'],
+  {
+    title: string;
+    subtitle?: string;
+    icon: LucideIcon;
+    trustBadges: TrustBadgeConfig[];
+  }
+> = {
+  setup: {
+    title: 'Secure Your Bitcoin Legacy',
+    subtitle: 'Create your encryption identity with military-grade age encryption',
+    icon: Shield,
+    trustBadges: [], // Setup screen typically doesn't show trust badges
+  },
+  encrypt: {
+    title: 'Encrypt Your Bitcoin Vault',
+    icon: Lock,
+    trustBadges: [
+      {
+        icon: Shield,
+        label: 'Military-grade',
+        tooltip: 'Age encryption standard used by security professionals',
+      },
+      {
+        icon: Lock,
+        label: 'Local-only',
+        tooltip: 'All processing happens on your device',
+      },
+      {
+        icon: Zap,
+        label: 'Zero network',
+        tooltip: 'No internet connection required or used',
+      },
+    ],
+  },
+  decrypt: {
+    title: 'Decrypt Your Vault',
+    icon: Unlock,
+    trustBadges: [
+      {
+        icon: Shield,
+        label: 'Military-grade',
+        tooltip: 'Military-grade decryption',
+      },
+      {
+        icon: Lock,
+        label: 'Local-only',
+        tooltip: 'Local-only recovery',
+      },
+      {
+        icon: Clock,
+        label: 'Under 60s',
+        tooltip: 'Typical decryption time',
+      },
+    ],
+  },
+};
+
+/**
+ * Unified header component that can be used across all screens
+ * Features a clean, single-line layout with optional trust badges
+ */
+const AppHeader: React.FC<AppHeaderProps> = ({
+  screen,
+  title,
+  subtitle,
+  icon,
+  trustBadges,
+  className = '',
+  includeSkipNav = false,
+  skipNavTarget = '#main-content',
+}) => {
+  // Get defaults for the screen type
+  const defaults = screenDefaults[screen];
+
+  // Use provided values or fall back to defaults
+  const finalTitle = title ?? defaults.title;
+  const finalSubtitle = subtitle ?? defaults.subtitle;
+  const finalIcon = icon ?? defaults.icon;
+  const finalTrustBadges = trustBadges ?? defaults.trustBadges;
+
+  // Determine if we should show subtitle (only for setup screen by default)
+  const showSubtitle = screen === 'setup' && finalSubtitle;
+
+  const Icon = finalIcon;
+
+  return (
+    <header className={`bg-white border-b border-gray-200 shadow-sm ${className}`}>
+      {/* Skip Navigation Link - Hidden until focused */}
+      {includeSkipNav && (
+        <a
+          href={skipNavTarget}
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-md z-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Skip to main content
+        </a>
+      )}
+
+      <div className="max-w-4xl mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Left side: Icon and Title */}
+          <div className="flex items-center gap-3">
+            <Icon className="w-6 h-6 text-blue-600 flex-shrink-0" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-bold text-gray-900 leading-tight">{finalTitle}</h1>
+              {showSubtitle && (
+                <p className="text-sm text-gray-700 mt-1 leading-tight">{finalSubtitle}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Right side: Trust Badges */}
+          {finalTrustBadges.length > 0 && (
+            <div className="flex items-center gap-4 ml-6">
+              {finalTrustBadges.map((badge, index) => (
+                <TrustBadge
+                  key={`${badge.label}-${index}`}
+                  icon={badge.icon}
+                  label={badge.label}
+                  tooltip={badge.tooltip}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default AppHeader;

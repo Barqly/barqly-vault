@@ -3,7 +3,7 @@ import { useDecryptionWorkflow } from '../hooks/useDecryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import ToastContainer from '../components/ui/ToastContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
-import DecryptionHeader from '../components/decrypt/DecryptionHeader';
+import AppHeader from '../components/common/AppHeader';
 import DecryptionProgressBar from '../components/decrypt/DecryptionProgressBar';
 import DecryptionForm from '../components/decrypt/DecryptionForm';
 import DecryptionReadyPanel from '../components/decrypt/DecryptionReadyPanel';
@@ -56,14 +56,14 @@ const DecryptPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Header with trust indicators */}
-      <DecryptionHeader />
+      {/* Unified App Header */}
+      <AppHeader screen="decrypt" includeSkipNav={true} skipNavTarget="#main-content" />
 
       {/* Progress indicator */}
       <DecryptionProgressBar currentStep={currentStep} />
 
       {/* Main content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-6 py-8" id="main-content">
         <div className="space-y-6">
           {/* Error display */}
           {error && !isDecrypting && (

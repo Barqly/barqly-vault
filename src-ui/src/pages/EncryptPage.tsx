@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useEncryptionWorkflow } from '../hooks/useEncryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import ToastContainer from '../components/ui/ToastContainer';
-import EncryptionHeader from '../components/encrypt/EncryptionHeader';
+import AppHeader from '../components/common/AppHeader';
 import StepIndicator from '../components/encrypt/StepIndicator';
 import EncryptionSteps from '../components/encrypt/EncryptionSteps';
 import EncryptionActions from '../components/encrypt/EncryptionActions';
@@ -57,15 +57,15 @@ const EncryptPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* Unified App Header */}
+      <AppHeader screen="encrypt" includeSkipNav={true} skipNavTarget="#main-content" />
+
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
 
-      {/* Page Header */}
-      <EncryptionHeader />
-
       {/* Main Content */}
-      <div>
+      <div className="container mx-auto px-4 py-6" id="main-content">
         {/* Progress Overlay */}
         {progress && !success && (
           <EncryptionProgress progress={progress} onCancel={handleReset} showCancel={true} />
