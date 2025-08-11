@@ -4,7 +4,7 @@ import TrustBadge from '../ui/TrustBadge';
 
 /**
  * Header component for the decryption page
- * Shows title, description, and trust badges
+ * Shows title and trust badges
  */
 const DecryptionHeader: React.FC = () => {
   return (
@@ -16,9 +16,6 @@ const DecryptionHeader: React.FC = () => {
               <Unlock className="w-6 h-6 text-blue-600" />
               Decrypt Your Vault
             </h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Recover your encrypted Bitcoin custody files
-            </p>
           </div>
           <div className="flex items-center gap-4">
             <TrustBadge icon={Shield} label="Military-grade" tooltip="Military-grade decryption" />
