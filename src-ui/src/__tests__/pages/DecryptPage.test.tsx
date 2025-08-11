@@ -119,7 +119,7 @@ describe('DecryptPage', () => {
       expect(screen.getByText('Decrypt Your Vault')).toBeInTheDocument();
       expect(screen.getByText('Military-grade')).toBeInTheDocument();
       expect(screen.getByText('Local-only')).toBeInTheDocument();
-      expect(screen.getByText('Under 60s')).toBeInTheDocument();
+      expect(screen.getByText('Zero network')).toBeInTheDocument();
 
       // Instructions guide the user
       expect(screen.getByText('Select Your Encrypted Vault')).toBeInTheDocument();

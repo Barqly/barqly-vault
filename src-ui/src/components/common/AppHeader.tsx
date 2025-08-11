@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucideIcon, Shield, Lock, Unlock, Zap, Clock } from 'lucide-react';
+import { LucideIcon, Shield, Lock, Unlock, Zap } from 'lucide-react';
 import TrustBadge from '../ui/TrustBadge';
 
 /**
@@ -36,6 +36,25 @@ export interface AppHeaderProps {
 /**
  * Default configurations for each screen type
  */
+// Universal trust badges used across all screens for consistent messaging
+const universalTrustBadges: TrustBadgeConfig[] = [
+  {
+    icon: Shield,
+    label: 'Military-grade',
+    tooltip: 'Military-grade age encryption standard',
+  },
+  {
+    icon: Lock,
+    label: 'Local-only',
+    tooltip: 'All processing happens on your device',
+  },
+  {
+    icon: Zap,
+    label: 'Zero network',
+    tooltip: 'No internet connection required or used',
+  },
+];
+
 const screenDefaults: Record<
   AppHeaderProps['screen'],
   {
@@ -47,51 +66,19 @@ const screenDefaults: Record<
 > = {
   setup: {
     title: 'Secure Your Bitcoin Legacy',
-    subtitle: 'Create your encryption identity with military-grade age encryption',
+    // subtitle removed for consistent single-line headers across all screens
     icon: Shield,
-    trustBadges: [], // Setup screen typically doesn't show trust badges
+    trustBadges: universalTrustBadges, // Now shows unified trust indicators
   },
   encrypt: {
     title: 'Encrypt Your Bitcoin Vault',
     icon: Lock,
-    trustBadges: [
-      {
-        icon: Shield,
-        label: 'Military-grade',
-        tooltip: 'Age encryption standard used by security professionals',
-      },
-      {
-        icon: Lock,
-        label: 'Local-only',
-        tooltip: 'All processing happens on your device',
-      },
-      {
-        icon: Zap,
-        label: 'Zero network',
-        tooltip: 'No internet connection required or used',
-      },
-    ],
+    trustBadges: universalTrustBadges, // Unified trust indicators
   },
   decrypt: {
     title: 'Decrypt Your Vault',
     icon: Unlock,
-    trustBadges: [
-      {
-        icon: Shield,
-        label: 'Military-grade',
-        tooltip: 'Military-grade decryption',
-      },
-      {
-        icon: Lock,
-        label: 'Local-only',
-        tooltip: 'Local-only recovery',
-      },
-      {
-        icon: Clock,
-        label: 'Under 60s',
-        tooltip: 'Typical decryption time',
-      },
-    ],
+    trustBadges: universalTrustBadges, // Unified trust indicators
   },
 };
 
