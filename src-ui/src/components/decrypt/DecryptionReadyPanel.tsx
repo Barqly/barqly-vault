@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Unlock } from 'lucide-react';
+import { CheckCircle, ChevronLeft, Unlock } from 'lucide-react';
 import PrimaryButton from '../ui/PrimaryButton';
 import DestinationSelector from './DestinationSelector';
 
@@ -11,6 +11,7 @@ interface DecryptionReadyPanelProps {
   onToggleAdvanced: () => void;
   onDecrypt: () => void;
   onReset: () => void;
+  onPrevious?: () => void;
 }
 
 /**
@@ -25,6 +26,7 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
   onToggleAdvanced,
   onDecrypt,
   onReset,
+  onPrevious,
 }) => {
   const formatPathDisplay = (path: string): string => {
     if (path.startsWith('/Users/')) {
@@ -87,12 +89,24 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
 
       {/* Action buttons */}
       <div className="flex justify-between items-center">
-        <button
-          onClick={onReset}
-          className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-        >
-          Start Over
-        </button>
+        <div className="flex items-center gap-2">
+          {onPrevious && (
+            <button
+              onClick={onPrevious}
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+              disabled={isLoading}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </button>
+          )}
+          <button
+            onClick={onReset}
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+          >
+            Start Over
+          </button>
+        </div>
         <PrimaryButton
           onClick={onDecrypt}
           disabled={isLoading}

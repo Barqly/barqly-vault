@@ -46,7 +46,18 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   onStepChange,
 }) => {
   const canGoToPreviousStep = currentStep > 1;
-  const canContinue = currentStep === 2 && selectedKeyId && passphrase.trim().length > 0;
+
+  // Define continue conditions for each step
+  const canContinue = (() => {
+    switch (currentStep) {
+      case 1:
+        return !!selectedFile; // Can continue from step 1 if file is selected
+      case 2:
+        return !!(selectedKeyId && passphrase.trim().length > 0); // Can continue from step 2 if key and passphrase are provided
+      default:
+        return false;
+    }
+  })();
 
   const handlePrevious = () => {
     if (canGoToPreviousStep) {
@@ -149,7 +160,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
             Previous
           </button>
 
-          {currentStep === 2 && (
+          {(currentStep === 1 || currentStep === 2) && (
             <button
               onClick={handleContinue}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
