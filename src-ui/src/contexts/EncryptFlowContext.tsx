@@ -178,13 +178,12 @@ export const EncryptFlowProvider: React.FC<EncryptFlowProviderProps> = ({ childr
   // Auto-advance to step 2 only when files are initially selected (not when navigating back)
   useEffect(() => {
     if (state.selectedFiles && !prevSelectedFiles && state.currentStep === 1) {
-      setTimeout(() => {
-        setState((prev) => ({
-          ...prev,
-          currentStep: 2,
-          visitedSteps: new Set([...prev.visitedSteps, 2]),
-        }));
-      }, 100);
+      // Immediate transition to prevent flicker - no setTimeout needed
+      setState((prev) => ({
+        ...prev,
+        currentStep: 2,
+        visitedSteps: new Set([...prev.visitedSteps, 2]),
+      }));
     }
     setPrevSelectedFiles(state.selectedFiles);
   }, [state.selectedFiles, prevSelectedFiles, state.currentStep]);

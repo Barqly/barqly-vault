@@ -125,7 +125,7 @@ describe('EncryptPage', () => {
 
   describe('File Selection Workflow', () => {
     it('should allow user to change selected files after initial selection', () => {
-      // Verify user can change files in step-based UI
+      // With immediate auto-advance, files selected moves directly to step 2
       mockUseFileEncryption.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: {
@@ -138,9 +138,8 @@ describe('EncryptPage', () => {
 
       renderEncryptPage();
 
-      // User should see their selected file
-      expect(screen.getByText(/1 file/)).toBeInTheDocument();
-      expect(screen.getByText(/file.txt/)).toBeInTheDocument();
+      // Due to immediate auto-advance, user goes directly to key selection
+      expect(screen.getByTestId('key-selection')).toBeInTheDocument();
     });
   });
 
@@ -270,7 +269,7 @@ describe('EncryptPage', () => {
 
   describe('User Feedback and Validation', () => {
     it('should provide clear feedback about encryption readiness', () => {
-      // Step-based UI should show clear selection status
+      // With immediate auto-advance, files selected moves directly to step 2
       mockUseFileEncryption.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: {
@@ -283,9 +282,8 @@ describe('EncryptPage', () => {
 
       renderEncryptPage();
 
-      // User should see file selection feedback in SelectedFilesDisplay
-      expect(screen.getByText(/2 files/)).toBeInTheDocument();
-      expect(screen.getByText(/2\.\d+ MB/)).toBeInTheDocument();
+      // Due to immediate auto-advance, user goes directly to key selection step
+      expect(screen.getByTestId('key-selection')).toBeInTheDocument();
     });
   });
 
