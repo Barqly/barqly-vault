@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useEncryptionWorkflow } from '../hooks/useEncryptionWorkflow';
 import { EncryptFlowProvider, useEncryptFlow } from '../contexts/EncryptFlowContext';
 import { ErrorMessage } from '../components/ui/error-message';
@@ -25,7 +25,7 @@ const ENCRYPTION_STEPS: ProgressStep[] = [
  * Inner component that uses the EncryptFlow context
  */
 const EncryptPageContent: React.FC = () => {
-  const { currentStep, completedSteps, resetFlow } = useEncryptFlow();
+  const { currentStep, completedSteps, resetFlow, selectedFiles, selectedKeyId, outputPath, archiveName } = useEncryptFlow();
 
   const {
     // From useFileEncryption
@@ -33,12 +33,19 @@ const EncryptPageContent: React.FC = () => {
     success,
     progress,
     clearError,
+    isLoading,
 
     // From useToast
     toasts,
     removeToast,
 
+    // Workflow state setters
+    setSelectedKeyId: setWorkflowKeyId,
+    setOutputPath: setWorkflowOutputPath,
+    setArchiveName: setWorkflowArchiveName,
+
     // Handlers
+    handleEncrypt,
     handleReset,
     encryptionResult,
   } = useEncryptionWorkflow();
@@ -49,6 +56,53 @@ const EncryptPageContent: React.FC = () => {
       handleReset();
     };
   }, [handleReset]);
+
+  // Sync context state with workflow state
+  useEffect(() => {
+    if (selectedKeyId && setWorkflowKeyId) {
+      setWorkflowKeyId(selectedKeyId);
+    }
+  }, [selectedKeyId, setWorkflowKeyId]);
+
+  useEffect(() => {
+    if (setWorkflowOutputPath) {
+      setWorkflowOutputPath(outputPath);
+    }
+  }, [outputPath, setWorkflowOutputPath]);
+
+  useEffect(() => {
+    if (setWorkflowArchiveName) {
+      setWorkflowArchiveName(archiveName);
+    }
+  }, [archiveName, setWorkflowArchiveName]);
+
+  // Sync selectedFiles from context to workflow
+  useEffect(() => {
+    // The workflow's selectedFiles should already be in sync since EncryptStep1 
+    // uses the same useFileEncryption hook, but let's add a safety check
+    if (selectedFiles) {
+      console.log('Context has selectedFiles:', selectedFiles);
+    }
+  }, [selectedFiles]);
+
+  // Wrapper function that validates context state before calling workflow
+  const handleEncryptWithContextValidation = useCallback(async () => {
+    console.log('[EncryptPage] Context validation:', { selectedFiles, selectedKeyId, outputPath, archiveName });
+    
+    if (!selectedFiles) {
+      console.error('Cannot encrypt: No files selected in context');
+      return;
+    }
+    
+    if (!selectedKeyId) {
+      console.error('Cannot encrypt: No key selected in context');
+      return;
+    }
+    
+    console.log('[EncryptPage] Context validation passed, calling handleEncrypt...');
+    // Call the workflow's handleEncrypt
+    await handleEncrypt();
+  }, [selectedFiles, selectedKeyId, outputPath, archiveName, handleEncrypt]);
 
   const handleEncryptMore = () => {
     resetFlow();
@@ -111,7 +165,7 @@ const EncryptPageContent: React.FC = () => {
 
                 {/* Step 3: Output Configuration & Encryption */}
                 <AnimatedTransition show={currentStep === 3} duration={300}>
-                  {currentStep === 3 && <EncryptStep3 />}
+                  {currentStep === 3 && <EncryptStep3 onEncrypt={handleEncryptWithContextValidation} isLoading={isLoading} />}
                 </AnimatedTransition>
 
                 {/* Help Section */}

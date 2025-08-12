@@ -85,8 +85,13 @@ export const useEncryptionWorkflow = () => {
 
   // Handle encryption
   const handleEncrypt = useCallback(async () => {
-    if (!selectedKeyId || !selectedFiles) {
-      showWarning('Cannot encrypt', 'Please select files and an encryption key first');
+    console.log('[useEncryptionWorkflow] handleEncrypt validation:', { selectedKeyId, selectedFiles });
+    if (!selectedKeyId) {
+      showWarning('Cannot encrypt', 'Please select an encryption key first');
+      return;
+    }
+    if (!selectedFiles) {
+      showWarning('Cannot encrypt', 'Please select files first');
       return;
     }
 

@@ -1,14 +1,19 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { ChevronLeft, Lock, CheckCircle, Loader2 } from 'lucide-react';
+import { documentDir, join } from '@tauri-apps/api/path';
 import DestinationSelector from '../DestinationSelector';
 import { useEncryptFlow } from '../../../contexts/EncryptFlowContext';
-import { useEncryptionWorkflow } from '../../../hooks/useEncryptionWorkflow';
+
+interface EncryptStep3Props {
+  onEncrypt: () => Promise<void>;
+  isLoading?: boolean;
+}
 
 /**
  * Step 3: Ready to Encrypt
  * Final confirmation panel with encryption action - mirrors DecryptionReadyPanel design
  */
-const EncryptStep3: React.FC = () => {
+const EncryptStep3: React.FC<EncryptStep3Props> = ({ onEncrypt, isLoading = false }) => {
   const {
     selectedFiles,
     selectedKeyId,
@@ -20,9 +25,25 @@ const EncryptStep3: React.FC = () => {
     markStepCompleted,
   } = useEncryptFlow();
 
-  const { handleEncrypt, isLoading } = useEncryptionWorkflow();
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [isEncrypting, setIsEncrypting] = useState(false);
+  const [defaultPath, setDefaultPath] = useState<string>('~/Documents/Barqly-Vaults');
+
+  // Get platform-appropriate default path
+  useEffect(() => {
+    const getDefaultPath = async () => {
+      try {
+        const docsPath = await documentDir();
+        const vaultsPath = await join(docsPath, 'Barqly-Vaults');
+        setDefaultPath(vaultsPath);
+      } catch (error) {
+        console.error('Error getting default path:', error);
+        // Fallback to platform-appropriate default
+        setDefaultPath('~/Documents/Barqly-Vaults');
+      }
+    };
+    getDefaultPath();
+  }, []);
 
   const handleBack = useCallback(() => {
     navigateToStep(2);
@@ -33,11 +54,11 @@ const EncryptStep3: React.FC = () => {
     markStepCompleted(3);
 
     try {
-      await handleEncrypt();
+      await onEncrypt();
     } finally {
       setIsEncrypting(false);
     }
-  }, [handleEncrypt, markStepCompleted]);
+  }, [onEncrypt, markStepCompleted]);
 
   const formatPathDisplay = (path: string): string => {
     if (path.startsWith('/Users/')) {
@@ -50,7 +71,7 @@ const EncryptStep3: React.FC = () => {
     return path;
   };
 
-  const displayPath = outputPath || '~/Downloads';
+  const displayPath = outputPath || defaultPath;
   const displayName = archiveName ? `${archiveName}.age` : 'Auto-generated filename';
 
   if (!selectedFiles || !selectedKeyId) {
