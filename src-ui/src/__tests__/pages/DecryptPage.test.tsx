@@ -338,14 +338,19 @@ describe('DecryptPage', () => {
       renderWithRouter(<DecryptPage />);
 
       expect(screen.getByText('Vault Successfully Decrypted!')).toBeInTheDocument();
-      expect(
-        screen.getByText('Your files have been recovered and are ready to use.'),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Files recovered and ready to use')).toBeInTheDocument();
     });
 
-    it('should show recovered file list', () => {
+    it('should show recovered file list', async () => {
       renderWithRouter(<DecryptPage />);
 
+      // Check that the file count is displayed
+      expect(screen.getByText('3 recovered files')).toBeInTheDocument();
+
+      // Click to expand the file list
+      await userEvent.click(screen.getByText('3 recovered files'));
+
+      // Check that individual files are now visible
       expect(screen.getByText('wallet-descriptor.json')).toBeInTheDocument();
       expect(screen.getByText('seed-phrase.txt')).toBeInTheDocument();
       expect(screen.getByText('xpub-keys.txt')).toBeInTheDocument();
@@ -355,13 +360,13 @@ describe('DecryptPage', () => {
       renderWithRouter(<DecryptPage />);
 
       expect(screen.getByText(successResult.output_dir)).toBeInTheDocument();
-      expect(screen.getByText('Copy Path')).toBeInTheDocument();
+      expect(screen.getByText('Copy')).toBeInTheDocument();
     });
 
     it('should show manifest verification status', () => {
       renderWithRouter(<DecryptPage />);
 
-      expect(screen.getByText(/File integrity: Verified/)).toBeInTheDocument();
+      expect(screen.getByText(/✓ Verified/)).toBeInTheDocument();
     });
 
     it('should provide option to decrypt another file', async () => {

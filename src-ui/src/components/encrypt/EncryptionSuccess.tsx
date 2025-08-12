@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Copy, FolderOpen, BookOpen, RotateCcw, ExternalLink } from 'lucide-react';
+import { CheckCircle, Copy, FolderOpen, BookOpen, RotateCcw, Clock, HardDrive } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
+import { useSuccessPanelSizing } from '../../utils/viewport';
+import ScrollHint from '../ui/ScrollHint';
 
 interface EncryptionSuccessProps {
   outputPath: string;
@@ -27,6 +29,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
+  const responsiveStyles = useSuccessPanelSizing();
 
   useEffect(() => {
     // Hide confetti after 2 seconds
@@ -76,125 +79,140 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
   };
 
   return (
-    <div className="relative">
-      {/* Success Animation */}
+    <div
+      className="relative bg-white rounded-lg shadow-lg border border-green-200 overflow-hidden"
+      style={{
+        ...responsiveStyles,
+        maxHeight: responsiveStyles['--success-panel-max-height'],
+        minHeight: responsiveStyles['--success-panel-min-height'],
+      }}
+    >
+      {/* Minimal success animation */}
       {showConfetti && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="animate-bounce absolute top-4 left-4">
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
-          </div>
-          <div className="animate-bounce absolute top-8 right-8" style={{ animationDelay: '0.1s' }}>
-            <div className="w-3 h-3 bg-blue-500 rounded-full" />
-          </div>
-          <div
-            className="animate-bounce absolute bottom-8 left-12"
-            style={{ animationDelay: '0.2s' }}
-          >
-            <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-          </div>
-          <div
-            className="animate-bounce absolute bottom-4 right-4"
-            style={{ animationDelay: '0.3s' }}
-          >
-            <div className="w-4 h-4 bg-purple-500 rounded-full" />
-          </div>
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce"
+              style={{
+                left: `${25 + i * 25}%`,
+                top: '20px',
+                animationDelay: `${i * 0.15}s`,
+                animationDuration: '1.5s',
+                opacity: 0.5,
+              }}
+            />
+          ))}
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-lg border border-green-200 p-8">
-        {/* Success Icon and Title */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
-            <CheckCircle className="w-12 h-12 text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Vault Successfully Created!</h2>
-          <p className="text-gray-600">
-            Your files are now protected with military-grade encryption and ready for long-term
-            storage.
-          </p>
-        </div>
-
-        {/* Vault Location */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <FolderOpen className="w-5 h-5 text-gray-500" />
-            <span className="font-medium text-gray-700">Vault Location:</span>
-          </div>
-          <div className="bg-white border border-gray-200 rounded p-3 font-mono text-sm text-gray-700 break-all">
-            {outputPath}/{fileName}
-          </div>
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={handleCopyPath}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              <Copy className="w-4 h-4" />
-              {copied ? 'Copied!' : 'Copy Path'}
-            </button>
-            <button
-              onClick={handleOpenFolder}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              <FolderOpen className="w-4 h-4" />
-              Open Folder
-            </button>
-            <button
-              onClick={handleShowInFinder}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Show in Finder
-            </button>
+      {/* Compact success header - responsive height */}
+      <div
+        className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-3 text-center relative"
+        style={{ height: responsiveStyles['--success-panel-header-height'] }}
+      >
+        <div className="relative z-10 flex items-center justify-center gap-3">
+          <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="text-left">
+            <h2 className="text-xl font-bold text-gray-900">Vault Successfully Created!</h2>
+            <p className="text-sm text-gray-600">Military-grade encryption applied</p>
           </div>
         </div>
+      </div>
 
-        {/* Encryption Summary */}
-        <div className="bg-blue-50 rounded-lg p-4 mb-6">
-          <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-blue-600" />
-            Encryption Summary
-          </h3>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <span className="text-gray-500">Files encrypted:</span>
-              <span className="ml-2 font-medium text-gray-700">
-                {fileCount} {fileCount === 1 ? 'file' : 'files'}
-              </span>
+      <ScrollHint
+        className="flex-1"
+        style={{ maxHeight: responsiveStyles['--success-panel-content-height'] }}
+      >
+        <div className="p-4 space-y-4">
+          {/* Inline stats - horizontal layout saves vertical space */}
+          <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <CheckCircle className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-gray-900">
+                  {fileCount} {fileCount === 1 ? 'file' : 'files'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4 text-green-600" />
+                <span className="text-sm text-gray-600">{duration}s</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <HardDrive className="w-4 h-4 text-gray-500" />
+                <span className="text-sm text-gray-600">{formatFileSize(encryptedSize)}</span>
+              </div>
             </div>
-            <div>
-              <span className="text-gray-500">Original size:</span>
-              <span className="ml-2 font-medium text-gray-700">{formatFileSize(originalSize)}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">Encrypted size:</span>
-              <span className="ml-2 font-medium text-gray-700">
-                {formatFileSize(encryptedSize)} ({getCompressionRatio()})
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-500">Encryption time:</span>
-              <span className="ml-2 font-medium text-gray-700">{duration} seconds</span>
-            </div>
-            <div className="col-span-2">
-              <span className="text-gray-500">Encryption key:</span>
-              <span className="ml-2 font-medium text-gray-700">{keyUsed}</span>
-            </div>
-            <div className="col-span-2">
-              <span className="text-gray-500">Algorithm:</span>
-              <span className="ml-2 font-medium text-gray-700">
-                age v1.0 (X25519, ChaCha20Poly1305)
-              </span>
+
+            {/* Compression ratio inline */}
+            <div className="flex items-center gap-1 text-sm text-gray-600">
+              <span className="text-xs">{getCompressionRatio()}</span>
             </div>
           </div>
-        </div>
 
-        {/* Next Actions */}
-        <div>
-          <p className="text-sm text-gray-600 mb-4">What would you like to do next?</p>
-          <div className="flex gap-3">
+          {/* Vault Location - more compact */}
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <FolderOpen className="w-4 h-4" />
+                Vault Location:
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopyPath}
+                  className="px-2 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
+                >
+                  <Copy className="w-3 h-3" />
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+                <button
+                  onClick={handleOpenFolder}
+                  className="px-2 py-1 text-xs font-medium text-blue-600 bg-white border border-blue-600 rounded hover:bg-blue-50 transition-colors"
+                >
+                  Open
+                </button>
+                <button
+                  onClick={handleShowInFinder}
+                  className="px-2 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                >
+                  Show
+                </button>
+              </div>
+            </div>
+            <p className="font-mono text-xs text-gray-800 break-all bg-white rounded px-2 py-1 border border-gray-200">
+              {outputPath}/{fileName}
+            </p>
+          </div>
+
+          {/* Compact summary - replaces large grid */}
+          <div className="bg-blue-50 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-gray-700">Encryption Details</span>
+              </div>
+            </div>
+            <div className="space-y-1 text-xs text-gray-600">
+              <div className="flex justify-between">
+                <span>Original size:</span>
+                <span className="font-medium">{formatFileSize(originalSize)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Key used:</span>
+                <span className="font-medium truncate max-w-32">{keyUsed}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Algorithm:</span>
+                <span className="font-medium">age v1.0 (X25519, ChaCha20Poly1305)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Fixed action buttons at bottom */}
+          <div className="flex justify-center gap-3 pt-3 border-t border-gray-200 bg-white sticky bottom-0">
             <button
               onClick={onEncryptMore}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
               Encrypt More Files
@@ -202,7 +220,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
             {onViewGuide && (
               <button
                 onClick={onViewGuide}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white text-gray-700 font-medium border border-gray-300 rounded-md hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <BookOpen className="w-4 h-4" />
                 View Decryption Guide
@@ -210,7 +228,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
             )}
           </div>
         </div>
-      </div>
+      </ScrollHint>
     </div>
   );
 };
