@@ -5,7 +5,7 @@ import ToastContainer from '../components/ui/ToastContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import AppHeader from '../components/common/AppHeader';
 import DecryptionProgressBar from '../components/decrypt/DecryptionProgressBar';
-import DecryptionForm from '../components/decrypt/DecryptionForm';
+import ProgressiveDecryptionCards from '../components/decrypt/ProgressiveDecryptionCards';
 import DecryptionReadyPanel from '../components/decrypt/DecryptionReadyPanel';
 import DecryptProgress from '../components/decrypt/DecryptProgress';
 import DecryptSuccess from '../components/decrypt/DecryptSuccess';
@@ -52,6 +52,10 @@ const DecryptPage: React.FC = () => {
     handleReset,
     handleDecryptAnother,
     handleKeyChange,
+
+    // Navigation handlers
+    handleStepNavigation,
+    canNavigateToStep,
   } = useDecryptionWorkflow();
 
   return (
@@ -60,7 +64,11 @@ const DecryptPage: React.FC = () => {
       <AppHeader screen="decrypt" includeSkipNav={true} skipNavTarget="#main-content" />
 
       {/* Progress indicator */}
-      <DecryptionProgressBar currentStep={currentStep} />
+      <DecryptionProgressBar
+        currentStep={currentStep}
+        onStepClick={handleStepNavigation}
+        canNavigateToStep={canNavigateToStep}
+      />
 
       {/* Main content */}
       <div className="max-w-4xl mx-auto px-6 py-8" id="main-content">
@@ -90,8 +98,9 @@ const DecryptPage: React.FC = () => {
           {/* Main form - hidden during success/progress */}
           {!success && !isDecrypting && (
             <>
-              {/* Multi-step form */}
-              <DecryptionForm
+              {/* Progressive Card System - Steps 1 & 2 */}
+              <ProgressiveDecryptionCards
+                currentStep={currentStep}
                 selectedFile={selectedFile}
                 selectedKeyId={selectedKeyId}
                 passphrase={passphrase}
@@ -109,10 +118,11 @@ const DecryptPage: React.FC = () => {
                     'Check your password manager, backup notes, or contact support for assistance',
                   );
                 }}
+                onStepChange={handleStepNavigation}
               />
 
-              {/* Ready to decrypt panel */}
-              {selectedFile && selectedKeyId && passphrase && outputPath && (
+              {/* Ready to decrypt panel - Step 3 */}
+              {currentStep === 3 && selectedFile && selectedKeyId && passphrase && outputPath && (
                 <DecryptionReadyPanel
                   outputPath={outputPath}
                   showAdvancedOptions={showAdvancedOptions}

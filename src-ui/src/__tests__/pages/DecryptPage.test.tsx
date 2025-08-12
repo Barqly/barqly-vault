@@ -121,9 +121,9 @@ describe('DecryptPage', () => {
       expect(screen.getByText('Local-only')).toBeInTheDocument();
       expect(screen.getByText('Zero network')).toBeInTheDocument();
 
-      // Instructions guide the user
-      expect(screen.getByText('Select Your Encrypted Vault')).toBeInTheDocument();
+      // File selection UI is available for user
       expect(screen.getByText('Select Vault File')).toBeInTheDocument();
+      expect(screen.getByText('Drop your encrypted vault here')).toBeInTheDocument();
     });
   });
 
@@ -159,9 +159,10 @@ describe('DecryptPage', () => {
         </BrowserRouter>,
       );
 
-      // The component should extract the date from the filename
+      // The component should progress to step 2 and show key selection
       await waitFor(() => {
-        expect(screen.getByText('Enter Your Vault Passphrase')).toBeInTheDocument();
+        expect(screen.getByText('Key Selection')).toBeInTheDocument();
+        expect(screen.getByText('Choose the key used for encryption')).toBeInTheDocument();
       });
     });
   });
@@ -505,8 +506,8 @@ describe('DecryptPage', () => {
       // Test the page behavior when a file is selected
       const { rerender } = renderWithRouter(<DecryptPage />);
 
-      // Initially no file selected
-      expect(screen.getByText('Select Your Encrypted Vault')).toBeInTheDocument();
+      // Initially no file selected - file selection UI should be available
+      expect(screen.getByText('Select Vault File')).toBeInTheDocument();
 
       // Update hook to simulate file selection
       mockDecryptionHook.selectedFile = '/path/to/encrypted.age';
@@ -558,8 +559,8 @@ describe('DecryptPage', () => {
       // Test page behavior when file selection is cancelled (selectedFile remains null)
       renderWithRouter(<DecryptPage />);
 
-      // Verify initial state with no file selected
-      expect(screen.getByText('Select Your Encrypted Vault')).toBeInTheDocument();
+      // Verify initial state with no file selected - file selection UI should be available
+      expect(screen.getByText('Select Vault File')).toBeInTheDocument();
 
       // Mock hook state remains unchanged (no file selected)
       expect(mockDecryptionHook.selectedFile).toBeNull();

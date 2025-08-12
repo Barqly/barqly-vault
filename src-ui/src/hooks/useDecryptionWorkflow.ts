@@ -39,9 +39,16 @@ export const useDecryptionWorkflow = () => {
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [vaultMetadata, setVaultMetadata] = useState<VaultMetadata>({});
+  const [forcedStep, setForcedStep] = useState<number | null>(null);
 
   // Determine current step
   const getCurrentStep = () => {
+    // If step is forced (user navigated manually), use that
+    if (forcedStep !== null) {
+      return forcedStep;
+    }
+
+    // Otherwise, determine step based on data
     if (selectedFile) {
       if (selectedKeyId && passphrase) {
         return 3;
@@ -50,6 +57,33 @@ export const useDecryptionWorkflow = () => {
     }
     return 1;
   };
+
+  // Check if user can navigate to a specific step
+  const canNavigateToStep = useCallback(
+    (step: number) => {
+      switch (step) {
+        case 1:
+          return true; // Can always go back to step 1
+        case 2:
+          return !!selectedFile; // Can go to step 2 if file is selected
+        case 3:
+          return !!(selectedFile && selectedKeyId && passphrase); // Can go to step 3 if all data is available
+        default:
+          return false;
+      }
+    },
+    [selectedFile, selectedKeyId, passphrase],
+  );
+
+  // Handle step navigation
+  const handleStepNavigation = useCallback(
+    (step: number) => {
+      if (canNavigateToStep(step)) {
+        setForcedStep(step);
+      }
+    },
+    [canNavigateToStep],
+  );
 
   // Handle file selection
   const handleFileSelected = useCallback(
@@ -69,6 +103,9 @@ export const useDecryptionWorkflow = () => {
 
       try {
         setSelectedFile(filePath);
+
+        // Clear forced step to allow natural progression
+        setForcedStep(null);
 
         // Extract metadata from filename
         const fileName = filePath.split('/').pop() || '';
@@ -159,6 +196,7 @@ export const useDecryptionWorkflow = () => {
     setPassphraseAttempts(0);
     setIsDecrypting(false);
     setVaultMetadata({});
+    setForcedStep(null);
   }, [reset]);
 
   // Handle decrypt another
@@ -216,5 +254,9 @@ export const useDecryptionWorkflow = () => {
     handleReset,
     handleDecryptAnother,
     handleKeyChange,
+
+    // Navigation handlers
+    handleStepNavigation,
+    canNavigateToStep,
   };
 };
