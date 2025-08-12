@@ -153,7 +153,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <button
             onClick={handlePrevious}
-            className="flex items-center gap-1 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
             disabled={isLoading || !canGoToPreviousStep}
           >
             <ChevronLeft className="w-4 h-4" />

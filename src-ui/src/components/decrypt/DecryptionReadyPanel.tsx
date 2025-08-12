@@ -1,6 +1,5 @@
 import React from 'react';
 import { CheckCircle, ChevronLeft, Unlock } from 'lucide-react';
-import PrimaryButton from '../ui/PrimaryButton';
 import DestinationSelector from './DestinationSelector';
 
 interface DecryptionReadyPanelProps {
@@ -10,7 +9,6 @@ interface DecryptionReadyPanelProps {
   onPathChange: (path: string) => void;
   onToggleAdvanced: () => void;
   onDecrypt: () => void;
-  onReset: () => void;
   onPrevious?: () => void;
 }
 
@@ -25,7 +23,6 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
   onPathChange,
   onToggleAdvanced,
   onDecrypt,
-  onReset,
   onPrevious,
 }) => {
   const formatPathDisplay = (path: string): string => {
@@ -88,33 +85,26 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
       </div>
 
       {/* Action buttons */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          {onPrevious && (
-            <button
-              onClick={onPrevious}
-              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
-              disabled={isLoading}
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
-            </button>
-          )}
+      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        {onPrevious && (
           <button
-            onClick={onReset}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+            onClick={onPrevious}
+            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
+            disabled={isLoading}
           >
-            Start Over
+            <ChevronLeft className="w-4 h-4" />
+            Previous
           </button>
-        </div>
-        <PrimaryButton
+        )}
+
+        <button
           onClick={onDecrypt}
+          className="px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center gap-1"
           disabled={isLoading}
-          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700"
         >
-          <Unlock className="w-4 h-4 mr-2" />
+          <Unlock className="w-4 h-4" />
           Decrypt Now
-        </PrimaryButton>
+        </button>
       </div>
     </div>
   );

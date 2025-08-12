@@ -130,7 +130,6 @@ const DecryptPage: React.FC = () => {
                   onPathChange={setOutputPath}
                   onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
                   onDecrypt={handleDecryption}
-                  onReset={handleReset}
                   onPrevious={() => handleStepNavigation(2)}
                 />
               )}
