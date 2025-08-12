@@ -6,11 +6,13 @@
 //! - Error handling for invalid keys/data
 //! - Performance with different data sizes
 
+use crate::common::cleanup::TestCleanup;
 use barqly_vault_lib::crypto::{decrypt_data, encrypt_data, generate_keypair, CryptoError};
 
 #[test]
 fn test_encrypt_data_with_valid_public_key() {
     // Arrange
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     let test_data = b"Hello, this is a test message for encryption!";
 
@@ -25,6 +27,7 @@ fn test_encrypt_data_with_valid_public_key() {
 #[test]
 fn test_decrypt_data_with_correct_private_key() {
     // Arrange
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     let test_data = b"Hello, this is a test message for encryption!";
     let encrypted = encrypt_data(test_data, &keypair.public_key).unwrap();
@@ -39,6 +42,7 @@ fn test_decrypt_data_with_correct_private_key() {
 #[test]
 fn test_decrypt_data_with_wrong_private_key() {
     // Arrange
+    let _cleanup = TestCleanup::new();
     let keypair_a = generate_keypair().unwrap();
     let keypair_b = generate_keypair().unwrap();
     let test_data = b"Secret message";
@@ -58,6 +62,7 @@ fn test_decrypt_data_with_wrong_private_key() {
 #[test]
 fn test_encrypt_decrypt_roundtrip() {
     // Arrange
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     let test_data = b"Hello, this is a test message for encryption!";
 
@@ -72,6 +77,7 @@ fn test_encrypt_decrypt_roundtrip() {
 #[test]
 fn test_encrypt_empty_data() {
     // Arrange
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     let empty_data: &[u8] = &[];
 
@@ -86,6 +92,7 @@ fn test_encrypt_empty_data() {
 #[test]
 fn test_encrypt_large_data() {
     // Arrange
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     let large_data: Vec<u8> = (0..1024 * 1024).map(|i| (i % 256) as u8).collect(); // 1MB
 
@@ -114,6 +121,7 @@ fn test_encrypt_with_invalid_public_key() {
 #[test]
 fn test_decrypt_with_invalid_private_key() {
     // Arrange
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     let test_data = b"test";
     let encrypted = encrypt_data(test_data, &keypair.public_key).unwrap();
@@ -135,6 +143,7 @@ fn test_decrypt_with_invalid_private_key() {
 #[test]
 fn test_encrypt_decrypt_binary_data() {
     // Arrange
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     let binary_data: Vec<u8> = (0..1000).map(|i| (i % 256) as u8).collect();
 
@@ -149,6 +158,7 @@ fn test_encrypt_decrypt_binary_data() {
 #[test]
 fn test_encrypt_decrypt_unicode_data() {
     // Arrange
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     let unicode_data = "Hello, 世界! 🌍".as_bytes();
 
@@ -163,6 +173,7 @@ fn test_encrypt_decrypt_unicode_data() {
 #[test]
 fn test_encryption_operations_are_deterministic() {
     // Test that encryption operations produce consistent results
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     let test_data = b"deterministic test data";
 

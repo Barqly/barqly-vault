@@ -8,6 +8,7 @@
 //! - Concurrent operation testing
 //! - Memory safety verification
 
+use crate::common::cleanup::TestCleanup;
 use crate::common::helpers::TestAssertions;
 use barqly_vault_lib::crypto::{
     decrypt_data, decrypt_private_key, encrypt_data, encrypt_private_key, generate_keypair,
@@ -22,7 +23,8 @@ use std::thread;
 
 #[test]
 fn should_generate_valid_keypair_with_correct_format() {
-    // Given: A request to generate a new keypair
+    // Given: A request to generate a new keypair and cleanup manager
+    let _cleanup = TestCleanup::new();
 
     // When: Generating the keypair
     let keypair =
@@ -43,7 +45,8 @@ fn should_generate_valid_keypair_with_correct_format() {
 
 #[test]
 fn should_generate_unique_keypairs() {
-    // Given: Multiple keypair generation requests
+    // Given: Multiple keypair generation requests and cleanup manager
+    let _cleanup = TestCleanup::new();
 
     // When: Generating multiple keypairs
     let keypair1 = TestAssertions::assert_ok(
@@ -70,7 +73,8 @@ fn should_generate_unique_keypairs() {
 
 #[test]
 fn should_display_public_key_correctly() {
-    // Given: A generated keypair
+    // Given: A generated keypair and cleanup manager
+    let _cleanup = TestCleanup::new();
     let keypair =
         TestAssertions::assert_ok(generate_keypair(), "Keypair generation should succeed");
 
@@ -95,7 +99,8 @@ fn should_display_public_key_correctly() {
 
 #[test]
 fn should_encrypt_and_decrypt_private_key_with_passphrase() {
-    // Given: A keypair and passphrase
+    // Given: A keypair and passphrase and cleanup manager
+    let _cleanup = TestCleanup::new();
     let keypair =
         TestAssertions::assert_ok(generate_keypair(), "Keypair generation should succeed");
     let passphrase = SecretString::from("test-passphrase-123".to_string());
@@ -120,7 +125,8 @@ fn should_encrypt_and_decrypt_private_key_with_passphrase() {
 
 #[test]
 fn should_reject_wrong_passphrase_for_private_key() {
-    // Given: An encrypted private key and wrong passphrase
+    // Given: An encrypted private key and wrong passphrase and cleanup manager
+    let _cleanup = TestCleanup::new();
     let keypair =
         TestAssertions::assert_ok(generate_keypair(), "Keypair generation should succeed");
     let correct_passphrase = SecretString::from("test-passphrase-123".to_string());
@@ -152,7 +158,8 @@ fn should_encrypt_and_decrypt_small_data_correctly(
     #[case] test_data: &[u8],
     #[case] test_name: &str,
 ) {
-    // Given: Test data and a keypair
+    // Given: Test data and a keypair and cleanup manager
+    let _cleanup = TestCleanup::new();
     let keypair = TestAssertions::assert_ok(
         generate_keypair(),
         &format!("Keypair generation should succeed for {test_name}"),
@@ -184,7 +191,8 @@ fn should_encrypt_and_decrypt_large_data_correctly(
     #[case] size_bytes: usize,
     #[case] test_name: &str,
 ) {
-    // Given: Large test data and a keypair
+    // Given: Large test data and a keypair and cleanup manager
+    let _cleanup = TestCleanup::new();
     let test_data: Vec<u8> = (0..size_bytes).map(|i| (i % 256) as u8).collect();
     let keypair = TestAssertions::assert_ok(
         generate_keypair(),
@@ -210,7 +218,8 @@ fn should_encrypt_and_decrypt_large_data_correctly(
 
 #[test]
 fn should_reject_decryption_with_wrong_key() {
-    // Given: Data encrypted with one key and a different keypair
+    // Given: Data encrypted with one key and a different keypair and cleanup manager
+    let _cleanup = TestCleanup::new();
     let keypair_a = TestAssertions::assert_ok(
         generate_keypair(),
         "First keypair generation should succeed",
@@ -257,7 +266,8 @@ fn should_handle_invalid_public_key_gracefully() {
 
 #[test]
 fn should_handle_empty_data_correctly() {
-    // Given: Empty data and a valid keypair
+    // Given: Empty data and a valid keypair and cleanup manager
+    let _cleanup = TestCleanup::new();
     let keypair =
         TestAssertions::assert_ok(generate_keypair(), "Keypair generation should succeed");
     let empty_data: &[u8] = &[];
@@ -286,7 +296,8 @@ fn should_handle_empty_data_correctly() {
 
 #[test]
 fn should_generate_unique_keys_in_concurrent_scenarios() {
-    // Given: Multiple concurrent key generation requests
+    // Given: Multiple concurrent key generation requests and cleanup manager
+    let _cleanup = TestCleanup::new();
     let num_threads = 10;
 
     // When: Generating keys concurrently
@@ -328,7 +339,8 @@ fn should_generate_unique_keys_in_concurrent_scenarios() {
 
 #[test]
 fn should_handle_concurrent_encryption_decryption() {
-    // Given: Multiple keypairs and test data sets
+    // Given: Multiple keypairs and test data sets and cleanup manager
+    let _cleanup = TestCleanup::new();
     let test_data_sets: Vec<Vec<u8>> = (0..5)
         .map(|i| format!("Test message {i}").into_bytes())
         .collect();
@@ -372,7 +384,8 @@ fn should_handle_concurrent_encryption_decryption() {
 
 #[test]
 fn should_handle_private_key_drop_safely() {
-    // Given: A keypair with private key in scope
+    // Given: A keypair with private key in scope and cleanup manager
+    let _cleanup = TestCleanup::new();
     let keypair =
         TestAssertions::assert_ok(generate_keypair(), "Keypair generation should succeed");
     let _private_key_str = keypair.private_key.expose_secret().to_string();
@@ -392,7 +405,8 @@ fn should_handle_private_key_drop_safely() {
 
 #[test]
 fn should_encrypt_data_within_reasonable_time() {
-    // Given: A 1MB test data set
+    // Given: A 1MB test data set and cleanup manager
+    let _cleanup = TestCleanup::new();
     let test_data: Vec<u8> = (0..1024 * 1024).map(|i| (i % 256) as u8).collect();
     let keypair =
         TestAssertions::assert_ok(generate_keypair(), "Keypair generation should succeed");

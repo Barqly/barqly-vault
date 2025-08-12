@@ -7,6 +7,7 @@
 //! - End-to-end encryption workflow validation
 //! - Error handling and edge cases
 
+use crate::common::cleanup::TestCleanup;
 use crate::common::helpers::{PerformanceHelper, TestAssertions};
 use barqly_vault_lib::{
     commands::{
@@ -31,6 +32,7 @@ struct Task3IntegrationTestEnv {
     temp_dir: tempfile::TempDir,
     test_files: Vec<std::path::PathBuf>,
     key_label: String,
+    _cleanup: TestCleanup,
 }
 
 impl Task3IntegrationTestEnv {
@@ -43,10 +45,14 @@ impl Task3IntegrationTestEnv {
         let random_id = rand::thread_rng().gen::<u32>();
         let key_label = format!("test-key-{timestamp}-{random_id}");
 
+        let mut cleanup = TestCleanup::new();
+        cleanup.register_key(&key_label);
+
         Self {
             temp_dir,
             test_files: Vec::new(),
             key_label,
+            _cleanup: cleanup,
         }
     }
 

@@ -9,6 +9,7 @@
 //! These are minimal, fast tests that validate the critical path
 //! without running full test suites.
 
+use crate::common::cleanup::TestCleanup;
 use barqly_vault_lib::{
     crypto::{decrypt_data, encrypt_data, generate_keypair},
     file_ops::{FileSelection, FileOpsConfig},
@@ -18,6 +19,7 @@ use barqly_vault_lib::{
 #[test]
 fn test_critical_encryption_path() {
     // Test that core encryption functionality works after deployment
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     let test_data = b"critical encryption test";
     
@@ -57,6 +59,7 @@ fn test_critical_logging_initialization() {
 #[test]
 fn test_critical_crypto_key_generation() {
     // Test that key generation works
+    let _cleanup = TestCleanup::new();
     let keypair = generate_keypair().unwrap();
     
     assert!(keypair.public_key.as_str().starts_with("age1"));

@@ -7,6 +7,7 @@
 //! - Performance validation with realistic data sizes
 //! - Security validation for decryption operations
 
+use crate::common::cleanup::TestCleanup;
 use crate::common::helpers::TestAssertions;
 use barqly_vault_lib::{
     crypto::{decrypt_data, encrypt_data, generate_keypair},
@@ -25,6 +26,7 @@ struct TestEnvironment {
     test_files: Vec<PathBuf>,
     encrypted_data: Vec<u8>,
     keypair: barqly_vault_lib::crypto::KeyPair,
+    _cleanup: TestCleanup,
 }
 
 impl TestEnvironment {
@@ -46,6 +48,7 @@ impl TestEnvironment {
             test_files,
             encrypted_data,
             keypair,
+            _cleanup: TestCleanup::new(),
         })
     }
 
@@ -105,7 +108,8 @@ fn should_decrypt_data_successfully_end_to_end() -> Result<(), Box<dyn std::erro
 
 #[test]
 fn should_handle_decryption_with_wrong_key() -> Result<(), Box<dyn std::error::Error>> {
-    // Given: A test environment with encrypted data
+    // Given: A test environment with encrypted data and cleanup manager
+    let _cleanup = TestCleanup::new();
     let env = TestAssertions::assert_ok(
         TestEnvironment::new(),
         "Test environment setup should succeed",
