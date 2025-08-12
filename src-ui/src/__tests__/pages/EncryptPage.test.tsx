@@ -159,10 +159,10 @@ describe('EncryptPage', () => {
 
       renderEncryptPage();
 
-      // Due to auto-advance, user should see step 2 (key selection)
+      // Due to auto-advance, user should see step 2 (key selection dropdown)
       // Wait for the auto-advance animation to complete
       await waitFor(() => {
-        expect(screen.getByText('Choose Your Encryption Key')).toBeInTheDocument();
+        expect(screen.getByTestId('key-selection')).toBeInTheDocument();
       });
     });
   });
@@ -202,9 +202,9 @@ describe('EncryptPage', () => {
 
       renderEncryptPage();
 
-      // With files selected, auto-advance shows step 2
+      // With files selected, auto-advance shows step 2 (key dropdown)
       await waitFor(() => {
-        expect(screen.getByText(/Choose Your Encryption Key/)).toBeInTheDocument();
+        expect(screen.getByTestId('key-selection')).toBeInTheDocument();
       });
 
       // User should be able to continue workflow
