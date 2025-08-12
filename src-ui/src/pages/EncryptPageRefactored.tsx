@@ -18,7 +18,7 @@ import EncryptStep3 from '../components/encrypt/steps/EncryptStep3';
 const ENCRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Files', description: 'Choose what to encrypt' },
   { id: 2, label: 'Choose Key', description: 'Select encryption key' },
-  { id: 3, label: 'Configure & Encrypt', description: 'Set output and start' },
+  { id: 3, label: 'Encrypt', description: 'Set output and start' },
 ];
 
 /**
