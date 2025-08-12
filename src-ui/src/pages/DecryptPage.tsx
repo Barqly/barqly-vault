@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDecryptionWorkflow } from '../hooks/useDecryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
+import { ErrorCode } from '../lib/api-types';
 import ToastContainer from '../components/ui/ToastContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import AppHeader from '../components/common/AppHeader';
@@ -42,7 +43,6 @@ const DecryptPage: React.FC = () => {
     toasts,
     removeToast,
     showInfo,
-    showError,
 
     // Computed
     currentStep,
@@ -53,6 +53,7 @@ const DecryptPage: React.FC = () => {
     handleReset,
     handleDecryptAnother,
     handleKeyChange,
+    handleFileValidationError,
 
     // Navigation handlers
     handleStepNavigation,
@@ -115,7 +116,15 @@ const DecryptPage: React.FC = () => {
                   isLoading={isLoading}
                   onFileSelected={handleFileSelected}
                   onClearFiles={clearSelection}
-                  onFileError={(error) => showError('File selection error', error.message)}
+                  onFileError={(error) => {
+                    // Create inline error for file validation failures
+                    const commandError = {
+                      code: ErrorCode.INVALID_INPUT,
+                      message: error.message,
+                      user_actionable: true,
+                    };
+                    handleFileValidationError(commandError);
+                  }}
                   onKeyChange={handleKeyChange}
                   onPassphraseChange={setPassphrase}
                   onNeedHelp={() => {

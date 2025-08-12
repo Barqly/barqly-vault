@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileDecryption } from './useFileDecryption';
 import { useToast } from './useToast';
+import { ErrorCode, CommandError } from '../lib/api-types';
+import { createCommandError } from '../lib/errors/command-error';
 
 interface VaultMetadata {
   creationDate?: string;
@@ -13,6 +15,7 @@ interface VaultMetadata {
  * Extracted from DecryptPage to reduce component size
  */
 export const useDecryptionWorkflow = () => {
+  const fileDecryptionHook = useFileDecryption();
   const {
     setSelectedFile,
     setKeyId,
@@ -30,7 +33,7 @@ export const useDecryptionWorkflow = () => {
     reset,
     clearError,
     clearSelection,
-  } = useFileDecryption();
+  } = fileDecryptionHook;
 
   const { toasts, showError, showInfo, removeToast } = useToast();
 
@@ -40,6 +43,7 @@ export const useDecryptionWorkflow = () => {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [vaultMetadata, setVaultMetadata] = useState<VaultMetadata>({});
   const [currentStep, setCurrentStep] = useState(1);
+  const [fileValidationError, setFileValidationError] = useState<CommandError | null>(null);
 
   // Steps are controlled by explicit user navigation only
   // No automatic transitions based on data
@@ -87,14 +91,28 @@ export const useDecryptionWorkflow = () => {
     async (paths: string[]) => {
       console.log('[DecryptionWorkflow] File selected:', paths);
 
+      // Clear any previous file validation errors
+      setFileValidationError(null);
+      clearError(); // Clear any existing errors from useFileDecryption
+
       if (paths.length !== 1) {
-        showError('Invalid selection', 'Please select only one encrypted .age file');
+        const error = createCommandError(
+          ErrorCode.INVALID_INPUT,
+          'Invalid file selection',
+          'Please select only one encrypted .age file',
+        );
+        setFileValidationError(error);
         return;
       }
 
       const filePath = paths[0];
       if (!filePath.toLowerCase().endsWith('.age')) {
-        showError('Invalid file format', 'Please select a .age encrypted file');
+        const error = createCommandError(
+          ErrorCode.INVALID_INPUT,
+          'Invalid file format. Please select .age files only.',
+          'Only encrypted .age files are supported for decryption',
+        );
+        setFileValidationError(error);
         return;
       }
 
@@ -114,19 +132,26 @@ export const useDecryptionWorkflow = () => {
         // Visual feedback from UI transition is sufficient
       } catch (error) {
         console.error('[DecryptionWorkflow] File selection error:', error);
-        showError(
+        const commandError = createCommandError(
+          ErrorCode.INTERNAL_ERROR,
           'File selection failed',
           error instanceof Error ? error.message : 'Please try again',
         );
+        setFileValidationError(commandError);
       }
     },
-    [setSelectedFile, showError],
+    [setSelectedFile, clearError],
   );
 
   // Handle decryption
   const handleDecryption = useCallback(async () => {
     if (!selectedKeyId || !passphrase || !outputPath) {
-      showError('Missing information', 'Please complete all required fields');
+      const error = createCommandError(
+        ErrorCode.MISSING_PARAMETER,
+        'Missing information',
+        'Please complete all required fields before decrypting',
+      );
+      setFileValidationError(error);
       return;
     }
 
@@ -197,6 +222,7 @@ export const useDecryptionWorkflow = () => {
     setVaultMetadata({});
     setCurrentStep(1);
     setPrevSelectedFile(null);
+    setFileValidationError(null);
   }, [reset]);
 
   // Handle decrypt another
@@ -217,6 +243,11 @@ export const useDecryptionWorkflow = () => {
     [setKeyId],
   );
 
+  // Handle file validation errors from FileDropZone
+  const handleFileValidationError = useCallback((error: CommandError) => {
+    setFileValidationError(error);
+  }, []);
+
   return {
     // State
     selectedFile,
@@ -231,10 +262,13 @@ export const useDecryptionWorkflow = () => {
 
     // From useFileDecryption
     isLoading,
-    error,
+    error: fileValidationError || error, // File validation errors take precedence
     success,
     progress,
-    clearError,
+    clearError: () => {
+      clearError();
+      setFileValidationError(null);
+    },
     clearSelection,
     setPassphrase,
     setOutputPath,
@@ -254,6 +288,7 @@ export const useDecryptionWorkflow = () => {
     handleReset,
     handleDecryptAnother,
     handleKeyChange,
+    handleFileValidationError,
 
     // Navigation handlers
     handleStepNavigation,
