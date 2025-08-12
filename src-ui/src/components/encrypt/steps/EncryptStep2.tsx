@@ -171,26 +171,27 @@ const EncryptStep2: React.FC = () => {
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center justify-between pt-2">
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
             <button
               onClick={handleBack}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 
-                       transition-colors font-medium"
+              className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
-              Back to Files
+              Previous
             </button>
 
-            {selectedKeyId && (
-              <button
-                onClick={handleContinue}
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
-                         transition-colors font-medium shadow-sm hover:shadow-md"
-              >
-                Continue to Output Settings
-              </button>
-            )}
+            <button
+              onClick={handleContinue}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                selectedKeyId
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+              disabled={!selectedKeyId}
+            >
+              Continue
+            </button>
           </div>
         </div>
       </div>

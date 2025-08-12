@@ -165,27 +165,26 @@ const EncryptStep3: React.FC = () => {
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center justify-between pt-2">
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
             <button
               onClick={handleBack}
               disabled={isEncrypting}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 
-                       transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
-              Back to Key Selection
+              Previous
             </button>
 
             <button
               onClick={handleStartEncryption}
               disabled={isLoading || isEncrypting}
-              className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg 
-                       hover:bg-green-700 transition-all font-medium shadow-sm hover:shadow-md
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-md 
+                       hover:bg-green-700 transition-colors
                        disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Lock className="w-4 h-4" />
-              {isEncrypting ? 'Encrypting...' : 'Start Encryption'}
+              {isEncrypting ? 'Encrypting...' : 'Encrypt Now'}
             </button>
           </div>
         </div>

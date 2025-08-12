@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { SelectedFiles } from '../types/file-types';
 
 /**
@@ -76,6 +83,7 @@ interface EncryptFlowProviderProps {
 
 export const EncryptFlowProvider: React.FC<EncryptFlowProviderProps> = ({ children }) => {
   const [state, setState] = useState<EncryptFlowState>(initialState);
+  const [prevSelectedFiles, setPrevSelectedFiles] = useState<SelectedFiles | null>(null);
 
   // File selection handler
   const setSelectedFiles = useCallback((files: SelectedFiles | null) => {
@@ -166,6 +174,20 @@ export const EncryptFlowProvider: React.FC<EncryptFlowProviderProps> = ({ childr
       completedSteps: new Set([...prev.completedSteps, step]),
     }));
   }, []);
+
+  // Auto-advance to step 2 only when files are initially selected (not when navigating back)
+  useEffect(() => {
+    if (state.selectedFiles && !prevSelectedFiles && state.currentStep === 1) {
+      setTimeout(() => {
+        setState((prev) => ({
+          ...prev,
+          currentStep: 2,
+          visitedSteps: new Set([...prev.visitedSteps, 2]),
+        }));
+      }, 100);
+    }
+    setPrevSelectedFiles(state.selectedFiles);
+  }, [state.selectedFiles, prevSelectedFiles, state.currentStep]);
 
   // Reset entire flow
   const resetFlow = useCallback(() => {
