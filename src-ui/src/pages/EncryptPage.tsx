@@ -1,19 +1,16 @@
-import React, { useEffect, useCallback } from 'react';
+import React from 'react';
 import { useEncryptionWorkflow } from '../hooks/useEncryptionWorkflow';
-import { EncryptFlowProvider, useEncryptFlow } from '../contexts/EncryptFlowContext';
 import { ErrorMessage } from '../components/ui/error-message';
+import { ErrorCode } from '../lib/api-types';
 import ToastContainer from '../components/ui/ToastContainer';
+import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import AppHeader from '../components/common/AppHeader';
 import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
-import AnimatedTransition from '../components/ui/AnimatedTransition';
-import CollapsibleHelp from '../components/ui/CollapsibleHelp';
+import ProgressiveEncryptionCards from '../components/encrypt/ProgressiveEncryptionCards';
+import EncryptionReadyPanel from '../components/encrypt/EncryptionReadyPanel';
 import EncryptionProgress from '../components/encrypt/EncryptionProgress';
 import EncryptionSuccess from '../components/encrypt/EncryptionSuccess';
-
-// Step components
-import EncryptStep1 from '../components/encrypt/steps/EncryptStep1';
-import EncryptStep2 from '../components/encrypt/steps/EncryptStep2';
-import EncryptStep3 from '../components/encrypt/steps/EncryptStep3';
+import AnimatedTransition from '../components/ui/AnimatedTransition';
 
 const ENCRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Files', description: 'Choose what to encrypt' },
@@ -22,92 +19,49 @@ const ENCRYPTION_STEPS: ProgressStep[] = [
 ];
 
 /**
- * Inner component that uses the EncryptFlow context
+ * Main encryption page component
+ * Uses step-based progressive disclosure pattern, symmetric with DecryptPage
  */
-const EncryptPageContent: React.FC = () => {
-  const { currentStep, completedSteps, resetFlow, selectedFiles, selectedKeyId, outputPath, archiveName } = useEncryptFlow();
-
+const EncryptPage: React.FC = () => {
   const {
+    // State
+    selectedFiles,
+    selectedKeyId,
+    outputPath,
+    archiveName,
+    showAdvancedOptions,
+    setShowAdvancedOptions,
+    isEncrypting,
+
     // From useFileEncryption
+    isLoading,
     error,
     success,
     progress,
     clearError,
-    isLoading,
+    clearSelection,
+    setOutputPath,
+    setArchiveName,
 
     // From useToast
     toasts,
     removeToast,
 
-    // Workflow state setters
-    setSelectedKeyId: setWorkflowKeyId,
-    setOutputPath: setWorkflowOutputPath,
-    setArchiveName: setWorkflowArchiveName,
+    // Computed
+    currentStep,
 
     // Handlers
-    handleEncrypt,
+    handleFilesSelected,
+    handleEncryption,
     handleReset,
+    handleEncryptAnother,
+    handleKeyChange,
+    handleFileValidationError,
+
+    // Navigation handlers
+    handleStepNavigation,
     encryptionResult,
   } = useEncryptionWorkflow();
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      handleReset();
-    };
-  }, [handleReset]);
-
-  // Sync context state with workflow state
-  useEffect(() => {
-    if (selectedKeyId && setWorkflowKeyId) {
-      setWorkflowKeyId(selectedKeyId);
-    }
-  }, [selectedKeyId, setWorkflowKeyId]);
-
-  useEffect(() => {
-    if (setWorkflowOutputPath) {
-      setWorkflowOutputPath(outputPath);
-    }
-  }, [outputPath, setWorkflowOutputPath]);
-
-  useEffect(() => {
-    if (setWorkflowArchiveName) {
-      setWorkflowArchiveName(archiveName);
-    }
-  }, [archiveName, setWorkflowArchiveName]);
-
-  // Sync selectedFiles from context to workflow
-  useEffect(() => {
-    // The workflow's selectedFiles should already be in sync since EncryptStep1 
-    // uses the same useFileEncryption hook, but let's add a safety check
-    if (selectedFiles) {
-      console.log('Context has selectedFiles:', selectedFiles);
-    }
-  }, [selectedFiles]);
-
-  // Wrapper function that validates context state before calling workflow
-  const handleEncryptWithContextValidation = useCallback(async () => {
-    console.log('[EncryptPage] Context validation:', { selectedFiles, selectedKeyId, outputPath, archiveName });
-    
-    if (!selectedFiles) {
-      console.error('Cannot encrypt: No files selected in context');
-      return;
-    }
-    
-    if (!selectedKeyId) {
-      console.error('Cannot encrypt: No key selected in context');
-      return;
-    }
-    
-    console.log('[EncryptPage] Context validation passed, calling handleEncrypt...');
-    // Call the workflow's handleEncrypt
-    await handleEncrypt();
-  }, [selectedFiles, selectedKeyId, outputPath, archiveName, handleEncrypt]);
-
-  const handleEncryptMore = () => {
-    resetFlow();
-    handleReset();
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -118,76 +72,97 @@ const EncryptPageContent: React.FC = () => {
       <ProgressBar
         steps={ENCRYPTION_STEPS}
         currentStep={currentStep}
-        completedSteps={completedSteps}
+        completedSteps={new Set(Array.from({ length: currentStep - 1 }, (_, i) => i + 1))}
         onStepClick={undefined}
         isClickable={false}
         variant="compact"
       />
 
-      {/* Toast Notifications */}
-      <ToastContainer toasts={toasts} onClose={removeToast} />
-
-      {/* Main Content */}
+      {/* Main content */}
       <div className="max-w-4xl mx-auto px-6 py-8" id="main-content">
         <div className="space-y-6">
-          {/* Error Display */}
-          {error && !progress && (
+          {/* Error display */}
+          {error && !isEncrypting && (
             <ErrorMessage error={error} showRecoveryGuidance={true} onClose={clearError} />
           )}
 
-          {/* Progress Overlay */}
-          <AnimatedTransition show={!!progress && !success} duration={300}>
-            {progress && !success && (
-              <EncryptionProgress progress={progress} onCancel={handleReset} showCancel={true} />
-            )}
-          </AnimatedTransition>
-
-          {/* Success State */}
-          <AnimatedTransition show={!!success && !!encryptionResult} duration={400}>
+          {/* Success display with animation */}
+          <AnimatedTransition show={!!success} duration={400}>
             {success && encryptionResult && (
-              <EncryptionSuccess {...encryptionResult} onEncryptMore={handleEncryptMore} />
+              <EncryptionSuccess
+                {...encryptionResult}
+                onEncryptMore={handleEncryptAnother}
+              />
             )}
           </AnimatedTransition>
 
-          {/* Step-based Form */}
-          <AnimatedTransition show={!success && !progress} duration={300}>
-            {!success && !progress && (
+          {/* Progress display - show immediately when encrypting starts */}
+          <AnimatedTransition show={isEncrypting && !success} duration={300}>
+            <EncryptionProgress
+              progress={
+                progress || {
+                  operation_id: 'encrypt-init',
+                  progress: 0,
+                  message: 'Initializing encryption...',
+                  timestamp: new Date().toISOString(),
+                }
+              }
+              onCancel={!progress || progress.progress < 90 ? handleReset : undefined}
+              showCancel={true}
+            />
+          </AnimatedTransition>
+
+          {/* Main form - hidden during success/progress with smooth transition */}
+          <AnimatedTransition show={!success && !isEncrypting} duration={300}>
+            {!success && !isEncrypting && (
               <>
-                {/* Step 1: File Selection */}
-                <AnimatedTransition show={currentStep === 1} duration={300}>
-                  {currentStep === 1 && <EncryptStep1 />}
-                </AnimatedTransition>
+                {/* Progressive Card System - Steps 1 & 2 */}
+                <ProgressiveEncryptionCards
+                  currentStep={currentStep}
+                  selectedFiles={selectedFiles}
+                  selectedKeyId={selectedKeyId}
+                  isLoading={isLoading}
+                  onFilesSelected={handleFilesSelected}
+                  onClearFiles={clearSelection}
+                  onFileError={(error) => {
+                    // Create inline error for file validation failures
+                    const commandError = {
+                      code: ErrorCode.INVALID_INPUT,
+                      message: error.message,
+                      user_actionable: true,
+                    };
+                    handleFileValidationError(commandError);
+                  }}
+                  onKeyChange={handleKeyChange}
+                  onStepChange={handleStepNavigation}
+                />
 
-                {/* Step 2: Key Selection */}
-                <AnimatedTransition show={currentStep === 2} duration={300}>
-                  {currentStep === 2 && <EncryptStep2 />}
-                </AnimatedTransition>
+                {/* Ready to encrypt panel - Step 3 */}
+                {currentStep === 3 && selectedFiles && selectedKeyId && (
+                  <EncryptionReadyPanel
+                    outputPath={outputPath}
+                    archiveName={archiveName}
+                    showAdvancedOptions={showAdvancedOptions}
+                    isLoading={isLoading}
+                    onPathChange={setOutputPath}
+                    onArchiveNameChange={setArchiveName}
+                    onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                    onEncrypt={handleEncryption}
+                    onPrevious={() => handleStepNavigation(2)}
+                  />
+                )}
 
-                {/* Step 3: Output Configuration & Encryption */}
-                <AnimatedTransition show={currentStep === 3} duration={300}>
-                  {currentStep === 3 && <EncryptStep3 onEncrypt={handleEncryptWithContextValidation} isLoading={isLoading} />}
-                </AnimatedTransition>
-
-                {/* Help Section */}
+                {/* Help section */}
                 <CollapsibleHelp triggerText="Encryption Guide" detailed={true} />
               </>
             )}
           </AnimatedTransition>
         </div>
       </div>
-    </div>
-  );
-};
 
-/**
- * Main encryption page component
- * Uses step-based progressive disclosure pattern, symmetric with DecryptPage
- */
-const EncryptPage: React.FC = () => {
-  return (
-    <EncryptFlowProvider>
-      <EncryptPageContent />
-    </EncryptFlowProvider>
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
+    </div>
   );
 };
 

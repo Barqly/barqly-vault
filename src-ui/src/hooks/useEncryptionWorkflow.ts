@@ -1,6 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileEncryption } from './useFileEncryption';
 import { useToast } from './useToast';
+import { ErrorCode, CommandError } from '../lib/api-types';
+import { createCommandError } from '../lib/errors/command-error';
 
 interface EncryptionResult {
   outputPath: string;
@@ -14,9 +17,10 @@ interface EncryptionResult {
 
 /**
  * Custom hook to manage the encryption workflow state and logic
- * Extracted from EncryptPage to reduce component size
+ * Mirrors useDecryptionWorkflow architecture exactly for consistency
  */
 export const useEncryptionWorkflow = () => {
+  const fileEncryptionHook = useFileEncryption();
   const {
     selectFiles,
     encryptFiles,
@@ -28,72 +32,115 @@ export const useEncryptionWorkflow = () => {
     reset,
     clearError,
     clearSelection,
-  } = useFileEncryption();
+  } = fileEncryptionHook;
 
-  const { toasts, showError, showSuccess, showWarning, removeToast } = useToast();
+  const { toasts, showError, showInfo, removeToast } = useToast();
 
-  // Workflow state
+  // Workflow state - mirrors useDecryptionWorkflow
   const [selectedKeyId, setSelectedKeyId] = useState<string>('');
   const [outputPath, setOutputPath] = useState<string>('');
   const [archiveName, setArchiveName] = useState<string>('');
+  const [isEncrypting, setIsEncrypting] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [fileValidationError, setFileValidationError] = useState<CommandError | null>(null);
   const [encryptionResult, setEncryptionResult] = useState<EncryptionResult | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
-  const [retryCount, setRetryCount] = useState<number>(0);
 
-  // Computed states
-  const isReadyToEncrypt = !!(selectedFiles && selectedKeyId);
+  // Track previous selectedFiles to distinguish between initial selection and navigation
+  const [prevSelectedFiles, setPrevSelectedFiles] = useState<typeof selectedFiles>(null);
 
-  // Determine current step based on state
-  const getCurrentStep = () => {
-    if (selectedFiles && selectedKeyId) return 3;
-    if (selectedFiles) return 2;
-    return 1;
-  };
+  // Auto-advance to step 2 only when files are initially selected (not when navigating back)
+  useEffect(() => {
+    if (selectedFiles && !prevSelectedFiles && currentStep === 1) {
+      setCurrentStep(2);
+    }
+    setPrevSelectedFiles(selectedFiles);
+  }, [selectedFiles, prevSelectedFiles, currentStep]);
+
+  // Check if user can navigate to a specific step
+  const canNavigateToStep = useCallback(
+    (step: number) => {
+      switch (step) {
+        case 1:
+          return true; // Can always go back to step 1
+        case 2:
+          return !!selectedFiles; // Can go to step 2 if files are selected
+        case 3:
+          return !!(selectedFiles && selectedKeyId); // Can go to step 3 if files and key are selected
+        default:
+          return false;
+      }
+    },
+    [selectedFiles, selectedKeyId],
+  );
+
+  // Handle step navigation - only way to change steps
+  const handleStepNavigation = useCallback(
+    (step: number) => {
+      if (canNavigateToStep(step)) {
+        setCurrentStep(step);
+      }
+    },
+    [canNavigateToStep],
+  );
 
   // Handle file selection
   const handleFilesSelected = useCallback(
     async (paths: string[], selectionType: 'Files' | 'Folder') => {
-      console.log('[EncryptionWorkflow] handleFilesSelected:', {
+      console.log('[EncryptionWorkflow] Files selected:', {
         paths,
         selectionType,
         timestamp: Date.now(),
       });
 
+      // Clear any previous file validation errors
+      setFileValidationError(null);
+      clearError(); // Clear any existing errors from useFileEncryption
+
       try {
         await selectFiles(paths, selectionType);
-        showSuccess(
-          'Files selected',
-          `${paths.length} ${paths.length === 1 ? 'item' : 'items'} ready for encryption`,
-        );
-        setRetryCount(0);
+        // Visual feedback from UI transition is sufficient
       } catch (err) {
         console.error('[EncryptionWorkflow] File selection error:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-        showError('File selection failed', errorMessage, {
-          action: {
-            label: 'Retry',
-            onClick: () => {
-              setRetryCount((prev) => prev + 1);
-              handleFilesSelected(paths, selectionType);
-            },
-          },
-        });
+        const commandError = createCommandError(
+          ErrorCode.INTERNAL_ERROR,
+          'File selection failed',
+          err instanceof Error ? err.message : 'Please try again',
+        );
+        setFileValidationError(commandError);
       }
     },
-    [selectFiles, showSuccess, showError],
+    [selectFiles, clearError],
   );
 
   // Handle encryption
-  const handleEncrypt = useCallback(async () => {
-    console.log('[useEncryptionWorkflow] handleEncrypt validation:', { selectedKeyId, selectedFiles });
+  const handleEncryption = useCallback(async () => {
     if (!selectedKeyId) {
-      showWarning('Cannot encrypt', 'Please select an encryption key first');
+      const error = createCommandError(
+        ErrorCode.MISSING_PARAMETER,
+        'Missing encryption key',
+        'Please select an encryption key before proceeding',
+      );
+      setFileValidationError(error);
       return;
     }
+
     if (!selectedFiles) {
-      showWarning('Cannot encrypt', 'Please select files first');
+      const error = createCommandError(
+        ErrorCode.MISSING_PARAMETER,
+        'Missing files',
+        'Please select files to encrypt before proceeding',
+      );
+      setFileValidationError(error);
       return;
     }
+
+    // Set encrypting state immediately for instant UI feedback
+    setIsEncrypting(true);
+
+    // Small delay to ensure UI updates before heavy operation
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     try {
       setStartTime(Date.now());
@@ -112,100 +159,107 @@ export const useEncryptionWorkflow = () => {
         keyUsed: selectedKeyId,
       });
 
-      showSuccess(
-        'Encryption successful',
-        `Your vault has been created successfully in ${duration} seconds`,
-      );
+      // Success panel provides comprehensive feedback
     } catch (err) {
       console.error('[EncryptionWorkflow] Encryption error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Encryption failed';
-      showError('Encryption failed', errorMessage, {
-        action: {
-          label: 'Retry',
-          onClick: () => handleEncrypt(),
-        },
-        duration: 10000,
-      });
+      // Error is handled by useFileEncryption hook
+    } finally {
+      setIsEncrypting(false);
     }
-  }, [
-    selectedKeyId,
-    selectedFiles,
-    archiveName,
-    outputPath,
-    encryptFiles,
-    showWarning,
-    showSuccess,
-    showError,
-    startTime,
-  ]);
+  }, [selectedKeyId, selectedFiles, archiveName, outputPath, encryptFiles, startTime]);
+
+  // Generate default output path
+  const getDefaultOutputPath = useCallback(async () => {
+    try {
+      const docsPath = await documentDir();
+      const vaultsPath = await join(docsPath, 'Barqly-Vaults');
+      return vaultsPath;
+    } catch (error) {
+      console.error('Error getting default path:', error);
+      return '~/Documents/Barqly-Vaults';
+    }
+  }, []);
+
+  // Set default output path when files are selected
+  useEffect(() => {
+    if (selectedFiles && !outputPath) {
+      getDefaultOutputPath().then(setOutputPath);
+    }
+  }, [selectedFiles, outputPath, getDefaultOutputPath]);
 
   // Handle reset
   const handleReset = useCallback(() => {
-    console.log('[EncryptionWorkflow] Resetting all state');
     reset();
     setSelectedKeyId('');
     setOutputPath('');
     setArchiveName('');
+    setIsEncrypting(false);
+    setShowAdvancedOptions(false);
+    setCurrentStep(1);
+    setPrevSelectedFiles(null);
+    setFileValidationError(null);
     setEncryptionResult(null);
   }, [reset]);
 
-  // Handle drop zone errors
-  const handleDropZoneError = useCallback(
-    (error: Error) => {
-      console.error('[EncryptionWorkflow] FileDropZone error:', error);
-      const isTransientError =
-        error.message.includes('backend') || error.message.includes('failed to process');
+  // Handle encrypt another
+  const handleEncryptAnother = useCallback(() => {
+    handleReset();
+    // UI reset to step 1 provides clear visual feedback
+  }, [handleReset]);
 
-      if (isTransientError && retryCount < 3) {
-        showWarning('Drop operation failed', `${error.message}. This might be a temporary issue.`, {
-          duration: 6000,
-        });
-      } else {
-        showError('Unable to process dropped files', error.message, {
-          action: {
-            label: 'Try browse instead',
-            onClick: () => {
-              console.log('[EncryptionWorkflow] User opted to use browse instead');
-            },
-          },
-        });
-      }
-    },
-    [showError, showWarning, retryCount],
-  );
+  // Handle key selection
+  const handleKeyChange = useCallback((keyId: string) => {
+    setSelectedKeyId(keyId);
+  }, []);
+
+  // Handle file validation errors from FileDropZone
+  const handleFileValidationError = useCallback((error: CommandError) => {
+    setFileValidationError(error);
+  }, []);
 
   return {
-    // State
+    // State - mirrors useDecryptionWorkflow
+    selectedFiles,
     selectedKeyId,
-    setSelectedKeyId,
     outputPath,
-    setOutputPath,
     archiveName,
-    setArchiveName,
+    isEncrypting,
+    showAdvancedOptions,
+    setShowAdvancedOptions,
     encryptionResult,
-    retryCount,
 
     // From useFileEncryption
-    selectedFiles,
     isLoading,
-    error,
+    error: fileValidationError || error, // File validation errors take precedence
     success,
     progress,
-    clearError,
+    clearError: () => {
+      clearError();
+      setFileValidationError(null);
+    },
     clearSelection,
+    setOutputPath,
+    setArchiveName,
 
     // From useToast
     toasts,
     removeToast,
+    showInfo,
+    showError,
 
     // Computed
-    isReadyToEncrypt,
-    currentStep: getCurrentStep(),
+    currentStep,
 
     // Handlers
     handleFilesSelected,
-    handleEncrypt,
+    handleEncryption,
     handleReset,
-    handleDropZoneError,
+    handleEncryptAnother,
+    handleKeyChange,
+    handleFileValidationError,
+
+    // Navigation handlers
+    handleStepNavigation,
+    canNavigateToStep,
   };
 };
