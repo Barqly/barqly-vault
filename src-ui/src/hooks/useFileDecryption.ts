@@ -122,7 +122,11 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
       throw validation.error;
     }
 
+    // Start decryption state immediately for UI responsiveness
     setState(decryptionStateUpdates.startDecryption);
+
+    // Small delay to ensure UI updates before heavy operation
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
     try {
       // Prepare and execute decryption

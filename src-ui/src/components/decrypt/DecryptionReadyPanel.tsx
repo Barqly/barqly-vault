@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCircle, ChevronLeft, Unlock } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle, ChevronLeft, Unlock, Loader2 } from 'lucide-react';
 import DestinationSelector from './DestinationSelector';
 
 interface DecryptionReadyPanelProps {
@@ -25,6 +25,15 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
   onDecrypt,
   onPrevious,
 }) => {
+  const [isDecrypting, setIsDecrypting] = useState(false);
+
+  const handleDecrypt = async () => {
+    setIsDecrypting(true);
+    // Call the parent's onDecrypt handler
+    await onDecrypt();
+    // Parent will handle resetting state
+  };
+
   const formatPathDisplay = (path: string): string => {
     if (path.startsWith('/Users/')) {
       return path.replace(/^\/Users\/[^/]+/, '~');
@@ -98,12 +107,21 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
         )}
 
         <button
-          onClick={onDecrypt}
+          onClick={handleDecrypt}
           className="px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center gap-1"
-          disabled={isLoading}
+          disabled={isLoading || isDecrypting}
         >
-          <Unlock className="w-4 h-4" />
-          Decrypt Now
+          {isDecrypting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Decrypting...
+            </>
+          ) : (
+            <>
+              <Unlock className="w-4 h-4" />
+              Decrypt Now
+            </>
+          )}
         </button>
       </div>
     </div>

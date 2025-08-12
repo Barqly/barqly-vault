@@ -22,12 +22,20 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
   const [showConfetti, setShowConfetti] = useState(true);
   const [copiedPath, setCopiedPath] = useState(false);
   const [showAllFiles, setShowAllFiles] = useState(false);
+  const [isContentReady, setIsContentReady] = useState(false);
   const responsiveStyles = useSuccessPanelSizing();
 
   useEffect(() => {
     // Subtle animation duration
     const timer = setTimeout(() => setShowConfetti(false), 2000);
-    return () => clearTimeout(timer);
+
+    // Mark content as ready after a minimal delay to ensure smooth transition
+    const contentTimer = setTimeout(() => setIsContentReady(true), 50);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(contentTimer);
+    };
   }, []);
 
   const handleOpenFolder = () => {
@@ -58,7 +66,9 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
 
   return (
     <div
-      className="relative bg-white rounded-lg border border-green-200 overflow-hidden"
+      className={`relative bg-white rounded-lg border border-green-200 overflow-hidden transition-opacity duration-300 ${
+        isContentReady ? 'opacity-100' : 'opacity-0'
+      }`}
       style={{
         ...responsiveStyles,
         maxHeight: responsiveStyles['--success-panel-max-height'],

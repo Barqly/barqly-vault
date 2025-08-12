@@ -9,6 +9,7 @@ import ProgressiveDecryptionCards from '../components/decrypt/ProgressiveDecrypt
 import DecryptionReadyPanel from '../components/decrypt/DecryptionReadyPanel';
 import DecryptProgress from '../components/decrypt/DecryptProgress';
 import DecryptSuccess from '../components/decrypt/DecryptSuccess';
+import AnimatedTransition from '../components/ui/AnimatedTransition';
 
 /**
  * Main decryption page component
@@ -73,66 +74,77 @@ const DecryptPage: React.FC = () => {
             <ErrorMessage error={error} showRecoveryGuidance={true} onClose={clearError} />
           )}
 
-          {/* Success display */}
-          {success && (
-            <DecryptSuccess
-              result={success}
-              onDecryptAnother={handleDecryptAnother}
-              onClose={handleReset}
-            />
-          )}
-
-          {/* Progress display */}
-          {progress && isDecrypting && (
-            <DecryptProgress
-              progress={progress}
-              onCancel={progress.progress < 90 ? handleReset : undefined}
-            />
-          )}
-
-          {/* Main form - hidden during success/progress */}
-          {!success && !isDecrypting && (
-            <>
-              {/* Progressive Card System - Steps 1 & 2 */}
-              <ProgressiveDecryptionCards
-                currentStep={currentStep}
-                selectedFile={selectedFile}
-                selectedKeyId={selectedKeyId}
-                passphrase={passphrase}
-                passphraseAttempts={passphraseAttempts}
-                vaultMetadata={vaultMetadata}
-                isLoading={isLoading}
-                onFileSelected={handleFileSelected}
-                onClearFiles={clearSelection}
-                onFileError={(error) => showError('File selection error', error.message)}
-                onKeyChange={handleKeyChange}
-                onPassphraseChange={setPassphrase}
-                onNeedHelp={() => {
-                  showInfo(
-                    'Passphrase Recovery',
-                    'Check your password manager, backup notes, or contact support for assistance',
-                  );
-                }}
-                onStepChange={handleStepNavigation}
+          {/* Success display with animation */}
+          <AnimatedTransition show={!!success} duration={400}>
+            {success && (
+              <DecryptSuccess
+                result={success}
+                onDecryptAnother={handleDecryptAnother}
+                onClose={handleReset}
               />
+            )}
+          </AnimatedTransition>
 
-              {/* Ready to decrypt panel - Step 3 */}
-              {currentStep === 3 && selectedFile && selectedKeyId && passphrase && outputPath && (
-                <DecryptionReadyPanel
-                  outputPath={outputPath}
-                  showAdvancedOptions={showAdvancedOptions}
+          {/* Progress display - show immediately when decrypting starts */}
+          <AnimatedTransition show={isDecrypting && !success} duration={300}>
+            <DecryptProgress
+              progress={
+                progress || {
+                  operation_id: 'decrypt-init',
+                  progress: 0,
+                  message: 'Initializing decryption...',
+                  timestamp: new Date().toISOString(),
+                }
+              }
+              onCancel={!progress || progress.progress < 90 ? handleReset : undefined}
+            />
+          </AnimatedTransition>
+
+          {/* Main form - hidden during success/progress with smooth transition */}
+          <AnimatedTransition show={!success && !isDecrypting} duration={300}>
+            {!success && !isDecrypting && (
+              <>
+                {/* Progressive Card System - Steps 1 & 2 */}
+                <ProgressiveDecryptionCards
+                  currentStep={currentStep}
+                  selectedFile={selectedFile}
+                  selectedKeyId={selectedKeyId}
+                  passphrase={passphrase}
+                  passphraseAttempts={passphraseAttempts}
+                  vaultMetadata={vaultMetadata}
                   isLoading={isLoading}
-                  onPathChange={setOutputPath}
-                  onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                  onDecrypt={handleDecryption}
-                  onPrevious={() => handleStepNavigation(2)}
+                  onFileSelected={handleFileSelected}
+                  onClearFiles={clearSelection}
+                  onFileError={(error) => showError('File selection error', error.message)}
+                  onKeyChange={handleKeyChange}
+                  onPassphraseChange={setPassphrase}
+                  onNeedHelp={() => {
+                    showInfo(
+                      'Passphrase Recovery',
+                      'Check your password manager, backup notes, or contact support for assistance',
+                    );
+                  }}
+                  onStepChange={handleStepNavigation}
                 />
-              )}
 
-              {/* Help section */}
-              <CollapsibleHelp triggerText="Decryption Tips" detailed={false} />
-            </>
-          )}
+                {/* Ready to decrypt panel - Step 3 */}
+                {currentStep === 3 && selectedFile && selectedKeyId && passphrase && outputPath && (
+                  <DecryptionReadyPanel
+                    outputPath={outputPath}
+                    showAdvancedOptions={showAdvancedOptions}
+                    isLoading={isLoading}
+                    onPathChange={setOutputPath}
+                    onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                    onDecrypt={handleDecryption}
+                    onPrevious={() => handleStepNavigation(2)}
+                  />
+                )}
+
+                {/* Help section */}
+                <CollapsibleHelp triggerText="Decryption Tips" detailed={false} />
+              </>
+            )}
+          </AnimatedTransition>
         </div>
       </div>
 

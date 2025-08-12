@@ -130,7 +130,12 @@ export const useDecryptionWorkflow = () => {
       return;
     }
 
+    // Set decrypting state immediately for instant UI feedback
     setIsDecrypting(true);
+
+    // Small delay to ensure UI updates before heavy operation
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
     try {
       await decryptFile();
       // Success panel provides comprehensive feedback

@@ -16,6 +16,15 @@ interface Phase {
 }
 
 const DecryptProgress: React.FC<DecryptProgressProps> = ({ progress, onCancel }) => {
+  // Show initial loading animation for smooth transition
+  const [isInitializing, setIsInitializing] = React.useState(progress.progress === 0);
+
+  React.useEffect(() => {
+    if (progress.progress > 0) {
+      setIsInitializing(false);
+    }
+  }, [progress.progress]);
+
   const getPhases = (currentProgress: number): Phase[] => {
     return [
       {
@@ -63,17 +72,21 @@ const DecryptProgress: React.FC<DecryptProgressProps> = ({ progress, onCancel })
         </p>
       </div>
 
-      {/* Main progress bar */}
+      {/* Main progress bar with smooth initialization */}
       <div className="mb-6">
         <ProgressBar
-          value={progress.progress / 100}
-          showPercentage={true}
+          value={isInitializing ? 0.02 : progress.progress / 100}
+          showPercentage={!isInitializing}
           showStatus={false}
-          className="h-3"
+          className={`h-3 ${isInitializing ? 'animate-pulse' : ''}`}
         />
         <div className="flex justify-between items-center mt-2">
-          <span className="text-sm text-gray-500">{progress.message || 'Processing...'}</span>
-          {estimatedTimeRemaining > 0 && (
+          <span className="text-sm text-gray-500">
+            {isInitializing
+              ? 'Starting decryption process...'
+              : progress.message || 'Processing...'}
+          </span>
+          {!isInitializing && estimatedTimeRemaining > 0 && (
             <span className="text-sm text-gray-500">
               About {estimatedTimeRemaining} seconds remaining
             </span>
