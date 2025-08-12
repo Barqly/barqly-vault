@@ -46,8 +46,8 @@ describe('useFileDecryption - Progress Tracking', () => {
       manifest_verified: true,
     };
 
-    let progressCallback: (event: Event<unknown>) => void;
-    mocks.safeListen.mockImplementationOnce((_event, callback) => {
+    let progressCallback: ((event: Event<unknown>) => void) | undefined;
+    mocks.safeListen.mockImplementation((_event, callback) => {
       progressCallback = callback as (event: Event<unknown>) => void;
       return Promise.resolve(() => Promise.resolve());
     });
@@ -61,7 +61,6 @@ describe('useFileDecryption - Progress Tracking', () => {
     };
 
     mocks.safeInvoke.mockResolvedValueOnce(mockFileSelection);
-    mocks.safeInvoke.mockResolvedValueOnce(mockDecryptionResult);
 
     await act(async () => {
       await result.current.selectEncryptedFile();
@@ -74,27 +73,50 @@ describe('useFileDecryption - Progress Tracking', () => {
       result.current.setOutputPath('/output');
     });
 
-    await act(async () => {
+    // Mock the decryption call to not resolve immediately
+    let decryptResolve: ((value: DecryptionResult) => void) | undefined;
+    const decryptPromise = new Promise<DecryptionResult>((resolve) => {
+      decryptResolve = resolve;
+    });
+    mocks.safeInvoke.mockReturnValueOnce(decryptPromise);
+
+    // Start decryption (non-blocking)
+    act(() => {
       result.current.decryptFile();
+    });
+
+    // Wait for the listener to be set up
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
     });
 
     // Simulate progress update
     await act(async () => {
-      progressCallback!({
-        event: 'decryption-progress',
-        id: 1,
-        payload: {
-          progress: 0.5,
-          message: 'Decrypting files...',
-          timestamp: new Date().toISOString(),
-        },
-      });
+      if (progressCallback) {
+        progressCallback({
+          payload: {
+            operation_id: 'test-decrypt',
+            progress: 50,
+            message: 'Decrypting files...',
+            timestamp: new Date().toISOString(),
+          },
+        } as Event<unknown>);
+      }
     });
 
+    // Check progress was updated
     expect(result.current.progress).toEqual({
-      progress: 0.5,
+      operation_id: 'test-decrypt',
+      progress: 50,
       message: 'Decrypting files...',
       timestamp: expect.any(String),
+    });
+
+    // Complete the decryption
+    await act(async () => {
+      if (decryptResolve) {
+        decryptResolve(mockDecryptionResult);
+      }
     });
   });
 });

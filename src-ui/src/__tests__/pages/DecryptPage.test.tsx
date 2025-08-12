@@ -1,16 +1,18 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import DecryptPage from '../../pages/DecryptPage';
 import { useFileDecryption } from '../../hooks/useFileDecryption';
+import { useDecryptionWorkflow } from '../../hooks/useDecryptionWorkflow';
 import { useToast } from '../../hooks/useToast';
 import { ErrorCode } from '../../lib/api-types';
 import { createTauriTestEnvironment, MOCK_RESPONSES, resetTauriMocks } from '../utils/tauri-mocks';
 
 // Mock the hooks
 vi.mock('../../hooks/useFileDecryption');
+vi.mock('../../hooks/useDecryptionWorkflow');
 vi.mock('../../hooks/useToast');
 
 // Mock Tauri APIs
@@ -39,6 +41,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 }));
 
 const mockUseFileDecryption = vi.mocked(useFileDecryption);
+const mockUseDecryptionWorkflow = vi.mocked(useDecryptionWorkflow);
 const mockUseToast = vi.mocked(useToast);
 
 // Helper function to render with router
@@ -78,6 +81,48 @@ describe('DecryptPage', () => {
     clearAll: vi.fn(),
   };
 
+  const mockWorkflowHook: any = {
+    // State from useFileDecryption
+    selectedFile: null,
+    selectedKeyId: null,
+    passphrase: '',
+    outputPath: null,
+    passphraseAttempts: 0,
+    isDecrypting: false,
+    showAdvancedOptions: false,
+    setShowAdvancedOptions: vi.fn(),
+    vaultMetadata: null,
+
+    // From useFileDecryption
+    isLoading: false,
+    error: null,
+    success: null,
+    progress: null,
+    clearError: vi.fn(),
+    clearSelection: vi.fn(),
+    setPassphrase: vi.fn(),
+    setOutputPath: vi.fn(),
+
+    // From useToast
+    toasts: [],
+    removeToast: vi.fn(),
+    showInfo: vi.fn(),
+    showError: vi.fn(),
+
+    // Computed
+    currentStep: 1, // Default to step 1
+
+    // Handlers
+    handleFileSelected: vi.fn(),
+    handleDecryption: vi.fn(),
+    handleReset: vi.fn(),
+    handleDecryptAnother: vi.fn(),
+    handleKeyChange: vi.fn(),
+
+    // Navigation handlers
+    handleStepNavigation: vi.fn(),
+  };
+
   // Setup standardized Tauri environment
   let tauriEnv: ReturnType<typeof createTauriTestEnvironment>;
 
@@ -97,7 +142,26 @@ describe('DecryptPage', () => {
       outputPath: null,
     });
 
+    // Reset workflow hook state
+    Object.assign(mockWorkflowHook, {
+      selectedFile: null,
+      selectedKeyId: null,
+      passphrase: '',
+      outputPath: null,
+      passphraseAttempts: 0,
+      isDecrypting: false,
+      showAdvancedOptions: false,
+      vaultMetadata: null,
+      isLoading: false,
+      error: null,
+      success: null,
+      progress: null,
+      toasts: [],
+      currentStep: 1, // Default to step 1
+    });
+
     mockUseFileDecryption.mockReturnValue(mockDecryptionHook);
+    mockUseDecryptionWorkflow.mockReturnValue(mockWorkflowHook);
     mockUseToast.mockReturnValue(mockToastHook);
 
     // Initialize standardized Tauri mocking
@@ -131,7 +195,9 @@ describe('DecryptPage', () => {
     it('should handle valid .age file selection', async () => {
       const { rerender } = renderWithRouter(<DecryptPage />);
 
-      // Simulate file selection through the mock
+      // Simulate file selection through the mock - update workflow hook
+      mockWorkflowHook.selectedFile = '/path/to/vault-2024-01-15.age';
+      mockWorkflowHook.currentStep = 2; // Auto-advance to step 2 after file selection
       mockDecryptionHook.selectedFile = '/path/to/vault-2024-01-15.age';
       mockDecryptionHook.selectEncryptedFile.mockResolvedValue(undefined);
 
@@ -152,7 +218,12 @@ describe('DecryptPage', () => {
     it('should extract metadata from filename', async () => {
       const { rerender } = renderWithRouter(<DecryptPage />);
 
+      // Update both hooks to reflect file selection and step advancement
+      mockWorkflowHook.selectedFile = '/path/to/bitcoin-vault-2024-01-15.age';
+      mockWorkflowHook.currentStep = 2; // Move to step 2 after file selection
+      mockWorkflowHook.vaultMetadata = { creationDate: '2024-01-15' };
       mockDecryptionHook.selectedFile = '/path/to/bitcoin-vault-2024-01-15.age';
+
       rerender(
         <BrowserRouter>
           <DecryptPage />
@@ -172,8 +243,16 @@ describe('DecryptPage', () => {
     });
 
     it('should guide user through key selection and passphrase entry', () => {
+      // Set up workflow hook with proper state
+      mockWorkflowHook.selectedFile = '/path/to/vault.age';
+      mockWorkflowHook.selectedKeyId = 'test-key-id';
+      mockWorkflowHook.currentStep = 2; // On step 2 for key/passphrase entry
+      mockWorkflowHook.vaultMetadata = {}; // Initialize vaultMetadata to avoid null error
+
+      // Also update decryption hook for consistency
       mockDecryptionHook.selectedFile = '/path/to/vault.age';
       mockDecryptionHook.selectedKeyId = 'test-key-id';
+
       renderWithRouter(<DecryptPage />);
 
       // User can enter passphrase after selecting key
@@ -182,10 +261,12 @@ describe('DecryptPage', () => {
     });
 
     it('should track passphrase attempts on failed decryption', async () => {
-      mockDecryptionHook.selectedFile = '/path/to/vault.age';
-      mockDecryptionHook.selectedKeyId = 'test-key-id';
-      mockDecryptionHook.passphrase = 'wrong-passphrase';
-      mockDecryptionHook.outputPath = '/output/path';
+      // Set up the workflow mock to show the ready panel
+      mockWorkflowHook.selectedFile = '/path/to/vault.age';
+      mockWorkflowHook.selectedKeyId = 'test-key-id';
+      mockWorkflowHook.passphrase = 'wrong-passphrase';
+      mockWorkflowHook.outputPath = '/output/path';
+      mockWorkflowHook.currentStep = 3; // Ensure we're on the ready step
 
       const error = {
         code: ErrorCode.DECRYPTION_FAILED,
@@ -194,25 +275,34 @@ describe('DecryptPage', () => {
         user_actionable: true,
       };
 
-      mockDecryptionHook.decryptFile.mockRejectedValue(error);
+      mockWorkflowHook.handleDecryption.mockRejectedValue(error);
 
       renderWithRouter(<DecryptPage />);
 
+      // Wait for the component to render and show the decrypt button
+      await waitFor(() => {
+        expect(screen.getByText('Decrypt Now')).toBeInTheDocument();
+      });
+
       const decryptButton = screen.getByText('Decrypt Now');
-      await userEvent.click(decryptButton);
+
+      await act(async () => {
+        await userEvent.click(decryptButton);
+      });
 
       await waitFor(() => {
-        expect(mockDecryptionHook.decryptFile).toHaveBeenCalled();
+        expect(mockWorkflowHook.handleDecryption).toHaveBeenCalled();
       });
     });
   });
 
   describe('Decryption Readiness', () => {
     beforeEach(() => {
-      mockDecryptionHook.selectedFile = '/path/to/vault.age';
-      mockDecryptionHook.selectedKeyId = 'test-key-id';
-      mockDecryptionHook.passphrase = 'test-passphrase';
-      mockDecryptionHook.outputPath = '/output/path';
+      mockWorkflowHook.selectedFile = '/path/to/vault.age';
+      mockWorkflowHook.selectedKeyId = 'test-key-id';
+      mockWorkflowHook.passphrase = 'test-passphrase';
+      mockWorkflowHook.outputPath = '/output/path';
+      mockWorkflowHook.currentStep = 3; // Ensure we're on the ready step
     });
 
     it('should indicate when user is ready to decrypt', () => {
@@ -225,10 +315,11 @@ describe('DecryptPage', () => {
 
   describe('Decryption Process', () => {
     beforeEach(() => {
-      mockDecryptionHook.selectedFile = '/path/to/vault.age';
-      mockDecryptionHook.selectedKeyId = 'test-key-id';
-      mockDecryptionHook.passphrase = 'correct-passphrase';
-      mockDecryptionHook.outputPath = '/output/path';
+      mockWorkflowHook.selectedFile = '/path/to/vault.age';
+      mockWorkflowHook.selectedKeyId = 'test-key-id';
+      mockWorkflowHook.passphrase = 'correct-passphrase';
+      mockWorkflowHook.outputPath = '/output/path';
+      mockWorkflowHook.currentStep = 3; // Ensure we're on the ready step
     });
 
     it('should show ready state when all fields are filled', () => {
@@ -247,20 +338,28 @@ describe('DecryptPage', () => {
         manifest_verified: true,
       };
 
-      mockDecryptionHook.decryptFile.mockResolvedValue(undefined);
+      mockWorkflowHook.handleDecryption.mockResolvedValue(undefined);
 
       renderWithRouter(<DecryptPage />);
 
+      // Wait for the decrypt button to be available
+      await waitFor(() => {
+        expect(screen.getByText('Decrypt Now')).toBeInTheDocument();
+      });
+
       const decryptButton = screen.getByText('Decrypt Now');
-      await userEvent.click(decryptButton);
+
+      await act(async () => {
+        await userEvent.click(decryptButton);
+      });
 
       await waitFor(() => {
-        expect(mockDecryptionHook.decryptFile).toHaveBeenCalled();
+        expect(mockWorkflowHook.handleDecryption).toHaveBeenCalled();
       });
 
       // Update the hook state to simulate success
-      mockDecryptionHook.success = successResult;
-      mockDecryptionHook.isDecrypting = false;
+      mockWorkflowHook.success = successResult;
+      mockWorkflowHook.isDecrypting = false;
     });
 
     it('should display progress during decryption', async () => {
@@ -289,6 +388,11 @@ describe('DecryptPage', () => {
         user_actionable: true,
       };
 
+      // Set up workflow hook with error state
+      mockWorkflowHook.error = error;
+      mockWorkflowHook.isDecrypting = false; // Not decrypting, so error should show
+
+      // Also update decryption hook
       mockDecryptionHook.error = error;
       mockDecryptionHook.decryptFile.mockRejectedValue(error);
 
@@ -331,7 +435,7 @@ describe('DecryptPage', () => {
     };
 
     beforeEach(() => {
-      mockDecryptionHook.success = successResult;
+      mockWorkflowHook.success = successResult;
     });
 
     it('should display success message with file details', () => {
@@ -372,14 +476,18 @@ describe('DecryptPage', () => {
     it('should provide option to decrypt another file', async () => {
       renderWithRouter(<DecryptPage />);
 
-      const anotherButton = screen.getByText('Decrypt Another Vault');
-      await userEvent.click(anotherButton);
+      // Wait for the success component to render and show the button
+      await waitFor(() => {
+        expect(screen.getByText('Decrypt Another Vault')).toBeInTheDocument();
+      });
 
-      expect(mockDecryptionHook.reset).toHaveBeenCalled();
-      expect(mockToastHook.showInfo).toHaveBeenCalledWith(
-        'Ready for new decryption',
-        'Select another vault file to decrypt',
-      );
+      const anotherButton = screen.getByText('Decrypt Another Vault');
+
+      await act(async () => {
+        await userEvent.click(anotherButton);
+      });
+
+      expect(mockWorkflowHook.handleDecryptAnother).toHaveBeenCalled();
     });
   });
 
@@ -391,6 +499,10 @@ describe('DecryptPage', () => {
         recovery_guidance: 'Passphrases are case-sensitive and must match exactly',
         user_actionable: true,
       };
+
+      // Set up workflow hook with error state
+      mockWorkflowHook.error = error;
+      mockWorkflowHook.isDecrypting = false; // Not decrypting, so error should show
 
       mockDecryptionHook.error = error;
       renderWithRouter(<DecryptPage />);
@@ -407,6 +519,10 @@ describe('DecryptPage', () => {
         user_actionable: true,
       };
 
+      // Set up workflow hook with error state
+      mockWorkflowHook.error = error;
+      mockWorkflowHook.isDecrypting = false;
+
       mockDecryptionHook.error = error;
       renderWithRouter(<DecryptPage />);
 
@@ -420,6 +536,10 @@ describe('DecryptPage', () => {
         recovery_guidance: 'Need 100 MB, only 50 MB available at destination',
         user_actionable: true,
       };
+
+      // Set up workflow hook with error state
+      mockWorkflowHook.error = error;
+      mockWorkflowHook.isDecrypting = false;
 
       mockDecryptionHook.error = error;
       renderWithRouter(<DecryptPage />);
@@ -435,6 +555,10 @@ describe('DecryptPage', () => {
         user_actionable: true,
       };
 
+      // Set up workflow hook with error state
+      mockWorkflowHook.error = error;
+      mockWorkflowHook.isDecrypting = false;
+
       mockDecryptionHook.error = error;
       renderWithRouter(<DecryptPage />);
 
@@ -449,12 +573,13 @@ describe('DecryptPage', () => {
       expect(screen.queryByText('Decrypt Now')).not.toBeInTheDocument();
 
       // Update the mock with all fields filled
-      mockUseFileDecryption.mockReturnValue({
-        ...mockDecryptionHook,
+      mockUseDecryptionWorkflow.mockReturnValue({
+        ...mockWorkflowHook,
         selectedFile: '/path/to/vault.age',
         selectedKeyId: 'test-key-id',
         passphrase: 'test-passphrase',
         outputPath: '/output/path',
+        currentStep: 3, // Ensure we're on the ready step
       });
 
       // Re-render with complete data
@@ -508,8 +633,11 @@ describe('DecryptPage', () => {
       // Initially no file selected - file selection UI should be available
       expect(screen.getByText('Select Vault File')).toBeInTheDocument();
 
-      // Update hook to simulate file selection
+      // Update hooks to simulate file selection
+      mockWorkflowHook.selectedFile = '/path/to/encrypted.age';
+      mockWorkflowHook.currentStep = 2; // Auto-advance to step 2
       mockDecryptionHook.selectedFile = '/path/to/encrypted.age';
+
       rerender(
         <BrowserRouter>
           <DecryptPage />
@@ -577,19 +705,19 @@ describe('DecryptPage', () => {
       };
 
       mockDecryptionHook.selectEncryptedFile.mockRejectedValue(error);
-      mockDecryptionHook.error = error;
 
-      const { rerender } = renderWithRouter(<DecryptPage />);
+      renderWithRouter(<DecryptPage />);
 
       const selectButton = screen.getByText('Select Vault File');
       await userEvent.click(selectButton);
 
-      // Update with error state
-      rerender(
-        <BrowserRouter>
-          <DecryptPage />
-        </BrowserRouter>,
-      );
+      // Update workflow hook with error state after click
+      mockWorkflowHook.error = error;
+      mockWorkflowHook.isDecrypting = false;
+      mockDecryptionHook.error = error;
+
+      // Force re-render with updated error state
+      renderWithRouter(<DecryptPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Cannot access file')).toBeInTheDocument();
@@ -604,7 +732,18 @@ describe('DecryptPage', () => {
         user_actionable: true,
       };
 
-      // Set up hook with error state
+      // Set up workflow hook with error state
+      mockUseDecryptionWorkflow.mockReturnValue({
+        ...mockWorkflowHook,
+        selectedFile: '/path/to/vault.age',
+        selectedKeyId: 'test-key-id',
+        passphrase: 'wrong-pass',
+        outputPath: '/output/path',
+        error: error,
+        isDecrypting: false,
+      });
+
+      // Set up file decryption hook with error state
       mockUseFileDecryption.mockReturnValue({
         ...mockDecryptionHook,
         selectedFile: '/path/to/vault.age',
@@ -629,6 +768,9 @@ describe('DecryptPage', () => {
         user_actionable: true,
       };
 
+      // Set up workflow hook with error state
+      mockWorkflowHook.error = error;
+      mockWorkflowHook.isDecrypting = false;
       mockDecryptionHook.error = error;
 
       renderWithRouter(<DecryptPage />);

@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import DecryptProgress from '../../../components/decrypt/DecryptProgress';
 import { ProgressUpdate } from '../../../lib/api-types';
-import '@testing-library/jest-dom';
 
 describe('DecryptProgress', () => {
   const createProgress = (value: number, message?: string): ProgressUpdate => ({
@@ -184,6 +183,14 @@ describe('DecryptProgress', () => {
       const initialPhase = screen.getByText('Validating vault integrity');
       expect(initialPhase.closest('div')).not.toHaveClass('text-green-600');
       expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    });
+
+    it('should show initialization message when progress is 0', () => {
+      const progress = createProgress(0, 'Starting...');
+      render(<DecryptProgress progress={progress} />);
+
+      // Users should see initialization message regardless of the progress message
+      expect(screen.getByText('Starting decryption process...')).toBeInTheDocument();
     });
 
     it('should clearly indicate completion to users', () => {
