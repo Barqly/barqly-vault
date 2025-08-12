@@ -116,7 +116,7 @@ describe('EncryptPage', () => {
       renderEncryptPage();
 
       // Verify trust-building elements are visible
-      expect(screen.getByText('Encrypt Your Bitcoin Vault')).toBeInTheDocument();
+      expect(screen.getByText('Encrypt Your Vault')).toBeInTheDocument();
       expect(screen.getByText('Military-grade')).toBeInTheDocument();
       expect(screen.getByText('Local-only')).toBeInTheDocument();
       expect(screen.getByText('Zero network')).toBeInTheDocument();
@@ -473,7 +473,7 @@ describe('EncryptPage', () => {
       renderEncryptPage();
 
       // Component should still render despite listener failure
-      expect(screen.getByText('Encrypt Your Bitcoin Vault')).toBeInTheDocument();
+      expect(screen.getByText('Encrypt Your Vault')).toBeInTheDocument();
     });
   });
 });

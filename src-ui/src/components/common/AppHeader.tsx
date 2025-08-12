@@ -71,7 +71,7 @@ const screenDefaults: Record<
     trustBadges: universalTrustBadges, // Now shows unified trust indicators
   },
   encrypt: {
-    title: 'Encrypt Your Bitcoin Vault',
+    title: 'Encrypt Your Vault',
     icon: Lock,
     trustBadges: universalTrustBadges, // Unified trust indicators
   },

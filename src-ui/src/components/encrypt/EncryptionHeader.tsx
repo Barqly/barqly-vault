@@ -11,7 +11,7 @@ const EncryptionHeader: React.FC = () => {
     <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
       <div className="flex items-center gap-2 mb-3">
         <Lock className="w-6 h-6 text-blue-600" />
-        <h2 className="text-2xl font-bold text-gray-900">Encrypt Your Bitcoin Vault</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Encrypt Your Vault</h2>
       </div>
       <div className="flex flex-wrap gap-2">
         <TrustBadge
