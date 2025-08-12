@@ -208,7 +208,7 @@ describe('DecryptPage', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Unlock with Key')).toBeInTheDocument();
+        expect(screen.getByText('Choose Key')).toBeInTheDocument();
       });
     });
 
@@ -645,7 +645,7 @@ describe('DecryptPage', () => {
 
       // Verify UI updates after file selection - step 2 is now visible
       await waitFor(() => {
-        expect(screen.getByText('Unlock with Key')).toBeInTheDocument();
+        expect(screen.getByText('Choose Key')).toBeInTheDocument();
       });
     });
 

@@ -14,8 +14,8 @@ import AnimatedTransition from '../components/ui/AnimatedTransition';
 
 const DECRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Vault', description: 'Choose vault to decrypt' },
-  { id: 2, label: 'Unlock with Key', description: 'Enter passphrase' },
-  { id: 3, label: 'Ready to Decrypt', description: 'Configure output location' },
+  { id: 2, label: 'Choose Key', description: 'Enter passphrase' },
+  { id: 3, label: 'Decrypt Vault', description: 'Configure output location' },
 ];
 
 /**

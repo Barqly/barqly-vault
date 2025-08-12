@@ -38,7 +38,7 @@ vi.mock('../../components/encrypt/steps/EncryptStep2', () => ({
 }));
 
 vi.mock('../../components/encrypt/steps/EncryptStep3', () => ({
-  default: () => <div data-testid="encrypt-step-3">Step 3: Encrypt</div>,
+  default: () => <div data-testid="encrypt-step-3">Step 3: Encrypt Vault</div>,
 }));
 
 // Mock other components
