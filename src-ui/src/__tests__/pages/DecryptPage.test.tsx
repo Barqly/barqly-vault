@@ -159,9 +159,8 @@ describe('DecryptPage', () => {
         </BrowserRouter>,
       );
 
-      // The component should progress to step 2 and show key selection
+      // The component should progress to step 2 and show key selection dropdown
       await waitFor(() => {
-        expect(screen.getByText('Key Selection')).toBeInTheDocument();
         expect(screen.getByText('Choose the key used for encryption')).toBeInTheDocument();
       });
     });

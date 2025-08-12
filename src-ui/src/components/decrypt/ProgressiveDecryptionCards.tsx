@@ -85,8 +85,6 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Key Selection</label>
-              <p className="text-xs text-gray-500 mb-3">Encryption Key</p>
               <KeySelectionDropdown
                 value={selectedKeyId || ''}
                 onChange={onKeyChange}
@@ -97,7 +95,6 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
             {selectedKeyId && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Passphrase</label>
                   <PassphraseInput
                     value={passphrase}
                     onChange={onPassphraseChange}
