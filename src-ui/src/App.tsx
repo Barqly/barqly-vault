@@ -2,10 +2,15 @@ import { type ReactElement, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import { LoadingSpinner } from './components/ui/loading-spinner';
+import { isFeatureEnabled } from './config/features';
 
 // Lazy load page components for better initial render performance
 const SetupPage = lazy(() => import('./pages/SetupPage'));
-const EncryptPage = lazy(() => import('./pages/EncryptPage'));
+const EncryptPage = lazy(() =>
+  isFeatureEnabled('USE_REFACTORED_ENCRYPT_SCREEN')
+    ? import('./pages/EncryptPageRefactored')
+    : import('./pages/EncryptPage'),
+);
 const DecryptPage = lazy(() => import('./pages/DecryptPage'));
 
 function App(): ReactElement {
