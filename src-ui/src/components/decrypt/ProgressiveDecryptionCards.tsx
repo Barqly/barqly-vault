@@ -46,10 +46,17 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   onStepChange,
 }) => {
   const canGoToPreviousStep = currentStep > 1;
+  const canContinue = currentStep === 2 && selectedKeyId && passphrase.trim().length > 0;
 
   const handlePrevious = () => {
     if (canGoToPreviousStep) {
       onStepChange(currentStep - 1);
+    }
+  };
+
+  const handleContinue = () => {
+    if (canContinue) {
+      onStepChange(currentStep + 1);
     }
   };
 
@@ -127,25 +134,35 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-      {/* Card Header with Navigation */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          {canGoToPreviousStep && (
+      {/* Card Content */}
+      <div className="p-6">
+        <div className="min-h-[200px] max-h-[350px] mb-6">{renderStepContent()}</div>
+
+        {/* Navigation Buttons */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <button
+            onClick={handlePrevious}
+            className="flex items-center gap-1 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+            disabled={isLoading || !canGoToPreviousStep}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Previous
+          </button>
+
+          {currentStep === 2 && (
             <button
-              onClick={handlePrevious}
-              className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
-              disabled={isLoading}
+              onClick={handleContinue}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                canContinue
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+              disabled={isLoading || !canContinue}
             >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
+              Continue
             </button>
           )}
         </div>
-      </div>
-
-      {/* Card Content */}
-      <div className="p-6">
-        <div className="min-h-[200px] max-h-[400px]">{renderStepContent()}</div>
       </div>
     </div>
   );
