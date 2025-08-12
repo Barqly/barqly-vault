@@ -55,7 +55,6 @@ const DecryptPage: React.FC = () => {
 
     // Navigation handlers
     handleStepNavigation,
-    canNavigateToStep,
   } = useDecryptionWorkflow();
 
   return (
@@ -64,11 +63,7 @@ const DecryptPage: React.FC = () => {
       <AppHeader screen="decrypt" includeSkipNav={true} skipNavTarget="#main-content" />
 
       {/* Progress indicator */}
-      <DecryptionProgressBar
-        currentStep={currentStep}
-        onStepClick={handleStepNavigation}
-        canNavigateToStep={canNavigateToStep}
-      />
+      <DecryptionProgressBar currentStep={currentStep} />
 
       {/* Main content */}
       <div className="max-w-4xl mx-auto px-6 py-8" id="main-content">

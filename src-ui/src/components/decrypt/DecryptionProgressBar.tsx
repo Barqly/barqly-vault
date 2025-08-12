@@ -3,67 +3,46 @@ import { CheckCircle } from 'lucide-react';
 
 interface DecryptionProgressBarProps {
   currentStep: number;
-  onStepClick?: (step: number) => void;
-  canNavigateToStep?: (step: number) => boolean;
 }
 
 /**
- * Interactive progress bar component showing decryption workflow steps
- * Users can click on completed/available steps to navigate
+ * Visual progress indicator showing decryption workflow steps
+ * Displays current position and completed steps without navigation
  */
-const DecryptionProgressBar: React.FC<DecryptionProgressBarProps> = ({
-  currentStep,
-  onStepClick,
-  canNavigateToStep,
-}) => {
+const DecryptionProgressBar: React.FC<DecryptionProgressBarProps> = ({ currentStep }) => {
   const getStepProgress = () => {
     const totalSteps = 3;
     return ((currentStep - 1) / (totalSteps - 1)) * 100;
   };
 
-  const handleStepClick = (step: number) => {
-    if (onStepClick && canNavigateToStep && canNavigateToStep(step)) {
-      onStepClick(step);
-    }
-  };
-
   const getStepClasses = (step: number) => {
     const baseClasses = 'transition-all duration-200';
     const isActive = currentStep >= step;
-    const isClickable = canNavigateToStep && canNavigateToStep(step);
-
-    let classes = baseClasses;
 
     if (isActive) {
-      classes += ' text-blue-600 font-medium';
+      return `${baseClasses} text-blue-600 font-medium`;
     } else {
-      classes += ' text-gray-600';
+      return `${baseClasses} text-gray-600`;
     }
-
-    if (isClickable) {
-      classes += ' cursor-pointer hover:text-blue-700 hover:font-medium';
-    }
-
-    return classes;
   };
 
   return (
     <div className="bg-gray-50 border-b border-gray-200">
       <div className="max-w-4xl mx-auto px-6 py-3">
         <div className="flex items-center justify-between text-xs mb-2">
-          <span className={getStepClasses(1)} onClick={() => handleStepClick(1)}>
+          <span className={getStepClasses(1)}>
             {currentStep > 1 ? (
               <CheckCircle className="inline w-3 h-3 mr-1 text-green-600" />
             ) : null}
             Step 1: Select Vault
           </span>
-          <span className={getStepClasses(2)} onClick={() => handleStepClick(2)}>
+          <span className={getStepClasses(2)}>
             {currentStep > 2 ? (
               <CheckCircle className="inline w-3 h-3 mr-1 text-green-600" />
             ) : null}
             Step 2: Unlock with Key
           </span>
-          <span className={getStepClasses(3)} onClick={() => handleStepClick(3)}>
+          <span className={getStepClasses(3)}>
             {currentStep >= 3 ? (
               <CheckCircle className="inline w-3 h-3 mr-1 text-green-600" />
             ) : null}

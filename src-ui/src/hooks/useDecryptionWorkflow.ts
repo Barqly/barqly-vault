@@ -32,31 +32,28 @@ export const useDecryptionWorkflow = () => {
     clearSelection,
   } = useFileDecryption();
 
-  const { toasts, showError, showSuccess, showInfo, removeToast } = useToast();
+  const { toasts, showError, showInfo, removeToast } = useToast();
 
   // Workflow state
   const [passphraseAttempts, setPassphraseAttempts] = useState(0);
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [vaultMetadata, setVaultMetadata] = useState<VaultMetadata>({});
-  const [forcedStep, setForcedStep] = useState<number | null>(null);
+  const [currentStep, setCurrentStep] = useState(1);
 
-  // Determine current step
-  const getCurrentStep = () => {
-    // If step is forced (user navigated manually), use that
-    if (forcedStep !== null) {
-      return forcedStep;
-    }
+  // Steps are controlled by explicit user navigation only
+  // No automatic transitions based on data
 
-    // Otherwise, determine step based on data
-    if (selectedFile) {
-      if (selectedKeyId && passphrase) {
-        return 3;
-      }
-      return 2;
+  // Track previous selectedFile to distinguish between initial selection and navigation
+  const [prevSelectedFile, setPrevSelectedFile] = useState<string | null>(null);
+
+  // Auto-advance to step 2 only when file is initially selected (not when navigating back)
+  useEffect(() => {
+    if (selectedFile && !prevSelectedFile && currentStep === 1) {
+      setCurrentStep(2);
     }
-    return 1;
-  };
+    setPrevSelectedFile(selectedFile);
+  }, [selectedFile, prevSelectedFile, currentStep]);
 
   // Check if user can navigate to a specific step
   const canNavigateToStep = useCallback(
@@ -75,11 +72,11 @@ export const useDecryptionWorkflow = () => {
     [selectedFile, selectedKeyId, passphrase],
   );
 
-  // Handle step navigation
+  // Handle step navigation - only way to change steps
   const handleStepNavigation = useCallback(
     (step: number) => {
       if (canNavigateToStep(step)) {
-        setForcedStep(step);
+        setCurrentStep(step);
       }
     },
     [canNavigateToStep],
@@ -104,9 +101,6 @@ export const useDecryptionWorkflow = () => {
       try {
         setSelectedFile(filePath);
 
-        // Clear forced step to allow natural progression
-        setForcedStep(null);
-
         // Extract metadata from filename
         const fileName = filePath.split('/').pop() || '';
         const match = fileName.match(/(\d{4}-\d{2}-\d{2})/);
@@ -117,7 +111,7 @@ export const useDecryptionWorkflow = () => {
           }));
         }
 
-        showSuccess('File selected', 'Encrypted vault file ready for decryption');
+        // Visual feedback from UI transition is sufficient
       } catch (error) {
         console.error('[DecryptionWorkflow] File selection error:', error);
         showError(
@@ -126,7 +120,7 @@ export const useDecryptionWorkflow = () => {
         );
       }
     },
-    [setSelectedFile, showError, showSuccess],
+    [setSelectedFile, showError],
   );
 
   // Handle decryption
@@ -139,7 +133,7 @@ export const useDecryptionWorkflow = () => {
     setIsDecrypting(true);
     try {
       await decryptFile();
-      showSuccess('Decryption successful', 'Your files have been recovered');
+      // Success panel provides comprehensive feedback
     } catch (err) {
       console.error('[DecryptionWorkflow] Decryption error:', err);
 
@@ -167,7 +161,7 @@ export const useDecryptionWorkflow = () => {
     } finally {
       setIsDecrypting(false);
     }
-  }, [selectedKeyId, passphrase, outputPath, decryptFile, showError, showSuccess]);
+  }, [selectedKeyId, passphrase, outputPath, decryptFile, showError]);
 
   // Generate default output path
   const getDefaultOutputPath = useCallback(async () => {
@@ -196,14 +190,15 @@ export const useDecryptionWorkflow = () => {
     setPassphraseAttempts(0);
     setIsDecrypting(false);
     setVaultMetadata({});
-    setForcedStep(null);
+    setCurrentStep(1);
+    setPrevSelectedFile(null);
   }, [reset]);
 
   // Handle decrypt another
   const handleDecryptAnother = useCallback(() => {
     handleReset();
-    showInfo('Ready for new decryption', 'Select another vault file to decrypt');
-  }, [handleReset, showInfo]);
+    // UI reset to step 1 provides clear visual feedback
+  }, [handleReset]);
 
   // Handle key selection
   const handleKeyChange = useCallback(
@@ -246,7 +241,7 @@ export const useDecryptionWorkflow = () => {
     showError,
 
     // Computed
-    currentStep: getCurrentStep(),
+    currentStep,
 
     // Handlers
     handleFileSelected,

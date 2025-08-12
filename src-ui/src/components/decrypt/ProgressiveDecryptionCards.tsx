@@ -151,14 +151,16 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
 
         {/* Navigation Buttons */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <button
-            onClick={handlePrevious}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
-            disabled={isLoading || !canGoToPreviousStep}
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </button>
+          {canGoToPreviousStep && (
+            <button
+              onClick={handlePrevious}
+              className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
+              disabled={isLoading}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </button>
+          )}
 
           {(currentStep === 1 || currentStep === 2) && (
             <button
@@ -167,7 +169,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                 canContinue
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              }`}
+              } ${!canGoToPreviousStep ? 'ml-auto' : ''}`}
               disabled={isLoading || !canContinue}
             >
               Continue
