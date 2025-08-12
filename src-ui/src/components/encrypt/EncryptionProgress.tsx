@@ -64,7 +64,10 @@ const EncryptionProgress: React.FC<EncryptionProgressProps> = ({ progress, onCan
   const estimatedTimeRemaining = Math.max(0, Math.round((100 - progress.progress) * 0.3)); // Rough estimate
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6" data-testid="encryption-progress">
+    <div
+      className="bg-white rounded-lg border border-gray-200 p-6"
+      data-testid="encryption-progress"
+    >
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Creating Your Encrypted Vault</h3>
         <p className="text-sm text-gray-600">

@@ -87,7 +87,7 @@ describe('EncryptPage', () => {
     showAdvancedOptions: false,
     setShowAdvancedOptions: mockSetShowAdvancedOptions,
     encryptionResult: null,
-    
+
     // From useFileEncryption
     isLoading: false,
     error: null,
@@ -97,16 +97,16 @@ describe('EncryptPage', () => {
     clearSelection: mockClearSelection,
     setOutputPath: mockSetOutputPath,
     setArchiveName: mockSetArchiveName,
-    
+
     // From useToast
     toasts: [],
     removeToast: vi.fn(),
     showInfo: vi.fn(),
     showError: vi.fn(),
-    
+
     // Computed
     currentStep: 1,
-    
+
     // Handlers
     handleFilesSelected: mockHandleFilesSelected,
     handleEncryption: mockHandleEncryption,
@@ -114,7 +114,7 @@ describe('EncryptPage', () => {
     handleEncryptAnother: vi.fn(),
     handleKeyChange: mockHandleKeyChange,
     handleFileValidationError: vi.fn(),
-    
+
     // Navigation handlers
     handleStepNavigation: mockHandleStepNavigation,
     canNavigateToStep: vi.fn(),
@@ -332,7 +332,7 @@ describe('EncryptPage', () => {
       });
 
       // Mock successful file selection in Tauri environment
-      mockSelectFiles.mockResolvedValue(MOCK_RESPONSES.fileSelection.multiple);
+      // Mock will be handled by useEncryptionWorkflow
 
       renderEncryptPage();
 
@@ -360,7 +360,7 @@ describe('EncryptPage', () => {
 
     it('should handle file selection in desktop environment', async () => {
       // Step-based UI should support desktop file selection
-      mockSelectFiles.mockResolvedValue(undefined);
+      // Mock will be handled by useEncryptionWorkflow
 
       renderEncryptPage();
 
@@ -438,7 +438,7 @@ describe('EncryptPage', () => {
         user_actionable: true,
       };
 
-      mockEncryptFiles.mockRejectedValue(error);
+      // Mock will be handled by useEncryptionWorkflow
 
       mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
