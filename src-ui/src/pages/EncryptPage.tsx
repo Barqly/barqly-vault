@@ -63,6 +63,13 @@ const EncryptPage: React.FC = () => {
     encryptionResult,
   } = useEncryptionWorkflow();
 
+  // Debug logging
+  console.log('[DEBUG] EncryptPage render:', {
+    success: !!success,
+    isEncrypting,
+    hasEncryptionResult: !!encryptionResult,
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Unified App Header */}
@@ -89,15 +96,12 @@ const EncryptPage: React.FC = () => {
           {/* Success display with animation */}
           <AnimatedTransition show={!!success} duration={400}>
             {success && encryptionResult && (
-              <EncryptionSuccess
-                {...encryptionResult}
-                onEncryptMore={handleEncryptAnother}
-              />
+              <EncryptionSuccess {...encryptionResult} onEncryptMore={handleEncryptAnother} />
             )}
           </AnimatedTransition>
 
           {/* Progress display - show immediately when encrypting starts */}
-          <AnimatedTransition show={isEncrypting && !success} duration={300}>
+          <AnimatedTransition show={!success && isEncrypting} duration={300}>
             <EncryptionProgress
               progress={
                 progress || {
@@ -108,7 +112,6 @@ const EncryptPage: React.FC = () => {
                 }
               }
               onCancel={!progress || progress.progress < 90 ? handleReset : undefined}
-              showCancel={true}
             />
           </AnimatedTransition>
 

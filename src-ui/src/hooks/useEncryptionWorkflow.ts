@@ -30,7 +30,7 @@ export const useEncryptionWorkflow = () => {
     progress,
     selectedFiles,
     reset,
-    clearError,
+    clearError: clearFileError,
     clearSelection,
   } = fileEncryptionHook;
 
@@ -48,7 +48,11 @@ export const useEncryptionWorkflow = () => {
   const [startTime, setStartTime] = useState<number>(0);
 
   // Track previous selectedFiles to distinguish between initial selection and navigation
-  const [prevSelectedFiles, setPrevSelectedFiles] = useState<typeof selectedFiles>(null);
+  const [prevSelectedFiles, setPrevSelectedFiles] = useState<{
+    paths: string[];
+    file_count: number;
+    total_size: number;
+  } | null>(null);
 
   // Auto-advance to step 2 only when files are initially selected (not when navigating back)
   useEffect(() => {
@@ -96,7 +100,7 @@ export const useEncryptionWorkflow = () => {
 
       // Clear any previous file validation errors
       setFileValidationError(null);
-      clearError(); // Clear any existing errors from useFileEncryption
+      clearFileError(); // Clear any existing errors from useFileEncryption
 
       try {
         await selectFiles(paths, selectionType);
@@ -111,7 +115,7 @@ export const useEncryptionWorkflow = () => {
         setFileValidationError(commandError);
       }
     },
-    [selectFiles, clearError],
+    [selectFiles, clearFileError],
   );
 
   // Handle encryption
@@ -143,8 +147,10 @@ export const useEncryptionWorkflow = () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     try {
+      console.log('[DEBUG] Starting encryption, isEncrypting=true');
       setStartTime(Date.now());
       await encryptFiles(selectedKeyId, archiveName || undefined, outputPath || undefined);
+      console.log('[DEBUG] Encryption completed, setting result');
 
       const duration = Math.round((Date.now() - startTime) / 1000);
       setEncryptionResult({
@@ -164,6 +170,7 @@ export const useEncryptionWorkflow = () => {
       console.error('[EncryptionWorkflow] Encryption error:', err);
       // Error is handled by useFileEncryption hook
     } finally {
+      console.log('[DEBUG] Finally block: setting isEncrypting=false');
       setIsEncrypting(false);
     }
   }, [selectedKeyId, selectedFiles, archiveName, outputPath, encryptFiles, startTime]);
@@ -234,7 +241,7 @@ export const useEncryptionWorkflow = () => {
     success,
     progress,
     clearError: () => {
-      clearError();
+      clearFileError();
       setFileValidationError(null);
     },
     clearSelection,

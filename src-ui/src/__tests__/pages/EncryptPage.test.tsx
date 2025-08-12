@@ -6,8 +6,8 @@ import { ErrorCode } from '../../lib/api-types';
 import { createTauriTestEnvironment, MOCK_RESPONSES, resetTauriMocks } from '../utils/tauri-mocks';
 
 // Mock the hooks
-vi.mock('../../hooks/useFileEncryption', () => ({
-  useFileEncryption: vi.fn(),
+vi.mock('../../hooks/useEncryptionWorkflow', () => ({
+  useEncryptionWorkflow: vi.fn(),
 }));
 
 // Mock the components
@@ -61,28 +61,63 @@ vi.mock('../../components/encrypt/EncryptionSuccess', () => ({
   }),
 }));
 
-const mockUseFileEncryption = vi.mocked(
-  await import('../../hooks/useFileEncryption'),
-).useFileEncryption;
+const mockUseEncryptionWorkflow = vi.mocked(
+  await import('../../hooks/useEncryptionWorkflow'),
+).useEncryptionWorkflow;
 
 describe('EncryptPage', () => {
-  const mockSelectFiles = vi.fn();
-  const mockEncryptFiles = vi.fn();
-  const mockReset = vi.fn();
+  const mockHandleFilesSelected = vi.fn();
+  const mockHandleEncryption = vi.fn();
+  const mockHandleReset = vi.fn();
   const mockClearError = vi.fn();
   const mockClearSelection = vi.fn();
+  const mockHandleKeyChange = vi.fn();
+  const mockHandleStepNavigation = vi.fn();
+  const mockSetShowAdvancedOptions = vi.fn();
+  const mockSetOutputPath = vi.fn();
+  const mockSetArchiveName = vi.fn();
 
   const defaultHookReturn = {
-    selectFiles: mockSelectFiles,
-    encryptFiles: mockEncryptFiles,
+    // State
+    selectedFiles: null,
+    selectedKeyId: '',
+    outputPath: '',
+    archiveName: '',
+    isEncrypting: false,
+    showAdvancedOptions: false,
+    setShowAdvancedOptions: mockSetShowAdvancedOptions,
+    encryptionResult: null,
+    
+    // From useFileEncryption
     isLoading: false,
     error: null,
     success: null,
     progress: null,
-    selectedFiles: null,
-    reset: mockReset,
     clearError: mockClearError,
     clearSelection: mockClearSelection,
+    setOutputPath: mockSetOutputPath,
+    setArchiveName: mockSetArchiveName,
+    
+    // From useToast
+    toasts: [],
+    removeToast: vi.fn(),
+    showInfo: vi.fn(),
+    showError: vi.fn(),
+    
+    // Computed
+    currentStep: 1,
+    
+    // Handlers
+    handleFilesSelected: mockHandleFilesSelected,
+    handleEncryption: mockHandleEncryption,
+    handleReset: mockHandleReset,
+    handleEncryptAnother: vi.fn(),
+    handleKeyChange: mockHandleKeyChange,
+    handleFileValidationError: vi.fn(),
+    
+    // Navigation handlers
+    handleStepNavigation: mockHandleStepNavigation,
+    canNavigateToStep: vi.fn(),
   };
 
   // Setup standardized Tauri environment
@@ -90,7 +125,7 @@ describe('EncryptPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseFileEncryption.mockReturnValue(defaultHookReturn);
+    mockUseEncryptionWorkflow.mockReturnValue(defaultHookReturn);
 
     // Initialize standardized Tauri mocking
     tauriEnv = createTauriTestEnvironment({
@@ -126,7 +161,7 @@ describe('EncryptPage', () => {
   describe('File Selection Workflow', () => {
     it('should allow user to change selected files after initial selection', () => {
       // With immediate auto-advance, files selected moves directly to step 2
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: {
           paths: ['/test/file.txt'],
@@ -146,7 +181,7 @@ describe('EncryptPage', () => {
   describe('Key Selection Workflow', () => {
     it('should enable key selection and update UI when user selects a key', async () => {
       // When files are selected, user automatically advances to step 2
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: {
           paths: ['/test/file.txt'],
@@ -171,7 +206,7 @@ describe('EncryptPage', () => {
   describe('Encryption Process', () => {
     it('should enable encrypt button when ready', () => {
       // With files selected, auto-advance to step 2 occurs
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: {
           paths: ['/test/file.txt'],
@@ -189,7 +224,7 @@ describe('EncryptPage', () => {
 
     it('should show encryption workflow progression', async () => {
       // Focus on user-visible workflow progression with auto-advance
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: {
           paths: ['/test/file.txt'],
@@ -211,8 +246,9 @@ describe('EncryptPage', () => {
     });
 
     it('should show progress during encryption', () => {
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
+        isEncrypting: true,
         progress: {
           operation_id: 'test-op',
           progress: 0.5,
@@ -224,12 +260,12 @@ describe('EncryptPage', () => {
       renderEncryptPage();
 
       expect(screen.getByTestId('encryption-progress')).toBeInTheDocument();
-      expect(screen.getByText('Progress: 0.5%')).toBeInTheDocument();
+      expect(screen.getByText('Creating Your Encrypted Vault')).toBeInTheDocument();
     });
 
     it('should handle workflow navigation', async () => {
       // Focus on user navigation capabilities in step-based flow
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: {
           paths: ['/test/file.txt'],
@@ -251,7 +287,7 @@ describe('EncryptPage', () => {
 
   describe('Error Handling', () => {
     it('should display errors', () => {
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         error: {
           code: ErrorCode.INVALID_INPUT,
@@ -270,7 +306,7 @@ describe('EncryptPage', () => {
   describe('User Feedback and Validation', () => {
     it('should provide clear feedback about encryption readiness', () => {
       // With immediate auto-advance, files selected moves directly to step 2
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: {
           paths: ['/test/file.txt', '/test/file2.txt'],
@@ -290,7 +326,7 @@ describe('EncryptPage', () => {
   describe('Environment-Specific Behavior', () => {
     it('should handle Tauri desktop environment correctly', async () => {
       // Already set up with isTauriEnv: true in beforeEach
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: null,
       });
@@ -310,7 +346,7 @@ describe('EncryptPage', () => {
       resetTauriMocks();
       tauriEnv = createTauriTestEnvironment({ isTauriEnv: false });
 
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: null,
       });
@@ -333,7 +369,7 @@ describe('EncryptPage', () => {
       expect(screen.getByText(/Drop files here/)).toBeInTheDocument();
 
       // After file selection, UI should update
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: MOCK_RESPONSES.fileSelection.multiple,
       });
@@ -345,9 +381,10 @@ describe('EncryptPage', () => {
     it('should handle progress events in Tauri environment', async () => {
       // Set up progress simulation
 
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: MOCK_RESPONSES.fileSelection.single,
+        isEncrypting: true,
         progress: {
           operation_id: 'encrypt-123',
           progress: 0.5,
@@ -360,7 +397,7 @@ describe('EncryptPage', () => {
 
       // Verify progress is displayed
       expect(screen.getByTestId('encryption-progress')).toBeInTheDocument();
-      expect(screen.getByText('Progress: 0.5%')).toBeInTheDocument();
+      expect(screen.getByText('Creating Your Encrypted Vault')).toBeInTheDocument();
 
       // Simulate progress update via Tauri event
       if (tauriEnv.progressSimulator) {
@@ -381,7 +418,7 @@ describe('EncryptPage', () => {
       };
 
       // Set up hook with error state after file selection attempt
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         error: error,
       });
@@ -403,7 +440,7 @@ describe('EncryptPage', () => {
 
       mockEncryptFiles.mockRejectedValue(error);
 
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: MOCK_RESPONSES.fileSelection.single,
         error: error,
@@ -426,7 +463,7 @@ describe('EncryptPage', () => {
         user_actionable: true,
       });
 
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: MOCK_RESPONSES.fileSelection.single,
       });
@@ -442,7 +479,7 @@ describe('EncryptPage', () => {
       // Mock listener setup failure
       tauriEnv.mocks.safeListen.mockRejectedValue(new Error('Failed to setup listener'));
 
-      mockUseFileEncryption.mockReturnValue({
+      mockUseEncryptionWorkflow.mockReturnValue({
         ...defaultHookReturn,
         selectedFiles: MOCK_RESPONSES.fileSelection.single,
       });
