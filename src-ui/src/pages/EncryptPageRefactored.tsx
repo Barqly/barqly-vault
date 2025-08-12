@@ -25,8 +25,7 @@ const ENCRYPTION_STEPS: ProgressStep[] = [
  * Inner component that uses the EncryptFlow context
  */
 const EncryptPageContent: React.FC = () => {
-  const { currentStep, completedSteps, navigateToStep, canNavigateToStep, resetFlow } =
-    useEncryptFlow();
+  const { currentStep, completedSteps, resetFlow } = useEncryptFlow();
 
   const {
     // From useFileEncryption
@@ -51,12 +50,6 @@ const EncryptPageContent: React.FC = () => {
     };
   }, [handleReset]);
 
-  const handleStepClick = (stepId: number) => {
-    if (canNavigateToStep(stepId)) {
-      navigateToStep(stepId);
-    }
-  };
-
   const handleEncryptMore = () => {
     resetFlow();
     handleReset();
@@ -72,7 +65,8 @@ const EncryptPageContent: React.FC = () => {
         steps={ENCRYPTION_STEPS}
         currentStep={currentStep}
         completedSteps={completedSteps}
-        onStepClick={handleStepClick}
+        onStepClick={undefined}
+        isClickable={false}
         variant="compact"
       />
 

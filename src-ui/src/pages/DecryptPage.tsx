@@ -5,12 +5,18 @@ import { ErrorCode } from '../lib/api-types';
 import ToastContainer from '../components/ui/ToastContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import AppHeader from '../components/common/AppHeader';
-import DecryptionProgressBar from '../components/decrypt/DecryptionProgressBar';
+import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
 import ProgressiveDecryptionCards from '../components/decrypt/ProgressiveDecryptionCards';
 import DecryptionReadyPanel from '../components/decrypt/DecryptionReadyPanel';
 import DecryptProgress from '../components/decrypt/DecryptProgress';
 import DecryptSuccess from '../components/decrypt/DecryptSuccess';
 import AnimatedTransition from '../components/ui/AnimatedTransition';
+
+const DECRYPTION_STEPS: ProgressStep[] = [
+  { id: 1, label: 'Select Vault', description: 'Choose vault to decrypt' },
+  { id: 2, label: 'Unlock with Key', description: 'Enter passphrase' },
+  { id: 3, label: 'Ready to Decrypt', description: 'Configure output location' },
+];
 
 /**
  * Main decryption page component
@@ -64,8 +70,15 @@ const DecryptPage: React.FC = () => {
       {/* Unified App Header */}
       <AppHeader screen="decrypt" includeSkipNav={true} skipNavTarget="#main-content" />
 
-      {/* Progress indicator */}
-      <DecryptionProgressBar currentStep={currentStep} />
+      {/* Progress Bar */}
+      <ProgressBar
+        steps={DECRYPTION_STEPS}
+        currentStep={currentStep}
+        completedSteps={new Set(Array.from({ length: currentStep - 1 }, (_, i) => i + 1))}
+        onStepClick={undefined}
+        isClickable={false}
+        variant="compact"
+      />
 
       {/* Main content */}
       <div className="max-w-4xl mx-auto px-6 py-8" id="main-content">

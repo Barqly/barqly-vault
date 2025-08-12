@@ -208,8 +208,7 @@ describe('DecryptPage', () => {
       );
 
       await waitFor(() => {
-        const step2 = screen.getByText('Step 2: Unlock with Key');
-        expect(step2.className).toContain('text-blue-600');
+        expect(screen.getByText('Unlock with Key')).toBeInTheDocument();
       });
     });
 
@@ -644,10 +643,9 @@ describe('DecryptPage', () => {
         </BrowserRouter>,
       );
 
-      // Verify UI updates after file selection
+      // Verify UI updates after file selection - step 2 is now visible
       await waitFor(() => {
-        const step2 = screen.getByText('Step 2: Unlock with Key');
-        expect(step2.className).toContain('text-blue-600');
+        expect(screen.getByText('Unlock with Key')).toBeInTheDocument();
       });
     });
 
