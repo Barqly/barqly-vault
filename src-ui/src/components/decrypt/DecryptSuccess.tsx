@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  CheckCircle,
-  FolderOpen,
-  Copy,
-  FileText,
-  Clock,
-  HardDrive,
-  ChevronDown,
-} from 'lucide-react';
+import { CheckCircle, FolderOpen, Copy, FileText, Clock, HardDrive } from 'lucide-react';
 import { DecryptionResult } from '../../lib/api-types';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
@@ -21,7 +13,6 @@ interface DecryptSuccessProps {
 const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnother, onClose }) => {
   const [showConfetti, setShowConfetti] = useState(true);
   const [copiedPath, setCopiedPath] = useState(false);
-  const [showAllFiles, setShowAllFiles] = useState(false);
   const [isContentReady, setIsContentReady] = useState(false);
   const responsiveStyles = useSuccessPanelSizing();
 
@@ -37,12 +28,6 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
       clearTimeout(contentTimer);
     };
   }, []);
-
-  const handleOpenFolder = () => {
-    // This would need Tauri command to open file explorer
-    // For now, we'll just copy the path
-    handleCopyPath();
-  };
 
   const handleCopyPath = async () => {
     try {
@@ -154,61 +139,18 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
                 <FolderOpen className="w-4 h-4" />
                 Saved to:
               </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleOpenFolder}
-                  className="px-2 py-1 text-xs font-medium text-blue-600 bg-white border border-blue-600 rounded hover:bg-blue-50 transition-colors"
-                >
-                  Open
-                </button>
-                <button
-                  onClick={handleCopyPath}
-                  className="px-2 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
-                >
-                  <Copy className="w-3 h-3" />
-                  {copiedPath ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
+              <button
+                onClick={handleCopyPath}
+                className="px-2 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
+              >
+                <Copy className="w-3 h-3" />
+                {copiedPath ? 'Copied!' : 'Copy'}
+              </button>
             </div>
             <p className="font-mono text-xs text-gray-800 break-all bg-white rounded px-2 py-1 border border-gray-200">
               {result.output_dir}
             </p>
           </div>
-
-          {/* Collapsible file list - prevents forced scrolling */}
-          {result.extracted_files.length > 0 && (
-            <div className="border border-gray-200 rounded-lg">
-              <button
-                onClick={() => setShowAllFiles(!showAllFiles)}
-                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">
-                    {result.extracted_files.length} recovered files
-                  </span>
-                </div>
-                <ChevronDown
-                  className={`w-4 h-4 text-gray-500 transition-transform ${
-                    showAllFiles ? 'transform rotate-180' : ''
-                  }`}
-                />
-              </button>
-
-              {showAllFiles && (
-                <div className="border-t border-gray-200 px-3 py-2 max-h-32 overflow-y-auto bg-gray-50">
-                  <ul className="space-y-1">
-                    {result.extracted_files.map((file, index) => (
-                      <li key={index} className="flex items-center gap-2 text-xs text-gray-600">
-                        <FileText className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                        <span className="font-mono truncate">{file.split('/').pop() || file}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Fixed action buttons at bottom */}
           <div className="flex justify-center gap-3 pt-3 border-t border-gray-200 bg-white sticky bottom-0">

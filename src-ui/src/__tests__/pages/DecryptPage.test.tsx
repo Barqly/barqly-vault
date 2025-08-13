@@ -422,19 +422,15 @@ describe('DecryptPage', () => {
       expect(screen.getByText('Files recovered and ready to use')).toBeInTheDocument();
     });
 
-    it('should show recovered file list', async () => {
+    it('should show file count in stats bar only', async () => {
       renderWithRouter(<DecryptPage />);
 
-      // Check that the file count is displayed
-      expect(screen.getByText('3 recovered files')).toBeInTheDocument();
+      // Check that the file count is displayed in the stats bar only
+      expect(screen.getByText('3 files')).toBeInTheDocument();
 
-      // Click to expand the file list
-      await userEvent.click(screen.getByText('3 recovered files'));
-
-      // Check that individual files are now visible
-      expect(screen.getByText('wallet-descriptor.json')).toBeInTheDocument();
-      expect(screen.getByText('seed-phrase.txt')).toBeInTheDocument();
-      expect(screen.getByText('xpub-keys.txt')).toBeInTheDocument();
+      // Verify that the expanded "recovered files" section no longer exists
+      expect(screen.queryByText('3 recovered files')).not.toBeInTheDocument();
+      expect(screen.queryByText('wallet-descriptor.json')).not.toBeInTheDocument();
     });
 
     it('should display output directory with copy functionality', () => {
