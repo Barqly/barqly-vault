@@ -102,7 +102,8 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
               <div className="flex items-center gap-1">
                 <FileText className="w-4 h-4 text-blue-600" />
                 <span className="text-sm font-medium text-gray-900">
-                  {result.extracted_files.length} files
+                  {result.extracted_files.length}{' '}
+                  {result.extracted_files.length === 1 ? 'file' : 'files'}
                 </span>
               </div>
               <div className="flex items-center gap-1">

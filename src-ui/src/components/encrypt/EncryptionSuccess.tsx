@@ -108,7 +108,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-gray-600">{duration}s</span>
+                <span className="text-sm text-gray-600">{Math.round(duration / 1000)}s</span>
               </div>
               <div className="flex items-center gap-1">
                 <HardDrive className="w-4 h-4 text-gray-500" />
