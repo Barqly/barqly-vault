@@ -49,17 +49,17 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
     <>
       <IconComponent
         className={`w-12 h-12 mb-4 transition-colors ${
-          isDragging ? 'text-blue-500' : 'text-gray-400'
+          isDragging ? 'text-blue-500' : 'text-slate-400'
         }`}
       />
 
-      {title && <p className="text-base font-medium text-gray-700 mb-2">{title}</p>}
+      {title && <p className="text-base font-medium text-slate-700 mb-2">{title}</p>}
 
-      <p className="text-base text-gray-700 mb-2">{dropText}</p>
+      <p className="text-base text-slate-700 mb-2">{dropText}</p>
 
-      {subtitle && <p className="text-sm text-gray-500 mb-3">{subtitle}</p>}
+      {subtitle && <p className="text-sm text-slate-500 mb-3">{subtitle}</p>}
 
-      <p className="text-sm text-gray-500 mb-1">- or -</p>
+      <p className="text-sm text-slate-500 mb-1">- or -</p>
 
       {/* Side-by-side buttons with unified styling for cohesion */}
       <div className={`flex items-center justify-center mt-3 ${showFolderButton ? 'gap-3' : ''}`}>
@@ -79,7 +79,7 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
             ${
               !disabled
                 ? 'border border-blue-600 text-blue-600 bg-white hover:bg-blue-50/50 hover:border-blue-700 active:bg-blue-50/80'
-                : 'border border-gray-300 text-gray-400 bg-white cursor-not-allowed'
+                : 'border border-slate-300 text-slate-400 bg-white cursor-not-allowed'
             }
           `}
         >
@@ -101,7 +101,7 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
               ${
                 !disabled
                   ? 'border border-blue-600 text-blue-600 bg-white hover:bg-blue-50/50 hover:border-blue-700 active:bg-blue-50/80'
-                  : 'border border-gray-300 text-gray-400 bg-white cursor-not-allowed'
+                  : 'border border-slate-300 text-slate-400 bg-white cursor-not-allowed'
               }
             `}
           >

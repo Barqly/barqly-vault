@@ -54,7 +54,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       case 'visited':
         return `${baseClasses} bg-blue-200 text-blue-700`;
       case 'upcoming':
-        return `${baseClasses} bg-gray-200 text-gray-400`;
+        return `${baseClasses} bg-slate-200 text-slate-400`;
       default:
         return baseClasses;
     }
@@ -82,12 +82,12 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                       isClickable ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
                     } ${
                       status === 'current'
-                        ? 'bg-blue-50 text-blue-700 font-medium'
+                        ? 'bg-blue-50 text-blue-600 font-medium border border-blue-600'
                         : status === 'completed'
                           ? 'text-green-600'
                           : status === 'visited'
                             ? 'text-blue-600'
-                            : 'text-gray-400'
+                            : 'text-slate-500'
                     }`}
                     onClick={() => isClickable && onStepClick?.(step.id)}
                     disabled={!isClickable}
@@ -100,7 +100,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
 
                   {index < steps.length - 1 && (
                     <div className="flex-1 mx-2">
-                      <div className="h-0.5 bg-gray-200 rounded-full">
+                      <div className="h-0.5 bg-slate-200 rounded-full">
                         <div
                           className="h-full bg-blue-600 rounded-full transition-all duration-500"
                           style={{
@@ -124,7 +124,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       <div className="max-w-4xl mx-auto px-6 py-6">
         <div className="relative">
           {/* Progress line background */}
-          <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200 rounded-full" />
+          <div className="absolute top-5 left-0 right-0 h-1 bg-slate-200 rounded-full" />
 
           {/* Animated progress line */}
           <div
@@ -161,16 +161,18 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                     <p
                       className={`text-sm font-medium ${
                         status === 'current'
-                          ? 'text-blue-700'
+                          ? 'text-blue-600'
                           : status === 'completed' || status === 'visited'
-                            ? 'text-gray-700'
-                            : 'text-gray-400'
+                            ? 'text-slate-700'
+                            : 'text-slate-500'
                       }`}
                     >
                       {step.label}
                     </p>
                     {step.description && status === 'current' && (
-                      <p className="text-xs text-gray-500 mt-1 max-w-[150px]">{step.description}</p>
+                      <p className="text-xs text-slate-500 mt-1 max-w-[150px]">
+                        {step.description}
+                      </p>
                     )}
                   </div>
                 </div>

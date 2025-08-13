@@ -73,12 +73,12 @@ const screenDefaults: Record<
   encrypt: {
     title: 'Encrypt Your Vault',
     icon: Lock,
-    trustBadges: universalTrustBadges, // Unified trust indicators
+    trustBadges: [], // Hide trust badges to use tagline instead
   },
   decrypt: {
     title: 'Decrypt Your Vault',
     icon: Unlock,
-    trustBadges: universalTrustBadges, // Unified trust indicators
+    trustBadges: [], // Hide trust badges to use tagline instead
   },
 };
 
@@ -126,27 +126,35 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="flex items-center justify-between">
           {/* Left side: Icon and Title */}
           <div className="flex items-center gap-3">
-            <Icon className="w-6 h-6 text-blue-600 flex-shrink-0" aria-hidden="true" />
+            <Icon className="h-5 w-5 text-blue-600 flex-shrink-0" aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight">{finalTitle}</h1>
+              <h1 className="text-slate-800 text-2xl md:text-[28px] font-semibold leading-tight">
+                {finalTitle}
+              </h1>
               {showSubtitle && (
                 <p className="text-sm text-gray-700 mt-1 leading-tight">{finalSubtitle}</p>
               )}
             </div>
           </div>
 
-          {/* Right side: Trust Badges */}
-          {finalTrustBadges.length > 0 && (
-            <div className="flex items-center gap-4 ml-6">
-              {finalTrustBadges.map((badge, index) => (
-                <TrustBadge
-                  key={`${badge.label}-${index}`}
-                  icon={badge.icon}
-                  label={badge.label}
-                  tooltip={badge.tooltip}
-                />
-              ))}
-            </div>
+          {/* Right side: Trust Badges or Tagline */}
+          {screen === 'encrypt' || screen === 'decrypt' ? (
+            <span className="text-sm text-slate-500 font-normal">
+              Secure file encryption for Bitcoin custody
+            </span>
+          ) : (
+            finalTrustBadges.length > 0 && (
+              <div className="flex items-center gap-4 ml-6">
+                {finalTrustBadges.map((badge, index) => (
+                  <TrustBadge
+                    key={`${badge.label}-${index}`}
+                    icon={badge.icon}
+                    label={badge.label}
+                    tooltip={badge.tooltip}
+                  />
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>

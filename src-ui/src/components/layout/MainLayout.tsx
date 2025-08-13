@@ -37,9 +37,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">Barqly Vault</h1>
+              <h1 className="text-xl font-semibold text-slate-800">Barqly Vault</h1>
             </div>
-            <div className="text-sm text-gray-500">Secure file encryption for Bitcoin custody</div>
           </div>
         </div>
       </header>
@@ -58,8 +57,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   to={item.path}
                   className={`flex items-center px-3 py-4 text-sm font-medium border-b-2 transition-colors ${
                     isActive
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                   }`}
                 >
                   <Icon className="w-4 h-4 mr-2" />

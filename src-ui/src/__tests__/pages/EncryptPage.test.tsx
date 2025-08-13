@@ -144,11 +144,9 @@ describe('EncryptPage', () => {
     it('should display trust indicators to build user confidence', () => {
       renderEncryptPage();
 
-      // Verify trust-building elements are visible
+      // Verify header elements are visible
       expect(screen.getByText('Encrypt Your Vault')).toBeInTheDocument();
-      expect(screen.getByText('Military-grade')).toBeInTheDocument();
-      expect(screen.getByText('Local-only')).toBeInTheDocument();
-      expect(screen.getByText('Zero network')).toBeInTheDocument();
+      expect(screen.getByText('Secure file encryption for Bitcoin custody')).toBeInTheDocument();
     });
   });
 
