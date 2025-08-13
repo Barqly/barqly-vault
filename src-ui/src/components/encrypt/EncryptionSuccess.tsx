@@ -201,10 +201,6 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
                 <span>Key used:</span>
                 <span className="font-medium truncate max-w-32">{keyUsed}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Algorithm:</span>
-                <span className="font-medium">age v1.0 (X25519, ChaCha20Poly1305)</span>
-              </div>
             </div>
           </div>
 
