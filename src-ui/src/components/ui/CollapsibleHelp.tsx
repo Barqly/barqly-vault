@@ -56,7 +56,7 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
         `}
         aria-hidden={!isOpen}
       >
-        <div className="rounded-xl border border-blue-100 bg-blue-50 p-5 md:p-6">
+        <div className="rounded-xl border border-blue-100 bg-blue-50/80 p-5 md:p-6">
           <h3 className="mb-4 text-base font-semibold text-blue-800">
             How Bitcoin Legacy Protection Works
           </h3>
@@ -73,14 +73,14 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
                   </span>
                 </div>
                 <p
-                  className="text-sm text-blue-800 leading-relaxed"
+                  className="text-sm text-slate-700 leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: step.description }}
                 ></p>
               </div>
             ))}
           </div>
 
-          <p className="mt-4 border-t border-slate-200 pt-3 text-xs text-slate-500">
+          <p className="mt-4 border-t border-slate-200 pt-3 text-xs text-slate-500 italic">
             <span className="font-semibold">Security Note:</span> Your private key never leaves this
             device. Share your public key only with trusted individuals.
           </p>

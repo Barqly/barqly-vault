@@ -30,11 +30,11 @@ export const DropdownButton: React.FC<DropdownButtonProps> = ({
       onKeyDown={onKeyDown}
       disabled={disabled || loading}
       className={`
-        w-full px-3 py-2 border rounded-md shadow-sm text-left
+        w-full px-3 py-2 border rounded-lg shadow-sm text-left
         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-        disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-        ${errorMessage ? 'border-red-400' : 'border-gray-400'}
-        ${disabled ? 'bg-gray-50' : 'bg-white'}
+        disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
+        ${errorMessage ? 'border-red-400' : 'border-slate-300'}
+        ${disabled ? 'bg-slate-50' : 'bg-white'}
         ${loading ? 'cursor-wait' : 'cursor-pointer'}
       `}
       aria-haspopup="listbox"
@@ -46,22 +46,22 @@ export const DropdownButton: React.FC<DropdownButtonProps> = ({
           {loading ? (
             <div className="flex items-center gap-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              <span className="text-gray-500">Loading keys...</span>
+              <span className="text-slate-500">Loading keys...</span>
             </div>
           ) : selectedKey ? (
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Key className="h-4 w-4 text-blue-600 flex-shrink-0" />
-              <span className="truncate">{selectedKey.label}</span>
+              <span className="truncate text-slate-800 font-medium">{selectedKey.label}</span>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Key className="h-4 w-4 text-gray-400 flex-shrink-0" />
-              <span className="text-gray-500">{placeholder}</span>
+              <Key className="h-4 w-4 text-slate-400 flex-shrink-0" />
+              <span className="text-slate-500 italic">{placeholder}</span>
             </div>
           )}
         </div>
         <ChevronDown
-          className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+          className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />

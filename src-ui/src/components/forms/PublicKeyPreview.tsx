@@ -15,20 +15,20 @@ export const PublicKeyPreview: React.FC<PublicKeyPreviewProps> = ({
   truncateKey,
 }) => {
   return (
-    <div className="mt-2 p-3 bg-gray-50 rounded-md">
+    <div className="mt-2 p-3 bg-slate-50 rounded-lg">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-700">Public Key</span>
+        <span className="text-sm font-medium text-slate-700">Public Key</span>
         <button
           type="button"
           onClick={onTogglePreview}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
+          className="text-slate-500 hover:text-slate-700 transition-colors"
           aria-label={showPreview ? 'Hide public key' : 'Show public key'}
         >
           {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
       </div>
       {showPreview && (
-        <div className="text-xs font-mono text-gray-600 break-all">{truncateKey(publicKey)}</div>
+        <div className="text-xs font-mono text-slate-700 break-all">{truncateKey(publicKey)}</div>
       )}
     </div>
   );

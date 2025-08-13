@@ -77,7 +77,7 @@ const DestinationSelector: React.FC<DestinationSelectorProps> = ({
   return (
     <div className="space-y-4">
       <div>
-        <label htmlFor="output-path" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="output-path" className="block text-sm font-medium text-slate-700 mb-2">
           Save encrypted vault to:
         </label>
         <div className="flex gap-2">
@@ -88,23 +88,23 @@ const DestinationSelector: React.FC<DestinationSelectorProps> = ({
             onChange={handlePathChange}
             placeholder={defaultPath || 'Enter output directory path'}
             disabled={disabled}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+            className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500"
             aria-label="Output directory path"
           />
           <button
             type="button"
             onClick={handleBrowse}
             disabled={disabled}
-            className="px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             aria-label="Browse for output directory"
           >
-            <FolderOpen className="w-5 h-5 text-gray-600" />
+            <FolderOpen className="w-5 h-5 text-slate-600" />
           </button>
         </div>
       </div>
 
       <div>
-        <label htmlFor="archive-name" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="archive-name" className="block text-sm font-medium text-slate-700 mb-2">
           Archive name (optional):
         </label>
         <input
@@ -114,13 +114,13 @@ const DestinationSelector: React.FC<DestinationSelectorProps> = ({
           onChange={handleNameChange}
           placeholder="family-bitcoin-backup"
           disabled={disabled}
-          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500"
           aria-label="Archive name"
         />
         <div className="mt-2 flex items-start gap-1">
-          <Info className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-gray-500">
-            Will be saved as: <span className="font-mono text-gray-600">{finalFileName}</span>
+          <Info className="w-3 h-3 text-slate-400 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-slate-500">
+            Will be saved as: <span className="font-mono text-slate-600">{finalFileName}</span>
           </p>
         </div>
       </div>

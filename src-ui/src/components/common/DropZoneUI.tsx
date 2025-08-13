@@ -48,14 +48,14 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
   return (
     <>
       <IconComponent
-        className={`w-12 h-12 mb-4 transition-colors ${
+        className={`w-12 h-12 mb-2 transition-colors ${
           isDragging ? 'text-blue-500' : 'text-slate-400'
         }`}
       />
 
       {title && <p className="text-base font-medium text-slate-700 mb-2">{title}</p>}
 
-      <p className="text-base text-slate-700 mb-2">{dropText}</p>
+      <p className="text-base text-slate-600 mb-2">{dropText}</p>
 
       {subtitle && <p className="text-sm text-slate-500 mb-3">{subtitle}</p>}
 

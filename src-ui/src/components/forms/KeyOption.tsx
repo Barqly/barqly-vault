@@ -21,7 +21,7 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
       aria-selected={isSelected}
       className={`
         px-3 py-2 cursor-pointer hover:bg-blue-50
-        ${isSelected ? 'bg-blue-100 text-blue-900' : 'text-gray-900'}
+        ${isSelected ? 'bg-blue-100 text-blue-900' : 'text-slate-800'}
       `}
       onClick={() => onSelect(keyData.label)}
     >
@@ -29,7 +29,7 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
         <Key className="h-4 w-4 text-blue-600 flex-shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="font-medium truncate">{keyData.label}</div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
             <Calendar className="h-3 w-3" />
             <span>{formatDate(keyData.created_at)}</span>
           </div>

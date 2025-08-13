@@ -82,7 +82,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                       isClickable ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
                     } ${
                       status === 'current'
-                        ? 'bg-blue-50 text-blue-600 font-medium border border-blue-600'
+                        ? 'bg-blue-50 text-blue-600 font-semibold border border-blue-600'
                         : status === 'completed'
                           ? 'text-green-600'
                           : status === 'visited'
@@ -159,12 +159,12 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                   {/* Step label */}
                   <div className="mt-3 text-center">
                     <p
-                      className={`text-sm font-medium ${
+                      className={`text-sm ${
                         status === 'current'
-                          ? 'text-blue-600'
+                          ? 'text-blue-600 font-semibold'
                           : status === 'completed' || status === 'visited'
-                            ? 'text-slate-700'
-                            : 'text-slate-500'
+                            ? 'text-slate-700 font-medium'
+                            : 'text-slate-500 font-medium'
                       }`}
                     >
                       {step.label}
