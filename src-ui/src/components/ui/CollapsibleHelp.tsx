@@ -1,43 +1,34 @@
 import React, { useState } from 'react';
-import { Info, ChevronDown, Key, Lock, Share2 } from 'lucide-react';
+import { Info, ChevronDown } from 'lucide-react';
 
 interface CollapsibleHelpProps {
   /** Custom trigger text */
   triggerText?: string;
-  /** Show detailed steps or simplified version */
-  detailed?: boolean;
 }
 
 const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
   triggerText = 'Learn what happens next',
-  detailed = true,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const steps = [
     {
       number: '1',
-      icon: Key,
       title: 'Key Generation',
-      description: 'Your encryption keypair is created and securely stored on your device.',
-      detail:
-        'Uses industry-standard age encryption with your passphrase protecting the private key.',
+      description:
+        '<span class="font-semibold">Your keypair is created and stored securely</span> on this device. Uses industry-standard <code>age</code> encryption. Your passphrase protects the private key.',
     },
     {
       number: '2',
-      icon: Lock,
       title: 'File Encryption',
       description:
-        'Use your key to encrypt important files like wallet backups and recovery information.',
-      detail: 'Files are compressed, archived, and encrypted in a single secure bundle.',
+        '<span class="font-semibold">Encrypt important files or entire folders</span> like wallet backups or recovery docs. Files are compressed and locked into a single secure bundle.',
     },
     {
       number: '3',
-      icon: Share2,
       title: 'Secure Storage',
       description:
-        'Store encrypted files safely and share the public key with trusted family members.',
-      detail: 'Only those with your private key and passphrase can decrypt your files.',
+        '<span class="font-semibold">Store encrypted files safely</span> and share your public key with trusted family. Only your private key + passphrase can unlock your files.',
     },
   ];
 
@@ -65,33 +56,34 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
         `}
         aria-hidden={!isOpen}
       >
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-4">
+        <div className="rounded-xl border border-blue-100 bg-blue-50 p-5 md:p-6">
+          <h3 className="mb-4 text-base font-semibold text-blue-800">
             How Bitcoin Legacy Protection Works
           </h3>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
             {steps.map((step) => (
-              <div key={step.number} className="text-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-6 h-6 bg-blue-600 text-white text-xs font-bold rounded-full">
+              <div key={step.number}>
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-semibold text-blue-800 ring-1 ring-slate-200">
                     {step.number}
-                  </div>
-                  <step.icon className="h-4 w-4 text-blue-600" aria-hidden="true" />
-                  <h4 className="font-medium text-blue-900">{step.title}</h4>
+                  </span>
+                  <span className="text-sm md:text-base font-semibold text-blue-800">
+                    {step.title}
+                  </span>
                 </div>
-                <p className="text-blue-800 mb-2">{step.description}</p>
-                {detailed && <p className="text-blue-700 text-xs">{step.detail}</p>}
+                <p
+                  className="text-sm text-blue-800 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: step.description }}
+                ></p>
               </div>
             ))}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-blue-150">
-            <p className="text-xs text-blue-700">
-              <strong>Security Note:</strong> Your private key never leaves this device. Only share
-              your public key with trusted individuals.
-            </p>
-          </div>
+          <p className="mt-4 border-t border-slate-200 pt-3 text-xs text-slate-500">
+            <span className="font-semibold">Security Note:</span> Your private key never leaves this
+            device. Share your public key only with trusted individuals.
+          </p>
         </div>
       </div>
     </div>

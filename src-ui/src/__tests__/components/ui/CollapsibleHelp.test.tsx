@@ -63,22 +63,25 @@ describe('CollapsibleHelp', () => {
     expect(screen.getByText('Secure Storage')).toBeInTheDocument();
   });
 
-  it('shows detailed information when detailed prop is true', () => {
-    render(<CollapsibleHelp detailed={true} />);
+  it('shows merged paragraph content for each step', () => {
+    render(<CollapsibleHelp />);
 
     fireEvent.click(screen.getByRole('button', { name: /learn what happens next/i }));
 
-    expect(screen.getByText(/Uses industry-standard age encryption/)).toBeInTheDocument();
-    expect(screen.getByText(/Files are compressed, archived/)).toBeInTheDocument();
-    expect(screen.getByText(/Only those with your private key/)).toBeInTheDocument();
+    expect(screen.getByText(/Your keypair is created and stored securely/)).toBeInTheDocument();
+    expect(screen.getByText(/Uses industry-standard/)).toBeInTheDocument();
+    expect(screen.getByText(/Files are compressed and locked/)).toBeInTheDocument();
   });
 
-  it('hides detailed information when detailed prop is false', () => {
-    render(<CollapsibleHelp detailed={false} />);
+  it('shows all content in merged paragraphs (no conditional detailed content)', () => {
+    render(<CollapsibleHelp />);
 
     fireEvent.click(screen.getByRole('button', { name: /learn what happens next/i }));
 
-    expect(screen.queryByText(/Uses industry-standard age encryption/)).not.toBeInTheDocument();
+    // All content should be visible since we merged everything into single paragraphs
+    expect(screen.getByText(/Uses industry-standard/)).toBeInTheDocument();
+    expect(screen.getByText(/Files are compressed and locked/)).toBeInTheDocument();
+    expect(screen.getByText(/Only your private key.*passphrase can unlock/)).toBeInTheDocument();
   });
 
   it('has proper accessibility attributes', () => {
@@ -99,7 +102,7 @@ describe('CollapsibleHelp', () => {
 
     expect(screen.getByText(/Your private key never leaves this device/)).toBeInTheDocument();
     expect(
-      screen.getByText(/Only share your public key with trusted individuals/),
+      screen.getByText(/Share your public key only with trusted individuals/),
     ).toBeInTheDocument();
   });
 });

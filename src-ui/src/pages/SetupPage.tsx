@@ -88,7 +88,7 @@ const SetupPage: React.FC = () => {
           {/* Collapsible Help Section */}
           {!success && (
             <div className="mt-4 text-center">
-              <CollapsibleHelp triggerText="How does this work?" detailed={false} />
+              <CollapsibleHelp triggerText="How does this work?" />
             </div>
           )}
         </div>
