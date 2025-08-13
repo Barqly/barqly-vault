@@ -2,7 +2,7 @@
 
 **Date:** January 6, 2025  
 **Issue:** Tauri v2 drag-and-drop functionality not working  
-**Status:** ✅ Resolved (after significant time waste)  
+**Status:** ✅ Resolved (after significant time waste)
 
 ---
 

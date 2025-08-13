@@ -1,6 +1,6 @@
 # Definition of Done
 
-*Mandatory completion checklist for ALL tasks - enforced by agents and humans*
+_Mandatory completion checklist for ALL tasks - enforced by agents and humans_
 
 ## CRITICAL: No Task is Complete Until Documentation is Updated
 
@@ -11,17 +11,17 @@ required_updates:
   1_project_status:
     file: "/docs/project-plan.md"
     action: "Mark completed items with [x], update progress percentages"
-    
+
   2_context_current:
     files:
       - "/docs/context/current/active-sprint.md"
       - "/docs/context/current/recent-decisions.md"
     action: "Add completed work, decisions made, approaches taken"
-    
+
   3_master_context:
     file: "/context.md"
     action: "Update 'Current State' or 'Active Development' if significant"
-    
+
   4_domain_context:
     file: "/docs/{domain}/context.md"
     action: "Update based on work domain (architecture/engineering/product)"
@@ -55,11 +55,11 @@ validate_documentation:
   check_project_plan:
     command: "grep -c '\\[x\\]' docs/project-plan.md"
     expectation: "Count should increase after task"
-    
+
   check_recent_updates:
     command: "git diff --name-only docs/context/current/"
     expectation: "Should show modified files"
-    
+
   check_commit_message:
     command: "git log -1 --pretty=%B | grep -c 'Updated'"
     expectation: "Should mention documentation updates"
@@ -67,38 +67,47 @@ validate_documentation:
 
 ### 📊 Update Triggers by Task Type
 
-| Task Type | Required Updates | Optional Updates |
-|-----------|-----------------|------------------|
+| Task Type                  | Required Updates                                          | Optional Updates                     |
+| -------------------------- | --------------------------------------------------------- | ------------------------------------ |
 | **Feature Implementation** | project-plan.md, active-sprint.md, engineering/context.md | architecture/technology-decisions.md |
-| **Bug Fix** | known-issues.md, recent-decisions.md | retrospectives/ |
-| **Architecture Change** | architecture/context.md, technology-decisions.md, ADDs | security-foundations.md |
-| **Testing** | project-plan.md, quality-standards.md | test-strategy.md |
-| **Documentation** | context.md, relevant domain contexts | all affected docs |
-| **Refactoring** | recent-decisions.md, engineering/context.md | architecture/context.md |
+| **Bug Fix**                | known-issues.md, recent-decisions.md                      | retrospectives/                      |
+| **Architecture Change**    | architecture/context.md, technology-decisions.md, ADDs    | security-foundations.md              |
+| **Testing**                | project-plan.md, quality-standards.md                     | test-strategy.md                     |
+| **Documentation**          | context.md, relevant domain contexts                      | all affected docs                    |
+| **Refactoring**            | recent-decisions.md, engineering/context.md               | architecture/context.md              |
 
 ### 🔄 Context Update Examples
 
 #### After Implementing a Feature:
+
 ```markdown
 # In /docs/context/current/active-sprint.md
+
 ## Completed This Sprint
+
 - ✅ Implemented batch file encryption (2025-01-15)
   - Added parallel processing for multiple files
   - Performance: 10x improvement for >10 files
   - See: src-tauri/src/commands/batch.rs
 
 # In /docs/engineering/context.md
+
 ## Recent Implementations
+
 ### Batch Operations (January 2025)
+
 - Parallel encryption using Rayon
 - Memory-efficient streaming for large files
 - Progress tracking with debounced updates
 ```
 
 #### After Fixing a Bug:
+
 ```markdown
 # In /docs/context/current/known-issues.md
+
 ## Resolved Issues
+
 - ~~File selection fails on Windows with spaces in path~~ (Fixed 2025-01-15)
   - Root cause: Improper path escaping
   - Solution: Added proper Windows path handling
@@ -108,6 +117,7 @@ validate_documentation:
 ### 🚨 Enforcement Rules
 
 1. **CI/CD Integration** (Future):
+
    ```yaml
    - name: Check Documentation Updates
      run: |
@@ -118,6 +128,7 @@ validate_documentation:
    ```
 
 2. **Pre-commit Hook**:
+
    ```bash
    # Already enforced via make validate
    # Add documentation check to validation
@@ -146,6 +157,7 @@ validate_documentation:
 ### 🔍 Verification Questions for Agents
 
 Before closing any task, answer:
+
 1. Did I update project-plan.md with completed items?
 2. Did I update the current sprint status?
 3. Did I document any decisions or trade-offs?

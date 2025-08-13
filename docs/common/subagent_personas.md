@@ -7,54 +7,61 @@ This document provides a quick overview of all personas in the ZenAI framework. 
 ## 🧑‍💻 Human Persona
 
 **1. Manager**  
-*Oversees the overall system, coordinates ZenAI agents, sets priorities, and provides human-in-the-loop judgment at approval gates.*
+_Oversees the overall system, coordinates ZenAI agents, sets priorities, and provides human-in-the-loop judgment at approval gates._
 
 ---
 
 ## 🤖 AI Personas (SubAgents)
 
 ### Core Orchestration
+
 **2. ZenMaster**  
-*Orchestrates team collaboration, routes tasks between specialists, manages project lifecycle, and enforces quality gates.*
+_Orchestrates team collaboration, routes tasks between specialists, manages project lifecycle, and enforces quality gates._
 
 ### Business & Strategy Layer
+
 **3. Customer Advocate**  
-*Represents end-user perspective, validates solutions against real-world needs, and ensures customer-centric decision making.*
+_Represents end-user perspective, validates solutions against real-world needs, and ensures customer-centric decision making._
 
 **4. Product Owner**  
-*Translates customer needs into actionable requirements, creates user stories, maintains product roadmap, and defines acceptance criteria.*
+_Translates customer needs into actionable requirements, creates user stories, maintains product roadmap, and defines acceptance criteria._
 
 ### Design & User Experience
+
 **5. UX Designer**  
-*Designs end-to-end user experiences, creates wireframes and mockups, defines interaction patterns, and ensures accessibility compliance.*
+_Designs end-to-end user experiences, creates wireframes and mockups, defines interaction patterns, and ensures accessibility compliance._
 
 **6. Frontend Engineer**  
-*Implements user-facing experiences, converts designs into responsive code, handles state management, and creates reusable components.*
+_Implements user-facing experiences, converts designs into responsive code, handles state management, and creates reusable components._
 
 ### Architecture & Foundation
+
 **7. System Architect**  
-*Designs system structure and scalability strategies, creates technical specifications, sets up project foundations, and evaluates existing architectures.*
+_Designs system structure and scalability strategies, creates technical specifications, sets up project foundations, and evaluates existing architectures._
 
 **8. Research Engineer**  
-*Investigates latest technologies and industry trends, validates technology choices, conducts stack assessments, and provides upgrade recommendations.*
+_Investigates latest technologies and industry trends, validates technology choices, conducts stack assessments, and provides upgrade recommendations._
 
 ### Development & Implementation
+
 **9. Backend Engineer**  
-*Develops server-side services and APIs, implements business logic, handles database interactions, and ensures scalable backend architecture.*
+_Develops server-side services and APIs, implements business logic, handles database interactions, and ensures scalable backend architecture._
 
 **10. DevOps Engineer**  
-*Manages infrastructure-as-code, development automation, CI/CD pipelines, deployment strategies, release management, and production operations from code commit to system maintenance.*
+_Manages infrastructure-as-code, development automation, CI/CD pipelines, deployment strategies, release management, and production operations from code commit to system maintenance._
 
 ### Quality & Security
+
 **11. QA Engineer**  
-*Designs comprehensive testing strategies, performs quality assurance validation, creates test cases, conducts load testing and performance profiling, identifies bottlenecks, and ensures acceptance criteria and SLA requirements are met.*
+_Designs comprehensive testing strategies, performs quality assurance validation, creates test cases, conducts load testing and performance profiling, identifies bottlenecks, and ensures acceptance criteria and SLA requirements are met._
 
 **12. Security Engineer**  
-*Performs threat modeling and security audits, implements secure-by-design principles, conducts vulnerability assessments, and ensures compliance.*
+_Performs threat modeling and security audits, implements secure-by-design principles, conducts vulnerability assessments, and ensures compliance._
 
 ### Documentation & Communication
+
 **13. Technical Writer**  
-*Creates comprehensive internal documentation, API references, architectural decision records, manages external technical content, handles developer relations, and builds community engagement.*
+_Creates comprehensive internal documentation, API references, architectural decision records, manages external technical content, handles developer relations, and builds community engagement._
 
 ---
 
@@ -75,4 +82,4 @@ This document provides a quick overview of all personas in the ZenAI framework. 
 
 ---
 
-*This reference guide is maintained as part of the ZenAI framework. For detailed implementation guidance, see individual persona documentation and the master documentation standards.*
+_This reference guide is maintained as part of the ZenAI framework. For detailed implementation guidance, see individual persona documentation and the master documentation standards._

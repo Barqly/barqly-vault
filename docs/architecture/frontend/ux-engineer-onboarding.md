@@ -7,19 +7,25 @@ As a UX engineer working on **Module 4 and above**, you only need to focus on th
 ## 📚 **Documentation Flow**
 
 ### **🎯 Start Here: This Onboarding Guide**
+
 **File**: `UX-Engineer-Onboarding.md` (this file)
+
 - **Purpose**: Your complete guide to getting started
 - **Contains**: Everything you need to know, with references to other docs
 - **Use when**: First time joining the team, need to understand the approach
 
 ### **📋 Quick Reference (After Onboarding)**
+
 **File**: `API-Quick-Reference.md`
+
 - **Purpose**: Fast lookup for commands and patterns
 - **Contains**: Command tables, common workflows, error handling patterns
 - **Use when**: Daily development, looking up specific commands
 
 ### **📖 Complete API Documentation (When You Need Details)**
+
 **File**: `API-Interfaces-Backend.md`
+
 - **Purpose**: Comprehensive reference for all available interfaces
 - **Contains**: Detailed type definitions, usage examples, security guidelines
 - **Use when**: Need detailed information about specific interfaces
@@ -27,17 +33,20 @@ As a UX engineer working on **Module 4 and above**, you only need to focus on th
 ## 🔧 **Generated TypeScript Types**
 
 ### **Location**
+
 ```
 src-tauri/target/debug/build/barqly-vault-*/out/generated/types.ts
 ```
 
 ### **How to Generate**
+
 ```bash
 cd src-tauri
 cargo build --features generate-types
 ```
 
 ### **What This Contains**
+
 - **All TypeScript interfaces** for commands
 - **Error handling types** and enums
 - **Progress tracking types**
@@ -46,9 +55,11 @@ cargo build --features generate-types
 ## 🚀 **Getting Started (3 Steps)**
 
 ### **Step 1: Read the Quick Reference**
+
 Start with `API-Quick-Reference.md` to understand the available commands and basic patterns.
 
 ### **Step 2: Generate TypeScript Definitions**
+
 ```bash
 # From project root
 cargo build --features generate-types
@@ -59,26 +70,32 @@ cargo build --features generate-types
 ```
 
 ### **Step 3: Start Building**
+
 ```typescript
 // Import the generated types (copy from generated file to src-ui/src/lib/api-types.ts)
-import { invokeCommand, CommandError, ErrorCode } from '@/lib/api-types';
+import { invokeCommand, CommandError, ErrorCode } from "@/lib/api-types";
 
 // Or import directly from generated file
-import { invokeCommand, CommandError, ErrorCode } from '../../../src-tauri/target/debug/build/barqly-vault-*/out/generated/types';
+import {
+  invokeCommand,
+  CommandError,
+  ErrorCode,
+} from "../../../src-tauri/target/debug/build/barqly-vault-*/out/generated/types";
 ```
 
 // Example: Generate a key
 try {
-  const key = await invokeCommand('generate_key', {
-    label: 'My Key',
-    passphrase: 'secure-passphrase'
-  });
-  console.log('Key generated:', key.key_id);
+const key = await invokeCommand('generate_key', {
+label: 'My Key',
+passphrase: 'secure-passphrase'
+});
+console.log('Key generated:', key.key_id);
 } catch (error) {
-  if (error instanceof CommandError) {
-    console.error('Error:', error.message);
-  }
+if (error instanceof CommandError) {
+console.error('Error:', error.message);
 }
+}
+
 ```
 
 ## 📋 **Available Commands Summary**
@@ -161,10 +178,12 @@ try {
 ## 📖 **Documentation Structure**
 
 ```
+
 barqly-vault.wiki/Architecture/
-├── API-Quick-Reference.md          # Start here - quick overview
-├── API-Interfaces-Backend.md       # Complete API documentation
-└── UX-Engineer-Onboarding.md       # This file - onboarding guide
+├── API-Quick-Reference.md # Start here - quick overview
+├── API-Interfaces-Backend.md # Complete API documentation
+└── UX-Engineer-Onboarding.md # This file - onboarding guide
+
 ```
 
 ## 🎯 **Key Principles**
@@ -200,4 +219,5 @@ You have everything you need to build a great user experience without worrying a
 
 ---
 
-*This guide is designed to get you up and running quickly. For detailed API information, see the other documentation files.* 
+*This guide is designed to get you up and running quickly. For detailed API information, see the other documentation files.*
+```

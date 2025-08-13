@@ -125,11 +125,11 @@ export interface KeySelectorProps {
 
 // File Selector
 export interface FileSelectorProps {
-  mode: 'files' | 'folder' | null;
+  mode: "files" | "folder" | null;
   selection: FileSelection | null;
   onSelect: () => void;
   onClear: () => void;
-  onModeChange: (mode: 'files' | 'folder') => void;
+  onModeChange: (mode: "files" | "folder") => void;
 }
 
 // Encryption Options
@@ -149,7 +149,7 @@ export interface DecryptFileInputProps {
   file: File | null;
   onSelect: () => void;
   onClear: () => void;
-  accept: '.age';
+  accept: ".age";
 }
 
 // Passphrase Input
@@ -184,13 +184,13 @@ export interface ProgressModalProps {
 export interface ErrorDisplayProps {
   error: AppError;
   onDismiss?: () => void;
-  variant: 'inline' | 'toast' | 'modal';
+  variant: "inline" | "toast" | "modal";
 }
 
 // File List Display
 export interface FileListProps {
   files: FileInfo[];
-  variant: 'compact' | 'detailed';
+  variant: "compact" | "detailed";
   showSize?: boolean;
   showPath?: boolean;
   onRemove?: (index: number) => void;
@@ -204,25 +204,25 @@ export interface FileListProps {
 ```typescript
 export interface Theme {
   colors: {
-    primary: string;      // Bitcoin orange
-    secondary: string;    // Dark gray
-    success: string;      // Green
-    error: string;        // Red
-    warning: string;      // Yellow
+    primary: string; // Bitcoin orange
+    secondary: string; // Dark gray
+    success: string; // Green
+    error: string; // Red
+    warning: string; // Yellow
     background: string;
     surface: string;
     text: string;
     textSecondary: string;
   };
-  
+
   spacing: {
-    xs: string;  // 4px
-    sm: string;  // 8px
-    md: string;  // 16px
-    lg: string;  // 24px
-    xl: string;  // 32px
+    xs: string; // 4px
+    sm: string; // 8px
+    md: string; // 16px
+    lg: string; // 24px
+    xl: string; // 32px
   };
-  
+
   typography: {
     fontFamily: string;
     sizes: {
@@ -233,7 +233,7 @@ export interface Theme {
       xl: string;
     };
   };
-  
+
   borderRadius: {
     sm: string;
     md: string;
@@ -284,11 +284,11 @@ export interface KeyboardNavigable {
 // Example: Setup Tab Container
 function SetupTab() {
   const { generateKey, keys, isLoading } = useAppStore();
-  
+
   const handleSubmit = async (data: KeyGenerationData) => {
     await generateKey(data.label, data.passphrase);
   };
-  
+
   return (
     <KeyGenerationForm
       onSubmit={handleSubmit}
@@ -353,4 +353,4 @@ function SetupTab() {
 
 ---
 
-*This blueprint defines the UI component architecture. Visual design and detailed styling are left to implementation while following these specifications.* 
+_This blueprint defines the UI component architecture. Visual design and detailed styling are left to implementation while following these specifications._

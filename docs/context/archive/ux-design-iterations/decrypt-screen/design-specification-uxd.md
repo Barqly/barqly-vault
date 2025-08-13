@@ -44,59 +44,60 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 
 ```css
 /* Primary Colors - Calming & Professional */
---trust-blue: #2563EB;         /* Primary actions, security */
---trust-blue-hover: #1D4ED8;
---recovery-green: #059669;     /* Success, positive progress */
---recovery-green-light: #10B981;
---bitcoin-orange: #F7931A;     /* Bitcoin accent, used sparingly */
+--trust-blue: #2563eb; /* Primary actions, security */
+--trust-blue-hover: #1d4ed8;
+--recovery-green: #059669; /* Success, positive progress */
+--recovery-green-light: #10b981;
+--bitcoin-orange: #f7931a; /* Bitcoin accent, used sparingly */
 
 /* Semantic Colors - Clear Communication */
 --success-green: #059669;
---success-green-bg: #F0FDF4;
---error-red: #DC2626;         /* Softened for less alarm */
---error-red-bg: #FEF2F2;
---warning-amber: #D97706;
---warning-amber-bg: #FFFBEB;
---info-blue: #2563EB;
---info-blue-bg: #EFF6FF;
+--success-green-bg: #f0fdf4;
+--error-red: #dc2626; /* Softened for less alarm */
+--error-red-bg: #fef2f2;
+--warning-amber: #d97706;
+--warning-amber-bg: #fffbeb;
+--info-blue: #2563eb;
+--info-blue-bg: #eff6ff;
 
 /* Neutral Palette - Calming Foundation */
---gray-900: #111827;           /* Primary text */
---gray-800: #1F2937;           /* Headers */
---gray-700: #374151;           /* Secondary text */
---gray-600: #4B5563;           /* Tertiary text */
---gray-500: #6B7280;           /* Helper text */
---gray-400: #9CA3AF;           /* Disabled text */
---gray-300: #D1D5DB;           /* Borders */
---gray-200: #E5E7EB;           /* Dividers */
---gray-100: #F3F4F6;           /* Backgrounds */
---gray-50: #F9FAFB;            /* Subtle backgrounds */
+--gray-900: #111827; /* Primary text */
+--gray-800: #1f2937; /* Headers */
+--gray-700: #374151; /* Secondary text */
+--gray-600: #4b5563; /* Tertiary text */
+--gray-500: #6b7280; /* Helper text */
+--gray-400: #9ca3af; /* Disabled text */
+--gray-300: #d1d5db; /* Borders */
+--gray-200: #e5e7eb; /* Dividers */
+--gray-100: #f3f4f6; /* Backgrounds */
+--gray-50: #f9fafb; /* Subtle backgrounds */
 
 /* Special Purpose - Recovery States */
---shield-green: #059669;       /* Security success */
---lock-open-blue: #2563EB;     /* Unlocking state */
---progress-gradient: linear-gradient(90deg, #2563EB 0%, #059669 100%);
---calm-gradient: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+--shield-green: #059669; /* Security success */
+--lock-open-blue: #2563eb; /* Unlocking state */
+--progress-gradient: linear-gradient(90deg, #2563eb 0%, #059669 100%);
+--calm-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 ```
 
 ### Typography System
 
 ```css
 /* Font Stack - System Fonts for Reliability */
---font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
-               'Helvetica Neue', 'Arial', sans-serif;
---font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+--font-family:
+  -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue",
+  "Arial", sans-serif;
+--font-mono: "SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace;
 
 /* Scale - Readable Under Stress */
---heading-xxl: 2rem;      /* 32px - Success messages */
---heading-xl: 1.875rem;   /* 30px - Page title */
---heading-lg: 1.5rem;     /* 24px - Section titles */
---heading-md: 1.25rem;    /* 20px - Subsections */
---heading-sm: 1.125rem;   /* 18px - Card headers */
---text-base: 1rem;        /* 16px - Body text */
---text-md: 0.9375rem;     /* 15px - Enhanced readability */
---text-sm: 0.875rem;      /* 14px - Secondary text */
---text-xs: 0.75rem;       /* 12px - Captions */
+--heading-xxl: 2rem; /* 32px - Success messages */
+--heading-xl: 1.875rem; /* 30px - Page title */
+--heading-lg: 1.5rem; /* 24px - Section titles */
+--heading-md: 1.25rem; /* 20px - Subsections */
+--heading-sm: 1.125rem; /* 18px - Card headers */
+--text-base: 1rem; /* 16px - Body text */
+--text-md: 0.9375rem; /* 15px - Enhanced readability */
+--text-sm: 0.875rem; /* 14px - Secondary text */
+--text-xs: 0.75rem; /* 12px - Captions */
 
 /* Weights - Clear Hierarchy */
 --font-regular: 400;
@@ -116,20 +117,20 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ```css
 /* 8-point Grid System */
 --space-0: 0;
---space-1: 0.25rem;   /* 4px */
---space-2: 0.5rem;    /* 8px */
---space-3: 0.75rem;   /* 12px */
---space-4: 1rem;      /* 16px */
---space-5: 1.25rem;   /* 20px */
---space-6: 1.5rem;    /* 24px */
---space-8: 2rem;      /* 32px */
---space-10: 2.5rem;   /* 40px */
---space-12: 3rem;     /* 48px */
---space-16: 4rem;     /* 64px */
+--space-1: 0.25rem; /* 4px */
+--space-2: 0.5rem; /* 8px */
+--space-3: 0.75rem; /* 12px */
+--space-4: 1rem; /* 16px */
+--space-5: 1.25rem; /* 20px */
+--space-6: 1.5rem; /* 24px */
+--space-8: 2rem; /* 32px */
+--space-10: 2.5rem; /* 40px */
+--space-12: 3rem; /* 48px */
+--space-16: 4rem; /* 64px */
 
 /* Container Constraints */
 --container-max: 1280px;
---content-max: 768px;     /* Narrower for focused attention */
+--content-max: 768px; /* Narrower for focused attention */
 --form-max: 640px;
 ```
 
@@ -174,6 +175,7 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ```
 
 **Specifications:**
+
 - Container height: 64px (40px header + 24px trust bar)
 - Background: White with subtle bottom shadow (0 1px 2px rgba(0,0,0,0.05))
 - Icon: Unlock (24px, --trust-blue)
@@ -194,6 +196,7 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ```
 
 **Specifications:**
+
 - Height: 40px
 - Background: --gray-50
 - Progress bar: 4px height, --progress-gradient fill
@@ -222,6 +225,7 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ```
 
 **Specifications:**
+
 - Drop zone: 140px height
 - Border: 2px dashed --gray-300 (default), --trust-blue (active)
 - Background: --gray-50 (default), --info-blue-bg (active)
@@ -246,6 +250,7 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ```
 
 **Specifications:**
+
 - Container: --success-green-bg background, 1px --success-green border
 - File icon: 20px
 - Filename: 14px font-medium, --gray-900, monospace
@@ -275,6 +280,7 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ```
 
 **Specifications:**
+
 - Label: 16px font-medium, --gray-900
 - Helper text: 14px, --gray-600
 - Input field: 48px height, 16px font, 1px --gray-300 border
@@ -302,6 +308,7 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ```
 
 **Specifications:**
+
 - Path input: 48px height, 14px monospace font
 - Browse button: 40px × 40px, integrated appearance
 - Checkboxes: 16px × 16px, --trust-blue when checked
@@ -323,6 +330,7 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ```
 
 **Specifications:**
+
 - Checklist: 14px with 14px --success-green checks
 - Clear button: Secondary style, 120px × 44px
 - Decrypt button: Primary style, 200px × 44px
@@ -351,6 +359,7 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ```
 
 **Specifications:**
+
 - Progress bar: 12px height, rounded, --progress-gradient fill
 - Percentage: 18px font-bold, --trust-blue
 - Status messages: 14px, --gray-700
@@ -389,6 +398,7 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ```
 
 **Specifications:**
+
 - Success icon: 48px animated check, --success-green
 - Title: 24px font-bold, --gray-900
 - Success message: 16px, --gray-700
@@ -406,20 +416,16 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 1. **Default**
    - Border: 1px solid --gray-300
    - Background: White
-   
 2. **Hover**
    - Border: 1px solid --gray-400
    - Cursor: pointer/text as appropriate
-   
 3. **Focus**
    - Border: 2px solid --trust-blue
    - Ring: 3px --trust-blue at 20% opacity
-   
 4. **Valid**
    - Border: 1px solid --success-green
    - Background: White
    - Icon: Green check
-   
 5. **Error**
    - Border: 1px solid --error-red
    - Background: --error-red-bg
@@ -429,19 +435,15 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 
 1. **Default**
    - As specified above
-   
 2. **Hover**
    - Transform: translateY(-1px)
    - Shadow: 0 4px 6px rgba(0,0,0,0.1)
-   
 3. **Active**
    - Transform: translateY(0)
    - Shadow: inset 0 1px 2px rgba(0,0,0,0.1)
-   
 4. **Disabled**
    - Opacity: 0.5
    - Cursor: not-allowed
-   
 5. **Loading**
    - Show spinner
    - Text: "Decrypting..."
@@ -502,20 +504,17 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
    - Normal text: 4.5:1 minimum (verified)
    - Large text: 3:1 minimum (verified)
    - Interactive elements: 3:1 minimum (verified)
-   
 2. **Focus Management**
    - Visible focus indicators on all interactive elements
    - Logical tab order through form
    - Focus trapped in modals
    - Focus restoration after operations
-   
 3. **Screen Reader Support**
    - Semantic HTML structure
    - ARIA labels for all icons and controls
    - Live regions for progress updates
    - Error announcements
    - Success confirmations
-   
 4. **Keyboard Navigation**
    - Tab: Navigate forward
    - Shift+Tab: Navigate backward
@@ -526,11 +525,13 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ## Mobile Optimization
 
 ### Touch Targets
+
 - Minimum 44×44px for all interactive elements
 - Adequate spacing between targets (8px minimum)
 - Larger buttons on mobile (48px height)
 
 ### Responsive Layout
+
 - Single column below 768px
 - Full-width form elements
 - Stacked buttons
@@ -573,4 +574,4 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 
 ---
 
-*This specification provides complete design direction for implementing the Decrypt screen, optimized for high-stakes Bitcoin custody recovery scenarios while maintaining consistency with the Barqly Vault design system.*
+_This specification provides complete design direction for implementing the Decrypt screen, optimized for high-stakes Bitcoin custody recovery scenarios while maintaining consistency with the Barqly Vault design system._

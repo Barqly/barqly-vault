@@ -36,16 +36,16 @@ Implement a centralized state management system for the Barqly Vault frontend us
 export interface AppState {
   // Key management state
   keys: KeyState;
-  
+
   // Encryption/decryption operations
   operations: OperationState;
-  
+
   // UI state
   ui: UIState;
-  
+
   // Application settings
   settings: SettingsState;
-  
+
   // Error handling
   errors: ErrorState;
 }
@@ -63,7 +63,7 @@ export interface OperationState {
 }
 
 export interface UIState {
-  activeTab: 'setup' | 'encrypt' | 'decrypt';
+  activeTab: "setup" | "encrypt" | "decrypt";
   selectedFiles: FileSelection | null;
   isProcessing: boolean;
 }
@@ -80,19 +80,19 @@ export interface AppActions {
   generateKey: (label: string, passphrase: string) => Promise<void>;
   selectKey: (keyId: string) => void;
   deleteKey: (keyId: string) => Promise<void>;
-  
+
   // File operations
-  selectFiles: (type: 'files' | 'folder') => Promise<void>;
+  selectFiles: (type: "files" | "folder") => Promise<void>;
   clearFileSelection: () => void;
-  
+
   // Encryption/decryption
   encrypt: (outputName?: string) => Promise<void>;
   decrypt: (passphrase: string, outputDir: string) => Promise<void>;
-  
+
   // UI actions
   setActiveTab: (tab: TabType) => void;
   clearErrors: () => void;
-  
+
   // Settings
   updateSettings: (settings: Partial<Settings>) => void;
 }
@@ -103,8 +103,8 @@ export interface AppActions {
 ```typescript
 // src-ui/src/store/index.ts
 
-import { create } from 'zustand';
-import { persist, devtools } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist, devtools } from "zustand/middleware";
 
 export const useAppStore = create<AppState & AppActions>()(
   devtools(
@@ -113,10 +113,12 @@ export const useAppStore = create<AppState & AppActions>()(
         // Initial state
         keys: { availableKeys: [], selectedKeyId: null, isLoading: false },
         operations: { currentOperation: null, history: [], progress: null },
-        ui: { activeTab: 'setup', selectedFiles: null, isProcessing: false },
-        settings: { /* ... */ },
+        ui: { activeTab: "setup", selectedFiles: null, isProcessing: false },
+        settings: {
+          /* ... */
+        },
         errors: { current: null, history: [] },
-        
+
         // Actions implementation
         loadKeys: async () => {
           // Set loading state
@@ -124,18 +126,18 @@ export const useAppStore = create<AppState & AppActions>()(
           // Update state with results
           // Handle errors
         },
-        
+
         // ... other actions
       }),
       {
-        name: 'barqly-vault-storage',
-        partialize: (state) => ({ 
+        name: "barqly-vault-storage",
+        partialize: (state) => ({
           settings: state.settings,
-          keys: { selectedKeyId: state.keys.selectedKeyId }
-        })
-      }
-    )
-  )
+          keys: { selectedKeyId: state.keys.selectedKeyId },
+        }),
+      },
+    ),
+  ),
 );
 ```
 
@@ -172,7 +174,7 @@ export interface ErrorActions {
 
 export interface ProgressInfo {
   operationId: string;
-  type: 'encryption' | 'decryption';
+  type: "encryption" | "decryption";
   progress: number; // 0.0 to 1.0
   message: string;
   startTime: Date;
@@ -198,9 +200,9 @@ async function storeAction() {
     const result = await tauriCommand(params);
     set({ data: result, isLoading: false });
   } catch (error) {
-    set({ 
-      error: translateError(error), 
-      isLoading: false 
+    set({
+      error: translateError(error),
+      isLoading: false,
     });
   }
 }
@@ -212,11 +214,11 @@ async function storeAction() {
 // Hook usage in components
 function MyComponent() {
   const { keys, loadKeys, selectKey } = useAppStore();
-  
+
   useEffect(() => {
     loadKeys();
   }, []);
-  
+
   return (/* ... */);
 }
 ```
@@ -231,18 +233,21 @@ function MyComponent() {
 ## Testing Strategy
 
 ### Unit Tests
+
 - Test each action in isolation
 - Verify state transitions
 - Test error handling paths
 - Validate persistence logic
 
 ### Integration Tests
+
 - Test action chains (e.g., generate → select → encrypt)
 - Verify Tauri command integration
 - Test error propagation
 - Validate optimistic updates
 
 ### Performance Tests
+
 - Measure state update latency
 - Test with large state objects
 - Verify memory usage
@@ -269,4 +274,4 @@ function MyComponent() {
 
 ---
 
-*This blueprint defines the state management architecture. Implementation details are left to the engineer's discretion while following these specifications.* 
+_This blueprint defines the state management architecture. Implementation details are left to the engineer's discretion while following these specifications._

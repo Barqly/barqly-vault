@@ -6,18 +6,21 @@
 ## UI Implementation Decisions (January 2025)
 
 ### Testing Strategy for UI Components
+
 **Decision:** Comprehensive mock isolation for all async operations
 **Rationale:** Prevents test flakiness and race conditions
 **Implementation:** Created testing-ui-standards.md with patterns
 **Result:** All 374+ tests passing reliably
 
 ### Three-Screen Alpha Release
+
 **Decision:** Focus on core user journey (Setup → Encrypt → Decrypt)
 **Rationale:** Deliver working MVP for user validation
 **Trade-off:** Deferred advanced features for core functionality
 **Result:** Functional alpha with 90-second setup achieved
 
 ### Drag-Drop Context Pattern
+
 **Decision:** Use React Context API for drag-drop state
 **Learning:** Context can fail silently if not properly wrapped
 **Solution:** Comprehensive error boundaries and provider validation
@@ -26,98 +29,113 @@
 ## Architecture Decisions
 
 ### Cache Implementation (This Week)
+
 **Decision:** LRU cache with 5-minute TTL for key operations  
 **Rationale:** 86.7% performance improvement with automatic invalidation  
-**Impact:** Significantly improved UI responsiveness  
+**Impact:** Significantly improved UI responsiveness
 
 ### Progress Debouncing Strategy
+
 **Decision:** Timer-based debouncing with 100ms intervals  
 **Rationale:** Reduce IPC overhead by 80-90% during long operations  
-**Trade-off:** Slight delay in updates vs. massive performance gain  
+**Trade-off:** Slight delay in updates vs. massive performance gain
 
 ### Test Organization
+
 **Decision:** Hierarchical test structure (unit/integration/smoke)  
 **Rationale:** Better organization and maintenance than embedded tests  
-**Result:** Clearer coverage understanding, easier debugging  
+**Result:** Clearer coverage understanding, easier debugging
 
 ## Implementation Choices
 
 ### Error Handling Enhancement
+
 **Decision:** Extended CommandError with recovery guidance  
 **Implementation:** Operation-specific guidance for Bitcoin custody use cases  
-**User Impact:** Clear, actionable next steps for each error scenario  
+**User Impact:** Clear, actionable next steps for each error scenario
 
 ### Component Lazy Loading
+
 **Decision:** React.lazy() for all page components  
 **Trade-off:** Slightly more complex routing for faster initial load  
-**Result:** Improved bundle splitting and startup performance  
+**Result:** Improved bundle splitting and startup performance
 
 ### Pre-commit Validation
+
 **Decision:** Full `make validate` in git hooks  
 **Philosophy:** Shift-left approach - catch issues before commit  
-**Developer Impact:** 95% CI readiness, no integration surprises  
+**Developer Impact:** 95% CI readiness, no integration surprises
 
 ## Process Improvements
 
 ### Test Cleanup Pattern
+
 **Decision:** Drop trait for automatic test resource cleanup  
 **Problem Solved:** ~1090 legacy test keys accumulating  
-**Implementation:** TestCleanup automatically registers and cleans  
+**Implementation:** TestCleanup automatically registers and cleans
 
 ### Development Commands
+
 **Decision:** Cross-platform Rust examples for dev tools  
 **Commands Added:** dev-reset, dev-keys, bench, clean-keys  
-**Benefit:** Consistent developer experience across platforms  
+**Benefit:** Consistent developer experience across platforms
 
 ## Deferred Decisions
 
 ### VSCode Tasks Configuration
+
 **Status:** Deferred to next sprint  
 **Reason:** Pre-commit hooks provide sufficient automation  
-**Revisit:** When team size increases  
+**Revisit:** When team size increases
 
 ### Test Data Generators
+
 **Status:** Deferred - current fixtures sufficient  
 **Reason:** Existing test data meets current needs  
-**Revisit:** When test complexity increases  
+**Revisit:** When test complexity increases
 
 ### Configuration Module (Milestone 2.4)
+
 **Status:** Deferred - not blocking current work  
 **Reason:** Current hardcoded defaults working well  
-**Revisit:** Before public release  
+**Revisit:** Before public release
 
 ## Security Decisions
 
 ### Password Visibility Delay
+
 **Decision:** 500ms delay on toggle to prevent shoulder surfing  
 **Implementation:** Simple timeout in PassphraseVisibilityToggle  
-**User Impact:** Subtle but effective security enhancement  
+**User Impact:** Subtle but effective security enhancement
 
 ### Production DevTools
+
 **Decision:** Completely disabled in production builds  
 **Configuration:** tauri.conf.json "devtools": false  
-**Security Benefit:** Prevents debugging attack vectors  
+**Security Benefit:** Prevents debugging attack vectors
 
 ## UI/UX Analysis & Optimization (August 2025)
 
-### Design Consistency Analysis  
+### Design Consistency Analysis
+
 **Decision:** Comprehensive UI capture and analysis system for design consistency  
 **Implementation:** 17 screenshots captured across all UI states, analyzed by UX designer agent  
 **Key Finding:** 25-30% screen real estate wasted on redundant headers  
-**Impact:** Fragmented design language across 3 screens undermining user trust  
+**Impact:** Fragmented design language across 3 screens undermining user trust
 
-### Header Unification Strategy  
+### Header Unification Strategy
+
 **Decision:** Replace fragmented headers with unified AppHeader component  
 **Current State:** Three different header implementations (EncryptionHeader, DecryptionHeader, SetupHeader)  
 **Priority:** Remove redundant subheaders first, then create unified component  
-**Expected Impact:** 30% space optimization and consistent design language  
+**Expected Impact:** 30% space optimization and consistent design language
 
 ## Performance Targets Met
 
-| Metric | Target | Achieved |
-|--------|--------|----------|
-| Cache Performance | 10-20% improvement | 86.7% |
-| Progress Updates | Reduce by 50% | 80-90% |
-| Test Cleanup | Manual process | Fully automated |
-| CI Alignment | 80% passing | 95% ready |
-| UI Space Utilization | Optimize usage | 30% recovery identified |
+| Metric               | Target             | Achieved                |
+| -------------------- | ------------------ | ----------------------- |
+| Cache Performance    | 10-20% improvement | 86.7%                   |
+| Progress Updates     | Reduce by 50%      | 80-90%                  |
+| Test Cleanup         | Manual process     | Fully automated         |
+| CI Alignment         | 80% passing        | 95% ready               |
+| UI Space Utilization | Optimize usage     | 30% recovery identified |

@@ -7,6 +7,7 @@ The Barqly Vault Demo System provides an automated development environment with 
 ## 🚀 **Quick Start**
 
 ### **Primary Development Command**
+
 ```bash
 # Your go-to development command
 npm run demo
@@ -16,37 +17,44 @@ make demo
 ```
 
 **What happens automatically:**
+
 - ✅ Detects development environment
 - ✅ Enables demo mode if needed
 - ✅ Starts development server
 - ✅ Provides access to all demo routes
 
 ### **Access Demo Routes**
+
 Once the server starts, visit:
+
 - **Main Demo Hub**: `http://localhost:1420/demo`
 - **Component Demos**: Available through the demo hub
 
 ## 🎨 **Available Demos**
 
 ### **Component Demos**
+
 - **File Selection Demo** - Interactive file picker with drag & drop
 - **Success Message Demo** - Various success states and animations
 - **Progress Bar Demo** - Different progress indicators and states
 - **Error Message Demo** - Error handling and display patterns
 
 ### **Page Demos**
+
 - **Demo Landing Page** - Overview and navigation to all demos
 - **File Selection Demo Page** - Complete file selection workflow
 
 ## 🛠️ **Development Commands**
 
 ### **Automated Commands (Recommended)**
+
 ```bash
 npm run demo          # Smart development (auto-enables demo mode)
 make demo             # Same via Makefile
 ```
 
 ### **Manual Control (Advanced)**
+
 ```bash
 # Enable/Disable demo mode
 npm run demo:enable   # Enable demo mode
@@ -60,6 +68,7 @@ make demo-dev         # Same via Makefile
 ```
 
 ### **Traditional Development**
+
 ```bash
 npm run dev           # Basic dev server (no demo routes)
 make dev              # Same via Makefile
@@ -68,11 +77,14 @@ make dev              # Same via Makefile
 ## 🤖 **Smart Pipeline Features**
 
 ### **Environment Detection**
+
 The system automatically detects:
+
 - **Development Machine**: macOS/Linux with user account
 - **CI/Production Environment**: GitHub Actions, Docker, etc.
 
 ### **Intelligent Decision Making**
+
 ```
 🔍 Context Analysis:
    Development Machine: true
@@ -83,7 +95,9 @@ The system automatically detects:
 ```
 
 ### **Pre-commit Safety**
+
 The pre-commit hook automatically:
+
 - **Development + Demo Mode** = ✅ Keep demo mode enabled
 - **Development + Production Mode** = 🔄 Auto-enable demo mode
 - **CI + Demo Mode** = 🚨 CRITICAL - Auto-switch to production
@@ -118,11 +132,13 @@ barqly-vault/
 ## 🔧 **How It Works**
 
 ### **Demo Mode Switching**
+
 1. **Backup Production**: `App.tsx` → `App.production.tsx`
 2. **Enable Demo Mode**: `App.demo.tsx` → `App.tsx`
 3. **Restore Production**: `App.production.tsx` → `App.tsx`
 
 ### **Smart Development Script**
+
 ```bash
 # Environment detection
 IS_DEV_MACHINE=false
@@ -140,6 +156,7 @@ fi
 ```
 
 ### **Pre-commit Safety**
+
 ```bash
 # Smart Demo Mode Pipeline
 if [ "$IS_DEV_CONTEXT" = false ] && [ "$DEMO_ENABLED" = true ]; then
@@ -151,6 +168,7 @@ fi
 ## 🎯 **Development Workflow**
 
 ### **Daily Development**
+
 ```bash
 # Start your day
 npm run demo
@@ -168,6 +186,7 @@ git commit -m "feat: new feature"
 ```
 
 ### **Component Development**
+
 1. **Start demo mode**: `npm run demo`
 2. **Navigate to component demo**: `http://localhost:1420/demo`
 3. **Edit component**: Changes hot-reload automatically
@@ -177,17 +196,20 @@ git commit -m "feat: new feature"
 ## 🛡️ **Safety Guarantees**
 
 ### **Production Safety**
+
 - **Impossible to commit demo mode** to production
 - **Automatic detection** of CI/Production environments
 - **Pre-commit guardrails** prevent demo mode in production builds
 
 ### **Development Efficiency**
+
 - **Zero manual switching** required
 - **Automatic demo mode** for development
 - **Hot reload** for all changes
 - **Interactive demos** for component testing
 
 ### **Environment Awareness**
+
 - **Different behavior** for development vs CI
 - **Smart decision making** based on context
 - **Clear feedback** on what's happening
@@ -197,6 +219,7 @@ git commit -m "feat: new feature"
 ### **Common Issues**
 
 #### **Port Already in Use**
+
 ```bash
 # Kill existing process
 pkill -f vite
@@ -206,6 +229,7 @@ npm run demo
 ```
 
 #### **Demo Mode Not Working**
+
 ```bash
 # Check status
 node scripts/switch-to-demo.js status
@@ -218,6 +242,7 @@ npm run dev
 ```
 
 #### **Pre-commit Hook Issues**
+
 ```bash
 # Reinstall hooks
 chmod +x scripts/setup-hooks.sh
@@ -230,6 +255,7 @@ cargo clippy
 ```
 
 ### **Getting Help**
+
 - Check the [Development Setup Guide](./Development-Setup.md)
 - Review [Validation System](./Validation-System.md)
 - Open a [GitHub Issue](https://github.com/inauman/barqly-vault/issues)
@@ -237,18 +263,21 @@ cargo clippy
 ## 🎉 **Benefits**
 
 ### **For Developers**
+
 - **Simple commands**: Just `npm run demo`
 - **No manual switching**: Everything automated
 - **Interactive testing**: Real component demos
 - **Hot reload**: Instant feedback
 
 ### **For Teams**
+
 - **Consistent workflow**: Everyone uses same commands
 - **Production safety**: Impossible to break production
 - **Quality assurance**: Pre-commit validation
 - **Documentation**: Live component examples
 
 ### **For Projects**
+
 - **Reduced errors**: Automated guardrails
 - **Faster development**: No context switching
 - **Better testing**: Interactive demos
@@ -256,4 +285,4 @@ cargo clippy
 
 ---
 
-*This demo system provides a seamless development experience while ensuring production safety through intelligent automation.* 
+_This demo system provides a seamless development experience while ensuring production safety through intelligent automation._

@@ -1,24 +1,30 @@
 # ZenAI Documentation Standards - Agent I/O Registry
 
 ## Overview
+
 This document defines the Input/Output contracts for all ZenAI subagents. With our lean context management system, agents should:
+
 1. **Start with context files** - Read domain-specific `context.md` files first
 2. **Navigate to details** - Follow references from context files to detailed documentation
 3. **Update contexts** - Maintain context files as work progresses
 
 ## Context Management Integration
+
 - **Master Context**: `/context.md` - 2-minute project orientation
 - **Domain Contexts**: `/docs/[domain]/context.md` - Domain-specific entry points
 - **Context Usage**: See `/docs/common/context-usage.ai.md` for maintenance procedures
 
 ## Agent Input/Output Declarations
 
-### zenmaster  
+### zenmaster
+
 **Primary Context:**
+
 - `/context.md` - Master project context for orientation
 - `/docs/context/current/` - Current sprint status and priorities
 
 **Inputs (Reads From):**
+
 - `docs/architecture/context.md` → System architecture context and deliverables
 - `docs/archive/*/research/` - Research Engineer deliverables (when archived)
 - `docs/evaluation/` - Project assessments (typically in archives after completion)
@@ -27,11 +33,13 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 
 **Outputs (Writes To):**
 **Always Create:**
+
 - `docs/project-plan.md` - Master project plan with milestones and task tracking
 - `docs/context/current/active-sprint.md` - Current sprint status updates
 - `docs/context/current/recent-decisions.md` - Key decisions with rationale
 
 **Create When Needed:**
+
 - `docs/zenmaster/existing-project-baseline.md` - For existing project engagement
 - `docs/zenmaster/integration-roadmap.md` - ZenAI adoption plan
 - `docs/zenmaster/risk-register.md` - Risk identification and mitigation
@@ -40,14 +48,17 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/retrospectives/` - Retrospective facilitation and learning capture
 
 ### system-architect
+
 **Inputs (Reads From):**
+
 - `docs/research/` - Technology recommendations and stack validation
-- `docs/product/` - Business requirements and user personas  
+- `docs/product/` - Business requirements and user personas
 - `docs/zenmaster/` - Project coordination and quality standards
 - `docs/evaluation/` - Existing project assessments (when available)
 
 **Outputs (Writes To):**
 **Always Create:**
+
 - `docs/architecture/system-architecture.md` - High-level design, diagrams, component responsibilities
 - `docs/architecture/api-contracts.md` - Interface definitions between modules
 - `docs/architecture/data-architecture.md` - Database schemas, data flow, storage strategies
@@ -57,6 +68,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `README.md` - Project overview, setup instructions, architecture summary
 
 **Create When Needed:**
+
 - `docs/architecture/specs/backend/{module|feature}-tech-spec.md` - Detailed backend implementation specifications
 - `docs/architecture/specs/frontend/{component|feature}-spec.md` - Detailed frontend implementation specifications
 - `configs/` - Development tooling configurations
@@ -67,6 +79,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/architecture/security-guidelines.md` - Security standards and checklists
 
 **For Existing Project Evaluation:**
+
 - `docs/evaluation/architecture-assessment.md` - Current state analysis and architectural review
 - `docs/evaluation/refactoring-roadmap.md` - Prioritized improvement plan with effort estimates
 - `docs/evaluation/technical-debt-analysis.md` - Issues inventory and remediation strategies
@@ -76,13 +89,16 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/evaluation/performance-analysis.md` - Performance bottlenecks and optimization opportunities
 
 ### research-engineer
+
 **Inputs (Reads From):**
+
 - `docs/architecture/` - System requirements for technology validation
 - `docs/zenmaster/` - Research assignments and coordination
 - Existing codebase - For technology stack audits
 
 **Outputs (Writes To):**
 **Always Create:**
+
 - `docs/research/technology-analysis.md` - Comprehensive technology evaluation with recommendations
 - `docs/research/stack-validation.md` - Validation results for proposed or existing technology choices
 - `docs/research/version-recommendations.md` - Specific version recommendations with rationale
@@ -90,6 +106,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/research/security-evaluation.md` - Security implications and vulnerability assessment
 
 **Create When Needed:**
+
 - `docs/research/existing-stack-audit.md` - Complete audit of existing project technology
 - `docs/research/upgrade-roadmap.md` - Prioritized upgrade plan with timelines and effort estimates
 - `docs/research/alternative-analysis.md` - Comparison of alternative technology options
@@ -100,7 +117,9 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/evaluation/` - Technology stack assessments and upgrade roadmaps (when evaluating existing projects)
 
 ### backend-engineer
+
 **Inputs (Reads From):**
+
 - `docs/architecture/specs/backend/` - Implementation specifications to follow
 - `docs/architecture/api-contracts.md` - API interfaces to implement
 - `docs/research/` - Technology recommendations and best practices
@@ -114,6 +133,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/evaluation/performance-analysis.md` - Performance requirements and optimization targets
 
 **Outputs (Writes To):**
+
 - `docs/engineering/backend/` - Implementation notes, technical decisions, progress updates
 - `docs/engineering/backend/api-documentation.md` - API endpoint documentation and usage examples
 - `docs/engineering/backend/performance-benchmarks.md` - Performance testing results and optimization notes
@@ -125,7 +145,9 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - Source code, tests, and technical documentation in project codebase
 
 ### frontend-engineer
+
 **Inputs (Reads From):**
+
 - `docs/architecture/frontend/` - Implementation specifications to follow
 - `src-ui/src/lib/api-types.ts` - API interfaces to implement.Don't modify manually. Auto generated by sr-backend-engineer.
 - `docs/research/` - Technology recommendations and best practices
@@ -136,6 +158,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 
 **Outputs (Writes To):**
 **Always Create:**
+
 - `docs/engineering/frontend/implementation-notes.md` - Technical decisions, progress updates, and architecture feedback
 - `docs/engineering/frontend/component-library.md` - Reusable component documentation and design system
 - `docs/engineering/frontend/accessibility-compliance.md` - WCAG compliance documentation and testing results
@@ -143,6 +166,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/engineering/frontend/cross-platform-compatibility.md` - Multi-platform testing and compatibility documentation
 
 **Create When Needed:**
+
 - `docs/engineering/frontend/design-system.md` - Design tokens, style guides, and UI standards
 - `docs/engineering/frontend/user-experience-testing.md` - Usability testing results and user feedback analysis
 - `docs/engineering/frontend/platform-specific-guides/` - iOS, Android, web, and desktop implementation guides
@@ -151,7 +175,9 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - Component library code, style guides, and design system assets
 
 ### devops-engineer
+
 **Inputs (Reads From):**
+
 - `docs/architecture/deployment-architecture.md` - Infrastructure and deployment topology specifications
 - `docs/architecture/system-architecture.md` - System design requirements for infrastructure planning
 - `docs/research/` - Technology recommendations and infrastructure tool validation
@@ -165,6 +191,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 
 **Outputs (Writes To):**
 **Always Create:**
+
 - `docs/operations/infrastructure-setup.md` - Infrastructure-as-code implementation and configuration
 - `docs/operations/deployment-pipeline.md` - CI/CD pipeline configuration and deployment procedures
 - `docs/operations/environment-management.md` - Development, staging, and production environment setup
@@ -172,6 +199,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/operations/incident-response.md` - Operational procedures and troubleshooting guides
 
 **Create When Needed:**
+
 - `docs/operations/infrastructure-audit.md` - Existing infrastructure assessment and optimization recommendations
 - `docs/operations/migration-plan.md` - Infrastructure migration and modernization roadmap
 - `docs/operations/automation-scripts/` - Development workflow automation, git hooks, and tooling
@@ -183,7 +211,9 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - Infrastructure configuration files (Terraform, Kubernetes manifests, Docker configurations)
 
 ### product-owner
+
 **Inputs (Reads From):**
+
 - `docs/zenmaster/` - Project coordination, task assignments, and strategic guidance
 - Customer feedback, support tickets, and user behavior data from Customer Advocate coordination
 - Market research, competitive analysis, and industry trend reports
@@ -195,6 +225,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 
 **Outputs (Writes To):**
 **Always Create:**
+
 - `docs/product/product-vision.md` - Comprehensive product vision, strategy, and market positioning
 - `docs/product/user-stories.md` - Detailed user stories with acceptance criteria and success metrics
 - `docs/product/product-roadmap.md` - Strategic feature roadmap with priorities and release planning
@@ -202,6 +233,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/product/requirements-specifications.md` - Detailed feature requirements and business rules
 
 **Create When Needed:**
+
 - `docs/product/market-analysis.md` - Competitive analysis, industry trends, and opportunity assessment
 - `docs/product/customer-research.md` - User feedback analysis, pain point identification, and behavioral insights
 - `docs/product/acceptance-criteria/` - Detailed acceptance criteria for complex features and user flows
@@ -212,7 +244,9 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/product/backlog-prioritization.md` - Detailed backlog prioritization with rationale and impact analysis
 
 ### ux-designer
+
 **Inputs (Reads From):**
+
 - `docs/product/user-stories.md` - User requirements, acceptance criteria, and feature specifications
 - `docs/product/user-personas.md` - Target user profiles, behaviors, and accessibility needs
 - Customer feedback, user research data, and behavioral analytics from Customer Advocate coordination
@@ -225,13 +259,15 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 
 **Outputs (Writes To):**
 **Always Create:**
+
 - `docs/design/user-experience-strategy.md` - Overall UX approach, design principles, and accessibility standards
-- `docs/design/design-system.md` - Component library, design tokens, and cross-platform design standards  
+- `docs/design/design-system.md` - Component library, design tokens, and cross-platform design standards
 - `docs/design/wireframes-mockups/` - Interface designs, user flows, and interaction specifications
 - `docs/design/accessibility-compliance.md` - WCAG 2.2 implementation and inclusive design documentation
 - `docs/design/user-research-findings.md` - Usability testing results, user feedback analysis, and design recommendations
 
 **Create When Needed:**
+
 - `docs/design/user-journey-maps.md` - End-to-end user experience documentation across all touchpoints
 - `docs/design/usability-testing/` - Test plans, results, and iteration recommendations
 - `docs/design/cross-platform-specifications/` - Platform-specific design guidelines for iOS, Android, web, desktop
@@ -242,7 +278,9 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/design/prototypes/` - Interactive prototypes and user flow demonstrations
 
 ### qa-engineer
+
 **Inputs (Reads From):**
+
 - `docs/product/user-stories.md` - User requirements and acceptance criteria for test case development
 - `docs/product/acceptance-criteria/` - Detailed acceptance criteria for feature validation and test planning
 - `docs/architecture/api-contracts.md` - API specifications for integration and contract testing
@@ -256,6 +294,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 
 **Outputs (Writes To):**
 **Always Create:**
+
 - `docs/testing/test-strategy.md` - Comprehensive testing approach covering functional and performance validation
 - `docs/testing/test-cases.md` - Detailed test scenarios, acceptance criteria validation, and edge case coverage
 - `docs/testing/automation-framework.md` - Test automation architecture, CI/CD integration, and maintenance procedures
@@ -263,6 +302,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/testing/quality-reports.md` - Test execution results, defect analysis, and quality metrics dashboard
 
 **Create When Needed:**
+
 - `docs/testing/performance-benchmarks.md` - Baseline performance metrics, SLA definitions, and optimization targets
 - `docs/testing/load-testing-results/` - Detailed load testing analysis, scalability validation, and bottleneck identification
 - `docs/testing/defect-analysis.md` - Root cause analysis, defect trends, and quality improvement recommendations
@@ -277,12 +317,14 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 ## Context Management Notes
 
 ### Document Lifecycle
+
 1. **Active Documents** - Live in their domain directories
 2. **Completed Work** - Moves to `/docs/archive/` with descriptive folder names
 3. **Evolution Tracking** - Major decisions tracked in `/docs/context/evolution/`
 4. **Retrospectives** - Learnings captured in `/docs/retrospectives/`
 
 ### Best Practices
+
 - Start by reading relevant context files before detailed documents
 - Update context files as work progresses
 - Archive completed deliverables to maintain clarity
@@ -290,9 +332,9 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - Reference the context usage guide for maintenance procedures
 
 ### Key Context Files
+
 - `/context.md` - Master project context (2-minute read)
 - `/docs/[domain]/context.md` - Domain-specific entry points
 - `/docs/context/current/` - Current sprint and priorities
 - `/docs/context/foundation/` - Stable architecture patterns
 - `/docs/context/evolution/` - Decision history and rationale
-

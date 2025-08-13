@@ -3,11 +3,13 @@
 ## 🚀 **Development Setup**
 
 ### **Prerequisites**
+
 - **Node.js**: v22.17.0 LTS or higher
 - **Rust**: Latest stable version (1.87.0+)
 - **Tauri CLI**: `cargo install tauri-cli`
 
 ### **Quick Setup**
+
 ```bash
 # Clone the repository
 git clone https://github.com/inauman/barqly-vault.git
@@ -23,6 +25,7 @@ make desktop         # Tauri desktop app
 ```
 
 ### **Available Commands**
+
 ```bash
 # Development
 make dev             # Start UI dev server
@@ -56,7 +59,7 @@ Barqly Vault makes secure file encryption simple. Follow these three steps to pr
 3. **Choose a strong passphrase** - this is your digital password
 4. **Save your key** - it's now ready to use
 
-*💡 Tip: Choose a passphrase you'll remember but others won't guess*
+_💡 Tip: Choose a passphrase you'll remember but others won't guess_
 
 ### Step 2: Encrypt Your Files
 
@@ -65,7 +68,7 @@ Barqly Vault makes secure file encryption simple. Follow these three steps to pr
 3. **Pick a destination** for your encrypted backup
 4. **Click "Encrypt"** - that's it!
 
-*✅ Your files are now securely encrypted and ready for backup*
+_✅ Your files are now securely encrypted and ready for backup_
 
 ### Step 3: Decrypt When Needed
 
@@ -78,11 +81,13 @@ Barqly Vault makes secure file encryption simple. Follow these three steps to pr
 ## What You'll See
 
 ### Setup Screen
+
 - Key name and passphrase creation
 - Backup reminder for your key
 - Success confirmation
 
 ### Encrypt Screen
+
 - File/folder selection
 - Key selection dropdown
 - Destination folder picker
@@ -90,6 +95,7 @@ Barqly Vault makes secure file encryption simple. Follow these three steps to pr
 - Success message with file location
 
 ### Decrypt Screen
+
 - Encrypted file selection
 - Key and passphrase input
 - Destination selection
@@ -99,18 +105,21 @@ Barqly Vault makes secure file encryption simple. Follow these three steps to pr
 ## Best Practices
 
 ### 🔐 **Security**
+
 - Use different keys for different purposes
 - Keep your passphrase private and memorable
 - Store encrypted backups in multiple locations
 - Test decryption periodically
 
 ### 📁 **Organization**
+
 - Use descriptive key names
 - Organize encrypted files by purpose
 - Keep a list of what's encrypted where
 - Include recovery instructions in your backups
 
 ### 💰 **Bitcoin-Specific**
+
 - Encrypt wallet recovery information
 - Include output descriptors and seed phrases
 - Backup to multiple secure locations
@@ -128,4 +137,4 @@ Barqly Vault makes secure file encryption simple. Follow these three steps to pr
 - Learn about [advanced features](../Product/Features.md)
 - Explore our [user journey](../Product/User-Journey.md)
 - Check out our [roadmap](../Product/Roadmap.md)
-- [Contribute to the project](https://github.com/inauman/barqly-vault/blob/main/CONTRIBUTING.md) 
+- [Contribute to the project](https://github.com/inauman/barqly-vault/blob/main/CONTRIBUTING.md)

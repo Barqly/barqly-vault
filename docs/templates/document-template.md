@@ -32,32 +32,34 @@ Use this complete template when creating new documents:
 ```markdown
 ---
 # Required Metadata
-status: draft              # draft | active | superseded | archived
-type: guide               # guide | spec | decision | reference | procedure
+status: draft # draft | active | superseded | archived
+type: guide # guide | spec | decision | reference | procedure
 created: 2025-01-03
 updated: 2025-01-03
 author: zenmaster
 
 # Context Management
-context: /project/feature-x    # Primary context path
-related:                        # Related contexts (optional)
+context: /project/feature-x # Primary context path
+related: # Related contexts (optional)
   - /architecture/patterns
   - /decisions/adr-042
-supersedes: null               # Document this replaces (if any)
-superseded_by: null            # Document that replaces this (if any)
+supersedes: null # Document this replaces (if any)
+superseded_by: null # Document that replaces this (if any)
 
 # Maintenance Hints
-update_frequency: often        # always | often | rarely | never
-expires: null                  # Optional expiration date
-tags: [encryption, security]  # Searchable tags
+update_frequency: often # always | often | rarely | never
+expires: null # Optional expiration date
+tags: [encryption, security] # Searchable tags
 ---
 
 # Document Title
 
 ## Purpose
+
 [One paragraph explaining why this document exists and what problem it solves]
 
 ## Status
+
 **Current State**: Draft  
 **Last Review**: 2025-01-03  
 **Next Review**: 2025-02-03 (if applicable)
@@ -65,27 +67,33 @@ tags: [encryption, security]  # Searchable tags
 ## Content
 
 ### Main Section
+
 [Primary content goes here]
 
 ### Implementation Details
+
 [Specific details, code examples, configurations]
 
 ## References
 
 ### Internal Documents
+
 - [Related Document 1](../path/to/doc1.md) - Brief description
 - [Related Document 2](../path/to/doc2.md) - Brief description
 
 ### External Resources
+
 - [External Resource](https://example.com) - Why it's relevant
 
 ## History
 
 ### Change Log
+
 - 2025-01-03: Initial draft created (author)
 - [Future changes will be listed here]
 
 ### Migration Notes
+
 [If this document replaces or consolidates others, note it here]
 ```
 
@@ -94,12 +102,14 @@ tags: [encryption, security]  # Searchable tags
 ## Usage Guidelines
 
 ### When to Use Minimal Header
+
 - Touching existing documents during regular work
 - Making minor updates or corrections
 - Documents not yet in the lifecycle system
 - Quick fixes that don't warrant full migration
 
 ### When to Use Full Template
+
 - Creating new documents from scratch
 - Major rewrites or consolidations
 - Establishing new architectural decisions
@@ -108,16 +118,19 @@ tags: [encryption, security]  # Searchable tags
 ### Status Transitions
 
 #### draft → active
+
 - Content is complete and reviewed
 - All placeholders filled in
 - Ready for team consumption
 
 #### active → superseded
+
 - Newer document available
 - Update `superseded_by` field
 - Keep for historical reference
 
 #### active → archived
+
 - No longer relevant
 - Technology deprecated
 - Decision reversed
@@ -125,6 +138,7 @@ tags: [encryption, security]  # Searchable tags
 ### Context Path Guidelines
 
 Context paths follow the hierarchy in Context.md:
+
 - `/project/*` - Project-specific contexts
 - `/architecture/*` - System design contexts
 - `/implementation/*` - Code-level contexts
@@ -141,6 +155,7 @@ Context paths follow the hierarchy in Context.md:
 ### Integration with Context.md
 
 Documents using this template automatically integrate with the context system:
+
 1. The `context` field links to the relevant Context.md section
 2. Context.md references back to documents in its scope
 3. Related contexts create a navigation graph
@@ -149,6 +164,7 @@ Documents using this template automatically integrate with the context system:
 ### Migration Strategy Support
 
 This template supports gradual migration:
+
 1. Start with minimal headers on touched documents
 2. Upgrade to full template when substantial changes needed
 3. Track migration progress through status fields
@@ -159,6 +175,7 @@ This template supports gradual migration:
 ## Examples
 
 ### Example 1: Minimal Header for Quick Update
+
 ```markdown
 ---
 status: active
@@ -167,10 +184,12 @@ context: /implementation/crypto
 ---
 
 # Encryption Implementation Guide
+
 [existing content...]
 ```
 
 ### Example 2: New Architecture Decision
+
 ```markdown
 ---
 status: draft
@@ -187,10 +206,12 @@ tags: [architecture, security, encryption]
 ---
 
 # ADR-042: Age Encryption for File Protection
+
 [content...]
 ```
 
 ### Example 3: Living Configuration Document
+
 ```markdown
 ---
 status: active
@@ -204,6 +225,7 @@ tags: [deployment, ci-cd, configuration]
 ---
 
 # Deployment Configuration Guide
+
 [frequently updated content...]
 ```
 
@@ -212,7 +234,9 @@ tags: [deployment, ci-cd, configuration]
 ## Automation Support
 
 ### VSCode Snippet
+
 Add to `.vscode/project.code-snippets`:
+
 ```json
 {
   "ZenAI Document Header": {
@@ -231,6 +255,7 @@ Add to `.vscode/project.code-snippets`:
 ```
 
 ### Pre-commit Hook
+
 Documents can be validated for required headers using git hooks (future implementation).
 
 ---

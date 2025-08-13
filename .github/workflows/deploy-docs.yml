@@ -3,8 +3,8 @@ name: Deploy Public Documentation
 on:
   push:
     branches: ["main"]
-    paths: ["public-docs/**"]  # Only trigger when docs change
-  workflow_dispatch:  # Allow manual deployment
+    paths: ["public-docs/**"] # Only trigger when docs change
+  workflow_dispatch: # Allow manual deployment
 
 permissions:
   contents: read
@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Validate content exists
         run: |
           if [ ! -d "public-docs" ]; then
@@ -30,17 +30,17 @@ jobs:
           fi
           echo "Found documentation files:"
           find public-docs -type f -name "*.html" -o -name "*.md" | head -10
-      
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      
+
       - name: Disable Jekyll processing
         run: touch public-docs/.nojekyll
-      
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './public-docs'
+          path: "./public-docs"
 
   deploy:
     environment:

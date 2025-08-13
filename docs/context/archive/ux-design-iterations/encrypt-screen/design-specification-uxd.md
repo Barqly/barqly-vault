@@ -40,53 +40,54 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 
 ```css
 /* Primary Colors - Bitcoin Trust Theme */
---bitcoin-orange: #F7931A;     /* Bitcoin brand accent */
---bitcoin-orange-hover: #E67E00;
---trust-blue: #2563EB;         /* Primary actions, security */
---trust-blue-hover: #1D4ED8;
---success-green: #059669;      /* Completion, validation */
---success-green-light: #10B981;
+--bitcoin-orange: #f7931a; /* Bitcoin brand accent */
+--bitcoin-orange-hover: #e67e00;
+--trust-blue: #2563eb; /* Primary actions, security */
+--trust-blue-hover: #1d4ed8;
+--success-green: #059669; /* Completion, validation */
+--success-green-light: #10b981;
 
 /* Semantic Colors */
---error-red: #EF4444;
---warning-amber: #F59E0B;
---info-blue: #3B82F6;
---shield-blue: #2563EB;        /* Security indicators */
+--error-red: #ef4444;
+--warning-amber: #f59e0b;
+--info-blue: #3b82f6;
+--shield-blue: #2563eb; /* Security indicators */
 
 /* Neutral Palette */
---gray-900: #111827;           /* Primary text */
---gray-800: #1F2937;           /* Headers */
---gray-700: #374151;           /* Secondary text */
---gray-600: #4B5563;           /* Tertiary text */
---gray-500: #6B7280;           /* Helper text */
---gray-400: #9CA3AF;           /* Disabled text */
---gray-300: #D1D5DB;           /* Borders */
---gray-200: #E5E7EB;           /* Dividers */
---gray-100: #F3F4F6;           /* Backgrounds */
---gray-50: #F9FAFB;            /* Subtle backgrounds */
+--gray-900: #111827; /* Primary text */
+--gray-800: #1f2937; /* Headers */
+--gray-700: #374151; /* Secondary text */
+--gray-600: #4b5563; /* Tertiary text */
+--gray-500: #6b7280; /* Helper text */
+--gray-400: #9ca3af; /* Disabled text */
+--gray-300: #d1d5db; /* Borders */
+--gray-200: #e5e7eb; /* Dividers */
+--gray-100: #f3f4f6; /* Backgrounds */
+--gray-50: #f9fafb; /* Subtle backgrounds */
 
 /* Special Purpose */
---drop-zone-blue: #EFF6FF;     /* Drag-drop areas */
---progress-gradient: linear-gradient(90deg, #2563EB 0%, #059669 100%);
+--drop-zone-blue: #eff6ff; /* Drag-drop areas */
+--progress-gradient: linear-gradient(90deg, #2563eb 0%, #059669 100%);
 ```
 
 ### Typography System
 
 ```css
 /* Font Stack */
---font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
-               'Helvetica Neue', 'Arial', sans-serif;
---font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+--font-family:
+  -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue",
+  "Arial", sans-serif;
+--font-mono: "SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace;
 
 /* Scale */
---heading-xxl: 2rem;      /* 32px - Page title */
---heading-xl: 1.875rem;   /* 30px - Major sections */
---heading-lg: 1.5rem;     /* 24px - Step titles */
---heading-md: 1.25rem;    /* 20px - Card headers */
---heading-sm: 1.125rem;   /* 18px - Subsections */
---text-base: 1rem;        /* 16px - Body text */
---text-sm: 0.875rem;      /* 14px - Secondary text */
---text-xs: 0.75rem;       /* 12px - Captions, badges */
+--heading-xxl: 2rem; /* 32px - Page title */
+--heading-xl: 1.875rem; /* 30px - Major sections */
+--heading-lg: 1.5rem; /* 24px - Step titles */
+--heading-md: 1.25rem; /* 20px - Card headers */
+--heading-sm: 1.125rem; /* 18px - Subsections */
+--text-base: 1rem; /* 16px - Body text */
+--text-sm: 0.875rem; /* 14px - Secondary text */
+--text-xs: 0.75rem; /* 12px - Captions, badges */
 
 /* Weights */
 --font-regular: 400;
@@ -105,16 +106,16 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```css
 /* 8-point Grid System */
 --space-0: 0;
---space-1: 0.25rem;   /* 4px */
---space-2: 0.5rem;    /* 8px */
---space-3: 0.75rem;   /* 12px */
---space-4: 1rem;      /* 16px */
---space-5: 1.25rem;   /* 20px */
---space-6: 1.5rem;    /* 24px */
---space-8: 2rem;      /* 32px */
---space-10: 2.5rem;   /* 40px */
---space-12: 3rem;     /* 48px */
---space-16: 4rem;     /* 64px */
+--space-1: 0.25rem; /* 4px */
+--space-2: 0.5rem; /* 8px */
+--space-3: 0.75rem; /* 12px */
+--space-4: 1rem; /* 16px */
+--space-5: 1.25rem; /* 20px */
+--space-6: 1.5rem; /* 24px */
+--space-8: 2rem; /* 32px */
+--space-10: 2.5rem; /* 40px */
+--space-12: 3rem; /* 48px */
+--space-16: 4rem; /* 64px */
 
 /* Container Constraints */
 --container-max: 1280px;
@@ -143,7 +144,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ### Responsive Grid
 
 - **Desktop (≥1280px)**: 12-column grid, 24px gutters
-- **Tablet (768-1279px)**: 8-column grid, 16px gutters  
+- **Tablet (768-1279px)**: 8-column grid, 16px gutters
 - **Mobile (<768px)**: Single column, 16px padding
 
 ## Component Specifications
@@ -162,6 +163,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```
 
 **Specifications:**
+
 - Container height: 80px total (48px header + 32px trust bar)
 - Background: White with subtle bottom shadow (0 1px 3px rgba(0,0,0,0.1))
 - Title: 24px, font-bold, --gray-900
@@ -180,6 +182,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```
 
 **Specifications:**
+
 - Height: 48px
 - Background: --gray-50
 - Active step: --trust-blue background, white text, 14px font-medium
@@ -205,6 +208,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```
 
 **Specifications:**
+
 - Toggle buttons: 120px × 48px each
 - Active: --trust-blue background, white text
 - Inactive: White background, --gray-700 text, 1px --gray-300 border
@@ -230,6 +234,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```
 
 **Specifications:**
+
 - Drop zone: Min height 160px
 - Border: 2px dashed --gray-300 (default), --trust-blue (active)
 - Background: --drop-zone-blue (on hover/active)
@@ -252,6 +257,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```
 
 **Specifications:**
+
 - Container: --gray-50 background, 1px --gray-200 border
 - Summary bar: 14px font-medium, --gray-700
 - File list: Max height 120px with scroll
@@ -278,6 +284,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```
 
 **Specifications:**
+
 - Dropdown: Full width, 48px height
 - Background: White with 1px --gray-300 border
 - Selected key: 16px font-medium, --gray-900
@@ -304,6 +311,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```
 
 **Specifications:**
+
 - Path input: 48px height, 16px font
 - Browse button: 40px × 40px, integrated appearance
 - Archive name: Optional field with lighter border (--gray-200)
@@ -325,6 +333,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```
 
 **Specifications:**
+
 - Validation checklist: --success-green checks, 14px text
 - Reset button: Secondary style, 120px × 48px
 - Encrypt button: Primary style, 240px × 48px
@@ -346,6 +355,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```
 
 **Specifications:**
+
 - Progress bar: 8px height, rounded ends
 - Fill: --progress-gradient with subtle animation
 - Status text: 14px, --gray-700
@@ -376,6 +386,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ```
 
 **Specifications:**
+
 - Success icon: 48px, animated check with --success-green
 - Title: 24px, font-bold, --gray-900
 - Path display: Monospace, --gray-700, with copy button
@@ -459,6 +470,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ### Error States
 
 1. **File Access Error**
+
    ```
    ⚠️ Cannot read file: document.pdf
    The file may be open in another program.
@@ -466,6 +478,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
    ```
 
 2. **Insufficient Space**
+
    ```
    ⚠️ Not enough disk space
    Need 45 MB, only 12 MB available.
@@ -560,25 +573,42 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 
 ```css
 /* Component Structure */
-.encrypt-page {}
-.encrypt-page__header {}
-.encrypt-page__trust-bar {}
-.encrypt-page__steps {}
-.encrypt-page__content {}
-.encrypt-page__file-selection {}
-.encrypt-page__key-selection {}
-.encrypt-page__output-config {}
-.encrypt-page__actions {}
-.encrypt-page__progress {}
-.encrypt-page__success {}
+.encrypt-page {
+}
+.encrypt-page__header {
+}
+.encrypt-page__trust-bar {
+}
+.encrypt-page__steps {
+}
+.encrypt-page__content {
+}
+.encrypt-page__file-selection {
+}
+.encrypt-page__key-selection {
+}
+.encrypt-page__output-config {
+}
+.encrypt-page__actions {
+}
+.encrypt-page__progress {
+}
+.encrypt-page__success {
+}
 
 /* State Modifiers */
-.encrypt-page--loading {}
-.encrypt-page--success {}
-.encrypt-page--error {}
-.encrypt-page__step--active {}
-.encrypt-page__step--complete {}
-.encrypt-page__step--disabled {}
+.encrypt-page--loading {
+}
+.encrypt-page--success {
+}
+.encrypt-page--error {
+}
+.encrypt-page__step--active {
+}
+.encrypt-page__step--complete {
+}
+.encrypt-page__step--disabled {
+}
 ```
 
 ### Component Dependencies
@@ -593,6 +623,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 ## Testing Checklist
 
 ### Visual Testing
+
 - [ ] All states render correctly
 - [ ] Animations perform smoothly
 - [ ] Colors match specification
@@ -600,6 +631,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 - [ ] Icons display properly
 
 ### Interaction Testing
+
 - [ ] File selection works (files and folders)
 - [ ] Drag and drop functions
 - [ ] Key selection updates properly
@@ -607,6 +639,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 - [ ] Progress updates smoothly
 
 ### Accessibility Testing
+
 - [ ] Keyboard navigation complete
 - [ ] Screen reader announces all states
 - [ ] Focus indicators visible
@@ -614,6 +647,7 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 - [ ] Touch targets adequate size
 
 ### Performance Testing
+
 - [ ] Page loads under 200ms
 - [ ] No janky animations
 - [ ] Memory usage stable
@@ -646,4 +680,4 @@ The Encrypt screen transforms the complex process of file encryption into a conf
 
 ---
 
-*This specification provides complete design direction for implementing the Encrypt screen. It maintains consistency with the Setup page while delivering an optimized experience for the core encryption workflow.*
+_This specification provides complete design direction for implementing the Encrypt screen. It maintains consistency with the Setup page while delivering an optimized experience for the core encryption workflow._

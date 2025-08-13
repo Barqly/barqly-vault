@@ -18,17 +18,17 @@ How would you like to protect your encryption keys?
   Traditional password-based security
   ✓ Works everywhere
   ✓ No hardware required
-  
+
 ○ YubiKey Protection (Hardware Security)
   Physical key required for decryption
   ✓ Cannot be hacked remotely
   ⚠️ Lost key = lost access
-  
+
 ● Both (Maximum Flexibility) [RECOMMENDED]
   Best of both worlds
   ✓ YubiKey for daily convenience
   ✓ Passphrase for emergency backup
-  
+
 [Learn More] [Continue →]
 ```
 
@@ -124,7 +124,7 @@ Primary YubiKey
 ✅ YubiKey 5C NFC (Serial: 12345678)
    PIN: [******]
    Slot: 82
-   
+
 Add Backup YubiKey? (Recommended)
 [+ Add Another YubiKey]
 
@@ -145,7 +145,7 @@ Your vault is protected by:
 
 🔐 Passphrase
    Hint: "Wedding date + dog's name"
-   
+
 🔑 YubiKey 5C NFC
    Serial: 12345678
    PIN: Set (not shown)
@@ -265,7 +265,7 @@ Step 1: Insert the new YubiKey
 
 ✅ YubiKey 5 Nano Detected
    Serial: 99887766
-   
+
 Step 2: Configure This YubiKey
 
 Label: [Backup YubiKey Nano]
@@ -286,7 +286,7 @@ Should they be updated to work with this new YubiKey?
 
 ● Yes, update all vaults (Recommended)
   Future vaults will also include this key
-  
+
 ○ No, only use for new vaults
   Existing vaults won't work with this key
 
@@ -340,10 +340,10 @@ After 3 failed attempts, the YubiKey will lock.
 Your options:
 1. Use your passphrase instead
    [Decrypt with Passphrase]
-   
+
 2. Use a backup YubiKey
    [Use Different YubiKey]
-   
+
 3. Reset this YubiKey (deletes key!)
    [Learn About Reset]
 
@@ -485,13 +485,13 @@ New to YubiKey? Here are best practices:
 
 1. Always register at least 2 YubiKeys
    One primary, one backup in safe location
-   
+
 2. Remember your PIN
    Unlike passwords, it's short (6-8 digits)
-   
+
 3. Keep passphrase backup
    Hardware can fail - have a fallback
-   
+
 4. Test regularly
    Verify your backup YubiKey works monthly
 

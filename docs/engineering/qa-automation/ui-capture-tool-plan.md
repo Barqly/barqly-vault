@@ -1,8 +1,8 @@
 # UI Capture & Analysis Tool - Implementation Plan
 
-*Project: On-Demand Desktop UI Screenshot Capture & AI Analysis*  
-*Timeline: 6-8 hours*  
-*Priority: Medium (Post-test suite refactoring)*
+_Project: On-Demand Desktop UI Screenshot Capture & AI Analysis_  
+_Timeline: 6-8 hours_  
+_Priority: Medium (Post-test suite refactoring)_
 
 ## Project Overview
 
@@ -11,6 +11,7 @@ Build a simple, flexible tool for on-demand desktop application screenshot captu
 ## Milestones
 
 ### Milestone 1: Project Setup & Core Architecture
+
 **Goal**: Establish simple capture tool foundation  
 **Estimated Time**: 2 hours
 
@@ -30,6 +31,7 @@ Build a simple, flexible tool for on-demand desktop application screenshot captu
   - [ ] 1.3.4: Create session finalization workflow
 
 ### Milestone 2: On-Demand Capture Workflow
+
 **Goal**: Complete simple "capture what you see" workflow  
 **Estimated Time**: 2 hours
 
@@ -50,6 +52,7 @@ Build a simple, flexible tool for on-demand desktop application screenshot captu
   - [ ] 2.3.4: Basic cross-platform compatibility
 
 ### Milestone 3: AI Analysis Integration (Hybrid Approach)
+
 **Goal**: Flexible AI analysis with manual and automated options  
 **Estimated Time**: 2 hours
 
@@ -70,6 +73,7 @@ Build a simple, flexible tool for on-demand desktop application screenshot captu
   - [ ] 3.3.4: Create analysis completion notifications
 
 ### Milestone 4: Tool Integration & Commands
+
 **Goal**: Seamless integration with existing development workflow  
 **Estimated Time**: 1 hour
 
@@ -87,6 +91,7 @@ Build a simple, flexible tool for on-demand desktop application screenshot captu
   - [ ] 4.3.3: Create troubleshooting guide
 
 ### Milestone 5: Enhanced Features (Future)
+
 **Goal**: Optional improvements for power users  
 **Estimated Time**: 2-3 hours (Optional)
 
@@ -107,6 +112,7 @@ Build a simple, flexible tool for on-demand desktop application screenshot captu
 ## Technical Implementation Details
 
 ### Project Structure
+
 ```
 scripts/
 └── ui-capture/
@@ -132,6 +138,7 @@ docs/ui-captures/                      # Output directory (hybrid git strategy)
 ```
 
 ### Dependencies Required
+
 ```json
 {
   "screenshot-desktop": "^1.12.7",
@@ -144,6 +151,7 @@ docs/ui-captures/                      # Output directory (hybrid git strategy)
 ### Integration Points
 
 #### package.json Scripts
+
 ```json
 {
   "scripts": {
@@ -155,6 +163,7 @@ docs/ui-captures/                      # Output directory (hybrid git strategy)
 ```
 
 #### Makefile Targets
+
 ```makefile
 # UI Capture and Analysis
 ui-capture:
@@ -169,6 +178,7 @@ ui-analyze:
 ## Command Interface Design
 
 ### Basic Usage
+
 ```bash
 # Start on-demand capture session
 make ui-capture
@@ -182,16 +192,17 @@ npm run ui:analyze
 ```
 
 ### Interactive Workflow
+
 ```bash
 make ui-capture
 
 > 📸 UI Capture Mode Active
-> 
+>
 > Instructions:
 > - Navigate your app manually to any state you want to capture
 > - Press 'c' + Enter to capture current screen
 > - Press 'q' + Enter to quit and optionally analyze
-> 
+>
 > Ready to capture. Press 'c' when you see something to screenshot...
 
 c [Enter]
@@ -199,7 +210,7 @@ c [Enter]
 > 📝 Enter description (optional): Setup screen - initial state
 > Continue? Press 'c' to capture more, 'q' to finish...
 
-c [Enter]  
+c [Enter]
 > ✅ Screenshot 2 captured
 > 📝 Enter description: Encrypt screen - files selected
 > Continue? Press 'c' to capture more, 'q' to finish...
@@ -211,6 +222,7 @@ q [Enter]
 ```
 
 ### Advanced Options (Future)
+
 ```bash
 # Start with custom session name
 npm run ui:capture -- --session="error-states-audit"
@@ -225,18 +237,21 @@ npm run ui:capture -- --auto-analyze
 ## Success Metrics
 
 ### Development Workflow Integration
+
 - [ ] Tool runs successfully with single command: `make ui-capture`
 - [ ] Complete capture session takes <2 minutes regardless of UI state complexity
 - [ ] Generated analysis prompts provide actionable design recommendations
 - [ ] File organization supports easy screenshot sharing and Claude Code integration
 
 ### Simplicity and Flexibility
+
 - [ ] Tool works without modification for any UI changes or new screens
 - [ ] On-demand capture supports any UI state user wants to analyze
 - [ ] No predefined screen lists - user controls what gets captured
 - [ ] Manual navigation gives complete control over timing and states
 
 ### Quality and Reliability
+
 - [ ] Cross-platform compatibility (macOS primary, Windows/Linux support)
 - [ ] Error recovery handles screenshot and file system failures gracefully
 - [ ] Screenshot quality is consistent across captures
@@ -245,16 +260,19 @@ npm run ui:capture -- --auto-analyze
 ## Risk Assessment & Mitigation
 
 ### Technical Risks
+
 - **Screenshot Library Reliability**: Test `screenshot-desktop` thoroughly, have fallback options
 - **Cross-Platform Differences**: Implement platform-specific handling where needed
 - **File System Permissions**: Handle permission errors gracefully with clear messaging
 
 ### User Experience Risks
+
 - **Tool Simplicity**: Keep interface minimal - just 'c' to capture, 'q' to quit
 - **Learning Curve**: Tool should be self-explanatory with clear instructions
 - **Workflow Disruption**: User controls all timing and navigation - no interruption
 
 ### Maintenance Risks
+
 - **Dependency Management**: Use well-maintained libraries, minimize external dependencies
 - **AI Integration Changes**: Design abstraction layer for AI analysis integration
 - **Storage Management**: Implement cleanup and archiving to prevent disk space issues
@@ -262,20 +280,23 @@ npm run ui:capture -- --auto-analyze
 ## Future Enhancements (Post-MVP)
 
 ### Enhanced Command Interface
+
 - [ ] Quick labeling shortcuts (c setup, c encrypt instead of manual descriptions)
 - [ ] Session management commands (list sessions, compare sessions)
 - [ ] Undo last capture functionality
 
 ### Advanced Analysis
+
 - [ ] Design system compliance checking against defined standards
 - [ ] Accessibility analysis integration with existing tools
 - [ ] Historical trend analysis for design consistency improvements
 
 ### Team Collaboration
+
 - [ ] Shared capture session templates
 - [ ] Integration with design review workflows
 - [ ] Automated analysis report generation for team reviews
 
 ---
 
-*This implementation plan provides a structured approach to building the UI capture tool with clear milestones and success criteria. Progress should be tracked using the TodoWrite tool as development proceeds.*
+_This implementation plan provides a structured approach to building the UI capture tool with clear milestones and success criteria. Progress should be tracked using the TodoWrite tool as development proceeds._

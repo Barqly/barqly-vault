@@ -70,8 +70,8 @@ export interface WorkflowTest {
 }
 
 // Key Generation → Encryption → Decryption Flow
-describe('Complete Encryption Workflow', () => {
-  test('should generate key, encrypt files, and decrypt successfully', async () => {
+describe("Complete Encryption Workflow", () => {
+  test("should generate key, encrypt files, and decrypt successfully", async () => {
     // 1. Navigate to Setup tab
     // 2. Generate new key with label and passphrase
     // 3. Confirm backup
@@ -92,23 +92,23 @@ describe('Complete Encryption Workflow', () => {
 ```typescript
 // tests/integration/commands.spec.ts
 
-describe('Tauri Command Integration', () => {
+describe("Tauri Command Integration", () => {
   // Test command invocation patterns
-  test('generate_key command', async () => {
+  test("generate_key command", async () => {
     // Mock file system
     // Invoke command
     // Verify key saved
     // Check response format
   });
-  
-  test('encrypt_data with progress', async () => {
+
+  test("encrypt_data with progress", async () => {
     // Setup progress listener
     // Invoke encryption
     // Verify progress events
     // Check final result
   });
-  
-  test('error propagation', async () => {
+
+  test("error propagation", async () => {
     // Trigger various errors
     // Verify error codes
     // Check user messages
@@ -121,19 +121,19 @@ describe('Tauri Command Integration', () => {
 ```typescript
 // tests/security/boundaries.spec.ts
 
-describe('Security Boundaries', () => {
-  test('path traversal prevention', async () => {
+describe("Security Boundaries", () => {
+  test("path traversal prevention", async () => {
     // Attempt various malicious paths
     // Verify all are rejected
   });
-  
-  test('input validation', async () => {
+
+  test("input validation", async () => {
     // Test SQL injection patterns
     // Test command injection
     // Test XSS attempts
   });
-  
-  test('resource limits', async () => {
+
+  test("resource limits", async () => {
     // Test large file handling
     // Test memory limits
     // Test concurrent operations
@@ -194,7 +194,7 @@ export function generateEncryptedBundle(): TestBundle {
 
 export async function assertFileEncrypted(
   filePath: string,
-  originalContent: Buffer
+  originalContent: Buffer,
 ): Promise<void> {
   // Verify file is encrypted
   // Check age format
@@ -203,7 +203,7 @@ export async function assertFileEncrypted(
 
 export async function assertManifestValid(
   manifest: Manifest,
-  files: FileInfo[]
+  files: FileInfo[],
 ): Promise<void> {
   // Verify all files listed
   // Check hashes match
@@ -217,18 +217,18 @@ export async function assertManifestValid(
 
 ```typescript
 export interface PlatformTest {
-  platforms: ('windows' | 'macos' | 'linux')[];
+  platforms: ("windows" | "macos" | "linux")[];
   test: () => Promise<void>;
   skipReason?: string;
 }
 
 // Platform-specific path handling
-describe.each(['windows', 'macos', 'linux'])('Platform: %s', (platform) => {
-  test('file path handling', async () => {
+describe.each(["windows", "macos", "linux"])("Platform: %s", (platform) => {
+  test("file path handling", async () => {
     // Test platform-specific paths
   });
-  
-  test('key storage location', async () => {
+
+  test("key storage location", async () => {
     // Verify correct directories
   });
 });
@@ -263,20 +263,20 @@ export interface Benchmark {
   iterations: number;
 }
 
-describe('Performance Benchmarks', () => {
-  benchmark('key generation', {
+describe("Performance Benchmarks", () => {
+  benchmark("key generation", {
     maxDuration: 1000,
-    iterations: 10
+    iterations: 10,
   });
-  
-  benchmark('10MB file encryption', {
+
+  benchmark("10MB file encryption", {
     maxDuration: 5000,
-    iterations: 5
+    iterations: 5,
   });
-  
-  benchmark('state updates', {
+
+  benchmark("state updates", {
     maxDuration: 50,
-    iterations: 100
+    iterations: 100,
   });
 });
 ```
@@ -292,7 +292,7 @@ export interface ResourceMetrics {
 }
 
 export function measureResources(
-  operation: () => Promise<void>
+  operation: () => Promise<void>,
 ): Promise<ResourceMetrics> {
   // Measure before
   // Run operation
@@ -326,11 +326,11 @@ export interface TestReport {
     skipped: number;
     duration: number;
   };
-  
+
   coverage: CoverageReport;
-  
+
   failures: TestFailure[];
-  
+
   performance: BenchmarkResults;
 }
 ```
@@ -367,4 +367,4 @@ export interface TestReport {
 
 ---
 
-*This blueprint defines the integration testing architecture. Test implementation should follow these specifications while maintaining reliability and performance.* 
+_This blueprint defines the integration testing architecture. Test implementation should follow these specifications while maintaining reliability and performance._

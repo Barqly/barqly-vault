@@ -2,7 +2,6 @@
 tbd/
 
 # Ignore specstory
-.specstory/
 .claude/sessions/
 
 # Rust

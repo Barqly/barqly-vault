@@ -5,6 +5,7 @@
 ## Quick Start Commands
 
 ### Most Used Commands
+
 ```bash
 # Start development
 make ui              # Frontend dev server (http://localhost:5173)
@@ -24,6 +25,7 @@ make test-rust       # Backend tests (~1-2min)
 ## Development Setup
 
 ### Initial Setup
+
 ```bash
 # Clone and setup
 git clone <repo>
@@ -39,6 +41,7 @@ make setup-hooks     # Install git hooks
 ```
 
 ### Daily Workflow
+
 ```bash
 # 1. Start your day
 git pull origin main
@@ -65,6 +68,7 @@ git commit -m "type(scope): description"
 ## Testing Workflow
 
 ### Running Tests
+
 ```bash
 # All tests
 make test
@@ -81,6 +85,7 @@ cd src-tauri && cargo tarpaulin
 ```
 
 ### Test Organization
+
 ```
 src-ui/__tests__/           # Frontend tests
 ├── components/             # Component tests
@@ -96,6 +101,7 @@ src-tauri/tests/            # Backend tests
 ## Code Quality Checks
 
 ### Frontend Validation
+
 ```bash
 # TypeScript check
 cd src-ui && npx tsc --noEmit
@@ -109,6 +115,7 @@ cd src-ui && npx prettier --write .  # Auto-fix
 ```
 
 ### Backend Validation
+
 ```bash
 # Formatting
 cd src-tauri && cargo fmt --check
@@ -124,6 +131,7 @@ cd src-tauri && cargo audit
 ## Development Tools
 
 ### Useful Development Commands
+
 ```bash
 # Reset development environment
 make dev-reset       # Interactive cleanup
@@ -139,6 +147,7 @@ make dev-keys        # Create 4 test keys
 ```
 
 ### Debugging
+
 ```bash
 # Enable verbose logging
 RUST_LOG=debug cargo tauri dev
@@ -154,6 +163,7 @@ console.log(data);   # Frontend logging
 ## Git Workflow
 
 ### Commit Convention
+
 ```bash
 # Format: type(scope): description
 
@@ -173,6 +183,7 @@ git commit -m "docs: update development workflow"
 ```
 
 ### Branch Strategy
+
 ```bash
 main                 # Production-ready code
 ├── feature/*        # New features
@@ -184,6 +195,7 @@ main                 # Production-ready code
 ## Performance Optimization
 
 ### Quick Performance Checks
+
 ```bash
 # Run benchmarks
 make bench
@@ -198,9 +210,10 @@ RUST_LOG=debug cargo tauri dev
 ```
 
 ### Common Optimizations
+
 ```typescript
 // Frontend: Use lazy loading
-const SetupPage = lazy(() => import('./pages/SetupPage'));
+const SetupPage = lazy(() => import("./pages/SetupPage"));
 
 // Frontend: Memoize expensive operations
 const result = useMemo(() => expensiveOp(data), [data]);
@@ -217,6 +230,7 @@ async fn long_operation() -> Result<T>
 ## Troubleshooting
 
 ### Common Issues
+
 ```bash
 # Frontend won't start
 cd src-ui && rm -rf node_modules package-lock.json
@@ -236,6 +250,7 @@ chmod +x .git/hooks/pre-commit
 ```
 
 ### Platform-Specific Paths
+
 ```bash
 # Find app data (macOS)
 ls ~/Library/Application\ Support/barqly-vault/
@@ -250,6 +265,7 @@ ls ~/.config/barqly-vault/
 ## CI/CD Integration
 
 ### Pre-push Checklist
+
 ```bash
 # 1. All tests pass
 make test
@@ -269,6 +285,7 @@ git log --oneline -1
 ```
 
 ### CI Pipeline Stages
+
 1. **Validation** - Formatting, linting, type checking
 2. **Testing** - Unit, integration, smoke tests
 3. **Security** - Dependency audits
@@ -278,6 +295,7 @@ git log --oneline -1
 ## Time-Saving Tips
 
 ### Fastest Iteration
+
 ```bash
 # Frontend only changes
 make validate-ui     # 30 seconds
@@ -295,6 +313,7 @@ make validate       # 2-3 minutes
 ```
 
 ### Parallel Development
+
 ```bash
 # Terminal 1: Frontend
 make ui
@@ -309,6 +328,7 @@ cd src-ui && npm test
 ## Definition of Done
 
 Before marking any task complete:
+
 - [ ] Feature works as specified
 - [ ] Tests written and passing
 - [ ] `make validate` passes

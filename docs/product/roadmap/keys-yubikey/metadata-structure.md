@@ -30,7 +30,7 @@ This document details the metadata structure changes required to support multipl
   "created_at": "2025-08-08T15:52:09.347467Z",
   "updated_at": "2025-08-09T10:30:00.000000Z",
   "encryption_config": {
-    "mode": "both",  // "passphrase" | "yubikey" | "both"
+    "mode": "both", // "passphrase" | "yubikey" | "both"
     "algorithm": "age-v1"
   },
   "recipients": [
@@ -158,13 +158,13 @@ impl MetadataVersion {
     pub fn load(path: &Path) -> Result<MetadataV2, Error> {
         let content = fs::read_to_string(path)?;
         let metadata: MetadataVersion = serde_json::from_str(&content)?;
-        
+
         match metadata {
             MetadataVersion::V1(v1) => Ok(Self::migrate_v1_to_v2(v1)),
             MetadataVersion::V2(v2) => Ok(v2),
         }
     }
-    
+
     fn migrate_v1_to_v2(v1: MetadataV1) -> MetadataV2 {
         MetadataV2 {
             version: "2.0".to_string(),
@@ -201,14 +201,14 @@ impl MetadataVersion {
 pub fn infer_recipients(vault_path: &Path) -> Vec<Recipient> {
     // Try to parse age file headers to identify recipients
     let mut recipients = vec![];
-    
+
     if let Ok(file) = File::open(vault_path) {
         if let Ok(decryptor) = age::Decryptor::new(file) {
             // Age files contain recipient information in headers
             // This is a fallback for vaults without .meta files
         }
     }
-    
+
     recipients
 }
 ```
@@ -313,7 +313,7 @@ pub async fn get_key_metadata(
 ) -> CommandResponse<MetadataV2> {
     let path = get_metadata_path(&key_label)?;
     let metadata = MetadataVersion::load(&path)?;
-    
+
     Ok(CommandResponse::Success {
         data: metadata,
         message: format!("Loaded metadata for {}", key_label),
@@ -330,7 +330,7 @@ pub async fn add_recipient(
     recipient: NewRecipient,
 ) -> CommandResponse<MetadataV2> {
     let mut metadata = load_metadata(&key_label)?;
-    
+
     // Add new recipient
     metadata.recipients.push(Recipient {
         id: generate_recipient_id(),
@@ -342,10 +342,10 @@ pub async fn add_recipient(
         status: "active".to_string(),
         ..Default::default()
     });
-    
+
     metadata.updated_at = Utc::now();
     save_metadata(&key_label, &metadata)?;
-    
+
     Ok(CommandResponse::Success {
         data: metadata,
         message: format!("Added recipient to {}", key_label),
@@ -362,28 +362,28 @@ pub async fn remove_recipient(
     recipient_id: String,
 ) -> CommandResponse<MetadataV2> {
     let mut metadata = load_metadata(&key_label)?;
-    
+
     // Don't actually delete, just mark as removed
     if let Some(recipient) = metadata.recipients.iter_mut()
         .find(|r| r.id == recipient_id) {
         recipient.status = "removed".to_string();
     }
-    
+
     // Check if at least one active recipient remains
     let active_count = metadata.recipients.iter()
         .filter(|r| r.status == "active")
         .count();
-    
+
     if active_count == 0 {
         return Err(CommandError {
             code: ErrorCode::InvalidOperation,
             message: "Cannot remove last recipient".to_string(),
         });
     }
-    
+
     metadata.updated_at = Utc::now();
     save_metadata(&key_label, &metadata)?;
-    
+
     Ok(CommandResponse::Success {
         data: metadata,
         message: format!("Removed recipient from {}", key_label),

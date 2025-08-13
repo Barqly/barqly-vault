@@ -9,17 +9,20 @@ This document provides comprehensive documentation for the Barqly Vault backend 
 ## Architecture Principles
 
 ### **Source-First Documentation**
+
 - **Single Source of Truth**: All interfaces defined in Rust source code
 - **Automatic Generation**: TypeScript definitions generated during build
 - **Type Safety**: Frontend builds against generated interfaces
 - **Consistency**: Documentation always matches implementation
 
 ### **Command-Only Access Pattern**
+
 - **UI Interface**: Only Tauri commands are public to the frontend
 - **Internal Modules**: All other modules are private implementation details
 - **Clean Separation**: Clear boundary between UI and backend logic
 
 ### **Error Handling Strategy**
+
 - **Unified Error Types**: All commands use `CommandError` with structured information
 - **User-Friendly Messages**: Errors include recovery guidance and actionable information
 - **Programmatic Handling**: Error codes enable client-side error handling
@@ -27,62 +30,75 @@ This document provides comprehensive documentation for the Barqly Vault backend 
 ## Generated TypeScript Definitions
 
 ### **Location**
+
 TypeScript definitions are automatically generated during build:
+
 ```
 src-tauri/target/debug/build/barqly-vault-*/out/generated/types.ts
 ```
 
 ### **Generation**
+
 ```bash
 # Generate TypeScript definitions
 cargo build --features generate-types
 ```
 
 ### **Usage in Frontend**
+
 ```typescript
-import { invokeCommand, CommandError, ErrorCode } from './generated/types';
+import { invokeCommand, CommandError, ErrorCode } from "./generated/types";
 
 // Use the generated types for type safety
-const result = await invokeCommand<GenerateKeyResponse>('generate_key', {
-  label: 'My Key',
-  passphrase: 'secure-passphrase'
+const result = await invokeCommand<GenerateKeyResponse>("generate_key", {
+  label: "My Key",
+  passphrase: "secure-passphrase",
 });
 ```
 
 ## Core Types
 
 ### **Command Response Pattern**
+
 All commands follow a consistent response pattern:
 
 ```typescript
 // Success case
-{ status: 'success'; data: T }
+{
+  status: "success";
+  data: T;
+}
 
-// Error case  
-{ status: 'error'; data: CommandError }
+// Error case
+{
+  status: "error";
+  data: CommandError;
+}
 ```
 
 ### **Error Handling**
+
 ```typescript
 interface CommandError {
-  code: ErrorCode;           // Programmatic error code
-  message: string;           // User-friendly message
-  details?: string;          // Technical details for debugging
+  code: ErrorCode; // Programmatic error code
+  message: string; // User-friendly message
+  details?: string; // Technical details for debugging
   recovery_guidance?: string; // Suggested user actions
-  user_actionable: boolean;  // Whether user can resolve
-  trace_id?: string;         // Debugging trace ID
-  span_id?: string;          // Debugging span ID
+  user_actionable: boolean; // Whether user can resolve
+  trace_id?: string; // Debugging trace ID
+  span_id?: string; // Debugging span ID
 }
 ```
 
 ### **Progress Tracking**
+
 ```typescript
 interface ProgressUpdate {
   operation_id: string;
-  progress: number;          // 0.0 to 1.0
-  message: string;           // Human-readable status
+  progress: number; // 0.0 to 1.0
+  message: string; // Human-readable status
   details?: ProgressDetails; // Operation-specific details
-  timestamp: string;         // ISO 8601
+  timestamp: string; // ISO 8601
   estimated_time_remaining?: number; // seconds
 }
 ```
@@ -90,6 +106,7 @@ interface ProgressUpdate {
 ## Crypto Commands
 
 ### **1. Key Generation**
+
 ```typescript
 // Generate a new encryption keypair
 generate_key(input: GenerateKeyInput): Promise<CommandResponse<GenerateKeyResponse>>
@@ -107,6 +124,7 @@ interface GenerateKeyResponse {
 ```
 
 ### **2. Passphrase Validation**
+
 ```typescript
 // Validate passphrase strength
 validate_passphrase(input: ValidatePassphraseInput): Promise<CommandResponse<ValidatePassphraseResponse>>
@@ -122,6 +140,7 @@ interface ValidatePassphraseResponse {
 ```
 
 ### **3. Data Encryption**
+
 ```typescript
 // Encrypt files with a public key
 encrypt_files(input: EncryptDataInput): Promise<CommandResponse<string>>
@@ -134,6 +153,7 @@ interface EncryptDataInput {
 ```
 
 ### **4. Data Decryption**
+
 ```typescript
 // Decrypt files with a private key
 decrypt_data(input: DecryptDataInput): Promise<CommandResponse<DecryptionResult>>
@@ -153,6 +173,7 @@ interface DecryptionResult {
 ```
 
 ### **5. Encryption Status**
+
 ```typescript
 // Get status of encryption operation
 get_encryption_status(input: GetEncryptionStatusInput): Promise<CommandResponse<EncryptionStatusResponse>>
@@ -184,6 +205,7 @@ enum EncryptionStatus {
 ```
 
 ### **6. Progress Tracking**
+
 ```typescript
 // Get progress of any operation
 get_progress(input: GetProgressInput): Promise<CommandResponse<GetProgressResponse>>
@@ -204,6 +226,7 @@ interface GetProgressResponse {
 ```
 
 ### **7. Manifest Verification**
+
 ```typescript
 // Verify extracted files against manifest
 verify_manifest(input: VerifyManifestInput): Promise<CommandResponse<VerifyManifestResponse>>
@@ -224,6 +247,7 @@ interface VerifyManifestResponse {
 ## Storage Commands
 
 ### **1. Key Management**
+
 ```typescript
 // List all available keys
 list_keys(): Promise<CommandResponse<KeyMetadata[]>>
@@ -239,6 +263,7 @@ delete_key(key_id: string): Promise<CommandResponse<() => void>>
 ```
 
 ### **2. Configuration**
+
 ```typescript
 // Get application configuration
 get_config(): Promise<CommandResponse<AppConfig>>
@@ -263,6 +288,7 @@ interface AppConfigUpdate {
 ## File Commands
 
 ### **1. File Selection**
+
 ```typescript
 // Select files or folders for encryption
 select_files(selection_type: SelectionType): Promise<CommandResponse<FileSelection>>
@@ -281,6 +307,7 @@ interface FileSelection {
 ```
 
 ### **2. File Information**
+
 ```typescript
 // Get information about a file
 get_file_info(file_path: string): Promise<CommandResponse<FileInfo>>
@@ -295,6 +322,7 @@ interface FileInfo {
 ```
 
 ### **3. Manifest Operations**
+
 ```typescript
 // Create manifest for files
 create_manifest(file_paths: string[]): Promise<CommandResponse<Manifest>>
@@ -311,6 +339,7 @@ interface Manifest {
 ## Error Codes
 
 ### **Validation Errors**
+
 - `INVALID_INPUT` - General input validation failure
 - `MISSING_PARAMETER` - Required parameter not provided
 - `INVALID_PATH` - Invalid file or directory path
@@ -321,18 +350,21 @@ interface Manifest {
 - `TOO_MANY_FILES` - Too many files selected
 
 ### **Permission Errors**
+
 - `PERMISSION_DENIED` - Insufficient permissions
 - `PATH_NOT_ALLOWED` - Path not allowed by security policy
 - `INSUFFICIENT_PERMISSIONS` - More specific permission error
 - `READ_ONLY_FILE_SYSTEM` - File system is read-only
 
 ### **Not Found Errors**
+
 - `KEY_NOT_FOUND` - Encryption key not found
 - `FILE_NOT_FOUND` - File doesn't exist
 - `DIRECTORY_NOT_FOUND` - Directory doesn't exist
 - `OPERATION_NOT_FOUND` - Operation ID not found
 
 ### **Operation Errors**
+
 - `ENCRYPTION_FAILED` - Encryption operation failed
 - `DECRYPTION_FAILED` - Decryption operation failed
 - `STORAGE_FAILED` - Storage operation failed
@@ -342,18 +374,21 @@ interface Manifest {
 - `CONCURRENT_OPERATION` - Concurrent operation conflict
 
 ### **Resource Errors**
+
 - `DISK_SPACE_INSUFFICIENT` - Not enough disk space
 - `MEMORY_INSUFFICIENT` - Not enough memory
 - `FILE_SYSTEM_ERROR` - File system error
 - `NETWORK_ERROR` - Network-related error
 
 ### **Security Errors**
+
 - `INVALID_KEY` - Invalid encryption key
 - `WRONG_PASSPHRASE` - Incorrect passphrase
 - `TAMPERED_DATA` - Data has been tampered with
 - `UNAUTHORIZED_ACCESS` - Unauthorized access attempt
 
 ### **Internal Errors**
+
 - `INTERNAL_ERROR` - Internal application error
 - `UNEXPECTED_ERROR` - Unexpected error occurred
 - `CONFIGURATION_ERROR` - Configuration error
@@ -361,37 +396,37 @@ interface Manifest {
 ## Usage Examples
 
 ### **Complete Encryption Workflow**
+
 ```typescript
-import { invokeCommand, CommandError } from './generated/types';
+import { invokeCommand, CommandError } from "./generated/types";
 
 async function encryptFiles() {
   try {
     // 1. Generate a key
-    const keyResult = await invokeCommand('generate_key', {
-      label: 'My Backup Key',
-      passphrase: 'secure-passphrase-123'
+    const keyResult = await invokeCommand("generate_key", {
+      label: "My Backup Key",
+      passphrase: "secure-passphrase-123",
     });
-    
+
     // 2. Select files
-    const selectionResult = await invokeCommand('select_files', 'Files');
-    
+    const selectionResult = await invokeCommand("select_files", "Files");
+
     // 3. Encrypt files
-    const encryptionResult = await invokeCommand('encrypt_files', {
+    const encryptionResult = await invokeCommand("encrypt_files", {
       key_id: keyResult.key_id,
       file_paths: selectionResult.paths,
-      output_name: 'backup-encrypted'
+      output_name: "backup-encrypted",
     });
-    
-    console.log('Encryption completed:', encryptionResult);
-    
+
+    console.log("Encryption completed:", encryptionResult);
   } catch (error) {
     if (error instanceof CommandError) {
       if (error.isValidationError()) {
-        console.error('Validation error:', error.message);
+        console.error("Validation error:", error.message);
       } else if (error.isSecurityError()) {
-        console.error('Security error:', error.message);
+        console.error("Security error:", error.message);
       } else {
-        console.error('Operation failed:', error.message);
+        console.error("Operation failed:", error.message);
       }
     }
   }
@@ -399,53 +434,55 @@ async function encryptFiles() {
 ```
 
 ### **Progress Tracking**
+
 ```typescript
 async function trackProgress(operationId: string) {
   const interval = setInterval(async () => {
     try {
-      const progress = await invokeCommand('get_progress', { operation_id: operationId });
-      
+      const progress = await invokeCommand("get_progress", {
+        operation_id: operationId,
+      });
+
       console.log(`Progress: ${Math.round(progress.progress * 100)}%`);
       console.log(`Message: ${progress.message}`);
-      
+
       if (progress.is_complete) {
         clearInterval(interval);
-        console.log('Operation completed!');
+        console.log("Operation completed!");
       }
-      
     } catch (error) {
       clearInterval(interval);
-      console.error('Progress tracking failed:', error);
+      console.error("Progress tracking failed:", error);
     }
   }, 1000);
 }
 ```
 
 ### **Error Handling**
+
 ```typescript
 async function handleErrors() {
   try {
-    const result = await invokeCommand('some_command', {});
+    const result = await invokeCommand("some_command", {});
     return result;
-    
   } catch (error) {
     if (error instanceof CommandError) {
       switch (error.code) {
-        case 'INVALID_INPUT':
+        case "INVALID_INPUT":
           // Show validation error to user
           showValidationError(error.message);
           break;
-          
-        case 'PERMISSION_DENIED':
+
+        case "PERMISSION_DENIED":
           // Request permissions from user
           requestPermissions();
           break;
-          
-        case 'KEY_NOT_FOUND':
+
+        case "KEY_NOT_FOUND":
           // Guide user to create or import key
           showKeyNotFoundDialog();
           break;
-          
+
         default:
           // Show generic error
           showError(error.message, error.recovery_guidance);
@@ -458,26 +495,31 @@ async function handleErrors() {
 ## Best Practices
 
 ### **1. Always Use Generated Types**
+
 - Import types from generated file for type safety
 - Don't define interfaces manually in frontend
 - Let TypeScript catch type mismatches at compile time
 
 ### **2. Handle All Error Cases**
+
 - Always wrap command calls in try-catch
 - Use `CommandError` class for structured error handling
 - Provide user-friendly error messages
 
 ### **3. Implement Progress Tracking**
+
 - Use progress updates for long-running operations
 - Show progress bars and status messages
 - Handle operation cancellation gracefully
 
 ### **4. Validate Input Early**
+
 - Validate user input before calling commands
 - Use client-side validation for immediate feedback
 - Let backend validation catch edge cases
 
 ### **5. Follow Security Guidelines**
+
 - Never log sensitive data (passphrases, keys)
 - Clear sensitive data from memory after use
 - Use secure storage for configuration
@@ -485,6 +527,7 @@ async function handleErrors() {
 ## Development Workflow
 
 ### **1. Adding New Commands**
+
 1. Define input/output types in Rust
 2. Add TypeScript equivalents in documentation
 3. Generate TypeScript definitions
@@ -492,12 +535,14 @@ async function handleErrors() {
 5. Test with frontend integration
 
 ### **2. Modifying Existing Commands**
+
 1. Update Rust types
 2. Regenerate TypeScript definitions
 3. Update frontend code to match new types
 4. Test backward compatibility
 
 ### **3. Error Handling**
+
 1. Use appropriate error codes
 2. Provide user-friendly messages
 3. Include recovery guidance
@@ -506,18 +551,21 @@ async function handleErrors() {
 ## Security Considerations
 
 ### **Data Protection**
+
 - All sensitive data is automatically zeroed from memory
 - Passphrases use constant-time comparison
 - Keys are stored encrypted at rest
 - No sensitive data is logged
 
 ### **Input Validation**
+
 - All input is validated before processing
 - Path traversal attempts are detected and blocked
 - File size limits are enforced
 - Malicious file types are rejected
 
 ### **Access Control**
+
 - Commands only access allowed file system locations
 - Key access requires proper authentication
 - Operations are isolated and sandboxed
@@ -525,12 +573,14 @@ async function handleErrors() {
 ## Performance Guidelines
 
 ### **Large File Handling**
+
 - Use streaming for large files
 - Implement progress tracking
 - Handle memory constraints gracefully
 - Support operation cancellation
 
 ### **Concurrent Operations**
+
 - Prevent conflicting operations
 - Use operation IDs for tracking
 - Implement proper cleanup
@@ -539,12 +589,14 @@ async function handleErrors() {
 ## Testing
 
 ### **Frontend Integration Tests**
+
 - Test all command interfaces
 - Verify error handling
 - Test progress tracking
 - Validate type safety
 
 ### **End-to-End Tests**
+
 - Test complete workflows
 - Verify data integrity
 - Test error recovery
@@ -553,12 +605,14 @@ async function handleErrors() {
 ## Maintenance
 
 ### **Version Compatibility**
+
 - Maintain backward compatibility
 - Version API changes appropriately
 - Document breaking changes
 - Provide migration guides
 
 ### **Documentation Updates**
+
 - Keep documentation in sync with code
 - Update examples for new features
 - Maintain usage guidelines
@@ -566,4 +620,4 @@ async function handleErrors() {
 
 ---
 
-*This document is automatically generated and maintained as part of the Barqly Vault development process. For questions or issues, please refer to the project documentation or create an issue in the repository.* 
+_This document is automatically generated and maintained as part of the Barqly Vault development process. For questions or issues, please refer to the project documentation or create an issue in the repository._

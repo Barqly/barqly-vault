@@ -7,6 +7,7 @@ This document defines the Rust coding standards for the Barqly Vault project. Th
 ### Enforcement
 
 All standards are enforced through tooling:
+
 - **rustfmt**: Automatic code formatting
 - **clippy**: Linting with security and performance checks
 - **cargo test**: Test execution and coverage
@@ -19,6 +20,7 @@ Run `make validate-rust` before committing to ensure compliance.
 ### 1.1 Ownership and Borrowing
 
 #### Prefer Borrowing Over Cloning
+
 ```rust
 //  Good: Borrow when possible
 fn validate_path(path: &Path) -> Result<()> {
@@ -38,6 +40,7 @@ fn validate_path(path: PathBuf) -> Result<()> {
 ```
 
 #### Use Smart Pointers Appropriately
+
 ```rust
 // Use Arc for shared ownership across threads
 use std::sync::Arc;
@@ -54,6 +57,7 @@ let large_data = Box::new(LargeStruct::new());
 ### 1.2 Error Handling
 
 #### Always Use Result<T, E> for Fallible Operations
+
 ```rust
 //  Good: Explicit error handling
 pub fn encrypt_files(paths: Vec<PathBuf>, key: &PublicKey) -> Result<Vec<u8>, CryptoError> {
@@ -67,6 +71,7 @@ pub fn encrypt_files(paths: Vec<PathBuf>, key: &PublicKey) -> Vec<u8> {
 ```
 
 #### Use thiserror for Custom Error Types
+
 ```rust
 use thiserror::Error;
 
@@ -74,16 +79,17 @@ use thiserror::Error;
 pub enum CryptoError {
     #[error("Invalid key format: {0}")]
     InvalidKeyFormat(String),
-    
+
     #[error("Encryption failed: {0}")]
     EncryptionFailed(String),
-    
+
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 }
 ```
 
 #### Error Propagation Pattern
+
 ```rust
 // Use ? operator for error propagation
 pub fn process_file(path: &Path) -> Result<String, FileOpsError> {
@@ -103,6 +109,7 @@ pub fn load_key(path: &Path) -> Result<PrivateKey, CryptoError> {
 ### 1.3 Pattern Matching
 
 #### Exhaustive Matching
+
 ```rust
 //  Good: Handle all cases explicitly
 match operation {
@@ -119,6 +126,7 @@ match operation {
 ```
 
 #### Use if let for Single Pattern
+
 ```rust
 //  Good: Simple pattern match
 if let Some(key) = optional_key {
@@ -135,6 +143,7 @@ if let Err(e) = validate_input(&input) {
 ### 1.4 Zero-Copy Operations
 
 #### Use Borrowed Types in APIs
+
 ```rust
 //  Good: Accept &str for string parameters
 pub fn validate_label(label: &str) -> Result<(), ValidationError> {
@@ -148,6 +157,7 @@ pub fn validate_label(label: String) -> Result<(), ValidationError> {
 ```
 
 #### Use Cow for Conditional Ownership
+
 ```rust
 use std::borrow::Cow;
 
@@ -163,6 +173,7 @@ pub fn normalize_path(path: &str) -> Cow<str> {
 ### 1.5 Memory Safety with Sensitive Data
 
 #### Always Use Zeroize for Sensitive Data
+
 ```rust
 use zeroize::{Zeroize, ZeroizeOnDrop};
 use secrecy::{Secret, SecretString};
@@ -186,6 +197,7 @@ pub fn validate_passphrase(passphrase: SecretString) -> Result<(), CryptoError> 
 ### 2.1 Command Architecture
 
 #### Command Structure
+
 ```rust
 // Commands should be in src/commands/ organized by domain
 // Each command should:
@@ -201,10 +213,10 @@ pub async fn generate_key(
     // Input validation
     ValidationHelper::validate_key_label(&label)?;
     ValidationHelper::validate_passphrase_strength(&passphrase)?;
-    
+
     // Wrap sensitive data
     let secret_passphrase = SecretString::from(passphrase);
-    
+
     // Perform operation with error handling
     let handler = ErrorHandler::new();
     let keypair = handler.handle_operation_error(
@@ -212,14 +224,14 @@ pub async fn generate_key(
         "Key generation",
         ErrorCode::EncryptionFailed,
     )?;
-    
+
     // Store securely
     let stored_path = handler.handle_operation_error(
         storage::store_keypair(&label, &keypair, secret_passphrase),
         "Key storage",
         ErrorCode::StorageFailed,
     )?;
-    
+
     Ok(KeyGenerationResponse {
         public_key: keypair.public_key.to_string(),
         key_label: label,
@@ -231,6 +243,7 @@ pub async fn generate_key(
 ### 2.2 Async/Await Best Practices
 
 #### Use Async for I/O Operations
+
 ```rust
 #[tauri::command]
 pub async fn encrypt_files(
@@ -248,7 +261,7 @@ pub async fn encrypt_files(
         ErrorCode::EncryptionFailed,
         format!("Encryption task failed: {}", e)
     ))??;
-    
+
     Ok(EncryptionResult {
         archive_path: encrypted_data.path,
         size: encrypted_data.size,
@@ -259,6 +272,7 @@ pub async fn encrypt_files(
 ### 2.3 State Management
 
 #### Use Tauri State Safely
+
 ```rust
 use tauri::State;
 use std::sync::Mutex;
@@ -277,7 +291,7 @@ pub fn get_operation_status(
             ErrorCode::InternalError,
             "Failed to acquire state lock"
         ))?;
-    
+
     operations.get(&operation_id)
         .cloned()
         .ok_or_else(|| CommandError::not_found("Operation not found").into())
@@ -287,6 +301,7 @@ pub fn get_operation_status(
 ### 2.4 Error Serialization
 
 #### Ensure Errors are Frontend-Friendly
+
 ```rust
 // All errors must implement proper serialization
 #[derive(Debug, Serialize, Deserialize)]
@@ -405,7 +420,7 @@ fn get_app_data_dir() -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_key_generation() {
         let keypair = generate_keypair().unwrap();
@@ -471,40 +486,40 @@ use super::types::CommandResponse;
 
 ### 4.3 Documentation Standards
 
-```rust
+````rust
 //! Module-level documentation
-//! 
+//!
 //! This module handles all cryptographic operations for Barqly Vault.
 //! It provides secure key generation, encryption, and decryption using
 //! the age encryption standard.
 
 /// Generate a new age keypair for encryption operations.
-/// 
+///
 /// # Returns
-/// 
+///
 /// Returns a `KeyPair` containing the public and private keys.
 /// The private key is wrapped in `SecretString` for secure handling.
-/// 
+///
 /// # Errors
-/// 
+///
 /// Returns `CryptoError` if key generation fails.
-/// 
+///
 /// # Example
-/// 
+///
 /// ```no_run
 /// use barqly_vault::crypto::generate_keypair;
-/// 
+///
 /// let keypair = generate_keypair()?;
 /// println!("Public key: {}", keypair.public_key.as_str());
 /// ```
-/// 
+///
 /// # Security
-/// 
+///
 /// The private key material is automatically zeroized when dropped.
 pub fn generate_keypair() -> Result<KeyPair, CryptoError> {
     // Implementation
 }
-```
+````
 
 ### 4.4 Comments
 
@@ -600,24 +615,24 @@ pub fn process_file_path(path: &str) -> Result<PathBuf, ValidationError> {
     if path.contains("..") {
         return Err(ValidationError::InvalidPath("Path traversal detected"));
     }
-    
+
     let path = PathBuf::from(path);
-    
+
     // Verify path is under allowed directory
     let canonical = path.canonicalize()
         .map_err(|_| ValidationError::InvalidPath("Cannot resolve path"))?;
-    
+
     if !canonical.starts_with(&allowed_base_path()) {
         return Err(ValidationError::InvalidPath("Path outside allowed directory"));
     }
-    
+
     Ok(canonical)
 }
 
 // Validate data sizes
 pub fn validate_file_size(size: u64) -> Result<(), ValidationError> {
     const MAX_SIZE: u64 = 100 * 1024 * 1024; // 100MB
-    
+
     if size > MAX_SIZE {
         return Err(ValidationError::FileTooLarge(size, MAX_SIZE));
     }
@@ -727,7 +742,7 @@ pub async fn heavy_computation(data: Vec<u8>) -> Result<String> {
     let result = tokio::task::spawn_blocking(move || {
         perform_heavy_computation(&data)
     }).await?;
-    
+
     Ok(result)
 }
 
@@ -768,10 +783,10 @@ pub fn process_with_cleanup() -> Result<()> {
     let _guard = CleanupGuard::new(|| {
         // Cleanup code runs when guard is dropped
     });
-    
+
     // Main processing
     risky_operation()?;
-    
+
     Ok(())
 }
 
@@ -779,9 +794,9 @@ pub fn process_with_cleanup() -> Result<()> {
 pub async fn process_archive(path: &Path) -> Result<()> {
     let file = tokio::fs::File::open(path).await?;
     let mut archive = Archive::new(file);
-    
+
     // Process archive
-    
+
     // Explicit cleanup
     archive.finish().await?;
     Ok(())
@@ -793,12 +808,14 @@ pub async fn process_archive(path: &Path) -> Result<()> {
 ### Required Tools
 
 1. **rustfmt** - Automatic formatting
+
    ```bash
    cargo fmt --all -- --check  # CI check
    cargo fmt --all             # Auto-fix
    ```
 
 2. **clippy** - Linting with security focus
+
    ```bash
    cargo clippy --all-targets --all-features -- -D warnings
    ```
@@ -832,11 +849,13 @@ allow = [
 ### Pre-commit Validation
 
 Run before every commit:
+
 ```bash
 make validate-rust
 ```
 
 This runs:
+
 - `cargo fmt --check`
 - `cargo clippy --all-targets --all-features -- -D warnings`
 - `cargo test`
@@ -844,6 +863,7 @@ This runs:
 ## Summary
 
 These standards ensure:
+
 1. **Security**: Memory safety, secure defaults, input validation
 2. **Performance**: Efficient resource usage, appropriate async
 3. **Maintainability**: Clear structure, comprehensive documentation

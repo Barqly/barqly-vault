@@ -1,10 +1,11 @@
 # UI Testing Standards and Best Practices
 
-*Last Updated: August 7, 2025*
+_Last Updated: August 7, 2025_
 
 This document captures critical learnings from building a robust test suite for the Barqly Vault UI, specifically addressing mock isolation, test philosophy, and React Testing Library with Vitest best practices.
 
 ## Table of Contents
+
 - [Mock Isolation and State Management](#mock-isolation-and-state-management)
 - [Test Philosophy: What to Test](#test-philosophy-what-to-test)
 - [React Testing Library Best Practices](#react-testing-library-best-practices)
@@ -21,7 +22,7 @@ When tests share mock objects, state can leak between tests causing unpredictabl
 ### L Wrong Approach: Creating New Mock Objects
 
 ```javascript
-describe('Component', () => {
+describe("Component", () => {
   // DON'T: Create factory functions that generate new objects
   const createMockHook = () => ({
     data: null,
@@ -42,7 +43,7 @@ describe('Component', () => {
 ###  Correct Approach: Reset Properties on Existing Objects
 
 ```javascript
-describe('Component', () => {
+describe("Component", () => {
   // DO: Create mock object once at describe scope
   const mockHook = {
     data: null,
@@ -54,14 +55,14 @@ describe('Component', () => {
   beforeEach(() => {
     // Reset mock functions
     vi.clearAllMocks();
-    
+
     // Reset mock state while keeping same object reference
     Object.assign(mockHook, {
       data: null,
       loading: false,
       error: null,
     });
-    
+
     // Set the mock return value
     mockUseHook.mockReturnValue(mockHook);
   });
@@ -73,6 +74,7 @@ describe('Component', () => {
 ```
 
 **Key insights:**
+
 1. Keep mock objects at describe scope - don't recreate them
 2. Use `Object.assign()` to reset properties while maintaining object reference
 3. Call `vi.clearAllMocks()` to reset function call counts and history
@@ -83,19 +85,19 @@ describe('Component', () => {
 When using nested describe blocks with their own `beforeEach`:
 
 ```javascript
-describe('Parent', () => {
+describe("Parent", () => {
   beforeEach(() => {
     // Runs first for every test
     mockHook.data = null;
   });
 
-  describe('Child', () => {
+  describe("Child", () => {
     beforeEach(() => {
       // Runs second, after parent's beforeEach
-      mockHook.data = 'test-data';
+      mockHook.data = "test-data";
     });
 
-    it('test', () => {
+    it("test", () => {
       // mockHook.data is 'test-data'
     });
   });
@@ -109,25 +111,25 @@ describe('Parent', () => {
  **Keep tests that validate user-visible behavior:**
 
 ```javascript
-it('should show error message when login fails', () => {
+it("should show error message when login fails", () => {
   // User sees an error - KEEP
-  mockAuth.mockReturnValue({ error: 'Invalid credentials' });
+  mockAuth.mockReturnValue({ error: "Invalid credentials" });
   render(<LoginForm />);
-  expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
+  expect(screen.getByText("Invalid credentials")).toBeInTheDocument();
 });
 
-it('should enable submit button when all fields are valid', () => {
+it("should enable submit button when all fields are valid", () => {
   // User interaction flow - KEEP
   render(<Form />);
   fillOutForm();
-  expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Submit" })).toBeEnabled();
 });
 
-it('should display loading spinner during data fetch', () => {
+it("should display loading spinner during data fetch", () => {
   // User sees loading state - KEEP
   mockHook.mockReturnValue({ loading: true });
   render(<DataList />);
-  expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+  expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
 });
 ```
 
@@ -136,20 +138,20 @@ it('should display loading spinner during data fetch', () => {
 L **Skip tests that check internal implementation:**
 
 ```javascript
-it.skip('should call selectFiles when button clicked - REMOVED: Tests implementation not UX', () => {
+it.skip("should call selectFiles when button clicked - REMOVED: Tests implementation not UX", () => {
   // Testing that a function was called - SKIP
   fireEvent.click(button);
   expect(mockSelectFiles).toHaveBeenCalled();
 });
 
-it.skip('should update internal state - REMOVED: Tests implementation detail', () => {
+it.skip("should update internal state - REMOVED: Tests implementation detail", () => {
   // Testing internal state changes - SKIP
   expect(component.state.isOpen).toBe(true);
 });
 
-it.skip('should pass correct props to child - REMOVED: Tests component internals', () => {
+it.skip("should pass correct props to child - REMOVED: Tests component internals", () => {
   // Testing prop passing - SKIP
-  expect(ChildComponent).toHaveBeenCalledWith({ foo: 'bar' });
+  expect(ChildComponent).toHaveBeenCalledWith({ foo: "bar" });
 });
 ```
 
@@ -157,12 +159,12 @@ it.skip('should pass correct props to child - REMOVED: Tests component internals
 
 Ask these questions to determine if a test should be kept:
 
-1. **Does it test something the user can see or interact with?** ’ KEEP
-2. **Does it test critical business logic that affects user experience?** ’ KEEP
-3. **Does it test that a function was called with specific arguments?** ’ SKIP
-4. **Does it test internal state that doesn't affect the UI?** ’ SKIP
-5. **Does it test the exact text format when the meaning is clear?** ’ SKIP
-6. **Does it test component integration that ensures features work together?** ’ KEEP
+1. **Does it test something the user can see or interact with?** ï¿½ KEEP
+2. **Does it test critical business logic that affects user experience?** ï¿½ KEEP
+3. **Does it test that a function was called with specific arguments?** ï¿½ SKIP
+4. **Does it test internal state that doesn't affect the UI?** ï¿½ SKIP
+5. **Does it test the exact text format when the meaning is clear?** ï¿½ SKIP
+6. **Does it test component integration that ensures features work together?** ï¿½ KEEP
 
 ## React Testing Library Best Practices
 
@@ -170,12 +172,12 @@ Ask these questions to determine if a test should be kept:
 
 ```javascript
 // All vi.mock() calls are hoisted to the top of the file
-vi.mock('../../hooks/useAuth'); // This runs first
+vi.mock("../../hooks/useAuth"); // This runs first
 
-describe('Component', () => {
+describe("Component", () => {
   // This runs after hoisting
   const mockUseAuth = vi.mocked(useAuth);
-  
+
   beforeEach(() => {
     // Change mock behavior per test
     mockUseAuth.mockReturnValue({ user: null });
@@ -194,6 +196,7 @@ With React 19.1, you may see act() warnings for async state updates:
 **Solutions:**
 
 1. **Use async utilities from React Testing Library** (they auto-wrap in act):
+
 ```javascript
 // Instead of manual waiting
 await act(async () => {
@@ -202,29 +205,30 @@ await act(async () => {
 
 // Use RTL utilities
 await waitFor(() => {
-  expect(screen.getByText('Loaded')).toBeInTheDocument();
+  expect(screen.getByText("Loaded")).toBeInTheDocument();
 });
 ```
 
 2. **Use findBy queries** (auto-wrapped in act):
+
 ```javascript
 // Instead of getBy + waitFor
-const element = await screen.findByText('Async Content');
+const element = await screen.findByText("Async Content");
 ```
 
 ### Proper use of rerender
 
 ```javascript
-it('should update when props change', () => {
+it("should update when props change", () => {
   const { rerender } = render(<Component prop="initial" />);
-  
+
   // Update mock if needed
-  mockHook.mockReturnValue({ data: 'new-data' });
-  
+  mockHook.mockReturnValue({ data: "new-data" });
+
   // Rerender with new props
   rerender(<Component prop="updated" />);
-  
-  expect(screen.getByText('updated')).toBeInTheDocument();
+
+  expect(screen.getByText("updated")).toBeInTheDocument();
 });
 ```
 
@@ -236,7 +240,8 @@ it('should update when props change', () => {
 
 **Cause:** Mock state contamination between tests
 
-**Solution:** 
+**Solution:**
+
 ```javascript
 beforeEach(() => {
   vi.clearAllMocks(); // Clear function calls
@@ -255,15 +260,17 @@ beforeEach(() => {
 **Cause:** Mutating the mock object instead of calling mockReturnValue
 
 **Wrong:**
+
 ```javascript
-mockHook.data = 'new-data'; // Won't trigger re-render
+mockHook.data = "new-data"; // Won't trigger re-render
 ```
 
 **Right:**
+
 ```javascript
 mockUseHook.mockReturnValue({
   ...mockHook,
-  data: 'new-data'
+  data: "new-data",
 });
 ```
 
@@ -272,11 +279,13 @@ mockUseHook.mockReturnValue({
 **Problem:** Tests break when text formatting changes slightly
 
 **Wrong:**
+
 ```javascript
 expect(screen.getByText('2 files selected " 2.00 KB')).toBeInTheDocument();
 ```
 
 **Right:**
+
 ```javascript
 expect(screen.getByText(/2 files selected/)).toBeInTheDocument();
 expect(screen.getByText(/2.*KB/)).toBeInTheDocument();
@@ -287,9 +296,10 @@ expect(screen.getByText(/2.*KB/)).toBeInTheDocument();
 **Problem:** Complex mock components that don't match actual behavior
 
 **Solution:** Keep mocks simple and focused on the test's needs:
+
 ```javascript
-vi.mock('./ComplexComponent', () => ({
-  default: () => <div data-testid="complex-component">Mocked</div>
+vi.mock("./ComplexComponent", () => ({
+  default: () => <div data-testid="complex-component">Mocked</div>,
 }));
 ```
 
@@ -335,4 +345,4 @@ npx vitest run --coverage
 
 ---
 
-*Remember: A test suite is only as strong as its weakest test. One flaky test can undermine confidence in the entire suite.*
+_Remember: A test suite is only as strong as its weakest test. One flaky test can undermine confidence in the entire suite._

@@ -84,6 +84,7 @@ The backup card is a printable physical backup method for Barqly Vault encryptio
 ## Typography
 
 ### Fonts
+
 - **Headers**: System UI Bold, 14pt
 - **Labels**: System UI Semibold, 10pt
 - **Body Text**: System UI Regular, 9pt
@@ -91,6 +92,7 @@ The backup card is a printable physical backup method for Barqly Vault encryptio
 - **Warnings**: System UI Bold, 10pt (red if color printing)
 
 ### Text Hierarchy
+
 1. Product name (largest)
 2. Section headers
 3. Key metadata
@@ -100,13 +102,16 @@ The backup card is a printable physical backup method for Barqly Vault encryptio
 ## QR Code Specifications
 
 ### Technical Requirements
+
 - **Error Correction**: Level H (30% damage tolerance)
 - **Module Size**: Minimum 4x4 pixels per module
 - **Quiet Zone**: 4 modules on all sides
 - **Data Capacity**: ~2,950 bytes with Level H
 
 ### Multi-Part QR Codes
+
 If key exceeds single QR capacity:
+
 ```
 ┌────────┐ ┌────────┐ ┌────────┐
 │ QR 1/3 │ │ QR 2/3 │ │ QR 3/3 │
@@ -115,6 +120,7 @@ Part 1 of 3  Part 2 of 3  Part 3 of 3
 ```
 
 ### QR Code Data Structure
+
 ```json
 {
   "v": "1.0",
@@ -131,12 +137,14 @@ Part 1 of 3  Part 2 of 3  Part 3 of 3
 ## Color Schemes
 
 ### Standard (Black & White)
+
 - Background: White (#FFFFFF)
 - Text: Black (#000000)
 - QR Code: Black on white
 - Borders: Black 1pt
 
 ### Professional (Subtle Color)
+
 - Background: White (#FFFFFF)
 - Headers: Dark Blue (#1E3A8A)
 - Warnings: Red (#DC2626)
@@ -145,12 +153,14 @@ Part 1 of 3  Part 2 of 3  Part 3 of 3
 ## Security Features
 
 ### Visual Security Elements
+
 1. **Holographic Sticker Space**: Designated area for tamper-evident seal
 2. **Serial Number**: Unique identifier for tracking
 3. **Void Pattern**: Optional background pattern that shows "VOID" when copied
 4. **Microprint Border**: Fine text border readable only with magnification
 
 ### Information Security
+
 - No sensitive metadata (file paths, system info)
 - Only encrypted key included
 - Passphrase never printed
@@ -159,6 +169,7 @@ Part 1 of 3  Part 2 of 3  Part 3 of 3
 ## Folding Variants
 
 ### Bi-Fold Card (Privacy)
+
 ```
 Outside:                    Inside:
 ┌─────────────┐            ┌─────────────┐
@@ -169,6 +180,7 @@ Outside:                    Inside:
 ```
 
 ### Envelope Style
+
 - Card fits in standard #10 envelope
 - Includes separate instruction sheet
 - QR code hidden when folded
@@ -176,62 +188,68 @@ Outside:                    Inside:
 ## Print Templates
 
 ### HTML Template Structure
+
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <style>
-    @media print {
-      @page { 
-        size: letter;
-        margin: 0.5in;
+  <head>
+    <style>
+      @media print {
+        @page {
+          size: letter;
+          margin: 0.5in;
+        }
+        body {
+          font-family: -apple-system, system-ui, sans-serif;
+        }
+        .no-print {
+          display: none;
+        }
+        .page-break {
+          page-break-after: always;
+        }
       }
-      body {
-        font-family: -apple-system, system-ui, sans-serif;
+
+      .backup-card {
+        border: 2pt solid #000;
+        padding: 20px;
+        max-width: 7.5in;
       }
-      .no-print { display: none; }
-      .page-break { page-break-after: always; }
-    }
-    
-    .backup-card {
-      border: 2pt solid #000;
-      padding: 20px;
-      max-width: 7.5in;
-    }
-    
-    .qr-code {
-      width: 200px;
-      height: 200px;
-      margin: 20px auto;
-    }
-    
-    .manual-code {
-      font-family: 'Courier New', monospace;
-      font-size: 10pt;
-      word-break: break-all;
-      background: #f5f5f5;
-      padding: 10px;
-      border: 1pt solid #ccc;
-    }
-    
-    .warning {
-      color: #dc2626;
-      font-weight: bold;
-      border: 2pt solid #dc2626;
-      padding: 10px;
-      margin: 15px 0;
-    }
-  </style>
-</head>
-<body>
-  <div class="backup-card">
-    <!-- Card content here -->
-  </div>
-</body>
+
+      .qr-code {
+        width: 200px;
+        height: 200px;
+        margin: 20px auto;
+      }
+
+      .manual-code {
+        font-family: "Courier New", monospace;
+        font-size: 10pt;
+        word-break: break-all;
+        background: #f5f5f5;
+        padding: 10px;
+        border: 1pt solid #ccc;
+      }
+
+      .warning {
+        color: #dc2626;
+        font-weight: bold;
+        border: 2pt solid #dc2626;
+        padding: 10px;
+        margin: 15px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="backup-card">
+      <!-- Card content here -->
+    </div>
+  </body>
 </html>
 ```
 
 ### PDF Generation
+
 - Use @react-pdf/renderer for React
 - Include embedded fonts for consistency
 - Vector QR code for quality
@@ -240,12 +258,14 @@ Outside:                    Inside:
 ## Accessibility
 
 ### Large Print Version
+
 - 16pt minimum font size
 - High contrast borders
 - Enlarged QR code
 - Simplified layout
 
 ### Screen Reader Version
+
 - Semantic HTML structure
 - ARIA labels for QR code
 - Alt text for images
@@ -254,12 +274,14 @@ Outside:                    Inside:
 ## Testing Requirements
 
 ### Print Testing
+
 - Test on inkjet and laser printers
 - Verify QR scanning at different sizes
 - Check readability after folding
 - Test lamination compatibility
 
 ### Scan Testing
+
 - Phone cameras (iOS/Android)
 - Webcams (various resolutions)
 - QR scanner apps
@@ -268,12 +290,14 @@ Outside:                    Inside:
 ## Production Considerations
 
 ### Pre-Printed Stock
+
 - Optional: Pre-print card templates
 - Users only add QR and manual code
 - Reduces printer requirements
 - Professional appearance
 
 ### Digital Wallet Integration
+
 - Apple Wallet pass format
 - Google Wallet support
 - PDF with password protection
@@ -282,14 +306,16 @@ Outside:                    Inside:
 ## Localization
 
 ### Supported Languages
+
 - English (primary)
 - Spanish
-- French  
+- French
 - German
 - Japanese
 - Simplified Chinese
 
 ### Layout Adjustments
+
 - RTL language support (Arabic, Hebrew)
 - Character encoding for Asian languages
 - Dynamic text sizing for longer translations

@@ -3,6 +3,7 @@
 ## Key Generation with Mandatory Backup
 
 ### Flow Overview
+
 ```
 Generate Key → Key Created → Backup Required → Choose Method → Verify Backup → Complete
 ```
@@ -10,6 +11,7 @@ Generate Key → Key Created → Backup Required → Choose Method → Verify Ba
 ### Detailed Journey
 
 #### Step 1: User Initiates Key Generation
+
 - User clicks "Generate New Key" from setup screen
 - Enters key name (e.g., "family-vault")
 - Sets passphrase
@@ -17,6 +19,7 @@ Generate Key → Key Created → Backup Required → Choose Method → Verify Ba
 - Clicks "Generate"
 
 ##### Passphrase Hint Guidelines
+
 ```
 Enter a hint to help you remember your passphrase:
 [________________________________________________]
@@ -33,6 +36,7 @@ Enter a hint to help you remember your passphrase:
 ```
 
 #### Step 2: Key Generation Success
+
 ```
 ┌─────────────────────────────────────────┐
 │  ✅ Key Generated Successfully!         │
@@ -49,6 +53,7 @@ Enter a hint to help you remember your passphrase:
 ```
 
 #### Step 3: Choose Backup Method
+
 ```
 ┌─────────────────────────────────────────┐
 │  Backup Your Key                       │
@@ -74,9 +79,11 @@ Enter a hint to help you remember your passphrase:
 ### Backup Method: USB Drive
 
 #### User Selects USB Drive
+
 1. System detects available removable drives
 2. User selects target drive
 3. App creates structured backup:
+
 ```
 /USB-Drive/Barqly-Key-Backup-2025-08-08/
 ├── family-vault.age         # Encrypted key
@@ -86,6 +93,7 @@ Enter a hint to help you remember your passphrase:
 ```
 
 #### Success Confirmation
+
 ```
 ✅ Key backed up successfully to:
    E:\Barqly-Key-Backup-2025-08-08\
@@ -96,19 +104,22 @@ Enter a hint to help you remember your passphrase:
 ### Backup Method: Export File
 
 #### User Selects Location
+
 1. File browser opens
 2. User navigates to desired location (NOT cloud-synced folders)
 3. Warning shown if cloud-sync detected:
+
 ```
 ⚠️ Warning: This location appears to sync with [iCloud/OneDrive/Dropbox]
    Keys should not be stored in cloud-synced folders.
-   
+
    [Choose Different Location] [Continue Anyway]
 ```
 
 ### Backup Method: Print Backup Card
 
 #### Generate Printable Card
+
 ```
 ┌────────────────────────────────────────┐
 │          BARQLY VAULT KEY BACKUP       │
@@ -139,6 +150,7 @@ Enter a hint to help you remember your passphrase:
 ### Step 4: Backup Verification
 
 #### Verification Process
+
 ```
 ┌─────────────────────────────────────────┐
 │  Verify Your Backup                    │
@@ -160,6 +172,7 @@ Enter a hint to help you remember your passphrase:
 ```
 
 ### Step 5: Setup Complete
+
 - User returns to main application
 - Backup status shown in UI: "✅ Key Backed Up"
 
@@ -168,9 +181,11 @@ Enter a hint to help you remember your passphrase:
 ### Scenario 1: New Device Setup
 
 #### User Story
+
 "I got a new computer and need to restore my Barqly Vault keys"
 
 #### Flow
+
 1. Install Barqly Vault
 2. On welcome screen: "Restore Existing Key"
 3. Select backup source:
@@ -183,25 +198,30 @@ Enter a hint to help you remember your passphrase:
 ### Scenario 2: Emergency Recovery
 
 #### User Story
+
 "My computer crashed and I need to decrypt important files NOW"
 
 #### Flow
+
 1. Stress-optimized UI with large, clear buttons
 2. Auto-scan for common backup locations
 3. "Found potential backup at E:\Barqly-Key-Backup\"
 4. Display passphrase hint if available:
+
    ```
    Enter your passphrase:
    [_____________________]
-   
+
    💡 Hint: "Wedding date + first pet"
    ```
+
 5. One-click restore with passphrase
 6. Immediate access to decrypt files
 
 ### Recovery from Printed Card
 
 #### QR Code Scanning
+
 1. User selects "Scan Backup Card"
 2. Camera/webcam activated
 3. QR code scanned
@@ -210,6 +230,7 @@ Enter a hint to help you remember your passphrase:
 6. Key restored
 
 #### Manual Entry (QR Damaged)
+
 1. User selects "Enter Key Manually"
 2. Types the AGE-SECRET-KEY string
 3. System validates format
@@ -221,16 +242,19 @@ Enter a hint to help you remember your passphrase:
 ### Common Errors and Solutions
 
 #### "Backup File Corrupted"
+
 - Try alternate backup if available
 - Check file integrity with provided checksum
 - Contact support with error code
 
 #### "Wrong Passphrase"
+
 - Allow multiple attempts
 - Provide passphrase hints if set during creation
 - No permanent lockout (stress scenario)
 
 #### "Backup File Not Found"
+
 - Scan common locations automatically
 - Guide user to check:
   - USB drives

@@ -14,6 +14,7 @@ After thorough analysis, `tauri-safe.ts` and `api-types.ts` serve **different, c
 **Purpose**: Defines TypeScript interfaces, types, and enums that mirror Rust structures
 
 **Contents**:
+
 - Data structure definitions (`CommandError`, `GenerateKeyInput`, etc.)
 - Enums (`ErrorCode`, `EncryptionStatus`)
 - Type aliases (`CommandResult<T>`, `ProgressDetails`)
@@ -27,6 +28,7 @@ After thorough analysis, `tauri-safe.ts` and `api-types.ts` serve **different, c
 **Purpose**: Provides safe runtime wrappers for Tauri API calls
 
 **Contents**:
+
 - `safeInvoke`: Main invocation wrapper with:
   - Environment detection (desktop vs web)
   - Dynamic import handling
@@ -40,18 +42,19 @@ After thorough analysis, `tauri-safe.ts` and `api-types.ts` serve **different, c
 
 ## Key Differences
 
-| Aspect | api-types.ts | tauri-safe.ts |
-|--------|--------------|---------------|
-| **Primary Role** | Type definitions | Runtime execution |
-| **Dependencies** | None (types only) | Imports from api-types.ts |
-| **Runtime Code** | Minimal (1 function) | Extensive |
-| **Environment Handling** | No | Yes (desktop/web detection) |
-| **Logging** | No | Comprehensive |
-| **Parameter Mapping** | No | Yes (command-specific) |
+| Aspect                   | api-types.ts         | tauri-safe.ts               |
+| ------------------------ | -------------------- | --------------------------- |
+| **Primary Role**         | Type definitions     | Runtime execution           |
+| **Dependencies**         | None (types only)    | Imports from api-types.ts   |
+| **Runtime Code**         | Minimal (1 function) | Extensive                   |
+| **Environment Handling** | No                   | Yes (desktop/web detection) |
+| **Logging**              | No                   | Comprehensive               |
+| **Parameter Mapping**    | No                   | Yes (command-specific)      |
 
 ## Current Type Generation Status
 
 ### Discovery:
+
 1. The `generate-types` feature exists in `Cargo.toml` but isn't actively used
 2. Generated types would be located at:
    ```
@@ -60,7 +63,9 @@ After thorough analysis, `tauri-safe.ts` and `api-types.ts` serve **different, c
 3. The current `api-types.ts` is manually maintained (despite "auto-generated" header)
 
 ### Recommendation:
+
 Keep the current manual approach because:
+
 1. It allows better control over TypeScript-specific features
 2. The type definitions are stable and don't change frequently
 3. Manual maintenance allows adding TypeScript-specific utilities like `CommandErrorClass`

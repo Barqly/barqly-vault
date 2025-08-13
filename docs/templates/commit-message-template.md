@@ -1,6 +1,7 @@
 # Commit Message Template
 
 ## Format
+
 ```
 <type>(<scope>): <subject>
 
@@ -10,6 +11,7 @@
 ```
 
 ## Types
+
 - **feat**: New feature implementation
 - **fix**: Bug fix
 - **docs**: Documentation changes
@@ -21,6 +23,7 @@
 - **security**: Security-related changes
 
 ## Scopes (Examples)
+
 - **crypto**: Encryption/decryption module
 - **storage**: Key storage module
 - **file-ops**: File operations module
@@ -30,23 +33,27 @@
 - **build**: Build system changes
 
 ## Subject
+
 - Use imperative mood ("add" not "added" or "adds")
 - Don't capitalize first letter
 - No period at the end
 - Limit to 50 characters
 
 ## Body
+
 - Explain what and why (not how)
 - Wrap at 72 characters
 - Reference issues and PRs
 
 ## Footer
+
 - Breaking changes: `BREAKING CHANGE: <description>`
 - Issue references: `Fixes #123`, `Closes #456`
 
 ## Examples
 
 ### Simple feature
+
 ```
 feat(crypto): add support for multiple recipients
 
@@ -57,6 +64,7 @@ Closes #123
 ```
 
 ### Security fix
+
 ```
 security(storage): prevent timing attacks in passphrase comparison
 
@@ -69,6 +77,7 @@ Fixes #CVE-2024-XXXX
 ```
 
 ### Breaking change
+
 ```
 refactor(commands): rename encrypt_files to encrypt_archive
 

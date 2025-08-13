@@ -11,6 +11,7 @@
 Bitcoin offers unprecedented financial sovereignty – complete control over your wealth without intermediaries. But this power creates a paradox: if something happens to you, your family could lose access forever. The very security that protects your Bitcoin from theft also locks out your loved ones.
 
 Current solutions force impossible trade-offs:
+
 - **Too Complex**: Command-line tools that intimidate non-technical family members
 - **Too Insecure**: Cloud storage that compromises the sovereignty Bitcoin provides
 - **Too Generic**: Encryption tools not designed for Bitcoin's specific needs
@@ -28,6 +29,7 @@ Our north star: **A Bitcoin-holding parent should be able to secure their family
 The foundation is complete and operational:
 
 **Core Encryption Engine**
+
 - Military-grade `age` encryption standard (audited, open-source)
 - Passphrase-protected key generation with memorable labels
 - File and folder encryption preserving structure
@@ -35,6 +37,7 @@ The foundation is complete and operational:
 - Cross-platform consistency (macOS, Windows, Linux)
 
 **User Experience**
+
 - Three-tab simplicity: Setup → Encrypt → Decrypt
 - 90-second setup process (measured and validated)
 - Progressive disclosure design reducing cognitive load
@@ -44,11 +47,13 @@ The foundation is complete and operational:
 ### What We're Building Next (Phase 2 - Q1 2026)
 
 **Enhanced Security**
+
 - Digital signatures for manifest verification (proving authenticity)
 - Hardware wallet integration (Trezor, Ledger key storage)
 - Multi-recipient encryption (family member access)
 
 **Bitcoin-Specific Features**
+
 - Direct wallet integration (Sparrow, Electrum, Core)
 - Output descriptor optimization
 - Recovery instruction templates for heirs
@@ -60,31 +65,37 @@ The Setup screen evolution demonstrates our commitment to iterative refinement b
 ### The Journey: From Functional to Exceptional
 
 **Starting Point** (`mockups/setup-screen.md`)
+
 - Basic form with title, fields, and button
 - Functional but uninspiring
 - No emotional connection or trust building
 
 **Requirements Definition** (`setup-screen/setup-screen-requirements-po.md`)
+
 - Identified need for trust indicators
 - Defined success metrics: 85% completion rate
 - Established emotional goals: confidence and family protection
 
 **Prime Real Estate Analysis** (`setup-screen/setup-screen-prime-real-estate-analysis.md`)
+
 - Discovered 30% of viewport wasted on redundant messaging
 - Form partially hidden below fold
 - Users needed to scroll to begin primary task
 
 **Information Hierarchy Optimization** (`setup-screen/information-hierarchy-guide-po.md`)
+
 - Consolidated three components into one compact header
 - Elevated form to primary position
 - Removed duplicate security messaging
 
 **Visual Identity Enhancement** (`setup-screen/bitcoin-visual-identity-uxd.md`)
+
 - Introduced Bitcoin-specific visual language
 - Balanced professionalism with approachability
 - Created cohesive design system
 
 **Current Implementation**
+
 - Compact header with integrated trust signals
 - Form-first design with immediate call-to-action
 - 70% completion rate → 85% (measured improvement)
@@ -97,18 +108,21 @@ The setup screen evolution taught us that users who download Barqly Vault are al
 ## User Personas: Who We're Building For
 
 ### Primary: The Bitcoin Family (70% of users)
+
 **Profile**: 30-50 years old, married with children, 1-3 years of Bitcoin self-custody  
 **Core Need**: Ensure family can access Bitcoin if something happens  
 **Pain Point**: Complex tools and cloud storage concerns  
 **Success Metric**: Creates inheritance backup within first week
 
 ### Secondary: The Bitcoin Professional (20% of users)
+
 **Profile**: 25-45 years old, developers/consultants, 3+ years Bitcoin experience  
 **Core Need**: Professional-grade encryption for client work  
 **Pain Point**: Need reliable cross-platform tools  
 **Success Metric**: Recommends to 3+ clients
 
 ### Tertiary: The Bitcoin Newcomer (10% of users)
+
 **Profile**: 20-35 years old, <1 year Bitcoin experience  
 **Core Need**: Start with proper security from day one  
 **Pain Point**: Overwhelmed by complexity  
@@ -117,23 +131,29 @@ The setup screen evolution taught us that users who download Barqly Vault are al
 ## Product Principles
 
 ### 1. Security Without Sacrifice
+
 Every feature must enhance or maintain security. No compromises for convenience.
 
 ### 2. Clarity Over Cleverness
+
 Clear, obvious interfaces beat clever, minimal ones. Users dealing with money need confidence, not puzzles.
 
 ### 3. Progressive Disclosure
+
 Show what's needed when it's needed. Advanced features exist but don't overwhelm beginners.
 
 ### 4. Bitcoin-Native Design
+
 This isn't generic encryption. Every decision considers Bitcoin-specific use cases.
 
 ### 5. Family-First Language
+
 We're not just protecting files, we're protecting families' financial futures.
 
 ## Success Metrics
 
 ### Current Performance (Alpha Release - January 2025)
+
 - **Setup Completion Rate**: 85% (target met) ✅
 - **First Backup Success**: 92% (target: 95%)
 - **Time to First Backup**: 90 seconds (exceeds 5 minute target) ✅
@@ -141,6 +161,7 @@ We're not just protecting files, we're protecting families' financial futures.
 - **User Experience**: Intuitive flow requiring no documentation ✅
 
 ### Key Learning Indicators
+
 - Users immediately understand the three-step process
 - Professional users recommend to clients
 - Family users create multiple backups for different purposes
@@ -149,19 +170,25 @@ We're not just protecting files, we're protecting families' financial futures.
 ## Integration with Other Domains
 
 ### To Architecture Domain
+
 Product requirements flow into technical architecture:
+
 - Security requirements → Encryption implementation
 - Performance targets → System design decisions
 - Cross-platform needs → Technology choices
 
 ### To Engineering Domain
+
 Product features become implementation tasks:
+
 - User stories → Development tickets
 - Success metrics → Test criteria
 - UI/UX designs → Component implementation
 
 ### From Business Domain
+
 Business strategy informs product decisions:
+
 - Market positioning → Feature prioritization
 - User acquisition → Onboarding optimization
 - Competitive analysis → Differentiation features
@@ -169,6 +196,7 @@ Business strategy informs product decisions:
 ## Active Decisions
 
 ### Decided and Implemented
+
 - ✅ Three-tab navigation (Setup/Encrypt/Decrypt)
 - ✅ Form-first setup screen design
 - ✅ 90-second setup target
@@ -176,12 +204,14 @@ Business strategy informs product decisions:
 - ✅ Local-only, no cloud dependencies
 
 ### Under Active Consideration
+
 - 🤔 Hardware wallet integration approach
 - 🤔 Multi-recipient encryption UX
 - 🤔 Backup scheduling implementation
 - 🤔 Recovery instruction templates
 
 ### Deliberately Deferred
+
 - ⏸️ Enterprise multi-user features (Phase 4)
 - ⏸️ API access (Phase 4)
 - ⏸️ Time-locked decryption (Future)
@@ -190,18 +220,21 @@ Business strategy informs product decisions:
 ## How to Use This Context
 
 ### For Feature Development
+
 1. Check alignment with user personas
 2. Validate against product principles
 3. Ensure consistency with current patterns
 4. Consider evolution story lessons
 
 ### For Design Decisions
+
 1. Reference setup screen evolution
 2. Apply prime real estate principles
 3. Follow progressive disclosure patterns
 4. Maintain Bitcoin-native language
 
 ### For Technical Implementation
+
 1. Understand the "why" behind requirements
 2. Consider user journey implications
 3. Maintain security-first approach
@@ -217,4 +250,4 @@ If maybe, we validate with users first.
 
 ---
 
-*This document represents the current state of product thinking. It evolves with user feedback, market learning, and team insights. For specific feature details, consult the referenced documents in this domain.*
+_This document represents the current state of product thinking. It evolves with user feedback, market learning, and team insights. For specific feature details, consult the referenced documents in this domain._

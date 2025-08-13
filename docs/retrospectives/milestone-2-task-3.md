@@ -1,6 +1,7 @@
 # Retro Notes - Milestone 2, Task 2.3: Test Suite Reorganization
 
 ## Task Summary
+
 Reorganized the test suite from embedded tests to a proper structured approach with clear separation of unit, integration, and smoke tests.
 
 ## What Went Well ✅
@@ -42,6 +43,7 @@ Reorganized the test suite from embedded tests to a proper structured approach w
 **Test Organization is as Critical as Test Coverage**: The reorganization revealed that proper test structure (unit/integration/smoke separation) is essential for maintainability. The shift from embedded tests to dedicated modules made the codebase significantly more maintainable and aligned with Rust best practices. This structural improvement will pay dividends in future development cycles.
 
 ## Technical Achievements
+
 - **87 unit tests** organized in dedicated modules
 - **Proper test isolation** using temporary directories
 - **Consistent naming conventions** across all test types
@@ -50,7 +52,8 @@ Reorganized the test suite from embedded tests to a proper structured approach w
 - **All tests passing** with proper error handling
 
 ## Next Steps
+
 - Address remaining clippy warnings (format string improvements)
 - Consider adding property-based testing for crypto operations
 - Implement test coverage reporting
-- Add performance benchmarks for critical operations 
+- Add performance benchmarks for critical operations

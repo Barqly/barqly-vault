@@ -60,20 +60,20 @@ pub enum ErrorCode {
     InvalidInput,
     MissingParameter,
     InvalidPath,
-    
+
     // Permission errors
     PermissionDenied,
     PathNotAllowed,
-    
+
     // Not found errors
     KeyNotFound,
     FileNotFound,
-    
+
     // Operation errors
     EncryptionFailed,
     DecryptionFailed,
     StorageFailed,
-    
+
     // Internal errors
     InternalError,
 }
@@ -197,13 +197,13 @@ pub async fn create_manifest(
 
 ### Error Handling Strategy
 
-| Scenario | Error Code | User Message |
-|----------|------------|--------------|
-| Invalid key label | `INVALID_INPUT` | "Key label can only contain letters, numbers, and dashes" |
-| Weak passphrase | `INVALID_INPUT` | "Passphrase must be at least 12 characters" |
-| Key not found | `KEY_NOT_FOUND` | "No key found with that name" |
-| Decryption failed | `DECRYPTION_FAILED` | "Unable to decrypt file. Wrong key or corrupted file" |
-| Path traversal | `PATH_NOT_ALLOWED` | "Selected path is not allowed" |
+| Scenario          | Error Code          | User Message                                              |
+| ----------------- | ------------------- | --------------------------------------------------------- |
+| Invalid key label | `INVALID_INPUT`     | "Key label can only contain letters, numbers, and dashes" |
+| Weak passphrase   | `INVALID_INPUT`     | "Passphrase must be at least 12 characters"               |
+| Key not found     | `KEY_NOT_FOUND`     | "No key found with that name"                             |
+| Decryption failed | `DECRYPTION_FAILED` | "Unable to decrypt file. Wrong key or corrupted file"     |
+| Path traversal    | `PATH_NOT_ALLOWED`  | "Selected path is not allowed"                            |
 
 ### TypeScript Integration
 
@@ -211,21 +211,18 @@ pub async fn create_manifest(
 // src-ui/src/types/commands.ts
 
 // Command result wrapper
-export type CommandResult<T> = 
-  | { status: 'success'; data: T }
-  | { status: 'error'; data: CommandError };
+export type CommandResult<T> =
+  | { status: "success"; data: T }
+  | { status: "error"; data: CommandError };
 
 // Command invocation pattern
-export async function invokeCommand<T>(
-  cmd: string,
-  args?: any
-): Promise<T> {
+export async function invokeCommand<T>(cmd: string, args?: any): Promise<T> {
   const result = await invoke<CommandResult<T>>(cmd, args);
-  
-  if (result.status === 'error') {
+
+  if (result.status === "error") {
     throw new CommandError(result.data);
   }
-  
+
   return result.data;
 }
 ```
@@ -236,7 +233,7 @@ export async function invokeCommand<T>(
 
 ```typescript
 // Listen for progress events
-const unlisten = await listen<ProgressUpdate>('progress', (event) => {
+const unlisten = await listen<ProgressUpdate>("progress", (event) => {
   updateProgress(event.payload);
 });
 
@@ -255,12 +252,14 @@ unlisten();
 ## Security Considerations
 
 ### Input Validation
+
 - All paths canonicalized and validated
 - Labels restricted to safe characters
 - File sizes checked before processing
 - Concurrent operation limits enforced
 
 ### Memory Safety
+
 - Passphrases cleared after use
 - Large files streamed, not loaded
 - Sensitive data never logged
@@ -269,18 +268,21 @@ unlisten();
 ## Testing Strategy
 
 ### Unit Tests
+
 - Validate each command handler
 - Test input validation logic
 - Verify error code mapping
 - Check progress event emission
 
 ### Integration Tests
+
 - Full command flow testing
 - Progress event verification
 - Error propagation validation
 - State management integration
 
 ### Security Tests
+
 - Path traversal attempts
 - Input injection tests
 - Resource exhaustion checks
@@ -307,4 +309,4 @@ tokio = { version = "1", features = ["full"] }
 
 ---
 
-*This blueprint defines the Tauri Commands Bridge architecture. Implementation details are left to the engineer's discretion while following these specifications.* 
+_This blueprint defines the Tauri Commands Bridge architecture. Implementation details are left to the engineer's discretion while following these specifications._

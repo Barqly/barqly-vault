@@ -11,6 +11,7 @@
 The `decrypt_data` command currently fails with "Output directory not found" error when the specified output directory doesn't exist. This is inconsistent with the `encrypt_files` command which successfully creates directories when needed.
 
 ### Current Error
+
 ```
 Invalid Input
 Validation failed for input: Output directory not found: /Users/nauman/Documents/Barqly-Recovery/2025-08-06_143633
@@ -23,11 +24,13 @@ Validation failed for input: Output directory not found: /Users/nauman/Documents
 The `decrypt_data` command should automatically create the output directory if it doesn't exist, similar to how `encrypt_files` handles this.
 
 **Current encrypt_files behavior** (working correctly):
+
 - Uses `validate_output_directory` function
 - Creates directory with `std::fs::create_dir_all` if it doesn't exist
 - Located in: `src-tauri/src/commands/crypto_commands.rs`
 
 **Needed for decrypt_data**:
+
 - Apply the same directory validation/creation logic
 - Ensure parent directories are also created (recursive)
 - Handle permissions errors gracefully
@@ -36,15 +39,16 @@ The `decrypt_data` command should automatically create the output directory if i
 
 The decrypt flow should mirror the encrypt flow for better user experience:
 
-| Encrypt | Decrypt |
-|---------|---------|
-| Default: `~/Documents/Barqly-Vaults/` | Default: `~/Documents/Barqly-Recovery/[timestamp]/` |
-| Creates directory if doesn't exist ✅ | Should create directory if doesn't exist ❌ |
-| Returns clear error if permission denied | Should return clear error if permission denied |
+| Encrypt                                  | Decrypt                                             |
+| ---------------------------------------- | --------------------------------------------------- |
+| Default: `~/Documents/Barqly-Vaults/`    | Default: `~/Documents/Barqly-Recovery/[timestamp]/` |
+| Creates directory if doesn't exist ✅    | Should create directory if doesn't exist ❌         |
+| Returns clear error if permission denied | Should return clear error if permission denied      |
 
 ### 3. Implementation Details
 
 #### Current DecryptDataInput Structure
+
 ```rust
 pub struct DecryptDataInput {
     pub encrypted_file: String,
@@ -55,6 +59,7 @@ pub struct DecryptDataInput {
 ```
 
 #### Suggested Implementation
+
 In the `decrypt_data` function, before attempting to decrypt:
 
 1. Validate the output_dir path
@@ -67,6 +72,7 @@ You can reuse the existing `validate_output_directory` function that's already u
 ### 4. Error Handling
 
 Ensure proper error messages for:
+
 - Permission denied when creating directory
 - Invalid path characters
 - Disk space issues
@@ -75,6 +81,7 @@ Ensure proper error messages for:
 ### 5. Testing Requirements
 
 Please add tests for:
+
 - Creating nested directories (e.g., `Barqly-Recovery/2025-08-06_143633/`)
 - Handling existing directories (should not error)
 - Permission denied scenarios
@@ -83,9 +90,10 @@ Please add tests for:
 ## Frontend Context
 
 The frontend is already sending the full path including subdirectories:
+
 ```typescript
 // Example path being sent from frontend
-const recoveryPath = await join(docsPath, 'Barqly-Recovery', `${date}_${time}`);
+const recoveryPath = await join(docsPath, "Barqly-Recovery", `${date}_${time}`);
 // Results in: /Users/nauman/Documents/Barqly-Recovery/2025-08-06_143633
 ```
 

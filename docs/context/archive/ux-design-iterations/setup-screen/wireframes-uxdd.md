@@ -126,6 +126,7 @@
 ## Component States
 
 ### Input Field States
+
 ```
 Default:
 ┌─────────────────────────┐
@@ -155,6 +156,7 @@ Success:
 ```
 
 ### Button States
+
 ```
 Default:
 ┌──────────────────────────┐
@@ -236,6 +238,7 @@ Loading:
 ## Color Specifications
 
 ### Primary Palette
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  Primary Blue     #2563EB  ████████  (Trust, CTAs)             │
@@ -245,6 +248,7 @@ Loading:
 ```
 
 ### Neutral Palette
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  Gray 900         #111827  ████████  (Primary text)            │
@@ -256,6 +260,7 @@ Loading:
 ```
 
 ### Semantic Colors
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  Success          #10B981  ████████  (Success messages)        │
@@ -268,6 +273,7 @@ Loading:
 ## Spacing & Sizing Guide
 
 ### Component Spacing
+
 ```
 Header to Trust Bar:     24px (1.5rem)
 Trust Bar to Context:    24px (1.5rem)
@@ -279,6 +285,7 @@ Input to helper:         4px (0.25rem)
 ```
 
 ### Component Heights
+
 ```
 Header:                  80px max
 Trust indicators:        48px
@@ -290,6 +297,7 @@ Form container padding:  32px
 ```
 
 ### Border Radius
+
 ```
 Cards:                   8px (0.5rem)
 Inputs:                  6px (0.375rem)
@@ -300,16 +308,19 @@ Small elements:          4px (0.25rem)
 ## Responsive Breakpoints
 
 ### Desktop (1024px+)
+
 - Full layout as shown
 - Side margins: 48px
 - Max content width: 896px
 
 ### Tablet (768px - 1023px)
+
 - Reduce side margins to 32px
 - Stack trust indicators if needed
 - Maintain button sizes
 
 ### Mobile (< 768px)
+
 - Side margins: 16px
 - Stack all elements vertically
 - Full-width buttons
@@ -318,6 +329,7 @@ Small elements:          4px (0.25rem)
 ## Animation Specifications
 
 ### Transitions
+
 ```
 Default transition:      200ms ease-out
 Collapsible sections:    300ms ease-out
@@ -326,6 +338,7 @@ Success animation:       400ms spring
 ```
 
 ### Hover Effects
+
 ```
 Buttons:                 translateY(-2px), shadow increase
 Input focus:             ring expansion (200ms)
@@ -343,4 +356,4 @@ Links:                   color change (150ms)
 
 ---
 
-*These wireframes provide the visual blueprint for implementing the enhanced Setup screen. All measurements and specifications are designed for optimal user experience across devices.*
+_These wireframes provide the visual blueprint for implementing the enhanced Setup screen. All measurements and specifications are designed for optimal user experience across devices._

@@ -121,19 +121,19 @@ pub struct YubiKeyInfo {
 impl YubiKeyManager {
     pub fn detect_yubikeys() -> Result<Vec<YubiKeyInfo>, Error> {
         let mut keys = vec![];
-        
+
         for device in yubikey::reader::list()? {
             if let Ok(yk) = YubiKey::open(device) {
                 let serial = yk.serial()?;
                 let version = yk.version()?;
-                
+
                 // Check available PIV slots
                 let slots = vec![
                     PIVSlot::Retired1,  // 0x82
                     PIVSlot::Retired2,  // 0x83
                     PIVSlot::Retired3,  // 0x84
                 ];
-                
+
                 keys.push(YubiKeyInfo {
                     serial,
                     version: format!("{}", version),
@@ -142,7 +142,7 @@ impl YubiKeyManager {
                 });
             }
         }
-        
+
         Ok(keys)
     }
 }
@@ -167,10 +167,10 @@ pub async fn generate_yubikey_recipient(
         ])
         .env("YUBIKEY_PIN", pin)
         .output()?;
-    
+
     let identity = String::from_utf8(output.stdout)?;
     let public_key = extract_public_key(&identity)?;
-    
+
     Ok(YubiKeyRecipient {
         identity: public_key,
         serial,
@@ -210,7 +210,7 @@ pub async fn setup_yubikey_protection(
     protection_config: ProtectionConfig,
 ) -> CommandResponse<SetupResult> {
     let mut recipients = vec![];
-    
+
     // Add passphrase recipient if configured
     if let Some(passphrase) = protection_config.passphrase {
         let identity = age::x25519::Identity::generate();
@@ -222,7 +222,7 @@ pub async fn setup_yubikey_protection(
             hint: protection_config.passphrase_hint,
         });
     }
-    
+
     // Add YubiKey recipients
     for yubikey_config in protection_config.yubikeys {
         let recipient = generate_yubikey_recipient(
@@ -232,10 +232,10 @@ pub async fn setup_yubikey_protection(
         )?;
         recipients.push(recipient);
     }
-    
+
     // Save metadata
     save_key_metadata(&key_label, &recipients)?;
-    
+
     Ok(SetupResult {
         key_label,
         recipients: recipients.len(),
@@ -254,29 +254,29 @@ pub async fn encrypt_file_multi(
     // Load all recipients from metadata
     let metadata = load_key_metadata(&key_label)?;
     let recipients = build_recipient_list(&metadata)?;
-    
+
     // Read file
     let data = fs::read(&file_path)?;
-    
+
     // Encrypt for all recipients using age
     let encrypted = {
         let encryptor = age::Encryptor::with_recipients(recipients)
             .expect("Failed to create encryptor");
-        
+
         let mut encrypted = vec![];
         let mut writer = encryptor.wrap_output(&mut encrypted)?;
         writer.write_all(&data)?;
         writer.finish()?;
         encrypted
     };
-    
+
     // Save encrypted file
     let output_path = format!("{}.age", file_path);
     fs::write(&output_path, encrypted)?;
-    
+
     // Create vault metadata
     save_vault_metadata(&output_path, &metadata)?;
-    
+
     Ok(EncryptResult {
         vault_path: output_path,
         recipients_count: metadata.recipients.len(),
@@ -293,7 +293,7 @@ pub async fn decrypt_file_smart(
     unlock_method: UnlockMethod,
 ) -> CommandResponse<DecryptResult> {
     let encrypted = fs::read(&vault_path)?;
-    
+
     let identity: Box<dyn age::Identity> = match unlock_method {
         UnlockMethod::Passphrase { passphrase } => {
             // Load and decrypt passphrase-protected key
@@ -307,7 +307,7 @@ pub async fn decrypt_file_smart(
             Box::new(identity)
         },
     };
-    
+
     // Decrypt file
     let decrypted = {
         let decryptor = age::Decryptor::new(&encrypted[..])?;
@@ -316,11 +316,11 @@ pub async fn decrypt_file_smart(
         reader.read_to_end(&mut decrypted)?;
         decrypted
     };
-    
+
     // Save decrypted file
     let output_path = vault_path.trim_end_matches(".age");
     fs::write(&output_path, decrypted)?;
-    
+
     Ok(DecryptResult {
         output_path: output_path.to_string(),
         size: decrypted.len(),
@@ -352,21 +352,21 @@ impl PluginInterface {
         } else {
             PathBuf::from("age-plugin-yubikey")
         };
-        
+
         Ok(Self { plugin_path })
     }
-    
+
     pub fn call_plugin(&self, args: &[&str]) -> Result<String, Error> {
         let output = Command::new(&self.plugin_path)
             .args(args)
             .output()?;
-        
+
         if !output.status.success() {
             return Err(Error::PluginError(
                 String::from_utf8_lossy(&output.stderr).to_string()
             ));
         }
-        
+
         Ok(String::from_utf8(output.stdout)?)
     }
 }
@@ -386,7 +386,7 @@ export interface YubiKeyInfo {
 }
 
 export interface ProtectionConfig {
-  mode: 'passphrase' | 'yubikey' | 'both';
+  mode: "passphrase" | "yubikey" | "both";
   passphrase?: string;
   passphraseHint?: string;
   yubikeys: YubiKeyConfig[];
@@ -400,16 +400,16 @@ export interface YubiKeyConfig {
 }
 
 export interface Recipient {
-  type: 'passphrase' | 'yubikey';
+  type: "passphrase" | "yubikey";
   publicKey: string;
   label: string;
   serial?: number;
   addedAt: string;
 }
 
-export type UnlockMethod = 
-  | { type: 'passphrase'; passphrase: string }
-  | { type: 'yubikey'; serial: number; pin: string };
+export type UnlockMethod =
+  | { type: "passphrase"; passphrase: string }
+  | { type: "yubikey"; serial: number; pin: string };
 ```
 
 ### React Components
@@ -419,31 +419,31 @@ export type UnlockMethod =
 export const YubiKeySetup: React.FC = () => {
   const [yubikeys, setYubikeys] = useState<YubiKeyInfo[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<YubiKeyConfig[]>([]);
-  
+
   const detectYubiKeys = async () => {
     const result = await invoke('detect_yubikeys');
     setYubikeys(result.data);
   };
-  
+
   const addYubiKey = async (serial: number) => {
     const pin = await promptForPin();
     const slot = await selectSlot();
-    
+
     const config: YubiKeyConfig = {
       serial,
       slot,
       pin,
       label: `YubiKey ${serial}`,
     };
-    
+
     setSelectedKeys([...selectedKeys, config]);
   };
-  
+
   return (
     <div>
       <h3>Configure YubiKey Protection</h3>
       <button onClick={detectYubiKeys}>Detect YubiKeys</button>
-      
+
       {yubikeys.map(yk => (
         <YubiKeyCard
           key={yk.serial}
@@ -451,7 +451,7 @@ export const YubiKeySetup: React.FC = () => {
           onAdd={() => addYubiKey(yk.serial)}
         />
       ))}
-      
+
       <div>
         <h4>Selected YubiKeys:</h4>
         {selectedKeys.map(key => (
@@ -474,22 +474,22 @@ export const YubiKeySetup: React.FC = () => {
 pub enum YubiKeyError {
     #[error("No YubiKey detected")]
     NoDeviceFound,
-    
+
     #[error("YubiKey locked (too many PIN attempts)")]
     DeviceLocked,
-    
+
     #[error("Invalid PIN")]
     InvalidPin,
-    
+
     #[error("Slot already in use")]
     SlotOccupied,
-    
+
     #[error("YubiKey removed during operation")]
     DeviceRemoved,
-    
+
     #[error("Plugin not found: {0}")]
     PluginNotFound(String),
-    
+
     #[error("Unsupported YubiKey version: {0}")]
     UnsupportedVersion(String),
 }
@@ -537,7 +537,7 @@ impl PinCache {
         }
         None
     }
-    
+
     pub fn set(&mut self, serial: u32, pin: SecretString) {
         self.pins.insert(serial, pin);
         self.expiry.insert(serial, Instant::now() + self.ttl);
@@ -574,16 +574,16 @@ fn test_multi_recipient_encryption() {
     let passphrase_key = age::x25519::Identity::generate();
     let yubikey1_identity = "age1yubikey1test1...";
     let yubikey2_identity = "age1yubikey1test2...";
-    
+
     // Encrypt for all
     let recipients = vec![
         passphrase_key.to_public(),
         parse_recipient(yubikey1_identity),
         parse_recipient(yubikey2_identity),
     ];
-    
+
     let encrypted = encrypt_data(b"test data", recipients);
-    
+
     // Verify each can decrypt
     assert!(decrypt_with_identity(&encrypted, &passphrase_key).is_ok());
     // Mock YubiKey decryption tests...
@@ -601,13 +601,16 @@ fn test_multi_recipient_encryption() {
 ## Platform-Specific Notes
 
 ### macOS
+
 - Requires user approval for USB device access
 - May need entitlements for smartcard access
 
 ### Windows
+
 - Requires Windows Smart Card service running
 - May need driver installation for older YubiKeys
 
 ### Linux
+
 - Requires udev rules for non-root access
 - May need pcscd service running

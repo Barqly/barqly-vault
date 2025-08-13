@@ -1,290 +1,328 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Barqly Vault - Simple, Secure File Encryption</title>
-    <meta name="description" content="Simple, secure file encryption for the Bitcoin ecosystem. Desktop app for encrypting wallet backups, Lightning node data, and sensitive documents.">
+    <meta
+      name="description"
+      content="Simple, secure file encryption for the Bitcoin ecosystem. Desktop app for encrypting wallet backups, Lightning node data, and sensitive documents."
+    />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: #f8fafc;
-        }
-        
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #f8fafc;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+      }
+
+      .header .tagline {
+        font-size: 1.2rem;
+        color: #666;
+        font-weight: 500;
+      }
+
+      .section {
+        background: white;
+        margin-bottom: 2rem;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #f97316;
+        padding-bottom: 0.5rem;
+      }
+
+      .benefits {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .benefit {
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        border-left: 4px solid #f97316;
+      }
+
+      .benefit h3 {
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .step {
+        text-align: center;
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 8px;
+      }
+
+      .step-number {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        background: #f97316;
+        color: white;
+        border-radius: 50%;
+        line-height: 40px;
+        font-weight: bold;
+        margin-bottom: 1rem;
+      }
+
+      .users {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      .user-type {
+        padding: 1rem;
+        background: #fef3c7;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .status {
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        text-align: center;
+      }
+
+      .status h2 {
+        border: none;
+        color: white;
+        margin-bottom: 1rem;
+      }
+
+      .tech-stack {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      .tech-item {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 2rem;
+        color: #666;
+        font-style: italic;
+      }
+
+      @media (max-width: 768px) {
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
+          padding: 1rem;
         }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
-            padding: 2rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
+
         .header h1 {
-            font-size: 2.5rem;
-            color: #1a1a1a;
-            margin-bottom: 1rem;
+          font-size: 2rem;
         }
-        
-        .header .tagline {
-            font-size: 1.2rem;
-            color: #666;
-            font-weight: 500;
-        }
-        
-        .section {
-            background: white;
-            margin-bottom: 2rem;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .section h2 {
-            color: #1a1a1a;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid #f97316;
-            padding-bottom: 0.5rem;
-        }
-        
-        .benefits {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-        
-        .benefit {
-            padding: 1rem;
-            background: #f8fafc;
-            border-radius: 8px;
-            border-left: 4px solid #f97316;
-        }
-        
-        .benefit h3 {
-            color: #1a1a1a;
-            margin-bottom: 0.5rem;
-        }
-        
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-        
-        .step {
-            text-align: center;
-            padding: 1.5rem;
-            background: #f8fafc;
-            border-radius: 8px;
-        }
-        
-        .step-number {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            background: #f97316;
-            color: white;
-            border-radius: 50%;
-            line-height: 40px;
-            font-weight: bold;
-            margin-bottom: 1rem;
-        }
-        
+
+        .benefits,
+        .steps,
         .users {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1.5rem;
+          grid-template-columns: 1fr;
         }
-        
-        .user-type {
-            padding: 1rem;
-            background: #fef3c7;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .status {
-            background: linear-gradient(135deg, #f97316, #ea580c);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            text-align: center;
-        }
-        
-        .status h2 {
-            border: none;
-            color: white;
-            margin-bottom: 1rem;
-        }
-        
-        .tech-stack {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-        
-        .tech-item {
-            padding: 0.5rem 1rem;
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .footer {
-            text-align: center;
-            margin-top: 3rem;
-            padding: 2rem;
-            color: #666;
-            font-style: italic;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .benefits, .steps, .users {
-                grid-template-columns: 1fr;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>Barqly Vault</h1>
-            <p class="tagline">Simple, secure file encryption for the Bitcoin ecosystem</p>
-        </div>
+      <div class="header">
+        <h1>Barqly Vault</h1>
+        <p class="tagline">
+          Simple, secure file encryption for the Bitcoin ecosystem
+        </p>
+      </div>
 
-        <div class="section">
-            <h2>What is Barqly Vault?</h2>
-            <p>Barqly Vault is a simple, secure desktop app that lets you encrypt and backup your most important digital files - like Bitcoin wallet recovery information, Lightning node backups, family documents, or any sensitive data you need to protect.</p>
-        </div>
+      <div class="section">
+        <h2>What is Barqly Vault?</h2>
+        <p>
+          Barqly Vault is a simple, secure desktop app that lets you encrypt and
+          backup your most important digital files - like Bitcoin wallet
+          recovery information, Lightning node backups, family documents, or any
+          sensitive data you need to protect.
+        </p>
+      </div>
 
-        <div class="section">
-            <h2>The Problem it Solves</h2>
-            <p>When you practice Bitcoin self-custody (mainchain or Lightning) or have sensitive family documents, you need a reliable way to create secure backups that you control completely. While some tools have built-in encryption, many users need additional security layers or want to encrypt other sensitive files alongside their Bitcoin backups.</p>
-        </div>
+      <div class="section">
+        <h2>The Problem it Solves</h2>
+        <p>
+          When you practice Bitcoin self-custody (mainchain or Lightning) or
+          have sensitive family documents, you need a reliable way to create
+          secure backups that you control completely. While some tools have
+          built-in encryption, many users need additional security layers or
+          want to encrypt other sensitive files alongside their Bitcoin backups.
+        </p>
+      </div>
 
-        <div class="section">
-            <h2>How it Works</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Setup</h3>
-                    <p>Create a secure "key" with a passphrase you remember</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Encrypt</h3>
-                    <p>Select files or folders, choose your key, and create an encrypted backup</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Decrypt</h3>
-                    <p>Use your key and passphrase to unlock your files when needed</p>
-                </div>
-            </div>
+      <div class="section">
+        <h2>How it Works</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <h3>Setup</h3>
+            <p>Create a secure "key" with a passphrase you remember</p>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <h3>Encrypt</h3>
+            <p>
+              Select files or folders, choose your key, and create an encrypted
+              backup
+            </p>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <h3>Decrypt</h3>
+            <p>Use your key and passphrase to unlock your files when needed</p>
+          </div>
         </div>
+      </div>
 
-        <div class="section">
-            <h2>Key Benefits</h2>
-            <div class="benefits">
-                <div class="benefit">
-                    <h3>Simple</h3>
-                    <p>Three clear steps - setup, encrypt, decrypt</p>
-                </div>
-                <div class="benefit">
-                    <h3>Secure</h3>
-                    <p>Military-grade encryption (age standard) trusted by security experts</p>
-                </div>
-                <div class="benefit">
-                    <h3>Self-Controlled</h3>
-                    <p>Your files never leave your computer unless you choose to move them</p>
-                </div>
-                <div class="benefit">
-                    <h3>Cross-Platform</h3>
-                    <p>Works the same way on Mac, Windows, and Linux</p>
-                </div>
-                <div class="benefit">
-                    <h3>Reliable</h3>
-                    <p>Preserves folder structure and includes integrity checks</p>
-                </div>
-            </div>
+      <div class="section">
+        <h2>Key Benefits</h2>
+        <div class="benefits">
+          <div class="benefit">
+            <h3>Simple</h3>
+            <p>Three clear steps - setup, encrypt, decrypt</p>
+          </div>
+          <div class="benefit">
+            <h3>Secure</h3>
+            <p>
+              Military-grade encryption (age standard) trusted by security
+              experts
+            </p>
+          </div>
+          <div class="benefit">
+            <h3>Self-Controlled</h3>
+            <p>
+              Your files never leave your computer unless you choose to move
+              them
+            </p>
+          </div>
+          <div class="benefit">
+            <h3>Cross-Platform</h3>
+            <p>Works the same way on Mac, Windows, and Linux</p>
+          </div>
+          <div class="benefit">
+            <h3>Reliable</h3>
+            <p>Preserves folder structure and includes integrity checks</p>
+          </div>
         </div>
+      </div>
 
-        <div class="section">
-            <h2>Target Users</h2>
-            <div class="users">
-                <div class="user-type">
-                    <strong>Bitcoin Users</strong><br>
-                    Wallet recovery information, seed phrases
-                </div>
-                <div class="user-type">
-                    <strong>Lightning Operators</strong><br>
-                    Additional encryption for node backups
-                </div>
-                <div class="user-type">
-                    <strong>Bitcoin Businesses</strong><br>
-                    Client data, configuration files, recovery kits
-                </div>
-                <div class="user-type">
-                    <strong>Families</strong><br>
-                    Inheritance planning with Bitcoin documents
-                </div>
-                <div class="user-type">
-                    <strong>Anyone</strong><br>
-                    Simple, secure file encryption
-                </div>
-            </div>
+      <div class="section">
+        <h2>Target Users</h2>
+        <div class="users">
+          <div class="user-type">
+            <strong>Bitcoin Users</strong><br />
+            Wallet recovery information, seed phrases
+          </div>
+          <div class="user-type">
+            <strong>Lightning Operators</strong><br />
+            Additional encryption for node backups
+          </div>
+          <div class="user-type">
+            <strong>Bitcoin Businesses</strong><br />
+            Client data, configuration files, recovery kits
+          </div>
+          <div class="user-type">
+            <strong>Families</strong><br />
+            Inheritance planning with Bitcoin documents
+          </div>
+          <div class="user-type">
+            <strong>Anyone</strong><br />
+            Simple, secure file encryption
+          </div>
         </div>
+      </div>
 
-        <div class="section">
-            <h2>The Promise</h2>
-            <p>Take the security of professional-grade encryption and make it as easy to use as any other desktop app. No cloud dependencies, no technical knowledge required - just secure, reliable file protection you control.</p>
-        </div>
+      <div class="section">
+        <h2>The Promise</h2>
+        <p>
+          Take the security of professional-grade encryption and make it as easy
+          to use as any other desktop app. No cloud dependencies, no technical
+          knowledge required - just secure, reliable file protection you
+          control.
+        </p>
+      </div>
 
-        <div class="status">
-            <h2>Current Status</h2>
-            <p><strong>Development Phase:</strong> Core application development in progress</p>
-            <p><strong>Timeline:</strong> Q3-Q4 2025 for initial release</p>
-            <p><strong>Platform:</strong> Cross-platform desktop application (macOS, Windows, Linux)</p>
-            
-            <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Technology Stack</h3>
-            <div class="tech-stack">
-                <div class="tech-item">Rust + Tauri</div>
-                <div class="tech-item">React + TypeScript</div>
-                <div class="tech-item">Age Encryption</div>
-            </div>
-        </div>
+      <div class="status">
+        <h2>Current Status</h2>
+        <p>
+          <strong>Development Phase:</strong> Core application development in
+          progress
+        </p>
+        <p><strong>Timeline:</strong> Q3-Q4 2025 for initial release</p>
+        <p>
+          <strong>Platform:</strong> Cross-platform desktop application (macOS,
+          Windows, Linux)
+        </p>
 
-        <div class="footer">
-            Built with ❤️ for the Bitcoin community
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem">Technology Stack</h3>
+        <div class="tech-stack">
+          <div class="tech-item">Rust + Tauri</div>
+          <div class="tech-item">React + TypeScript</div>
+          <div class="tech-item">Age Encryption</div>
         </div>
+      </div>
+
+      <div class="footer">Built with ❤️ for the Bitcoin community</div>
     </div>
-</body>
+  </body>
 </html>

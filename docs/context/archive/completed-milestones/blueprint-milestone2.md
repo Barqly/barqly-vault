@@ -5,6 +5,7 @@ Perfect! Thank you for that clarity. As your architect, I recommend using **plat
 - **Linux**: `~/.config/barqly-vault/`
 
 This approach:
+
 - ✅ **Follows platform best practices** - Users find files where they expect them
 - ✅ **Simplifies support** - "Look in your Application Support folder" is clear
 - ✅ **Maintains consistency** - Each OS follows its own standard
@@ -25,6 +26,7 @@ This blueprint provides a complete, implementable specification for Milestone 2 
 ## 📋 Prerequisites
 
 Before starting implementation:
+
 1. Ensure all Milestone 1 tasks are complete
 2. Verify development environment:
    - Rust 1.87.0+ (stable)
@@ -43,11 +45,11 @@ graph TD
     A -->|uses| C[Storage Module]
     A -->|uses| D[File Ops Module]
     A -->|uses| E[Config Module]
-    
+
     B -->|stores keys via| C
     D -->|uses manifest from| C
     E -->|reads paths from| C
-    
+
     B -.->|age crate| F[External Dependencies]
     C -.->|directories crate| F
     D -.->|tar crate| F
@@ -59,9 +61,11 @@ graph TD
 ## 📦 Module 2.1: Crypto Module
 
 ### Purpose
+
 Provides secure encryption/decryption operations using the `age` encryption standard with passphrase-protected private keys.
 
 ### File Structure
+
 ```
 src-tauri/src/crypto/
 ├── mod.rs           # Public module interface
@@ -71,6 +75,7 @@ src-tauri/src/crypto/
 ```
 
 ### Dependencies to Add to Cargo.toml
+
 ```toml
 [dependencies]
 age = "0.10"
@@ -81,10 +86,13 @@ rand = "0.8"
 ```
 
 ### Module Interface (crypto/mod.rs)
+
 Ran tool
+
 ### Detailed Implementation Specification
 
 #### 2.1.1: Core Types (crypto/mod.rs)
+
 ```rust
 use secrecy::{ExposeSecret, SecretString};
 use zeroize::Zeroize;
@@ -113,13 +121,14 @@ pub type Result<T> = std::result::Result<T, CryptoError>;
 ```
 
 #### 2.1.2: Key Generation (crypto/key_mgmt.rs)
-```rust
+
+````rust
 /// Generate a new age keypair
-/// 
+///
 /// # Security
 /// - Uses age's X25519 key generation
 /// - Private key is immediately wrapped in SecretString
-/// 
+///
 /// # Example
 /// ```
 /// let keypair = generate_keypair()?;
@@ -134,14 +143,14 @@ pub fn generate_keypair() -> Result<KeyPair> {
 }
 
 /// Encrypt a private key with a passphrase
-/// 
+///
 /// # Arguments
 /// * `private_key` - The private key to encrypt
 /// * `passphrase` - The passphrase for encryption
-/// 
+///
 /// # Returns
 /// Encrypted bytes suitable for file storage
-/// 
+///
 /// # Security
 /// - Uses age's native passphrase encryption
 /// - Passphrase is zeroized after use
@@ -156,7 +165,7 @@ pub fn encrypt_private_key(
 }
 
 /// Decrypt a private key with a passphrase
-/// 
+///
 /// # Security
 /// - Validates passphrase before returning key
 /// - Returns error on wrong passphrase
@@ -170,19 +179,20 @@ pub fn decrypt_private_key(
     // 3. Validate the result is a valid age key
     // 4. Wrap in PrivateKey type
 }
-```
+````
 
 #### 2.1.3: Encryption Operations (crypto/age_ops.rs)
+
 ```rust
 /// Encrypt data using a public key
-/// 
+///
 /// # Arguments
 /// * `data` - The data to encrypt
 /// * `recipient` - The public key of the recipient
-/// 
+///
 /// # Returns
 /// Encrypted bytes in age format
-/// 
+///
 /// # Security
 /// - Uses age's streaming encryption
 /// - Suitable for large files
@@ -196,7 +206,7 @@ pub fn encrypt_data(data: &[u8], recipient: &PublicKey) -> Result<Vec<u8>> {
 }
 
 /// Decrypt data using a private key
-/// 
+///
 /// # Security
 /// - Validates age format before decryption
 /// - Returns specific error for wrong key
@@ -210,6 +220,7 @@ pub fn decrypt_data(encrypted_data: &[u8], private_key: &PrivateKey) -> Result<V
 ```
 
 #### 2.1.4: Error Types (crypto/errors.rs)
+
 ```rust
 use thiserror::Error;
 
@@ -217,22 +228,22 @@ use thiserror::Error;
 pub enum CryptoError {
     #[error("Invalid key format: {0}")]
     InvalidKeyFormat(String),
-    
+
     #[error("Encryption failed: {0}")]
     EncryptionFailed(String),
-    
+
     #[error("Decryption failed: {0}")]
     DecryptionFailed(String),
-    
+
     #[error("Wrong passphrase")]
     WrongPassphrase,
-    
+
     #[error("Invalid recipient key")]
     InvalidRecipient,
-    
+
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
-    
+
     #[error("Age library error: {0}")]
     AgeError(String),
 }
@@ -241,18 +252,19 @@ pub enum CryptoError {
 ### Testing Requirements
 
 #### Unit Tests (crypto/mod.rs - test module)
+
 ```rust
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_keypair_generation() {
         // Test successful generation
         // Verify public key format (age1...)
         // Verify private key is properly wrapped
     }
-    
+
     #[test]
     fn test_key_encryption_decryption() {
         // Generate keypair
@@ -260,7 +272,7 @@ mod tests {
         // Decrypt with same passphrase - should succeed
         // Decrypt with wrong passphrase - should fail
     }
-    
+
     #[test]
     fn test_data_encryption_decryption() {
         // Test with small data (< 1KB)
@@ -268,14 +280,14 @@ mod tests {
         // Test with large data (10MB)
         // Verify round-trip encryption/decryption
     }
-    
+
     #[test]
     fn test_wrong_key_decryption() {
         // Encrypt with key A
         // Try to decrypt with key B
         // Should fail with specific error
     }
-    
+
     #[test]
     fn test_memory_zeroization() {
         // Create private key in scope
@@ -286,6 +298,7 @@ mod tests {
 ```
 
 #### Integration Tests (tests/crypto_integration.rs)
+
 ```rust
 #[test]
 fn test_full_encryption_workflow() {
@@ -303,9 +316,11 @@ fn test_full_encryption_workflow() {
 ## 📁 Module 2.2: Storage Module
 
 ### Purpose
+
 Manages secure storage of encrypted keys and application data using platform-specific directories.
 
 ### File Structure
+
 ```
 src-tauri/src/storage/
 ├── mod.rs           # Public module interface
@@ -315,22 +330,26 @@ src-tauri/src/storage/
 ```
 
 ### Dependencies to Add
+
 ```toml
 [dependencies]
 directories = "5.0"
 ```
 
 ### Module Interface (storage/mod.rs)
+
 Ran tool
+
 ### Detailed Implementation Specification
 
 #### 2.2.1: Path Management (storage/paths.rs)
+
 ```rust
 use directories::ProjectDirs;
 use std::path::PathBuf;
 
 /// Get the platform-specific application directory
-/// 
+///
 /// Returns:
 /// - macOS: ~/Library/Application Support/barqly-vault/
 /// - Windows: %APPDATA%\barqly-vault\
@@ -358,7 +377,7 @@ pub fn get_logs_dir() -> Result<PathBuf> {
 }
 
 /// Ensure a directory exists with proper permissions
-/// 
+///
 /// # Security
 /// - Sets restrictive permissions (700) on Unix systems
 /// - Validates path doesn't contain symlinks
@@ -371,6 +390,7 @@ fn ensure_dir_exists(path: &Path) -> Result<()> {
 ```
 
 #### 2.2.2: Key Storage (storage/key_store.rs)
+
 ```rust
 use chrono::{DateTime, Utc};
 
@@ -384,15 +404,15 @@ pub struct KeyInfo {
 }
 
 /// Save an encrypted private key
-/// 
+///
 /// # Arguments
 /// * `label` - User-friendly label for the key
 /// * `encrypted_key` - The encrypted key bytes
 /// * `public_key` - Optional public key to cache
-/// 
+///
 /// # Returns
 /// Path where the key was saved
-/// 
+///
 /// # Security
 /// - Validates label doesn't contain path separators
 /// - Sets restrictive file permissions
@@ -412,7 +432,7 @@ pub fn save_encrypted_key(
 }
 
 /// List all available keys
-/// 
+///
 /// # Returns
 /// Vector of KeyInfo for all stored keys
 pub fn list_keys() -> Result<Vec<KeyInfo>> {
@@ -428,7 +448,7 @@ pub fn list_keys() -> Result<Vec<KeyInfo>> {
 }
 
 /// Load an encrypted key by label
-/// 
+///
 /// # Security
 /// - Validates file hasn't been tampered with
 /// - Checks file permissions before reading
@@ -441,7 +461,7 @@ pub fn load_encrypted_key(label: &str) -> Result<Vec<u8>> {
 }
 
 /// Delete a key by label
-/// 
+///
 /// # Security
 /// - Overwrites file before deletion on supported platforms
 pub fn delete_key(label: &str) -> Result<()> {
@@ -454,24 +474,25 @@ pub fn delete_key(label: &str) -> Result<()> {
 ```
 
 #### 2.2.3: Error Types (storage/errors.rs)
+
 ```rust
 #[derive(Error, Debug)]
 pub enum StorageError {
     #[error("Invalid key label: {0}")]
     InvalidLabel(String),
-    
+
     #[error("Key not found: {0}")]
     KeyNotFound(String),
-    
+
     #[error("Key already exists: {0}")]
     KeyAlreadyExists(String),
-    
+
     #[error("Permission denied: {0}")]
     PermissionDenied(PathBuf),
-    
+
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
-    
+
     #[error("Path traversal attempt detected")]
     PathTraversal,
 }
@@ -480,6 +501,7 @@ pub enum StorageError {
 ### Testing Requirements
 
 #### Unit Tests
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -489,14 +511,14 @@ mod tests {
         // Check directory creation
         // Verify permissions (Unix only)
     }
-    
+
     #[test]
     fn test_label_validation() {
         // Test valid labels
         // Test invalid labels (/, \, .., etc.)
         // Test Unicode labels
     }
-    
+
     #[test]
     fn test_key_storage_lifecycle() {
         // Save key
@@ -513,9 +535,11 @@ mod tests {
 ## 📄 Module 2.3: File Operations
 
 ### Purpose
+
 Handles file/folder selection, staging, archiving, and manifest generation.
 
 ### File Structure
+
 ```
 src-tauri/src/file_ops/
 ├── mod.rs           # Public module interface
@@ -526,6 +550,7 @@ src-tauri/src/file_ops/
 ```
 
 ### Dependencies to Add
+
 ```toml
 [dependencies]
 tar = "0.4"
@@ -536,10 +561,13 @@ walkdir = "2.4"
 ```
 
 ### Module Interface (file_ops/mod.rs)
+
 Ran tool
+
 ### Detailed Implementation Specification
 
 #### 2.3.1: Staging Operations (file_ops/staging.rs)
+
 ```rust
 use tempfile::TempDir;
 
@@ -551,7 +579,7 @@ pub struct StagingArea {
 
 impl StagingArea {
     /// Create a new staging area
-    /// 
+    ///
     /// # Security
     /// - Creates directory with restrictive permissions
     /// - Uses system temp directory
@@ -561,12 +589,12 @@ impl StagingArea {
         // 2. Initialize empty ManifestBuilder
         // 3. Return StagingArea
     }
-    
+
     /// Stage individual files
-    /// 
+    ///
     /// # Arguments
     /// * `files` - Paths to files to stage
-    /// 
+    ///
     /// # Security
     /// - Validates files exist and are readable
     /// - Preserves file metadata
@@ -580,9 +608,9 @@ impl StagingArea {
         //    - Add to manifest
         // 2. Return error if any file fails
     }
-    
+
     /// Stage an entire folder
-    /// 
+    ///
     /// # Security
     /// - Follows symlinks based on config
     /// - Preserves directory structure
@@ -596,12 +624,12 @@ impl StagingArea {
         //    - Add to manifest
         // 3. Skip hidden files based on config
     }
-    
+
     /// Get the staging directory path
     pub fn path(&self) -> &Path {
         self.temp_dir.path()
     }
-    
+
     /// Finalize and get the manifest
     pub fn finalize_manifest(self) -> Manifest {
         self.manifest.build()
@@ -617,15 +645,16 @@ impl Drop for StagingArea {
 ```
 
 #### 2.3.2: Archive Operations (file_ops/archive.rs)
+
 ```rust
 /// Create a TAR archive from a directory
-/// 
+///
 /// # Arguments
 /// * `source_dir` - Directory to archive
-/// 
+///
 /// # Returns
 /// Bytes of the TAR archive
-/// 
+///
 /// # Security
 /// - Validates no path traversal in archive
 /// - Sets safe permissions in archive
@@ -641,7 +670,7 @@ pub fn create_tar_archive(source_dir: &Path) -> Result<Vec<u8>> {
 }
 
 /// Extract a TAR archive to a directory
-/// 
+///
 /// # Security
 /// - Validates archive entries for path traversal
 /// - Sets safe permissions on extracted files
@@ -662,6 +691,7 @@ pub fn extract_tar_archive(
 ```
 
 #### 2.3.3: Manifest Generation (file_ops/manifest.rs)
+
 ```rust
 use serde::{Serialize, Deserialize};
 use sha2::{Sha256, Digest};
@@ -697,7 +727,7 @@ impl ManifestBuilder {
             total_size: 0,
         }
     }
-    
+
     /// Add a file to the manifest
     pub fn add_file(
         &mut self,
@@ -711,7 +741,7 @@ impl ManifestBuilder {
         // 4. Add to files vec
         // 5. Update total_size
     }
-    
+
     /// Build the final manifest
     pub fn build(self) -> Manifest {
         Manifest {
@@ -740,6 +770,7 @@ pub fn verify_manifest(
 ### Testing Requirements
 
 #### Unit Tests
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -749,28 +780,28 @@ mod tests {
         // Verify temp directory exists
         // Verify cleanup on drop
     }
-    
+
     #[test]
     fn test_file_staging() {
         // Stage individual files
         // Verify they're copied correctly
         // Verify manifest entries
     }
-    
+
     #[test]
     fn test_folder_staging() {
         // Stage folder with subdirectories
         // Verify structure preserved
         // Verify all files included
     }
-    
+
     #[test]
     fn test_tar_archive_roundtrip() {
         // Create archive from directory
         // Extract to new location
         // Verify contents match
     }
-    
+
     #[test]
     fn test_path_traversal_protection() {
         // Try to create archive with ../.. paths
@@ -785,9 +816,11 @@ mod tests {
 ## ⚙️ Module 2.4: Config Module
 
 ### Purpose
+
 Manages application configuration, preferences, and cached data.
 
 ### File Structure
+
 ```
 src-tauri/src/config/
 ├── mod.rs           # Public module interface
@@ -797,16 +830,20 @@ src-tauri/src/config/
 ```
 
 ### Dependencies to Add
+
 ```toml
 [dependencies]
 toml = "0.8"
 ```
 
 ### Module Interface (config/mod.rs)
+
 Ran tool
+
 ### Detailed Implementation Specification
 
 #### 2.4.1: Application Configuration (config/app_config.rs)
+
 ```rust
 /// Main application configuration
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -889,6 +926,7 @@ pub fn save(config: &AppConfig) -> Result<()> {
 ```
 
 #### 2.4.2: Recent Files Cache (config/cache.rs)
+
 ```rust
 /// Recent file/folder entry
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -920,7 +958,7 @@ impl RecentFilesCache {
         // 2. Insert at beginning
         // 3. Truncate to max_entries
     }
-    
+
     /// Get recent entries by type
     pub fn get_by_type(&self, entry_type: EntryType) -> Vec<&RecentEntry> {
         self.entries
@@ -928,7 +966,7 @@ impl RecentFilesCache {
             .filter(|e| e.entry_type == entry_type)
             .collect()
     }
-    
+
     /// Clear all entries
     pub fn clear(&mut self) {
         self.entries.clear();
@@ -953,6 +991,7 @@ pub fn save_recent_files(cache: &RecentFilesCache) -> Result<()> {
 ### Testing Requirements
 
 #### Unit Tests
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -961,7 +1000,7 @@ mod tests {
         // Verify default values are sensible
         // Check all fields have defaults
     }
-    
+
     #[test]
     fn test_config_serialization() {
         // Create config
@@ -969,7 +1008,7 @@ mod tests {
         // Deserialize back
         // Verify equality
     }
-    
+
     #[test]
     fn test_recent_files_management() {
         // Add entries
@@ -977,7 +1016,7 @@ mod tests {
         // Test max entries limit
         // Test deduplication
     }
-    
+
     #[test]
     fn test_config_migration() {
         // Test loading older config versions
@@ -991,6 +1030,7 @@ mod tests {
 ## 🧪 Module 2.5: Comprehensive Testing Strategy
 
 ### Test Organization
+
 ```
 src-tauri/
 ├── src/
@@ -1005,6 +1045,7 @@ src-tauri/
 ```
 
 ### Test Utilities (tests/common/mod.rs)
+
 ```rust
 use tempfile::TempDir;
 
@@ -1021,12 +1062,12 @@ impl TestEnv {
         std::fs::create_dir_all(&app_dir)?;
         Ok(Self { temp_dir, app_dir })
     }
-    
+
     /// Create test files with known content
     pub fn create_test_files(&self, count: usize) -> Vec<PathBuf> {
         // Implementation
     }
-    
+
     /// Generate deterministic test data
     pub fn test_data(size: usize) -> Vec<u8> {
         // Implementation
@@ -1037,59 +1078,60 @@ impl TestEnv {
 ### Integration Test Examples
 
 #### Full Workflow Test (tests/full_workflow.rs)
+
 ```rust
 #[test]
 fn test_complete_encryption_workflow() {
     let env = TestEnv::new().unwrap();
-    
+
     // 1. Generate and save key
     let keypair = crypto::generate_keypair().unwrap();
     let encrypted_key = crypto::encrypt_private_key(
         &keypair.private_key,
         "test-passphrase".into()
     ).unwrap();
-    
+
     let key_path = storage::save_encrypted_key(
         "test-key",
         &encrypted_key,
         Some(&keypair.public_key.to_string())
     ).unwrap();
-    
+
     // 2. Stage files
     let mut staging = file_ops::StagingArea::new().unwrap();
     let test_files = env.create_test_files(5);
     staging.stage_files(&test_files).unwrap();
-    
+
     // 3. Create archive
     let archive_data = file_ops::create_tar_archive(
         staging.path()
     ).unwrap();
-    
+
     // 4. Generate manifest
     let manifest = staging.finalize_manifest();
-    
+
     // 5. Encrypt archive
     let encrypted_data = crypto::encrypt_data(
         &archive_data,
         &keypair.public_key
     ).unwrap();
-    
+
     // 6. Save encrypted bundle
     let bundle_path = env.temp_dir.path().join("test.age");
     std::fs::write(&bundle_path, &encrypted_data).unwrap();
-    
+
     // 7. Load and decrypt
     let loaded_key = storage::load_encrypted_key("test-key").unwrap();
     let private_key = crypto::decrypt_private_key(
         &loaded_key,
         "test-passphrase".into()
     ).unwrap();
-    
+
     let decrypted_data = crypto::decrypt_data(
         &encrypted_data,
         &private_key
     ).unwrap();
-    
+
     // 8. Extract and verify
     let extract_dir = env.temp_dir.path().join("extracted");
     file_ops::extract_tar_archive(
@@ -1097,18 +1139,19 @@ fn test_complete_encryption_workflow() {
         &extract_dir,
         None
     ).unwrap();
-    
+
     // 9. Verify manifest
     let errors = file_ops::verify_manifest(
         &manifest,
         &extract_dir
     ).unwrap();
-    
+
     assert!(errors.is_empty());
 }
 ```
 
 ### Performance Tests
+
 ```rust
 #[test]
 #[ignore] // Run with --ignored flag
@@ -1120,6 +1163,7 @@ fn test_large_file_encryption_performance() {
 ```
 
 ### Security Tests
+
 ```rust
 #[test]
 fn test_memory_cleanup() {
@@ -1139,42 +1183,45 @@ fn test_path_traversal_protection() {
 ## 📊 Module 2.6: Documentation Requirements
 
 ### Documentation Structure
+
 Each module should have:
 
 1. **Module-level documentation** (in mod.rs)
-```rust
+
+````rust
 //! # Crypto Module
-//! 
+//!
 //! Provides secure encryption operations using the age encryption standard.
-//! 
+//!
 //! ## Security Considerations
 //! - All private keys are automatically zeroed on drop
 //! - Passphrases use constant-time comparison
-//! 
+//!
 //! ## Example
 //! ```no_run
 //! use barqly_vault::crypto;
-//! 
+//!
 //! let keypair = crypto::generate_keypair()?;
 //! let encrypted = crypto::encrypt_data(b"secret", &keypair.public_key)?;
 //! ```
-```
+````
 
 2. **Function documentation** with security notes
+
 ```rust
 /// Encrypt data using age encryption
-/// 
+///
 /// # Arguments
 /// * `data` - The data to encrypt
 /// * `recipient` - The recipient's public key
-/// 
+///
 /// # Returns
 /// The encrypted data in age format
-/// 
+///
 /// # Security
 /// - Uses ChaCha20-Poly1305 for encryption
 /// - Includes integrity protection
-/// 
+///
 /// # Errors
 /// - `CryptoError::InvalidRecipient` if the key is malformed
 /// - `CryptoError::EncryptionFailed` if encryption fails
@@ -1191,6 +1238,7 @@ Each module should have:
 ## 🚀 Implementation Checklist
 
 ### For Each Module:
+
 - [ ] Create file structure as specified
 - [ ] Add dependencies to Cargo.toml
 - [ ] Implement types and traits
@@ -1203,6 +1251,7 @@ Each module should have:
 - [ ] Commit with conventional message
 
 ### Validation Before Completion:
+
 - [ ] All tests pass: `cargo test --all`
 - [ ] No clippy warnings: `cargo clippy -- -D warnings`
 - [ ] Formatted: `cargo fmt --all -- --check`
@@ -1215,6 +1264,7 @@ Each module should have:
 ## 🎯 Success Criteria
 
 The implementation is complete when:
+
 1. All four modules are implemented with full test coverage (>80%)
 2. Integration tests demonstrate end-to-end workflows
 3. Documentation is comprehensive and includes examples
@@ -1227,6 +1277,7 @@ The implementation is complete when:
 ## 🔒 Security Checklist
 
 Before marking Milestone 2 complete:
+
 - [ ] Private keys are zeroized on drop
 - [ ] Path traversal attacks are prevented
 - [ ] File permissions are restrictive (Unix)

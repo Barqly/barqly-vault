@@ -1,6 +1,7 @@
 # Code Review Checklist
 
 ## General Code Quality
+
 - [ ] Code follows Rust coding standards (docs/common/rust-coding-standards.md)
 - [ ] No clippy warnings or errors
 - [ ] Code is properly formatted with rustfmt
@@ -9,6 +10,7 @@
 - [ ] Complex logic is well-commented
 
 ## Rust-Specific
+
 - [ ] Proper error handling with Result<T, E>
 - [ ] No unnecessary clones or allocations
 - [ ] Appropriate use of borrowing vs ownership
@@ -17,6 +19,7 @@
 - [ ] Pattern matching is exhaustive
 
 ## Security
+
 - [ ] All user input is validated
 - [ ] No hardcoded secrets or sensitive data
 - [ ] Sensitive data is zeroized after use
@@ -25,6 +28,7 @@
 - [ ] No SQL injection or command injection vulnerabilities
 
 ## Tauri-Specific
+
 - [ ] Commands properly validate inputs
 - [ ] Errors are serialized correctly for frontend
 - [ ] No blocking operations in async contexts
@@ -32,6 +36,7 @@
 - [ ] CSP headers are appropriate
 
 ## Testing
+
 - [ ] Adequate test coverage for new code
 - [ ] Tests are meaningful (not just for coverage)
 - [ ] Edge cases are tested
@@ -40,6 +45,7 @@
 - [ ] No flaky tests introduced
 
 ## Performance
+
 - [ ] No unnecessary loops or iterations
 - [ ] Efficient data structures used
 - [ ] No performance regressions in benchmarks
@@ -47,6 +53,7 @@
 - [ ] Memory usage is reasonable
 
 ## Documentation
+
 - [ ] Public APIs have rustdoc comments
 - [ ] Complex algorithms are explained
 - [ ] Security considerations documented
@@ -54,6 +61,7 @@
 - [ ] Changelog updated if needed
 
 ## Dependencies
+
 - [ ] New dependencies are justified
 - [ ] Dependencies are from reputable sources
 - [ ] Version constraints are appropriate
@@ -61,6 +69,7 @@
 - [ ] Security audit passing for new dependencies
 
 ## Architecture
+
 - [ ] Changes align with overall architecture
 - [ ] Module boundaries are respected
 - [ ] No circular dependencies introduced
@@ -68,6 +77,7 @@
 - [ ] Future extensibility considered
 
 ## Final Checks
+
 - [ ] All CI checks pass
 - [ ] No merge conflicts
 - [ ] Commit history is clean

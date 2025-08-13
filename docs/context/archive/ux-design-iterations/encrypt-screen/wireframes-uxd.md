@@ -533,16 +533,16 @@ Error Occurs
 
 ## Component State Matrix
 
-| Component | Initial | Active | Complete | Error | Disabled |
-|-----------|---------|--------|----------|-------|----------|
-| File Selection | Empty drop zone | Highlight on hover | Show file list | Red border | N/A |
-| Mode Toggle | Neither selected | One highlighted | Mode locked | N/A | N/A |
-| Key Dropdown | Placeholder | Open with options | Shows selection | Red border | Grayed out |
-| Path Input | Default path | Editable | Valid path shown | Red with message | Grayed out |
-| Name Input | Empty/placeholder | Typing | Name set | N/A | Grayed out |
-| Encrypt Button | Disabled | Hover effect | Loading state | N/A | Gray, no hover |
-| Progress Bar | Hidden | Animating | 100% filled | N/A | N/A |
-| Success Message | Hidden | N/A | Visible with animation | N/A | N/A |
+| Component       | Initial           | Active             | Complete               | Error            | Disabled       |
+| --------------- | ----------------- | ------------------ | ---------------------- | ---------------- | -------------- |
+| File Selection  | Empty drop zone   | Highlight on hover | Show file list         | Red border       | N/A            |
+| Mode Toggle     | Neither selected  | One highlighted    | Mode locked            | N/A              | N/A            |
+| Key Dropdown    | Placeholder       | Open with options  | Shows selection        | Red border       | Grayed out     |
+| Path Input      | Default path      | Editable           | Valid path shown       | Red with message | Grayed out     |
+| Name Input      | Empty/placeholder | Typing             | Name set               | N/A              | Grayed out     |
+| Encrypt Button  | Disabled          | Hover effect       | Loading state          | N/A              | Gray, no hover |
+| Progress Bar    | Hidden            | Animating          | 100% filled            | N/A              | N/A            |
+| Success Message | Hidden            | N/A                | Visible with animation | N/A              | N/A            |
 
 ## Responsive Breakpoints
 
@@ -572,7 +572,7 @@ Mobile (<768px)
 ### Touch Target Sizes
 
 - **Mobile**: Minimum 44×44px
-- **Tablet**: Minimum 40×40px  
+- **Tablet**: Minimum 40×40px
 - **Desktop**: Minimum 32×32px (mouse)
 
 ## Animation Specifications
@@ -653,18 +653,18 @@ Mobile (<768px)
 </div>
 
 <!-- Progress -->
-<div role="progressbar" 
-     aria-valuenow="65" 
-     aria-valuemin="0" 
-     aria-valuemax="100"
-     aria-label="Encryption progress">
+<div
+  role="progressbar"
+  aria-valuenow="65"
+  aria-valuemin="0"
+  aria-valuemax="100"
+  aria-label="Encryption progress"
+>
   <span aria-live="polite">Creating secure archive, 65% complete</span>
 </div>
 
 <!-- Success -->
-<div role="alert" aria-live="assertive">
-  Vault successfully created
-</div>
+<div role="alert" aria-live="assertive">Vault successfully created</div>
 ```
 
 ## Implementation Notes
@@ -705,9 +705,9 @@ EncryptPage
 // Core states
 const [step, setStep] = useState(1);
 const [files, setFiles] = useState(null);
-const [selectedKey, setSelectedKey] = useState('');
+const [selectedKey, setSelectedKey] = useState("");
 const [outputPath, setOutputPath] = useState(defaultPath);
-const [archiveName, setArchiveName] = useState('');
+const [archiveName, setArchiveName] = useState("");
 const [isEncrypting, setIsEncrypting] = useState(false);
 const [progress, setProgress] = useState(0);
 const [success, setSuccess] = useState(null);
@@ -721,4 +721,4 @@ const canEncrypt = canProceedToStep3 && outputPath;
 
 ---
 
-*These wireframes provide the visual foundation for implementing the Encrypt screen. They should be used in conjunction with the Design Specification and Component Specifications for complete implementation guidance.*
+_These wireframes provide the visual foundation for implementing the Encrypt screen. They should be used in conjunction with the Design Specification and Component Specifications for complete implementation guidance._

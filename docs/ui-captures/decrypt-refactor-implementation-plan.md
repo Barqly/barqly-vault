@@ -10,6 +10,7 @@
 This implementation plan addresses critical UI/UX inconsistencies identified in the comprehensive analysis of Barqly Vault's interface. The primary issues center around **25-30% wasted screen real estate**, **fragmented design language**, and **poor viewport utilization** that forces users to scroll during critical operations.
 
 ### Key Problems to Solve
+
 1. **Space Inefficiency**: Encrypt/Decrypt screens waste 180px and 160px respectively on redundant headers
 2. **Design Fragmentation**: Three different header implementations across Setup/Encrypt/Decrypt screens
 3. **Viewport Overflow**: Success messages require scrolling, undermining user confidence
@@ -17,11 +18,13 @@ This implementation plan addresses critical UI/UX inconsistencies identified in 
 5. **Accessibility Gaps**: Multiple WCAG 2.2 AA violations in color contrast and keyboard navigation
 
 ### Solution Approach
+
 Implement a **unified component architecture** with **progressive disclosure patterns** that recovers 30% of vertical space, ensures 100% above-fold visibility for critical actions, and establishes a consistent design language across all screens.
 
 ### Expected Outcomes
+
 - ✅ **Header unification achieved** - Unified design language across all screens
-- ✅ **Trust indicator consistency** - Universal security messaging implemented  
+- ✅ **Trust indicator consistency** - Universal security messaging implemented
 - ✅ **Space recovery started** - Redundant subheaders removed
 - [ ] **Zero scrolling** required for success confirmations (Next: Success panel optimization)
 - [ ] **50% reduction** in UI-related support tickets (To be measured post-deployment)
@@ -35,9 +38,11 @@ Implement a **unified component architecture** with **progressive disclosure pat
 **Goal**: Unify design language and recover 30% of wasted screen real estate while maintaining accessibility standards
 
 #### Phase 1: Quick Wins & Critical Fixes (Week 1)
-*Focus: Immediate space recovery and viewport fixes*
+
+_Focus: Immediate space recovery and viewport fixes_
 
 ##### 7.1: Header Unification & Space Recovery ✅ **COMPLETED**
+
 **Effort**: 8 hours (Actual: 6 hours)  
 **Priority**: P0 - Ship Blocker  
 **Impact**: ✅ Recovered 100px+ of vertical space per screen + Unified design language
@@ -69,6 +74,7 @@ Implement a **unified component architecture** with **progressive disclosure pat
   - Setup screen now includes trust indicators (major UX improvement)
 
 ##### 7.2: Success Panel Viewport Optimization
+
 **Effort**: 6 hours  
 **Priority**: P0 - Ship Blocker  
 **Impact**: Eliminates scrolling frustration for success confirmations
@@ -95,6 +101,7 @@ Implement a **unified component architecture** with **progressive disclosure pat
   - Preserve critical information above fold
 
 ##### 7.3: Typography Standardization
+
 **Effort**: 4 hours  
 **Priority**: P1 - High Impact  
 **Impact**: Establishes visual consistency and hierarchy
@@ -122,9 +129,11 @@ Implement a **unified component architecture** with **progressive disclosure pat
   - Migration guide for existing components
 
 #### Phase 2: Component Architecture & Design System (Week 2)
-*Focus: Building reusable components and establishing patterns*
+
+_Focus: Building reusable components and establishing patterns_
 
 ##### 7.4: Unified Component Library
+
 **Effort**: 12 hours  
 **Priority**: P1 - High Impact  
 **Impact**: Reduces technical debt and ensures consistency
@@ -164,13 +173,14 @@ Implement a **unified component architecture** with **progressive disclosure pat
   - Migration guide from old components
 
 ##### 7.5: Design Token Implementation
+
 **Effort**: 8 hours  
 **Priority**: P1 - High Impact  
 **Impact**: Enables consistent theming and future customization
 
 - [ ] 7.5.1: Define color token system (2 hours)
   - Primary palette: Blue scale for actions
-  - Success palette: Green scale for confirmations  
+  - Success palette: Green scale for confirmations
   - Error palette: Red scale for errors
   - Neutral palette: Gray scale for UI
   - Semantic tokens: Map to specific uses
@@ -202,6 +212,7 @@ Implement a **unified component architecture** with **progressive disclosure pat
   - Test token application
 
 ##### 7.6: Accessibility Improvements
+
 **Effort**: 10 hours  
 **Priority**: P0 - Ship Blocker  
 **Impact**: WCAG 2.2 AA compliance and inclusive design
@@ -243,9 +254,11 @@ Implement a **unified component architecture** with **progressive disclosure pat
   - Document compliance status
 
 #### Phase 3: Advanced Optimizations (Week 3)
-*Focus: Performance, responsiveness, and user preferences*
+
+_Focus: Performance, responsiveness, and user preferences_
 
 ##### 7.7: Responsive Design System
+
 **Effort**: 8 hours  
 **Priority**: P2 - Nice to Have  
 **Impact**: Optimal experience across all screen sizes
@@ -271,6 +284,7 @@ Implement a **unified component architecture** with **progressive disclosure pat
   - Swipe gestures for navigation
 
 ##### 7.8: User Preference System
+
 **Effort**: 6 hours  
 **Priority**: P2 - Nice to Have  
 **Impact**: Personalized experience for different user types
@@ -296,6 +310,7 @@ Implement a **unified component architecture** with **progressive disclosure pat
   - Custom accent colors
 
 ##### 7.9: Performance Optimization
+
 **Effort**: 6 hours  
 **Priority**: P2 - Nice to Have  
 **Impact**: Faster perceived performance
@@ -324,18 +339,18 @@ Implement a **unified component architecture** with **progressive disclosure pat
 interface AppHeaderProps {
   title: string;
   subtitle?: string;
-  variant?: 'compact' | 'full';
+  variant?: "compact" | "full";
   showTrustBadges?: boolean;
-  screen: 'setup' | 'encrypt' | 'decrypt';
+  screen: "setup" | "encrypt" | "decrypt";
 }
 
 // /src-ui/src/components/shared/ProgressFlow.tsx
 interface ProgressFlowProps {
   steps: Array<{
     label: string;
-    status: 'pending' | 'active' | 'complete';
+    status: "pending" | "active" | "complete";
   }>;
-  orientation?: 'horizontal' | 'vertical';
+  orientation?: "horizontal" | "vertical";
   compact?: boolean;
 }
 
@@ -353,7 +368,11 @@ interface SuccessPanelProps {
   message: string;
   stats?: Array<{ label: string; value: string | number }>;
   fileList?: string[];
-  actions?: Array<{ label: string; onClick: () => void; variant: 'primary' | 'secondary' }>;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    variant: "primary" | "secondary";
+  }>;
   maxHeight?: number;
 }
 ```
@@ -369,21 +388,25 @@ interface SuccessPanelProps {
 ## Testing Strategy
 
 ### Unit Testing
+
 - **Component Tests**: 100% coverage for new shared components
 - **Accessibility Tests**: jest-axe for automated a11y testing
 - **Snapshot Tests**: Visual regression for critical components
 
 ### Integration Testing
+
 - **User Flow Tests**: Complete workflows with Testing Library
 - **Cross-Browser Tests**: Chrome, Firefox, Safari, Edge
 - **Screen Size Tests**: 768px, 1024px, 1440px breakpoints
 
 ### Visual Testing
+
 - **Storybook Stories**: All component states documented
 - **Chromatic Integration**: Automated visual regression
 - **Manual QA**: Checklist for each screen
 
 ### Accessibility Testing
+
 - **Automated**: axe-core integration in tests
 - **Manual**: Keyboard navigation verification
 - **Screen Readers**: NVDA/JAWS testing
@@ -392,23 +415,26 @@ interface SuccessPanelProps {
 ## Success Metrics
 
 ### Primary Metrics
-| Metric | Current | Target | Measurement |
-|--------|---------|--------|-------------|
-| Viewport Utilization | 70% | >95% | % of functional content above fold |
-| Scroll Events | 30% of sessions | <5% | Analytics tracking |
-| Task Completion Rate | 85% | >95% | Success without help |
-| Time to Complete | 90 seconds | <60 seconds | Average operation time |
-| Support Tickets | Baseline | -50% | UI-related issues |
+
+| Metric               | Current         | Target      | Measurement                        |
+| -------------------- | --------------- | ----------- | ---------------------------------- |
+| Viewport Utilization | 70%             | >95%        | % of functional content above fold |
+| Scroll Events        | 30% of sessions | <5%         | Analytics tracking                 |
+| Task Completion Rate | 85%             | >95%        | Success without help               |
+| Time to Complete     | 90 seconds      | <60 seconds | Average operation time             |
+| Support Tickets      | Baseline        | -50%        | UI-related issues                  |
 
 ### Secondary Metrics
-| Metric | Current | Target | Measurement |
-|--------|---------|--------|-------------|
-| Component Reuse | 60% | >90% | Shared vs unique components |
-| WCAG Compliance | ~70% | 100% AA | axe audit score |
-| Performance Score | 85 | >95 | Lighthouse score |
-| User Satisfaction | 3.8/5 | >4.5/5 | Post-task survey |
+
+| Metric            | Current | Target  | Measurement                 |
+| ----------------- | ------- | ------- | --------------------------- |
+| Component Reuse   | 60%     | >90%    | Shared vs unique components |
+| WCAG Compliance   | ~70%    | 100% AA | axe audit score             |
+| Performance Score | 85      | >95     | Lighthouse score            |
+| User Satisfaction | 3.8/5   | >4.5/5  | Post-task survey            |
 
 ### Leading Indicators
+
 - Click-through rate on primary CTAs
 - Help content expansion rate
 - Error recovery success rate
@@ -417,21 +443,27 @@ interface SuccessPanelProps {
 ## Implementation Priority Matrix
 
 ### Immediate (Week 1)
+
 **High Impact, Low Effort**
+
 1. Remove redundant subheaders (2 hours) - **30% space gain**
 2. Fix success panel overflow (3 hours) - **Eliminates scrolling**
 3. Standardize header heights (2 hours) - **Instant consistency**
 4. Implement collapsible help (3 hours) - **Progressive disclosure**
 
 ### Short-term (Week 2)
+
 **High Impact, Medium Effort**
+
 1. Create unified AppHeader (4 hours) - **Design consistency**
 2. Build design token system (8 hours) - **Foundation for theming**
 3. Fix accessibility issues (10 hours) - **WCAG compliance**
 4. Extract shared components (12 hours) - **Reduce tech debt**
 
 ### Long-term (Week 3+)
+
 **Medium Impact, High Effort**
+
 1. Responsive design system (8 hours) - **Multi-device support**
 2. User preference system (6 hours) - **Personalization**
 3. Performance optimization (6 hours) - **Faster experience**
@@ -440,6 +472,7 @@ interface SuccessPanelProps {
 ## Dependencies and Risks
 
 ### Technical Dependencies
+
 - **React 19.1**: Latest hooks and performance features
 - **TypeScript 5.x**: Type safety for component props
 - **Tailwind CSS 3.x**: Utility-first styling
@@ -447,15 +480,16 @@ interface SuccessPanelProps {
 
 ### Implementation Risks
 
-| Risk | Probability | Impact | Mitigation |
-|------|------------|--------|------------|
-| Breaking existing functionality | Low | High | Feature flags, gradual rollout |
-| User confusion from changes | Medium | Medium | Clear communication, onboarding |
-| Performance regression | Low | Medium | Performance monitoring, testing |
-| Accessibility regression | Low | High | Automated testing, manual QA |
-| Scope creep | Medium | Medium | Strict milestone adherence |
+| Risk                            | Probability | Impact | Mitigation                      |
+| ------------------------------- | ----------- | ------ | ------------------------------- |
+| Breaking existing functionality | Low         | High   | Feature flags, gradual rollout  |
+| User confusion from changes     | Medium      | Medium | Clear communication, onboarding |
+| Performance regression          | Low         | Medium | Performance monitoring, testing |
+| Accessibility regression        | Low         | High   | Automated testing, manual QA    |
+| Scope creep                     | Medium      | Medium | Strict milestone adherence      |
 
 ### Mitigation Strategies
+
 1. **Feature Flags**: Roll out changes gradually
 2. **A/B Testing**: Validate improvements with real users
 3. **Rollback Plan**: Quick reversion capability
@@ -487,16 +521,19 @@ src-ui/src/
 ## Timeline & Milestones
 
 ### Week 1 (Days 1-5): Quick Wins
+
 - **Day 1-2**: Header unification and space recovery
 - **Day 3-4**: Success panel optimization
 - **Day 5**: Typography standardization and testing
 
 ### Week 2 (Days 6-10): Foundation Building
+
 - **Day 6-7**: Component extraction and library
 - **Day 8-9**: Design token implementation
 - **Day 10**: Accessibility improvements
 
 ### Week 3 (Days 11-15): Polish & Optimization
+
 - **Day 11-12**: Responsive design system
 - **Day 13**: User preferences
 - **Day 14**: Performance optimization
@@ -505,30 +542,35 @@ src-ui/src/
 ## Progress Update
 
 ### ✅ Completed (Phase 1 - Week 1)
+
 1. **Unified AppHeader Component** - All screens now use consistent header design
-2. **Redundant Subheader Removal** - Space recovery achieved on Encrypt/Decrypt screens  
+2. **Redundant Subheader Removal** - Space recovery achieved on Encrypt/Decrypt screens
 3. **Universal Trust Indicators** - Consistent security messaging across all screens
 4. **Height Consistency** - All headers now have identical ~64px height
 
 ### 🔄 Current Status
+
 - **Commits**: 2 successful commits with all tests passing
 - **Files Modified**: 5 core files + 1 test file updated
 - **Test Coverage**: 682 frontend + 420 backend tests all passing
 - **Next Up**: Success panel viewport optimization (7.2)
 
-### 📋 Next Steps  
+### 📋 Next Steps
+
 1. **Success Panel Optimization** - Eliminate scrolling for confirmations
 2. **Typography Standardization** - Consistent text hierarchy
 3. **Progressive Disclosure** - Collapsible help content
 4. **Accessibility Improvements** - WCAG 2.2 AA compliance
 
 ### Communication Plan
+
 1. **Daily standups** during implementation
 2. **Weekly demos** to stakeholders
 3. **User communication** before major changes
 4. **Documentation updates** with each phase
 
 ### Success Criteria
+
 - All P0 items complete within Week 1
 - 90% of P1 items complete within Week 2
 - Zero regression in existing functionality
@@ -547,10 +589,12 @@ The phased approach ensures minimal disruption to users while progressively impr
 ---
 
 ### 🎯 Implementation Status
+
 **Phase 1 Progress**: ✅ **COMPLETED** (6/8 hours)
+
 - Header unification and consistency achieved
-- Universal trust indicators implemented 
+- Universal trust indicators implemented
 - Space recovery initiated
 - All tests passing, ready for Phase 2
 
-*Next: Success panel optimization and typography standardization.*
+_Next: Success panel optimization and typography standardization._

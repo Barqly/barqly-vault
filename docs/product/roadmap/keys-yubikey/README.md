@@ -34,7 +34,7 @@ One Encrypted Vault File
         ↓
 Can be decrypted by ANY of:
   • YubiKey 1 (age1yubikey1abc...)
-  • YubiKey 2 (age1yubikey1xyz...)  
+  • YubiKey 2 (age1yubikey1xyz...)
   • Passphrase key (age1regular...)
 ```
 
@@ -51,18 +51,21 @@ Can be decrypted by ANY of:
 ## Quick Summary for Engineers
 
 ### Backend Requirements
+
 - Bundle `age-plugin-yubikey` with application
 - Implement PIV communication for YubiKey management
 - Update metadata structure for multiple recipients
 - Modify encryption commands to support multi-recipient
 
 ### Frontend Requirements
+
 - New setup flow with three protection modes
 - YubiKey management interface
 - PIN entry dialogs
 - Recovery mode selection
 
 ### Key Features
+
 - Generate age keys directly on YubiKey hardware
 - Support multiple YubiKeys per user
 - One encrypted file works with all registered keys

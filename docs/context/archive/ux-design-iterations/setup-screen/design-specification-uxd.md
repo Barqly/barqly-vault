@@ -12,15 +12,19 @@ This design specification transforms the Barqly Vault Setup screen from a functi
 ## Design Principles
 
 ### 1. **Trust Through Design**
+
 Every visual element reinforces security, professionalism, and reliability through considered use of icons, typography, and spatial relationships.
 
 ### 2. **Progressive Disclosure**
+
 Information is revealed at the right moment, reducing cognitive load while maintaining comprehensive guidance for those who need it.
 
 ### 3. **Emotional Connection**
+
 Design elements connect the technical process of key generation to the emotional outcome of protecting family wealth.
 
 ### 4. **Accessibility First**
+
 All design decisions prioritize inclusive access, ensuring the interface works for users with diverse abilities and contexts.
 
 ## Visual Design System
@@ -29,41 +33,41 @@ All design decisions prioritize inclusive access, ensuring the interface works f
 
 ```css
 /* Primary Colors */
---primary-blue: #2563EB;      /* Trust, security */
---primary-blue-hover: #1D4ED8;
---primary-green: #059669;     /* Success, positive actions */
---primary-orange: #F59E0B;    /* Bitcoin accent */
+--primary-blue: #2563eb; /* Trust, security */
+--primary-blue-hover: #1d4ed8;
+--primary-green: #059669; /* Success, positive actions */
+--primary-orange: #f59e0b; /* Bitcoin accent */
 
 /* Neutral Colors */
---gray-900: #111827;          /* Primary text */
---gray-700: #374151;          /* Secondary text */
---gray-500: #6B7280;          /* Helper text */
---gray-100: #F3F4F6;          /* Backgrounds */
+--gray-900: #111827; /* Primary text */
+--gray-700: #374151; /* Secondary text */
+--gray-500: #6b7280; /* Helper text */
+--gray-100: #f3f4f6; /* Backgrounds */
 
 /* Semantic Colors */
---success-green: #10B981;
---error-red: #EF4444;
---warning-amber: #F59E0B;
---info-blue: #3B82F6;
+--success-green: #10b981;
+--error-red: #ef4444;
+--warning-amber: #f59e0b;
+--info-blue: #3b82f6;
 
 /* Trust Indicators */
---shield-blue: #2563EB;
---lock-gray: #6B7280;
+--shield-blue: #2563eb;
+--lock-gray: #6b7280;
 ```
 
 ### Typography Scale
 
 ```css
 /* Headings */
---heading-xl: 1.875rem;   /* 30px - Page titles */
---heading-lg: 1.5rem;     /* 24px - Section titles */
---heading-md: 1.25rem;    /* 20px - Card titles */
---heading-sm: 1.125rem;   /* 18px - Subsections */
+--heading-xl: 1.875rem; /* 30px - Page titles */
+--heading-lg: 1.5rem; /* 24px - Section titles */
+--heading-md: 1.25rem; /* 20px - Card titles */
+--heading-sm: 1.125rem; /* 18px - Subsections */
 
 /* Body Text */
---text-base: 1rem;        /* 16px - Body text */
---text-sm: 0.875rem;      /* 14px - Helper text */
---text-xs: 0.75rem;       /* 12px - Captions */
+--text-base: 1rem; /* 16px - Body text */
+--text-sm: 0.875rem; /* 14px - Helper text */
+--text-xs: 0.75rem; /* 12px - Captions */
 
 /* Font Weights */
 --font-regular: 400;
@@ -76,13 +80,13 @@ All design decisions prioritize inclusive access, ensuring the interface works f
 
 ```css
 /* Spacing Scale (rem) */
---space-1: 0.25rem;   /* 4px */
---space-2: 0.5rem;    /* 8px */
---space-3: 0.75rem;   /* 12px */
---space-4: 1rem;      /* 16px */
---space-6: 1.5rem;    /* 24px */
---space-8: 2rem;      /* 32px */
---space-12: 3rem;     /* 48px */
+--space-1: 0.25rem; /* 4px */
+--space-2: 0.5rem; /* 8px */
+--space-3: 0.75rem; /* 12px */
+--space-4: 1rem; /* 16px */
+--space-6: 1.5rem; /* 24px */
+--space-8: 2rem; /* 32px */
+--space-12: 3rem; /* 48px */
 ```
 
 ## Component Specifications
@@ -100,6 +104,7 @@ All design decisions prioritize inclusive access, ensuring the interface works f
 ```
 
 **Specifications**:
+
 - Height: 80px (max)
 - Background: White with subtle bottom border (#E5E7EB)
 - Icon: Shield (24x24px, #2563EB)
@@ -119,6 +124,7 @@ All design decisions prioritize inclusive access, ensuring the interface works f
 ```
 
 **Specifications**:
+
 - Position: Below header, above main form
 - Height: 48px
 - Background: #F9FAFB with 1px border
@@ -164,6 +170,7 @@ All design decisions prioritize inclusive access, ensuring the interface works f
 **Specifications**:
 
 #### Form Container
+
 - Background: White
 - Border: 1px solid #E5E7EB
 - Border-radius: 8px
@@ -171,12 +178,14 @@ All design decisions prioritize inclusive access, ensuring the interface works f
 - Shadow: 0 1px 3px rgba(0,0,0,0.1)
 
 #### Form Title
+
 - Font: 18px, font-semibold, #111827
 - Margin-bottom: 24px
 - Border-bottom: 1px solid #E5E7EB
 - Padding-bottom: 16px
 
 #### Input Fields
+
 - Height: 48px
 - Border: 1px solid #D1D5DB
 - Border-radius: 6px
@@ -186,15 +195,18 @@ All design decisions prioritize inclusive access, ensuring the interface works f
 - Background: White
 
 #### Labels
+
 - Font: 14px, font-medium, #374151
 - Margin-bottom: 6px
 - Required asterisk: #EF4444
 
 #### Helper Text
+
 - Font: 12px, #6B7280
 - Margin-top: 4px
 
 #### Passphrase Strength Indicator
+
 - Height: 32px
 - Background: #F3F4F6
 - Border-radius: 4px
@@ -202,6 +214,7 @@ All design decisions prioritize inclusive access, ensuring the interface works f
 - Text: 12px, font-medium
 
 #### Buttons
+
 - Primary (Create Security Identity):
   - Height: 48px
   - Background: #2563EB
@@ -241,6 +254,7 @@ When expanded:
 ```
 
 **Specifications**:
+
 - Collapsed height: 40px
 - Expanded: Auto-height with smooth animation
 - Background: #EFF6FF (blue-50)
@@ -259,6 +273,7 @@ When expanded:
 ```
 
 **Specifications**:
+
 - Position: Above form container
 - Height: 32px
 - Text: 14px, #6B7280
@@ -272,19 +287,15 @@ When expanded:
 1. **Default**
    - Border: #D1D5DB
    - Background: White
-   
 2. **Hover**
    - Border: #9CA3AF
    - Cursor: Text
-   
 3. **Focus**
    - Border: #2563EB
    - Ring: 2px, #DBEAFE
-   
 4. **Error**
    - Border: #EF4444
    - Background: #FEF2F2
-   
 5. **Success**
    - Border: #10B981
    - Icon: Checkmark (green)
@@ -293,19 +304,15 @@ When expanded:
 
 1. **Default**
    - As specified above
-   
 2. **Hover**
    - Transform: translateY(-1px)
    - Shadow: 0 4px 6px rgba(0,0,0,0.1)
-   
 3. **Active**
    - Transform: translateY(0)
    - Shadow: inset 0 2px 4px rgba(0,0,0,0.1)
-   
 4. **Disabled**
    - Opacity: 0.5
    - Cursor: not-allowed
-   
 5. **Loading**
    - Show spinner
    - Text: "Creating..."
@@ -313,12 +320,14 @@ When expanded:
 ## Animation Specifications
 
 ### Transitions
+
 - All interactive elements: 200ms ease-out
 - Collapsible sections: 300ms ease-out
 - Progress bars: 500ms ease-in-out
 - Success states: 400ms spring
 
 ### Micro-interactions
+
 1. **Button hover**: Subtle lift with shadow
 2. **Input focus**: Smooth ring expansion
 3. **Checkbox toggle**: Smooth slide
@@ -327,11 +336,13 @@ When expanded:
 ## Responsive Behavior
 
 ### Breakpoints
+
 - Desktop: 1024px+
 - Tablet: 768px - 1023px
 - Mobile: < 768px
 
 ### Mobile Adaptations
+
 1. **Header**: Stack icon and text vertically
 2. **Trust indicators**: Single column
 3. **Form**: Full width with 16px padding
@@ -341,6 +352,7 @@ When expanded:
 ## Accessibility Requirements
 
 ### WCAG 2.2 AA Compliance
+
 1. **Color Contrast**
    - Normal text: 4.5:1 minimum
    - Large text: 3:1 minimum
@@ -364,12 +376,14 @@ When expanded:
 ## Success Metrics
 
 ### Quantitative
+
 - Setup completion rate: 85%+
 - Average time to complete: < 90 seconds
 - Error rate: < 10%
 - Mobile completion rate: 80%+
 
 ### Qualitative
+
 - Trust perception: 8+/10
 - Ease of use: 9+/10
 - Professional appearance: 9+/10
@@ -378,6 +392,7 @@ When expanded:
 ## Implementation Notes
 
 ### Required Assets
+
 1. Shield icon (SVG, 24x24)
 2. Lock icon (SVG, 16x16)
 3. Info icon (SVG, 16x16)
@@ -386,6 +401,7 @@ When expanded:
 6. Chevron up/down icons (SVG, 16x16)
 
 ### Technical Considerations
+
 1. Use CSS custom properties for theming
 2. Implement smooth animations with will-change
 3. Lazy load help content
@@ -394,4 +410,4 @@ When expanded:
 
 ---
 
-*This specification provides the complete design direction for implementing the enhanced Setup screen. See accompanying wireframes and component library for visual references.*
+_This specification provides the complete design direction for implementing the enhanced Setup screen. See accompanying wireframes and component library for visual references._

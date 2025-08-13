@@ -15,20 +15,20 @@ graph TB
         SM[State Management]
         TC[Tauri Client API]
     end
-    
+
     subgraph "Tauri Bridge Layer"
         CMD[Command Handlers]
         SEC[Security Middleware]
         ERR[Error Translation]
     end
-    
+
     subgraph "Core Rust Modules"
         CRYPTO[Crypto Module]
         STORAGE[Storage Module]
         FILEOPS[File Ops Module]
         CONFIG[Config Module]
     end
-    
+
     UI --> SM
     SM --> TC
     TC --> CMD
@@ -38,7 +38,7 @@ graph TB
     ERR --> STORAGE
     ERR --> FILEOPS
     ERR --> CONFIG
-    
+
     style UI fill:#e1f5fe
     style CMD fill:#fff3e0
     style SEC fill:#ffebee
@@ -77,16 +77,19 @@ graph TB
 ### Primary Stakeholders and Their Needs
 
 #### **Dev Engineers** 🎯 (Contributor)
+
 **Needs**: Clear command interfaces, type definitions, error handling patterns
 **Impact Level**: High
 **Communication**: Detailed task-level blueprints with implementation examples
 
 #### **Test Automation Engineers** 🧪 (Contributor)
+
 **Needs**: Testable command structure, mock capabilities, E2E test framework
 **Impact Level**: High
 **Communication**: Testing strategy with command mocking and UI automation
 
 #### **Customer Persona** ⭐ (North Star)
+
 **Needs**: Intuitive UI, clear error messages, secure operations
 **Impact Level**: High
 **Communication**: User flows, accessibility requirements, performance targets
@@ -94,11 +97,13 @@ graph TB
 ### Secondary Stakeholders and Considerations
 
 #### **Security Engineers** 🔒 (Contributor)
+
 **Needs**: Input validation, secure IPC, permission model
 **Impact Level**: High
 **Communication**: Security boundaries, threat model, secure defaults
 
 #### **Tech Operations Engineers** 🔧 (Contributor)
+
 **Needs**: Logging, monitoring, update mechanism
 **Impact Level**: Medium
 **Communication**: Telemetry design, error tracking, deployment strategy
@@ -106,24 +111,28 @@ graph TB
 ## Development Roadmap
 
 ### Phase 1: Core Command Infrastructure (Week 1)
+
 - Implement command handler structure
 - Add security middleware layer
 - Create error translation system
 - Set up logging infrastructure
 
 ### Phase 2: Command Implementation (Week 2)
+
 - Implement crypto commands (generate, encrypt, decrypt)
 - Implement storage commands (save, load, list keys)
 - Implement file operations commands
 - Add progress reporting
 
 ### Phase 3: Frontend Development (Week 3)
+
 - Create state management architecture
 - Build UI components (Setup, Encrypt, Decrypt tabs)
 - Implement command invocation layer
 - Add error handling UI
 
 ### Phase 4: Integration and Testing (Week 4)
+
 - End-to-end workflow testing
 - Security audit
 - Performance optimization
@@ -132,11 +141,13 @@ graph TB
 ### Dependencies and Critical Path
 
 **Critical Dependencies**:
+
 - Milestone 2 modules must be complete and tested
 - Tauri v2 stable release (already available)
 - Security review of command interfaces
 
 **Critical Path**:
+
 1. Command infrastructure → Command implementation
 2. State management → UI components
 3. All components → Integration testing
@@ -145,12 +156,12 @@ graph TB
 
 ### Technical Risks and Mitigations
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| **IPC Performance** | High | Medium | Stream large files, implement progress callbacks |
-| **Type Mismatches** | Medium | High | Generate TypeScript types from Rust, strict validation |
-| **Memory Leaks** | High | Low | Careful resource management, automated testing |
-| **Cross-Platform Issues** | Medium | Medium | Platform-specific testing, CI/CD matrix |
+| Risk                      | Impact | Likelihood | Mitigation                                             |
+| ------------------------- | ------ | ---------- | ------------------------------------------------------ |
+| **IPC Performance**       | High   | Medium     | Stream large files, implement progress callbacks       |
+| **Type Mismatches**       | Medium | High       | Generate TypeScript types from Rust, strict validation |
+| **Memory Leaks**          | High   | Low        | Careful resource management, automated testing         |
+| **Cross-Platform Issues** | Medium | Medium     | Platform-specific testing, CI/CD matrix                |
 
 ### Security Considerations Overview
 
@@ -179,6 +190,7 @@ graph TB
 ### Tauri Command Interface Design
 
 Commands follow a consistent pattern:
+
 ```rust
 #[tauri::command]
 async fn module_action(
@@ -238,23 +250,23 @@ graph LR
         USER[User Input]
         FS[File System]
     end
-    
+
     subgraph "Trust Boundary"
         VAL[Validation]
         SAN[Sanitization]
     end
-    
+
     subgraph "Trusted"
         CMD[Commands]
         CORE[Core Modules]
     end
-    
+
     USER --> VAL
     FS --> VAL
     VAL --> SAN
     SAN --> CMD
     CMD --> CORE
-    
+
     style VAL fill:#ffebee
     style SAN fill:#ffebee
 ```
@@ -290,8 +302,8 @@ graph LR
 ### E2E Testing Framework
 
 ```typescript
-describe('Encryption Workflow', () => {
-  it('should encrypt files end-to-end', async () => {
+describe("Encryption Workflow", () => {
+  it("should encrypt files end-to-end", async () => {
     // Generate key
     // Select files
     // Encrypt
@@ -310,12 +322,14 @@ describe('Encryption Workflow', () => {
 ## Success Metrics
 
 ### Immediate Goals
+
 - **Command Coverage**: 100% of core module functions exposed
 - **Type Safety**: Zero runtime type errors
 - **Security Validation**: All inputs validated
 - **Error Handling**: User-friendly messages for all errors
 
 ### Long-term Goals
+
 - **Performance**: Sub-second operations for typical use
 - **Reliability**: 99.9% crash-free sessions
 - **Security**: Zero security vulnerabilities
@@ -323,12 +337,13 @@ describe('Encryption Workflow', () => {
 
 ---
 
-*This module-level blueprint provides the architectural foundation for Milestone 3. Detailed implementation specifications are provided in the task-level blueprints.*
+_This module-level blueprint provides the architectural foundation for Milestone 3. Detailed implementation specifications are provided in the task-level blueprints._
 
 ## 🧩 Linked Ritual Artifacts
 
 Refer to:
+
 - [Blueprint-Milestone3-Task3.1.md](Blueprint-Milestone3-Task3.1.md) - Tauri Commands Bridge
 - [Blueprint-Milestone3-Task3.2.md](Blueprint-Milestone3-Task3.2.md) - Frontend State Management
 - [Blueprint-Milestone3-Task3.3.md](Blueprint-Milestone3-Task3.3.md) - User Interface Components
-- [Blueprint-Milestone3-Task3.4.md](Blueprint-Milestone3-Task3.4.md) - Integration Testing 
+- [Blueprint-Milestone3-Task3.4.md](Blueprint-Milestone3-Task3.4.md) - Integration Testing

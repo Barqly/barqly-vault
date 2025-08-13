@@ -7,6 +7,7 @@
 ## Design Philosophy
 
 ### Core Principle
+
 Barqly Vault is a professional security tool that happens to excel at Bitcoin use cases. The visual identity should reflect this hierarchy:
 
 1. **Primary**: Security, trust, professionalism
@@ -14,6 +15,7 @@ Barqly Vault is a professional security tool that happens to excel at Bitcoin us
 3. **Subtle**: Community connection without alienation
 
 ### Visual Strategy
+
 - Use Bitcoin visual cues where contextually relevant
 - Avoid overwhelming non-Bitcoin users
 - Maintain professional appearance suitable for advisors
@@ -24,19 +26,21 @@ Barqly Vault is a professional security tool that happens to excel at Bitcoin us
 ### Color Integration
 
 #### Primary Palette (Security-First)
+
 ```css
 /* Core Security Colors */
---primary-blue: #2563EB;      /* Trust, security, primary actions */
---shield-blue: #1E40AF;       /* Security indicators */
---success-green: #059669;     /* Positive actions, success */
+--primary-blue: #2563eb; /* Trust, security, primary actions */
+--shield-blue: #1e40af; /* Security indicators */
+--success-green: #059669; /* Positive actions, success */
 
 /* Bitcoin Accent (Used Sparingly) */
---bitcoin-orange: #F59E0B;    /* Bitcoin reference, highlights */
---bitcoin-orange-dark: #D97706; /* Hover states */
---bitcoin-orange-light: #FCD34D; /* Backgrounds */
+--bitcoin-orange: #f59e0b; /* Bitcoin reference, highlights */
+--bitcoin-orange-dark: #d97706; /* Hover states */
+--bitcoin-orange-light: #fcd34d; /* Backgrounds */
 ```
 
 #### Usage Guidelines
+
 1. **Primary Actions**: Always use security blue, not Bitcoin orange
 2. **Bitcoin Context**: Use orange for Bitcoin-specific features only
 3. **Accents**: Maximum 10% of interface should use Bitcoin colors
@@ -45,6 +49,7 @@ Barqly Vault is a professional security tool that happens to excel at Bitcoin us
 ### Iconography Strategy
 
 #### Security-First Icons
+
 ```
 Primary Icons (Always Present):
 🛡️ Shield - Security, protection
@@ -60,15 +65,18 @@ Bitcoin Context Icons (When Relevant):
 ```
 
 #### Icon Implementation
+
 ```tsx
 // Example: Contextual Bitcoin indicator
 const BitcoinContextBadge = ({ show = true }) => {
   if (!show) return null;
-  
+
   return (
-    <div className="inline-flex items-center gap-1 px-2 py-1 
+    <div
+      className="inline-flex items-center gap-1 px-2 py-1 
                     bg-bitcoin-orange-light/10 rounded-full
-                    border border-bitcoin-orange/20">
+                    border border-bitcoin-orange/20"
+    >
       <span className="text-bitcoin-orange text-sm">₿</span>
       <span className="text-xs text-gray-600">Bitcoin optimized</span>
     </div>
@@ -79,13 +87,15 @@ const BitcoinContextBadge = ({ show = true }) => {
 ### Typography Considerations
 
 #### Font Selection
+
 - **Primary**: System fonts for security/speed
 - **Monospace**: For keys, technical data
 - **No Bitcoin-specific fonts**: Maintain professionalism
 
 ```css
---font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", 
-             Roboto, "Helvetica Neue", Arial, sans-serif;
+--font-sans:
+  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+  Arial, sans-serif;
 --font-mono: Consolas, "Courier New", monospace;
 ```
 
@@ -94,6 +104,7 @@ const BitcoinContextBadge = ({ show = true }) => {
 ### Setup Screen Integration Points
 
 #### 1. Subtle Welcome Message
+
 ```tsx
 // Option A: Security-first with Bitcoin mention
 <p className="text-sm text-gray-600 mt-1">
@@ -108,6 +119,7 @@ const BitcoinContextBadge = ({ show = true }) => {
 ```
 
 #### 2. Bitcoin Context Indicator
+
 ```tsx
 // Subtle indicator in form section
 <div className="absolute top-4 right-4">
@@ -124,6 +136,7 @@ const BitcoinContextBadge = ({ show = true }) => {
 ```
 
 #### 3. Example Use Cases
+
 ```tsx
 // In helper text
 <p className="text-xs text-gray-500">
@@ -139,16 +152,19 @@ const BitcoinContextBadge = ({ show = true }) => {
 ### Progressive Bitcoin Disclosure
 
 #### Level 1: Universal (Default)
+
 - No Bitcoin-specific visuals
 - Focus on security and encryption
 - Professional, neutral appearance
 
 #### Level 2: Bitcoin-Aware (Detected Context)
+
 - Subtle Bitcoin indicators
 - Relevant examples in help text
 - Orange accents on Bitcoin features
 
 #### Level 3: Bitcoin-Focused (User Preference)
+
 - Stronger Bitcoin visual identity
 - Bitcoin-specific terminology
 - Community visual language
@@ -156,6 +172,7 @@ const BitcoinContextBadge = ({ show = true }) => {
 ## Visual Hierarchy Examples
 
 ### Security-First Approach
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ 🛡️ Secure Your Digital Legacy                           │
@@ -165,6 +182,7 @@ const BitcoinContextBadge = ({ show = true }) => {
 ```
 
 ### Bitcoin-Aware Approach
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ 🛡️ Secure Your Bitcoin Legacy                           │
@@ -176,6 +194,7 @@ const BitcoinContextBadge = ({ show = true }) => {
 ## Component-Specific Guidelines
 
 ### Trust Indicators
+
 ```tsx
 // Universal trust indicators
 <div className="flex items-center gap-6">
@@ -197,6 +216,7 @@ const BitcoinContextBadge = ({ show = true }) => {
 ```
 
 ### Success States
+
 ```tsx
 // Universal success
 <h3 className="text-green-900">
@@ -213,6 +233,7 @@ const BitcoinContextBadge = ({ show = true }) => {
 ```
 
 ### Button Styling
+
 ```tsx
 // Primary CTA (always security blue)
 <button className="bg-blue-600 hover:bg-blue-700 text-white">
@@ -234,22 +255,24 @@ const BitcoinContextBadge = ({ show = true }) => {
 ## Implementation Patterns
 
 ### 1. Feature Detection Pattern
+
 ```tsx
 const BitcoinContext = () => {
   const [showBitcoinContext, setShowBitcoinContext] = useState(false);
-  
+
   useEffect(() => {
     // Detect Bitcoin-related usage
     const hasBitcoinFiles = checkForBitcoinFiles();
     const userPreference = getUserPreference();
     setShowBitcoinContext(hasBitcoinFiles || userPreference);
   }, []);
-  
+
   return showBitcoinContext;
 };
 ```
 
 ### 2. Progressive Enhancement Pattern
+
 ```tsx
 const EnhancedLabel = ({ bitcoinAware = false }) => (
   <label>
@@ -264,12 +287,13 @@ const EnhancedLabel = ({ bitcoinAware = false }) => (
 ```
 
 ### 3. Contextual Help Pattern
+
 ```tsx
 const getHelpText = (context) => {
   const helpTexts = {
     universal: "Choose a memorable name for this key",
     bitcoin: "Name it after your wallet or storage method",
-    professional: "Use a descriptive label for client identification"
+    professional: "Use a descriptive label for client identification",
   };
   return helpTexts[context] || helpTexts.universal;
 };
@@ -278,6 +302,7 @@ const getHelpText = (context) => {
 ## Visual Balance Examples
 
 ### Too Much Bitcoin (Avoid)
+
 ```
 ❌ Orange everywhere
 ❌ Bitcoin logos as primary elements
@@ -286,6 +311,7 @@ const getHelpText = (context) => {
 ```
 
 ### Balanced Approach (Recommended)
+
 ```
 ✅ Security-first messaging
 ✅ Subtle Bitcoin optimization hints
@@ -296,16 +322,19 @@ const getHelpText = (context) => {
 ### Implementation Priority
 
 #### Phase 1: Subtle Integration
+
 1. Add small Bitcoin context badge
 2. Include Bitcoin examples in help text
 3. Mention Bitcoin in success messages
 
 #### Phase 2: Smart Context
+
 1. Detect Bitcoin-related usage
 2. Show relevant examples
 3. Adapt terminology slightly
 
 #### Phase 3: User Preference
+
 1. Allow Bitcoin-focused mode
 2. Stronger visual identity option
 3. Community terminology
@@ -313,12 +342,14 @@ const getHelpText = (context) => {
 ## Success Metrics
 
 ### Quantitative
+
 - Non-Bitcoin user completion: >80%
 - Bitcoin user recognition: >90%
 - Professional approval: >85%
 - Visual confusion reports: <5%
 
 ### Qualitative
+
 - "Looks professional and trustworthy"
 - "I can tell it's good for Bitcoin"
 - "Not overwhelming or niche"
@@ -326,4 +357,4 @@ const getHelpText = (context) => {
 
 ---
 
-*This Bitcoin visual identity guide ensures Barqly Vault appeals to its core Bitcoin audience while maintaining the professional, security-first appearance necessary for broader adoption and trust.*
+_This Bitcoin visual identity guide ensures Barqly Vault appeals to its core Bitcoin audience while maintaining the professional, security-first appearance necessary for broader adoption and trust._

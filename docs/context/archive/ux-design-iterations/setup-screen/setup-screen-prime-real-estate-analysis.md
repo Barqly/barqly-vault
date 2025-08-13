@@ -47,12 +47,14 @@ Based on the current implementation in `SetupPage.tsx`:
 ### 1. Information Redundancy
 
 **Duplicate Security Messaging:**
+
 - Header: "military-grade age encryption"
 - Trust Indicators: "Your keys never leave your device" + "Open-source audited"
 - Form subtitle: "secure identity"
 - **Impact**: Users see 3-4 security messages before reaching the form
 
 **Duplicate Identity/Setup Context:**
+
 - Header: "Create your encryption identity"
 - Form title: "Create Your Encryption Identity"
 - Form subtitle: References "secure identity" again
@@ -61,6 +63,7 @@ Based on the current implementation in `SetupPage.tsx`:
 ### 2. Static vs Interactive Balance
 
 **Current Balance:**
+
 - 30% static informational content
 - 70% interactive/form content (but only 40-50% visible)
 - **Problem**: Users must scroll to see complete form and action buttons
@@ -68,12 +71,14 @@ Based on the current implementation in `SetupPage.tsx`:
 ### 3. Visual Hierarchy Misalignment
 
 **Current Priority (by visual weight):**
+
 1. Header with large title
 2. Trust indicators (prominent gray bar)
 3. Progress context
 4. Form (partially visible)
 
 **Optimal Priority for Conversion:**
+
 1. Form fields (immediately actionable)
 2. Trust/security context (supporting)
 3. Progress expectations (supporting)
@@ -90,6 +95,7 @@ Based on the current implementation in `SetupPage.tsx`:
 5. **Begin interaction** → Finally start the actual task
 
 **Friction Points:**
+
 - Cognitive processing of redundant information
 - Physical scrolling to reach primary action
 - Delayed engagement with core task
@@ -108,12 +114,14 @@ Based on the current implementation in `SetupPage.tsx`:
 **Current State**: Three separate components taking ~25% of viewport
 
 **Recommended State**: Single compact header bar (~8-10% of viewport)
+
 ```
 [Shield] Barqly Vault | Secure Bitcoin Legacy Protection
          Your keys never leave your device • Open-source audited • 90-second setup
 ```
 
 **Benefits:**
+
 - Saves 15-17% of prime real estate
 - Maintains all trust signals
 - Creates cleaner visual hierarchy
@@ -123,11 +131,13 @@ Based on the current implementation in `SetupPage.tsx`:
 **Current State**: Form starts below multiple information blocks
 
 **Recommended State**: Form begins immediately after compact header
+
 - Form title becomes the primary visual element
 - Fields visible without scrolling
 - Action buttons above the fold
 
 **Benefits:**
+
 - 100% of form visible on load
 - Immediate call-to-action
 - Reduced cognitive load
@@ -135,11 +145,13 @@ Based on the current implementation in `SetupPage.tsx`:
 ### 3. Reorganize Information Architecture
 
 **Remove Redundancies:**
+
 - Consolidate "encryption identity" messaging to single instance
 - Merge progress context into header bar
 - Eliminate duplicate security reassurances
 
 **Reposition Secondary Content:**
+
 - Move "Learn how Bitcoin legacy protection works" to form sidebar
 - Place detailed security information in collapsible section
 - Keep help content contextual to form fields
@@ -147,11 +159,13 @@ Based on the current implementation in `SetupPage.tsx`:
 ### 4. Optimize Form Section Design
 
 **Current FormSection:**
+
 - Large padding (p-8)
 - Separate title/subtitle section with border
 - Significant vertical spacing
 
 **Optimized FormSection:**
+
 - Reduced padding (p-6)
 - Integrated title without separator
 - Tighter vertical rhythm
@@ -160,16 +174,19 @@ Based on the current implementation in `SetupPage.tsx`:
 ## Implementation Priority Matrix
 
 ### High Priority (Immediate Impact)
+
 1. **Compact header design** - Consolidate three components into one
 2. **Form elevation** - Move form higher in viewport
 3. **Remove duplicate messaging** - Eliminate redundant content
 
 ### Medium Priority (Enhancement)
+
 1. **Progressive disclosure** - Make trust indicators expandable
 2. **Contextual help** - Move help inline with form fields
 3. **Visual weight adjustment** - Make form inputs larger/bolder
 
 ### Low Priority (Polish)
+
 1. **Animation on load** - Draw attention to form
 2. **Micro-interactions** - Enhance field focus states
 3. **Success state optimization** - Improve post-generation experience
@@ -177,12 +194,14 @@ Based on the current implementation in `SetupPage.tsx`:
 ## Success Metrics
 
 ### Quantitative Metrics
+
 - **Time to First Interaction**: Target <3 seconds (from current ~5-7 seconds)
 - **Scroll Depth Before Interaction**: Target 0% (from current ~30%)
 - **Form Completion Rate**: Target 85%+ (estimated current 70-75%)
 - **Average Time to Complete**: Target <60 seconds (from 90 seconds)
 
 ### Qualitative Indicators
+
 - Users immediately understand the task
 - Reduced questions about "what to do"
 - Increased confidence in security without information overload
@@ -191,11 +210,13 @@ Based on the current implementation in `SetupPage.tsx`:
 ## Competitive Advantage Through Design
 
 ### Current State
+
 - Professional but generic security tool appearance
 - Information-heavy onboarding
 - Traditional form-below-content pattern
 
 ### Optimized State
+
 - Action-oriented Bitcoin security tool
 - Conversion-optimized onboarding
 - Modern, task-focused design pattern
@@ -204,11 +225,13 @@ Based on the current implementation in `SetupPage.tsx`:
 ## Risk Mitigation
 
 ### Potential Concerns
+
 1. **"Too simple" perception** → Mitigate with subtle security indicators
 2. **Lost trust building** → Integrate trust signals into interactions
 3. **Reduced information** → Provide progressive disclosure options
 
 ### A/B Testing Recommendations
+
 1. Test compact header vs current implementation
 2. Measure impact of form-first vs content-first layouts
 3. Evaluate trust indicator positioning options
@@ -229,7 +252,8 @@ The key insight: **Users who open Barqly Vault are already interested in the sec
 
 ---
 
-*Related Documents:*
+_Related Documents:_
+
 - [Setup Screen Requirements](./setup-screen-requirements-po.md)
 - [Information Hierarchy Guide](./information-hierarchy-guide-po.md)
 - [Component Improvements](./component-improvements-uxd.md)

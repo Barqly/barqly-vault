@@ -7,15 +7,19 @@
 ## Core Accessibility Principles
 
 ### 1. Perceivable
+
 Information and UI components must be presentable to users in ways they can perceive.
 
 ### 2. Operable
+
 UI components and navigation must be operable by all users.
 
 ### 3. Understandable
+
 Information and UI operation must be understandable.
 
 ### 4. Robust
+
 Content must be robust enough to work with assistive technologies.
 
 ## Detailed Requirements
@@ -23,28 +27,31 @@ Content must be robust enough to work with assistive technologies.
 ### Color & Contrast
 
 #### Text Contrast Requirements
-| Element | Foreground | Background | Ratio | WCAG Requirement |
-|---------|------------|------------|-------|------------------|
-| Primary text | #111827 | #FFFFFF | 19.5:1 | ✅ 4.5:1 (AA) |
-| Secondary text | #374151 | #FFFFFF | 12.6:1 | ✅ 4.5:1 (AA) |
-| Helper text | #6B7280 | #FFFFFF | 5.8:1 | ✅ 4.5:1 (AA) |
-| Error text | #EF4444 | #FFFFFF | 4.5:1 | ✅ 4.5:1 (AA) |
-| Success text | #059669 | #FFFFFF | 4.8:1 | ✅ 4.5:1 (AA) |
-| Button text | #FFFFFF | #2563EB | 4.6:1 | ✅ 4.5:1 (AA) |
-| Disabled text | #9CA3AF | #FFFFFF | 3.0:1 | ✅ 3:1 (disabled) |
+
+| Element        | Foreground | Background | Ratio  | WCAG Requirement  |
+| -------------- | ---------- | ---------- | ------ | ----------------- |
+| Primary text   | #111827    | #FFFFFF    | 19.5:1 | ✅ 4.5:1 (AA)     |
+| Secondary text | #374151    | #FFFFFF    | 12.6:1 | ✅ 4.5:1 (AA)     |
+| Helper text    | #6B7280    | #FFFFFF    | 5.8:1  | ✅ 4.5:1 (AA)     |
+| Error text     | #EF4444    | #FFFFFF    | 4.5:1  | ✅ 4.5:1 (AA)     |
+| Success text   | #059669    | #FFFFFF    | 4.8:1  | ✅ 4.5:1 (AA)     |
+| Button text    | #FFFFFF    | #2563EB    | 4.6:1  | ✅ 4.5:1 (AA)     |
+| Disabled text  | #9CA3AF    | #FFFFFF    | 3.0:1  | ✅ 3:1 (disabled) |
 
 #### Non-Text Contrast Requirements
-| Element | Color | Background | Ratio | WCAG Requirement |
-|---------|-------|------------|-------|------------------|
-| Input borders | #D1D5DB | #FFFFFF | 2.0:1 | ❌ Need 3:1 |
-| Focus rings | #2563EB | #FFFFFF | 4.6:1 | ✅ 3:1 (AA) |
-| Icons | #6B7280 | #FFFFFF | 5.8:1 | ✅ 3:1 (AA) |
+
+| Element       | Color   | Background | Ratio | WCAG Requirement |
+| ------------- | ------- | ---------- | ----- | ---------------- |
+| Input borders | #D1D5DB | #FFFFFF    | 2.0:1 | ❌ Need 3:1      |
+| Focus rings   | #2563EB | #FFFFFF    | 4.6:1 | ✅ 3:1 (AA)      |
+| Icons         | #6B7280 | #FFFFFF    | 5.8:1 | ✅ 3:1 (AA)      |
 
 **Action Required**: Update input borders to #9CA3AF for 3:1 contrast ratio.
 
 ### Keyboard Navigation
 
 #### Tab Order
+
 ```
 1. Header (skip link target)
 2. Key Label input
@@ -58,14 +65,16 @@ Content must be robust enough to work with assistive technologies.
 ```
 
 #### Keyboard Shortcuts
-| Action | Key | Implementation |
-|--------|-----|----------------|
-| Submit form | Enter | When button focused |
-| Cancel/Clear | Escape | Clear form fields |
-| Toggle password | Space | When toggle focused |
-| Expand help | Enter/Space | On help button |
+
+| Action          | Key         | Implementation      |
+| --------------- | ----------- | ------------------- |
+| Submit form     | Enter       | When button focused |
+| Cancel/Clear    | Escape      | Clear form fields   |
+| Toggle password | Space       | When toggle focused |
+| Expand help     | Enter/Space | On help button      |
 
 #### Focus Management
+
 ```tsx
 // Example focus trap implementation
 const FocusTrap = ({ children, active }) => {
@@ -73,8 +82,8 @@ const FocusTrap = ({ children, active }) => {
   const endRef = useRef(null);
 
   const handleTabKey = (e) => {
-    if (!active || e.key !== 'Tab') return;
-    
+    if (!active || e.key !== "Tab") return;
+
     // Handle tab navigation within trap
     const focusableElements = getFocusableElements();
     // ... focus management logic
@@ -97,6 +106,7 @@ const FocusTrap = ({ children, active }) => {
 ### Screen Reader Support
 
 #### ARIA Labels & Descriptions
+
 ```tsx
 // Header with landmark
 <header role="banner" aria-label="Setup page header">
@@ -107,8 +117,8 @@ const FocusTrap = ({ children, active }) => {
 </header>
 
 // Form with proper labeling
-<form 
-  role="form" 
+<form
+  role="form"
   aria-labelledby="form-title"
   aria-describedby="form-description"
 >
@@ -161,9 +171,9 @@ const FocusTrap = ({ children, active }) => {
         {showPassword ? <EyeOff /> : <Eye />}
       </button>
     </div>
-    <div 
-      id="passphrase-strength" 
-      role="status" 
+    <div
+      id="passphrase-strength"
+      role="status"
       aria-live="polite"
       aria-atomic="true"
     >
@@ -174,11 +184,12 @@ const FocusTrap = ({ children, active }) => {
 ```
 
 #### Live Regions
+
 ```tsx
 // Progress announcements
-<div 
-  role="status" 
-  aria-live="polite" 
+<div
+  role="status"
+  aria-live="polite"
   aria-atomic="true"
   className="sr-only"
 >
@@ -188,18 +199,18 @@ const FocusTrap = ({ children, active }) => {
 </div>
 
 // Error announcements
-<div 
-  role="alert" 
-  aria-live="assertive" 
+<div
+  role="alert"
+  aria-live="assertive"
   aria-atomic="true"
 >
   {error && error.message}
 </div>
 
 // Form validation feedback
-<div 
-  role="status" 
-  aria-live="polite" 
+<div
+  role="status"
+  aria-live="polite"
   aria-relevant="additions removals"
 >
   {passphraseMatch === false && 'Passphrases do not match'}
@@ -210,14 +221,16 @@ const FocusTrap = ({ children, active }) => {
 ### Touch & Mobile Accessibility
 
 #### Touch Target Sizes
-| Element | Current | Required | Action |
-|---------|---------|----------|--------|
-| Input fields | 48px | 44px min | ✅ OK |
-| Buttons | 48px | 44px min | ✅ OK |
-| Password toggle | 40px | 44px min | ❌ Increase |
-| Help toggle | 32px | 44px min | ❌ Increase |
+
+| Element         | Current | Required | Action      |
+| --------------- | ------- | -------- | ----------- |
+| Input fields    | 48px    | 44px min | ✅ OK       |
+| Buttons         | 48px    | 44px min | ✅ OK       |
+| Password toggle | 40px    | 44px min | ❌ Increase |
+| Help toggle     | 32px    | 44px min | ❌ Increase |
 
 #### Mobile Gestures
+
 - No swipe-only interactions
 - All actions available via tap
 - Pinch-to-zoom not blocked
@@ -226,10 +239,11 @@ const FocusTrap = ({ children, active }) => {
 ### Visual Indicators
 
 #### Focus Indicators
+
 ```css
 /* High contrast focus styles */
 .focus-visible:focus {
-  outline: 2px solid #2563EB;
+  outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
 
@@ -243,53 +257,56 @@ const FocusTrap = ({ children, active }) => {
 ```
 
 #### Error States
+
 ```tsx
 // Visual + programmatic error indication
 <input
   className={`
     border-2
-    ${error ? 'border-red-500 bg-red-50' : 'border-gray-300'}
+    ${error ? "border-red-500 bg-red-50" : "border-gray-300"}
   `}
   aria-invalid={!!error}
   aria-errormessage="input-error"
-/>
-{error && (
-  <p 
-    id="input-error" 
-    className="text-red-600 flex items-center gap-1"
-  >
-    <ExclamationCircle className="h-4 w-4" aria-hidden="true" />
-    <span>{error}</span>
-  </p>
-)}
+/>;
+{
+  error && (
+    <p id="input-error" className="text-red-600 flex items-center gap-1">
+      <ExclamationCircle className="h-4 w-4" aria-hidden="true" />
+      <span>{error}</span>
+    </p>
+  );
+}
 ```
 
 ### Cognitive Accessibility
 
 #### Clear Instructions
+
 - Simple, jargon-free language
 - One instruction per step
 - Visual progress indicators
 - Consistent terminology
 
 #### Error Prevention
+
 ```tsx
 // Inline validation with debouncing
 const validatePassphrase = useMemo(
-  () => debounce((value) => {
-    if (value.length < 8) {
-      setError('Passphrase must be at least 8 characters');
-    } else {
-      setError(null);
-    }
-  }, 500),
-  []
+  () =>
+    debounce((value) => {
+      if (value.length < 8) {
+        setError("Passphrase must be at least 8 characters");
+      } else {
+        setError(null);
+      }
+    }, 500),
+  [],
 );
 
 // Confirmation before destructive actions
 const handleClear = () => {
   if (hasUnsavedChanges) {
-    if (confirm('Are you sure you want to clear the form?')) {
+    if (confirm("Are you sure you want to clear the form?")) {
       clearForm();
     }
   } else {
@@ -299,6 +316,7 @@ const handleClear = () => {
 ```
 
 #### Consistent Patterns
+
 - Standard form layout
 - Predictable button placement
 - Familiar icons with labels
@@ -307,6 +325,7 @@ const handleClear = () => {
 ### Motion & Animation
 
 #### Reduced Motion Support
+
 ```css
 /* Respect user preferences */
 @media (prefers-reduced-motion: reduce) {
@@ -330,6 +349,7 @@ const handleClear = () => {
 ```
 
 #### Safe Animations
+
 - No flashing content
 - No parallax effects
 - Smooth, predictable transitions
@@ -338,6 +358,7 @@ const handleClear = () => {
 ### Testing Requirements
 
 #### Manual Testing Checklist
+
 - [ ] Keyboard-only navigation
 - [ ] Screen reader testing (NVDA, JAWS, VoiceOver)
 - [ ] 200% zoom functionality
@@ -347,36 +368,37 @@ const handleClear = () => {
 - [ ] Switch device navigation
 
 #### Automated Testing
+
 ```tsx
 // Example accessibility tests
-import { render, screen } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
+import { render, screen } from "@testing-library/react";
+import { axe, toHaveNoViolations } from "jest-axe";
 
 expect.extend(toHaveNoViolations);
 
-test('Setup form has no accessibility violations', async () => {
+test("Setup form has no accessibility violations", async () => {
   const { container } = render(<SetupPage />);
   const results = await axe(container);
   expect(results).toHaveNoViolations();
 });
 
-test('All form inputs have labels', () => {
+test("All form inputs have labels", () => {
   render(<SetupPage />);
-  
+
   const keyLabelInput = screen.getByLabelText(/key label/i);
   expect(keyLabelInput).toBeInTheDocument();
-  
+
   const passphraseInput = screen.getByLabelText(/^passphrase$/i);
   expect(passphraseInput).toBeInTheDocument();
 });
 
-test('Error messages are announced', async () => {
+test("Error messages are announced", async () => {
   render(<SetupPage />);
-  
+
   const submitButton = screen.getByText(/create security identity/i);
   fireEvent.click(submitButton);
-  
-  const alert = await screen.findByRole('alert');
+
+  const alert = await screen.findByRole("alert");
   expect(alert).toHaveTextContent(/required/i);
 });
 ```
@@ -384,18 +406,21 @@ test('Error messages are announced', async () => {
 ## Implementation Checklist
 
 ### Phase 1: Critical Fixes
+
 - [ ] Update input border colors for 3:1 contrast
 - [ ] Increase touch targets for toggles
 - [ ] Add comprehensive ARIA labels
 - [ ] Implement focus management
 
 ### Phase 2: Enhanced Support
+
 - [ ] Add skip navigation links
 - [ ] Implement live regions
 - [ ] Add keyboard shortcuts
 - [ ] Enhance error messaging
 
 ### Phase 3: Advanced Features
+
 - [ ] Voice control optimization
 - [ ] Cognitive load reduction
 - [ ] Advanced screen reader hints
@@ -404,6 +429,7 @@ test('Error messages are announced', async () => {
 ## Resources
 
 ### Testing Tools
+
 - axe DevTools (Chrome/Firefox extension)
 - WAVE (WebAIM evaluation tool)
 - Lighthouse (Chrome DevTools)
@@ -412,6 +438,7 @@ test('Error messages are announced', async () => {
 - TalkBack (Android screen reader)
 
 ### Design Resources
+
 - WCAG 2.2 Guidelines
 - ARIA Authoring Practices Guide
 - WebAIM Contrast Checker
@@ -419,4 +446,4 @@ test('Error messages are announced', async () => {
 
 ---
 
-*This accessibility requirements document ensures the Setup screen provides an inclusive experience for all users, regardless of their abilities or the assistive technologies they use.*
+_This accessibility requirements document ensures the Setup screen provides an inclusive experience for all users, regardless of their abilities or the assistive technologies they use._

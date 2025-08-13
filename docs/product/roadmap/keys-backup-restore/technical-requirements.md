@@ -7,12 +7,14 @@ This document specifies the technical implementation requirements for the key ba
 ## Architecture Changes
 
 ### Current State
+
 - Keys stored in: `~/Library/Application Support/com.barqly.vault/keys/` (macOS)
 - Key generation: `src-tauri/src/commands/crypto/key_generation.rs`
 - Key storage: `src-tauri/src/storage/key_store/`
 - No export/backup functionality exists
 
 ### Required Changes
+
 1. Add backup/export commands to Tauri backend
 2. Modify key generation flow in frontend to include backup step
 3. Add verification mechanism for backups
@@ -23,6 +25,7 @@ This document specifies the technical implementation requirements for the key ba
 ### New Commands Required
 
 #### 1. Export Key to USB
+
 ```rust
 // src-tauri/src/commands/crypto/backup.rs
 
@@ -51,6 +54,7 @@ pub struct BackupResult {
 ```
 
 #### 2. Export Key to File
+
 ```rust
 #[tauri::command]
 pub async fn export_key_to_file(
@@ -66,6 +70,7 @@ pub async fn export_key_to_file(
 ```
 
 #### 3. Generate Backup Card Data
+
 ```rust
 #[tauri::command]
 pub async fn generate_backup_card(
@@ -91,6 +96,7 @@ pub struct BackupCardData {
 ```
 
 #### 4. Verify Backup
+
 ```rust
 #[tauri::command]
 pub async fn verify_backup(
@@ -117,6 +123,7 @@ pub struct VerificationResult {
 ```
 
 #### 5. Import Key from Backup
+
 ```rust
 #[tauri::command]
 pub async fn import_key_from_backup(
@@ -136,6 +143,7 @@ pub async fn import_key_from_backup(
 ```
 
 #### 6. Scan QR Code
+
 ```rust
 #[tauri::command]
 pub async fn import_key_from_qr(
@@ -162,6 +170,7 @@ Barqly-Key-Backup-{timestamp}/
 ```
 
 #### Current File Extensions
+
 - `.agekey.enc` - Encrypted private key file
 - `.agekey.meta` - JSON metadata file containing:
   - `label`: User-friendly key name
@@ -172,6 +181,7 @@ Barqly-Key-Backup-{timestamp}/
   - `passphrase_hint`: Optional hint for recovery (nullable, max 100 chars)
 
 #### README.txt Template
+
 ```text
 BARQLY VAULT KEY BACKUP
 ======================
@@ -210,43 +220,45 @@ For help: support@barqly.com
 ### Passphrase Hint Implementation
 
 #### Validation Rules
+
 ```rust
 pub fn validate_passphrase_hint(
-    hint: &str, 
+    hint: &str,
     passphrase: &SecretString
 ) -> Result<(), ValidationError> {
     // Max length check
     if hint.len() > 100 {
         return Err(ValidationError::HintTooLong);
     }
-    
+
     // Ensure hint doesn't contain passphrase
     let passphrase_str = passphrase.expose_secret().to_lowercase();
     let hint_lower = hint.to_lowercase();
-    
-    if passphrase_str.contains(&hint_lower) || 
+
+    if passphrase_str.contains(&hint_lower) ||
        hint_lower.contains(&passphrase_str) {
         return Err(ValidationError::HintContainsPassphrase);
     }
-    
+
     // Check for overly revealing patterns
     let bad_patterns = [
         r"^password",
         r"^\d{4,}$",  // Just numbers
         r"^[a-z]+\d{1,3}$",  // Common weak patterns
     ];
-    
+
     for pattern in bad_patterns {
         if Regex::new(pattern)?.is_match(&hint_lower) {
             return Err(ValidationError::HintTooRevealing);
         }
     }
-    
+
     Ok(())
 }
 ```
 
 #### Storage in Metadata
+
 ```rust
 #[derive(Serialize, Deserialize)]
 pub struct KeyMetadata {
@@ -276,7 +288,7 @@ fn is_removable_drive(path: &Path) -> bool {
     // and is not the system drive
 }
 
-#[cfg(target_os = "linux")]  
+#[cfg(target_os = "linux")]
 fn is_removable_drive(path: &Path) -> bool {
     // Check if path is under /media/ or /mnt/
     // or check /sys/block/*/removable
@@ -288,7 +300,7 @@ fn is_removable_drive(path: &Path) -> bool {
 ```rust
 fn is_cloud_synced(path: &Path) -> Option<String> {
     let path_str = path.to_string_lossy().to_lowercase();
-    
+
     if path_str.contains("icloud") {
         return Some("iCloud".to_string());
     }
@@ -301,7 +313,7 @@ fn is_cloud_synced(path: &Path) -> Option<String> {
     if path_str.contains("google drive") {
         return Some("Google Drive".to_string());
     }
-    
+
     None
 }
 ```
@@ -314,7 +326,7 @@ fn is_cloud_synced(path: &Path) -> Option<String> {
 // src-ui/components/Setup/KeyGeneration.tsx
 
 interface KeyGenerationState {
-  step: 'generate' | 'backup' | 'verify' | 'complete';
+  step: "generate" | "backup" | "verify" | "complete";
   keyGenerated: boolean;
   backupCompleted: boolean;
   backupVerified: boolean;
@@ -325,7 +337,7 @@ interface KeyGenerationState {
 // State machine for key generation with backup
 const KeyGenerationFlow: React.FC = () => {
   const [state, setState] = useState<KeyGenerationState>({
-    step: 'generate',
+    step: "generate",
     keyGenerated: false,
     backupCompleted: false,
     backupVerified: false,
@@ -335,11 +347,15 @@ const KeyGenerationFlow: React.FC = () => {
 
   // Step transitions with validation
   const canProceed = () => {
-    switch(state.step) {
-      case 'generate': return state.keyGenerated;
-      case 'backup': return state.backupCompleted;
-      case 'verify': return state.backupVerified;
-      default: return true;
+    switch (state.step) {
+      case "generate":
+        return state.keyGenerated;
+      case "backup":
+        return state.backupCompleted;
+      case "verify":
+        return state.backupVerified;
+      default:
+        return true;
     }
   };
 };
@@ -391,7 +407,7 @@ export const BackupVerification: React.FC = ({ backupPath, keyLabel }) => {
   const verifyBackup = async () => {
     setVerifying(true);
     try {
-      const result = await invoke('verify_backup', {
+      const result = await invoke("verify_backup", {
         backupPath,
         originalKeyLabel: keyLabel,
       });
@@ -407,11 +423,13 @@ export const BackupVerification: React.FC = ({ backupPath, keyLabel }) => {
 ## QR Code Generation
 
 ### Library Requirements
+
 - Use `qrcode` crate in Rust backend
 - Split large keys into multiple QR codes if needed
 - Error correction level: High (30% redundancy)
 
 ### QR Code Data Format
+
 ```json
 {
   "version": "1.0",
@@ -426,6 +444,7 @@ export const BackupVerification: React.FC = ({ backupPath, keyLabel }) => {
 ## Testing Requirements
 
 ### Unit Tests
+
 - Key export with various formats
 - Backup verification logic
 - Import from different sources
@@ -433,12 +452,14 @@ export const BackupVerification: React.FC = ({ backupPath, keyLabel }) => {
 - USB drive detection
 
 ### Integration Tests
+
 - Full backup and restore cycle
 - Corrupt backup handling
 - Multiple QR code reconstruction
 - Cross-platform path handling
 
 ### E2E Tests
+
 - Complete key generation with backup flow
 - Recovery from USB drive
 - Recovery from printed card (mock QR scan)
@@ -455,6 +476,7 @@ export const BackupVerification: React.FC = ({ backupPath, keyLabel }) => {
 ## Error Handling
 
 ### Error Codes
+
 ```rust
 pub enum BackupError {
     KeyNotFound,
@@ -470,6 +492,7 @@ pub enum BackupError {
 ```
 
 ### User-Friendly Messages
+
 - Map technical errors to clear user messages
 - Provide actionable recovery steps
 - Include support contact for critical failures
@@ -477,18 +500,21 @@ pub enum BackupError {
 ## Migration Path
 
 ### Phase 1: Backend Implementation
+
 1. Implement backup/export commands
 2. Add verification logic
 3. Create import functionality
 4. Add tests
 
 ### Phase 2: Frontend Integration
+
 1. Modify key generation flow
 2. Add backup method components
 3. Implement verification UI
 4. Add recovery flow
 
 ### Phase 3: Testing & Polish
+
 1. Full E2E testing
 2. Error message refinement
 3. Performance optimization
@@ -497,6 +523,7 @@ pub enum BackupError {
 ## Dependencies
 
 ### Rust Crates
+
 ```toml
 [dependencies]
 qrcode = "0.14"
@@ -506,11 +533,12 @@ base64 = "0.21"  # For encoding
 ```
 
 ### NPM Packages
+
 ```json
 {
   "dependencies": {
-    "@react-pdf/renderer": "^3.0.0",  // For printable cards
-    "qr-scanner": "^1.4.0"  // For QR code scanning
+    "@react-pdf/renderer": "^3.0.0", // For printable cards
+    "qr-scanner": "^1.4.0" // For QR code scanning
   }
 }
 ```

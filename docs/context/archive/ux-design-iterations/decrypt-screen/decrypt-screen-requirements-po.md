@@ -13,12 +13,14 @@ The Decrypt screen is the moment of truth for Barqly Vault—where users recover
 ## Problem Statement
 
 Bitcoin custody recovery scenarios are inherently high-stakes. Users attempting decryption might be:
+
 - Family members accessing inheritance after loss of a loved one
-- Users recovering from hardware failures or disasters  
+- Users recovering from hardware failures or disasters
 - Professionals helping clients in urgent situations
 - HODLers accessing long-term cold storage after years
 
 Current decryption tools fail users when they need them most by:
+
 - Requiring technical knowledge during emotional stress
 - Providing cryptic error messages that increase anxiety
 - Lacking clear progress indication for large files
@@ -26,6 +28,7 @@ Current decryption tools fail users when they need them most by:
 - Offering no guidance when passphrases are forgotten
 
 Users need a decryption workflow that:
+
 - Works reliably even under emotional stress
 - Provides clear, calming guidance at every step
 - Preserves exact file structures critical for wallet restoration
@@ -35,6 +38,7 @@ Users need a decryption workflow that:
 ## Success Criteria
 
 ### Primary Metrics
+
 - **Decryption Success Rate**: >98% successful recovery on valid attempts
 - **Time to Recovery**: <60 seconds for typical custody files
 - **Error Recovery Rate**: >85% successful resolution after initial failure
@@ -42,6 +46,7 @@ Users need a decryption workflow that:
 - **Zero Data Loss**: 100% preservation of original file structures
 
 ### Secondary Metrics
+
 - **File Selection Accuracy**: <3% re-selection rate
 - **Passphrase Success**: >90% correct on first attempt (with hints)
 - **Output Path Clarity**: >95% understand where files were saved
@@ -49,6 +54,7 @@ Users need a decryption workflow that:
 - **Help Utilization**: <10% need external support
 
 ### Business Impact
+
 - **Trust Building**: Successful recovery creates lifetime advocates
 - **Emergency Readiness**: Users confident in crisis recovery capability
 - **Support Cost**: 80% reduction in decryption-related support
@@ -58,11 +64,13 @@ Users need a decryption workflow that:
 ## User Stories & Acceptance Criteria
 
 ### Story 1: Widow Accessing Bitcoin Inheritance
+
 **As** a surviving spouse with limited technical knowledge  
 **I want** to decrypt my late partner's Bitcoin custody vault  
 **So that** I can access family funds during a difficult time
 
 **Acceptance Criteria:**
+
 - File selection uses familiar interface patterns
 - Clear indication of what will be recovered
 - Passphrase field provides helpful context/hints
@@ -71,11 +79,13 @@ Users need a decryption workflow that:
 - Emotional tone is supportive, not clinical
 
 ### Story 2: Bitcoin HODLer After Years of Storage
+
 **As** a long-term Bitcoin holder accessing cold storage  
 **I want** to decrypt vaults created years ago  
 **So that** I can access my accumulated wealth
 
 **Acceptance Criteria:**
+
 - Clear compatibility with older vault versions
 - File integrity verification before decryption
 - Memory aids for passphrase recovery
@@ -84,11 +94,13 @@ Users need a decryption workflow that:
 - Success confirmation with file locations
 
 ### Story 3: Professional Custody Manager
+
 **As** a Bitcoin custody professional helping clients  
 **I want** efficient batch decryption capabilities  
 **So that** I can quickly restore client access
 
 **Acceptance Criteria:**
+
 - Support for multiple file decryption
 - Clear progress tracking per file
 - Professional error reporting
@@ -97,11 +109,13 @@ Users need a decryption workflow that:
 - Client-appropriate visual presentation
 
 ### Story 4: Disaster Recovery Scenario
+
 **As** someone recovering from hardware failure or theft  
 **I want** to decrypt my backup vaults on new hardware  
 **So that** I can restore access to my Bitcoin
 
 **Acceptance Criteria:**
+
 - Works immediately on fresh system install
 - No dependency on previous configuration
 - Clear guidance for first-time setup
@@ -110,11 +124,13 @@ Users need a decryption workflow that:
 - Recovery options for partial corruption
 
 ### Story 5: Family Member Testing Access
+
 **As** a family member given emergency access instructions  
 **I want** to verify I can decrypt the family vault  
 **So that** I'm prepared for actual emergencies
 
 **Acceptance Criteria:**
+
 - Non-destructive test mode available
 - Clear indication of test vs. real decryption
 - Verification without modifying original files
@@ -126,6 +142,7 @@ Users need a decryption workflow that:
 ### 1. Page Header & Context Setting
 
 #### Visual Identity
+
 - **Title**: "Decrypt Your Vault" (action-oriented, clear purpose)
 - **Subtitle**: "Recover your encrypted Bitcoin custody files"
 - **Context Indicators**:
@@ -136,6 +153,7 @@ Users need a decryption workflow that:
 - **Visual Weight**: Maximum 8% of viewport
 
 #### Emotional Design
+
 - **Reassuring Tone**: "Your data is safe and recoverable"
 - **Time Expectation**: "Recovery typically takes under 60 seconds"
 - **Trust Building**: "Age encryption standard - proven since 2019"
@@ -144,6 +162,7 @@ Users need a decryption workflow that:
 ### 2. Streamlined Recovery Workflow
 
 #### Three-Step Recovery Process
+
 ```
 [1. Select Vault] → [2. Enter Passphrase] → [3. Choose Destination] → [Decrypt]
        ↓                     ↓                        ↓
@@ -153,6 +172,7 @@ Users need a decryption workflow that:
 #### Step 1: Vault File Selection
 
 **File Selection Interface:**
+
 - **Primary Method**: Large, clear "Select Encrypted Vault" button
 - **Alternative Method**: Drag-and-drop zone with visual feedback
 - **File Validation**:
@@ -162,6 +182,7 @@ Users need a decryption workflow that:
   - Creation date for identification
 
 **Selection Feedback:**
+
 - **File Information Panel**:
   - Filename with icon
   - Size: "2.4 MB encrypted vault"
@@ -171,15 +192,17 @@ Users need a decryption workflow that:
 - **Remove Option**: Clear × button for each file
 
 **Validation & Guidance:**
+
 - **Format Check**: "✓ Valid Age encrypted file"
 - **Integrity Status**: "File integrity verified"
-- **Warning States**: 
+- **Warning States**:
   - "File may be corrupted - proceed with caution"
   - "Unknown encryption format - ensure this is a Barqly vault"
 
 #### Step 2: Secure Passphrase Entry
 
 **Passphrase Input Design:**
+
 - **Field Label**: "Enter your vault passphrase"
 - **Helper Text**: "The passphrase you used when creating this vault"
 - **Security Features**:
@@ -189,6 +212,7 @@ Users need a decryption workflow that:
   - Secure input masking
 
 **Memory Aids & Recovery:**
+
 - **Contextual Hints** (if metadata available):
   - "Vault created on [date]"
   - "You named this vault: [custom name]"
@@ -205,6 +229,7 @@ Users need a decryption workflow that:
 #### Step 3: Output Destination
 
 **Smart Destination Selection:**
+
 - **Default Location**: Desktop/Barqly-Recovery-[date]/
 - **Custom Path**: Browse button for folder selection
 - **Safety Checks**:
@@ -214,8 +239,9 @@ Users need a decryption workflow that:
 - **Recent Locations**: Quick-select last 3 destinations
 
 **Output Options:**
+
 - **Folder Creation**: "Create new folder for recovered files"
-- **Overwrite Policy**: 
+- **Overwrite Policy**:
   - "Keep both" (default - rename with number)
   - "Replace existing"
   - "Skip duplicates"
@@ -224,6 +250,7 @@ Users need a decryption workflow that:
 ### 3. Decryption Execution
 
 #### Pre-Decryption Confirmation
+
 - **Summary Panel**:
   - Files to decrypt: [count and size]
   - Destination: [full path]
@@ -235,6 +262,7 @@ Users need a decryption workflow that:
 #### Progress Tracking
 
 **Multi-Phase Progress Display:**
+
 1. **Validation Phase** (0-10%):
    - "Verifying vault integrity..."
    - "Checking passphrase..."
@@ -249,6 +277,7 @@ Users need a decryption workflow that:
    - "Cleanup and optimization..."
 
 **Progress Indicators:**
+
 - **Visual Progress Bar**: Smooth, animated progression
 - **Percentage Display**: Clear numerical progress
 - **Time Remaining**: "About X seconds remaining"
@@ -258,6 +287,7 @@ Users need a decryption workflow that:
 #### Success State
 
 **Recovery Celebration:**
+
 - **Visual Confirmation**: Professional success animation
 - **Clear Summary**:
   - "✓ Successfully recovered X files"
@@ -270,6 +300,7 @@ Users need a decryption workflow that:
   - "Verify Files" - optional integrity check
 
 **Recovery Report:**
+
 - **Detailed Summary** (optional view):
   - Files recovered with original names
   - Folder structure preservation status
@@ -282,6 +313,7 @@ Users need a decryption workflow that:
 #### Critical Error Scenarios
 
 **Wrong Passphrase:**
+
 - **Message**: "Unable to decrypt - passphrase may be incorrect"
 - **Guidance**: "Passphrases are case-sensitive and must match exactly"
 - **Recovery Options**:
@@ -291,6 +323,7 @@ Users need a decryption workflow that:
 - **Attempt Tracking**: Show attempt count (without lockout)
 
 **Corrupted File:**
+
 - **Message**: "File appears to be damaged or incomplete"
 - **Details**: "The vault file may have been corrupted during storage"
 - **Recovery Options**:
@@ -299,6 +332,7 @@ Users need a decryption workflow that:
   - "File Repair Guide" - advanced recovery steps
 
 **Insufficient Space:**
+
 - **Message**: "Not enough space to recover files"
 - **Details**: "Need X MB, only Y MB available at destination"
 - **Recovery Options**:
@@ -307,6 +341,7 @@ Users need a decryption workflow that:
   - "Calculate Space" - show detailed breakdown
 
 **Permission Denied:**
+
 - **Message**: "Cannot write to selected location"
 - **Details**: "You don't have permission to save files here"
 - **Recovery Options**:
@@ -315,6 +350,7 @@ Users need a decryption workflow that:
   - "Use Default Location" - fallback to Desktop
 
 **Partial Failure:**
+
 - **Message**: "Some files could not be recovered"
 - **Details**: List of successful and failed files
 - **Recovery Options**:
@@ -325,6 +361,7 @@ Users need a decryption workflow that:
 ### 5. Visual Design Requirements
 
 #### Layout Structure
+
 ```
 ┌─────────────────────────────────────┐
 │ Header (Trust + Purpose)            │ 8%
@@ -347,6 +384,7 @@ Users need a decryption workflow that:
 ```
 
 #### Visual Hierarchy
+
 - **Primary Focus**: Current active step (highlighted)
 - **Completed Steps**: Check mark with muted styling
 - **Pending Steps**: Grayed out until available
@@ -354,6 +392,7 @@ Users need a decryption workflow that:
 - **Errors**: Immediate attention without panic
 
 #### Color Psychology
+
 - **Calming Blue**: Primary actions and progress
 - **Success Green**: Successful recovery confirmation
 - **Soft Warning**: Amber for caution without alarm
@@ -363,6 +402,7 @@ Users need a decryption workflow that:
 ### 6. Interaction Design
 
 #### Cognitive Load Reduction
+
 - **Progressive Activation**: Only show relevant options
 - **Smart Defaults**: Logical pre-selections
 - **Inline Validation**: Immediate feedback
@@ -370,15 +410,17 @@ Users need a decryption workflow that:
 - **Minimal Decisions**: Reduce choice paralysis
 
 #### Keyboard Support
+
 - **Tab Navigation**: Logical flow through controls
 - **Enter Key**: Submit when form valid
 - **Escape Key**: Cancel current operation
-- **Shortcuts**: 
+- **Shortcuts**:
   - Cmd/Ctrl+O: Open file selector
   - Cmd/Ctrl+V: Paste passphrase
   - Cmd/Ctrl+D: Start decryption
 
 #### Responsive Behavior
+
 - **Desktop**: Full three-panel layout
 - **Tablet**: Stacked steps with larger targets
 - **Window Resize**: Graceful reflow
@@ -387,18 +429,21 @@ Users need a decryption workflow that:
 ### 7. Content & Messaging
 
 #### Step Instructions
+
 - **File Selection**: "Select your encrypted vault file"
 - **Passphrase**: "Enter the passphrase used for encryption"
 - **Destination**: "Choose where to save recovered files"
 - **Ready**: "Everything ready - decrypt your vault"
 
 #### Helpful Context (Collapsible)
+
 - **About Vaults**: "Barqly vaults are Age-encrypted archives"
 - **Passphrase Help**: "The exact phrase used during encryption"
 - **Recovery Tips**: "Files are restored with original names"
 - **Security Note**: "Decryption happens entirely on your device"
 
 #### Success Messages
+
 - **Immediate**: "Success! Your files are recovered"
 - **Specific**: "X files restored to [location]"
 - **Actionable**: "Open folder to access your files"
@@ -407,6 +452,7 @@ Users need a decryption workflow that:
 ### 8. Performance Requirements
 
 #### Speed Targets
+
 - **Page Load**: <150ms
 - **File Validation**: <500ms
 - **Passphrase Check**: <1 second
@@ -417,6 +463,7 @@ Users need a decryption workflow that:
 - **Large Files (>100MB)**: Show accurate time estimate
 
 #### Resource Management
+
 - **Memory**: Stream large files (don't load entirely)
 - **CPU**: Single-threaded decryption (predictable)
 - **Disk I/O**: Buffered writes for performance
@@ -425,6 +472,7 @@ Users need a decryption workflow that:
 ### 9. Security Considerations
 
 #### Passphrase Handling
+
 - **No Persistence**: Clear from memory immediately after use
 - **No Logging**: Never write passphrase to logs
 - **Secure Input**: Protected against screen capture
@@ -432,6 +480,7 @@ Users need a decryption workflow that:
 - **No History**: Disable browser/OS history
 
 #### File Safety
+
 - **Validation First**: Check file integrity before processing
 - **Safe Extraction**: Prevent path traversal attacks
 - **Preserve Permissions**: Maintain original file permissions
@@ -439,6 +488,7 @@ Users need a decryption workflow that:
 - **Atomic Operations**: All-or-nothing file recovery
 
 #### Privacy Protection
+
 - **Local Only**: All operations on user's device
 - **No Analytics**: Don't track decryption operations
 - **No Filenames**: Never log or transmit filenames
@@ -447,6 +497,7 @@ Users need a decryption workflow that:
 ### 10. Accessibility Requirements
 
 #### Visual Accessibility
+
 - **High Contrast**: Clear visual separation
 - **Focus Indicators**: Visible keyboard focus
 - **Error Colors**: Not solely color-dependent
@@ -454,6 +505,7 @@ Users need a decryption workflow that:
 - **Icons**: Always paired with text labels
 
 #### Screen Reader Support
+
 - **Semantic HTML**: Proper heading structure
 - **ARIA Labels**: Descriptive labels for all controls
 - **Live Regions**: Announce progress updates
@@ -461,6 +513,7 @@ Users need a decryption workflow that:
 - **Success Confirmation**: Clear completion announcement
 
 #### Interaction Accessibility
+
 - **Keyboard Only**: Full keyboard navigation
 - **Focus Management**: Logical tab order
 - **Skip Links**: Jump to main content
@@ -470,6 +523,7 @@ Users need a decryption workflow that:
 ### 11. Testing Requirements
 
 #### Functional Testing
+
 - **File Format Support**: Various .age file versions
 - **Passphrase Variations**: Special characters, lengths
 - **File Sizes**: From bytes to gigabytes
@@ -477,6 +531,7 @@ Users need a decryption workflow that:
 - **Error Conditions**: All error scenarios
 
 #### Usability Testing
+
 - **Emergency Scenarios**: Test under stress conditions
 - **Non-Technical Users**: Complete without help
 - **Time Pressure**: Maintain accuracy when rushed
@@ -484,6 +539,7 @@ Users need a decryption workflow that:
 - **Help Effectiveness**: Help content actually helps
 
 #### Edge Cases
+
 - **Empty Archives**: Handle gracefully
 - **Huge Files**: Gigabyte+ smooth handling
 - **Long Paths**: OS path limit handling
@@ -495,18 +551,21 @@ Users need a decryption workflow that:
 ### 12. Integration Requirements
 
 #### Setup Screen Integration
+
 - **Key Recognition**: Auto-detect keys from Setup
 - **Passphrase Hints**: Reference key labels
 - **Consistent UI**: Matching visual patterns
 - **Shared Components**: Reuse UI elements
 
 #### Encrypt Screen Integration
+
 - **Format Compatibility**: Decrypt any encrypted vault
 - **Metadata Usage**: Use custom names if available
 - **Progress Patterns**: Consistent progress display
 - **Error Handling**: Unified error approach
 
 #### System Integration
+
 - **File Manager**: Native file selection dialogs
 - **OS Permissions**: Handle OS security prompts
 - **Clipboard**: Secure passphrase paste
@@ -515,6 +574,7 @@ Users need a decryption workflow that:
 ## Implementation Priorities
 
 ### Phase 1: Core Functionality (MVP)
+
 1. Basic file selection and validation
 2. Passphrase input with show/hide
 3. Simple destination selection
@@ -523,6 +583,7 @@ Users need a decryption workflow that:
 6. File list display
 
 ### Phase 2: Enhanced Recovery
+
 1. Memory aids and hints
 2. Batch file support
 3. Advanced progress tracking
@@ -531,6 +592,7 @@ Users need a decryption workflow that:
 6. Recovery reports
 
 ### Phase 3: Polish & Optimization
+
 1. Animations and transitions
 2. Drag-and-drop support
 3. Keyboard shortcuts
@@ -541,6 +603,7 @@ Users need a decryption workflow that:
 ## Success Metrics & KPIs
 
 ### User Behavior Metrics
+
 - **First-Attempt Success**: >90% successful decryption
 - **Recovery Time**: <60 seconds average
 - **Error Resolution**: >85% self-resolve errors
@@ -548,6 +611,7 @@ Users need a decryption workflow that:
 - **Completion Rate**: >98% started operations complete
 
 ### Technical Metrics
+
 - **Decryption Speed**: >20MB/s
 - **Memory Usage**: <150MB for typical files
 - **UI Responsiveness**: <100ms interaction delay
@@ -555,6 +619,7 @@ Users need a decryption workflow that:
 - **Format Support**: All .age versions supported
 
 ### Business Metrics
+
 - **Trust Score**: 9+ user confidence rating
 - **Support Reduction**: 80% fewer support tickets
 - **User Retention**: 5x higher for successful users
@@ -564,18 +629,21 @@ Users need a decryption workflow that:
 ## Competitive Differentiation
 
 ### vs. Command Line Tools
+
 - **Visual Interface**: No terminal knowledge required
 - **Progress Feedback**: Clear operation status
 - **Error Recovery**: Guided problem resolution
 - **Memory Aids**: Helpful context and hints
 
 ### vs. Generic Encryption Tools
+
 - **Bitcoin Optimized**: Understands custody workflows
 - **Folder Preservation**: Maintains wallet structures
 - **Emergency Ready**: Designed for stress scenarios
 - **Family Friendly**: Non-technical family members succeed
 
 ### vs. Cloud Services
+
 - **Fully Local**: Complete privacy and control
 - **No Account**: Works without registration
 - **Offline Capable**: No internet required
@@ -584,18 +652,21 @@ Users need a decryption workflow that:
 ## Risk Mitigation
 
 ### Technical Risks
+
 - **File Corruption**: Implement recovery modes
 - **Memory Limits**: Stream processing for large files
 - **Compatibility**: Support all .age versions
 - **Performance**: Optimize for large archives
 
 ### User Experience Risks
+
 - **Panic Scenarios**: Calming, clear interface
 - **Forgotten Passphrases**: Maximum recovery help
 - **Technical Barriers**: Eliminate jargon
 - **Stress Errors**: Prevent mistakes through design
 
 ### Security Risks
+
 - **Passphrase Exposure**: Multiple protection layers
 - **File Tampering**: Integrity verification
 - **Memory Attacks**: Secure memory handling
@@ -604,6 +675,7 @@ Users need a decryption workflow that:
 ## Future Enhancements
 
 ### Version 2.0 Possibilities
+
 - **Partial Recovery**: Recover from damaged vaults
 - **Cloud Vault Support**: Decrypt from cloud storage
 - **Multi-Key Support**: Try multiple keys automatically
@@ -611,6 +683,7 @@ Users need a decryption workflow that:
 - **Audit Logging**: Optional operation history
 
 ### Advanced Features
+
 - **Preview Mode**: See file list before full decrypt
 - **Selective Recovery**: Choose specific files
 - **Format Conversion**: Export to other formats
@@ -627,14 +700,16 @@ When users successfully decrypt their first vault, they should feel the relief a
 
 ---
 
-*Related Documents:*
+_Related Documents:_
+
 - [Project Plan - Section 4.2.4.3](../../../project-plan.md#milestone-4-frontend-foundation)
 - [Setup Screen Requirements](../setup-screen/setup-screen-requirements-po.md)
 - [Encrypt Screen Requirements](../encrypt-screen/encrypt-screen-requirements-po.md)
 - [User Journey Map](../../user-journey.md)
 - [Security Foundations](../../../common/security-foundations.md)
 
-*Next Steps:*
+_Next Steps:_
+
 1. UX Designer to create visual design specifications
 2. System Architect to review technical feasibility
 3. Engineering team to implement Phase 1 MVP

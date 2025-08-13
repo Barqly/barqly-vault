@@ -5,6 +5,7 @@
 ## Core Technologies
 
 ### Backend (Rust)
+
 ```toml
 # Rust toolchain
 edition = "2021"
@@ -27,6 +28,7 @@ criterion = "0.5"      # Benchmarking
 ```
 
 ### Frontend (TypeScript/React)
+
 ```json
 // Node.js requirement
 "node": "22.17.0 LTS"
@@ -55,6 +57,7 @@ criterion = "0.5"      # Benchmarking
 ## Build Tools
 
 ### Required Versions
+
 ```bash
 # Check your versions
 node --version      # Must be 22.17.0
@@ -69,14 +72,17 @@ cargo install tauri-cli@2
 ### Platform Requirements
 
 #### macOS
+
 - Xcode Command Line Tools
 - macOS 10.15+ (Catalina or later)
 
 #### Windows
+
 - Visual Studio Build Tools 2022
 - Windows 10 version 1803+
 
 #### Linux
+
 - webkit2gtk-4.1
 - libssl-dev
 - libgtk-3-dev
@@ -84,6 +90,7 @@ cargo install tauri-cli@2
 ## Development Environment
 
 ### IDE Setup
+
 ```bash
 # VSCode extensions
 - rust-analyzer     # Rust language support
@@ -93,6 +100,7 @@ cargo install tauri-cli@2
 ```
 
 ### Environment Variables
+
 ```bash
 # Development
 RUST_LOG=debug      # Enable debug logging
@@ -106,12 +114,14 @@ CI=true            # CI environment
 ## Security Libraries
 
 ### Cryptography
+
 - **age**: Modern file encryption
 - **ChaCha20-Poly1305**: AEAD cipher
 - **scrypt**: Key derivation
 - **SHA-256**: File integrity
 
 ### Memory Safety
+
 - **zeroize**: Secure memory clearing
 - **secrecy**: Secret value wrapper
 - **constant_time_eq**: Timing-safe comparison
@@ -119,6 +129,7 @@ CI=true            # CI environment
 ## Testing Stack
 
 ### Backend Testing
+
 ```rust
 // Test framework
 #[cfg(test)]       // Built-in Rust testing
@@ -128,6 +139,7 @@ proptest           // Property testing (future)
 ```
 
 ### Frontend Testing
+
 ```typescript
 // Test framework
 vitest                    // Test runner
@@ -139,6 +151,7 @@ vitest                    // Test runner
 ## CI/CD Pipeline
 
 ### GitHub Actions
+
 ```yaml
 # Workflow tools
 actions/checkout@v4
@@ -148,6 +161,7 @@ tauri-apps/tauri-action@v0
 ```
 
 ### Validation Commands
+
 ```bash
 # Pre-commit validation
 make validate         # Full suite
@@ -164,6 +178,7 @@ npm run type-check
 ## Performance Tools
 
 ### Benchmarking
+
 ```bash
 # Rust benchmarks
 cargo bench
@@ -176,6 +191,7 @@ npm run build -- --analyze
 ```
 
 ### Profiling
+
 ```bash
 # Memory profiling
 valgrind --tool=memcheck  # Linux/macOS
@@ -189,6 +205,7 @@ Instruments              # macOS
 ## Package Management
 
 ### Rust (Cargo)
+
 ```bash
 cargo add <package>         # Add dependency
 cargo update               # Update deps
@@ -197,6 +214,7 @@ cargo audit               # Security check
 ```
 
 ### Node.js (npm)
+
 ```bash
 npm install <package>      # Add dependency
 npm update                # Update deps
@@ -207,17 +225,19 @@ npm audit                # Security check
 ## Version Constraints
 
 ### Minimum Supported Versions
-| Component | Minimum | Recommended | Notes |
-|-----------|---------|-------------|-------|
-| Rust | 1.70 | Latest stable | Memory safety features |
-| Node.js | 22.17.0 | 22.17.0 LTS | Required for Tailwind v4 |
-| Tauri | 2.0 | 2.x latest | Desktop framework |
-| React | 18.0 | 18.3.1 | Concurrent features |
-| TypeScript | 5.0 | 5.5.3 | Strict mode required |
+
+| Component  | Minimum | Recommended   | Notes                    |
+| ---------- | ------- | ------------- | ------------------------ |
+| Rust       | 1.70    | Latest stable | Memory safety features   |
+| Node.js    | 22.17.0 | 22.17.0 LTS   | Required for Tailwind v4 |
+| Tauri      | 2.0     | 2.x latest    | Desktop framework        |
+| React      | 18.0    | 18.3.1        | Concurrent features      |
+| TypeScript | 5.0     | 5.5.3         | Strict mode required     |
 
 ## Configuration Files
 
 ### Key Config Locations
+
 ```
 src-tauri/
 ├── Cargo.toml           # Rust dependencies
@@ -239,6 +259,7 @@ root/
 ## Platform-Specific Notes
 
 ### macOS Signing
+
 ```bash
 # Code signing (future)
 codesign --deep --force --verify
@@ -246,12 +267,14 @@ notarytool submit
 ```
 
 ### Windows Signing
+
 ```bash
 # Certificate signing (future)
 signtool sign /a /fd SHA256
 ```
 
 ### Linux Packaging
+
 ```bash
 # AppImage/Flatpak (future)
 appimage-builder

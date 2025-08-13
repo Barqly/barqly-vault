@@ -12,6 +12,7 @@ The Architecture domain serves as the technical foundation for Barqly Vault, def
 ## Domain Scope
 
 ### What This Domain Covers
+
 - System architecture and technology stack decisions
 - Tauri command bridge design and API contracts
 - Module blueprints for crypto, storage, and file operations
@@ -20,6 +21,7 @@ The Architecture domain serves as the technical foundation for Barqly Vault, def
 - Security boundaries and threat models
 
 ### What This Domain Doesn't Cover
+
 - Detailed implementation code (see Engineering domain)
 - Testing strategies and QA processes (see QA domain)
 - User interface mockups (see Design domain)
@@ -31,6 +33,7 @@ The Architecture domain serves as the technical foundation for Barqly Vault, def
 ### Core Architecture Documents
 
 #### System Foundation
+
 - **[system-architecture.md](./system-architecture.md)** - Complete technical architecture
   - Technology stack: Tauri v2 + Rust + React 19.1
   - Module architecture: crypto, storage, file_ops
@@ -38,6 +41,7 @@ The Architecture domain serves as the technical foundation for Barqly Vault, def
   - Security considerations and threat model
 
 #### Backend Architecture (Implemented)
+
 - **Core Modules** - Fully implemented in Rust
   - Crypto module with age encryption
   - Storage module for key management
@@ -50,6 +54,7 @@ The Architecture domain serves as the technical foundation for Barqly Vault, def
 - **Archived Blueprints**: See `/docs/context/archive/completed-milestones/`
 
 #### Frontend Architecture
+
 - **[Frontend Specifications](./frontend/)** - TypeScript/React patterns
   - [api-interfaces-backend.md](./frontend/api-interfaces-backend.md) - Complete API documentation
   - [api-quick-reference.md](./frontend/api-quick-reference.md) - Command reference
@@ -59,6 +64,7 @@ The Architecture domain serves as the technical foundation for Barqly Vault, def
 ### Key Architectural Decisions
 
 #### 1. Tauri v2 Framework
+
 ```rust
 // Command-based architecture
 #[tauri::command]
@@ -67,32 +73,40 @@ async fn encrypt_files(
     file_paths: Vec<String>,
 ) -> Result<String, CommandError>
 ```
+
 **Rationale**: Native performance, small bundle size, security sandbox
 
 #### 2. Age Encryption
+
 ```rust
 use age::{Encryptor, Recipient};
 // Direct library usage instead of CLI
 ```
+
 **Rationale**: Audited library, simple API, perfect for Bitcoin custody
 
 #### 3. TypeScript Type Generation
+
 ```typescript
 // Auto-generated from Rust types
-import { CommandResponse, ErrorCode } from './generated/types';
+import { CommandResponse, ErrorCode } from "./generated/types";
 ```
+
 **Rationale**: Single source of truth, compile-time safety
 
 #### 4. Staging Area Pattern
+
 ```rust
 // All operations use temporary staging
 pub fn create_staging_area() -> Result<StagingArea>
 ```
+
 **Rationale**: Atomic operations, rollback capability, data integrity
 
 ## Architectural Patterns
 
 ### Security Patterns
+
 1. **Defense in Depth**
    - Input validation at UI layer
    - Command validation in Tauri bridge
@@ -105,12 +119,14 @@ pub fn create_staging_area() -> Result<StagingArea>
    - Sandboxed operations
 
 ### Design Patterns
+
 1. **Command Pattern** - All UI-backend communication
 2. **Repository Pattern** - Key storage abstraction
 3. **Factory Pattern** - Staging area creation
 4. **Observer Pattern** - Progress tracking
 
 ### Error Handling Strategy
+
 ```typescript
 interface CommandError {
   code: ErrorCode;
@@ -125,21 +141,25 @@ interface CommandError {
 ### Cross-Domain Dependencies
 
 #### With Engineering Domain
+
 - Implementation of architectural blueprints
 - Code quality standards
 - Performance optimization
 
 #### With Technology Standards
+
 - Technology validation results
 - Security evaluation findings
 - Performance benchmarks
 
 #### With QA Domain
+
 - Testing requirements from architecture
 - Integration test specifications
 - Security test scenarios
 
 #### With Design Domain
+
 - UI component architecture
 - User flow implementations
 - Accessibility requirements
@@ -147,6 +167,7 @@ interface CommandError {
 ## Technology Stack Summary
 
 ### Backend Stack
+
 - **Runtime**: Tauri v2 (latest stable)
 - **Language**: Rust (memory safety, performance)
 - **Encryption**: age-encryption crate
@@ -157,6 +178,7 @@ interface CommandError {
 - **Memory Safety**: zeroize
 
 ### Frontend Stack
+
 - **Framework**: React 19.1 (latest stable)
 - **Language**: TypeScript 5.x (strict mode)
 - **Styling**: Tailwind CSS v4 + Shadcn/ui
@@ -167,6 +189,7 @@ interface CommandError {
 ## Quick Reference
 
 ### Command Categories
+
 1. **Setup Commands** - Key generation, management
 2. **Encryption Commands** - File selection, archiving, encryption
 3. **Decryption Commands** - Archive decryption, extraction
@@ -174,12 +197,14 @@ interface CommandError {
 5. **Progress Commands** - Operation tracking
 
 ### Module Responsibilities
+
 - **Crypto Module**: Age encryption, key management, passphrase protection
 - **Storage Module**: Cross-platform paths, key persistence, configuration
 - **File Ops Module**: Staging, archiving, manifest generation
 - **Command Module**: Tauri bridge, error translation, validation
 
 ### Performance Targets
+
 - Startup: <2 seconds
 - Key generation: <1 second
 - Encryption: >10MB/s
@@ -189,12 +214,14 @@ interface CommandError {
 ## Action Items for Developers
 
 ### Getting Started
+
 1. Review [system-architecture.md](./system-architecture.md) for overview
 2. Study relevant backend blueprints for your module
 3. Check [api-interfaces-backend.md](./frontend/api-interfaces-backend.md) for API contracts
 4. Follow patterns in [type-system-analysis.md](./frontend/type-system-analysis.md)
 
 ### When Implementing
+
 1. Use staging area pattern for all file operations
 2. Generate TypeScript types from Rust definitions
 3. Include structured logging with OpenTelemetry
@@ -202,6 +229,7 @@ interface CommandError {
 5. Validate all inputs at command boundary
 
 ### Security Checklist
+
 - [ ] Input validation implemented
 - [ ] Path traversal protection added
 - [ ] Sensitive data zeroized
@@ -211,6 +239,7 @@ interface CommandError {
 ## Domain Maintenance
 
 ### Update Triggers
+
 - New architectural decisions
 - Technology stack changes
 - Security model updates
@@ -218,6 +247,7 @@ interface CommandError {
 - Pattern refinements
 
 ### Review Schedule
+
 - Weekly: Blueprint progress
 - Sprint: API contract updates
 - Monthly: Architecture health check
@@ -225,11 +255,13 @@ interface CommandError {
 ## Related Resources
 
 ### External Dependencies
+
 - [Age Encryption Spec](https://age-encryption.org)
 - [Tauri v2 Documentation](https://v2.tauri.app)
 - [React 18 Patterns](https://react.dev)
 
 ### Internal References
+
 - Technology Decisions: [`/docs/architecture/technology-decisions.md`](technology-decisions.md)
 - Security Foundations: [`/docs/common/security-foundations.md`](../common/security-foundations.md)
 - Quality Standards: [`/docs/common/quality-standards.md`](../common/quality-standards.md)
@@ -240,4 +272,4 @@ interface CommandError {
 
 ---
 
-*This context document synthesizes knowledge from 14 architecture files. For detailed specifications, refer to linked documents. For implementation, coordinate with Engineering domain.*
+_This context document synthesizes knowledge from 14 architecture files. For detailed specifications, refer to linked documents. For implementation, coordinate with Engineering domain._

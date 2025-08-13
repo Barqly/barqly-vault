@@ -12,22 +12,27 @@ This action plan provides specific, prioritized changes to optimize the Setup sc
 ## Quick Wins (Implement Today)
 
 ### 1. Remove Redundant Form Title & Subtitle
+
 **Current Code** (FormSection component):
+
 ```tsx
-title="Create Your Encryption Identity"
-subtitle="Set up your secure identity with a memorable label and strong passphrase"
+title = "Create Your Encryption Identity";
+subtitle =
+  "Set up your secure identity with a memorable label and strong passphrase";
 ```
 
 **Change To**:
+
 ```tsx
-title=""  // Remove title entirely
-subtitle=""  // Remove subtitle entirely
+title = ""; // Remove title entirely
+subtitle = ""; // Remove subtitle entirely
 ```
 
 **Alternative** (if title required):
+
 ```tsx
-title="Let's secure your Bitcoin"
-subtitle=""  // No subtitle needed
+title = "Let's secure your Bitcoin";
+subtitle = ""; // No subtitle needed
 ```
 
 **Impact**: Saves ~60px vertical space, reduces redundancy  
@@ -35,7 +40,9 @@ subtitle=""  // No subtitle needed
 **Risk**: None
 
 ### 2. Consolidate Progress Context Message
+
 **Current**:
+
 ```tsx
 <ProgressContext variant="quick" estimatedTime={90} />
 ```
@@ -47,12 +54,15 @@ subtitle=""  // No subtitle needed
 **Risk**: None
 
 ### 3. Reduce FormSection Padding
+
 **Current** (in FormSection.tsx):
+
 ```tsx
 <div className="p-8">
 ```
 
 **Change To**:
+
 ```tsx
 <div className="p-6 sm:p-8">
 ```
@@ -66,6 +76,7 @@ subtitle=""  // No subtitle needed
 ### 1. Create Compact Header Component
 
 **New Component** (`CompactSetupHeader.tsx`):
+
 ```tsx
 const CompactSetupHeader = () => {
   return (
@@ -100,6 +111,7 @@ const CompactSetupHeader = () => {
 **Remove** the separate TrustIndicators component.
 
 **Add** trust signals contextually:
+
 ```tsx
 // Near passphrase field
 <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
@@ -123,10 +135,11 @@ const CompactSetupHeader = () => {
 **Current**: Separate helper text components
 
 **Optimized**: Inline placeholders and focused helpers
+
 ```tsx
 <EnhancedInput
   placeholder="e.g., Family Bitcoin Vault"
-  helper=""  // Remove static helper
+  helper="" // Remove static helper
   onFocus={() => setShowHelper(true)}
   helperText={showHelper ? "Choose a memorable name" : ""}
 />
@@ -141,10 +154,11 @@ const CompactSetupHeader = () => {
 ### 1. Form-First Layout Structure
 
 **Restructure SetupPage layout**:
+
 ```tsx
 <div className="min-h-screen bg-gray-50">
   <CompactSetupHeader />
-  
+
   {/* Form starts immediately - no gaps */}
   <div className="max-w-md mx-auto mt-8 px-4">
     {/* Skip intermediate containers */}
@@ -162,12 +176,13 @@ const CompactSetupHeader = () => {
 ### 2. Progressive Trust Building System
 
 **Implement dynamic trust indicators**:
+
 ```tsx
 const TrustSignals = {
   idle: null,
   typing: "✓ Stored locally only",
   valid: "✓ Ready to encrypt",
-  complete: "✓ Military-grade protection active"
+  complete: "✓ Military-grade protection active",
 };
 ```
 
@@ -178,6 +193,7 @@ const TrustSignals = {
 ### 3. Smart Help System
 
 **Replace CollapsibleHelp with contextual system**:
+
 ```tsx
 // Floating help button
 <button className="fixed bottom-4 right-4 ..." onClick={openHelp}>
@@ -195,6 +211,7 @@ const TrustSignals = {
 ## Implementation Sequence
 
 ### Phase 1: Immediate (Day 1)
+
 1. Remove redundant titles/subtitles - **5 mins**
 2. Reduce padding - **5 mins**
 3. Update button text - **5 mins**
@@ -204,6 +221,7 @@ const TrustSignals = {
 **Expected Impact**: 20% more form visibility
 
 ### Phase 2: Quick Wins (Day 2-3)
+
 1. Create CompactSetupHeader - **2 hours**
 2. Remove separate TrustIndicators - **30 mins**
 3. Optimize field helpers - **2 hours**
@@ -212,6 +230,7 @@ const TrustSignals = {
 **Expected Impact**: 40% improvement in prime real estate usage
 
 ### Phase 3: Structural (Week 2)
+
 1. Implement form-first layout - **4 hours**
 2. Add progressive trust system - **6 hours**
 3. Create smart help system - **8 hours**
@@ -222,16 +241,19 @@ const TrustSignals = {
 ## Success Metrics
 
 ### Immediate Metrics (After Phase 1)
+
 - Form visibility without scroll: 60% → 75%
 - Time to first interaction: -2 seconds
 - Reduced cognitive load (qualitative)
 
 ### Short-term Metrics (After Phase 2)
+
 - Form visibility without scroll: 75% → 90%
 - Setup completion rate: +10%
 - User satisfaction: +15%
 
 ### Long-term Metrics (After Phase 3)
+
 - Conversion rate: 70% → 85%+
 - Time to complete: 90s → 60s
 - Support tickets: -30%
@@ -239,17 +261,20 @@ const TrustSignals = {
 ## Risk Mitigation
 
 ### A/B Testing Plan
+
 1. **Control**: Current implementation
 2. **Test A**: Phase 1 changes only
 3. **Test B**: Phase 1 + 2 changes
 4. **Test C**: Full optimization
 
 ### Rollback Strategy
+
 - Git branch for each phase
 - Feature flags for progressive rollout
 - Monitor metrics in real-time
 
 ### User Feedback Collection
+
 - In-app feedback widget
 - Session recordings (privacy-compliant)
 - Post-setup survey (optional)
@@ -259,16 +284,19 @@ const TrustSignals = {
 ### For Frontend Developer
 
 **Step 1**: Create new branch
+
 ```bash
 git checkout -b feature/optimize-setup-prime-real-estate
 ```
 
 **Step 2**: Implement Phase 1 changes
+
 - Edit `SetupPage.tsx`: Remove titles, reduce padding
 - Test on mobile and desktop viewports
 - Commit with message: "feat(setup): optimize prime real estate usage - phase 1"
 
 **Step 3**: Implement Phase 2 changes
+
 - Create `CompactSetupHeader.tsx`
 - Update `SetupPage.tsx` to use new header
 - Remove `TrustIndicators` component usage
@@ -277,6 +305,7 @@ git checkout -b feature/optimize-setup-prime-real-estate
 **Step 4**: Submit PR with before/after screenshots
 
 ### Code Review Checklist
+
 - [ ] Mobile viewport tested (iPhone SE to Pro Max)
 - [ ] Desktop viewport tested (1024px to 4K)
 - [ ] No accessibility regressions
@@ -294,4 +323,4 @@ The key is to start with quick wins that provide immediate value, then progressi
 
 ---
 
-*For questions or clarifications, contact the Product Owner or UX Designer.*
+_For questions or clarifications, contact the Product Owner or UX Designer._

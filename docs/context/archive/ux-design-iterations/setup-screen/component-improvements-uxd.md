@@ -6,26 +6,25 @@
 
 ## Component Improvement Matrix
 
-| Component | Current State | Improved State | Priority | Impact |
-|-----------|--------------|----------------|----------|--------|
-| Header | Large, generic title | Compact trust-building header | P0 | High |
-| Trust Indicators | Missing | Subtle security badges | P0 | High |
-| Form Title | Missing | Clear action-oriented title | P0 | Medium |
-| Input Fields | Basic styling | Enhanced with better UX | P1 | High |
-| Passphrase UX | Basic input | Strength + match indicators | P1 | High |
-| CTA Button | Generic text | Action-oriented messaging | P0 | High |
-| Help Section | Always visible | Collapsible on-demand | P1 | Medium |
-| Progress Context | Missing | Time expectation setter | P2 | Medium |
-| Success State | Basic message | Celebratory + next steps | P2 | Medium |
+| Component        | Current State        | Improved State                | Priority | Impact |
+| ---------------- | -------------------- | ----------------------------- | -------- | ------ |
+| Header           | Large, generic title | Compact trust-building header | P0       | High   |
+| Trust Indicators | Missing              | Subtle security badges        | P0       | High   |
+| Form Title       | Missing              | Clear action-oriented title   | P0       | Medium |
+| Input Fields     | Basic styling        | Enhanced with better UX       | P1       | High   |
+| Passphrase UX    | Basic input          | Strength + match indicators   | P1       | High   |
+| CTA Button       | Generic text         | Action-oriented messaging     | P0       | High   |
+| Help Section     | Always visible       | Collapsible on-demand         | P1       | Medium |
+| Progress Context | Missing              | Time expectation setter       | P2       | Medium |
+| Success State    | Basic message        | Celebratory + next steps      | P2       | Medium |
 
 ## 1. Header Component Enhancement
 
 ### Current Implementation
+
 ```tsx
 <div className="text-center mb-8">
-  <h1 className="text-3xl font-bold text-gray-900 mb-4">
-    Setup Barqly Vault
-  </h1>
+  <h1 className="text-3xl font-bold text-gray-900 mb-4">Setup Barqly Vault</h1>
   <p className="text-lg text-gray-600 max-w-2xl mx-auto">
     Generate your first encryption key...
   </p>
@@ -33,9 +32,10 @@
 ```
 
 ### Improved Implementation
+
 ```tsx
 // components/SetupHeader.tsx
-import { Shield } from 'lucide-react';
+import { Shield } from "lucide-react";
 
 export const SetupHeader = () => (
   <header className="border-b border-gray-200 pb-4 mb-6">
@@ -55,6 +55,7 @@ export const SetupHeader = () => (
 ```
 
 ### Benefits
+
 - ✅ 60% less vertical space usage
 - ✅ Immediate trust signal with shield icon
 - ✅ Stronger emotional connection to outcome
@@ -63,9 +64,10 @@ export const SetupHeader = () => (
 ## 2. Trust Indicators Component
 
 ### New Component
+
 ```tsx
 // components/TrustIndicators.tsx
-import { Lock, BookOpen } from 'lucide-react';
+import { Lock, BookOpen } from "lucide-react";
 
 export const TrustIndicators = () => (
   <div className="bg-gray-50 border border-gray-200 rounded-md px-4 py-3 mb-6">
@@ -85,6 +87,7 @@ export const TrustIndicators = () => (
 ```
 
 ### Placement
+
 - Position between header and main form
 - Subtle but visible security reassurance
 - Mobile: Stack vertically on small screens
@@ -92,15 +95,15 @@ export const TrustIndicators = () => (
 ## 3. Form Enhancement Component
 
 ### Current Form Container
+
 ```tsx
 <div className="bg-white rounded-lg shadow-sm border p-8">
-  <div className="space-y-6">
-    {/* Form fields */}
-  </div>
+  <div className="space-y-6">{/* Form fields */}</div>
 </div>
 ```
 
 ### Enhanced Form Container
+
 ```tsx
 // components/SetupForm.tsx
 export const SetupForm = ({ children }) => (
@@ -109,15 +112,14 @@ export const SetupForm = ({ children }) => (
       <h2 className="text-lg font-semibold text-gray-800 pb-4 mb-6 border-b border-gray-100">
         Create Your Encryption Identity
       </h2>
-      <div className="space-y-6">
-        {children}
-      </div>
+      <div className="space-y-6">{children}</div>
     </div>
   </div>
 );
 ```
 
 ### Benefits
+
 - ✅ Clear section purpose with form title
 - ✅ Better visual hierarchy
 - ✅ Professional card design
@@ -125,6 +127,7 @@ export const SetupForm = ({ children }) => (
 ## 4. Enhanced Input Field Component
 
 ### Current Input
+
 ```tsx
 <input
   type="text"
@@ -133,15 +136,16 @@ export const SetupForm = ({ children }) => (
 ```
 
 ### Enhanced Input Component
+
 ```tsx
 // components/EnhancedInput.tsx
-export const EnhancedInput = ({ 
-  label, 
-  required, 
-  helper, 
+export const EnhancedInput = ({
+  label,
+  required,
+  helper,
   error,
   success,
-  ...props 
+  ...props
 }) => (
   <div className="space-y-1">
     <label className="block text-sm font-medium text-gray-700">
@@ -152,9 +156,13 @@ export const EnhancedInput = ({
         className={`
           w-full h-12 px-4 text-base
           border rounded-md transition-all duration-200
-          ${error ? 'border-red-400 bg-red-50' : 
-            success ? 'border-green-500' : 
-            'border-gray-300'}
+          ${
+            error
+              ? "border-red-400 bg-red-50"
+              : success
+                ? "border-green-500"
+                : "border-gray-300"
+          }
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
           hover:border-gray-400
         `}
@@ -164,17 +172,14 @@ export const EnhancedInput = ({
         <Check className="absolute right-3 top-3.5 h-5 w-5 text-green-500" />
       )}
     </div>
-    {helper && !error && (
-      <p className="text-xs text-gray-500">{helper}</p>
-    )}
-    {error && (
-      <p className="text-xs text-red-600">{error}</p>
-    )}
+    {helper && !error && <p className="text-xs text-gray-500">{helper}</p>}
+    {error && <p className="text-xs text-red-600">{error}</p>}
   </div>
 );
 ```
 
 ### Benefits
+
 - ✅ Better touch targets (48px height)
 - ✅ Clear visual feedback states
 - ✅ Integrated helper/error text
@@ -183,16 +188,17 @@ export const EnhancedInput = ({
 ## 5. Advanced Passphrase Component
 
 ### Enhanced Passphrase Input
+
 ```tsx
 // components/PassphraseField.tsx
-import { Eye, EyeOff, Check, X } from 'lucide-react';
+import { Eye, EyeOff, Check, X } from "lucide-react";
 
-export const PassphraseField = ({ 
-  value, 
-  onChange, 
+export const PassphraseField = ({
+  value,
+  onChange,
   showStrength = false,
   matchValue = null,
-  ...props 
+  ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const strength = calculateStrength(value);
@@ -202,7 +208,7 @@ export const PassphraseField = ({
     <div className="space-y-2">
       <div className="relative">
         <input
-          type={showPassword ? 'text' : 'password'}
+          type={showPassword ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="w-full h-12 pr-12 pl-4 text-base..."
@@ -217,9 +223,7 @@ export const PassphraseField = ({
         </button>
       </div>
 
-      {showStrength && value && (
-        <PassphraseStrength strength={strength} />
-      )}
+      {showStrength && value && <PassphraseStrength strength={strength} />}
 
       {isMatch !== null && value && (
         <div className="flex items-center gap-1.5 text-xs">
@@ -242,20 +246,21 @@ export const PassphraseField = ({
 ```
 
 ### Passphrase Strength Indicator
+
 ```tsx
 // components/PassphraseStrength.tsx
 export const PassphraseStrength = ({ strength }) => {
   const getStrengthColor = () => {
-    if (strength < 2) return 'bg-red-500';
-    if (strength < 3) return 'bg-amber-500';
-    return 'bg-green-500';
+    if (strength < 2) return "bg-red-500";
+    if (strength < 3) return "bg-amber-500";
+    return "bg-green-500";
   };
 
   const getStrengthText = () => {
-    if (strength < 2) return 'Weak';
-    if (strength < 3) return 'Medium';
-    if (strength < 4) return 'Strong';
-    return 'Very Strong';
+    if (strength < 2) return "Weak";
+    if (strength < 3) return "Medium";
+    if (strength < 4) return "Strong";
+    return "Very Strong";
   };
 
   return (
@@ -267,7 +272,7 @@ export const PassphraseStrength = ({ strength }) => {
         </span>
       </div>
       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-        <div 
+        <div
           className={`h-full transition-all duration-300 ${getStrengthColor()}`}
           style={{ width: `${(strength / 4) * 100}%` }}
         />
@@ -280,28 +285,28 @@ export const PassphraseStrength = ({ strength }) => {
 ## 6. Enhanced Call-to-Action Button
 
 ### Current Button
+
 ```tsx
-<button className="px-4 py-2 text-sm...">
-  Generate Key
-</button>
+<button className="px-4 py-2 text-sm...">Generate Key</button>
 ```
 
 ### Enhanced CTA Component
+
 ```tsx
 // components/PrimaryButton.tsx
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2 } from "lucide-react";
 
-export const PrimaryButton = ({ 
-  children, 
-  loading, 
+export const PrimaryButton = ({
+  children,
+  loading,
   icon = true,
-  size = 'default',
-  ...props 
+  size = "default",
+  ...props
 }) => {
   const sizeClasses = {
-    default: 'h-12 px-6 text-base',
-    large: 'h-14 px-8 text-lg',
-    small: 'h-10 px-4 text-sm'
+    default: "h-12 px-6 text-base",
+    large: "h-14 px-8 text-lg",
+    small: "h-10 px-4 text-sm",
   };
 
   return (
@@ -336,8 +341,9 @@ export const PrimaryButton = ({
 ```
 
 ### Usage
+
 ```tsx
-<PrimaryButton 
+<PrimaryButton
   onClick={handleGenerate}
   disabled={!isValid}
   loading={isGenerating}
@@ -350,9 +356,10 @@ export const PrimaryButton = ({
 ## 7. Collapsible Help Section
 
 ### Implementation
+
 ```tsx
 // components/CollapsibleHelp.tsx
-import { Info, ChevronDown } from 'lucide-react';
+import { Info, ChevronDown } from "lucide-react";
 
 export const CollapsibleHelp = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -365,17 +372,19 @@ export const CollapsibleHelp = () => {
       >
         <Info className="h-4 w-4" />
         Learn what happens next
-        <ChevronDown 
+        <ChevronDown
           className={`h-4 w-4 transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`} 
+            isOpen ? "rotate-180" : ""
+          }`}
         />
       </button>
 
-      <div className={`
+      <div
+        className={`
         overflow-hidden transition-all duration-300
-        ${isOpen ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'}
-      `}>
+        ${isOpen ? "max-h-96 opacity-100 mt-4" : "max-h-0 opacity-0"}
+      `}
+      >
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <div className="grid md:grid-cols-3 gap-4 text-sm">
             <div>
@@ -384,7 +393,8 @@ export const CollapsibleHelp = () => {
                 <h3 className="font-medium text-blue-900">Key Generation</h3>
               </div>
               <p className="text-blue-800">
-                Your encryption keypair is created and securely stored on your device.
+                Your encryption keypair is created and securely stored on your
+                device.
               </p>
             </div>
             {/* Additional steps... */}
@@ -399,9 +409,10 @@ export const CollapsibleHelp = () => {
 ## 8. Progress Context Component
 
 ### New Component
+
 ```tsx
 // components/ProgressContext.tsx
-import { Clock } from 'lucide-react';
+import { Clock } from "lucide-react";
 
 export const ProgressContext = () => (
   <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-4">
@@ -416,9 +427,10 @@ export const ProgressContext = () => (
 ## 9. Enhanced Success State
 
 ### Improved Success Component
+
 ```tsx
 // components/EnhancedSuccess.tsx
-import { CheckCircle, Copy, ArrowRight } from 'lucide-react';
+import { CheckCircle, Copy, ArrowRight } from "lucide-react";
 
 export const EnhancedSuccess = ({ publicKey, onContinue }) => {
   const [copied, setCopied] = useState(false);
@@ -453,7 +465,7 @@ export const EnhancedSuccess = ({ publicKey, onContinue }) => {
             className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
           >
             <Copy className="h-4 w-4" />
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? "Copied!" : "Copy"}
           </button>
         </div>
         <div className="font-mono text-xs text-gray-600 break-all bg-gray-50 p-3 rounded">
@@ -463,7 +475,8 @@ export const EnhancedSuccess = ({ publicKey, onContinue }) => {
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-green-700">
-          Share this public key with family members who need to encrypt files for you.
+          Share this public key with family members who need to encrypt files
+          for you.
         </p>
         <button
           onClick={onContinue}
@@ -481,18 +494,21 @@ export const EnhancedSuccess = ({ publicKey, onContinue }) => {
 ## Implementation Priority
 
 ### Phase 1: Immediate Impact (1-2 days)
+
 1. ✅ Enhanced Header Component
 2. ✅ Trust Indicators
 3. ✅ Enhanced CTA Button
 4. ✅ Progress Context
 
 ### Phase 2: Core UX Improvements (3-4 days)
+
 1. ✅ Enhanced Input Components
 2. ✅ Advanced Passphrase UX
 3. ✅ Collapsible Help Section
 4. ✅ Form Title Enhancement
 
 ### Phase 3: Polish & Refinement (2-3 days)
+
 1. ✅ Enhanced Success State
 2. ✅ Animation & Transitions
 3. ✅ Mobile Optimizations
@@ -501,31 +517,35 @@ export const EnhancedSuccess = ({ publicKey, onContinue }) => {
 ## Success Metrics
 
 ### Component-Level Metrics
-| Component | Current | Target | Measurement |
-|-----------|---------|---------|-------------|
-| Header Space | 15% viewport | 8% viewport | CSS analysis |
-| Form Completion | 60-70% | 85%+ | Analytics |
-| Error Rate | 20% | <10% | Form tracking |
-| Time to Complete | 2-3 min | <90 sec | Session timing |
-| Trust Score | 6/10 | 8+/10 | User survey |
+
+| Component        | Current      | Target      | Measurement    |
+| ---------------- | ------------ | ----------- | -------------- |
+| Header Space     | 15% viewport | 8% viewport | CSS analysis   |
+| Form Completion  | 60-70%       | 85%+        | Analytics      |
+| Error Rate       | 20%          | <10%        | Form tracking  |
+| Time to Complete | 2-3 min      | <90 sec     | Session timing |
+| Trust Score      | 6/10         | 8+/10       | User survey    |
 
 ## Testing Strategy
 
 ### Unit Testing
+
 - Test each component in isolation
 - Verify all interaction states
 - Test accessibility compliance
 
 ### Integration Testing
+
 - Test complete form flow
 - Verify component communication
 - Test error scenarios
 
 ### User Testing
+
 - A/B test old vs new design
 - Collect qualitative feedback
 - Monitor completion metrics
 
 ---
 
-*This component improvement plan provides a systematic approach to transforming the Setup screen. Each component can be developed and tested independently, allowing for iterative deployment and validation.*
+_This component improvement plan provides a systematic approach to transforming the Setup screen. Each component can be developed and tested independently, allowing for iterative deployment and validation._

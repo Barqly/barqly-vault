@@ -19,6 +19,7 @@ Engineering at Barqly Vault is about **making the right thing easy and the wrong
 ## Progressive Development Flow
 
 ### Level 1: Immediate Productivity (First 5 Minutes)
+
 ```bash
 make demo               # Interactive component demos
 make validate-ui        # Quick frontend validation (~30s)
@@ -28,6 +29,7 @@ make test-ui           # Run frontend tests (~10-20s)
 You're now developing with hot reload, seeing your changes live, and validating as you go. The demo system automatically detects you're in development and enables the right mode.
 
 ### Level 2: Full Stack Development (First Hour)
+
 ```bash
 make desktop           # Full Tauri app experience
 make validate          # Complete validation (mirrors CI)
@@ -37,6 +39,7 @@ make test              # All tests (frontend + backend)
 Now you're working with the complete encryption system - frontend, backend, and cross-platform desktop app. The validation system ensures your changes will pass CI.
 
 ### Level 3: Advanced Operations (As Needed)
+
 ```bash
 # Surgical validation for specific changes
 make validate-rust     # Rust only (~1-2min)
@@ -52,22 +55,28 @@ You now understand the full system and can optimize your workflow for speed whil
 ## The Three Pillars of Engineering
 
 ### 1. Developer Experience First
+
 Every decision optimizes for developer productivity:
+
 - **Hot reload everywhere** - See changes instantly in UI and demos
 - **Smart automation** - Demo mode auto-detects development context
 - **Copy-paste commands** - Everything in docs is immediately runnable
 - **Fast feedback loops** - Validation tells you exactly what's wrong
 
 ### 2. Quality as Code
+
 Quality isn't checked after - it's built in:
+
 - **Pre-commit hooks** block bad code before it enters the repo
 - **Validation hierarchy** - Quick checks first, comprehensive checks on demand
 - **Test recovery plans** - When tests break, we know exactly how to fix them
 - **CI/CD mirroring** - Local validation exactly matches CI pipeline
 
 ### 3. Failure Recovery
+
 Mature systems plan for failure:
-- **Test suite recovery** - 24-step plan when tests drift from implementation  
+
+- **Test suite recovery** - 24-step plan when tests drift from implementation
 - **Existing project onboarding** - Baseline and backup before any changes
 - **Clear error messages** - Know what broke and how to fix it
 - **Incremental validation** - Fix one thing at a time
@@ -81,7 +90,7 @@ Our validation is hierarchical and intelligent:
 make test-ui            # ~10-20s - Run this frequently
 make validate-ui        # ~30s - Before committing frontend changes
 
-# Comprehensive validation before pushing  
+# Comprehensive validation before pushing
 make validate           # ~2-3min - Mirrors CI exactly
 ```
 
@@ -95,7 +104,7 @@ The demo system is our secret weapon for rapid development:
 npm run demo
 # Automatically:
 # - Detects development environment
-# - Enables demo routes if needed  
+# - Enables demo routes if needed
 # - Starts with hot reload
 # - Provides component playground
 ```
@@ -107,10 +116,11 @@ npm run demo
 Engineering implements what Architecture designs:
 
 ### From Architecture's Modular Design
+
 ```typescript
 // Architecture defines the interface
 interface EncryptionService {
-  encrypt(files: File[], key: Key): Promise<Archive>
+  encrypt(files: File[], key: Key): Promise<Archive>;
 }
 
 // Engineering provides the implementation
@@ -123,6 +133,7 @@ class AgeEncryptionService implements EncryptionService {
 ```
 
 ### From Architecture's Security Model
+
 ```rust
 // Architecture specifies: "Keys must be zeroed from memory"
 // Engineering implements with zeroize crate
@@ -139,6 +150,7 @@ struct SensitiveData {
 Engineering delivers what Product envisions:
 
 ### From Product's User Journey
+
 ```bash
 # Product wants: "Simple three-step encryption"
 # Engineering delivers:
@@ -149,6 +161,7 @@ make demo  # See the three-step flow in action
 ```
 
 ### From Product's Quality Goals
+
 ```bash
 # Product wants: "Bank-grade security, consumer-grade UX"
 # Engineering ensures:
@@ -159,6 +172,7 @@ make demo      # UX iteration with instant feedback
 ## Recent Implementations (January 2025)
 
 ### Alpha Release - Three Functional Screens
+
 Successfully implemented and tested all three core user screens:
 
 1. **SetupPage** - Encryption identity creation
@@ -167,7 +181,7 @@ Successfully implemented and tested all three core user screens:
    - Key generation with memorable labels
    - Trust indicators and Bitcoin branding
 
-2. **EncryptPage** - File encryption workflow  
+2. **EncryptPage** - File encryption workflow
    - Drag-and-drop interface
    - Batch file processing
    - Progress tracking with debouncing
@@ -180,13 +194,16 @@ Successfully implemented and tested all three core user screens:
    - Family-member tested
 
 ### UI Testing Standards Established
+
 Created comprehensive testing patterns based on learnings:
+
 - Mock isolation strategies
 - Async operation handling
 - Component testing best practices
 - See: `/docs/engineering/testing-ui-standards.md`
 
 ### Performance Optimizations
+
 - Implemented progress debouncing (80% IPC reduction)
 - Added component lazy loading
 - Optimized test suite performance
@@ -194,6 +211,7 @@ Created comprehensive testing patterns based on learnings:
 ## Common Workflows
 
 ### Adding a New Feature
+
 ```bash
 # 1. Start with the demo system
 make demo
@@ -214,6 +232,7 @@ git add . && git commit -m "feat: your feature"
 ```
 
 ### Fixing a Broken Test Suite
+
 ```bash
 # 1. Assess the damage
 make test-ui
@@ -229,6 +248,7 @@ make validate
 ```
 
 ### Joining an Existing Project
+
 ```bash
 # 1. Create baseline (never modify without backup)
 git tag baseline-$(date +%Y%m%d)
@@ -256,6 +276,7 @@ These aren't aspirational - we measure and maintain them:
 ## The Tools That Matter
 
 ### Core Commands
+
 ```bash
 make demo              # Your home base for development
 make validate          # Your safety net before pushing
@@ -263,6 +284,7 @@ make test-ui           # Your quick feedback during coding
 ```
 
 ### Key Files to Know
+
 ```
 src-ui/src/App.demo.tsx        # Demo system entry point
 scripts/automated-dev.sh       # Smart development automation
@@ -272,6 +294,7 @@ docs/engineering/desktop-app-debugging-guide.md  # Desktop app troubleshooting
 ```
 
 ### Recovery Commands
+
 ```bash
 make clean             # When things get weird
 npm run demo:disable   # Return to production mode
@@ -288,6 +311,7 @@ cargo clean           # Reset Rust build cache
 ## The Path Forward
 
 Engineering excellence isn't about perfection - it's about:
+
 - **Fast feedback loops** that catch issues early
 - **Clear recovery paths** when things go wrong
 - **Progressive disclosure** that doesn't overwhelm
@@ -299,4 +323,4 @@ Welcome to Barqly Vault engineering - where building secure software is as smoot
 
 ---
 
-*"Make the right thing easy and the wrong thing hard" - The Barqly Vault Way*
+_"Make the right thing easy and the wrong thing hard" - The Barqly Vault Way_

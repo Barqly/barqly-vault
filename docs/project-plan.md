@@ -310,7 +310,7 @@ Barqly Vault is a cross-platform desktop application for secure file encryption 
 
 **Total Estimated Effort**: 2-3 developer days
 
-#### Critical Priority - Do Today 
+#### Critical Priority - Do Today
 
 - [x] 12.1: Security Hardening (1 hour)
   - [x] 12.1.1: Disable DevTools in production (15 minutes)
@@ -338,7 +338,7 @@ Barqly Vault is a cross-platform desktop application for secure file encryption 
     - Added operation-specific recovery guidance for Bitcoin custody use cases
     - Enhanced validation messages with detailed requirements and examples
     - All 374+ tests passing with improved error handling
-  - [x] 12.3.2: Add simple response caching (1 hour) 
+  - [x] 12.3.2: Add simple response caching (1 hour)
     - ✅ Implemented LRU cache for key listing operations with 5-minute TTL
     - ✅ Added thread-safe caching with automatic invalidation on key modifications
     - ✅ Integrated cache metrics and performance monitoring via get_cache_metrics command

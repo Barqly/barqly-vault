@@ -1,27 +1,31 @@
 # Barqly Vault Validation System
 
 ## 🚀 Quick Start (For New Developers)
+
 1. **Install the pre-commit hook:**
    ```bash
    chmod +x scripts/setup-hooks.sh
    ./scripts/setup-hooks.sh
    ```
 2. **Every time you commit,** the hook will automatically run:
+
    ```bash
    # Backend validation (Rust)
    cargo fmt --check    # Formatting validation
-   cargo clippy         # Linting validation  
+   cargo clippy         # Linting validation
    cargo test           # Test validation
-   
+
    # Frontend validation (TypeScript/React)
    npm run lint         # ESLint validation
    npm run build        # Build validation
    ```
+
 3. **If any validation fails,** the commit is blocked until you fix the issues!
 
 ---
 
 ## ❓ Why Validation Matters
+
 - **Saves time:** Prevents 4-5 minute CI failures for simple issues.
 - **Ensures quality:** Keeps code clean, linted, and tested.
 - **Team consistency:** Everyone follows the same process.
@@ -30,6 +34,7 @@
 ---
 
 ## 🪟 Windows Users
+
 - The pre-commit hook is a Bash script. On Windows, use Git Bash or WSL for full compatibility.
 - If you use Windows-only tools, run the manual validation commands before pushing.
 
@@ -38,6 +43,7 @@
 ## 🎯 Overview
 
 The validation system consists of:
+
 - **Pre-commit hooks** that automatically validate code quality before commits
 - **Local validation scripts** for manual checks
 - **CI/CD integration** that mirrors local validation
@@ -47,12 +53,14 @@ The validation system consists of:
 ## 🔧 Setup
 
 ### Initial Setup
+
 ```bash
 chmod +x scripts/setup-hooks.sh
 ./scripts/setup-hooks.sh
 ```
 
 ### Manual Installation
+
 ```bash
 cp scripts/pre-commit .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
@@ -63,6 +71,7 @@ chmod +x .git/hooks/pre-commit
 ## 🚦 How It Works
 
 Every commit triggers automatic validation:
+
 ```
 🔍 Barqly Vault Pre-commit Validation
 =====================================
@@ -85,6 +94,7 @@ Every commit triggers automatic validation:
 ---
 
 ## 🛠️ Manual Validation Steps
+
 ```bash
 # Backend validation (from root or src-tauri)
 cargo fmt --check    # Formatting
@@ -105,6 +115,7 @@ make clean           # Clean build artifacts
 ## 📝 Usage Example
 
 ### Successful Commit
+
 ```bash
 # Edit code...
 git add .
@@ -116,6 +127,7 @@ git push
 ```
 
 ### Failed Validation
+
 ```bash
 git add .
 git commit -m "feat: new feature"
@@ -134,6 +146,7 @@ git commit -m "feat: new feature"
 ---
 
 ## 🛡️ Validation Checklist
+
 - [ ] `cargo fmt --check` passes
 - [ ] `cargo clippy` passes
 - [ ] `cargo test` passes
@@ -142,6 +155,7 @@ git commit -m "feat: new feature"
 ---
 
 ## 💡 If Validation Fails
+
 - **Formatting issues:** Run `cargo fmt` to fix
 - **Clippy issues:** Fix the linting problems shown
 - **Test failures:** Fix the failing tests
@@ -150,13 +164,15 @@ git commit -m "feat: new feature"
 ---
 
 ## 🧑‍💻 Feedback & Improvements
+
 - If you find a better way or spot an error, **please update this doc for the next engineer!**
 - We value continuous improvement—no cargo culting!
 
 ---
 
 ## 🔄 Integration with ZenAI Rituals
+
 - **Automated validation** before every commit
 - **Fail-fast approach** to catch issues early
 - **Reduced feedback loops** by preventing bad commits
-- **Consistent quality** across all team members 
+- **Consistent quality** across all team members

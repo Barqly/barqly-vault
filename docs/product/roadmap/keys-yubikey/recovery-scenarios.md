@@ -6,27 +6,29 @@ This document details various recovery scenarios users might face with YubiKey-p
 
 ## Recovery Matrix
 
-| Scenario | Available Assets | Recovery Method | Success Rate |
-|----------|-----------------|-----------------|--------------|
-| Lost YubiKey | Passphrase | Use passphrase | 100% |
-| Lost YubiKey | Backup YubiKey | Use backup | 100% |
-| Lost YubiKey | Neither | No recovery | 0% |
-| Forgotten PIN | Passphrase | Use passphrase | 100% |
-| Forgotten PIN | Other YubiKey | Use other key | 100% |
-| Locked YubiKey | Passphrase | Use passphrase | 100% |
-| Broken YubiKey | Any backup method | Use backup | 100% |
-| Lost everything | Cloud backup | Restore & decrypt | Varies |
+| Scenario        | Available Assets  | Recovery Method   | Success Rate |
+| --------------- | ----------------- | ----------------- | ------------ |
+| Lost YubiKey    | Passphrase        | Use passphrase    | 100%         |
+| Lost YubiKey    | Backup YubiKey    | Use backup        | 100%         |
+| Lost YubiKey    | Neither           | No recovery       | 0%           |
+| Forgotten PIN   | Passphrase        | Use passphrase    | 100%         |
+| Forgotten PIN   | Other YubiKey     | Use other key     | 100%         |
+| Locked YubiKey  | Passphrase        | Use passphrase    | 100%         |
+| Broken YubiKey  | Any backup method | Use backup        | 100%         |
+| Lost everything | Cloud backup      | Restore & decrypt | Varies       |
 
 ## Detailed Recovery Scenarios
 
 ### Scenario 1: Lost Primary YubiKey
 
 #### Situation
+
 User's daily-carry YubiKey is lost or stolen.
 
 #### Available Options
 
 **Option A: Use Backup YubiKey**
+
 ```
 Recovery Steps:
 1. Launch Barqly Vault
@@ -42,6 +44,7 @@ Post-Recovery:
 ```
 
 **Option B: Use Passphrase**
+
 ```
 Recovery Steps:
 1. Launch Barqly Vault
@@ -56,6 +59,7 @@ Post-Recovery:
 ```
 
 #### Implementation
+
 ```rust
 #[tauri::command]
 pub async fn initiate_recovery_mode(
@@ -63,7 +67,7 @@ pub async fn initiate_recovery_mode(
 ) -> CommandResponse<RecoveryOptions> {
     let metadata = load_vault_metadata(&vault_path)?;
     let mut options = RecoveryOptions::default();
-    
+
     // Check available recovery methods
     for recipient in &metadata.recipients {
         match recipient.type_ {
@@ -81,10 +85,10 @@ pub async fn initiate_recovery_mode(
             },
         }
     }
-    
+
     Ok(CommandResponse::Success {
         data: options,
-        message: format!("Found {} recovery options", 
+        message: format!("Found {} recovery options",
             options.count_available()),
     })
 }
@@ -93,9 +97,11 @@ pub async fn initiate_recovery_mode(
 ### Scenario 2: Forgotten YubiKey PIN
 
 #### Situation
+
 User cannot remember their YubiKey PIN after multiple attempts.
 
 #### Warning State
+
 ```
 PIN Entry Failed
 ────────────────
@@ -108,6 +114,7 @@ this YubiKey will be locked.
 ```
 
 #### After Lockout
+
 ```
 YubiKey Locked
 ──────────────
@@ -122,6 +129,7 @@ Recovery Options:
 ```
 
 #### Reset Process
+
 ```rust
 pub struct YubiKeyResetGuide {
     steps: Vec<String>,
@@ -157,9 +165,11 @@ impl YubiKeyResetGuide {
 ### Scenario 3: YubiKey Hardware Failure
 
 #### Situation
+
 YubiKey stops responding or is physically damaged.
 
 #### Detection
+
 ```rust
 pub enum YubiKeyHealth {
     Healthy,
@@ -178,7 +188,7 @@ pub async fn diagnose_yubikey(serial: u32) -> YubiKeyHealth {
         }
         sleep(Duration::from_millis(500)).await;
     }
-    
+
     // Check if visible but not responding
     if list_yubikeys().iter().any(|yk| yk.serial == serial) {
         YubiKeyHealth::NotResponding
@@ -189,6 +199,7 @@ pub async fn diagnose_yubikey(serial: u32) -> YubiKeyHealth {
 ```
 
 #### Recovery Flow
+
 ```
 YubiKey Not Responding
 ──────────────────────
@@ -209,9 +220,11 @@ Still not working?
 ### Scenario 4: Complete System Recovery
 
 #### Situation
+
 New computer setup or complete system restore needed.
 
 #### Recovery Checklist
+
 ```
 System Recovery Checklist
 ────────────────────────
@@ -228,7 +241,7 @@ Option 1: YubiKey Recovery
   □ Enter PIN
   □ Ready to decrypt
 
-Option 2: Passphrase Recovery  
+Option 2: Passphrase Recovery
   □ Import backed-up key file
   □ Enter passphrase
   □ Verify key works
@@ -242,6 +255,7 @@ Option 3: Backup Card Recovery
 ```
 
 #### Implementation
+
 ```rust
 #[tauri::command]
 pub async fn system_recovery_wizard() -> CommandResponse<RecoveryWizard> {
@@ -257,7 +271,7 @@ pub async fn system_recovery_wizard() -> CommandResponse<RecoveryWizard> {
         discovered_vaults: vec![],
         available_methods: vec![],
     };
-    
+
     Ok(CommandResponse::Success {
         data: wizard,
         message: "Starting recovery wizard".into(),
@@ -268,9 +282,11 @@ pub async fn system_recovery_wizard() -> CommandResponse<RecoveryWizard> {
 ### Scenario 5: Partial Recovery (Some Keys Lost)
 
 #### Situation
+
 User has lost some but not all authentication methods.
 
 #### Assessment
+
 ```
 Recovery Assessment
 ──────────────────
@@ -295,9 +311,11 @@ Available keys:
 ### Scenario 6: Enterprise Recovery
 
 #### Situation
+
 Employee leaves company, YubiKey must be revoked.
 
 #### Admin Recovery Process
+
 ```rust
 pub struct EnterpriseRecovery {
     pub escrow_enabled: bool,
@@ -312,23 +330,23 @@ impl EnterpriseRecovery {
     ) -> Result<(), Error> {
         // Verify admin authorization
         verify_admin(admin_auth)?;
-        
+
         // Get user's vaults
         let vaults = get_user_vaults(user_id)?;
-        
+
         // Re-encrypt without revoked key
         for vault in vaults {
             let mut recipients = vault.recipients.clone();
             recipients.retain(|r| r.user_id != user_id);
-            
+
             // Add enterprise recovery key if needed
             if recipients.is_empty() {
                 recipients.push(get_enterprise_recovery_key()?);
             }
-            
+
             re_encrypt_vault(vault, recipients)?;
         }
-        
+
         Ok(())
     }
 }
@@ -339,6 +357,7 @@ impl EnterpriseRecovery {
 ### Preventive Measures
 
 #### 1. Regular Backup Verification
+
 ```
 Monthly Backup Check
 ───────────────────
@@ -355,22 +374,23 @@ Test your recovery methods:
 ```
 
 #### 2. Redundancy Requirements
+
 ```rust
 pub fn assess_redundancy(metadata: &MetadataV2) -> RedundancyLevel {
     let active_recipients = metadata.recipients
         .iter()
         .filter(|r| r.status == "active")
         .count();
-    
+
     let has_passphrase = metadata.recipients
         .iter()
         .any(|r| r.type_ == RecipientType::Passphrase);
-    
+
     let yubikey_count = metadata.recipients
         .iter()
         .filter(|r| r.type_ == RecipientType::YubiKey)
         .count();
-    
+
     match (active_recipients, has_passphrase, yubikey_count) {
         (1, _, _) => RedundancyLevel::Critical,  // Single point of failure
         (2, true, 1) => RedundancyLevel::Good,   // Passphrase + 1 YubiKey
@@ -383,42 +403,49 @@ pub fn assess_redundancy(metadata: &MetadataV2) -> RedundancyLevel {
 ### Recovery Documentation
 
 #### User Recovery Card Template
+
 ```markdown
 # Barqly Vault Recovery Information
 
 ## Your Protection Methods
+
 - [ ] Passphrase (memorized)
-- [ ] YubiKey Serial: __________ (location: _________)
-- [ ] Backup YubiKey Serial: __________ (location: _________)
-- [ ] Printed backup (location: _________)
+- [ ] YubiKey Serial: ****\_\_**** (location: ****\_****)
+- [ ] Backup YubiKey Serial: ****\_\_**** (location: ****\_****)
+- [ ] Printed backup (location: ****\_****)
 
 ## Recovery Procedures
 
 ### If YubiKey Lost:
+
 1. Use passphrase or backup YubiKey
 2. Remove lost key from system
 3. Add replacement YubiKey
 
 ### If PIN Forgotten:
+
 1. Use passphrase instead
 2. Or use backup YubiKey
 3. Reset YubiKey if needed (data loss!)
 
 ### If Everything Lost:
+
 1. Check cloud backups
 2. Check offsite storage
-3. Contact: ______________
+3. Contact: ******\_\_******
 
 ## Important Contacts
-- IT Support: ______________
+
+- IT Support: ******\_\_******
 - Barqly Support: support@barqly.com
 
-Last Updated: ______________
+Last Updated: ******\_\_******
 ```
 
 ## Recovery Metrics
 
 ### Track Recovery Success
+
 ```rust
 #[derive(Serialize)]
 pub struct RecoveryMetrics {
@@ -442,7 +469,7 @@ pub fn log_recovery_attempt(
         "duration_seconds": duration.as_secs(),
         "timestamp": Utc::now(),
     }));
-    
+
     // Update metrics
     RECOVERY_METRICS.lock().unwrap().record(method, success, duration);
 }
@@ -451,6 +478,7 @@ pub fn log_recovery_attempt(
 ## Emergency Recovery Hotline
 
 ### Support Script for Recovery
+
 ```
 1. Verify user identity
 2. Assess available recovery methods
@@ -468,6 +496,7 @@ Common Issues:
 ## Conclusion
 
 Successful recovery depends on:
+
 1. **Multiple backup methods** configured during setup
 2. **Regular verification** of backup methods
 3. **Clear documentation** of recovery procedures
