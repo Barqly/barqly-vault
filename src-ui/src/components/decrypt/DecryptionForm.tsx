@@ -65,7 +65,7 @@ const DecryptionForm: React.FC<DecryptionFormProps> = ({
           mode="single"
           acceptedFormats={[]}
           dropText="Drop your encrypted vault here (.age format)"
-          browseButtonText="Select Vault File"
+          browseButtonText="Select Vault"
           icon="decrypt"
         />
       </FormSection>

@@ -164,7 +164,7 @@ describe('DecryptPage', () => {
       expect(screen.getByText('Zero network')).toBeInTheDocument();
 
       // File selection UI is available for user
-      expect(screen.getByText('Select Vault File')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select Vault' })).toBeInTheDocument();
       expect(screen.getByText('Drop your encrypted vault here (.age format)')).toBeInTheDocument();
     });
   });
@@ -604,7 +604,7 @@ describe('DecryptPage', () => {
       const { rerender } = renderWithRouter(<DecryptPage />);
 
       // Initially no file selected - file selection UI should be available
-      expect(screen.getByText('Select Vault File')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select Vault' })).toBeInTheDocument();
 
       // Update hooks to simulate file selection
       mockWorkflowHook.selectedFile = '/path/to/encrypted.age';
@@ -659,7 +659,7 @@ describe('DecryptPage', () => {
       renderWithRouter(<DecryptPage />);
 
       // Verify initial state with no file selected - file selection UI should be available
-      expect(screen.getByText('Select Vault File')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Select Vault' })).toBeInTheDocument();
 
       // Mock hook state remains unchanged (no file selected)
       expect(mockDecryptionHook.selectedFile).toBeNull();
@@ -680,7 +680,7 @@ describe('DecryptPage', () => {
 
       renderWithRouter(<DecryptPage />);
 
-      const selectButton = screen.getByText('Select Vault File');
+      const selectButton = screen.getByRole('button', { name: 'Select Vault' });
       await userEvent.click(selectButton);
 
       // Update workflow hook with error state after click

@@ -54,6 +54,20 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
     );
   }
 
+  // Handle keyboard accessibility for Enter key
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent) => {
+      if (disabled) return;
+
+      // Trigger file selection on Enter or Space key
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleBrowseFiles();
+      }
+    },
+    [disabled, handleBrowseFiles],
+  );
+
   // Render drop zone
   const showFolderButton = mode !== 'single' && mode !== 'folder';
 
@@ -61,6 +75,10 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
     <div
       ref={dropZoneRef}
       {...handlers}
+      tabIndex={disabled ? -1 : 0}
+      role="button"
+      aria-label={mode === 'single' ? 'Select a file' : 'Select files'}
+      onKeyDown={handleKeyDown}
       className={`
         relative min-h-[160px] border-2 border-dashed rounded-lg
         flex flex-col items-center justify-center p-8

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Upload, Lock } from 'lucide-react';
 
 interface DropZoneUIProps {
@@ -12,6 +12,7 @@ interface DropZoneUIProps {
   browseButtonText?: string;
   browseFolderButtonText?: string;
   showFolderButton?: boolean;
+  autoFocus?: boolean;
   onBrowseFiles: () => void;
   onBrowseFolder: () => void;
 }
@@ -27,10 +28,24 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
   browseButtonText = 'Browse Files',
   browseFolderButtonText = 'Browse Folder',
   showFolderButton = false,
+  autoFocus = false,
   onBrowseFiles,
   onBrowseFolder,
 }) => {
   const IconComponent = icon === 'decrypt' ? Lock : Upload;
+  const browseButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-focus the browse button when requested and component is enabled
+  useEffect(() => {
+    if (autoFocus && !disabled && browseButtonRef.current) {
+      // Use a small timeout to ensure the component is fully rendered
+      const timeoutId = setTimeout(() => {
+        browseButtonRef.current?.focus();
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [autoFocus, disabled]);
 
   return (
     <>
@@ -54,16 +69,18 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
 
       <div className="flex gap-3 mt-3">
         <button
+          ref={browseButtonRef}
           onClick={(e) => {
             e.stopPropagation();
             onBrowseFiles();
           }}
           disabled={disabled}
+          aria-label={browseButtonText}
           className={`
             px-4 py-2 text-sm font-medium rounded-md transition-colors
             ${
               !disabled
-                ? 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50'
+                ? 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 focus:outline-none'
                 : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
             }
           `}
@@ -78,11 +95,12 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
               onBrowseFolder();
             }}
             disabled={disabled}
+            aria-label={browseFolderButtonText}
             className={`
               px-4 py-2 text-sm font-medium rounded-md transition-colors
               ${
                 !disabled
-                  ? 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50'
+                  ? 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 focus:outline-none'
                   : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
               }
             `}
