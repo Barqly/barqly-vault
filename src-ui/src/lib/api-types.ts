@@ -170,6 +170,7 @@ export interface DecryptionResult {
   extracted_files: string[];
   output_dir: string;
   manifest_verified: boolean;
+  external_manifest_restored?: boolean | null;
 }
 
 export interface GetEncryptionStatusInput {

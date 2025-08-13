@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Copy, FolderOpen, BookOpen, RotateCcw, Clock, HardDrive } from 'lucide-react';
+import { CheckCircle, Copy, FolderOpen, BookOpen, RotateCcw, HardDrive } from 'lucide-react';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
 
@@ -8,7 +8,6 @@ interface EncryptionSuccessProps {
   fileName: string;
   fileCount: number;
   encryptedSize: number;
-  duration: number;
   onEncryptMore: () => void;
   onViewGuide?: () => void;
 }
@@ -18,7 +17,6 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
   fileName,
   fileCount,
   encryptedSize,
-  duration,
   onEncryptMore,
   onViewGuide,
 }) => {
@@ -107,10 +105,6 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
                 </span>
               </div>
               <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-gray-600">{Math.round(duration / 1000)}s</span>
-              </div>
-              <div className="flex items-center gap-1">
                 <HardDrive className="w-4 h-4 text-gray-500" />
                 <span className="text-sm text-gray-600">{formatFileSize(encryptedSize)}</span>
               </div>
@@ -122,7 +116,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <FolderOpen className="w-4 h-4" />
-                Vault Location:
+                Vault Files Created:
               </span>
               <button
                 onClick={handleCopyPath}
@@ -132,8 +126,16 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
                 {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
-            <p className="font-mono text-xs text-gray-800 break-all bg-white rounded px-2 py-1 border border-gray-200">
-              {outputPath}/{fileName}
+            <div className="space-y-1">
+              <p className="font-mono text-xs text-gray-800 break-all bg-white rounded px-2 py-1 border border-gray-200">
+                {outputPath}/{fileName}
+              </p>
+              <p className="font-mono text-xs text-gray-600 break-all bg-white rounded px-2 py-1 border border-gray-200">
+                {outputPath}/{fileName.replace('.age', '.manifest')}
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              External manifest provides readable vault contents for verification
             </p>
           </div>
 

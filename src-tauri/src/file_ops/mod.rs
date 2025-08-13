@@ -22,6 +22,7 @@
 pub mod archive_manifest;
 pub mod archive_operations;
 pub mod errors;
+pub mod external_manifest;
 pub mod selection;
 pub mod staging;
 pub mod utils;
@@ -33,8 +34,11 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 pub use archive_manifest::{verify_manifest, Manifest};
-pub use archive_operations::{create_archive, extract_archive};
+pub use archive_operations::{create_archive, create_archive_with_file_info, extract_archive};
 pub use errors::FileOpsError;
+pub use external_manifest::{
+    create_external_manifest_for_archive, generate_external_manifest_path, ExternalManifest,
+};
 pub use selection::{FileSelection, SelectionType};
 pub use staging::StagingArea;
 pub use validation::{validate_file_size, validate_paths};

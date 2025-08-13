@@ -17,6 +17,7 @@ This tool provides a "capture what you see" approach to UI screenshot capture. Y
 ## Quick Start
 
 ### Setup
+
 ```bash
 # Install dependencies (run once)
 make ui-capture-setup
@@ -25,6 +26,7 @@ npm run ui:capture:setup
 ```
 
 ### Basic Usage
+
 ```bash
 # Start capture session
 make ui-capture
@@ -61,12 +63,12 @@ c [Enter]
 > ✅ Screenshot 1 captured
 > 📝 Enter description: Setup screen - empty form
 
-c [Enter]  
+c [Enter]
 > ✅ Screenshot 2 captured
 > 📝 Enter description: Setup screen - validation errors
 
 c [Enter]
-> ✅ Screenshot 3 captured  
+> ✅ Screenshot 3 captured
 > 📝 Enter description: Encrypt screen - files selected
 
 q [Enter]
@@ -79,7 +81,7 @@ q [Enter]
 
 ```
 docs/ui-captures/
-├── sessions/                    # Gitignored - raw screenshots  
+├── sessions/                    # Gitignored - raw screenshots
 │   └── 2025-01-09_143022/
 │       ├── screenshots/
 │       │   ├── capture-1.png
@@ -101,6 +103,7 @@ docs/ui-captures/
 4. **Save results** in `analysis-results.md` for future reference
 
 The generated analysis prompt includes:
+
 - Screenshot metadata and descriptions
 - Structured analysis request for design consistency
 - Specific focus areas (colors, typography, layout, UX)
@@ -109,19 +112,24 @@ The generated analysis prompt includes:
 ## Advanced Usage
 
 ### Analysis Only
+
 Generate analysis prompt for existing capture session:
+
 ```bash
 make ui-analyze
 npm run ui:analyze
 ```
 
 ### Custom Session Names (Future)
+
 ```bash
 npm run ui:capture -- --session="error-states-audit"
 ```
 
-### Auto-Analysis (Future) 
+### Auto-Analysis (Future)
+
 Direct Claude Code integration:
+
 ```bash
 npm run ui:capture -- --auto-analyze
 ```
@@ -129,24 +137,28 @@ npm run ui:capture -- --auto-analyze
 ## Use Cases
 
 ### Error State Documentation
+
 1. Navigate to forms with various error states
 2. Capture each error presentation
 3. Analyze consistency of error styling
 
-### Workflow State Analysis  
+### Workflow State Analysis
+
 1. Go through complete user workflows (setup → encrypt → decrypt)
 2. Capture key states in each workflow
 3. Analyze consistency across user journeys
 
 ### Component Consistency Audit
+
 1. Find screens with similar components (buttons, forms, cards)
 2. Capture variations of the same component types
 3. Identify standardization opportunities
 
 ### Before/After Comparison
+
 1. Capture current UI state
 2. Make design changes
-3. Capture updated state  
+3. Capture updated state
 4. Compare sessions for improvement validation
 
 ## Tips
@@ -161,20 +173,26 @@ npm run ui:capture -- --auto-analyze
 ## Troubleshooting
 
 ### Permission Issues
+
 If screenshot capture fails:
+
 - Check system screenshot permissions for Terminal/Node
 - Try running with `sudo` (not recommended for regular use)
 - Verify no screen recording restrictions
 
 ### Dependencies
+
 If tool fails to start:
+
 ```bash
 cd scripts/ui-capture
 npm install
 ```
 
 ### File System Issues
+
 If directory creation fails:
+
 - Verify write permissions in `docs/` directory
 - Check available disk space
 - Ensure `docs/ui-captures/` exists
@@ -198,4 +216,4 @@ The tool integrates seamlessly with existing development workflow:
 
 ---
 
-*Part of Barqly Vault development tools. See main project documentation for more information.*
+_Part of Barqly Vault development tools. See main project documentation for more information._

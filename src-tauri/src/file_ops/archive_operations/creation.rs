@@ -114,6 +114,53 @@ pub fn create_archive_with_progress(
     Ok(operation)
 }
 
+/// Create archive and return operation info, file information, and staging path for external manifest
+pub fn create_archive_with_file_info(
+    selection: &FileSelection,
+    output_path: &Path,
+    config: &FileOpsConfig,
+) -> Result<(ArchiveOperation, Vec<crate::file_ops::FileInfo>, std::path::PathBuf)> {
+    info!(
+        "Creating archive with file info: {} -> {}",
+        match selection {
+            FileSelection::Files(files) => format!("{} files", files.len()),
+            FileSelection::Folder(folder) => format!("folder: {}", folder.display()),
+        },
+        output_path.display()
+    );
+
+    // Validate output path
+    validate_archive_path(output_path)?;
+
+    // Create staging area
+    let mut staging = StagingArea::new()?;
+    staging.stage_files(selection)?;
+
+    // Get file information and staging path before creating archive
+    let file_info: Vec<crate::file_ops::FileInfo> = staging.staged_files().to_vec();
+    let staging_path = staging.path().to_path_buf();
+
+    // Create archive
+    let archive_info = create_tar_gz(&staging, output_path, config)?;
+
+    // Create archive operation info
+    let operation = ArchiveOperation {
+        archive_path: output_path.to_path_buf(),
+        manifest_path: None, // Will be set by manifest module
+        total_size: archive_info.compressed_size,
+        file_count: staging.file_count(),
+        created: chrono::Utc::now(),
+        archive_hash: archive_info.archive_hash,
+    };
+
+    info!(
+        "Archive created successfully: {} bytes, {} files",
+        operation.total_size, operation.file_count
+    );
+
+    Ok((operation, file_info, staging_path))
+}
+
 /// Create TAR.GZ archive from staging area
 pub(super) fn create_tar_gz(
     staging: &StagingArea,

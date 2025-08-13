@@ -203,9 +203,9 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     progress_manager.set_progress(PROGRESS_ENCRYPT_ARCHIVE_START, "Creating archive...");
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
-    // Create archive with progress reporting
-    let archive_operation = error_handler.handle_operation_error(
-        file_ops::create_archive(&file_selection, &output_path, &config),
+    // Create archive with progress reporting and capture file info for external manifest
+    let (archive_operation, archive_files, staging_path) = error_handler.handle_operation_error(
+        file_ops::create_archive_with_file_info(&file_selection, &output_path, &config),
         "create_archive",
         ErrorCode::EncryptionFailed,
     )?;
@@ -246,6 +246,24 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
         "write_encrypted_file",
         ErrorCode::EncryptionFailed,
     )?;
+
+    // Create external manifest file for user-facing vault information
+    progress_manager.set_progress(PROGRESS_ENCRYPT_CLEANUP, "Creating manifest file...");
+    super::update_global_progress(&operation_id, progress_manager.get_current_update());
+
+    let external_manifest_path = file_ops::generate_external_manifest_path(&encrypted_path);
+    if let Err(manifest_err) = file_ops::create_external_manifest_for_archive(
+        &archive_operation,
+        &archive_files,
+        &staging_path,
+        &encrypted_path,
+        &input.key_id,
+        public_key_str,
+        Some(&external_manifest_path),
+    ) {
+        // Log warning but don't fail the entire operation for external manifest
+        tracing::warn!("Failed to create external manifest: {}", manifest_err);
+    }
 
     // Clean up temporary archive file with proper error handling
     progress_manager.set_progress(PROGRESS_ENCRYPT_CLEANUP, "Cleaning up temporary files...");

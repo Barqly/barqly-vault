@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, FolderOpen, Copy, FileText, Clock, HardDrive } from 'lucide-react';
+import { CheckCircle, FolderOpen, Copy, FileText, HardDrive } from 'lucide-react';
 import { DecryptionResult } from '../../lib/api-types';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
@@ -41,11 +41,6 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
   const formatFileSize = (_files: string[]): string => {
     // This would need actual size calculation
     return '1.8 MB';
-  };
-
-  const getDecryptionTime = (): string => {
-    // This would need actual time tracking
-    return '12 seconds';
   };
 
   return (
@@ -107,10 +102,6 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
                 </span>
               </div>
               <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-gray-600">{getDecryptionTime()}</span>
-              </div>
-              <div className="flex items-center gap-1">
                 <HardDrive className="w-4 h-4 text-gray-500" />
                 <span className="text-sm text-gray-600">
                   {formatFileSize(result.extracted_files)}
@@ -119,17 +110,35 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
             </div>
 
             {/* Manifest status inline */}
-            {result.manifest_verified !== undefined && (
-              <div
-                className={`flex items-center gap-1 text-sm ${
-                  result.manifest_verified ? 'text-green-600' : 'text-amber-600'
-                }`}
-              >
-                <span className="text-xs">
-                  {result.manifest_verified ? '✓ Verified' : '⚠ Unverified'}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {result.manifest_verified !== undefined && (
+                <div
+                  className={`flex items-center gap-1 text-sm ${
+                    result.manifest_verified ? 'text-green-600' : 'text-amber-600'
+                  }`}
+                >
+                  <span className="text-xs">
+                    {result.manifest_verified ? '✓ Verified' : '⚠ Unverified'}
+                  </span>
+                </div>
+              )}
+
+              {/* External manifest restoration status */}
+              {result.external_manifest_restored !== undefined &&
+                result.external_manifest_restored !== null && (
+                  <div
+                    className={`flex items-center gap-1 text-sm ${
+                      result.external_manifest_restored ? 'text-green-600' : 'text-amber-600'
+                    }`}
+                  >
+                    <span className="text-xs">
+                      {result.external_manifest_restored
+                        ? '📄 Manifest Restored'
+                        : '⚠ Manifest Not Restored'}
+                    </span>
+                  </div>
+                )}
+            </div>
           </div>
 
           {/* File location - more compact */}

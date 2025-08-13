@@ -34,6 +34,8 @@ pub struct DecryptionResult {
     pub extracted_files: Vec<String>,
     pub output_dir: String,
     pub manifest_verified: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub external_manifest_restored: Option<bool>,
 }
 
 impl ValidateInput for DecryptDataInput {
@@ -173,6 +175,12 @@ pub async fn decrypt_data(
         ErrorCode::InternalError,
     )?;
 
+    // Restore external manifest if it exists alongside the encrypted file
+    progress_manager.set_progress(PROGRESS_DECRYPT_CLEANUP, "Restoring manifest file...");
+    super::update_global_progress(&operation_id, progress_manager.get_current_update());
+    let external_manifest_restored =
+        restore_external_manifest_if_exists(&input.encrypted_file, output_path, &error_handler);
+
     // Clean up temporary file
     progress_manager.set_progress(PROGRESS_DECRYPT_CLEANUP, "Cleaning up temporary files...");
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
@@ -215,6 +223,7 @@ pub async fn decrypt_data(
         extracted_files: extracted_file_paths,
         output_dir: input.output_dir,
         manifest_verified,
+        external_manifest_restored,
     })
 }
 
@@ -281,5 +290,58 @@ fn verify_manifest_if_exists(
             HashMap::new(),
         );
         true
+    }
+}
+
+/// Helper function to restore external manifest if it exists alongside the encrypted file
+fn restore_external_manifest_if_exists(
+    encrypted_file_path: &str,
+    output_path: &Path,
+    _error_handler: &ErrorHandler,
+) -> Option<bool> {
+    let encrypted_path = Path::new(encrypted_file_path);
+    let external_manifest_path = file_ops::generate_external_manifest_path(encrypted_path);
+
+    // Check if external manifest exists
+    if !external_manifest_path.exists() {
+        log_operation(
+            crate::logging::LogLevel::Info,
+            "No external manifest found, skipping restoration",
+            &SpanContext::new("restore_external_manifest"),
+            HashMap::new(),
+        );
+        return None;
+    }
+
+    // Try to copy the external manifest to the output directory
+    let output_manifest_path = output_path.join(
+        external_manifest_path
+            .file_name()
+            .unwrap_or_else(|| std::ffi::OsStr::new("vault.manifest")),
+    );
+
+    match std::fs::copy(&external_manifest_path, &output_manifest_path) {
+        Ok(_) => {
+            log_operation(
+                crate::logging::LogLevel::Info,
+                &format!(
+                    "External manifest restored successfully: {} -> {}",
+                    external_manifest_path.display(),
+                    output_manifest_path.display()
+                ),
+                &SpanContext::new("restore_external_manifest"),
+                HashMap::new(),
+            );
+            Some(true)
+        }
+        Err(e) => {
+            log_operation(
+                crate::logging::LogLevel::Warn,
+                &format!("Failed to restore external manifest: {e}"),
+                &SpanContext::new("restore_external_manifest"),
+                HashMap::new(),
+            );
+            Some(false)
+        }
     }
 }

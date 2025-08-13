@@ -95,6 +95,7 @@ export enum ErrorCode {
   // Operation errors
   ENCRYPTION_FAILED = 'ENCRYPTION_FAILED',
   DECRYPTION_FAILED = 'DECRYPTION_FAILED',
+  KEY_GENERATION_FAILED = 'KEY_GENERATION_FAILED',
   STORAGE_FAILED = 'STORAGE_FAILED',
   ARCHIVE_CORRUPTED = 'ARCHIVE_CORRUPTED',
   MANIFEST_INVALID = 'MANIFEST_INVALID',
@@ -174,6 +175,7 @@ export interface DecryptionResult {
   extracted_files: string[];
   output_dir: string;
   manifest_verified: boolean;
+  external_manifest_restored?: boolean | null;
 }
 
 export interface GetEncryptionStatusInput {
