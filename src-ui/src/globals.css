@@ -120,27 +120,5 @@
 }
 
 @layer components {
-  /* Button group styling for visually connected buttons */
-  .button-group {
-    @apply shadow-sm;
-  }
-
-  .button-group > button:not(:first-child):not(:last-child) {
-    @apply rounded-none;
-  }
-
-  .button-group > button:not(:last-child) {
-    @apply border-r-0;
-  }
-
-  /* Ensure proper border rendering on hover/focus */
-  .button-group > button:hover + button,
-  .button-group > button:focus + button {
-    @apply border-l-transparent;
-  }
-
-  /* Maintain visual connection on focus */
-  .button-group > button:focus {
-    @apply relative;
-  }
+  /* Component utilities */
 }

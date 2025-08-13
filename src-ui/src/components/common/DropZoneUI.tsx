@@ -61,8 +61,8 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
 
       <p className="text-sm text-gray-500 mb-1">- or -</p>
 
-      {/* Button group container - visually grouped for consistency */}
-      <div className={`inline-flex mt-3 ${showFolderButton ? 'button-group' : ''}`}>
+      {/* Side-by-side buttons with unified styling for cohesion */}
+      <div className={`flex items-center justify-center mt-3 ${showFolderButton ? 'gap-3' : ''}`}>
         <button
           ref={browseButtonRef}
           onClick={(e) => {
@@ -70,14 +70,16 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
             onBrowseFiles();
           }}
           disabled={disabled}
-          aria-label={browseButtonText}
+          aria-label={showFolderButton ? 'Select one or more files to encrypt' : browseButtonText}
           className={`
-            px-4 py-2 text-sm font-medium transition-colors focus:z-10
-            ${showFolderButton ? 'rounded-l-md border-r-0' : 'rounded-md'}
+            inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium
+            transition-colors duration-150 ease-in-out focus:outline-none
+            focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2
+            ${showFolderButton ? 'w-32' : 'w-auto'}
             ${
               !disabled
-                ? 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 focus:outline-none'
-                : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                ? 'border border-blue-600 text-blue-600 bg-white hover:bg-blue-50/50 hover:border-blue-700 active:bg-blue-50/80'
+                : 'border border-gray-300 text-gray-400 bg-white cursor-not-allowed'
             }
           `}
         >
@@ -91,13 +93,15 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
               onBrowseFolder();
             }}
             disabled={disabled}
-            aria-label={browseFolderButtonText}
+            aria-label="Select an entire folder to encrypt"
             className={`
-              px-4 py-2 text-sm font-medium rounded-r-md transition-colors focus:z-10
+              inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium w-32
+              transition-colors duration-150 ease-in-out focus:outline-none
+              focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2
               ${
                 !disabled
-                  ? 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 focus:outline-none'
-                  : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                  ? 'border border-blue-600 text-blue-600 bg-white hover:bg-blue-50/50 hover:border-blue-700 active:bg-blue-50/80'
+                  : 'border border-gray-300 text-gray-400 bg-white cursor-not-allowed'
               }
             `}
           >
