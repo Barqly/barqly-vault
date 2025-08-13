@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileEncryption } from './useFileEncryption';
-import { useToast } from './useToast';
 import { ErrorCode, CommandError } from '../lib/api-types';
 import { createCommandError } from '../lib/errors/command-error';
 
@@ -33,8 +32,6 @@ export const useEncryptionWorkflow = () => {
     clearError: clearFileError,
     clearSelection,
   } = fileEncryptionHook;
-
-  const { toasts, showError, showInfo, removeToast } = useToast();
 
   // Workflow state - mirrors useDecryptionWorkflow
   const [selectedKeyId, setSelectedKeyId] = useState<string>('');
@@ -247,12 +244,6 @@ export const useEncryptionWorkflow = () => {
     clearSelection,
     setOutputPath,
     setArchiveName,
-
-    // From useToast
-    toasts,
-    removeToast,
-    showInfo,
-    showError,
 
     // Computed
     currentStep,

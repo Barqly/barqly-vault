@@ -2,7 +2,6 @@ import React from 'react';
 import { useEncryptionWorkflow } from '../hooks/useEncryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import { ErrorCode } from '../lib/api-types';
-import ToastContainer from '../components/ui/ToastContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import AppHeader from '../components/common/AppHeader';
 import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
@@ -42,10 +41,6 @@ const EncryptPage: React.FC = () => {
     clearSelection,
     setOutputPath,
     setArchiveName,
-
-    // From useToast
-    toasts,
-    removeToast,
 
     // Computed
     currentStep,
@@ -162,9 +157,6 @@ const EncryptPage: React.FC = () => {
           </AnimatedTransition>
         </div>
       </div>
-
-      {/* Toast notifications */}
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

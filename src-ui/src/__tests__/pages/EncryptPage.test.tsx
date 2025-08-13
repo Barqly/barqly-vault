@@ -21,7 +21,7 @@ vi.mock('../../components/forms/KeySelectionDropdown', () => ({
   )),
 }));
 
-vi.mock('../../components/encrypt/FileDropZone', () => ({
+vi.mock('../../components/common/FileDropZone', () => ({
   default: vi.fn(() => (
     <div data-testid="file-drop-zone">
       <p>Drop files here</p>
@@ -97,12 +97,6 @@ describe('EncryptPage', () => {
     clearSelection: mockClearSelection,
     setOutputPath: mockSetOutputPath,
     setArchiveName: mockSetArchiveName,
-
-    // From useToast
-    toasts: [],
-    removeToast: vi.fn(),
-    showInfo: vi.fn(),
-    showError: vi.fn(),
 
     // Computed
     currentStep: 1,
@@ -364,7 +358,7 @@ describe('EncryptPage', () => {
       expect(tauriEnv.mocks.isWeb()).toBe(true);
     });
 
-    it.skip('should handle file selection in desktop environment - SKIPPED: Needs investigation of ProgressiveEncryptionCards step 1 rendering', async () => {
+    it('should handle file selection in desktop environment', async () => {
       // Step-based UI should support desktop file selection
       // Mock will be handled by useEncryptionWorkflow
 
