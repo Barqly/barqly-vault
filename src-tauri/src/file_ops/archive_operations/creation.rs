@@ -119,7 +119,11 @@ pub fn create_archive_with_file_info(
     selection: &FileSelection,
     output_path: &Path,
     config: &FileOpsConfig,
-) -> Result<(ArchiveOperation, Vec<crate::file_ops::FileInfo>, std::path::PathBuf)> {
+) -> Result<(
+    ArchiveOperation,
+    Vec<crate::file_ops::FileInfo>,
+    std::path::PathBuf,
+)> {
     info!(
         "Creating archive with file info: {} -> {}",
         match selection {

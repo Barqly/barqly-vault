@@ -75,12 +75,13 @@ impl ExternalManifest {
             .iter()
             .map(|file| {
                 // Convert staging path to archive-relative path
-                let relative_path = file.path
+                let relative_path = file
+                    .path
                     .strip_prefix(staging_path)
                     .unwrap_or(&file.path)
                     .to_string_lossy()
                     .to_string();
-                
+
                 ContentEntry {
                     file: relative_path,
                     size: format_file_size(file.size),
