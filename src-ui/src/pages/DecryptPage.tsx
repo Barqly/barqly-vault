@@ -2,7 +2,6 @@ import React from 'react';
 import { useDecryptionWorkflow } from '../hooks/useDecryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import { ErrorCode } from '../lib/api-types';
-import ToastContainer from '../components/ui/ToastContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import AppHeader from '../components/common/AppHeader';
 import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
@@ -44,11 +43,6 @@ const DecryptPage: React.FC = () => {
     clearSelection,
     setPassphrase,
     setOutputPath,
-
-    // From useToast
-    toasts,
-    removeToast,
-    showInfo,
 
     // Computed
     currentStep,
@@ -141,9 +135,9 @@ const DecryptPage: React.FC = () => {
                   onKeyChange={handleKeyChange}
                   onPassphraseChange={setPassphrase}
                   onNeedHelp={() => {
-                    showInfo(
-                      'Passphrase Recovery',
-                      'Check your password manager, backup notes, or contact support for assistance',
+                    // TODO: Consider implementing inline help panel instead of toast
+                    console.log(
+                      'Help requested: Check your password manager, backup notes, or contact support',
                     );
                   }}
                   onStepChange={handleStepNavigation}
@@ -169,9 +163,6 @@ const DecryptPage: React.FC = () => {
           </AnimatedTransition>
         </div>
       </div>
-
-      {/* Toast notifications */}
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

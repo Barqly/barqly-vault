@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileDecryption } from './useFileDecryption';
-import { useToast } from './useToast';
 import { ErrorCode, CommandError } from '../lib/api-types';
 import { createCommandError } from '../lib/errors/command-error';
 
@@ -34,8 +33,6 @@ export const useDecryptionWorkflow = () => {
     clearError,
     clearSelection,
   } = fileDecryptionHook;
-
-  const { toasts, showError, showInfo, removeToast } = useToast();
 
   // Workflow state
   const [passphraseAttempts, setPassphraseAttempts] = useState(0);
@@ -177,10 +174,8 @@ export const useDecryptionWorkflow = () => {
         const message = (err as any).message.toLowerCase();
 
         if (message.includes('directory not found')) {
-          showError(
-            'Backend Update Needed',
-            'The decrypt_data command needs to create directories like encrypt_files does',
-          );
+          // This error will be handled by the main error handling mechanism
+          // via the error state in the component
           return;
         }
 
@@ -191,7 +186,7 @@ export const useDecryptionWorkflow = () => {
     } finally {
       setIsDecrypting(false);
     }
-  }, [selectedKeyId, passphrase, outputPath, decryptFile, showError]);
+  }, [selectedKeyId, passphrase, outputPath, decryptFile]);
 
   // Generate default output path
   const getDefaultOutputPath = useCallback(async () => {
@@ -272,12 +267,6 @@ export const useDecryptionWorkflow = () => {
     clearSelection,
     setPassphrase,
     setOutputPath,
-
-    // From useToast
-    toasts,
-    removeToast,
-    showInfo,
-    showError,
 
     // Computed
     currentStep,

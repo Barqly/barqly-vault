@@ -6,14 +6,12 @@ import { BrowserRouter } from 'react-router-dom';
 import DecryptPage from '../../pages/DecryptPage';
 import { useFileDecryption } from '../../hooks/useFileDecryption';
 import { useDecryptionWorkflow } from '../../hooks/useDecryptionWorkflow';
-import { useToast } from '../../hooks/useToast';
 import { ErrorCode } from '../../lib/api-types';
 import { createTauriTestEnvironment, MOCK_RESPONSES, resetTauriMocks } from '../utils/tauri-mocks';
 
 // Mock the hooks
 vi.mock('../../hooks/useFileDecryption');
 vi.mock('../../hooks/useDecryptionWorkflow');
-vi.mock('../../hooks/useToast');
 
 // Mock Tauri APIs
 vi.mock('@tauri-apps/plugin-dialog', () => ({
@@ -42,7 +40,6 @@ vi.mock('@tauri-apps/api/core', () => ({
 
 const mockUseFileDecryption = vi.mocked(useFileDecryption);
 const mockUseDecryptionWorkflow = vi.mocked(useDecryptionWorkflow);
-const mockUseToast = vi.mocked(useToast);
 
 // Helper function to render with router
 const renderWithRouter = (component: React.ReactElement) => {
@@ -70,17 +67,6 @@ describe('DecryptPage', () => {
     outputPath: null,
   };
 
-  const mockToastHook: any = {
-    toasts: [],
-    showError: vi.fn(),
-    showSuccess: vi.fn(),
-    showInfo: vi.fn(),
-    showWarning: vi.fn(),
-    removeToast: vi.fn(),
-    addToast: vi.fn(),
-    clearAll: vi.fn(),
-  };
-
   const mockWorkflowHook: any = {
     // State from useFileDecryption
     selectedFile: null,
@@ -102,12 +88,6 @@ describe('DecryptPage', () => {
     clearSelection: vi.fn(),
     setPassphrase: vi.fn(),
     setOutputPath: vi.fn(),
-
-    // From useToast
-    toasts: [],
-    removeToast: vi.fn(),
-    showInfo: vi.fn(),
-    showError: vi.fn(),
 
     // Computed
     currentStep: 1, // Default to step 1
@@ -156,13 +136,11 @@ describe('DecryptPage', () => {
       error: null,
       success: null,
       progress: null,
-      toasts: [],
       currentStep: 1, // Default to step 1
     });
 
     mockUseFileDecryption.mockReturnValue(mockDecryptionHook);
     mockUseDecryptionWorkflow.mockReturnValue(mockWorkflowHook);
-    mockUseToast.mockReturnValue(mockToastHook);
 
     // Initialize standardized Tauri mocking
     tauriEnv = createTauriTestEnvironment({
