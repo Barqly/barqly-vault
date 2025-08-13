@@ -165,7 +165,7 @@ describe('DecryptPage', () => {
 
       // File selection UI is available for user
       expect(screen.getByText('Select Vault File')).toBeInTheDocument();
-      expect(screen.getByText('Drop your encrypted vault here')).toBeInTheDocument();
+      expect(screen.getByText('Drop your encrypted vault here (.age format)')).toBeInTheDocument();
     });
   });
 

@@ -91,8 +91,8 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               onError={onFileError}
               disabled={isLoading}
               mode="single"
-              acceptedFormats={['.age']}
-              dropText="Drop your encrypted vault here"
+              acceptedFormats={[]}
+              dropText="Drop your encrypted vault here (.age format)"
               browseButtonText="Select Vault File"
               icon="decrypt"
             />

@@ -63,8 +63,8 @@ const DecryptionForm: React.FC<DecryptionFormProps> = ({
           onError={onFileError}
           disabled={isLoading}
           mode="single"
-          acceptedFormats={['.age']}
-          dropText="Drop your encrypted vault here"
+          acceptedFormats={[]}
+          dropText="Drop your encrypted vault here (.age format)"
           browseButtonText="Select Vault File"
           icon="decrypt"
         />
