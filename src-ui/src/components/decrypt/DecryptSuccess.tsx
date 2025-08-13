@@ -7,10 +7,9 @@ import ScrollHint from '../ui/ScrollHint';
 interface DecryptSuccessProps {
   result: DecryptionResult;
   onDecryptAnother?: () => void;
-  onClose?: () => void;
 }
 
-const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnother, onClose }) => {
+const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnother }) => {
   const [showConfetti, setShowConfetti] = useState(true);
   const [copiedPath, setCopiedPath] = useState(false);
   const [isContentReady, setIsContentReady] = useState(false);
@@ -159,15 +158,7 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
                 onClick={onDecryptAnother}
                 className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Decrypt Another Vault
-              </button>
-            )}
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Close
+                Decrypt More
               </button>
             )}
           </div>

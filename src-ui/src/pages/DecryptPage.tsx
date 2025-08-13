@@ -84,13 +84,7 @@ const DecryptPage: React.FC = () => {
 
           {/* Success display with animation */}
           <AnimatedTransition show={!!success} duration={400}>
-            {success && (
-              <DecryptSuccess
-                result={success}
-                onDecryptAnother={handleDecryptAnother}
-                onClose={handleReset}
-              />
-            )}
+            {success && <DecryptSuccess result={success} onDecryptAnother={handleDecryptAnother} />}
           </AnimatedTransition>
 
           {/* Progress display - show immediately when decrypting starts */}

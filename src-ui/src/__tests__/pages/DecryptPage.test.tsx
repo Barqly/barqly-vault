@@ -451,10 +451,10 @@ describe('DecryptPage', () => {
 
       // Wait for the success component to render and show the button
       await waitFor(() => {
-        expect(screen.getByText('Decrypt Another Vault')).toBeInTheDocument();
+        expect(screen.getByText('Decrypt More')).toBeInTheDocument();
       });
 
-      const anotherButton = screen.getByText('Decrypt Another Vault');
+      const anotherButton = screen.getByText('Decrypt More');
 
       await act(async () => {
         await userEvent.click(anotherButton);
