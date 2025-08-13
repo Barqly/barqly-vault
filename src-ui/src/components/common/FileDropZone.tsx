@@ -26,6 +26,7 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
   autoFocus = false,
 }) => {
   // Use custom hooks for drag-and-drop and file browsing
+  // IMPORTANT: All hooks must be called unconditionally to comply with React's Rules of Hooks
   const { isDragging, dropZoneRef, handlers } = useDragAndDrop({
     disabled,
     mode,
@@ -42,19 +43,6 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
     onFilesSelected,
   });
 
-  // Render selected files view
-  if (selectedFiles) {
-    return (
-      <SelectedFilesDisplay
-        selectedFiles={selectedFiles}
-        onClearFiles={onClearFiles}
-        icon={icon}
-        acceptedFormats={acceptedFormats}
-        className={className}
-      />
-    );
-  }
-
   // Handle keyboard accessibility for Enter key
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {
@@ -68,6 +56,20 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
     },
     [disabled, handleBrowseFiles],
   );
+
+  // Render selected files view
+  // NOTE: This conditional rendering happens AFTER all hooks are called
+  if (selectedFiles) {
+    return (
+      <SelectedFilesDisplay
+        selectedFiles={selectedFiles}
+        onClearFiles={onClearFiles}
+        icon={icon}
+        acceptedFormats={acceptedFormats}
+        className={className}
+      />
+    );
+  }
 
   // Render drop zone
   const showFolderButton = mode !== 'single' && mode !== 'folder';
