@@ -8,7 +8,6 @@ interface DropZoneUIProps {
   title?: string;
   subtitle?: string;
   dropText?: string;
-  acceptedFormats?: string[];
   browseButtonText?: string;
   browseFolderButtonText?: string;
   showFolderButton?: boolean;
@@ -24,7 +23,6 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
   title,
   subtitle,
   dropText = 'Drop files here',
-  acceptedFormats = [],
   browseButtonText = 'Browse Files',
   browseFolderButtonText = 'Browse Folder',
   showFolderButton = false,
@@ -61,13 +59,10 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
 
       {subtitle && <p className="text-sm text-gray-500 mb-3">{subtitle}</p>}
 
-      {acceptedFormats.length > 0 && (
-        <p className="text-xs text-gray-400 mb-3">Accepted formats: {acceptedFormats.join(', ')}</p>
-      )}
-
       <p className="text-sm text-gray-500 mb-1">- or -</p>
 
-      <div className="flex gap-3 mt-3">
+      {/* Button group container - visually grouped for consistency */}
+      <div className={`inline-flex mt-3 ${showFolderButton ? 'button-group' : ''}`}>
         <button
           ref={browseButtonRef}
           onClick={(e) => {
@@ -77,7 +72,8 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
           disabled={disabled}
           aria-label={browseButtonText}
           className={`
-            px-4 py-2 text-sm font-medium rounded-md transition-colors
+            px-4 py-2 text-sm font-medium transition-colors focus:z-10
+            ${showFolderButton ? 'rounded-l-md border-r-0' : 'rounded-md'}
             ${
               !disabled
                 ? 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 focus:outline-none'
@@ -97,7 +93,7 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
             disabled={disabled}
             aria-label={browseFolderButtonText}
             className={`
-              px-4 py-2 text-sm font-medium rounded-md transition-colors
+              px-4 py-2 text-sm font-medium rounded-r-md transition-colors focus:z-10
               ${
                 !disabled
                   ? 'bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 focus:outline-none'

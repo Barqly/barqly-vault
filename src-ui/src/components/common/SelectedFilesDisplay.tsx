@@ -7,7 +7,6 @@ interface SelectedFilesDisplayProps {
   selectedFiles: SelectedFiles;
   onClearFiles?: () => void;
   icon?: 'upload' | 'decrypt';
-  acceptedFormats?: string[];
   className?: string;
 }
 
@@ -15,7 +14,6 @@ const SelectedFilesDisplay: React.FC<SelectedFilesDisplayProps> = ({
   selectedFiles,
   onClearFiles,
   icon = 'upload',
-  acceptedFormats = [],
   className = '',
 }) => {
   const isDecryptMode = icon === 'decrypt';
@@ -65,7 +63,7 @@ const SelectedFilesDisplay: React.FC<SelectedFilesDisplayProps> = ({
                   {getFileName(path)}
                 </span>
               </div>
-              {isDecryptMode && acceptedFormats.includes('.age') && (
+              {isDecryptMode && (
                 <span className="text-xs text-green-600 font-medium">
                   ✓ Valid encryption format
                 </span>

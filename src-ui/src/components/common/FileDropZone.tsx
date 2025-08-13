@@ -65,7 +65,6 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
         selectedFiles={selectedFiles}
         onClearFiles={onClearFiles}
         icon={icon}
-        acceptedFormats={acceptedFormats}
         className={className}
       />
     );
@@ -104,7 +103,6 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
         title={title}
         subtitle={subtitle}
         dropText={dropText}
-        acceptedFormats={acceptedFormats}
         browseButtonText={browseButtonText}
         browseFolderButtonText={browseFolderButtonText}
         showFolderButton={showFolderButton}
