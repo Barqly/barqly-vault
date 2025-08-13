@@ -23,6 +23,7 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
   browseFolderButtonText = 'Browse Folder',
   icon = 'upload',
   className = '',
+  autoFocus = false,
 }) => {
   // Use custom hooks for drag-and-drop and file browsing
   const { isDragging, dropZoneRef, handlers } = useDragAndDrop({
@@ -105,6 +106,7 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
         browseButtonText={browseButtonText}
         browseFolderButtonText={browseFolderButtonText}
         showFolderButton={showFolderButton}
+        autoFocus={autoFocus}
         onBrowseFiles={handleBrowseFiles}
         onBrowseFolder={handleBrowseFolder}
       />

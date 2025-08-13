@@ -67,6 +67,7 @@ const DecryptionForm: React.FC<DecryptionFormProps> = ({
           dropText="Drop your encrypted vault here (.age format)"
           browseButtonText="Select Vault"
           icon="decrypt"
+          autoFocus={true}
         />
       </FormSection>
 

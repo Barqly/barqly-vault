@@ -22,4 +22,5 @@ export interface FileDropZoneProps {
   browseFolderButtonText?: string;
   icon?: 'upload' | 'decrypt';
   className?: string;
+  autoFocus?: boolean;
 }

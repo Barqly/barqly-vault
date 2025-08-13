@@ -95,6 +95,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               dropText="Drop your encrypted vault here (.age format)"
               browseButtonText="Select Vault"
               icon="decrypt"
+              autoFocus={true}
             />
           </div>
         );
