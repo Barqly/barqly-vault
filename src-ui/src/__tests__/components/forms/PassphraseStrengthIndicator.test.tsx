@@ -16,38 +16,38 @@ describe('PassphraseStrengthIndicator', () => {
     score: 4,
   };
 
-  it('should show default message when user has not typed', () => {
+  it('should show no message when user has not typed', () => {
     render(<PassphraseStrengthIndicator strength={mockStrength} hasUserTyped={false} />);
 
-    expect(screen.getByText('Passphrase Strength:')).toBeInTheDocument();
     expect(screen.queryByText('Strong passphrase')).not.toBeInTheDocument();
+    expect(screen.queryByText('Too short')).not.toBeInTheDocument();
   });
 
   it('should show strength message when user has typed', () => {
     render(<PassphraseStrengthIndicator strength={mockStrength} hasUserTyped={true} />);
 
-    expect(screen.getByText('Passphrase Strength: Strong passphrase')).toBeInTheDocument();
+    expect(screen.getByText('Strong passphrase')).toBeInTheDocument();
   });
 
   it('should show green styling for strong passphrase', () => {
     render(<PassphraseStrengthIndicator strength={mockStrength} hasUserTyped={true} />);
 
-    const strengthText = screen.getByText('Passphrase Strength: Strong passphrase');
+    const strengthText = screen.getByText('Strong passphrase');
     expect(strengthText).toHaveClass('text-green-600');
   });
 
   it('should show red styling for weak passphrase', () => {
     render(<PassphraseStrengthIndicator strength={mockWeakStrength} hasUserTyped={true} />);
 
-    const strengthText = screen.getByText('Passphrase Strength: Too short (5/12 characters)');
+    const strengthText = screen.getByText('Too short');
     expect(strengthText).toHaveClass('text-red-600');
   });
 
   it('should render progress bar when user has typed', () => {
     render(<PassphraseStrengthIndicator strength={mockStrength} hasUserTyped={true} />);
 
-    // Look for the progress bar by its characteristic class
-    const progressContainer = document.querySelector('.w-full.bg-gray-200.rounded-full.h-2');
+    // Look for the progress bar by its new characteristic classes
+    const progressContainer = document.querySelector('.h-1\\.5.w-full.rounded-full.bg-slate-200');
     expect(progressContainer).toBeInTheDocument();
   });
 
@@ -55,7 +55,7 @@ describe('PassphraseStrengthIndicator', () => {
     render(<PassphraseStrengthIndicator strength={mockStrength} hasUserTyped={false} />);
 
     // Progress bar should not be present
-    const progressContainer = document.querySelector('.w-full.bg-gray-200.rounded-full.h-2');
+    const progressContainer = document.querySelector('.h-1\\.5.w-full.rounded-full.bg-slate-200');
     expect(progressContainer).not.toBeInTheDocument();
   });
 });
