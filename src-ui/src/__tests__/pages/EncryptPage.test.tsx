@@ -146,9 +146,9 @@ describe('EncryptPage', () => {
 
       // Verify header elements are visible
       expect(screen.getByText('Encrypt Your Vault')).toBeInTheDocument();
-      expect(screen.getByText('Military-grade')).toBeInTheDocument();
-      expect(screen.getByText('Local-only')).toBeInTheDocument();
-      expect(screen.getByText('Zero network')).toBeInTheDocument();
+      expect(screen.getByText('Strong Encryption')).toBeInTheDocument();
+      expect(screen.getByText('Local-Only Storage')).toBeInTheDocument();
+      expect(screen.getByText('No Network Access')).toBeInTheDocument();
     });
   });
 

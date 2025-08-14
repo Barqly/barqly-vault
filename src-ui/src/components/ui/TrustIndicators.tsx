@@ -26,7 +26,7 @@ const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
   if (extended) {
     indicators.push({
       icon: Shield,
-      text: 'Military-grade encryption',
+      text: 'Strong encryption',
     });
   }
 

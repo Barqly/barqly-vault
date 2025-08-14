@@ -85,7 +85,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div className="text-left">
             <h2 className="text-xl font-semibold text-green-800">Vault Successfully Created!</h2>
-            <p className="text-sm text-slate-700">Military-grade encryption applied</p>
+            <p className="text-sm text-slate-700">Strong encryption applied</p>
           </div>
         </div>
       </div>

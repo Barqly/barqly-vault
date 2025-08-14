@@ -40,7 +40,7 @@ const EncryptionProgress: React.FC<EncryptionProgressProps> = ({ progress, onCan
         status: currentProgress >= 20 ? 'completed' : currentProgress >= 10 ? 'active' : 'pending',
       },
       {
-        name: 'Applying military-grade encryption',
+        name: 'Applying strong encryption',
         icon: <Loader2 className="w-4 h-4 animate-spin" />,
         progressRange: [20, 70],
         status: currentProgress >= 70 ? 'completed' : currentProgress >= 20 ? 'active' : 'pending',

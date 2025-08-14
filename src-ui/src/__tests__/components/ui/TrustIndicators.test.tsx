@@ -21,7 +21,7 @@ describe('TrustIndicators', () => {
   it('renders extended indicators when enabled', () => {
     render(<TrustIndicators extended={true} />);
 
-    expect(screen.getByText('Military-grade encryption')).toBeInTheDocument();
+    expect(screen.getByText('Strong encryption')).toBeInTheDocument();
   });
 
   it('has proper accessibility attributes', () => {
@@ -47,6 +47,6 @@ describe('TrustIndicators', () => {
     // Should have all 3 trust indicators
     expect(screen.getByText('Your keys never leave your device')).toBeInTheDocument();
     expect(screen.getByText('Open-source audited')).toBeInTheDocument();
-    expect(screen.getByText('Military-grade encryption')).toBeInTheDocument();
+    expect(screen.getByText('Strong encryption')).toBeInTheDocument();
   });
 });

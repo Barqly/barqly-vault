@@ -159,9 +159,9 @@ describe('DecryptPage', () => {
 
       // Header elements help user feel secure
       expect(screen.getByText('Decrypt Your Vault')).toBeInTheDocument();
-      expect(screen.getByText('Military-grade')).toBeInTheDocument();
-      expect(screen.getByText('Local-only')).toBeInTheDocument();
-      expect(screen.getByText('Zero network')).toBeInTheDocument();
+      expect(screen.getByText('Strong Encryption')).toBeInTheDocument();
+      expect(screen.getByText('Local-Only Storage')).toBeInTheDocument();
+      expect(screen.getByText('No Network Access')).toBeInTheDocument();
 
       // File selection UI is available for user
       expect(screen.getByRole('button', { name: 'Select Vault' })).toBeInTheDocument();
@@ -788,7 +788,7 @@ describe('DecryptPage', () => {
 
       // Component should still render despite listener failure
       expect(screen.getByText('Decrypt Your Vault')).toBeInTheDocument();
-      expect(screen.getByText('Military-grade')).toBeInTheDocument();
+      expect(screen.getByText('Strong Encryption')).toBeInTheDocument();
     });
   });
 });

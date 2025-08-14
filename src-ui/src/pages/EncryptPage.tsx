@@ -2,8 +2,9 @@ import React from 'react';
 import { useEncryptionWorkflow } from '../hooks/useEncryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import { ErrorCode } from '../lib/api-types';
+import { Lock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
-import AppHeader from '../components/common/AppHeader';
+import UniversalHeader from '../components/common/UniversalHeader';
 import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
 import ProgressiveEncryptionCards from '../components/encrypt/ProgressiveEncryptionCards';
 import EncryptionReadyPanel from '../components/encrypt/EncryptionReadyPanel';
@@ -68,7 +69,7 @@ const EncryptPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Unified App Header */}
-      <AppHeader screen="encrypt" includeSkipNav={true} skipNavTarget="#main-content" />
+      <UniversalHeader title="Encrypt Your Vault" icon={Lock} skipNavTarget="#main-content" />
 
       {/* Progress Bar */}
       <ProgressBar

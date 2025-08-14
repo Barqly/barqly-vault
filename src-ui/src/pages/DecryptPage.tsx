@@ -2,8 +2,9 @@ import React from 'react';
 import { useDecryptionWorkflow } from '../hooks/useDecryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import { ErrorCode } from '../lib/api-types';
+import { Unlock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
-import AppHeader from '../components/common/AppHeader';
+import UniversalHeader from '../components/common/UniversalHeader';
 import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
 import ProgressiveDecryptionCards from '../components/decrypt/ProgressiveDecryptionCards';
 import DecryptionReadyPanel from '../components/decrypt/DecryptionReadyPanel';
@@ -62,7 +63,7 @@ const DecryptPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Unified App Header */}
-      <AppHeader screen="decrypt" includeSkipNav={true} skipNavTarget="#main-content" />
+      <UniversalHeader title="Decrypt Your Vault" icon={Unlock} skipNavTarget="#main-content" />
 
       {/* Progress Bar */}
       <ProgressBar

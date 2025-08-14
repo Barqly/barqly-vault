@@ -1,11 +1,12 @@
 import React from 'react';
 import { useSetupWorkflow } from '../hooks/useSetupWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
-import { Shield, Sparkles, Lock, Zap } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import SetupForm from '../components/setup/SetupForm';
 import SetupProgressPanel from '../components/setup/SetupProgressPanel';
 import SetupSuccessPanel from '../components/setup/SetupSuccessPanel';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
+import UniversalHeader from '../components/common/UniversalHeader';
 import { logger } from '../lib/logger';
 
 /**
@@ -37,30 +38,8 @@ const SetupPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Section header bar with tight spacing - matches Encrypt/Decrypt */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="mx-auto max-w-[960px] px-6 h-16 flex items-center justify-between">
-          <h1 className="flex items-center gap-3 text-2xl font-semibold text-slate-900">
-            <Shield className="h-5 w-5 text-blue-600" />
-            Create Your Vault Key
-          </h1>
-          <div className="hidden md:flex gap-2">
-            {/* Trust badges on same row as title */}
-            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 text-slate-700 px-3 h-8 text-sm">
-              <Sparkles className="h-4 w-4 text-slate-600" />
-              Military-grade
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 text-slate-700 px-3 h-8 text-sm">
-              <Lock className="h-4 w-4 text-slate-600" />
-              Local-only
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 text-slate-700 px-3 h-8 text-sm">
-              <Zap className="h-4 w-4 text-slate-600" />
-              Zero network
-            </span>
-          </div>
-        </div>
-      </header>
+      {/* Unified header component */}
+      <UniversalHeader title="Create Your Vault Key" icon={Shield} skipNavTarget="#main-content" />
 
       {/* Main content container */}
       <main className="mx-auto max-w-[960px] px-6" id="main-content">
