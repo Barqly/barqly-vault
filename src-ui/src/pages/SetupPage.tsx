@@ -88,17 +88,6 @@ const SetupPage: React.FC = () => {
               className="relative rounded-2xl border border-slate-200 bg-white shadow-sm py-6 px-6 md:py-6 md:px-7 mt-6"
               style={{"--space-1":"4px", "--space-2":"8px", "--space-3":"12px", "--space-4":"16px", "--space-5":"20px", "--space-6":"24px"} as React.CSSProperties}
             >
-              {/* Security badge (top-right) */}
-              <div 
-                className="absolute top-6 right-6 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50/70 px-3 py-1 text-[13px] leading-5 text-slate-600"
-                aria-label="Keys stay on this device. Nothing is sent over the network."
-              >
-                <svg aria-hidden="true" className="h-3.5 w-3.5 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10 2a6 6 0 00-6 6v2.5a2.5 2.5 0 002 2.45V15a4 4 0 108 0v-2.05a2.5 2.5 0 002-2.45V8a6 6 0 00-6-6zm2 13a2 2 0 11-4 0v-2h4v2z"/>
-                </svg>
-                <span>Keys stay on this device</span>
-              </div>
-
               {/* Progress Display */}
               {progress && <SetupProgressPanel progress={progress} />}
 

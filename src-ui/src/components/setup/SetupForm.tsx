@@ -66,10 +66,35 @@ const SetupForm: React.FC<SetupFormProps> = ({
             placeholder="e.g., Family Vault"
             required={true}
             autoFocus={true}
-            className={`w-full rounded-lg border ${keyLabel.trim().length > 0 ? 'border-green-400' : 'border-slate-300'} bg-white text-slate-900 placeholder:text-slate-400 h-12 px-4 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors`}
+            className={`w-full rounded-lg border ${keyLabel.trim().length > 0 ? 'border-green-400' : 'border-slate-300'} bg-white text-slate-900 placeholder:text-slate-400 h-12 px-4 pr-28 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors`}
           />
+          
+          {/* Security badge in input */}
+          <button
+            type="button"
+            className="group absolute inset-y-0 right-2 my-auto inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50/80 px-2 py-0.5 text-xs leading-[18px] text-slate-600 shadow-[0_1px_0_rgba(0,0,0,0.02)] hover:bg-slate-50 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500/40"
+            aria-describedby="local-only-help"
+          >
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5 text-slate-500 group-hover:text-slate-600">
+              <path d="M10 2c.5 0 .9.1 1.3.3l4.7 2.1v4.1c0 4.1-2.6 7.3-6 8.9-3.4-1.6-6-4.8-6-8.9V4.4l4.7-2.1C9.1 2.1 9.5 2 10 2z"/>
+            </svg>
+            <span>Keys stay on this device</span>
+          </button>
+
+          {/* Tooltip */}
+          <div
+            id="local-only-help"
+            role="tooltip"
+            className="pointer-events-none absolute right-0 z-30 mt-2 hidden w-[280px] rounded-xl border border-slate-200 bg-white p-3 text-[12px] leading-5 text-slate-700 shadow-lg group-hover:block group-focus-visible:block"
+          >
+            <div className="mb-1 font-medium text-slate-900">Local-only</div>
+            <div>Keys are generated and stored on this device. Nothing is sent over the network.</div>
+            {/* Arrow */}
+            <div className="absolute -top-1 right-6 h-2 w-2 rotate-45 bg-white border-l border-t border-slate-200"></div>
+          </div>
+          
           {keyLabel.trim().length > 0 && (
-            <Check className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" />
+            <Check className="absolute right-32 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" />
           )}
         </div>
         {/* Reserved space for validation message */}
