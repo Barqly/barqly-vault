@@ -70,7 +70,7 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     <div className="mt-6">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+        className="inline-flex items-center gap-1.5 text-sm text-blue-700 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 rounded"
         aria-expanded={isOpen}
         aria-controls="help-content"
       >

@@ -43,7 +43,7 @@ const SetupPage: React.FC = () => {
       {/* Main content */}
       <div className="p-4">
         <div className="w-full max-w-2xl mx-auto">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
             {/* Form content */}
             <div className="px-6 py-6">
               {/* Skip navigation target for accessibility */}
