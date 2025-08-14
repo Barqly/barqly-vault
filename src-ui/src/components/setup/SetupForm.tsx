@@ -66,6 +66,28 @@ const SetupForm: React.FC<SetupFormProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Handle Enter key when Create Key button is focused
+    if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'BUTTON') {
+      const target = e.target as HTMLButtonElement;
+      if (target.type === 'submit' && isActuallyFormValid) {
+        e.preventDefault();
+        onSubmit();
+      }
+    }
+  };
+
+  const handleClear = () => {
+    onReset();
+    // Focus the Key Label input after clearing the form
+    setTimeout(() => {
+      const keyLabelInput = document.getElementById('key-label');
+      if (keyLabelInput) {
+        keyLabelInput.focus();
+      }
+    }, 0);
+  };
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="flex flex-col gap-[var(--space-5)] md:gap-[var(--space-6)]">
@@ -86,12 +108,14 @@ const SetupForm: React.FC<SetupFormProps> = ({
               placeholder="e.g., Family Vault"
               required={true}
               autoFocus={true}
+              tabIndex={1}
               className={`w-full rounded-lg border ${keyLabel.trim().length > 0 ? 'border-green-400' : 'border-slate-300'} bg-white text-slate-900 placeholder:text-slate-400 h-12 px-4 pr-28 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors`}
             />
 
             {/* Security indicator in input */}
             <button
               type="button"
+              tabIndex={-1}
               className="absolute inset-y-0 right-2 my-auto inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 cursor-help focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500/40"
               aria-label="Keys stay on this device"
               aria-describedby="local-only-help"
@@ -179,6 +203,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
             placeholder="Enter a strong passphrase"
             showStrength={true}
             required={true}
+            tabIndex={2}
             className=""
           />
         </div>
@@ -199,6 +224,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
             showStrength={false}
             matchValue={passphrase}
             required={true}
+            tabIndex={3}
             className=""
           />
         </div>
@@ -208,8 +234,9 @@ const SetupForm: React.FC<SetupFormProps> = ({
       <div className="mt-[var(--space-4)] flex items-center justify-end gap-[var(--space-3)]">
         <button
           type="button"
-          onClick={onReset}
+          onClick={handleClear}
           title="Clear form (Esc)"
+          tabIndex={4}
           className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           Clear
@@ -218,6 +245,8 @@ const SetupForm: React.FC<SetupFormProps> = ({
           type="submit"
           title="Create key (Enter)"
           disabled={!isActuallyFormValid}
+          tabIndex={5}
+          onKeyDown={handleKeyDown}
           className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
             !isActuallyFormValid
               ? 'bg-slate-200 text-slate-500 cursor-not-allowed'

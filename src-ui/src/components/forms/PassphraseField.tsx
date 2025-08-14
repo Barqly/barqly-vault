@@ -20,6 +20,8 @@ interface PassphraseFieldProps {
   required?: boolean;
   /** Additional CSS classes */
   className?: string;
+  /** Tab index for focus order */
+  tabIndex?: number;
 }
 
 const PassphraseField: React.FC<PassphraseFieldProps> = ({
@@ -31,6 +33,7 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
   matchValue = null,
   required = false,
   className = '',
+  tabIndex,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -69,11 +72,13 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
           placeholder={placeholder}
           className={`${getInputClasses()} ${className}`}
           required={required}
+          tabIndex={tabIndex}
           aria-describedby={showStrength ? `${id}-strength` : undefined}
         />
 
         <button
           type="button"
+          tabIndex={-1}
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 grid place-items-center rounded-md text-slate-500 hover:text-slate-700 transition-colors"
           aria-label={showPassword ? 'Hide passphrase' : 'Show passphrase'}
