@@ -84,9 +84,18 @@ const SetupPage: React.FC = () => {
         ) : (
           <>
             {/* Form card with consistent spacing */}
-            <section 
+            <section
               className="relative rounded-2xl border border-slate-200 bg-white shadow-sm py-6 px-6 md:py-6 md:px-7 mt-6"
-              style={{"--space-1":"4px", "--space-2":"8px", "--space-3":"12px", "--space-4":"16px", "--space-5":"20px", "--space-6":"24px"} as React.CSSProperties}
+              style={
+                {
+                  '--space-1': '4px',
+                  '--space-2': '8px',
+                  '--space-3': '12px',
+                  '--space-4': '16px',
+                  '--space-5': '20px',
+                  '--space-6': '24px',
+                } as React.CSSProperties
+              }
             >
               {/* Progress Display */}
               {progress && <SetupProgressPanel progress={progress} />}

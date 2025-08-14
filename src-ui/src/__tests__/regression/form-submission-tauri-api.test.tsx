@@ -63,78 +63,97 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
 
   describe('REGRESSION: Form Submission Works But API Fails', () => {
     it('should prevent "Cannot read properties of undefined (reading \'invoke\')" in desktop environment', async () => {
-      // Mock the exact scenario where form submission works but Tauri API is undefined
-      const mockGenerateKey = vi.fn().mockImplementation(async () => {
-        // Simulate the original error condition
-        const error = new TypeError("Cannot read properties of undefined (reading 'invoke')");
-        throw error;
-      });
+      // Mock console.error to prevent test output noise
+      const originalConsoleError = console.error;
+      console.error = vi.fn();
 
-      mockUseKeyGeneration.mockReturnValue({
-        ...defaultHookReturn,
-        generateKey: mockGenerateKey,
-      });
+      try {
+        // Mock the exact scenario where form submission works but Tauri API is undefined
+        const mockGenerateKey = vi.fn().mockImplementation(async () => {
+          // Simulate the original error condition
+          const error = new TypeError("Cannot read properties of undefined (reading 'invoke')");
+          throw error;
+        });
 
-      renderWithRouter(<SetupPage />);
+        mockUseKeyGeneration.mockReturnValue({
+          ...defaultHookReturn,
+          generateKey: mockGenerateKey,
+        });
 
-      // Fill out form completely
-      const keyLabelInput = screen.getByLabelText(/key label/i);
-      const passphraseInput = screen.getByLabelText(/^passphrase/i);
-      const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
+        renderWithRouter(<SetupPage />);
 
-      await user.type(keyLabelInput, 'Test Key');
-      await user.type(passphraseInput, 'StrongPassword123!');
-      await user.type(confirmPassphraseInput, 'StrongPassword123!');
+        // Fill out form completely
+        const keyLabelInput = screen.getByLabelText(/key label/i);
+        const passphraseInput = screen.getByLabelText(/^passphrase/i);
+        const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
 
-      // Form should be valid and submittable
-      const submitButton = screen.getByRole('button', { name: /create key/i });
-      expect(submitButton).not.toBeDisabled();
+        await user.type(keyLabelInput, 'Test Key');
+        await user.type(passphraseInput, 'StrongPassword123!');
+        await user.type(confirmPassphraseInput, 'StrongPassword123!');
 
-      // Submit via Enter key (original regression scenario)
-      await user.keyboard('{Enter}');
+        // Form should be valid and submittable
+        const submitButton = screen.getByRole('button', { name: /create key/i });
+        expect(submitButton).not.toBeDisabled();
 
-      // Form submission should work (generateKey should be called)
-      expect(mockGenerateKey).toHaveBeenCalledTimes(1);
+        // Submit via Enter key (original regression scenario)
+        await user.keyboard('{Enter}');
 
-      // But the API error should be handled gracefully
-      // We expect console.error to be called with the specific error
-      await waitFor(() => {
-        // The component should handle the error gracefully without crashing
-        // Check that the form is still present (by checking for key elements)
-        expect(screen.getByLabelText(/key label/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
-      });
+        // Form submission should work (generateKey should be called)
+        expect(mockGenerateKey).toHaveBeenCalledTimes(1);
+
+        // But the API error should be handled gracefully
+        await waitFor(() => {
+          // The component should handle the error gracefully without crashing
+          // Check that the form is still present (by checking for key elements)
+          expect(screen.getByLabelText(/key label/i)).toBeInTheDocument();
+          expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
+        });
+      } finally {
+        // Restore console.error
+        console.error = originalConsoleError;
+      }
     });
 
     it('should prevent API failure when form submission via button click works', async () => {
-      // Test the button click variant of the regression
-      const mockGenerateKey = vi
-        .fn()
-        .mockRejectedValue(new Error('Tauri invoke function not available'));
+      // Mock console.error to prevent test output noise
+      const originalConsoleError = console.error;
+      console.error = vi.fn();
 
-      mockUseKeyGeneration.mockReturnValue({
-        ...defaultHookReturn,
-        generateKey: mockGenerateKey,
-      });
+      try {
+        // Test the button click variant of the regression
+        const mockGenerateKey = vi
+          .fn()
+          .mockRejectedValue(new Error('Tauri invoke function not available'));
 
-      renderWithRouter(<SetupPage />);
+        mockUseKeyGeneration.mockReturnValue({
+          ...defaultHookReturn,
+          generateKey: mockGenerateKey,
+        });
 
-      const keyLabelInput = screen.getByLabelText(/key label/i);
-      const passphraseInput = screen.getByLabelText(/^passphrase/i);
-      const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
-      const submitButton = screen.getByRole('button', { name: /create key/i });
+        renderWithRouter(<SetupPage />);
 
-      await user.type(keyLabelInput, 'Test Key');
-      await user.type(passphraseInput, 'StrongPassword123!');
-      await user.type(confirmPassphraseInput, 'StrongPassword123!');
+        const keyLabelInput = screen.getByLabelText(/key label/i);
+        const passphraseInput = screen.getByLabelText(/^passphrase/i);
+        const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
+        const submitButton = screen.getByRole('button', { name: /create key/i });
 
-      // Submit via button click
-      await user.click(submitButton);
+        await user.type(keyLabelInput, 'Test Key');
+        await user.type(passphraseInput, 'StrongPassword123!');
+        await user.type(confirmPassphraseInput, 'StrongPassword123!');
 
-      expect(mockGenerateKey).toHaveBeenCalledTimes(1);
+        // Submit via button click
+        await user.click(submitButton);
 
-      // Component should remain functional after API error
-      expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
+        expect(mockGenerateKey).toHaveBeenCalledTimes(1);
+
+        // Component should remain functional after API error
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
+        });
+      } finally {
+        // Restore console.error
+        console.error = originalConsoleError;
+      }
     });
 
     it('should handle environment mismatch where form works but Tauri APIs fail', async () => {

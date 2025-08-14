@@ -31,8 +31,9 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
     it('should show passphrase strength indicator', () => {
       render(<KeyGenerationForm />);
 
-      // Only the first field should show strength indicator by default
-      expect(screen.getAllByText(/passphrase strength/i)).toHaveLength(1);
+      // Check for progress bar which indicates strength indicator is present
+      const progressBars = document.querySelectorAll('.h-1\\.5.rounded.bg-slate-200');
+      expect(progressBars).toHaveLength(1); // Only one strength indicator for the main passphrase field
     });
 
     it('should display form validation rules', () => {
@@ -43,7 +44,8 @@ describe('KeyGenerationForm (4.2.1.1)', () => {
       expect(screen.getByRole('button', { name: /passphrase requirements/i })).toBeInTheDocument();
 
       // Only the first field should show strength indicator by default
-      expect(screen.getAllByText(/passphrase strength/i)).toHaveLength(1);
+      const progressBars = document.querySelectorAll('.h-1\\.5.rounded.bg-slate-200');
+      expect(progressBars).toHaveLength(1);
     });
   });
 

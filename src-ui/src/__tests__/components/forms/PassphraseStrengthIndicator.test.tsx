@@ -33,29 +33,33 @@ describe('PassphraseStrengthIndicator', () => {
     render(<PassphraseStrengthIndicator strength={mockStrength} hasUserTyped={true} />);
 
     const strengthText = screen.getByText('Strong passphrase');
-    expect(strengthText).toHaveClass('text-green-600');
+    expect(strengthText).toHaveClass('text-green-700');
   });
 
   it('should show red styling for weak passphrase', () => {
     render(<PassphraseStrengthIndicator strength={mockWeakStrength} hasUserTyped={true} />);
 
-    const strengthText = screen.getByText('Too short');
-    expect(strengthText).toHaveClass('text-red-600');
+    const strengthText = screen.getByText('Too short (5/12 characters)');
+    expect(strengthText).toHaveClass('text-red-700');
   });
 
   it('should render progress bar when user has typed', () => {
     render(<PassphraseStrengthIndicator strength={mockStrength} hasUserTyped={true} />);
 
-    // Look for the progress bar by its new characteristic classes
-    const progressContainer = document.querySelector('.h-1\\.5.w-full.rounded-full.bg-slate-200');
+    // Look for the progress bar by its characteristic classes
+    const progressContainer = document.querySelector('.h-1\\.5.rounded.bg-slate-200');
     expect(progressContainer).toBeInTheDocument();
   });
 
   it('should not render progress bar when user has not typed', () => {
     render(<PassphraseStrengthIndicator strength={mockStrength} hasUserTyped={false} />);
 
-    // Progress bar should not be present
-    const progressContainer = document.querySelector('.h-1\\.5.w-full.rounded-full.bg-slate-200');
-    expect(progressContainer).not.toBeInTheDocument();
+    // Progress bar container should still be there but empty
+    const progressContainer = document.querySelector('.h-1\\.5.rounded.bg-slate-200');
+    expect(progressContainer).toBeInTheDocument();
+
+    // But the filled bar should not be present
+    const progressBar = document.querySelector('.bg-green-600');
+    expect(progressBar).not.toBeInTheDocument();
   });
 });

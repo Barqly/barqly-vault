@@ -53,13 +53,17 @@ describe('PassphraseField', () => {
   it('shows strength indicator when showStrength is true and value exists', () => {
     render(<PassphraseField {...defaultProps} value="test123" showStrength={true} />);
 
-    expect(screen.getByText(/passphrase strength/i)).toBeInTheDocument();
+    // Look for the strength indicator div
+    const strengthIndicator = document.querySelector('#test-passphrase-strength');
+    expect(strengthIndicator).toBeInTheDocument();
   });
 
   it('shows strength indicator with default state when value is empty', () => {
     render(<PassphraseField {...defaultProps} value="" showStrength={true} />);
 
-    expect(screen.getByText(/passphrase strength/i)).toBeInTheDocument();
+    // Look for the strength indicator div - should be present even when empty
+    const strengthIndicator = document.querySelector('#test-passphrase-strength');
+    expect(strengthIndicator).toBeInTheDocument();
   });
 
   it('shows match indicator when matchValue is provided', () => {
