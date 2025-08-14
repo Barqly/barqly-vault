@@ -210,14 +210,6 @@ describe('PassphraseMemoryHints', () => {
   });
 
   describe('Visual Styling', () => {
-    it.skip('should have blue theme for informational hints - REMOVED: Tests implementation not UX', () => {
-      // Testing CSS classes is an implementation detail, not user behavior
-      render(<PassphraseMemoryHints vaultPath="/path/to/vault.age" />);
-
-      const container = screen.getByLabelText('Toggle memory hints').closest('div');
-      expect(container).toHaveClass('bg-blue-50/60', 'border-blue-200');
-    });
-
     it('should display icons for different hint types', () => {
       render(
         <PassphraseMemoryHints
