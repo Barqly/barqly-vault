@@ -125,7 +125,7 @@ const EncryptionReadyPanel: React.FC<EncryptionReadyPanelProps> = ({
         {onPrevious && (
           <button
             onClick={onPrevious}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors"
+            className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
             disabled={isLoading}
           >
             <ChevronLeft className="w-4 h-4" />
@@ -135,7 +135,7 @@ const EncryptionReadyPanel: React.FC<EncryptionReadyPanelProps> = ({
 
         <button
           onClick={handleEncrypt}
-          className="px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center gap-1"
+          className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center gap-1"
           disabled={isLoading || isEncrypting}
         >
           {isEncrypting ? (

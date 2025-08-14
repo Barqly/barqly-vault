@@ -112,7 +112,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
           {canGoToPreviousStep && (
             <button
               onClick={handlePrevious}
-              className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors"
+              className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
               disabled={isLoading}
             >
               <ChevronLeft className="w-4 h-4" />
@@ -123,7 +123,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
           {(currentStep === 1 || currentStep === 2) && (
             <button
               onClick={handleContinue}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 canContinue
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-slate-100 text-slate-400 cursor-not-allowed'

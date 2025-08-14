@@ -92,7 +92,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
             {/* Security indicator in input */}
             <button
               type="button"
-              className="absolute inset-y-0 right-2 my-auto inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 cursor-help focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500/40"
+              className="absolute inset-y-0 right-2 my-auto inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 cursor-help focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500/40"
               aria-label="Keys stay on this device"
               aria-describedby="local-only-help"
               onMouseEnter={handleTooltipShow}

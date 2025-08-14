@@ -84,8 +84,9 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
         <div className="relative z-10 flex items-center justify-center gap-3">
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div className="text-left">
-            <h2 className="text-xl font-semibold text-green-800">Vault Successfully Created!</h2>
-            <p className="text-sm text-slate-700">Strong encryption applied</p>
+            <h2 className="text-xl font-semibold text-green-800">
+              Your vault is ready — strong encryption applied.
+            </h2>
           </div>
         </div>
       </div>
@@ -134,7 +135,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
                 {outputPath}/{fileName.replace('.age', '.manifest')}
               </p>
             </div>
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-sm text-slate-500 mt-2">
               External manifest provides readable vault contents for verification
             </p>
           </div>
