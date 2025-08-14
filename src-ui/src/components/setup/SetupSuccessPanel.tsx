@@ -30,18 +30,19 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({ success, onClose 
       aria-label="Key generation success notification"
     >
       <SuccessMessage
-        title="Key Generated Successfully!"
-        message="Your encryption keypair has been created and securely stored."
+        title="Key generated successfully"
+        message="Your encryption keypair has been created and securely stored on this device."
         showCloseButton={true}
         onClose={onClose}
+        size="lg"
         details={
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">Your Public Key:</p>
-            <div className="bg-gray-50 p-3 rounded font-mono text-xs break-all border transition-colors hover:bg-gray-100">
+            <label className="block mb-1 text-sm font-medium text-gray-800">Your public key</label>
+            <div className="bg-gray-100 rounded-lg p-2 font-mono text-sm text-gray-800 break-all mt-2 mb-3">
               {success.public_key}
             </div>
-            <p className="mt-2 text-xs text-gray-600">
-              Share this public key with others who need to encrypt files for you.
+            <p className="mt-3 text-xs text-gray-500">
+              Share this key with others so they can encrypt files for you.
             </p>
           </div>
         }

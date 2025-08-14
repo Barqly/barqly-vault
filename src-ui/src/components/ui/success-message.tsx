@@ -31,7 +31,7 @@ const successMessageVariants = cva(
 const iconVariants = cva('flex-shrink-0', {
   variants: {
     variant: {
-      default: 'text-green-600 dark:text-green-400',
+      default: 'text-green-700 dark:text-green-400',
       info: 'text-blue-600 dark:text-blue-400',
       warning: 'text-yellow-600 dark:text-yellow-400',
     },
@@ -127,10 +127,10 @@ function SuccessMessage({
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Title */}
-          {title && <h4 className="font-semibold leading-tight mb-1">{title}</h4>}
+          {title && <h4 className="font-medium leading-tight mb-1 text-green-700">{title}</h4>}
 
           {/* Message */}
-          {message && <p className="text-sm leading-relaxed">{message}</p>}
+          {message && <p className="text-sm leading-relaxed text-gray-700">{message}</p>}
 
           {/* Details */}
           {showDetails && details && <div className="mt-3">{details}</div>}

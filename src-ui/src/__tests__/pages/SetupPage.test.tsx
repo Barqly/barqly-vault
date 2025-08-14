@@ -103,7 +103,7 @@ describe('SetupPage', () => {
       renderWithRouter(<SetupPage />);
 
       expect(screen.queryByRole('textbox', { name: /key label/i })).not.toBeInTheDocument();
-      expect(screen.getByText('Key Generated Successfully!')).toBeInTheDocument();
+      expect(screen.getByText('Key generated successfully')).toBeInTheDocument();
     });
   });
 
@@ -337,7 +337,7 @@ describe('SetupPage', () => {
 
       renderWithRouter(<SetupPage />);
 
-      expect(screen.getByText('Key Generated Successfully!')).toBeInTheDocument();
+      expect(screen.getByText('Key generated successfully')).toBeInTheDocument();
       expect(screen.getByText('age1testkey123456789')).toBeInTheDocument();
       expect(screen.getByText(/your public key/i)).toBeInTheDocument();
     });
