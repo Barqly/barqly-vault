@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useKeyGeneration } from './useKeyGeneration';
+import { checkPassphraseStrength } from '../lib/validation/passphrase-validation';
 import { logger } from '../lib/logger';
 
 /**
@@ -24,9 +25,13 @@ export const useSetupWorkflow = () => {
   const [passphrase, setPassphrase] = useState<string>('');
   const [confirmPassphrase, setConfirmPassphrase] = useState<string>('');
 
-  // Validation
+  // Validation - form is valid only when passphrase is strong
+  const passphraseStrength = checkPassphraseStrength(passphrase);
   const isFormValid =
-    !!keyLabel.trim() && !!passphrase && !!confirmPassphrase && passphrase === confirmPassphrase;
+    !!keyLabel.trim() &&
+    passphraseStrength.isStrong &&
+    !!confirmPassphrase &&
+    passphrase === confirmPassphrase;
 
   // Reset handler
   const handleReset = useCallback(() => {

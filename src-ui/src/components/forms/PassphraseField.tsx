@@ -39,23 +39,23 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
 
   const getInputClasses = () => {
     const baseClasses = `
-      w-full rounded-lg px-4 py-3 pr-12
-      text-[15px] text-slate-800 placeholder:text-slate-400
+      w-full rounded-lg h-12 px-4 pr-12
+      text-slate-900 placeholder:text-slate-400
       bg-white border
       outline-none transition
-      focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white
+      focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500
     `.trim();
 
     if (matchValue !== null && value.length > 0) {
-      return isMatch ? `${baseClasses} border-green-600` : `${baseClasses} border-red-600`;
+      return isMatch ? `${baseClasses} border-green-400` : `${baseClasses} border-red-400`;
     }
 
     // Show green border for strong passphrase when showing strength
     if (showStrength && strength && strength.isStrong && value.length > 0) {
-      return `${baseClasses} border-green-600`;
+      return `${baseClasses} border-green-400`;
     }
 
-    return `${baseClasses} border-slate-200`;
+    return `${baseClasses} border-slate-300`;
   };
 
   return (
@@ -75,7 +75,7 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md transition-colors"
+          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 grid place-items-center rounded-md text-slate-500 hover:text-slate-700 transition-colors"
           aria-label={showPassword ? 'Hide passphrase' : 'Show passphrase'}
         >
           {showPassword ? (
@@ -93,22 +93,24 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
         </div>
       )}
 
-      {/* Match Validation */}
-      {isMatch !== null && value && (
-        <div className="mt-2 inline-flex items-center gap-2 text-sm">
-          {isMatch ? (
-            <>
-              <Check className="h-4 w-4 text-green-600" aria-hidden="true" />
-              <span className="text-green-600">Passphrases match</span>
-            </>
-          ) : (
-            <>
-              <X className="h-4 w-4 text-red-600" aria-hidden="true" />
-              <span className="text-red-600">Passphrases don't match</span>
-            </>
-          )}
-        </div>
-      )}
+      {/* Match Validation - Reserved space to prevent jumps */}
+      <div className="h-6 mt-1">
+        {isMatch !== null && value && (
+          <div className="inline-flex items-center gap-2 text-sm">
+            {isMatch ? (
+              <>
+                <Check className="h-4 w-4 text-green-700" aria-hidden="true" />
+                <span className="text-green-700">Passphrases match</span>
+              </>
+            ) : (
+              <>
+                <X className="h-4 w-4 text-red-700" aria-hidden="true" />
+                <span className="text-red-700">Passphrases don't match</span>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -37,88 +37,79 @@ const SetupPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Global header row - in app bar */}
-      <div className="absolute top-4 right-6">
-        <p className="text-sm text-slate-500">Secure file encryption for Bitcoin custody</p>
-      </div>
-
-      {/* Main content container with proper spacing */}
-      <div className="py-10" id="main-content">
-        {/* Section header bar */}
-        <section className="max-w-[960px] mx-auto px-6">
-          <div className="rounded-xl border border-slate-200 bg-white px-6 py-4">
-            <h2 className="flex items-center gap-2 text-[28px] leading-8 font-semibold text-slate-800">
-              <Shield className="h-5 w-5 text-blue-600" />
-              Create Your Vault Key
-            </h2>
-
-            <div className="mt-4 flex gap-3">
-              {/* Security badges */}
-              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs text-slate-700">
-                <Sparkles className="h-3.5 w-3.5 text-slate-500" />
-                Military-grade
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs text-slate-700">
-                <Lock className="h-3.5 w-3.5 text-slate-500" />
-                Local-only
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs text-slate-700">
-                <Zap className="h-3.5 w-3.5 text-slate-500" />
-                Zero network
-              </span>
-            </div>
+      {/* Section header bar with tight spacing - matches Encrypt/Decrypt */}
+      <header className="bg-white border-b border-slate-200">
+        <div className="mx-auto max-w-[960px] px-6 h-16 flex items-center justify-between">
+          <h1 className="flex items-center gap-3 text-2xl font-semibold text-slate-900">
+            <Shield className="h-5 w-5 text-blue-600" />
+            Create Your Vault Key
+          </h1>
+          <div className="hidden md:flex gap-2">
+            {/* Trust badges on same row as title */}
+            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 text-slate-700 px-3 h-8 text-sm">
+              <Sparkles className="h-4 w-4 text-slate-600" />
+              Military-grade
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 text-slate-700 px-3 h-8 text-sm">
+              <Lock className="h-4 w-4 text-slate-600" />
+              Local-only
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 text-slate-700 px-3 h-8 text-sm">
+              <Zap className="h-4 w-4 text-slate-600" />
+              Zero network
+            </span>
           </div>
-        </section>
-
-        {/* Form content container */}
-        <div className="max-w-[960px] mx-auto px-6">
-          {/* Error Display */}
-          {error && (
-            <div className="mt-6">
-              <ErrorMessage
-                error={error}
-                showRecoveryGuidance={true}
-                showCloseButton={true}
-                onClose={clearError}
-              />
-            </div>
-          )}
-
-          {/* Success Display - replaces form card when shown */}
-          {success ? (
-            <div className="mt-6">
-              <SetupSuccessPanel success={success} onClose={handleReset} />
-            </div>
-          ) : (
-            <>
-              {/* Form card */}
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] p-6">
-                {/* Progress Display */}
-                {progress && <SetupProgressPanel progress={progress} />}
-
-                {/* Key Generation Form */}
-                {!isLoading && (
-                  <SetupForm
-                    keyLabel={keyLabel}
-                    passphrase={passphrase}
-                    confirmPassphrase={confirmPassphrase}
-                    isFormValid={isFormValid}
-                    isLoading={isLoading}
-                    onKeyLabelChange={handleKeyLabelChange}
-                    onPassphraseChange={handlePassphraseChange}
-                    onConfirmPassphraseChange={setConfirmPassphrase}
-                    onSubmit={handleKeyGeneration}
-                    onReset={handleReset}
-                  />
-                )}
-              </div>
-            </>
-          )}
-
-          {/* "How does this work?" link */}
-          {!success && <CollapsibleHelp triggerText="How does this work?" />}
         </div>
-      </div>
+      </header>
+
+      {/* Main content container */}
+      <main className="mx-auto max-w-[960px] px-6" id="main-content">
+        {/* Error Display */}
+        {error && (
+          <div className="mt-6">
+            <ErrorMessage
+              error={error}
+              showRecoveryGuidance={true}
+              showCloseButton={true}
+              onClose={clearError}
+            />
+          </div>
+        )}
+
+        {/* Success Display - replaces form card when shown */}
+        {success ? (
+          <div className="mt-6">
+            <SetupSuccessPanel success={success} onClose={handleReset} />
+          </div>
+        ) : (
+          <>
+            {/* Form card with consistent spacing */}
+            <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 md:p-8 mt-6">
+              {/* Progress Display */}
+              {progress && <SetupProgressPanel progress={progress} />}
+
+              {/* Key Generation Form */}
+              {!isLoading && (
+                <SetupForm
+                  keyLabel={keyLabel}
+                  passphrase={passphrase}
+                  confirmPassphrase={confirmPassphrase}
+                  isFormValid={isFormValid}
+                  isLoading={isLoading}
+                  onKeyLabelChange={handleKeyLabelChange}
+                  onPassphraseChange={handlePassphraseChange}
+                  onConfirmPassphraseChange={setConfirmPassphrase}
+                  onSubmit={handleKeyGeneration}
+                  onReset={handleReset}
+                />
+              )}
+            </section>
+          </>
+        )}
+
+        {/* "How does this work?" expandable help section */}
+        {!success && <CollapsibleHelp triggerText="How does this work?" />}
+      </main>
     </div>
   );
 };
