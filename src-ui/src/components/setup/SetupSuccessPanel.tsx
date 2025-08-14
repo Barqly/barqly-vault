@@ -36,9 +36,9 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({ success, onClose 
         onClose={onClose}
         size="lg"
         details={
-          <div className="mt-4">
+          <div className="mt-6">
             <label className="block mb-1 text-sm font-medium text-gray-800">Your public key</label>
-            <div className="bg-gray-100 rounded-lg p-2 font-mono text-sm text-gray-800 break-all mt-2 mb-3">
+            <div className="bg-gray-100 rounded-lg p-2 font-mono text-sm text-gray-800 mt-2 mb-3 overflow-x-auto whitespace-nowrap">
               {success.public_key}
             </div>
             <p className="mt-3 text-xs text-gray-500">

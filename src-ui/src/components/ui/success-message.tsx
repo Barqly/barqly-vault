@@ -127,7 +127,7 @@ function SuccessMessage({
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Title */}
-          {title && <h4 className="font-medium leading-tight mb-1 text-green-700">{title}</h4>}
+          {title && <h4 className="font-semibold leading-tight mb-1 text-green-700">{title}</h4>}
 
           {/* Message */}
           {message && <p className="text-sm leading-relaxed text-gray-700">{message}</p>}
