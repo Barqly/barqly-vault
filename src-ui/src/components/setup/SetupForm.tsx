@@ -116,7 +116,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
               bottom: '100%',
               right: '140px', // Position above the shield icon from the right
               transform: 'translateX(50%)',
-              marginBottom: '8px',
+              marginBottom: '12px', // Nudged up by 4px for better spacing from field border
               backgroundColor: '#fdfdfd',
               color: '#1e293b',
               border: '1px solid #e5e7eb',
@@ -136,13 +136,13 @@ const SetupForm: React.FC<SetupFormProps> = ({
             }}
           >
             Your vault key is generated locally and never leaves this device.
-            {/* Downward-pointing arrow - positioned above shield icon */}
+            {/* Downward-pointing arrow - perfectly centered with shield icon */}
             <div
               style={{
                 content: '""',
                 position: 'absolute',
                 top: '100%',
-                left: '50%', // Back to center of tooltip
+                left: '100px', // Aligned with the shield icon before "Keys stay on this device"
                 transform: 'translateX(-50%)',
                 borderWidth: '6px',
                 borderStyle: 'solid',
