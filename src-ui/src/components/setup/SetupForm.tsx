@@ -47,7 +47,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
     }
     const timeoutId = setTimeout(() => {
       setShowTooltip(true);
-    }, 150);
+    }, 175); // 150-200ms range per spec
     setTooltipTimeoutId(timeoutId);
   };
 
@@ -110,14 +110,21 @@ const SetupForm: React.FC<SetupFormProps> = ({
           <div
             id="local-only-help"
             role="tooltip"
-            className={`pointer-events-none absolute right-1 z-30 mt-2 w-[280px] rounded-md border border-slate-200 bg-white px-3 py-2 text-sm leading-relaxed shadow-[0px_2px_8px_rgba(0,0,0,0.12)] transition-all duration-100 ease-out ${
-              showTooltip ? 'opacity-100 visible' : 'opacity-0 invisible'
+            className={`pointer-events-none absolute right-1 z-30 mt-2 w-[280px] rounded-md bg-white px-3 py-2 text-sm font-normal shadow-[0px_2px_8px_rgba(0,0,0,0.12)] transition-all duration-[120ms] ease-out ${
+              showTooltip ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-95'
             }`}
-            style={{ color: '#2C2C2C' }}
+            style={{ 
+              color: '#2C2C2C',
+              lineHeight: '1.45',
+              border: '1px solid #e2e8f0'
+            }}
           >
             Your vault key is generated locally and never leaves this device.
-            {/* Arrow - reduced height by 2px */}
-            <div className="absolute -top-1 right-6 h-1.5 w-1.5 rotate-45 bg-white border-l border-t border-slate-200"></div>
+            {/* Arrow - 6px width, reduced height */}
+            <div 
+              className="absolute -top-1 right-6 h-1.5 w-1.5 rotate-45 bg-white"
+              style={{ borderLeft: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0' }}
+            ></div>
           </div>
           
           {keyLabel.trim().length > 0 && (
