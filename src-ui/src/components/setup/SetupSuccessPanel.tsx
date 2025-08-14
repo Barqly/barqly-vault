@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { SuccessMessage } from '../ui/success-message';
+import { CheckCircle, X } from 'lucide-react';
 
 interface SetupSuccessPanelProps {
   success: {
@@ -24,30 +24,39 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({ success, onClose 
 
   return (
     <div
-      className="animate-in slide-in-from-top-4 duration-500 ease-out"
+      className="rounded-2xl border border-green-200 bg-green-50 p-6"
       ref={successMessageRef}
       tabIndex={-1}
       aria-label="Key generation success notification"
     >
-      <SuccessMessage
-        title="Key generated successfully"
-        message="Your encryption keypair has been created and securely stored on this device."
-        showCloseButton={true}
-        onClose={onClose}
-        size="lg"
-        details={
-          <div className="mt-6">
-            <label className="block mb-1 text-sm font-medium text-gray-800">Your public key</label>
-            <div className="bg-gray-100 rounded-lg p-2 font-mono text-sm text-gray-800 mt-2 mb-3 overflow-x-auto whitespace-nowrap">
+      <div className="flex items-start gap-3">
+        <CheckCircle className="mt-0.5 h-5 w-5 text-green-600" />
+        <div className="flex-1">
+          <h3 className="text-base font-semibold text-green-700">Key generated successfully</h3>
+          <p className="mt-1 text-sm text-slate-700">
+            Your encryption keypair has been created and securely stored on this device.
+          </p>
+
+          <div className="mt-4">
+            <p className="text-sm font-medium text-slate-700">Your public key</p>
+            <code className="mt-2 block w-full truncate rounded-lg bg-slate-100 px-3 py-2 text-[13px] text-slate-800">
               {success.public_key}
-            </div>
-            <p className="mt-3 text-xs text-gray-500">
-              Share this key with others so they can encrypt files for you.
-            </p>
+            </code>
           </div>
-        }
-        showDetails={true}
-      />
+
+          <p className="mt-3 text-sm text-slate-500">
+            Share this key with others so they can encrypt files for you.
+          </p>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="shrink-0 rounded-md p-1.5 text-slate-400 hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          aria-label="Dismiss"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSetupWorkflow } from '../hooks/useSetupWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
-import CollapsibleHelp from '../components/ui/CollapsibleHelp';
-import AppHeader from '../components/common/AppHeader';
+import { Shield, Sparkles, Lock, Zap } from 'lucide-react';
 import SetupForm from '../components/setup/SetupForm';
 import SetupProgressPanel from '../components/setup/SetupProgressPanel';
 import SetupSuccessPanel from '../components/setup/SetupSuccessPanel';
+import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import { logger } from '../lib/logger';
 
 /**
@@ -37,60 +37,86 @@ const SetupPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Unified App Header */}
-      <AppHeader screen="setup" includeSkipNav={true} skipNavTarget="#main-content" />
+      {/* Global header row - in app bar */}
+      <div className="absolute top-4 right-6">
+        <p className="text-sm text-slate-500">Secure file encryption for Bitcoin custody</p>
+      </div>
 
-      {/* Main content */}
-      <div className="max-w-4xl mx-auto px-6 py-8" id="main-content">
-        <div className="w-full">
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-            {/* Form content */}
-            <div className="px-6 py-6 space-y-6">
-              {/* Skip navigation target for accessibility */}
-              <div tabIndex={-1} className="sr-only">
-                Main form content
-              </div>
+      {/* Main content container with proper spacing */}
+      <div className="py-10" id="main-content">
+        {/* Section header bar */}
+        <section className="max-w-[960px] mx-auto px-6">
+          <div className="rounded-xl border border-slate-200 bg-white px-6 py-4">
+            <h2 className="flex items-center gap-2 text-[28px] leading-8 font-semibold text-slate-800">
+              <Shield className="h-5 w-5 text-blue-600" />
+              Create Your Vault Key
+            </h2>
 
-              {/* Error Display */}
-              {error && (
-                <ErrorMessage
-                  error={error}
-                  showRecoveryGuidance={true}
-                  showCloseButton={true}
-                  onClose={clearError}
-                />
-              )}
-
-              {/* Success Display */}
-              {success && <SetupSuccessPanel success={success} onClose={handleReset} />}
-
-              {/* Progress Display */}
-              {progress && <SetupProgressPanel progress={progress} />}
-
-              {/* Key Generation Form */}
-              {!success && !isLoading && (
-                <SetupForm
-                  keyLabel={keyLabel}
-                  passphrase={passphrase}
-                  confirmPassphrase={confirmPassphrase}
-                  isFormValid={isFormValid}
-                  isLoading={isLoading}
-                  onKeyLabelChange={handleKeyLabelChange}
-                  onPassphraseChange={handlePassphraseChange}
-                  onConfirmPassphraseChange={setConfirmPassphrase}
-                  onSubmit={handleKeyGeneration}
-                  onReset={handleReset}
-                />
-              )}
+            <div className="mt-4 flex gap-3">
+              {/* Security badges */}
+              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                <Sparkles className="h-3.5 w-3.5 text-slate-500" />
+                Military-grade
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                <Lock className="h-3.5 w-3.5 text-slate-500" />
+                Local-only
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                <Zap className="h-3.5 w-3.5 text-slate-500" />
+                Zero network
+              </span>
             </div>
           </div>
+        </section>
 
-          {/* Collapsible Help Section */}
-          {!success && (
-            <div className="mt-4 text-center">
-              <CollapsibleHelp triggerText="How does this work?" />
+        {/* Form content container */}
+        <div className="max-w-[960px] mx-auto px-6">
+          {/* Error Display */}
+          {error && (
+            <div className="mt-6">
+              <ErrorMessage
+                error={error}
+                showRecoveryGuidance={true}
+                showCloseButton={true}
+                onClose={clearError}
+              />
             </div>
           )}
+
+          {/* Success Display - replaces form card when shown */}
+          {success ? (
+            <div className="mt-6">
+              <SetupSuccessPanel success={success} onClose={handleReset} />
+            </div>
+          ) : (
+            <>
+              {/* Form card */}
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)] p-6">
+                {/* Progress Display */}
+                {progress && <SetupProgressPanel progress={progress} />}
+
+                {/* Key Generation Form */}
+                {!isLoading && (
+                  <SetupForm
+                    keyLabel={keyLabel}
+                    passphrase={passphrase}
+                    confirmPassphrase={confirmPassphrase}
+                    isFormValid={isFormValid}
+                    isLoading={isLoading}
+                    onKeyLabelChange={handleKeyLabelChange}
+                    onPassphraseChange={handlePassphraseChange}
+                    onConfirmPassphraseChange={setConfirmPassphrase}
+                    onSubmit={handleKeyGeneration}
+                    onReset={handleReset}
+                  />
+                )}
+              </div>
+            </>
+          )}
+
+          {/* "How does this work?" link */}
+          {!success && <CollapsibleHelp triggerText="How does this work?" />}
         </div>
       </div>
     </div>
