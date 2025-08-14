@@ -69,14 +69,15 @@ const SetupForm: React.FC<SetupFormProps> = ({
             className={`w-full rounded-lg border ${keyLabel.trim().length > 0 ? 'border-green-400' : 'border-slate-300'} bg-white text-slate-900 placeholder:text-slate-400 h-12 px-4 pr-28 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-colors`}
           />
           
-          {/* Security badge in input */}
+          {/* Security indicator in input */}
           <button
             type="button"
-            className="group absolute inset-y-0 right-2 my-auto inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50/80 px-2 py-0.5 text-xs leading-[18px] text-slate-600 shadow-[0_1px_0_rgba(0,0,0,0.02)] hover:bg-slate-50 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500/40"
+            className="group absolute inset-y-0 right-2 my-auto inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 cursor-help focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500/40"
+            aria-label="Keys stay on this device"
             aria-describedby="local-only-help"
           >
-            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5 text-slate-500 group-hover:text-slate-600">
-              <path d="M10 2c.5 0 .9.1 1.3.3l4.7 2.1v4.1c0 4.1-2.6 7.3-6 8.9-3.4-1.6-6-4.8-6-8.9V4.4l4.7-2.1C9.1 2.1 9.5 2 10 2z"/>
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+              <path fill="currentColor" d="M10 2c.5 0 .9.1 1.3.3l4.7 2.1v4.1c0 4.1-2.6 7.3-6 8.9-3.4-1.6-6-4.8-6-8.9V4.4l4.7-2.1C9.1 2.1 9.5 2 10 2z"/>
             </svg>
             <span>Keys stay on this device</span>
           </button>
@@ -85,10 +86,9 @@ const SetupForm: React.FC<SetupFormProps> = ({
           <div
             id="local-only-help"
             role="tooltip"
-            className="pointer-events-none absolute right-0 z-30 mt-2 hidden w-[280px] rounded-xl border border-slate-200 bg-white p-3 text-[12px] leading-5 text-slate-700 shadow-lg group-hover:block group-focus-visible:block"
+            className="pointer-events-none absolute right-0 z-30 mt-2 hidden w-[280px] rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-lg group-hover:block group-focus-visible:block opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150"
           >
-            <div className="mb-1 font-medium text-slate-900">Local-only</div>
-            <div>Keys are generated and stored on this device. Nothing is sent over the network.</div>
+            Your vault key is generated locally and never leaves this device.
             {/* Arrow */}
             <div className="absolute -top-1 right-6 h-2 w-2 rotate-45 bg-white border-l border-t border-slate-200"></div>
           </div>
