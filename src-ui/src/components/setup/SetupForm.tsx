@@ -153,7 +153,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
           </div>
           
           {keyLabel.trim().length > 0 && (
-            <Check className="absolute right-32 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" />
+            <Check className="absolute right-48 top-1/2 -translate-y-1/2 h-5 w-5 text-green-600" />
           )}
         </div>
         {/* Reserved space for validation message */}
