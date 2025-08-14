@@ -71,7 +71,7 @@ const EncryptionReadyPanel: React.FC<EncryptionReadyPanelProps> = ({
   const displayName = archiveName ? `${archiveName}.age` : 'Auto-generated filename';
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 shadow-sm border-l-4 border-l-green-500">
+    <div className="bg-white rounded-lg border border-slate-200 shadow-sm border-l-green-500 rounded-l-lg">
       <div className="p-6">
         <h3 className="text-lg font-semibold text-slate-900 mb-3">Ready to Encrypt Your Vault</h3>
 
