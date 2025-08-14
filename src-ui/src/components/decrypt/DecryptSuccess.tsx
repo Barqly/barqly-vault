@@ -45,7 +45,7 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
 
   return (
     <div
-      className={`relative bg-green-50 rounded-2xl border border-green-200 overflow-hidden transition-opacity duration-300 ${
+      className={`relative bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden transition-opacity duration-300 ${
         isContentReady ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
@@ -54,34 +54,36 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
         minHeight: responsiveStyles['--success-panel-min-height'],
       }}
     >
+      {/* Minimal success animation */}
+      {showConfetti && (
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce"
+              style={{
+                left: `${25 + i * 25}%`,
+                top: '20px',
+                animationDelay: `${i * 0.15}s`,
+                animationDuration: '1.5s',
+                opacity: 0.5,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Compact success header - responsive height */}
       <div
-        className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-3 text-center relative"
+        className="bg-white px-6 py-3 text-center relative"
         style={{ height: responsiveStyles['--success-panel-header-height'] }}
       >
-        {showConfetti && (
-          <div className="absolute inset-0 pointer-events-none">
-            {/* Minimal confetti effect */}
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce"
-                style={{
-                  left: `${25 + i * 25}%`,
-                  animationDelay: `${i * 0.15}s`,
-                  animationDuration: '1.5s',
-                  opacity: 0.5,
-                }}
-              />
-            ))}
-          </div>
-        )}
-
         <div className="relative z-10 flex items-center justify-center gap-3">
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div className="text-left">
-            <h2 className="text-xl font-semibold text-green-800">Vault Successfully Decrypted!</h2>
-            <p className="text-sm text-slate-700">Files recovered and ready to use</p>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Your vault has been successfully decrypted.
+            </h2>
           </div>
         </div>
       </div>
@@ -166,7 +168,7 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
             {onDecryptAnother && (
               <button
                 onClick={onDecryptAnother}
-                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus-visible:ring-2 ring-blue-300 ring-offset-2"
+                className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
               >
                 Decrypt More
               </button>
