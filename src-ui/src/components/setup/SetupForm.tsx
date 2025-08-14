@@ -117,21 +117,13 @@ const SetupForm: React.FC<SetupFormProps> = ({
       </div>
       </div>
 
-      {/* Security Note */}
-      <p className="text-sm text-slate-500 mt-4">
-        Security note: Keys are generated and kept on this device. Nothing is sent over the network.
-      </p>
-
-      {/* Divider before actions */}
-      <hr className="my-[var(--space-5)] border-slate-200/70" />
-
       {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-[var(--space-3)]">
+      <div className="mt-[var(--space-4)] flex items-center justify-end gap-[var(--space-3)]">
         <button
           type="button"
           onClick={onReset}
           title="Clear form (Esc)"
-          className="inline-flex items-center justify-center h-10 px-4 rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+          className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           Clear
         </button>
@@ -139,7 +131,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
           type="submit"
           title="Create key (Enter)"
           disabled={!isActuallyFormValid}
-          className={`inline-flex items-center justify-center h-10 px-5 rounded-lg transition-colors ${
+          className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
             !isActuallyFormValid
               ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
               : 'bg-blue-600 text-white hover:bg-blue-700'
