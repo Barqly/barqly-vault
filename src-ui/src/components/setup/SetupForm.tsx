@@ -33,12 +33,31 @@ const SetupForm: React.FC<SetupFormProps> = ({
   onReset,
 }) => {
   const [showTooltip, setShowTooltip] = React.useState(false);
+  const [tooltipTimeoutId, setTooltipTimeoutId] = React.useState<NodeJS.Timeout | null>(null);
   const passphraseStrength = checkPassphraseStrength(passphrase);
   const isStrongPassphrase = passphraseStrength.isStrong;
   const passphraseMatch = confirmPassphrase.length > 0 && passphrase === confirmPassphrase;
 
   // Form is valid only when key label exists, passphrase is strong, and passwords match
   const isActuallyFormValid = keyLabel.trim().length > 0 && isStrongPassphrase && passphraseMatch;
+
+  const handleTooltipShow = () => {
+    if (tooltipTimeoutId) {
+      clearTimeout(tooltipTimeoutId);
+    }
+    const timeoutId = setTimeout(() => {
+      setShowTooltip(true);
+    }, 150);
+    setTooltipTimeoutId(timeoutId);
+  };
+
+  const handleTooltipHide = () => {
+    if (tooltipTimeoutId) {
+      clearTimeout(tooltipTimeoutId);
+      setTooltipTimeoutId(null);
+    }
+    setShowTooltip(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,10 +95,10 @@ const SetupForm: React.FC<SetupFormProps> = ({
             className="absolute inset-y-0 right-2 my-auto inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 cursor-help focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-blue-500/40"
             aria-label="Keys stay on this device"
             aria-describedby="local-only-help"
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
+            onMouseEnter={handleTooltipShow}
+            onMouseLeave={handleTooltipHide}
             onFocus={() => setShowTooltip(true)}
-            onBlur={() => setShowTooltip(false)}
+            onBlur={handleTooltipHide}
           >
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
               <path fill="currentColor" d="M10 2c.5 0 .9.1 1.3.3l4.7 2.1v4.1c0 4.1-2.6 7.3-6 8.9-3.4-1.6-6-4.8-6-8.9V4.4l4.7-2.1C9.1 2.1 9.5 2 10 2z"/>
@@ -91,13 +110,14 @@ const SetupForm: React.FC<SetupFormProps> = ({
           <div
             id="local-only-help"
             role="tooltip"
-            className={`pointer-events-none absolute right-0 z-30 mt-2 w-[280px] rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-lg transition-all duration-150 ${
+            className={`pointer-events-none absolute right-1 z-30 mt-2 w-[280px] rounded-md border border-slate-200 bg-white px-3 py-2 text-sm leading-relaxed shadow-[0px_2px_8px_rgba(0,0,0,0.12)] transition-all duration-100 ease-out ${
               showTooltip ? 'opacity-100 visible' : 'opacity-0 invisible'
             }`}
+            style={{ color: '#2C2C2C' }}
           >
             Your vault key is generated locally and never leaves this device.
-            {/* Arrow */}
-            <div className="absolute -top-1 right-6 h-2 w-2 rotate-45 bg-white border-l border-t border-slate-200"></div>
+            {/* Arrow - reduced height by 2px */}
+            <div className="absolute -top-1 right-6 h-1.5 w-1.5 rotate-45 bg-white border-l border-t border-slate-200"></div>
           </div>
           
           {keyLabel.trim().length > 0 && (
