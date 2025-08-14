@@ -215,7 +215,8 @@ clean-keys:
 # UI Capture and Analysis
 ui-capture:
 	@echo "📸 Starting on-demand UI capture session..."
-	@npm run ui:capture
+	@SESSION_DESC=$(desc) npm run ui:capture
+
 
 ui-analyze:
 	@echo "🤖 Generating analysis prompt for latest capture session..."

@@ -21,6 +21,52 @@ const readline = require("readline");
 const { execSync } = require("child_process");
 const os = require("os");
 
+// ---- Description seeding & filename helpers ----
+const SESSION_DESC = (process.env.SESSION_DESC || '').trim();
+
+function sanitizeForFilename(s) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^\w\s-]+/g, '')     // drop non-word chars (keep _ and -)
+    .trim()
+    .replace(/\s+/g, '-')          // spaces -> hyphens
+    .replace(/-+/g, '-')           // collapse multiple hyphens
+    .slice(0, 80);                 // keep it tidy
+}
+
+/**
+ * Build the final description based on a seed and user input.
+ * - If userInput is empty → use seed.
+ * - If userInput starts with '-' or '+' → append to the seed.
+ * - If seed exists and userInput doesn't start with special chars → prepend seed to userInput.
+ * - Otherwise → userInput only.
+ */
+function buildFinalDescription(seed, userInput) {
+  const s = (seed || '').trim();
+  const u = (userInput || '').trim();
+
+  if (!u) return s; // empty input, use seed
+  if ((u.startsWith('-') || u.startsWith('+')) && s) {
+    return `${s}${u}`; // append suffix (e.g., "setup-screen-variant")
+  }
+  if (s && u) {
+    return `${s}-${u}`; // prepend seed (e.g., "setup-screen-default-view")
+  }
+  return u; // no seed, just user input
+}
+
+/** Generate filename from description + timestamp fallback */
+function buildFilename(finalDesc) {
+  const safe = sanitizeForFilename(finalDesc);
+  const ts = new Date().toISOString().replace(/[:.]/g, '-');
+  // Prefer description; fall back to timestamp if empty
+  return (safe ? `${safe}.png` : `capture-${ts}.png`);
+}
+
+// ---- End of helpers ----
+
+
 class UICaptureTool {
   constructor() {
     this.projectRoot = path.resolve(__dirname, "../..");
@@ -174,7 +220,18 @@ class UICaptureTool {
         .replace(/[:.]/g, "")
         .replace("T", "_")
         .split("Z")[0];
-      const filename = `capture-${captureNumber}-${timestamp}.png`;
+      //const filename = `capture-${captureNumber}-${timestamp}.png`;
+
+      // 1) prompt for description with seed prefilled
+      const defaultSeed = SESSION_DESC; // may be empty string
+      const userInput = await this.askQuestion(`Enter description${defaultSeed ? ` (default: ${defaultSeed})` : ''}: `);
+
+      // 2) combine - if user input is empty and we have a seed, use the seed
+      const finalDesc = buildFinalDescription(defaultSeed, userInput);
+
+      // 3) build filename
+      const filename = buildFilename(finalDesc);
+
       const filepath = path.join(this.sessionDir, "screenshots", filename);
 
       console.log(`💾 Saving to: ${filepath}`);
@@ -184,16 +241,11 @@ class UICaptureTool {
 
       console.log("✅ File saved successfully");
 
-      // Get optional description
-      const description = await this.askQuestion(
-        "📝 Enter description (optional): ",
-      );
-
-      // Store metadata
+      // Store metadata using the final description
       const captureData = {
         number: captureNumber,
         filename,
-        description: description || `Screenshot ${captureNumber}`,
+        description: finalDesc || `Screenshot ${captureNumber}`,
         timestamp: new Date().toISOString(),
         filepath: path.relative(this.projectRoot, filepath),
         fileSize: screenshotBuffer.length,
@@ -202,7 +254,7 @@ class UICaptureTool {
       this.screenshots.push(captureData);
 
       console.log(
-        `✅ Screenshot ${captureNumber} captured: ${description || filename}`,
+        `✅ Screenshot ${captureNumber} captured: ${finalDesc || filename}`,
       );
       console.log(
         "Continue? Press 'c' to capture more, 'q' to finish, 'l' to list captures...\n",
