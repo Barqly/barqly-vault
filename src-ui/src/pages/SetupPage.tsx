@@ -84,7 +84,7 @@ const SetupPage: React.FC = () => {
         ) : (
           <>
             {/* Form card with consistent spacing */}
-            <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 md:p-8 mt-6">
+            <section className="rounded-2xl border border-slate-200 bg-white shadow-sm py-6 px-6 md:py-6 md:px-7 mt-6">
               {/* Progress Display */}
               {progress && <SetupProgressPanel progress={progress} />}
 
@@ -108,7 +108,11 @@ const SetupPage: React.FC = () => {
         )}
 
         {/* "How does this work?" expandable help section */}
-        {!success && <CollapsibleHelp triggerText="How does this work?" />}
+        {!success && (
+          <section className="mt-[var(--space-6)]">
+            <CollapsibleHelp triggerText="How does this work?" />
+          </section>
+        )}
       </main>
     </div>
   );

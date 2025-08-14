@@ -52,16 +52,14 @@ const PassphraseStrengthIndicator: React.FC<PassphraseStrengthIndicatorProps> = 
 
   return (
     <div className={`${className}`} id="passphrase-strength">
-      {/* Reserved space for strength indicator to prevent jumps */}
-      <div className="h-6">
-        {hasUserTyped && info.label && (
-          <p className={`text-sm font-medium ${info.color}`}>{info.label}</p>
-        )}
-      </div>
-      <div className="h-1.5 w-full rounded-full bg-slate-200">
+      {/* Compact strength meter group */}
+      {hasUserTyped && info.label && (
+        <p className={`text-[13px] leading-5 ${info.color} mb-1`}>{info.label}</p>
+      )}
+      <div className="h-1.5 rounded bg-slate-200 overflow-hidden">
         {hasUserTyped && (
           <div
-            className={`h-1.5 rounded-full transition-all duration-300 ${info.barColor}`}
+            className={`h-full transition-all duration-300 ${info.barColor}`}
             style={{ width: `${info.width}%` }}
           />
         )}

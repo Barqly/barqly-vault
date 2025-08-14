@@ -47,7 +47,8 @@ const SetupForm: React.FC<SetupFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-[var(--space-5)] md:gap-[var(--space-6)]">
       {/* Key Label Input */}
       <div>
         <label htmlFor="key-label" className="text-sm font-medium text-slate-700 mb-2 block">
@@ -114,14 +115,18 @@ const SetupForm: React.FC<SetupFormProps> = ({
           className=""
         />
       </div>
+      </div>
 
       {/* Security Note */}
       <p className="text-sm text-slate-500 mt-4">
         Security note: Keys are generated and kept on this device. Nothing is sent over the network.
       </p>
 
+      {/* Divider before actions */}
+      <hr className="my-[var(--space-5)] border-slate-200/70" />
+
       {/* Action Buttons */}
-      <div className="mt-8 flex items-center gap-3 justify-end">
+      <div className="flex items-center justify-end gap-[var(--space-3)]">
         <button
           type="button"
           onClick={onReset}

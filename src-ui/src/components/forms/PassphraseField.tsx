@@ -59,7 +59,7 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div>
       <div className="relative">
         <input
           id={id}
@@ -88,13 +88,13 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
 
       {/* Strength Indicator */}
       {showStrength && strength && (
-        <div id={`${id}-strength`}>
+        <div id={`${id}-strength`} className="mt-2">
           <PassphraseStrengthIndicator strength={strength} hasUserTyped={value.length > 0} />
         </div>
       )}
 
       {/* Match Validation - Reserved space to prevent jumps */}
-      <div className="h-6 mt-1">
+      <div className="h-6 mt-2">
         {isMatch !== null && value && (
           <div className="inline-flex items-center gap-2 text-sm">
             {isMatch ? (
