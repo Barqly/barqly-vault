@@ -82,7 +82,7 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div className="text-left">
             <h2 className="text-xl font-semibold text-slate-900">
-              Your vault has been successfully decrypted.
+              Vault decrypted successfully.
             </h2>
           </div>
         </div>
@@ -96,14 +96,14 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
           {/* Summary strip (chips) */}
           <div className="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-2">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
+              <div className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
                 <FileText className="w-4 h-4 text-blue-600" />
                 <span className="text-sm text-slate-700 font-medium">
                   {result.extracted_files.length}{' '}
                   {result.extracted_files.length === 1 ? 'file' : 'files'}
                 </span>
               </div>
-              <div className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
+              <div className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
                 <HardDrive className="w-4 h-4 text-slate-500" />
                 <span className="text-sm text-slate-700">
                   {formatFileSize(result.extracted_files)}
@@ -112,10 +112,10 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
             </div>
 
             {/* Right-side badges */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
               {result.manifest_verified !== undefined && (
                 <div
-                  className={`rounded-full px-2 py-1 text-xs font-medium ${
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
                     result.manifest_verified
                       ? 'bg-green-100 text-green-800'
                       : 'bg-amber-100 text-amber-800'
@@ -124,22 +124,6 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
                   {result.manifest_verified ? 'Verified' : 'Unverified'}
                 </div>
               )}
-
-              {/* External manifest restoration status */}
-              {result.external_manifest_restored !== undefined &&
-                result.external_manifest_restored !== null && (
-                  <div
-                    className={`rounded-full px-2 py-1 text-xs font-medium ${
-                      result.external_manifest_restored
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {result.external_manifest_restored
-                      ? 'Manifest Restored'
-                      : 'Manifest Not Restored'}
-                  </div>
-                )}
             </div>
           </div>
 
@@ -164,7 +148,7 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
           </div>
 
           {/* Final CTA */}
-          <div className="flex justify-center gap-3 pt-3 border-t border-slate-200 bg-white sticky bottom-0">
+          <div className="flex justify-center gap-3 pt-6 border-t border-slate-200 bg-white sticky bottom-0">
             {onDecryptAnother && (
               <button
                 onClick={onDecryptAnother}
