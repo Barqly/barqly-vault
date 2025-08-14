@@ -71,85 +71,89 @@ const EncryptionReadyPanel: React.FC<EncryptionReadyPanelProps> = ({
   const displayName = archiveName ? `${archiveName}.age` : 'Auto-generated filename';
 
   return (
-    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-green-800 mb-3">Ready to Encrypt Your Vault</h3>
+    <div className="bg-white rounded-lg border border-slate-200 shadow-sm border-l-4 border-l-green-500">
+      <div className="p-6">
+        <h3 className="text-lg font-semibold text-slate-900 mb-3">Ready to Encrypt Your Vault</h3>
 
-      {/* Output location display */}
-      <div className="bg-white border border-slate-200 rounded-lg p-3 mb-4">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <p className="text-xs text-slate-500 mb-1">Vault will be saved to:</p>
-            <p className="text-sm font-mono text-slate-700">{formatPathDisplay(displayPath)}</p>
-            {archiveName && <p className="text-xs text-slate-500 mt-1">Filename: {displayName}</p>}
+        {/* Output location display */}
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-xs text-slate-500 mb-1">Vault will be saved to:</p>
+              <p className="text-sm font-mono text-slate-700">{formatPathDisplay(displayPath)}</p>
+              {archiveName && (
+                <p className="text-xs text-slate-500 mt-1">Filename: {displayName}</p>
+              )}
+            </div>
+            <button
+              onClick={onToggleAdvanced}
+              className="text-xs text-blue-600 hover:text-blue-700 ml-3"
+            >
+              {showAdvancedOptions ? 'Hide' : 'Change location'}
+            </button>
           </div>
-          <button
-            onClick={onToggleAdvanced}
-            className="text-xs text-blue-600 hover:text-blue-700 ml-3"
-          >
-            {showAdvancedOptions ? 'Hide' : 'Change location'}
-          </button>
         </div>
-      </div>
 
-      {/* Advanced options */}
-      {showAdvancedOptions && (
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
-          <DestinationSelector
-            outputPath={outputPath}
-            onPathChange={onPathChange}
-            archiveName={archiveName}
-            onNameChange={onArchiveNameChange}
-            disabled={isLoading}
-          />
-        </div>
-      )}
-
-      {/* Status checklist */}
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-sm text-slate-700">
-          <CheckCircle className="w-4 h-4 text-green-600" />
-          <span>Files selected and ready</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-slate-700">
-          <CheckCircle className="w-4 h-4 text-green-600" />
-          <span>Encryption key verified</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-slate-700">
-          <CheckCircle className="w-4 h-4 text-green-600" />
-          <span>Output location ready</span>
-        </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-        {onPrevious && (
-          <button
-            onClick={onPrevious}
-            className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
-            disabled={isLoading}
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </button>
+        {/* Advanced options */}
+        {showAdvancedOptions && (
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
+            <DestinationSelector
+              outputPath={outputPath}
+              onPathChange={onPathChange}
+              archiveName={archiveName}
+              onNameChange={onArchiveNameChange}
+              disabled={isLoading}
+            />
+          </div>
         )}
 
-        <button
-          onClick={handleEncrypt}
-          className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center gap-1"
-          disabled={isLoading || isEncrypting}
-        >
-          {isEncrypting ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Encrypting...
-            </>
-          ) : (
-            <>
-              <Lock className="w-4 h-4" />
-              Encrypt Now
-            </>
+        {/* Status checklist */}
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-2 text-sm text-slate-700">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            <span>Files selected and ready</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-slate-700">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            <span>Encryption key verified</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-slate-700">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            <span>Output location ready</span>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+          {onPrevious && (
+            <button
+              onClick={onPrevious}
+              className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
+              disabled={isLoading}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </button>
           )}
-        </button>
+
+          <button
+            onClick={handleEncrypt}
+            className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center gap-1"
+            disabled={isLoading || isEncrypting}
+          >
+            {isEncrypting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Encrypting...
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4" />
+                Encrypt Now
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
