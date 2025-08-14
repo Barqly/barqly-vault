@@ -46,18 +46,19 @@ function EnhancedInput({
       ${fullWidth ? 'w-full' : ''}
       ${sizeClasses[size]}
       border rounded-md transition-all duration-200 ease-in-out
-      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-      hover:border-gray-400 hover:shadow-sm
+      focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent
+      hover:border-slate-400 hover:shadow-sm
       disabled:bg-gray-50 disabled:cursor-not-allowed
+      placeholder:text-gray-400
       transform focus:scale-[1.02] hover:scale-[1.01]
     `.trim();
 
     if (error) {
-      return `${baseClasses} border-red-400 bg-red-50 focus:ring-red-500`;
+      return `${baseClasses} border-red-300 bg-red-50 focus:ring-red-300`;
     } else if (success) {
-      return `${baseClasses} border-green-500 focus:ring-green-500`;
+      return `${baseClasses} border-green-400 focus:ring-green-400`;
     } else {
-      return `${baseClasses} border-gray-400`;
+      return `${baseClasses} border-slate-300`;
     }
   };
 
@@ -91,19 +92,19 @@ function EnhancedInput({
 
         {error && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <AlertCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
+            <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
           </div>
         )}
       </div>
 
       {(helper || error) && (
-        <div id={`${id}-description`} className="space-y-1">
+        <div id={`${id}-description`} className="space-y-1 mt-2">
           {error && (
-            <p className="text-xs text-red-600" role="alert">
+            <p className="text-sm font-normal text-red-500" role="alert">
               {error}
             </p>
           )}
-          {helper && !error && <p className="text-xs text-gray-500">{helper}</p>}
+          {helper && !error && <p className="text-xs text-gray-400">{helper}</p>}
         </div>
       )}
     </div>

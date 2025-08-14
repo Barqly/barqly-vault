@@ -68,17 +68,17 @@ const screenDefaults: Record<
     title: 'Create Your Vault Key',
     // subtitle removed for consistent single-line headers across all screens
     icon: Shield,
-    trustBadges: universalTrustBadges, // Shows unified trust indicators
+    trustBadges: universalTrustBadges, // Shows unified trust indicators across all screens
   },
   encrypt: {
     title: 'Encrypt Your Vault',
     icon: Lock,
-    trustBadges: universalTrustBadges, // Restore trust badges for consistency
+    trustBadges: universalTrustBadges, // Shows unified trust indicators across all screens
   },
   decrypt: {
     title: 'Decrypt Your Vault',
     icon: Unlock,
-    trustBadges: universalTrustBadges, // Restore trust badges for consistency
+    trustBadges: universalTrustBadges, // Shows unified trust indicators across all screens
   },
 };
 

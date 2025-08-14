@@ -41,18 +41,19 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
     const baseClasses = `
       w-full h-11 pr-12 pl-3.5 py-2.5 text-base
       border rounded-md transition-all duration-200
-      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-      hover:border-gray-400
+      focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent
+      hover:border-slate-400
       disabled:bg-gray-50 disabled:cursor-not-allowed
+      placeholder:text-gray-400
     `.trim();
 
     if (matchValue !== null && value.length > 0) {
       return isMatch
-        ? `${baseClasses} border-green-500 focus:ring-green-500`
-        : `${baseClasses} border-red-400 bg-red-50 focus:ring-red-500`;
+        ? `${baseClasses} border-green-400 focus:ring-green-400`
+        : `${baseClasses} border-red-300 bg-red-50 focus:ring-red-300`;
     }
 
-    return `${baseClasses} border-gray-400`;
+    return `${baseClasses} border-slate-300`;
   };
 
   return (
@@ -92,16 +93,16 @@ const PassphraseField: React.FC<PassphraseFieldProps> = ({
 
       {/* Match Validation */}
       {isMatch !== null && value && (
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex items-center gap-1.5 text-sm mt-2">
           {isMatch ? (
             <>
               <Check className="h-4 w-4 text-green-500" aria-hidden="true" />
-              <span className="text-green-600">Passphrases match</span>
+              <span className="text-green-600 font-normal">Passphrases match</span>
             </>
           ) : (
             <>
-              <X className="h-4 w-4 text-red-500" aria-hidden="true" />
-              <span className="text-red-600">Passphrases don't match</span>
+              <X className="h-4 w-4 text-red-400" aria-hidden="true" />
+              <span className="text-red-500 font-normal">Passphrases don't match</span>
             </>
           )}
         </div>

@@ -37,7 +37,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Key Label Input */}
       <EnhancedInput
         id="key-label"
@@ -86,7 +86,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
       </div>
 
       {/* Security Note */}
-      <p className="mt-4 border-t border-slate-200 pt-3 text-xs text-slate-500">
+      <p className="mt-6 border-t border-slate-200 pt-4 text-xs text-gray-500">
         <span className="font-semibold">Security note:</span> Keys are generated and kept on this
         device. Nothing is sent over the network.
       </p>
