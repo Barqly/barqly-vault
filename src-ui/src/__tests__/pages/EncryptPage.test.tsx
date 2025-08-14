@@ -146,7 +146,9 @@ describe('EncryptPage', () => {
 
       // Verify header elements are visible
       expect(screen.getByText('Encrypt Your Vault')).toBeInTheDocument();
-      expect(screen.getByText('Secure file encryption for Bitcoin custody')).toBeInTheDocument();
+      expect(screen.getByText('Military-grade')).toBeInTheDocument();
+      expect(screen.getByText('Local-only')).toBeInTheDocument();
+      expect(screen.getByText('Zero network')).toBeInTheDocument();
     });
   });
 
