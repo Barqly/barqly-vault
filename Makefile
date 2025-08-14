@@ -1,5 +1,5 @@
 # Barqly Vault - Monorepo Makefile
-# Secure file encryption for Bitcoin custody
+# Secure backup and restore for sensitive data & documents
 
 .PHONY: help ui app demo demo-build build app-build preview app-preview lint fmt rust-lint rust-fmt clean install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys
 

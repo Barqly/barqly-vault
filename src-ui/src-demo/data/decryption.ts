@@ -9,16 +9,16 @@ import { DecryptionResult, ProgressUpdate } from '@/lib/api-types';
 /**
  * Mock encrypted file path for demo
  */
-export const MOCK_ENCRYPTED_FILE = '/Users/demo/Documents/bitcoin-backup-encrypted.age';
+export const MOCK_ENCRYPTED_FILE = '/Users/demo/Documents/sensitive-data-backup.age';
 
 /**
  * Mock decryption result for demo
  */
 export const MOCK_DECRYPTION_RESULT: DecryptionResult = {
   extracted_files: [
-    '/Users/demo/Documents/bitcoin-wallet.dat',
-    '/Users/demo/Documents/seed-phrase.txt',
-    '/Users/demo/Documents/private-key.png',
+    '/Users/demo/Documents/financial-records.dat',
+    '/Users/demo/Documents/confidential-notes.txt',
+    '/Users/demo/Documents/secure-credentials.png',
     '/Users/demo/Documents/manifest.json',
   ],
   output_dir: '/Users/demo/Documents',

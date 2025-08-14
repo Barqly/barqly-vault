@@ -1,6 +1,6 @@
 # Barqly Vault
 
-**Simple, secure file encryption for the Bitcoin ecosystem**
+**Simple, secure backup and restore for sensitive data & documents**
 
 ---
 

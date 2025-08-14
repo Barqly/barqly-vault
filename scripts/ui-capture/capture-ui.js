@@ -612,7 +612,7 @@ class UICaptureTool {
 
 ## Context
 
-This is a desktop application built with Tauri (Rust + React/TypeScript) for secure Bitcoin file encryption. The app has evolved organically and needs design consistency analysis to identify visual inconsistencies and UX improvements.
+This is a desktop application built with Tauri (Rust + React/TypeScript) for secure backup and restore of sensitive data & documents. The app has evolved organically and needs design consistency analysis to identify visual inconsistencies and UX improvements.
 
 ## Screenshots Captured
 
@@ -699,7 +699,7 @@ Actionable design consistency improvements that will:
 - Reduce visual inconsistencies across the application
 - Improve user experience through predictable UI patterns
 - Create foundation for a scalable design system
-- Enhance professional appearance for Bitcoin custody use case
+- Enhance professional appearance for secure data protection use cases
 
 ---
 

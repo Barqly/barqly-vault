@@ -36,7 +36,7 @@ export const useFileEncryptionDemo = (): UseFileEncryptionReturn => {
           ? paths
           : selectionType === 'Files'
             ? MOCK_FILE_PATHS.toEncrypt
-            : ['/Users/demo/Documents/BitcoinBackup'];
+            : ['/Users/demo/Documents/SensitiveData'];
 
       const mockSelection: FileSelection = {
         paths: actualPaths,

@@ -40,7 +40,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <h1 className="text-xl font-semibold text-slate-800">Barqly Vault</h1>
             </div>
             <span className="text-sm text-slate-500">
-              Secure file encryption for Bitcoin custody
+              Secure backup and restore for sensitive data & documents
             </span>
           </div>
         </div>

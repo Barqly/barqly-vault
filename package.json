@@ -1,7 +1,7 @@
 {
   "name": "barqly-vault",
   "version": "0.1.0",
-  "description": "Secure file encryption for Bitcoin custody - Desktop Application",
+  "description": "Secure backup and restore for sensitive data & documents - Desktop Application",
   "workspaces": [
     "src-ui"
   ],

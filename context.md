@@ -1,12 +1,12 @@
 # Barqly Vault - Master Context
 
-_Your 2-minute orientation to the Bitcoin custody vault system_
+_Your 2-minute orientation to the secure data vault system_
 
 ## What This Is
 
-**Barqly Vault** - Desktop application for secure file encryption, designed for Bitcoin custody workflows. Military-grade encryption running locally on your machine.
+**Barqly Vault** - Desktop application for secure backup and restore of sensitive data & documents. Military-grade encryption running locally on your machine.
 
-**Core Mission**: Enable secure Bitcoin key storage in under 90 seconds, recoverable decades later.
+**Core Mission**: Enable secure data backup in under 90 seconds, recoverable decades later.
 
 ## Current State (January 2025)
 
@@ -23,7 +23,7 @@ _Your 2-minute orientation to the Bitcoin custody vault system_
 | Task Domain           | Context Location                  | Key Focus                        |
 | --------------------- | --------------------------------- | -------------------------------- |
 | Architecture & Design | `/docs/architecture/context.md`   | Technology stack, security model |
-| Features & UX         | `/docs/product/context.md`        | User journeys, Bitcoin workflows |
+| Features & UX         | `/docs/product/context.md`        | User journeys, encryption workflows |
 | Code Implementation   | `/docs/engineering/context.md`    | Development patterns, testing    |
 | CI/CD & Operations    | `/docs/operations/context.md`     | GitHub Actions, releases         |
 | Standards & Templates | `/docs/templates/context.md`      | ADDs, code templates             |
@@ -55,7 +55,7 @@ barqly-vault/
 1. **Security First** - Protect user assets above all
 2. **90-Second Goal** - Critical operations under 90 seconds
 3. **Local-Only** - No mandatory network, user owns data
-4. **Bitcoin-Ready** - Optimized for seeds, keys, custody docs
+4. **Universal** - Works with any sensitive files including Bitcoin seeds, keys, documents
 5. **Future-Proof** - Recoverable in 20+ years
 
 ## Essential Commands

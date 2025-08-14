@@ -1,5 +1,5 @@
 /**
- * Passphrase validation utilities for secure Bitcoin custody
+ * Passphrase validation utilities for secure data protection
  */
 
 export interface PassphraseStrength {
@@ -14,7 +14,7 @@ export interface ConfirmationMatch {
 }
 
 /**
- * Check passphrase strength with clear Bitcoin custody requirements
+ * Check passphrase strength with security requirements for sensitive data
  *
  * @param passphrase - The passphrase to validate
  * @returns PassphraseStrength object with validation results
@@ -34,7 +34,7 @@ export function checkPassphraseStrength(passphrase: string): PassphraseStrength 
   // Count how many character types are present
   const charTypes = [hasUppercase, hasLowercase, hasNumbers, hasSymbols].filter(Boolean).length;
 
-  // For Bitcoin custody: MUST have 12+ chars AND all 4 character types
+  // For secure data protection: MUST have 12+ chars AND all 4 character types
   const isStrong = isLongEnough && charTypes === 4;
 
   let message = '';
