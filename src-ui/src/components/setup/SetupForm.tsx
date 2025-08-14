@@ -110,21 +110,46 @@ const SetupForm: React.FC<SetupFormProps> = ({
           <div
             id="local-only-help"
             role="tooltip"
-            className={`pointer-events-none absolute right-1 z-30 mt-2 w-[280px] rounded-md bg-white px-3 py-2 text-sm font-normal shadow-[0px_2px_8px_rgba(0,0,0,0.12)] transition-all duration-[120ms] ease-out ${
-              showTooltip ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-95'
-            }`}
-            style={{ 
-              color: '#2C2C2C',
-              lineHeight: '1.45',
-              border: '1px solid #e2e8f0'
+            className={`vault-tooltip ${showTooltip ? 'visible' : ''}`}
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              right: '140px', // Position above the shield icon from the right
+              transform: 'translateX(50%)',
+              marginBottom: '8px',
+              backgroundColor: '#fdfdfd',
+              color: '#1e293b',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              fontSize: '14px',
+              fontWeight: 400,
+              lineHeight: '1.4',
+              width: '270px',
+              padding: '12px 14px',
+              zIndex: 999,
+              whiteSpace: 'normal',
+              opacity: showTooltip ? 1 : 0,
+              transition: 'opacity 0.2s ease-in-out',
+              pointerEvents: 'none',
+              textAlign: 'center'
             }}
           >
             Your vault key is generated locally and never leaves this device.
-            {/* Arrow - 6px width, reduced height */}
-            <div 
-              className="absolute -top-1 right-6 h-1.5 w-1.5 rotate-45 bg-white"
-              style={{ borderLeft: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0' }}
-            ></div>
+            {/* Downward-pointing arrow - positioned above shield icon */}
+            <div
+              style={{
+                content: '""',
+                position: 'absolute',
+                top: '100%',
+                left: '50%', // Back to center of tooltip
+                transform: 'translateX(-50%)',
+                borderWidth: '6px',
+                borderStyle: 'solid',
+                borderColor: '#fdfdfd transparent transparent transparent',
+                filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.05))'
+              }}
+            />
           </div>
           
           {keyLabel.trim().length > 0 && (
