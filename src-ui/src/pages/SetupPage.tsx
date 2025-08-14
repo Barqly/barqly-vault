@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSetupWorkflow } from '../hooks/useSetupWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import { Shield } from 'lucide-react';
@@ -15,6 +16,7 @@ import { logger } from '../lib/logger';
  */
 const SetupPage: React.FC = () => {
   logger.logComponentLifecycle('SetupPage', 'Mount');
+  const navigate = useNavigate();
 
   const {
     // State
@@ -35,6 +37,10 @@ const SetupPage: React.FC = () => {
     handleReset,
     clearError,
   } = useSetupWorkflow();
+
+  const handleEncryptVault = () => {
+    navigate('/encrypt');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -58,7 +64,7 @@ const SetupPage: React.FC = () => {
         {/* Success Display - replaces form card when shown */}
         {success ? (
           <div className="mt-6">
-            <SetupSuccessPanel success={success} onClose={handleReset} />
+            <SetupSuccessPanel success={success} onClose={handleReset} onEncryptVault={handleEncryptVault} />
           </div>
         ) : (
           <>
