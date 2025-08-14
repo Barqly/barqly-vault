@@ -50,7 +50,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
 
   return (
     <div
-      className="relative bg-white rounded-lg shadow-sm border border-slate-200 border-l-green-500 rounded-l-lg overflow-hidden"
+      className="relative bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden"
       style={{
         ...responsiveStyles,
         maxHeight: responsiveStyles['--success-panel-max-height'],
@@ -85,7 +85,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div className="text-left">
             <h2 className="text-xl font-semibold text-slate-900">
-              Your vault is ready — strong encryption applied.
+              Your vault is ready — securely encrypted.
             </h2>
           </div>
         </div>
