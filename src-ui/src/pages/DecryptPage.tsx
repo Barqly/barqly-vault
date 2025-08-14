@@ -60,7 +60,7 @@ const DecryptPage: React.FC = () => {
   } = useDecryptionWorkflow();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Unified App Header */}
       <AppHeader screen="decrypt" includeSkipNav={true} skipNavTarget="#main-content" />
 

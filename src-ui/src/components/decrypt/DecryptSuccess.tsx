@@ -45,7 +45,7 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
 
   return (
     <div
-      className={`relative bg-white rounded-lg border border-green-200 overflow-hidden transition-opacity duration-300 ${
+      className={`relative bg-green-50 rounded-2xl border border-green-200 overflow-hidden transition-opacity duration-300 ${
         isContentReady ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
@@ -80,8 +80,8 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
         <div className="relative z-10 flex items-center justify-center gap-3">
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div className="text-left">
-            <h2 className="text-xl font-bold text-gray-900">Vault Successfully Decrypted!</h2>
-            <p className="text-sm text-gray-600">Files recovered and ready to use</p>
+            <h2 className="text-xl font-semibold text-green-800">Vault Successfully Decrypted!</h2>
+            <p className="text-sm text-slate-700">Files recovered and ready to use</p>
           </div>
         </div>
       </div>
@@ -91,35 +91,35 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
         style={{ maxHeight: responsiveStyles['--success-panel-content-height'] }}
       >
         <div className="p-4 space-y-4">
-          {/* Inline stats - horizontal layout saves vertical space */}
-          <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2">
+          {/* Summary strip (chips) */}
+          <div className="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-2">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
                 <FileText className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm text-slate-700 font-medium">
                   {result.extracted_files.length}{' '}
                   {result.extracted_files.length === 1 ? 'file' : 'files'}
                 </span>
               </div>
-              <div className="flex items-center gap-1">
-                <HardDrive className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-600">
+              <div className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
+                <HardDrive className="w-4 h-4 text-slate-500" />
+                <span className="text-sm text-slate-700">
                   {formatFileSize(result.extracted_files)}
                 </span>
               </div>
             </div>
 
-            {/* Manifest status inline */}
+            {/* Right-side badges */}
             <div className="flex items-center gap-3">
               {result.manifest_verified !== undefined && (
                 <div
-                  className={`flex items-center gap-1 text-sm ${
-                    result.manifest_verified ? 'text-green-600' : 'text-amber-600'
+                  className={`rounded-full px-2 py-1 text-xs font-medium ${
+                    result.manifest_verified
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-amber-100 text-amber-800'
                   }`}
                 >
-                  <span className="text-xs">
-                    {result.manifest_verified ? '✓ Verified' : '⚠ Unverified'}
-                  </span>
+                  {result.manifest_verified ? 'Verified' : 'Unverified'}
                 </div>
               )}
 
@@ -127,46 +127,46 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
               {result.external_manifest_restored !== undefined &&
                 result.external_manifest_restored !== null && (
                   <div
-                    className={`flex items-center gap-1 text-sm ${
-                      result.external_manifest_restored ? 'text-green-600' : 'text-amber-600'
+                    className={`rounded-full px-2 py-1 text-xs font-medium ${
+                      result.external_manifest_restored
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-amber-100 text-amber-800'
                     }`}
                   >
-                    <span className="text-xs">
-                      {result.external_manifest_restored
-                        ? '📄 Manifest Restored'
-                        : '⚠ Manifest Not Restored'}
-                    </span>
+                    {result.external_manifest_restored
+                      ? 'Manifest Restored'
+                      : 'Manifest Not Restored'}
                   </div>
                 )}
             </div>
           </div>
 
-          {/* File location - more compact */}
-          <div className="bg-gray-50 rounded-lg p-3">
+          {/* Saved-to path section */}
+          <div className="bg-slate-50 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
                 <FolderOpen className="w-4 h-4" />
                 Saved to:
               </span>
               <button
                 onClick={handleCopyPath}
-                className="px-2 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
+                className="px-2 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors flex items-center gap-1"
               >
                 <Copy className="w-3 h-3" />
                 {copiedPath ? 'Copied!' : 'Copy'}
               </button>
             </div>
-            <p className="font-mono text-xs text-gray-800 break-all bg-white rounded px-2 py-1 border border-gray-200">
+            <p className="font-mono text-xs text-slate-700 break-all bg-white rounded-lg px-2 py-1 border border-slate-200">
               {result.output_dir}
             </p>
           </div>
 
-          {/* Fixed action buttons at bottom */}
-          <div className="flex justify-center gap-3 pt-3 border-t border-gray-200 bg-white sticky bottom-0">
+          {/* Final CTA */}
+          <div className="flex justify-center gap-3 pt-3 border-t border-slate-200 bg-white sticky bottom-0">
             {onDecryptAnother && (
               <button
                 onClick={onDecryptAnother}
-                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus-visible:ring-2 ring-blue-300 ring-offset-2"
               >
                 Decrypt More
               </button>

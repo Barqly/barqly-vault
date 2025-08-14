@@ -4,14 +4,21 @@ import { Info, ChevronDown } from 'lucide-react';
 interface CollapsibleHelpProps {
   /** Custom trigger text */
   triggerText?: string;
+  /** Context type to determine content */
+  context?: 'encrypt' | 'decrypt';
 }
 
 const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
   triggerText = 'Learn what happens next',
+  context,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const steps = [
+  // Auto-detect context from trigger text if not explicitly provided
+  const actualContext =
+    context || (triggerText?.toLowerCase().includes('decrypt') ? 'decrypt' : 'encrypt');
+
+  const encryptSteps = [
     {
       number: '1',
       title: 'Key Generation',
@@ -31,6 +38,33 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
         '<span class="font-semibold">Store encrypted files safely</span> and share your public key with trusted family. Only your private key + passphrase can unlock your files.',
     },
   ];
+
+  const decryptSteps = [
+    {
+      number: '1',
+      title: 'Select Your Vault',
+      description:
+        '<span class="font-semibold">Choose the encrypted .age file</span> you want to decrypt. Only files created with Barqly Vault are supported.',
+    },
+    {
+      number: '2',
+      title: 'Provide Key & Passphrase',
+      description:
+        '<span class="font-semibold">Select the key used for encryption</span> and enter your passphrase. Remember: passphrases are case-sensitive.',
+    },
+    {
+      number: '3',
+      title: 'Recover Files',
+      description:
+        '<span class="font-semibold">Files are extracted and verified</span> against the manifest. Your original folder structure is restored.',
+    },
+  ];
+
+  const steps = actualContext === 'decrypt' ? decryptSteps : encryptSteps;
+  const title =
+    actualContext === 'decrypt'
+      ? 'How Vault Decryption Works'
+      : 'How Bitcoin Legacy Protection Works';
 
   return (
     <div className="mt-6">
@@ -56,10 +90,8 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
         `}
         aria-hidden={!isOpen}
       >
-        <div className="rounded-xl border border-blue-100 bg-blue-50/80 p-5 md:p-6">
-          <h3 className="mb-4 text-base font-semibold text-blue-800">
-            How Bitcoin Legacy Protection Works
-          </h3>
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 md:p-6">
+          <h3 className="mb-4 text-base font-semibold text-blue-800">{title}</h3>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
             {steps.map((step) => (

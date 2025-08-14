@@ -143,7 +143,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
       <div className="flex items-center gap-2">
         <label
           htmlFor={id || 'passphrase-input'}
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-slate-700"
         >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
@@ -163,11 +163,11 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
             disabled={disabled}
             required={required}
             className={`
-              block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-              disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-              ${displayError ? 'border-red-400' : 'border-gray-400'}
-              ${disabled ? 'bg-gray-50' : 'bg-white'}
+              block w-full px-3 py-2 border rounded-lg shadow-sm placeholder-slate-500
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
+              ${displayError ? 'border-red-500' : 'border-slate-300'}
+              ${disabled ? 'bg-slate-50' : 'bg-white'}
               pr-10
             `}
             aria-describedby={displayError ? `${id || 'passphrase-input'}-error` : undefined}

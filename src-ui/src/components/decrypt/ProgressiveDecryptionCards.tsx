@@ -145,17 +145,17 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
       {/* Card Content */}
       <div className="p-6">
         <div className="min-h-[200px] max-h-[350px] mb-6">{renderStepContent()}</div>
 
         {/* Navigation Buttons */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
           {canGoToPreviousStep && (
             <button
               onClick={handlePrevious}
-              className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
+              className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors"
               disabled={isLoading}
             >
               <ChevronLeft className="w-4 h-4" />
@@ -166,10 +166,10 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
           {(currentStep === 1 || currentStep === 2) && (
             <button
               onClick={handleContinue}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:ring-2 ring-blue-300 ring-offset-2 ${
                 canContinue
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
               } ${!canGoToPreviousStep ? 'ml-auto' : ''}`}
               disabled={isLoading || !canContinue}
             >

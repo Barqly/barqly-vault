@@ -83,7 +83,7 @@ const PassphraseMemoryHints: React.FC<PassphraseMemoryHintsProps> = ({
   }
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden transition-all duration-300">
+    <div className="bg-blue-50/60 border border-blue-200 rounded-lg overflow-hidden transition-all duration-150 ease-in-out">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-100 transition-colors"
@@ -92,7 +92,7 @@ const PassphraseMemoryHints: React.FC<PassphraseMemoryHintsProps> = ({
       >
         <div className="flex items-center gap-2">
           <Lightbulb className="w-4 h-4 text-blue-600" />
-          <span className="text-sm font-medium text-blue-900">
+          <span className="text-sm font-medium text-slate-700">
             Memory Hints
             {attemptCount > 0 && (
               <span className="ml-2 text-blue-700">
@@ -111,9 +111,17 @@ const PassphraseMemoryHints: React.FC<PassphraseMemoryHintsProps> = ({
       {isExpanded && (
         <div className="px-4 pb-3 space-y-2">
           {hints.map((hint, index) => (
-            <div key={index} className="flex items-start gap-2 text-sm text-blue-800">
+            <div key={index} className="flex items-start gap-2 text-sm">
               <span className="text-blue-600 mt-0.5">{hint.icon}</span>
-              <span>{hint.text}</span>
+              <span
+                className={
+                  hint.text.includes('key:')
+                    ? 'text-blue-700 cursor-pointer hover:underline'
+                    : 'text-slate-700'
+                }
+              >
+                {hint.text}
+              </span>
             </div>
           ))}
 

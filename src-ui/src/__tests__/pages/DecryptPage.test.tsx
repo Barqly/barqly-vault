@@ -441,7 +441,7 @@ describe('DecryptPage', () => {
     it('should show manifest verification status', () => {
       renderWithRouter(<DecryptPage />);
 
-      expect(screen.getByText(/✓ Verified/)).toBeInTheDocument();
+      expect(screen.getByText('Verified')).toBeInTheDocument();
     });
 
     it('should provide option to decrypt another file', async () => {
