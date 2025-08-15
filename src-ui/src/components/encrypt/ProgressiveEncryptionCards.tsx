@@ -79,6 +79,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
               mode="multiple"
               acceptedFormats={[]}
               dropText="Drop your files and folders here"
+              subtitle="All selected files will be encrypted together into a single vault."
               browseButtonText="Select Files"
               browseFolderButtonText="Select Folder"
               icon="upload"
