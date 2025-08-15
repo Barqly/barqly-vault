@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle, Copy, FolderOpen, BookOpen, RotateCcw, HardDrive } from 'lucide-react';
+import {
+  CheckCircle,
+  Copy,
+  FolderOpen,
+  BookOpen,
+  RotateCcw,
+  HardDrive,
+  Unlock,
+} from 'lucide-react';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
 
@@ -9,6 +17,7 @@ interface EncryptionSuccessProps {
   fileCount: number;
   encryptedSize: number;
   onEncryptMore: () => void;
+  onNavigateToDecrypt?: () => void;
   onViewGuide?: () => void;
 }
 
@@ -18,11 +27,12 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
   fileCount,
   encryptedSize,
   onEncryptMore,
+  onNavigateToDecrypt,
   onViewGuide,
 }) => {
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
-  const encryptMoreButtonRef = useRef<HTMLButtonElement>(null);
+  const primaryActionButtonRef = useRef<HTMLButtonElement>(null);
   const responsiveStyles = useSuccessPanelSizing();
 
   useEffect(() => {
@@ -33,10 +43,10 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
 
   // Auto-focus the primary action button when success screen loads
   useEffect(() => {
-    if (encryptMoreButtonRef.current) {
+    if (primaryActionButtonRef.current) {
       // Use a small timeout to ensure the component is fully rendered
       const timeoutId = setTimeout(() => {
-        encryptMoreButtonRef.current?.focus();
+        primaryActionButtonRef.current?.focus();
       }, 100);
 
       return () => clearTimeout(timeoutId);
@@ -159,25 +169,37 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
           </div>
 
           {/* Fixed action buttons at bottom */}
-          <div className="flex justify-center gap-3 pt-3 border-t border-slate-200 bg-white sticky bottom-0">
+          <div className="flex justify-between items-center pt-3 border-t border-slate-200 bg-white sticky bottom-0">
             <button
-              ref={encryptMoreButtonRef}
               onClick={onEncryptMore}
-              className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
-              tabIndex={1}
+              className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+              tabIndex={2}
             >
               <RotateCcw className="w-4 h-4" />
               Encrypt More
             </button>
-            {onViewGuide && (
+            {onNavigateToDecrypt ? (
               <button
-                onClick={onViewGuide}
-                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
-                tabIndex={3}
+                ref={primaryActionButtonRef}
+                onClick={onNavigateToDecrypt}
+                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+                tabIndex={1}
               >
-                <BookOpen className="w-4 h-4" />
-                View Decryption Guide
+                <Unlock className="w-4 h-4" />
+                Decrypt Your Vault
               </button>
+            ) : (
+              onViewGuide && (
+                <button
+                  ref={primaryActionButtonRef}
+                  onClick={onViewGuide}
+                  className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  tabIndex={1}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  View Decryption Guide
+                </button>
+              )
             )}
           </div>
         </div>

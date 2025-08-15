@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useEncryptionWorkflow } from '../hooks/useEncryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import { ErrorCode } from '../lib/api-types';
@@ -24,6 +25,7 @@ const ENCRYPTION_STEPS: ProgressStep[] = [
  * Uses step-based progressive disclosure pattern, symmetric with DecryptPage
  */
 const EncryptPage: React.FC = () => {
+  const navigate = useNavigate();
   const {
     // State
     selectedFiles,
@@ -60,6 +62,11 @@ const EncryptPage: React.FC = () => {
     encryptionResult,
   } = useEncryptionWorkflow();
 
+  // Navigation handler for decrypt flow
+  const handleNavigateToDecrypt = () => {
+    navigate('/decrypt');
+  };
+
   // Debug logging
   console.log('[DEBUG] EncryptPage render:', {
     success: !!success,
@@ -93,7 +100,11 @@ const EncryptPage: React.FC = () => {
           {/* Success display with animation */}
           <AnimatedTransition show={!!success} duration={400}>
             {success && encryptionResult && (
-              <EncryptionSuccess {...encryptionResult} onEncryptMore={handleEncryptAnother} />
+              <EncryptionSuccess
+                {...encryptionResult}
+                onEncryptMore={handleEncryptAnother}
+                onNavigateToDecrypt={handleNavigateToDecrypt}
+              />
             )}
           </AnimatedTransition>
 
