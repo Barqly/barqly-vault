@@ -26,18 +26,18 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
   const setupSteps = [
     {
       number: '1',
-      title: 'Create a Key',
-      description: 'Give your vault a name and choose a strong passphrase.',
+      title: 'Create Your Key',
+      description: 'Name your vault and set a strong passphrase.',
     },
     {
       number: '2',
-      title: 'Stored Locally',
-      description: 'Your private key never leaves this device.',
+      title: 'Store Locally',
+      description: 'Your private key stays on this device.',
     },
     {
       number: '3',
-      title: "You're in Control",
-      description: 'Only your passphrase can unlock your key.',
+      title: 'Stay in Control',
+      description: 'Only your passphrase can unlock it.',
     },
   ];
 
@@ -45,17 +45,17 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '1',
       title: 'Add Your Files',
-      description: 'Select files or folders you want to protect.',
+      description: 'Select files or folders to protect.',
     },
     {
       number: '2',
       title: 'Lock with Your Key',
-      description: 'Files are encrypted so only your private key + passphrase can open them.',
+      description: 'Encrypt so only your key + passphrase can open them.',
     },
     {
       number: '3',
-      title: 'Save Anywhere',
-      description: 'Store the encrypted vault file safely, even in the cloud.',
+      title: 'Store Securely',
+      description: 'Save the vault file anywhere, even in the cloud.',
     },
   ];
 
@@ -63,17 +63,17 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '1',
       title: 'Select Your Vault',
-      description: 'Pick the encrypted vault file you want to open.',
+      description: 'Choose the encrypted file to open.',
     },
     {
       number: '2',
-      title: 'Unlock Securely',
-      description: 'Use your private key + passphrase to decrypt.',
+      title: 'Unlock with Your Key',
+      description: 'Use your key + passphrase to decrypt.',
     },
     {
       number: '3',
       title: 'Recover Your Files',
-      description: 'Files return to their original folders, ready to use.',
+      description: 'Restore them to their original folders.',
     },
   ];
 
