@@ -99,8 +99,19 @@ const SetupPage: React.FC = () => {
                   } as React.CSSProperties
                 }
               >
-                {/* Progress Display */}
-                {progress && <SetupProgressPanel progress={progress} />}
+                {/* Progress Display - show immediately when loading starts */}
+                {isLoading && (
+                  <SetupProgressPanel
+                    progress={
+                      progress || {
+                        operation_id: 'key-generation-init',
+                        progress: 0,
+                        message: 'Initializing key generation...',
+                        timestamp: new Date().toISOString(),
+                      }
+                    }
+                  />
+                )}
 
                 {/* Key Generation Form */}
                 {!isLoading && (
