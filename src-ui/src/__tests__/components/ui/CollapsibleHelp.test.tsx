@@ -69,7 +69,9 @@ describe('CollapsibleHelp', () => {
     fireEvent.click(screen.getByRole('button', { name: /learn what happens next/i }));
 
     expect(screen.getByText(/Select files or folders to protect/)).toBeInTheDocument();
-    expect(screen.getByText(/Encrypt so only your key \+ passphrase can open them/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Encrypt so only your key \+ passphrase can open them/),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Save the vault file anywhere, even in the cloud/)).toBeInTheDocument();
   });
 
@@ -80,7 +82,9 @@ describe('CollapsibleHelp', () => {
 
     // All content should be visible since we merged everything into single paragraphs
     expect(screen.getByText(/Select files or folders to protect/)).toBeInTheDocument();
-    expect(screen.getByText(/Encrypt so only your key \+ passphrase can open them/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Encrypt so only your key \+ passphrase can open them/),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Save the vault file anywhere, even in the cloud/)).toBeInTheDocument();
   });
 
