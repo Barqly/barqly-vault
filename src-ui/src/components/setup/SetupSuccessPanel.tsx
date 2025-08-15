@@ -96,7 +96,7 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div className="text-left">
             <h2 className="text-xl font-semibold text-slate-900">Key generated successfully</h2>
-            <p className="text-sm text-slate-600 mt-1">Your encryption keypair has been created and securely stored on this device.</p>
+            <p className="text-sm text-slate-600 mt-1">Your encryption key pair has been created and securely stored on this device</p>
           </div>
         </div>
       </div>
@@ -128,8 +128,8 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({
           <p className="font-mono text-xs text-slate-800 break-all bg-white rounded px-2 py-1 border border-slate-200">
             {success.public_key}
           </p>
-          <p className="text-sm text-slate-500 mt-2">
-            Share this publickey with others so they can encrypt files for you.
+          <p className="text-sm text-slate-500 mt-4">
+            Share this public key with others so they can encrypt files for you.
           </p>
         </div>
 
