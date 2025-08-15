@@ -160,6 +160,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               mode="single"
               acceptedFormats={['.age']}
               dropText="Drop your encrypted vault here (.age format)"
+              subtitle="All files in this vault will be restored to their original folder structure in the chosen recovery location."
               browseButtonText="Select Vault"
               icon="decrypt"
               autoFocus={currentStep === 1}
