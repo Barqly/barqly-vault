@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
@@ -31,6 +31,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   onKeyChange,
   onStepChange,
 }) => {
+  const continueButtonRef = useRef<HTMLButtonElement>(null);
   const canGoToPreviousStep = currentStep > 1;
 
   // Define continue conditions for each step
@@ -57,6 +58,13 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
     }
   };
 
+  const handleKeySelected = () => {
+    // Focus the Continue button after key selection
+    setTimeout(() => {
+      continueButtonRef.current?.focus();
+    }, 100);
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -74,6 +82,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
               browseButtonText="Select Files"
               browseFolderButtonText="Select Folder"
               icon="upload"
+              autoFocus={currentStep === 1}
             />
           </div>
         );
@@ -86,6 +95,8 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                 value={selectedKeyId || ''}
                 onChange={onKeyChange}
                 placeholder="Choose the key for encryption"
+                autoFocus={currentStep === 2}
+                onKeySelected={handleKeySelected}
               />
             </div>
           </div>
@@ -114,6 +125,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
               onClick={handlePrevious}
               className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
               disabled={isLoading}
+              tabIndex={2}
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
@@ -122,6 +134,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
 
           {(currentStep === 1 || currentStep === 2) && (
             <button
+              ref={continueButtonRef}
               onClick={handleContinue}
               className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 canContinue
@@ -129,6 +142,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                   : 'bg-slate-100 text-slate-400 cursor-not-allowed'
               } ${!canGoToPreviousStep ? 'ml-auto' : ''}`}
               disabled={isLoading || !canContinue}
+              tabIndex={canContinue ? 1 : -1}
             >
               Continue
             </button>

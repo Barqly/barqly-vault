@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, Copy, FolderOpen, BookOpen, RotateCcw, HardDrive } from 'lucide-react';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
@@ -22,12 +22,25 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
+  const encryptMoreButtonRef = useRef<HTMLButtonElement>(null);
   const responsiveStyles = useSuccessPanelSizing();
 
   useEffect(() => {
     // Hide confetti after 2 seconds
     const timer = setTimeout(() => setShowConfetti(false), 2000);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Auto-focus the primary action button when success screen loads
+  useEffect(() => {
+    if (encryptMoreButtonRef.current) {
+      // Use a small timeout to ensure the component is fully rendered
+      const timeoutId = setTimeout(() => {
+        encryptMoreButtonRef.current?.focus();
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
   }, []);
 
   const formatFileSize = (bytes: number): string => {
@@ -121,7 +134,8 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
               </span>
               <button
                 onClick={handleCopyPath}
-                className="px-2 py-1 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded hover:bg-slate-50 transition-colors flex items-center gap-1"
+                className="px-2 py-1 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded hover:bg-slate-50 transition-colors flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                tabIndex={2}
               >
                 <Copy className="w-3 h-3" />
                 {copied ? 'Copied!' : 'Copy'}
@@ -143,8 +157,10 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
           {/* Fixed action buttons at bottom */}
           <div className="flex justify-center gap-3 pt-3 border-t border-slate-200 bg-white sticky bottom-0">
             <button
+              ref={encryptMoreButtonRef}
               onClick={onEncryptMore}
-              className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+              tabIndex={1}
             >
               <RotateCcw className="w-4 h-4" />
               Encrypt More
@@ -152,7 +168,8 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
             {onViewGuide && (
               <button
                 onClick={onViewGuide}
-                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+                tabIndex={3}
               >
                 <BookOpen className="w-4 h-4" />
                 View Decryption Guide

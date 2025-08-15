@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, ChevronLeft, Lock, Loader2 } from 'lucide-react';
 import { documentDir, join } from '@tauri-apps/api/path';
 import DestinationSelector from './DestinationSelector';
@@ -13,6 +13,7 @@ interface EncryptionReadyPanelProps {
   onToggleAdvanced: () => void;
   onEncrypt: () => void;
   onPrevious?: () => void;
+  autoFocus?: boolean;
 }
 
 /**
@@ -29,9 +30,11 @@ const EncryptionReadyPanel: React.FC<EncryptionReadyPanelProps> = ({
   onToggleAdvanced,
   onEncrypt,
   onPrevious,
+  autoFocus = false,
 }) => {
   const [isEncrypting, setIsEncrypting] = useState(false);
   const [defaultPath, setDefaultPath] = useState<string>('~/Documents/Barqly-Vaults');
+  const encryptButtonRef = useRef<HTMLButtonElement>(null);
 
   // Get platform-appropriate default path
   useEffect(() => {
@@ -48,6 +51,18 @@ const EncryptionReadyPanel: React.FC<EncryptionReadyPanelProps> = ({
     };
     getDefaultPath();
   }, []);
+
+  // Auto-focus the Encrypt Now button when the panel loads
+  useEffect(() => {
+    if (autoFocus && encryptButtonRef.current && !isLoading && !isEncrypting) {
+      // Use a small timeout to ensure the component is fully rendered
+      const timeoutId = setTimeout(() => {
+        encryptButtonRef.current?.focus();
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [autoFocus, isLoading, isEncrypting]);
 
   const handleEncrypt = async () => {
     setIsEncrypting(true);
@@ -87,7 +102,8 @@ const EncryptionReadyPanel: React.FC<EncryptionReadyPanelProps> = ({
             </div>
             <button
               onClick={onToggleAdvanced}
-              className="text-xs text-blue-600 hover:text-blue-700 ml-3"
+              className="text-xs text-blue-600 hover:text-blue-700 ml-3 focus:outline-none focus:ring-2 focus:ring-blue-300 rounded"
+              tabIndex={2}
             >
               {showAdvancedOptions ? 'Hide' : 'Change location'}
             </button>
@@ -130,6 +146,7 @@ const EncryptionReadyPanel: React.FC<EncryptionReadyPanelProps> = ({
               onClick={onPrevious}
               className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
               disabled={isLoading}
+              tabIndex={3}
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
@@ -137,9 +154,11 @@ const EncryptionReadyPanel: React.FC<EncryptionReadyPanelProps> = ({
           )}
 
           <button
+            ref={encryptButtonRef}
             onClick={handleEncrypt}
             className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center gap-1"
             disabled={isLoading || isEncrypting}
+            tabIndex={1}
           >
             {isEncrypting ? (
               <>

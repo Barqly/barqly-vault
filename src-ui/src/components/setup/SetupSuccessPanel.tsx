@@ -13,7 +13,11 @@ interface SetupSuccessPanelProps {
  * Success panel for the setup page
  * Shows generated key information and next steps
  */
-const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({ success, onClose, onEncryptVault }) => {
+const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({
+  success,
+  onClose,
+  onEncryptVault,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const encryptButtonRef = useRef<HTMLButtonElement>(null);
   const copyButtonRef = useRef<HTMLButtonElement>(null);
@@ -35,7 +39,7 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({ success, onClose,
         (document.activeElement as HTMLElement)?.blur();
         return;
       }
-      
+
       if (e.key !== 'Tab') return;
 
       const focusableElements = [
@@ -44,11 +48,11 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({ success, onClose,
         createAnotherButtonRef.current,
       ].filter(Boolean) as HTMLElement[];
 
-      const currentIndex = focusableElements.findIndex(el => el === document.activeElement);
-      
+      const currentIndex = focusableElements.findIndex((el) => el === document.activeElement);
+
       // Only trap focus if we're currently focused on one of our elements
       if (currentIndex === -1) return;
-      
+
       if (e.shiftKey) {
         // Shift+Tab (backward)
         e.preventDefault();
@@ -80,7 +84,7 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({ success, onClose,
   };
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden"
     >

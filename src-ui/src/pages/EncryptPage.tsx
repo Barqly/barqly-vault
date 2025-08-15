@@ -148,6 +148,7 @@ const EncryptPage: React.FC = () => {
                     onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
                     onEncrypt={handleEncryption}
                     onPrevious={() => handleStepNavigation(2)}
+                    autoFocus={currentStep === 3}
                   />
                 )}
 

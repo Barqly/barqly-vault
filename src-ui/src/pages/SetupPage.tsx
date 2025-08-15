@@ -64,7 +64,11 @@ const SetupPage: React.FC = () => {
         {/* Success Display - replaces form card when shown */}
         {success ? (
           <div className="mt-6">
-            <SetupSuccessPanel success={success} onClose={handleReset} onEncryptVault={handleEncryptVault} />
+            <SetupSuccessPanel
+              success={success}
+              onClose={handleReset}
+              onEncryptVault={handleEncryptVault}
+            />
           </div>
         ) : (
           <>

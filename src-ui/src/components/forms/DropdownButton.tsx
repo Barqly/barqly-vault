@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { ChevronDown, Key } from 'lucide-react';
 import { KeyMetadata } from '../../lib/api-types';
 
@@ -11,6 +11,7 @@ export interface DropdownButtonProps {
   errorMessage?: string;
   onClick: () => void;
   onKeyDown: (event: React.KeyboardEvent) => void;
+  autoFocus?: boolean;
 }
 
 export const DropdownButton: React.FC<DropdownButtonProps> = ({
@@ -22,9 +23,25 @@ export const DropdownButton: React.FC<DropdownButtonProps> = ({
   errorMessage,
   onClick,
   onKeyDown,
+  autoFocus = false,
 }) => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-focus the button when requested and component is enabled
+  useEffect(() => {
+    if (autoFocus && !disabled && !loading && buttonRef.current) {
+      // Use a small timeout to ensure the component is fully rendered
+      const timeoutId = setTimeout(() => {
+        buttonRef.current?.focus();
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [autoFocus, disabled, loading]);
+
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onClick}
       onKeyDown={onKeyDown}
