@@ -8,8 +8,13 @@ import SetupProgressPanel from '../components/setup/SetupProgressPanel';
 import SetupSuccessPanel from '../components/setup/SetupSuccessPanel';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import UniversalHeader from '../components/common/UniversalHeader';
+import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import { logger } from '../lib/logger';
+
+const SETUP_STEPS: ProgressStep[] = [
+  { id: 1, label: 'Create Key', description: 'Set up your vault key' },
+];
 
 /**
  * Main setup page component for key generation
@@ -47,6 +52,16 @@ const SetupPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Unified header component */}
       <UniversalHeader title="Create Your Vault Key" icon={Shield} skipNavTarget="#main-content" />
+
+      {/* Progress Bar */}
+      <ProgressBar
+        steps={SETUP_STEPS}
+        currentStep={1}
+        completedSteps={new Set()}
+        onStepClick={undefined}
+        isClickable={false}
+        variant="compact"
+      />
 
       {/* Main content */}
       <AppPrimaryContainer id="main-content">
