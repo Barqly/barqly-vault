@@ -129,6 +129,16 @@ const DecryptPage: React.FC = () => {
                   }}
                   onKeyChange={handleKeyChange}
                   onPassphraseChange={setPassphrase}
+                  onPassphraseError={(error) => {
+                    // Create command error for passphrase validation failures
+                    const commandError = {
+                      code: ErrorCode.WRONG_PASSPHRASE,
+                      message: error.message,
+                      user_actionable: true,
+                    };
+                    handleFileValidationError(commandError);
+                  }}
+                  onClearError={clearError}
                   onNeedHelp={() => {
                     // TODO: Consider implementing inline help panel instead of toast
                     console.log(

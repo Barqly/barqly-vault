@@ -21,6 +21,8 @@ interface ProgressiveDecryptionCardsProps {
   onFileError: (error: Error) => void;
   onKeyChange: (keyId: string) => void;
   onPassphraseChange: (passphrase: string) => void;
+  onPassphraseError: (error: { code: string; message: string; user_actionable: boolean }) => void;
+  onClearError: () => void;
   onNeedHelp: () => void;
   onStepChange: (step: number) => void;
 }
@@ -42,6 +44,8 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   onFileError,
   onKeyChange,
   onPassphraseChange,
+  onPassphraseError,
+  onClearError,
   onNeedHelp,
   onStepChange,
 }) => {
@@ -72,38 +76,46 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
       // For step 2, validate the passphrase with the selected key before proceeding
       if (currentStep === 2 && selectedKeyId && passphrase && selectedFile) {
         setIsValidatingPassphrase(true);
-        
+
         try {
-          // Import the decryption function to test the passphrase
+          // Import the safe invoke function
           const { safeInvoke } = await import('../../lib/tauri-safe');
-          
-          // Test the passphrase by attempting to decrypt (this will validate the combination)
-          await safeInvoke('decrypt_data', {
-            encrypted_file: selectedFile,
-            key_id: selectedKeyId,
-            passphrase: passphrase,
-            output_dir: '/tmp' // Use temp directory for validation
-          }, 'passphrase_validation');
-          
+
+          // Use dedicated validation command for efficient passphrase verification
+          const result = (await safeInvoke(
+            'verify_key_passphrase',
+            {
+              key_id: selectedKeyId,
+              passphrase: passphrase,
+            },
+            'passphrase_validation',
+          )) as { is_valid: boolean; message: string };
+
+          // Check if validation was successful
+          if (!result.is_valid) {
+            throw new Error(result.message);
+          }
+
+          // Clear any previous errors since validation succeeded
+          onClearError();
+
           // If we get here, passphrase is correct, proceed to next step
           onStepChange(currentStep + 1);
         } catch (error: any) {
-          // Check if this is a passphrase error
-          if (error?.message?.toLowerCase().includes('passphrase') || 
-              error?.message?.toLowerCase().includes('password') ||
-              error?.message?.toLowerCase().includes('wrong') ||
-              error?.message?.toLowerCase().includes('incorrect')) {
-            // Show error and keep focus on passphrase field
-            const passphraseInput = document.querySelector('input[placeholder="Enter your key passphrase"]') as HTMLInputElement;
-            if (passphraseInput) {
-              passphraseInput.focus();
-            }
-            // TODO: Display error message to user (you may want to pass this up to parent)
-            console.error('Passphrase validation failed:', error.message);
-          } else {
-            // For other errors (file issues, etc.), still proceed but let the decrypt screen handle it
-            onStepChange(currentStep + 1);
+          // For validation failures (wrong passphrase), keep focus on passphrase field
+          const passphraseInput = document.querySelector(
+            'input[placeholder="Enter your key passphrase"]',
+          ) as HTMLInputElement;
+          if (passphraseInput) {
+            passphraseInput.focus();
           }
+
+          // Pass error to parent for display
+          onPassphraseError({
+            code: 'WRONG_PASSPHRASE',
+            message: error.message || 'Incorrect passphrase for the selected key',
+            user_actionable: true,
+          });
         } finally {
           setIsValidatingPassphrase(false);
         }
@@ -117,13 +129,14 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   const handleKeySelected = () => {
     // Focus the Passphrase field after key selection
     setTimeout(() => {
-      const passphraseInput = document.querySelector('input[placeholder="Enter your key passphrase"]') as HTMLInputElement;
+      const passphraseInput = document.querySelector(
+        'input[placeholder="Enter your key passphrase"]',
+      ) as HTMLInputElement;
       if (passphraseInput) {
         passphraseInput.focus();
       }
     }, 100);
   };
-
 
   const renderStepContent = () => {
     switch (currentStep) {

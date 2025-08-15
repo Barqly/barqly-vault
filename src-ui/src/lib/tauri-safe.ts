@@ -85,6 +85,7 @@ export async function safeInvoke<T>(
       // Crypto commands with 'input' parameter
       generate_key: 'input',
       validate_passphrase: 'input',
+      verify_key_passphrase: 'input',
       encrypt_files: 'input', // Takes EncryptDataInput wrapped in 'input'
       decrypt_data: 'input',
       get_encryption_status: 'input',
