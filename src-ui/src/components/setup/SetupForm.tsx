@@ -231,7 +231,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-[var(--space-3)] flex items-center justify-end gap-[var(--space-3)]">
+      <div className="mt-[var(--space-3)] flex items-center justify-between pt-4 border-t border-slate-100">
         <button
           type="button"
           onClick={handleClear}
