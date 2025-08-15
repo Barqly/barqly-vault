@@ -87,6 +87,8 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({
     <div
       ref={containerRef}
       className="relative bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden"
+      aria-label="Key generation success notification"
+      tabIndex={-1}
     >
       {/* Compact success header */}
       <div className="bg-white px-6 py-3 text-center relative">
@@ -140,6 +142,7 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({
             ref={createAnotherButtonRef}
             onClick={onClose}
             className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+            aria-label="Close success message"
           >
             <RotateCcw className="w-4 h-4" />
             Create Another Key

@@ -431,8 +431,7 @@ describe('DecryptPage', () => {
     it('should display success message with file details', () => {
       renderWithRouter(<DecryptPage />);
 
-      expect(screen.getByText('Vault Successfully Decrypted!')).toBeInTheDocument();
-      expect(screen.getByText('Files recovered and ready to use')).toBeInTheDocument();
+      expect(screen.getByText('Vault decrypted successfully.')).toBeInTheDocument();
     });
 
     it('should show file count in stats bar only', async () => {
