@@ -34,6 +34,9 @@ export interface PassphraseInputProps {
   // New props for confirmation field behavior
   isConfirmationField?: boolean;
   originalPassphrase?: string;
+  // Focus management props
+  autoFocus?: boolean;
+  tabIndex?: number;
 }
 
 const PassphraseInput: React.FC<PassphraseInputProps> = ({
@@ -54,6 +57,8 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   id,
   isConfirmationField = false,
   originalPassphrase = '',
+  autoFocus = false,
+  tabIndex,
 }) => {
   const [internalValue, setInternalValue] = useState('');
   const [showPassphrase, setShowPassphrase] = useState(false);
@@ -162,6 +167,8 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
             placeholder={placeholder}
             disabled={disabled}
             required={required}
+            autoFocus={autoFocus}
+            tabIndex={tabIndex}
             className={`
               block w-full px-3 py-2 border rounded-lg shadow-sm placeholder-slate-500
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CheckCircle, ChevronLeft, Unlock, Loader2 } from 'lucide-react';
 import DestinationSelector from './DestinationSelector';
 
@@ -10,6 +10,8 @@ interface DecryptionReadyPanelProps {
   onToggleAdvanced: () => void;
   onDecrypt: () => void;
   onPrevious?: () => void;
+  /** Whether to auto-focus the decrypt button */
+  autoFocus?: boolean;
 }
 
 /**
@@ -24,8 +26,21 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
   onToggleAdvanced,
   onDecrypt,
   onPrevious,
+  autoFocus = false,
 }) => {
   const [isDecrypting, setIsDecrypting] = useState(false);
+  const decryptButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-focus the decrypt button when panel loads
+  useEffect(() => {
+    if (autoFocus && decryptButtonRef.current) {
+      const timeoutId = setTimeout(() => {
+        decryptButtonRef.current?.focus();
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [autoFocus]);
 
   const handleDecrypt = async () => {
     setIsDecrypting(true);
@@ -101,6 +116,7 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
               onClick={onPrevious}
               className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
               disabled={isLoading}
+              tabIndex={2}
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
@@ -108,9 +124,11 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
           )}
 
           <button
+            ref={decryptButtonRef}
             onClick={handleDecrypt}
             className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center gap-1"
             disabled={isLoading || isDecrypting}
+            tabIndex={1}
           >
             {isDecrypting ? (
               <>

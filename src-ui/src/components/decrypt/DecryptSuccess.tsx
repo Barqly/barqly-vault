@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, FolderOpen, Copy, FileText, HardDrive } from 'lucide-react';
 import { DecryptionResult } from '../../lib/api-types';
 import { useSuccessPanelSizing } from '../../utils/viewport';
@@ -13,6 +13,7 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
   const [showConfetti, setShowConfetti] = useState(true);
   const [copiedPath, setCopiedPath] = useState(false);
   const [isContentReady, setIsContentReady] = useState(false);
+  const decryptMoreButtonRef = useRef<HTMLButtonElement>(null);
   const responsiveStyles = useSuccessPanelSizing();
 
   useEffect(() => {
@@ -26,6 +27,18 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
       clearTimeout(timer);
       clearTimeout(contentTimer);
     };
+  }, []);
+
+  // Auto-focus the primary action button when success screen loads
+  useEffect(() => {
+    if (decryptMoreButtonRef.current) {
+      // Use a small timeout to ensure the component is fully rendered
+      const timeoutId = setTimeout(() => {
+        decryptMoreButtonRef.current?.focus();
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
   }, []);
 
   const handleCopyPath = async () => {
@@ -81,9 +94,7 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
         <div className="relative z-10 flex items-center justify-center gap-3">
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div className="text-left">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Vault decrypted successfully.
-            </h2>
+            <h2 className="text-xl font-semibold text-slate-900">Vault decrypted successfully.</h2>
           </div>
         </div>
       </div>
@@ -136,7 +147,8 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
               </span>
               <button
                 onClick={handleCopyPath}
-                className="px-2 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors flex items-center gap-1"
+                className="px-2 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                tabIndex={2}
               >
                 <Copy className="w-3 h-3" />
                 {copiedPath ? 'Copied!' : 'Copy'}
@@ -151,8 +163,10 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
           <div className="flex justify-center gap-3 pt-6 border-t border-slate-200 bg-white sticky bottom-0">
             {onDecryptAnother && (
               <button
+                ref={decryptMoreButtonRef}
                 onClick={onDecryptAnother}
                 className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+                tabIndex={1}
               >
                 Decrypt More
               </button>

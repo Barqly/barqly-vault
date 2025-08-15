@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
@@ -46,6 +46,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   onStepChange,
 }) => {
   const canGoToPreviousStep = currentStep > 1;
+  const continueButtonRef = useRef<HTMLButtonElement>(null);
 
   // Define continue conditions for each step
   const canContinue = (() => {
@@ -68,6 +69,22 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   const handleContinue = () => {
     if (canContinue) {
       onStepChange(currentStep + 1);
+    }
+  };
+
+  const handleKeySelected = () => {
+    // Focus the Continue button after key selection
+    setTimeout(() => {
+      continueButtonRef.current?.focus();
+    }, 100);
+  };
+
+  const handlePassphraseEntry = () => {
+    // Focus the Continue button after passphrase entry (when both key and passphrase are valid)
+    if (selectedKeyId && passphrase.trim().length > 0) {
+      setTimeout(() => {
+        continueButtonRef.current?.focus();
+      }, 100);
     }
   };
 
@@ -95,7 +112,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               dropText="Drop your encrypted vault here (.age format)"
               browseButtonText="Select Vault"
               icon="decrypt"
-              autoFocus={true}
+              autoFocus={currentStep === 1}
             />
           </div>
         );
@@ -108,6 +125,8 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                 value={selectedKeyId || ''}
                 onChange={onKeyChange}
                 placeholder="Choose the key used for encryption"
+                autoFocus={currentStep === 2}
+                onKeySelected={handleKeySelected}
               />
             </div>
 
@@ -116,9 +135,15 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                 <div>
                   <PassphraseInput
                     value={passphrase}
-                    onChange={onPassphraseChange}
+                    onChange={(value) => {
+                      onPassphraseChange(value);
+                      // Trigger focus management check after passphrase change
+                      setTimeout(handlePassphraseEntry, 50);
+                    }}
                     placeholder="Enter your key passphrase"
                     showStrength={false}
+                    autoFocus={false}
+                    tabIndex={1}
                   />
                 </div>
 
@@ -157,6 +182,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               onClick={handlePrevious}
               className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
               disabled={isLoading}
+              tabIndex={2}
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
@@ -165,6 +191,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
 
           {(currentStep === 1 || currentStep === 2) && (
             <button
+              ref={continueButtonRef}
               onClick={handleContinue}
               className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 canContinue
@@ -172,6 +199,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                   : 'bg-slate-100 text-slate-400 cursor-not-allowed'
               } ${!canGoToPreviousStep ? 'ml-auto' : ''}`}
               disabled={isLoading || !canContinue}
+              tabIndex={canContinue ? 1 : -1}
             >
               Continue
             </button>

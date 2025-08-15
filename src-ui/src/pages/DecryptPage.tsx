@@ -148,6 +148,7 @@ const DecryptPage: React.FC = () => {
                     onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
                     onDecrypt={handleDecryption}
                     onPrevious={() => handleStepNavigation(2)}
+                    autoFocus={currentStep === 3}
                   />
                 )}
 
