@@ -132,7 +132,7 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({
             {success.public_key}
           </p>
           <p className="text-sm text-slate-500 mt-2">
-            Share this key with others so they can encrypt files for you.
+            Share this publickey with others so they can encrypt files for you.
           </p>
         </div>
 

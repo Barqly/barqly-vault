@@ -165,7 +165,9 @@ describe('DecryptPage', () => {
 
       // File selection UI is available for user
       expect(screen.getByRole('button', { name: 'Select Vault' })).toBeInTheDocument();
-      expect(screen.getByText('Drop your encrypted vault here (.age format)')).toBeInTheDocument();
+      expect(
+        screen.getByText('Drop your encrypted vault here (Barqly Vault .age format)'),
+      ).toBeInTheDocument();
     });
   });
 

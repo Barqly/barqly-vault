@@ -102,6 +102,9 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
           // If we get here, passphrase is correct, proceed to next step
           onStepChange(currentStep + 1);
         } catch (error: any) {
+          // Clear the passphrase field so user can retype without manual clearing
+          onPassphraseChange('');
+
           // For validation failures (wrong passphrase), keep focus on passphrase field
           const passphraseInput = document.querySelector(
             'input[placeholder="Enter your key passphrase"]',
@@ -159,7 +162,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               disabled={isLoading}
               mode="single"
               acceptedFormats={['.age']}
-              dropText="Drop your encrypted vault here (.age format)"
+              dropText="Drop your encrypted vault here (Barqly Vault .age format)"
               subtitle="All files in this vault will be restored to their original folder structure in the chosen recovery location."
               browseButtonText="Select Vault"
               icon="decrypt"
