@@ -26,12 +26,12 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
   const setupSteps = [
     {
       number: '1',
-      title: 'Create Your Key',
+      title: 'Create Key',
       description: 'Name your vault and set a strong passphrase.',
     },
     {
       number: '2',
-      title: 'Store Locally',
+      title: 'Store Key Locally',
       description: 'Your private key stays on this device.',
     },
     {
@@ -44,17 +44,17 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
   const encryptSteps = [
     {
       number: '1',
-      title: 'Add Your Files',
+      title: 'Add Files',
       description: 'Select files or folders to protect.',
     },
     {
       number: '2',
-      title: 'Lock with Your Key',
+      title: 'Lock with Key',
       description: 'Encrypt so only your key + passphrase can open them.',
     },
     {
       number: '3',
-      title: 'Store Securely',
+      title: 'Store Vault Securely',
       description: 'Save the vault file anywhere, even in the cloud.',
     },
   ];
@@ -62,17 +62,17 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
   const decryptSteps = [
     {
       number: '1',
-      title: 'Select Your Vault',
+      title: 'Select Vault',
       description: 'Choose the encrypted file to open.',
     },
     {
       number: '2',
-      title: 'Unlock with Your Key',
+      title: 'Unlock with Key',
       description: 'Use your key + passphrase to decrypt.',
     },
     {
       number: '3',
-      title: 'Recover Your Files',
+      title: 'Recover Files',
       description: 'Restore them to their original folders.',
     },
   ];
