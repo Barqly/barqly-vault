@@ -33,6 +33,8 @@ export interface KeySelectionDropdownProps {
   autoFocus?: boolean;
   /** Callback called when a key is selected (for focus management) */
   onKeySelected?: () => void;
+  /** Tab index for the dropdown button */
+  tabIndex?: number;
 }
 
 export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
@@ -49,6 +51,7 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
   onLoadingChange,
   autoFocus = false,
   onKeySelected,
+  tabIndex,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const {
@@ -156,6 +159,7 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
           onClick={handleToggle}
           onKeyDown={handleKeyDown}
           autoFocus={autoFocus}
+          tabIndex={tabIndex}
         />
 
         {/* Dropdown Menu */}

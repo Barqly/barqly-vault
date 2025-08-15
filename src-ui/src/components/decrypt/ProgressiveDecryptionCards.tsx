@@ -73,9 +73,12 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   };
 
   const handleKeySelected = () => {
-    // Focus the Continue button after key selection
+    // Focus the Passphrase field after key selection to maintain logical flow
     setTimeout(() => {
-      continueButtonRef.current?.focus();
+      const passphraseInput = document.querySelector('input[placeholder="Enter your key passphrase"]') as HTMLInputElement;
+      if (passphraseInput) {
+        passphraseInput.focus();
+      }
     }, 100);
   };
 
@@ -127,6 +130,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                 placeholder="Choose the key used for encryption"
                 autoFocus={currentStep === 2}
                 onKeySelected={handleKeySelected}
+                tabIndex={1}
               />
             </div>
 
@@ -143,7 +147,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                     placeholder="Enter your key passphrase"
                     showStrength={false}
                     autoFocus={false}
-                    tabIndex={1}
+                    tabIndex={2}
                   />
                 </div>
 
