@@ -24,6 +24,7 @@ use commands::{
     select_files,
     update_config,
     validate_passphrase,
+    verify_key_passphrase,
     verify_manifest,
 };
 
@@ -43,6 +44,7 @@ pub fn run() {
             // Crypto commands
             generate_key,
             validate_passphrase,
+            verify_key_passphrase,
             encrypt_files,
             get_encryption_status,
             decrypt_data,

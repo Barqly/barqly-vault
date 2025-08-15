@@ -158,6 +158,16 @@ export interface ValidatePassphraseResponse {
   message: string;
 }
 
+export interface VerifyKeyPassphraseInput {
+  key_id: string;
+  passphrase: string;
+}
+
+export interface VerifyKeyPassphraseResponse {
+  is_valid: boolean;
+  message: string;
+}
+
 export interface EncryptDataInput {
   key_id: string;
   file_paths: string[];

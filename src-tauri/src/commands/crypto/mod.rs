@@ -20,7 +20,10 @@ pub use progress::{
     get_encryption_status, get_progress, EncryptionStatus, EncryptionStatusResponse,
     GetEncryptionStatusInput, GetProgressInput, GetProgressResponse,
 };
-pub use validation::{validate_passphrase, ValidatePassphraseInput, ValidatePassphraseResponse};
+pub use validation::{
+    validate_passphrase, verify_key_passphrase, ValidatePassphraseInput,
+    ValidatePassphraseResponse, VerifyKeyPassphraseInput, VerifyKeyPassphraseResponse,
+};
 
 // Shared state management
 use std::collections::HashMap;
