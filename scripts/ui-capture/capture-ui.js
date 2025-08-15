@@ -56,14 +56,14 @@ function buildFinalDescription(seed, userInput) {
   return u; // no seed, just user input
 }
 
-/** Generate filename from description + timestamp fallback with capture number prefix */
-function buildFilename(finalDesc, captureNumber) {
+/** Generate filename with hierarchical numbering (group-state-description) */
+function buildFilename(finalDesc, screenGroupNumber, screenStateNumber) {
   const safe = sanitizeForFilename(finalDesc);
   const ts = new Date().toISOString().replace(/[:.]/g, '-');
   // Prefer description; fall back to timestamp if empty
   const baseFilename = (safe ? `${safe}.png` : `capture-${ts}.png`);
-  // Add capture number prefix (e.g., "1-", "2-", "3-")
-  return `${captureNumber}-${baseFilename}`;
+  // Add hierarchical numbering prefix (e.g., "1-1-", "1-2-", "2-1-")
+  return `${screenGroupNumber}-${screenStateNumber}-${baseFilename}`;
 }
 
 // ---- End of helpers ----
@@ -81,6 +81,18 @@ class UICaptureTool {
       input: process.stdin,
       output: process.stdout,
     });
+
+    // Screen grouping state for hierarchical numbering
+    this.currentScreenName = null; // Current screen name (desc)
+    this.screenGroupNumber = 0; // Increments each time 'n' is used
+    this.screenStateNumber = 0; // Resets to 0 each time screen changes
+    
+    // If SESSION_DESC is provided, use it as initial screen
+    if (SESSION_DESC) {
+      this.currentScreenName = SESSION_DESC;
+      this.screenGroupNumber = 1;
+      this.screenStateNumber = 0;
+    }
 
     // Dynamic import for screenshot-desktop (ESM module)
     this.screenshot = null;
@@ -121,6 +133,9 @@ class UICaptureTool {
     console.log("==========================================\n");
     console.log("Instructions:");
     console.log(
+      "- Press 'n' + Enter to set/change screen name (e.g., setup-screen, encrypt-screen)",
+    );
+    console.log(
       "- Navigate your Barqly Vault app to any state you want to capture",
     );
     console.log(
@@ -131,13 +146,13 @@ class UICaptureTool {
     console.log("- Press 'q' + Enter to quit and optionally generate analysis");
     console.log("- Press 'h' + Enter to show help\n");
     console.log(
+      "📝 Hierarchical Numbering: Screenshots are numbered as {group}-{state} (e.g., 1-1, 1-2, 2-1)",
+    );
+    console.log(
       "🍎 macOS Mode: Captures ONLY the active window (clean screenshots!)",
     );
     console.log(
-      "💡 Tip: After pressing Enter, quickly click on your Barqly Vault app",
-    );
-    console.log(
-      "Ready to capture. Press 'c' when you see something to screenshot...\n",
+      "💡 Tip: Start with 'n' to set your first screen name, then use 'c' to capture states\n",
     );
 
     while (true) {
@@ -158,9 +173,11 @@ class UICaptureTool {
           this.listCaptures();
         } else if (command === "t") {
           await this.testScreenshot();
+        } else if (command === "n") {
+          await this.changeScreenName();
         } else {
           console.log(
-            "❓ Unknown command. Press 'c' (3s delay), 'f' (fast), '5' (5s delay), 'q' to quit, 'h' for help",
+            "❓ Unknown command. Press 'c' (3s delay), 'f' (fast), '5' (5s delay), 'n' (new screen), 'q' to quit, 'h' for help",
           );
         }
       } catch (error) {
@@ -188,9 +205,34 @@ class UICaptureTool {
     });
   }
 
+  async changeScreenName() {
+    const newScreenName = await this.askQuestion(
+      `\n📱 Enter screen name${this.currentScreenName ? ` (current: ${this.currentScreenName})` : ''}: `
+    );
+    
+    if (newScreenName) {
+      this.currentScreenName = newScreenName;
+      this.screenGroupNumber += 1;
+      this.screenStateNumber = 0; // Reset state counter for new screen
+      console.log(`\n✅ Switched to screen: "${this.currentScreenName}" (Group ${this.screenGroupNumber})`);
+      console.log(`📸 Next screenshots will be numbered: ${this.screenGroupNumber}-1-, ${this.screenGroupNumber}-2-, etc.\n`);
+    } else {
+      console.log(`\n⚠️  No screen name entered. Staying with: "${this.currentScreenName || 'none'}"\n`);
+    }
+  }
+
   async captureCurrentScreen(delaySeconds = 3) {
-    const captureNumber = this.screenshots.length + 1;
-    console.log(`\n📸 Capturing screenshot ${captureNumber}...`);
+    // Check if we have a current screen name
+    if (!this.currentScreenName) {
+      console.log(`\n⚠️  No screen name set! Please press 'n' first to set a screen name.\n`);
+      return;
+    }
+
+    // Increment state number for current screen
+    this.screenStateNumber += 1;
+    const totalCaptureNumber = this.screenshots.length + 1;
+    
+    console.log(`\n📸 Capturing screenshot ${this.screenGroupNumber}-${this.screenStateNumber} (${this.currentScreenName})...`);
 
     try {
       // Add capture delay to allow window switching
@@ -216,18 +258,14 @@ class UICaptureTool {
 
       console.log(`📊 Screenshot captured: ${screenshotBuffer.length} bytes`);
 
-      // Note: filename will be generated below using buildFilename() with captureNumber
-      //const filename = `capture-${captureNumber}-${timestamp}.png`;
+      // 1) prompt for description with current screen as seed
+      const userInput = await this.askQuestion(`Enter description (default: ${this.currentScreenName}): `);
 
-      // 1) prompt for description with seed prefilled
-      const defaultSeed = SESSION_DESC; // may be empty string
-      const userInput = await this.askQuestion(`Enter description${defaultSeed ? ` (default: ${defaultSeed})` : ''}: `);
+      // 2) combine - if user input is empty, use current screen name
+      const finalDesc = buildFinalDescription(this.currentScreenName, userInput);
 
-      // 2) combine - if user input is empty and we have a seed, use the seed
-      const finalDesc = buildFinalDescription(defaultSeed, userInput);
-
-      // 3) build filename with capture number
-      const filename = buildFilename(finalDesc, captureNumber);
+      // 3) build filename with hierarchical numbering
+      const filename = buildFilename(finalDesc, this.screenGroupNumber, this.screenStateNumber);
 
       const filepath = path.join(this.sessionDir, "screenshots", filename);
 
@@ -238,11 +276,14 @@ class UICaptureTool {
 
       console.log("✅ File saved successfully");
 
-      // Store metadata using the final description
+      // Store metadata using hierarchical information
       const captureData = {
-        number: captureNumber,
+        number: totalCaptureNumber,
+        screenGroup: this.screenGroupNumber,
+        screenState: this.screenStateNumber,
+        screenName: this.currentScreenName,
         filename,
-        description: finalDesc || `Screenshot ${captureNumber}`,
+        description: finalDesc || `${this.currentScreenName} ${this.screenStateNumber}`,
         timestamp: new Date().toISOString(),
         filepath: path.relative(this.projectRoot, filepath),
         fileSize: screenshotBuffer.length,
@@ -251,7 +292,7 @@ class UICaptureTool {
       this.screenshots.push(captureData);
 
       console.log(
-        `✅ Screenshot ${captureNumber} captured: ${finalDesc || filename}`,
+        `✅ Screenshot ${this.screenGroupNumber}-${this.screenStateNumber} captured: ${finalDesc || filename}`,
       );
       console.log(
         "Continue? Press 'c' to capture more, 'q' to finish, 'l' to list captures...\n",
@@ -361,6 +402,7 @@ class UICaptureTool {
 
   showHelp() {
     console.log("\n📋 Available Commands:");
+    console.log("  n - Set/change current screen name (starts new screen group)");
     console.log("  c - Capture active window (3-second delay, recommended)");
     console.log("  f - Fast capture (immediate, no delay)");
     console.log("  5 - Capture with 5-second delay");
@@ -368,6 +410,15 @@ class UICaptureTool {
     console.log("  l - List current captures in this session");
     console.log("  t - Test screenshot capability (diagnostic)");
     console.log("  h - Show this help message\n");
+    console.log(
+      "📝 Hierarchical Numbering: Each screen gets its own group (1-, 2-, 3-)",
+    );
+    console.log(
+      "    Screenshots within each screen are numbered 1, 2, 3, etc.",
+    );
+    console.log(
+      "    Example: 1-1-setup-screen.png, 1-2-setup-screen.png, 2-1-encrypt-screen.png\n",
+    );
     console.log(
       "💡 On macOS: Captures only the active window (cleaner screenshots)",
     );
@@ -446,8 +497,11 @@ class UICaptureTool {
 
     console.log(`\n📷 Current Session Captures (${this.screenshots.length}):`);
     console.log("==========================================");
-    this.screenshots.forEach((capture, index) => {
-      console.log(`${index + 1}. ${capture.description}`);
+    this.screenshots.forEach((capture) => {
+      const hierarchicalNumber = capture.screenGroup && capture.screenState ? 
+        `${capture.screenGroup}-${capture.screenState}` : 
+        capture.number.toString();
+      console.log(`${hierarchicalNumber}. ${capture.description} (${capture.screenName || 'no screen set'})`);
       console.log(`   File: ${capture.filename}`);
       console.log(`   Time: ${new Date(capture.timestamp).toLocaleString()}\n`);
     });
