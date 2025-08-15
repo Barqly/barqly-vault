@@ -12,7 +12,6 @@ export interface DropdownButtonProps {
   onClick: () => void;
   onKeyDown: (event: React.KeyboardEvent) => void;
   autoFocus?: boolean;
-  tabIndex?: number;
 }
 
 export const DropdownButton: React.FC<DropdownButtonProps> = ({
@@ -25,7 +24,6 @@ export const DropdownButton: React.FC<DropdownButtonProps> = ({
   onClick,
   onKeyDown,
   autoFocus = false,
-  tabIndex,
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -48,7 +46,6 @@ export const DropdownButton: React.FC<DropdownButtonProps> = ({
       onClick={onClick}
       onKeyDown={onKeyDown}
       disabled={disabled || loading}
-      tabIndex={tabIndex}
       className={`
         w-full px-3 py-2 border rounded-lg shadow-sm text-left
         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
