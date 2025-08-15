@@ -95,7 +95,9 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div className="text-left">
             <h2 className="text-xl font-semibold text-slate-900">Vault decrypted successfully.</h2>
-            <p className="text-sm text-slate-600 mt-1">Vault integrity verified - your files are authentic and unmodified</p>
+            <p className="text-sm text-slate-600 mt-1">
+              Vault integrity verified - your files are authentic and unmodified
+            </p>
           </div>
         </div>
       </div>

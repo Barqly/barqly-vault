@@ -29,11 +29,9 @@ const DecryptPage: React.FC = () => {
     selectedKeyId,
     passphrase,
     outputPath,
-    passphraseAttempts,
     isDecrypting,
     showAdvancedOptions,
     setShowAdvancedOptions,
-    vaultMetadata,
 
     // From useFileDecryption
     isLoading,
@@ -113,8 +111,6 @@ const DecryptPage: React.FC = () => {
                   selectedFile={selectedFile}
                   selectedKeyId={selectedKeyId}
                   passphrase={passphrase}
-                  passphraseAttempts={passphraseAttempts}
-                  vaultMetadata={vaultMetadata}
                   isLoading={isLoading}
                   onFileSelected={handleFileSelected}
                   onClearFiles={clearSelection}
@@ -139,12 +135,6 @@ const DecryptPage: React.FC = () => {
                     handleFileValidationError(commandError);
                   }}
                   onClearError={clearError}
-                  onNeedHelp={() => {
-                    // TODO: Consider implementing inline help panel instead of toast
-                    console.log(
-                      'Help requested: Check your password manager, backup notes, or contact support',
-                    );
-                  }}
                   onStepChange={handleStepNavigation}
                 />
 

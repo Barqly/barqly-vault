@@ -100,7 +100,10 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
             <h2 className="text-xl font-semibold text-slate-900">
               Your vault is ready — securely encrypted.
             </h2>
-            <p className="text-sm text-slate-600 mt-1">Encryption verified — your vault is securely protected and ready for storage or sharing</p>
+            <p className="text-sm text-slate-600 mt-1">
+              Encryption verified — your vault is securely protected and ready for storage or
+              sharing
+            </p>
           </div>
         </div>
       </div>

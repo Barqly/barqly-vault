@@ -3,18 +3,12 @@ import { ChevronLeft } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
 import PassphraseInput from '../forms/PassphraseInput';
-import PassphraseMemoryHints from './PassphraseMemoryHints';
 
 interface ProgressiveDecryptionCardsProps {
   currentStep: number;
   selectedFile: string | null;
   selectedKeyId: string | null;
   passphrase: string;
-  passphraseAttempts: number;
-  vaultMetadata: {
-    creationDate?: string;
-    keyLabel?: string;
-  };
   isLoading: boolean;
   onFileSelected: (paths: string[]) => void;
   onClearFiles: () => void;
@@ -23,7 +17,6 @@ interface ProgressiveDecryptionCardsProps {
   onPassphraseChange: (passphrase: string) => void;
   onPassphraseError: (error: { code: string; message: string; user_actionable: boolean }) => void;
   onClearError: () => void;
-  onNeedHelp: () => void;
   onStepChange: (step: number) => void;
 }
 
@@ -36,8 +29,6 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   selectedFile,
   selectedKeyId,
   passphrase,
-  passphraseAttempts,
-  vaultMetadata,
   isLoading,
   onFileSelected,
   onClearFiles,
@@ -46,7 +37,6 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   onPassphraseChange,
   onPassphraseError,
   onClearError,
-  onNeedHelp,
   onStepChange,
 }) => {
   const canGoToPreviousStep = currentStep > 1;
@@ -201,14 +191,6 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                     }}
                   />
                 </div>
-
-                <PassphraseMemoryHints
-                  vaultPath={selectedFile || undefined}
-                  creationDate={vaultMetadata.creationDate}
-                  keyLabel={vaultMetadata.keyLabel}
-                  attemptCount={passphraseAttempts}
-                  onNeedHelp={onNeedHelp}
-                />
               </>
             )}
           </div>
