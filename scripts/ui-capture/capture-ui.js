@@ -56,12 +56,14 @@ function buildFinalDescription(seed, userInput) {
   return u; // no seed, just user input
 }
 
-/** Generate filename from description + timestamp fallback */
-function buildFilename(finalDesc) {
+/** Generate filename from description + timestamp fallback with capture number prefix */
+function buildFilename(finalDesc, captureNumber) {
   const safe = sanitizeForFilename(finalDesc);
   const ts = new Date().toISOString().replace(/[:.]/g, '-');
   // Prefer description; fall back to timestamp if empty
-  return (safe ? `${safe}.png` : `capture-${ts}.png`);
+  const baseFilename = (safe ? `${safe}.png` : `capture-${ts}.png`);
+  // Add capture number prefix (e.g., "1-", "2-", "3-")
+  return `${captureNumber}-${baseFilename}`;
 }
 
 // ---- End of helpers ----
@@ -214,12 +216,7 @@ class UICaptureTool {
 
       console.log(`📊 Screenshot captured: ${screenshotBuffer.length} bytes`);
 
-      // Generate filename
-      const timestamp = new Date()
-        .toISOString()
-        .replace(/[:.]/g, "")
-        .replace("T", "_")
-        .split("Z")[0];
+      // Note: filename will be generated below using buildFilename() with captureNumber
       //const filename = `capture-${captureNumber}-${timestamp}.png`;
 
       // 1) prompt for description with seed prefilled
@@ -229,8 +226,8 @@ class UICaptureTool {
       // 2) combine - if user input is empty and we have a seed, use the seed
       const finalDesc = buildFinalDescription(defaultSeed, userInput);
 
-      // 3) build filename
-      const filename = buildFilename(finalDesc);
+      // 3) build filename with capture number
+      const filename = buildFilename(finalDesc, captureNumber);
 
       const filepath = path.join(this.sessionDir, "screenshots", filename);
 
@@ -659,7 +656,7 @@ Please provide specific feedback for each captured screenshot:
 
 ${this.screenshots
   .map(
-    (capture, index) => `
+    (capture) => `
 #### ${capture.description}
 - What works well in this screen?
 - What specific inconsistencies need attention?
