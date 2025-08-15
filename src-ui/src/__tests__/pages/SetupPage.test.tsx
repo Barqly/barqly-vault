@@ -67,7 +67,7 @@ describe('SetupPage', () => {
       expect(screen.getByLabelText(/key label/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/^passphrase/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/confirm passphrase/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^create key$/i })).toBeInTheDocument();
     });
 
     it('should not render form when loading', () => {
@@ -144,7 +144,7 @@ describe('SetupPage', () => {
       const keyLabelInput = screen.getByLabelText(/key label/i);
       const passphraseInput = screen.getByLabelText(/^passphrase/i);
       const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
-      const submitButton = screen.getByRole('button', { name: /create key/i });
+      const submitButton = screen.getByRole('button', { name: /^create key$/i });
 
       // Fill form with valid data
       await user.type(keyLabelInput, 'Test Key');
@@ -166,7 +166,7 @@ describe('SetupPage', () => {
 
       renderWithRouter(<SetupPage />);
 
-      const submitButton = screen.getByRole('button', { name: /create key/i });
+      const submitButton = screen.getByRole('button', { name: /^create key$/i });
 
       // Try to submit without filling form
       await user.click(submitButton);
@@ -187,7 +187,7 @@ describe('SetupPage', () => {
       const keyLabelInput = screen.getByLabelText(/key label/i);
       const passphraseInput = screen.getByLabelText(/^passphrase/i);
       const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
-      const submitButton = screen.getByRole('button', { name: /create key/i });
+      const submitButton = screen.getByRole('button', { name: /^create key$/i });
 
       // Fill form with mismatched passphrases
       await user.type(keyLabelInput, 'Test Key');
@@ -369,6 +369,7 @@ describe('SetupPage', () => {
     it('should display progress bar and context when progress is available', () => {
       mockUseKeyGeneration.mockReturnValue({
         ...defaultHookReturn,
+        isLoading: true,
         progress: {
           operation_id: 'test-op-456',
           progress: 0.75,
@@ -482,7 +483,7 @@ describe('SetupPage', () => {
 
       // Verify page renders correctly in desktop environment
       expect(screen.getByText('Create Your Vault Key')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^create key$/i })).toBeInTheDocument();
     });
 
     it('should handle web environment correctly', async () => {

@@ -58,9 +58,9 @@ describe('CollapsibleHelp', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /learn what happens next/i }));
 
-    expect(screen.getByText('Key Generation')).toBeInTheDocument();
-    expect(screen.getByText('File Encryption')).toBeInTheDocument();
-    expect(screen.getByText('Secure Storage')).toBeInTheDocument();
+    expect(screen.getByText('Add Files')).toBeInTheDocument();
+    expect(screen.getByText('Lock with Key')).toBeInTheDocument();
+    expect(screen.getByText('Store Vault Securely')).toBeInTheDocument();
   });
 
   it('shows merged paragraph content for each step', () => {
@@ -68,9 +68,9 @@ describe('CollapsibleHelp', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /learn what happens next/i }));
 
-    expect(screen.getByText(/Your keypair is created and stored securely/)).toBeInTheDocument();
-    expect(screen.getByText(/Uses industry-standard/)).toBeInTheDocument();
-    expect(screen.getByText(/Files are compressed and locked/)).toBeInTheDocument();
+    expect(screen.getByText(/Select files or folders to protect/)).toBeInTheDocument();
+    expect(screen.getByText(/Encrypt so only your key \+ passphrase can open them/)).toBeInTheDocument();
+    expect(screen.getByText(/Save the vault file anywhere, even in the cloud/)).toBeInTheDocument();
   });
 
   it('shows all content in merged paragraphs (no conditional detailed content)', () => {
@@ -79,9 +79,9 @@ describe('CollapsibleHelp', () => {
     fireEvent.click(screen.getByRole('button', { name: /learn what happens next/i }));
 
     // All content should be visible since we merged everything into single paragraphs
-    expect(screen.getByText(/Uses industry-standard/)).toBeInTheDocument();
-    expect(screen.getByText(/Files are compressed and locked/)).toBeInTheDocument();
-    expect(screen.getByText(/Only your private key.*passphrase can unlock/)).toBeInTheDocument();
+    expect(screen.getByText(/Select files or folders to protect/)).toBeInTheDocument();
+    expect(screen.getByText(/Encrypt so only your key \+ passphrase can open them/)).toBeInTheDocument();
+    expect(screen.getByText(/Save the vault file anywhere, even in the cloud/)).toBeInTheDocument();
   });
 
   it('has proper accessibility attributes', () => {

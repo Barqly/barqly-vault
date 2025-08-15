@@ -92,7 +92,7 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
         await user.type(confirmPassphraseInput, 'StrongPassword123!');
 
         // Form should be valid and submittable
-        const submitButton = screen.getByRole('button', { name: /create key/i });
+        const submitButton = screen.getByRole('button', { name: /^create key$/i });
         expect(submitButton).not.toBeDisabled();
 
         // Submit via Enter key (original regression scenario)
@@ -106,7 +106,7 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
           // The component should handle the error gracefully without crashing
           // Check that the form is still present (by checking for key elements)
           expect(screen.getByLabelText(/key label/i)).toBeInTheDocument();
-          expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
+          expect(screen.getByRole('button', { name: /^create key$/i })).toBeInTheDocument();
         });
       } finally {
         // Restore console.error
@@ -135,7 +135,7 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
         const keyLabelInput = screen.getByLabelText(/key label/i);
         const passphraseInput = screen.getByLabelText(/^passphrase/i);
         const confirmPassphraseInput = screen.getByLabelText(/confirm passphrase/i);
-        const submitButton = screen.getByRole('button', { name: /create key/i });
+        const submitButton = screen.getByRole('button', { name: /^create key$/i });
 
         await user.type(keyLabelInput, 'Test Key');
         await user.type(passphraseInput, 'StrongPassword123!');
@@ -148,7 +148,7 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
 
         // Component should remain functional after API error
         await waitFor(() => {
-          expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
+          expect(screen.getByRole('button', { name: /^create key$/i })).toBeInTheDocument();
         });
       } finally {
         // Restore console.error
@@ -180,7 +180,7 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
 
       // Form should render normally (check for key elements)
       expect(screen.getByLabelText(/key label/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^create key$/i })).toBeInTheDocument();
 
       // Error should be displayed
       expect(screen.getByText('This feature requires the desktop application')).toBeInTheDocument();
@@ -267,7 +267,7 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
       expect(mockGenerateKey).not.toHaveBeenCalled();
 
       // Button should be disabled
-      const submitButton = screen.getByRole('button', { name: /create key/i });
+      const submitButton = screen.getByRole('button', { name: /^create key$/i });
       expect(submitButton).toBeDisabled();
     });
   });
@@ -283,7 +283,7 @@ describe('Regression: Form Submission + Tauri API Integration', () => {
       expect(screen.getByLabelText(/key label/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/^passphrase/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/confirm passphrase/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /create key/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^create key$/i })).toBeInTheDocument();
     });
 
     it('should handle web environment API errors gracefully during form submission', async () => {
