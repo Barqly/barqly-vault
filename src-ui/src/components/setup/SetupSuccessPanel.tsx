@@ -96,15 +96,12 @@ const SetupSuccessPanel: React.FC<SetupSuccessPanelProps> = ({
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div className="text-left">
             <h2 className="text-xl font-semibold text-slate-900">Key generated successfully</h2>
+            <p className="text-sm text-slate-600 mt-1">Your encryption keypair has been created and securely stored on this device.</p>
           </div>
         </div>
       </div>
 
       <div className="p-4 space-y-4">
-        <p className="text-slate-600 text-center">
-          Your encryption keypair has been created and securely stored on this device.
-        </p>
-
         {/* Public key section */}
         <div className="bg-slate-50 rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
