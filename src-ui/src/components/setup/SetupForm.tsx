@@ -90,7 +90,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-[var(--space-5)] md:gap-[var(--space-6)]">
+      <div className="flex flex-col gap-[var(--space-4)]">
         {/* Key Label Input */}
         <div>
           <label htmlFor="key-label" className="text-sm font-medium text-slate-700 mb-2 block">
@@ -184,7 +184,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
             )}
           </div>
           {/* Reserved space for validation message */}
-          <div className="h-6 mt-1">
+          <div className="h-5 mt-1">
             {keyLabel.trim().length > 0 && (
               <span className="text-sm text-green-700">Label added</span>
             )}
@@ -231,7 +231,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-[var(--space-4)] flex items-center justify-end gap-[var(--space-3)]">
+      <div className="mt-[var(--space-3)] flex items-center justify-end gap-[var(--space-3)]">
         <button
           type="button"
           onClick={handleClear}
