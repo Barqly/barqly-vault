@@ -11,6 +11,7 @@ import DecryptionReadyPanel from '../components/decrypt/DecryptionReadyPanel';
 import DecryptProgress from '../components/decrypt/DecryptProgress';
 import DecryptSuccess from '../components/decrypt/DecryptSuccess';
 import AnimatedTransition from '../components/ui/AnimatedTransition';
+import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 
 const DECRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Vault', description: 'Choose vault to decrypt' },
@@ -74,8 +75,8 @@ const DecryptPage: React.FC = () => {
       />
 
       {/* Main content */}
-      <div className="max-w-4xl mx-auto px-6 py-8" id="main-content">
-        <div className="space-y-6">
+      <AppPrimaryContainer id="main-content">
+        <div className="mt-6 space-y-6">
           {/* Error display */}
           {error && !isDecrypting && (
             <ErrorMessage error={error} showRecoveryGuidance={true} onClose={clearError} />
@@ -158,7 +159,7 @@ const DecryptPage: React.FC = () => {
             )}
           </AnimatedTransition>
         </div>
-      </div>
+      </AppPrimaryContainer>
     </div>
   );
 };

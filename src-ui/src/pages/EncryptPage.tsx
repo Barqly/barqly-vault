@@ -11,6 +11,7 @@ import EncryptionReadyPanel from '../components/encrypt/EncryptionReadyPanel';
 import EncryptionProgress from '../components/encrypt/EncryptionProgress';
 import EncryptionSuccess from '../components/encrypt/EncryptionSuccess';
 import AnimatedTransition from '../components/ui/AnimatedTransition';
+import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 
 const ENCRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Files', description: 'Choose what to encrypt' },
@@ -82,8 +83,8 @@ const EncryptPage: React.FC = () => {
       />
 
       {/* Main content */}
-      <div className="max-w-4xl mx-auto px-6 py-8" id="main-content">
-        <div className="space-y-6">
+      <AppPrimaryContainer id="main-content">
+        <div className="mt-6 space-y-6">
           {/* Error display */}
           {error && !isEncrypting && (
             <ErrorMessage error={error} showRecoveryGuidance={true} onClose={clearError} />
@@ -158,7 +159,7 @@ const EncryptPage: React.FC = () => {
             )}
           </AnimatedTransition>
         </div>
-      </div>
+      </AppPrimaryContainer>
     </div>
   );
 };
