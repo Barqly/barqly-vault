@@ -21,6 +21,7 @@ export interface PassphraseInputProps {
   onStrengthChange?: (strength: PassphraseStrength) => void;
   onBlur?: () => void;
   onFocus?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   label?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -45,6 +46,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   onStrengthChange,
   onBlur,
   onFocus,
+  onKeyDown,
   label = 'Passphrase',
   placeholder = 'Enter your passphrase',
   disabled = false,
@@ -164,6 +166,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
             onChange={handleChange}
             onBlur={handleBlur}
             onFocus={handleFocus}
+            onKeyDown={onKeyDown}
             placeholder={placeholder}
             disabled={disabled}
             required={required}

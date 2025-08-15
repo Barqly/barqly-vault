@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
@@ -47,6 +47,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
 }) => {
   const canGoToPreviousStep = currentStep > 1;
   const continueButtonRef = useRef<HTMLButtonElement>(null);
+  const [isValidatingPassphrase, setIsValidatingPassphrase] = useState(false);
 
   // Define continue conditions for each step
   const canContinue = (() => {
@@ -66,27 +67,63 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (canContinue) {
-      onStepChange(currentStep + 1);
+      // For step 2, validate the passphrase with the selected key before proceeding
+      if (currentStep === 2 && selectedKeyId && passphrase && selectedFile) {
+        setIsValidatingPassphrase(true);
+        
+        try {
+          // Import the decryption function to test the passphrase
+          const { safeInvoke } = await import('../../lib/tauri-safe');
+          
+          // Test the passphrase by attempting to decrypt (this will validate the combination)
+          await safeInvoke('decrypt_data', {
+            encrypted_file: selectedFile,
+            key_id: selectedKeyId,
+            passphrase: passphrase,
+            output_dir: '/tmp' // Use temp directory for validation
+          }, 'passphrase_validation');
+          
+          // If we get here, passphrase is correct, proceed to next step
+          onStepChange(currentStep + 1);
+        } catch (error: any) {
+          // Check if this is a passphrase error
+          if (error?.message?.toLowerCase().includes('passphrase') || 
+              error?.message?.toLowerCase().includes('password') ||
+              error?.message?.toLowerCase().includes('wrong') ||
+              error?.message?.toLowerCase().includes('incorrect')) {
+            // Show error and keep focus on passphrase field
+            const passphraseInput = document.querySelector('input[placeholder="Enter your key passphrase"]') as HTMLInputElement;
+            if (passphraseInput) {
+              passphraseInput.focus();
+            }
+            // TODO: Display error message to user (you may want to pass this up to parent)
+            console.error('Passphrase validation failed:', error.message);
+          } else {
+            // For other errors (file issues, etc.), still proceed but let the decrypt screen handle it
+            onStepChange(currentStep + 1);
+          }
+        } finally {
+          setIsValidatingPassphrase(false);
+        }
+      } else {
+        // For other steps or missing data, proceed normally
+        onStepChange(currentStep + 1);
+      }
     }
   };
 
   const handleKeySelected = () => {
-    // Focus the Continue button after key selection
+    // Focus the Passphrase field after key selection
     setTimeout(() => {
-      continueButtonRef.current?.focus();
+      const passphraseInput = document.querySelector('input[placeholder="Enter your key passphrase"]') as HTMLInputElement;
+      if (passphraseInput) {
+        passphraseInput.focus();
+      }
     }, 100);
   };
 
-  const handlePassphraseEntry = () => {
-    // Focus the Continue button after passphrase entry (when both key and passphrase are valid)
-    if (selectedKeyId && passphrase.trim().length > 0) {
-      setTimeout(() => {
-        continueButtonRef.current?.focus();
-      }, 100);
-    }
-  };
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -135,15 +172,16 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                 <div>
                   <PassphraseInput
                     value={passphrase}
-                    onChange={(value) => {
-                      onPassphraseChange(value);
-                      // Trigger focus management check after passphrase change
-                      setTimeout(handlePassphraseEntry, 50);
-                    }}
+                    onChange={onPassphraseChange}
                     placeholder="Enter your key passphrase"
                     showStrength={false}
                     autoFocus={false}
-                    tabIndex={1}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && canContinue) {
+                        e.preventDefault();
+                        handleContinue();
+                      }
+                    }}
                   />
                 </div>
 
@@ -194,14 +232,14 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               ref={continueButtonRef}
               onClick={handleContinue}
               className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                canContinue
+                canContinue && !isValidatingPassphrase
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-slate-100 text-slate-400 cursor-not-allowed'
               } ${!canGoToPreviousStep ? 'ml-auto' : ''}`}
-              disabled={isLoading || !canContinue}
+              disabled={isLoading || !canContinue || isValidatingPassphrase}
               tabIndex={canContinue ? 1 : -1}
             >
-              Continue
+              {isValidatingPassphrase ? 'Validating...' : 'Continue'}
             </button>
           )}
         </div>

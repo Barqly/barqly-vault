@@ -89,6 +89,7 @@ const PassphraseMemoryHints: React.FC<PassphraseMemoryHintsProps> = ({
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-100 transition-colors"
         aria-expanded={isExpanded}
         aria-label="Toggle memory hints"
+        tabIndex={-1}
       >
         <div className="flex items-center gap-2">
           <Lightbulb className="w-4 h-4 text-blue-600" />
@@ -130,6 +131,7 @@ const PassphraseMemoryHints: React.FC<PassphraseMemoryHintsProps> = ({
               <button
                 onClick={onNeedHelp}
                 className="text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline"
+                tabIndex={-1}
               >
                 Need help recovering your passphrase? →
               </button>

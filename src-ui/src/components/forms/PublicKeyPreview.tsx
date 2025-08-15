@@ -23,6 +23,7 @@ export const PublicKeyPreview: React.FC<PublicKeyPreviewProps> = ({
           onClick={onTogglePreview}
           className="text-slate-500 hover:text-slate-700 transition-colors"
           aria-label={showPreview ? 'Hide public key' : 'Show public key'}
+          tabIndex={-1}
         >
           {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
