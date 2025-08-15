@@ -154,7 +154,7 @@ const DecryptPage: React.FC = () => {
                 )}
 
                 {/* Help section */}
-                <CollapsibleHelp triggerText="Decryption Tips" />
+                <CollapsibleHelp triggerText="How Decryption Works" context="decrypt" />
               </>
             )}
           </AnimatedTransition>

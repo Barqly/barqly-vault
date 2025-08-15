@@ -119,9 +119,9 @@ const SetupPage: React.FC = () => {
                 )}
               </section>
 
-              {/* "How does this work?" expandable help section */}
+              {/* "How Setup Works" expandable help section */}
               <section>
-                <CollapsibleHelp triggerText="How does this work?" />
+                <CollapsibleHelp triggerText="How Setup Works" context="setup" />
               </section>
             </>
           )}

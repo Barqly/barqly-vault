@@ -5,7 +5,7 @@ interface CollapsibleHelpProps {
   /** Custom trigger text */
   triggerText?: string;
   /** Context type to determine content */
-  context?: 'encrypt' | 'decrypt';
+  context?: 'setup' | 'encrypt' | 'decrypt';
 }
 
 const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
@@ -16,26 +16,46 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
 
   // Auto-detect context from trigger text if not explicitly provided
   const actualContext =
-    context || (triggerText?.toLowerCase().includes('decrypt') ? 'decrypt' : 'encrypt');
+    context ||
+    (triggerText?.toLowerCase().includes('decrypt')
+      ? 'decrypt'
+      : triggerText?.toLowerCase().includes('setup') || triggerText?.toLowerCase().includes('work')
+        ? 'setup'
+        : 'encrypt');
+
+  const setupSteps = [
+    {
+      number: '1',
+      title: 'Create a Key',
+      description: 'Give your vault a name and choose a strong passphrase.',
+    },
+    {
+      number: '2',
+      title: 'Stored Locally',
+      description: 'Your private key never leaves this device.',
+    },
+    {
+      number: '3',
+      title: "You're in Control",
+      description: 'Only your passphrase can unlock your key.',
+    },
+  ];
 
   const encryptSteps = [
     {
       number: '1',
-      title: 'Key Generation',
-      description:
-        '<span class="font-semibold">Your keypair is created and stored securely</span> on this device. Uses industry-standard <code>age</code> encryption. Your passphrase protects the private key.',
+      title: 'Add Your Files',
+      description: 'Select files or folders you want to protect.',
     },
     {
       number: '2',
-      title: 'File Encryption',
-      description:
-        '<span class="font-semibold">Encrypt important files or entire folders</span> like wallet backups or recovery docs. Files are compressed and locked into a single secure bundle.',
+      title: 'Lock with Your Key',
+      description: 'Files are encrypted so only your private key + passphrase can open them.',
     },
     {
       number: '3',
-      title: 'Secure Storage',
-      description:
-        '<span class="font-semibold">Store encrypted files safely</span> and share your public key with trusted family. Only your private key + passphrase can unlock your files.',
+      title: 'Save Anywhere',
+      description: 'Store the encrypted vault file safely, even in the cloud.',
     },
   ];
 
@@ -43,28 +63,33 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '1',
       title: 'Select Your Vault',
-      description:
-        '<span class="font-semibold">Choose the encrypted .age file</span> you want to decrypt. Only files created with Barqly Vault are supported.',
+      description: 'Pick the encrypted vault file you want to open.',
     },
     {
       number: '2',
-      title: 'Provide Key & Passphrase',
-      description:
-        '<span class="font-semibold">Select the key used for encryption</span> and enter your passphrase. Remember: passphrases are case-sensitive.',
+      title: 'Unlock Securely',
+      description: 'Use your private key + passphrase to decrypt.',
     },
     {
       number: '3',
-      title: 'Recover Files',
-      description:
-        '<span class="font-semibold">Files are extracted and verified</span> against the manifest. Your original folder structure is restored.',
+      title: 'Recover Your Files',
+      description: 'Files return to their original folders, ready to use.',
     },
   ];
 
-  const steps = actualContext === 'decrypt' ? decryptSteps : encryptSteps;
-  const title =
-    actualContext === 'decrypt'
-      ? 'How Vault Decryption Works'
-      : 'How Bitcoin Legacy Protection Works';
+  const getStepsAndTitle = () => {
+    switch (actualContext) {
+      case 'setup':
+        return { steps: setupSteps, title: 'How Setup Works' };
+      case 'decrypt':
+        return { steps: decryptSteps, title: 'How Decryption Works' };
+      case 'encrypt':
+      default:
+        return { steps: encryptSteps, title: 'How Encryption Works' };
+    }
+  };
+
+  const { steps, title } = getStepsAndTitle();
 
   return (
     <div className="mt-6">
@@ -104,10 +129,7 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
                     {step.title}
                   </span>
                 </div>
-                <p
-                  className="text-sm text-slate-700 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: step.description }}
-                ></p>
+                <p className="text-sm text-slate-700 leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
