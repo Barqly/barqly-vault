@@ -14,10 +14,7 @@
     "format:fix": "prettier --write .",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run",
-    "demo:dev": "vite --config vite.demo.config.ts",
-    "demo:build": "vite build --config vite.demo.config.ts",
-    "demo:preview": "vite preview --config vite.demo.config.ts"
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
