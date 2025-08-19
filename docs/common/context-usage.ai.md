@@ -20,7 +20,6 @@ contexts:
   architecture: "/docs/architecture/context.md"
   product: "/docs/product/context.md"
   engineering: "/docs/engineering/context.md"
-  operations: "/docs/operations/context.md"
 
 active_work:
   current_sprint: "/docs/context/current/active-sprint.md"

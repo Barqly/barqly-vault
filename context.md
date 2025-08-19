@@ -26,7 +26,6 @@ _Your 2-minute orientation to the secure data vault system_
 | Architecture & Design | `/docs/architecture/context.md`   | Technology stack, security model |
 | Features & UX         | `/docs/product/context.md`        | User journeys, encryption workflows |
 | Code Implementation   | `/docs/engineering/context.md`    | Development patterns, testing    |
-| CI/CD & Operations    | `/docs/operations/context.md`     | GitHub Actions, releases         |
 | Standards & Templates | `/docs/templates/context.md`      | ADDs, code templates             |
 | Historical Decisions  | `/docs/retrospectives/context.md` | Past decisions, evolution        |
 

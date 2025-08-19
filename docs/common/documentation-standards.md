@@ -128,7 +128,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/common/rust-quality-standards.md` - Testing, CI/CD, and quality gate requirements
 - `docs/evaluation/security-audit.md` - Security requirements and vulnerability assessments (when available)
 - `docs/product/` - Business requirements and user story acceptance criteria
-- `docs/operations/infrastructure-setup.md` - Deployment and infrastructure requirements
+- Project infrastructure and deployment configurations
 - `docs/engineering/frontend/` - Frontend integration and API consumption patterns
 - `docs/evaluation/performance-analysis.md` - Performance requirements and optimization targets
 
@@ -192,23 +192,20 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 **Outputs (Writes To):**
 **Always Create:**
 
-- `docs/operations/infrastructure-setup.md` - Infrastructure-as-code implementation and configuration
-- `docs/operations/deployment-pipeline.md` - CI/CD pipeline configuration and deployment procedures
-- `docs/operations/environment-management.md` - Development, staging, and production environment setup
-- `docs/operations/monitoring-configuration.md` - Observability, alerting, and logging system setup
-- `docs/operations/incident-response.md` - Operational procedures and troubleshooting guides
+- `docs/engineering/infrastructure-setup.md` - Infrastructure-as-code implementation and configuration
+- `docs/engineering/deployment-pipeline.md` - CI/CD pipeline configuration and deployment procedures
+- `docs/engineering/environment-management.md` - Development, staging, and production environment setup
+- `docs/engineering/monitoring-configuration.md` - Observability, alerting, and logging system setup
+- `docs/engineering/troubleshooting-guides.md` - Operational procedures and troubleshooting guides
 
 **Create When Needed:**
 
-- `docs/operations/infrastructure-audit.md` - Existing infrastructure assessment and optimization recommendations
-- `docs/operations/migration-plan.md` - Infrastructure migration and modernization roadmap
-- `docs/operations/automation-scripts/` - Development workflow automation, git hooks, and tooling
-- `docs/operations/disaster-recovery.md` - Backup procedures, recovery plans, and business continuity
-- `docs/operations/performance-optimization.md` - Infrastructure performance tuning and capacity planning
-- `docs/operations/security-compliance.md` - Infrastructure security implementation and compliance documentation
-- `docs/operations/cost-optimization.md` - Resource usage analysis and cost reduction strategies
-- `scripts/` - Infrastructure automation, deployment scripts, and operational utilities
-- Infrastructure configuration files (Terraform, Kubernetes manifests, Docker configurations)
+- `docs/engineering/infrastructure-audit.md` - Existing infrastructure assessment and optimization recommendations
+- `docs/engineering/migration-plan.md` - Infrastructure migration and modernization roadmap
+- `scripts/` - Development workflow automation, git hooks, and tooling
+- `docs/engineering/performance-optimization.md` - Infrastructure performance tuning and capacity planning
+- `docs/engineering/security-compliance.md` - Infrastructure security implementation and compliance documentation
+- Infrastructure configuration files and automation scripts
 
 ### product-owner
 
@@ -288,7 +285,7 @@ This document defines the Input/Output contracts for all ZenAI subagents. With o
 - `docs/zenmaster/` - Task assignments, testing priorities, and quality coordination
 - `docs/engineering/backend/` - Implementation details for backend service testing and API validation
 - `docs/engineering/frontend/` - Frontend implementation for UI testing and user experience validation
-- `docs/operations/infrastructure-setup.md` - Environment configurations for realistic performance testing
+- Project infrastructure and environment configurations for testing
 - `docs/research/` - Technology recommendations affecting testing tools and framework decisions
 - Production monitoring data, user feedback, and performance metrics for quality assessment
 
