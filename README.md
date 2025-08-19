@@ -26,14 +26,14 @@ Barqly Vault is a minimal, open-source desktop tool to **encrypt sensitive data 
 
 This project uses **AI Driven Development (ADD)** - a methodology that enables both AI-enhanced and traditional development workflows:
 
-- **Rich documentation structure** in `docs/` provides context for AI agents and human developers
+- **Rich documentation structure** in [`docs/`](docs/) provides context for AI agents and human developers
 - **Standard tooling** - all commands work with traditional tools (make, npm, cargo)  
-- **Clear setup guides** in `docs/engineering/` for getting started
+- **Clear setup guides** in [`docs/engineering/`](docs/engineering/) for getting started
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details on both AI-enhanced and traditional contribution approaches.
 
 ## Contributing
-Issues and PRs welcome. Please see `SECURITY.md` for reporting vulnerabilities.
+Issues and PRs welcome. Please see [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
 ## License
 MIT

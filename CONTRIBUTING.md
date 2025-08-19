@@ -29,15 +29,15 @@ This project uses AI Driven Development (ADD) while remaining fully accessible t
 
 ### Without AI Tools (Traditional Development)
 - **Clear documentation** provides excellent onboarding for human developers
-- **Comprehensive guides** in `docs/engineering/` cover all setup and development processes
+- **Comprehensive guides** in [`docs/engineering/`](docs/engineering/) cover all setup and development processes
 - **Standard workflows** - all commands work with traditional tools (make, npm, cargo)
 - **Well-organized codebase** follows conventional patterns and best practices
 
 ### Documentation Structure (Benefits Everyone)
-- `docs/context/` - Project state and decisions (useful for both humans and AI)
-- `docs/engineering/` - Development setup, standards, and workflows
-- `docs/architecture/` - System design and technical decisions
-- `docs/common/` - Quality standards and development protocols
+- [`docs/context/`](docs/context/) - Project state and decisions (useful for both humans and AI)
+- [`docs/engineering/`](docs/engineering/) - Development setup, standards, and workflows
+- [`docs/architecture/`](docs/architecture/) - System design and technical decisions
+- [`docs/common/`](docs/common/) - Quality standards and development protocols
 
 **Whether you use AI Driven Development or traditional approaches, you'll find comprehensive guidance for contributing effectively.**
 
