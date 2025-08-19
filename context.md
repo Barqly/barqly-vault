@@ -4,7 +4,7 @@ _Your 2-minute orientation to the secure data vault system_
 
 ## What This Is
 
-**Barqly Vault** - Desktop application for secure backup and restore of sensitive data & documents. Military-grade encryption running locally on your machine.
+**Barqly Vault** - Desktop application for secure backup and restore of sensitive data & documents. Strong encryption running locally on your machine.
 
 **Core Mission**: Enable secure data backup in under 90 seconds, recoverable decades later.
 
