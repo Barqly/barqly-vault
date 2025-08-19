@@ -1,7 +1,7 @@
 # to be deleted (tbd folder)
 tbd/
 
-# Ignore specstory
+# Claude Code sessions
 .claude/sessions/
 
 # Rust
