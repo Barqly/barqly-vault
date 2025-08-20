@@ -100,83 +100,112 @@ build_frontend() {
     print_status "success" "Frontend build completed"
 }
 
-# Function to build universal binary
+# Function to build universal binary using proper Tauri approach
 build_universal_binary() {
-    print_status "info" "Building universal binary for macOS..."
+    print_status "info" "Building universal binary for macOS using proper architecture..."
     
-    # Clean previous builds from project root (where cargo actually puts them)
+    # Clean previous builds
     print_status "step" "Cleaning previous builds..."
     rm -rf target/release/bundle
     rm -rf target/aarch64-apple-darwin
     rm -rf target/x86_64-apple-darwin
     rm -rf target/universal-apple-darwin
     
-    # Build for Apple Silicon
+    # Install required targets
+    print_status "step" "Ensuring required targets are installed..."
+    rustup target add aarch64-apple-darwin
+    rustup target add x86_64-apple-darwin
+    
+    # Build for both architectures using Tauri
     print_status "step" "Building for Apple Silicon (ARM64)..."
     cd src-tauri
-    cargo build --release --target aarch64-apple-darwin
+    cargo tauri build --target aarch64-apple-darwin
+    
+    print_status "step" "Building for Intel (x86_64)..."
+    cargo tauri build --target x86_64-apple-darwin
     cd ..
     
-    # Build for Intel
-    print_status "step" "Building for Intel (x86_64)..."
-    cd src-tauri
-    cargo build --release --target x86_64-apple-darwin
-    cd ..
+    # Create universal directory structure
+    print_status "step" "Creating universal bundle structure..."
+    mkdir -p target/universal-apple-darwin/release/bundle/macos
+    
+    # Copy the app bundle from one of the builds as the base
+    ARM_APP="target/aarch64-apple-darwin/release/bundle/macos/Barqly Vault.app"
+    INTEL_APP="target/x86_64-apple-darwin/release/bundle/macos/Barqly Vault.app"
+    UNIVERSAL_APP="target/universal-apple-darwin/release/bundle/macos/Barqly Vault.app"
+    
+    if [ ! -d "$ARM_APP" ]; then
+        print_status "error" "ARM64 app bundle not found at $ARM_APP"
+        exit 1
+    fi
+    
+    if [ ! -d "$INTEL_APP" ]; then
+        print_status "error" "Intel app bundle not found at $INTEL_APP"
+        exit 1
+    fi
+    
+    # Copy the entire app bundle structure from ARM build
+    cp -R "$ARM_APP" "$UNIVERSAL_APP"
     
     # Create universal binary using lipo
     print_status "step" "Creating universal binary with lipo..."
+    ARM_BINARY="$ARM_APP/Contents/MacOS/barqly-vault"
+    INTEL_BINARY="$INTEL_APP/Contents/MacOS/barqly-vault"
+    UNIVERSAL_BINARY="$UNIVERSAL_APP/Contents/MacOS/barqly-vault"
     
-    # Create directory for universal binary
-    mkdir -p target/universal-apple-darwin/release
+    if [ ! -f "$ARM_BINARY" ]; then
+        print_status "error" "ARM64 binary not found at $ARM_BINARY"
+        exit 1
+    fi
     
-    # Combine the binaries (they're in project root target/)
-    lipo -create \
-        target/aarch64-apple-darwin/release/barqly-vault \
-        target/x86_64-apple-darwin/release/barqly-vault \
-        -output target/universal-apple-darwin/release/barqly-vault
+    if [ ! -f "$INTEL_BINARY" ]; then
+        print_status "error" "Intel binary not found at $INTEL_BINARY"
+        exit 1
+    fi
+    
+    # Create the universal binary
+    lipo -create "$ARM_BINARY" "$INTEL_BINARY" -output "$UNIVERSAL_BINARY"
     
     # Verify the universal binary
     print_status "step" "Verifying universal binary..."
-    lipo -info target/universal-apple-darwin/release/barqly-vault
-    
-    print_status "success" "Universal binary created successfully"
+    if file "$UNIVERSAL_BINARY" | grep -q "universal binary"; then
+        file "$UNIVERSAL_BINARY"
+        print_status "success" "Universal binary created successfully"
+    else
+        print_status "error" "Failed to create universal binary"
+        exit 1
+    fi
 }
 
-# Function to create the app bundle
-create_app_bundle() {
-    print_status "info" "Creating macOS app bundle..."
+# Function to validate the app bundle
+validate_app_bundle() {
+    print_status "info" "Validating universal app bundle..."
     
-    cd src-tauri
-    
-    # Use Tauri to create the bundle structure
-    print_status "step" "Generating app bundle with Tauri..."
-    
-    # First, build with Tauri for the current architecture to get the bundle structure
-    cargo tauri build --target aarch64-apple-darwin
-    
-    cd ..
-    
-    # Copy the bundle to universal location (bundles are in project root target/)
-    print_status "step" "Preparing universal app bundle..."
-    rm -rf target/universal-apple-darwin/release/bundle
-    cp -R target/aarch64-apple-darwin/release/bundle target/universal-apple-darwin/release/
-    
-    # Replace the binary with the universal one
-    print_status "step" "Injecting universal binary into app bundle..."
     APP_PATH="target/universal-apple-darwin/release/bundle/macos/Barqly Vault.app"
-    if [ -d "$APP_PATH" ]; then
-        cp target/universal-apple-darwin/release/barqly-vault "$APP_PATH/Contents/MacOS/Barqly Vault"
-        
-        # Update Info.plist to indicate universal binary support
-        /usr/libexec/PlistBuddy -c "Add :LSArchitecturePriority array" "$APP_PATH/Contents/Info.plist" 2>/dev/null || true
-        /usr/libexec/PlistBuddy -c "Add :LSArchitecturePriority:0 string arm64" "$APP_PATH/Contents/Info.plist" 2>/dev/null || true
-        /usr/libexec/PlistBuddy -c "Add :LSArchitecturePriority:1 string x86_64" "$APP_PATH/Contents/Info.plist" 2>/dev/null || true
-    else
+    
+    if [ ! -d "$APP_PATH" ]; then
         print_status "error" "App bundle not found at expected location"
         exit 1
     fi
     
-    print_status "success" "App bundle created with universal binary"
+    # Verify the binary is universal
+    BINARY_PATH="$APP_PATH/Contents/MacOS/barqly-vault"
+    if [ ! -f "$BINARY_PATH" ]; then
+        print_status "error" "Binary not found in app bundle"
+        exit 1
+    fi
+    
+    print_status "step" "Verifying app bundle integrity..."
+    
+    # Check if it's a universal binary
+    if file "$BINARY_PATH" | grep -q "universal binary"; then
+        print_status "success" "App bundle contains universal binary"
+    else
+        print_status "error" "App bundle does not contain universal binary"
+        exit 1
+    fi
+    
+    print_status "success" "App bundle validation passed"
 }
 
 # Function to create DMG
@@ -314,7 +343,7 @@ main() {
     fi
     
     build_universal_binary
-    create_app_bundle
+    validate_app_bundle
     create_dmg
     show_instructions
 }
