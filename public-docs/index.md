@@ -1,12 +1,12 @@
 # Barqly Vault
 
-**Simple, secure backup and restore for sensitive data & documents**
+**Simple, secure file encryption for the Bitcoin ecosystem**
 
 ---
 
 ## What is Barqly Vault?
 
-Barqly Vault is a simple, secure desktop app that lets you encrypt and backup your most important digital files - like Bitcoin wallet recovery information, Lightning node backups, family documents, or any sensitive data you need to protect.
+Barqly Vault is a minimal, open-source desktop app that lets you encrypt and backup your most important digital files - like Bitcoin output descriptors, Lightning node backups, family documents, or any sensitive data you need to protect.
 
 ## The Problem it Solves
 
@@ -21,29 +21,37 @@ When you practice Bitcoin self-custody (mainchain or Lightning) or have sensitiv
 ## Key Benefits
 
 - **Simple**: Three clear steps - setup, encrypt, decrypt
-- **Secure**: Uses military-grade encryption (age standard) that's trusted by security experts
+- **Secure**: Uses [age](https://github.com/FiloSottile/age), a modern encryption standard trusted by security experts
 - **Self-Controlled**: Your files never leave your computer unless you choose to move them
 - **Cross-Platform**: Works the same way on Mac, Windows, and Linux
 - **Reliable**: Preserves folder structure and includes integrity checks to ensure your files are safe
 
 ## Target Users
 
-- **Bitcoin mainchain users** - wallet recovery information, seed phrases
+- **Bitcoin mainchain users** - wallet recovery info, output descriptors, seed phrases
 - **Lightning node operators** - additional encryption for node backups
 - **Bitcoin businesses** - client data, configuration files, recovery kits
 - **Families** - inheritance planning with all Bitcoin-related documents
-- **Anyone** who wants simple, secure file encryption without technical complexity
+- **Anyone** who wants simple, secure file encryption without cloud lock-in
 
 ## The Promise
 
-Take the security of professional-grade encryption and make it as easy to use as any other desktop app. No cloud dependencies, no technical knowledge required - just secure, reliable file protection you control.
+Professional-grade encryption, without the complexity. No cloud. No accounts. No hidden dependencies. Just secure, reliable file protection you fully control.
+
+---
+
+## 🚀 Get Involved
+
+👉 [Try the Alpha Preview](https://github.com/barqly/barqly-vault)  
+👉 [Star the Repo](https://github.com/barqly/barqly-vault/stargazers)  
+👉 [Contribute Feedback](https://github.com/barqly/barqly-vault/issues)
 
 ---
 
 ## Current Status
 
 **Development Phase**: Core application development in progress  
-**Timeline**: Q3-Q4 2024 for initial release  
+**Timeline**: Q3-Q4 2025 for initial release  
 **Platform**: Cross-platform desktop application (macOS, Windows, Linux)
 
 ## Technology Stack
