@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure backup and restore for sensitive data & documents
 
-.PHONY: help ui app demo demo-build build app-build dmg-universal dmg-quick linux-build preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys
+.PHONY: help ui app demo demo-build build app-build dmg-universal dmg-quick linux-build preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys pipeline-test pipeline-release
 
 # Default target
 help:
@@ -49,6 +49,10 @@ help:
 	@echo "  dev-keys      - Generate sample keys and test data for development"
 	@echo "  bench         - Run performance benchmarks"
 	@echo "  clean-keys    - Clean application keys directory (with confirmation)"
+	@echo ""
+	@echo "Pipeline & CI/CD:"
+	@echo "  pipeline-test    - Test CI pipeline locally (simulate GitHub Actions)"
+	@echo "  pipeline-release - Simulate release pipeline locally"
 	@echo ""
 	@echo "UI Capture & Analysis:"
 	@echo "  ui-capture    - Start on-demand UI screenshot capture session"
@@ -246,3 +250,39 @@ ui-capture:
 ui-analyze:
 	@echo "🤖 Generating analysis prompt for latest capture session..."
 	@npm run ui:analyze
+
+# Pipeline & CI/CD commands
+pipeline-test:
+	@echo "🔧 Testing CI pipeline locally (simulating GitHub Actions)..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "📋 This simulates the CI smart pipeline workflow locally"
+	@echo ""
+	@echo "🔍 Step 1: Comprehensive validation..."
+	@$(MAKE) validate || (echo "❌ Validation failed - CI would fail" && exit 1)
+	@echo ""
+	@echo "🔨 Step 2: Production build test..."
+	@$(MAKE) build || (echo "❌ Build failed - CI would fail" && exit 1)
+	@echo ""
+	@echo "✅ Pipeline test complete - CI would pass!"
+	@echo "💡 Ready to push to GitHub"
+
+pipeline-release:
+	@echo "🚀 Simulating release pipeline locally..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "📋 This tests what would happen on version tag release"
+	@echo ""
+	@echo "🔍 Step 1: Full validation..."
+	@$(MAKE) validate || (echo "❌ Release validation failed" && exit 1)
+	@echo ""
+	@echo "🍎 Step 2: macOS universal DMG..."
+	@$(MAKE) dmg-universal || (echo "❌ macOS build failed" && exit 1)
+	@echo ""
+	@echo "🐧 Step 3: Linux packages (if on Linux)..."
+	@if [[ "$$OSTYPE" == "linux-gnu"* ]]; then \
+		$(MAKE) linux-build || (echo "❌ Linux build failed" && exit 1); \
+	else \
+		echo "⚠️  Skipped Linux build (not on Linux OS)"; \
+	fi
+	@echo ""
+	@echo "✅ Release pipeline simulation complete!"
+	@echo "💡 Ready for version tag: git tag v1.0.0 && git push origin v1.0.0"
