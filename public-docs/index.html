@@ -116,7 +116,7 @@
 
       .users {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 1rem;
         margin-top: 1.5rem;
       }
@@ -130,17 +130,27 @@
       }
 
       .status {
-        background: linear-gradient(135deg, #2563EB, #1D4ED8);
-        color: white;
+        background: white;
+        color: #1E293B;
+        border: 2px solid #2563EB;
         padding: 2rem;
         border-radius: 12px;
         text-align: center;
       }
 
       .status h2 {
-        border: none;
-        color: white;
+        color: #1E293B;
+        border-bottom: 2px solid #2563EB;
+        padding-bottom: 0.5rem;
         margin-bottom: 1rem;
+      }
+
+      .status p {
+        color: #334155;
+      }
+
+      .status h3 {
+        color: #1E293B;
       }
 
       .tech-stack {
@@ -154,9 +164,10 @@
 
       .tech-item {
         padding: 0.5rem 1rem;
-        background: rgba(255, 255, 255, 0.15);
+        background: #EFF6FF;
+        border: 1px solid #DBEAFE;
+        color: #1E293B;
         border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
         font-weight: 500;
       }
 
