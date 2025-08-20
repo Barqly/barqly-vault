@@ -13,338 +13,154 @@ on:
         description: 'Version to release (e.g., 1.0.0)'
         required: true
       prerelease:
-        description: 'Is this a pre-release?'
-        required: false
-        default: false
+        description: 'Mark as pre-release'
         type: boolean
-
-permissions:
-  contents: write
-  discussions: write
+        default: false
 
 jobs:
-  # Create release draft
-  create-release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      version: ${{ steps.version.outputs.version }}
-    
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Full history for changelog
-      
-      - name: Get version
-        id: version
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            VERSION="v${{ github.event.inputs.version }}"
-          else
-            VERSION="${{ github.ref_name }}"
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
-      
-      - name: Generate changelog
-        id: changelog
-        run: |
-          # Generate changelog from commits
-          echo "## What's Changed" > CHANGELOG.md
-          git log --pretty=format:"* %s by @%an" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$(git describe --tags --abbrev=0 HEAD^)...${{ steps.version.outputs.version }}" >> CHANGELOG.md
-      
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.version.outputs.version }}
-          release_name: Barqly Vault ${{ steps.version.outputs.version }}
-          body_path: CHANGELOG.md
-          draft: true
-          prerelease: ${{ github.event.inputs.prerelease || contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'rc') }}
-
-  # Build for all platforms
-  build-release:
-    name: Build Release
-    needs: create-release
+  publish-tauri:
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Linux builds
-          - os: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            bundles: appimage,deb
-            artifact_name: linux-x64
-            artifact_paths: |
-              appimage/*.AppImage
-              deb/*.deb
+          # macOS Intel (like Sparrow)
+          - platform: 'macos-latest'
+            args: '--target x86_64-apple-darwin'
+            arch: 'intel'
+            label: 'macOS (Intel)'
           
-          # macOS Universal build
-          - os: macos-latest
-            target: universal-apple-darwin
-            bundles: dmg
-            artifact_name: macos-universal
-            artifact_paths: |
-              dmg/*.dmg
+          # macOS Apple Silicon (like Sparrow)  
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+            arch: 'apple-silicon'
+            label: 'macOS (Apple M-series)'
           
-          # Windows builds
-          - os: windows-2022
-            target: x86_64-pc-windows-msvc
-            bundles: msi,nsis
-            artifact_name: windows-x64
-            artifact_paths: |
-              msi/*.msi
-              nsis/*.exe
-    
-    runs-on: ${{ matrix.os }}
+          # Linux x64 - Intel/AMD (like Sparrow: .deb, .rpm, .tar.gz)
+          - platform: 'ubuntu-22.04'
+            args: '--target x86_64-unknown-linux-gnu'
+            arch: 'x64'
+            label: 'Linux (Intel/AMD)'
+          
+          # Linux ARM64 (like Sparrow: .deb, .rpm, .tar.gz)
+          - platform: 'ubuntu-22.04-arm'
+            args: '--target aarch64-unknown-linux-gnu'
+            arch: 'arm64'
+            label: 'Linux (ARM64)'
+          
+          # Windows x64 (like Sparrow: .msi and .zip)
+          - platform: 'windows-latest'
+            args: '--target x86_64-pc-windows-msvc'
+            arch: 'x64'
+            label: 'Windows'
+
+    runs-on: ${{ matrix.platform }}
     
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Node.js
+      - name: setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
+          node-version: lts/*
           cache: 'npm'
       
-      - name: Setup Rust
+      - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target != 'universal-apple-darwin' && matrix.target || '' }}
+          # Install the specific target for this matrix job
+          # Each job only builds for ONE specific architecture
+          targets: ${{ matrix.arch == 'intel' && 'x86_64-apple-darwin' || matrix.arch == 'apple-silicon' && 'aarch64-apple-darwin' || matrix.arch == 'x64' && contains(matrix.platform, 'ubuntu') && 'x86_64-unknown-linux-gnu' || matrix.arch == 'arm64' && 'aarch64-unknown-linux-gnu' || matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' }}
       
-      - name: Add macOS targets for universal
-        if: matrix.target == 'universal-apple-darwin'
-        run: |
-          rustup target add x86_64-apple-darwin
-          rustup target add aarch64-apple-darwin
-      
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
         with:
-          workspaces: "./src-tauri -> target"
-          key: ${{ matrix.os }}-${{ matrix.target }}-release
+          workspaces: './src-tauri -> target'
       
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-22.04'
+      - name: install dependencies (ubuntu only)
+        if: contains(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            libgtk-3-dev \
-            libayatana-appindicator3-dev
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+          # Install RPM build tools for creating .rpm packages
+          sudo apt-get install -y rpm
       
-      - name: Install frontend dependencies
-        run: npm ci
-      
-      - name: Update version in configs
+      - name: install ARM64 cross-compilation tools (ubuntu ARM64 only)
+        if: matrix.platform == 'ubuntu-22.04-arm'
         run: |
-          # Update version in tauri.conf.json
-          VERSION=${{ needs.create-release.outputs.version }}
-          VERSION=${VERSION#v}  # Remove 'v' prefix
-          sed -i.bak "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" src-tauri/tauri.conf.json
-          sed -i.bak "s/version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          echo "[target.aarch64-unknown-linux-gnu]" >> ~/.cargo/config.toml
+          echo "linker = \"aarch64-linux-gnu-gcc\"" >> ~/.cargo/config.toml
       
-      # Standard build for Linux and Windows
-      - name: Build application
-        if: matrix.target != 'universal-apple-darwin'
+      - name: install frontend dependencies
+        run: npm install --prefix src-ui
+      
+      - uses: tauri-apps/tauri-action@v0
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: app-v__VERSION__
+          releaseName: 'Barqly Vault v__VERSION__'
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+          
+      # Rename macOS DMG files to include architecture (like Sparrow)
+      - name: Rename macOS DMG with architecture
+        if: matrix.platform == 'macos-latest'
         run: |
-          cd src-tauri
-          cargo tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
-      
-      # Universal build for macOS
-      - name: Build macOS universal
-        if: matrix.target == 'universal-apple-darwin'
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          # Import certificates if available
-          if [ -n "$APPLE_CERTIFICATE" ]; then
-            echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
-            security create-keychain -p actions temp.keychain
-            security default-keychain -s temp.keychain
-            security unlock-keychain -p actions temp.keychain
-            security import certificate.p12 -k temp.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions temp.keychain
+          if [[ "$GITHUB_REF" =~ refs/tags/v?(.+) ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+          else
+            VERSION="dev"
           fi
           
-          # Build universal binary
-          make dmg-universal
+          # Determine the DMG path based on architecture
+          if [ "${{ matrix.arch }}" = "intel" ]; then
+            TARGET_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/macos"
+            NEW_NAME="Sparrow-style/Barqly-Vault-$VERSION-x86_64.dmg"
+          elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
+            TARGET_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
+            NEW_NAME="Sparrow-style/Barqly-Vault-$VERSION-aarch64.dmg"
+          fi
           
-          # Notarize if credentials available
-          if [ -n "$APPLE_ID" ] && [ -n "$APPLE_PASSWORD" ]; then
-            echo "Notarizing DMG..."
-            xcrun notarytool submit target/universal-apple-darwin/release/bundle/dmg/*.dmg \
-              --apple-id "$APPLE_ID" \
-              --password "$APPLE_PASSWORD" \
-              --team-id "$APPLE_TEAM_ID" \
-              --wait
+          # Create Sparrow-style naming directory
+          mkdir -p "$TARGET_DIR/Sparrow-style"
+          
+          # Find and rename the DMG
+          if [ -f "$TARGET_DIR/Barqly Vault.dmg" ]; then
+            mv "$TARGET_DIR/Barqly Vault.dmg" "$TARGET_DIR/$NEW_NAME"
+            echo "Renamed DMG to: $(basename $NEW_NAME)"
+            echo "DMG_PATH=$TARGET_DIR/$NEW_NAME" >> $GITHUB_ENV
           fi
       
-      # Sign Windows binaries
-      - name: Sign Windows binaries
-        if: matrix.os == 'windows-2022'
-        env:
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      # Create standalone .zip for Windows (like Sparrow)
+      - name: Create Windows standalone ZIP
+        if: matrix.platform == 'windows-latest'
         run: |
-          if ($env:WINDOWS_CERTIFICATE) {
-            $cert = [System.Convert]::FromBase64String($env:WINDOWS_CERTIFICATE)
-            [System.IO.File]::WriteAllBytes("certificate.pfx", $cert)
-            
-            # Sign all executables
-            Get-ChildItem -Path "src-tauri\target\${{ matrix.target }}\release\bundle" -Recurse -Include *.exe,*.msi | ForEach-Object {
-              signtool sign /f certificate.pfx /p $env:WINDOWS_CERTIFICATE_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $_.FullName
-            }
-            
-            Remove-Item certificate.pfx
+          $version = if ($env:GITHUB_REF -match "refs/tags/(.+)") { $matches[1] } else { "dev" }
+          $zipName = "Barqly-Vault-$version-standalone-x64.zip"
+          $appPath = "src-tauri/target/release/Barqly Vault.exe"
+          if (Test-Path $appPath) {
+            Compress-Archive -Path $appPath -DestinationPath $zipName
+            echo "Created standalone ZIP: $zipName"
           }
       
-      # Find and prepare artifacts
-      - name: Prepare artifacts
-        id: artifacts
-        shell: bash
+      # Create .tar.gz for Linux (like Sparrow)  
+      - name: Create Linux standalone archive
+        if: contains(matrix.platform, 'ubuntu')
         run: |
-          if [[ "${{ matrix.target }}" == "universal-apple-darwin" ]]; then
-            BASE_PATH="src-tauri/target/universal-apple-darwin/release/bundle"
+          if [[ "$GITHUB_REF" =~ refs/tags/(.+) ]]; then
+            VERSION="${BASH_REMATCH[1]}"
           else
-            BASE_PATH="src-tauri/target/${{ matrix.target }}/release/bundle"
+            VERSION="dev"
           fi
           
-          # Create staging directory
-          mkdir -p release-artifacts
-          
-          # Copy artifacts based on bundle type
-          for bundle in $(echo "${{ matrix.bundles }}" | tr ',' ' '); do
-            if [ -d "$BASE_PATH/$bundle" ]; then
-              cp $BASE_PATH/$bundle/* release-artifacts/ 2>/dev/null || true
-            fi
-          done
-          
-          # List artifacts
-          echo "Found artifacts:"
-          ls -la release-artifacts/
-      
-      # Upload artifacts to release
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ needs.create-release.outputs.version }}
-          files: release-artifacts/*
-          draft: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      # Also upload as workflow artifacts for testing
-      - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-${{ matrix.artifact_name }}
-          path: release-artifacts/
-          retention-days: 30
-
-  # Generate checksums
-  generate-checksums:
-    name: Generate Checksums
-    needs: [create-release, build-release]
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: release-*
-          path: artifacts/
-      
-      - name: Generate checksums
-        run: |
-          cd artifacts
-          find . -type f \( -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.msi" -o -name "*.exe" \) | while read file; do
-            sha256sum "$file" >> ../checksums.txt
-          done
-          cd ..
-          
-          echo "### SHA256 Checksums" > CHECKSUMS.md
-          echo '```' >> CHECKSUMS.md
-          cat checksums.txt >> CHECKSUMS.md
-          echo '```' >> CHECKSUMS.md
-      
-      - name: Upload checksums
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ needs.create-release.outputs.version }}
-          files: |
-            checksums.txt
-            CHECKSUMS.md
-          draft: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Publish release
-  publish-release:
-    name: Publish Release
-    needs: [create-release, build-release, generate-checksums]
-    runs-on: ubuntu-latest
-    environment: production
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Publish release
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const tag = '${{ needs.create-release.outputs.version }}';
-            
-            // Get the release
-            const releases = await github.rest.repos.listReleases({
-              owner,
-              repo
-            });
-            
-            const release = releases.data.find(r => r.tag_name === tag);
-            
-            if (!release) {
-              throw new Error(`Release ${tag} not found`);
-            }
-            
-            // Update release to published
-            await github.rest.repos.updateRelease({
-              owner,
-              repo,
-              release_id: release.id,
-              draft: false,
-              body: release.body + '\n\n## Installation\n\n' +
-                '### macOS\n' +
-                '1. Download the `.dmg` file (works on both Intel and Apple Silicon)\n' +
-                '2. Open the DMG and drag Barqly Vault to Applications\n\n' +
-                '### Linux\n' +
-                '- **AppImage**: Download, make executable (`chmod +x`), and run\n' +
-                '- **.deb**: Install with `sudo dpkg -i barqly-vault_*.deb`\n\n' +
-                '### Windows\n' +
-                '- **MSI**: Download and run the installer\n' +
-                '- **EXE**: Download and run the setup executable\n\n' +
-                '### Verify Downloads\n' +
-                'Check file integrity using the provided `checksums.txt` file.'
-            });
-            
-            console.log(`Published release ${tag}`);
+          BINARY_PATH="src-tauri/target/release/barqly-vault"
+          if [ -f "$BINARY_PATH" ]; then
+            ARCHIVE_NAME="barqly-vault-$VERSION-${{ matrix.arch }}.tar.gz"
+            tar -czf "$ARCHIVE_NAME" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
+            echo "Created standalone archive: $ARCHIVE_NAME"
+          fi

@@ -45,17 +45,25 @@
       "hardenedRuntime": true,
       "minimumSystemVersion": "10.13"
     },
-    "windows": {
-      "certificateThumbprint": "",
-      "digestAlgorithm": "sha256",
-      "timestampUrl": "http://timestamp.digicert.com"
-    },
     "linux": {
       "deb": {
         "depends": []
       },
+      "rpm": {
+        "depends": [],
+        "epoch": 0,
+        "release": "1"
+      },
       "appimage": {
         "bundleMediaFramework": true
+      }
+    },
+    "windows": {
+      "certificateThumbprint": "",
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com",
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
       }
     }
   }

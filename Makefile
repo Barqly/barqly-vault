@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure backup and restore for sensitive data & documents
 
-.PHONY: help ui app demo demo-build build app-build dmg-universal dmg-quick linux-build preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys pipeline-test pipeline-release
+.PHONY: help ui app demo demo-build build app-build dmg-intel dmg-arm dmg-all dmg-quick linux-build preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys pipeline-test pipeline-release
 
 # Default target
 help:
@@ -15,8 +15,10 @@ help:
 	@echo "Build:"
 	@echo "  build         - Build UI for production"
 	@echo "  app-build     - Build desktop app (current architecture)"
-	@echo "  dmg-universal - Build universal DMG for Intel + Apple Silicon"
-	@echo "  dmg-quick     - Quick universal DMG build (skip validation)"
+	@echo "  dmg-intel     - Build DMG for Intel Macs (x86_64)"
+	@echo "  dmg-arm       - Build DMG for Apple Silicon Macs (aarch64)"
+	@echo "  dmg-all       - Build separate DMGs for both architectures"
+	@echo "  dmg-quick     - Quick build for current architecture (skip validation)"
 	@echo "  linux-build   - Build Linux AppImage and .deb (requires Linux OS)"
 	@echo "  demo-build    - Build demo site"
 	@echo ""
@@ -86,13 +88,21 @@ demo-build:
 	@echo "🌐 Building demo site..."
 	cd src-ui && npm run demo:build
 
-dmg-universal:
-	@echo "🚀 Building universal DMG for macOS (Intel + Apple Silicon)..."
-	@./scripts/build-universal-dmg.sh
+dmg-intel:
+	@echo "🚀 Building DMG for Intel Macs (x86_64)..."
+	@./scripts/build-macos-separate.sh --target intel
+
+dmg-arm:
+	@echo "🚀 Building DMG for Apple Silicon Macs (aarch64)..."
+	@./scripts/build-macos-separate.sh --target arm
+
+dmg-all:
+	@echo "🚀 Building separate DMGs for Intel and Apple Silicon..."
+	@./scripts/build-macos-separate.sh
 
 dmg-quick:
-	@echo "⚡ Quick universal DMG build (skipping validation)..."
-	@./scripts/quick-dmg.sh
+	@echo "⚡ Quick DMG build for current architecture (skipping validation)..."
+	@./scripts/build-macos-separate.sh --skip-validation --skip-frontend
 
 linux-build:
 	@echo "🐧 Building Linux packages (AppImage + .deb)..."
@@ -137,7 +147,7 @@ clean-releases:
 	@echo "🧹 Cleaning release files and build artifacts..."
 	rm -rf target/aarch64-apple-darwin
 	rm -rf target/x86_64-apple-darwin
-	rm -rf target/universal-apple-darwin
+	# Note: universal builds are no longer used (we follow Sparrow's separate builds model)
 	rm -rf target/release/bundle
 	cd src-ui && rm -rf dist dist-demo node_modules/.vite
 	cd src-tauri && cargo clean
@@ -274,8 +284,8 @@ pipeline-release:
 	@echo "🔍 Step 1: Full validation..."
 	@$(MAKE) validate || (echo "❌ Release validation failed" && exit 1)
 	@echo ""
-	@echo "🍎 Step 2: macOS universal DMG..."
-	@$(MAKE) dmg-universal || (echo "❌ macOS build failed" && exit 1)
+	@echo "🍎 Step 2: macOS separate DMGs (Intel & ARM)..."
+	@$(MAKE) dmg-all || (echo "❌ macOS build failed" && exit 1)
 	@echo ""
 	@echo "🐧 Step 3: Linux packages (if on Linux)..."
 	@if [[ "$$OSTYPE" == "linux-gnu"* ]]; then \

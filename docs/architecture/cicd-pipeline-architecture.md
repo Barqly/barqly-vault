@@ -310,28 +310,36 @@ build:
 
 #### macOS Strategy
 
-**Universal Binary Approach** (Recommended):
+**Separate Architecture Builds** (Industry Standard - Sparrow Model):
 ```yaml
-build-macos-universal:
+build-macos-separate:
+  strategy:
+    matrix:
+      include:
+        - arch: 'intel'
+          target: 'x86_64-apple-darwin'
+        - arch: 'apple-silicon'
+          target: 'aarch64-apple-darwin'
   runs-on: macos-latest
   steps:
-    - name: Build Universal DMG
+    - name: Build ${{ matrix.arch }} DMG
       run: |
-        rustup target add x86_64-apple-darwin aarch64-apple-darwin
-        make dmg-universal
+        rustup target add ${{ matrix.target }}
+        cargo tauri build --target ${{ matrix.target }}
     
     - name: Notarize and Staple
       env:
         APPLE_ID: ${{ secrets.APPLE_ID }}
         APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
       run: |
-        xcrun notarytool submit target/release/bundle/dmg/*.dmg \
+        DMG_PATH="target/${{ matrix.target }}/release/bundle/macos/*.dmg"
+        xcrun notarytool submit $DMG_PATH \
           --apple-id "$APPLE_ID" \
           --password "$APPLE_PASSWORD" \
           --wait
 ```
 
-**Distribution**: Single universal DMG supporting both Intel and Apple Silicon
+**Distribution**: Separate DMG files for Intel (x86_64) and Apple Silicon (aarch64)
 
 #### Linux Strategy
 
@@ -410,8 +418,9 @@ release:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          # macOS
-          target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          # macOS (separate architecture builds)
+          target/x86_64-apple-darwin/release/bundle/macos/*.dmg
+          target/aarch64-apple-darwin/release/bundle/macos/*.dmg
           
           # Linux
           target/release/bundle/appimage/*.AppImage
@@ -686,9 +695,9 @@ security-checks:
 
 ### Phase 2: Multi-Platform Builds (Week 2)
 - [ ] Configure build matrix
-- [ ] Set up macOS universal builds
-- [ ] Add Linux AppImage + .deb
-- [ ] Implement Windows MSI + MSIX
+- [ ] Set up macOS separate Intel/ARM builds (Sparrow model)
+- [ ] Add Linux AppImage + .deb + .rpm
+- [ ] Implement Windows MSI + standalone .zip
 
 ### Phase 3: Testing Infrastructure (Week 3)
 - [ ] Add smoke tests for each platform
