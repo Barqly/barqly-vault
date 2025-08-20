@@ -50,6 +50,13 @@
       "digestAlgorithm": "sha256",
       "timestampUrl": "http://timestamp.digicert.com"
     },
-    "linux": {}
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "appimage": {
+        "bundleMediaFramework": true
+      }
+    }
   }
 }

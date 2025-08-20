@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure backup and restore for sensitive data & documents
 
-.PHONY: help ui app demo demo-build build app-build dmg-universal dmg-quick preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys
+.PHONY: help ui app demo demo-build build app-build dmg-universal dmg-quick linux-build preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys
 
 # Default target
 help:
@@ -17,6 +17,7 @@ help:
 	@echo "  app-build     - Build desktop app (current architecture)"
 	@echo "  dmg-universal - Build universal DMG for Intel + Apple Silicon"
 	@echo "  dmg-quick     - Quick universal DMG build (skip validation)"
+	@echo "  linux-build   - Build Linux AppImage and .deb (requires Linux OS)"
 	@echo "  demo-build    - Build demo site"
 	@echo ""
 	@echo "Preview:"
@@ -88,6 +89,10 @@ dmg-universal:
 dmg-quick:
 	@echo "⚡ Quick universal DMG build (skipping validation)..."
 	@./scripts/quick-dmg.sh
+
+linux-build:
+	@echo "🐧 Building Linux packages (AppImage + .deb)..."
+	@./scripts/build-linux.sh
 
 # Preview commands
 preview:
