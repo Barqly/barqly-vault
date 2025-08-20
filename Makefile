@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure backup and restore for sensitive data & documents
 
-.PHONY: help ui app demo demo-build build app-build preview app-preview lint fmt rust-lint rust-fmt clean install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys
+.PHONY: help ui app demo demo-build build app-build dmg-universal dmg-quick preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys
 
 # Default target
 help:
@@ -14,7 +14,9 @@ help:
 	@echo ""
 	@echo "Build:"
 	@echo "  build         - Build UI for production"
-	@echo "  app-build     - Build desktop app"
+	@echo "  app-build     - Build desktop app (current architecture)"
+	@echo "  dmg-universal - Build universal DMG for Intel + Apple Silicon"
+	@echo "  dmg-quick     - Quick universal DMG build (skip validation)"
 	@echo "  demo-build    - Build demo site"
 	@echo ""
 	@echo "Preview:"
@@ -38,6 +40,7 @@ help:
 	@echo ""
 	@echo "Utilities:"
 	@echo "  clean         - Clean build artifacts"
+	@echo "  clean-releases - Clean all release files and build artifacts"
 	@echo "  install       - Install dependencies"
 	@echo ""
 	@echo "Development Tools:"
@@ -78,6 +81,14 @@ demo-build:
 	@echo "🌐 Building demo site..."
 	cd src-ui && npm run demo:build
 
+dmg-universal:
+	@echo "🚀 Building universal DMG for macOS (Intel + Apple Silicon)..."
+	@./scripts/build-universal-dmg.sh
+
+dmg-quick:
+	@echo "⚡ Quick universal DMG build (skipping validation)..."
+	@./scripts/quick-dmg.sh
+
 # Preview commands
 preview:
 	@echo "👀 Previewing UI build..."
@@ -110,6 +121,15 @@ rust-fmt:
 
 clean:
 	@echo "🧹 Cleaning build artifacts..."
+	cd src-ui && rm -rf dist dist-demo node_modules/.vite
+	cd src-tauri && cargo clean
+
+clean-releases:
+	@echo "🧹 Cleaning release files and build artifacts..."
+	rm -rf target/aarch64-apple-darwin
+	rm -rf target/x86_64-apple-darwin
+	rm -rf target/universal-apple-darwin
+	rm -rf target/release/bundle
 	cd src-ui && rm -rf dist dist-demo node_modules/.vite
 	cd src-tauri && cargo clean
 
