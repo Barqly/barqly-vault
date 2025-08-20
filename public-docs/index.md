@@ -24,7 +24,6 @@ When you practice Bitcoin self-custody (mainchain or Lightning) or have sensitiv
 - **Secure**: Uses [age](https://github.com/FiloSottile/age), a modern encryption standard trusted by security experts
 - **Self-Controlled**: Your files never leave your computer unless you choose to move them
 - **Cross-Platform**: Works the same way on Mac, Windows, and Linux
-- **Reliable**: Preserves folder structure and includes integrity checks to ensure your files are safe
 
 ## Target Users
 
@@ -32,7 +31,6 @@ When you practice Bitcoin self-custody (mainchain or Lightning) or have sensitiv
 - **Lightning node operators** - additional encryption for node backups
 - **Bitcoin businesses** - client data, configuration files, recovery kits
 - **Families** - inheritance planning with all Bitcoin-related documents
-- **Anyone** who wants simple, secure file encryption without cloud lock-in
 
 ## The Promise
 
