@@ -2,7 +2,7 @@
 
 # Fix test files to use tauri-safe mocks properly
 
-find /Users/nauman/projects/barqly-vault/src-ui/src/__tests__/hooks -name "*.test.ts" | while read file; do
+find ~/projects/barqly-vault/src-ui/src/__tests__/hooks -name "*.test.ts" | while read file; do
   echo "Processing $file"
   
   # Create a temporary file

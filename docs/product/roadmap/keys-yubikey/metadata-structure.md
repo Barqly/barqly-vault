@@ -12,7 +12,7 @@ This document details the metadata structure changes required to support multipl
 {
   "label": "family-vault",
   "created_at": "2025-08-08T15:52:09.347467Z",
-  "file_path": "/Users/nauman/Library/Application Support/com.barqly.vault/keys/family-vault.agekey.enc",
+  "file_path": "~/Library/Application Support/com.barqly.vault/keys/family-vault.agekey.enc",
   "public_key": "age1aajp29j7rdpp709mk5ejjufnt49mk00zq4svgs74kct5qjj7fqjsyc83dr",
   "passphrase_hint": "Anniversary + dog's nickname",
   "last_accessed": null
@@ -40,7 +40,7 @@ This document details the metadata structure changes required to support multipl
       "public_key": "age1aajp29j7rdpp709mk5ejjufnt49mk00zq4svgs74kct5qjj7fqjsyc83dr",
       "label": "Primary passphrase key",
       "passphrase_hint": "Anniversary + dog's nickname",
-      "file_path": "/Users/nauman/Library/Application Support/com.barqly.vault/keys/family-vault.agekey.enc",
+      "file_path": "~/Library/Application Support/com.barqly.vault/keys/family-vault.agekey.enc",
       "added_at": "2025-08-08T15:52:09.347467Z",
       "last_used": "2025-08-09T09:15:00.000000Z",
       "status": "active"

@@ -4,7 +4,7 @@
 
 ```bash
 # Start developing in 30 seconds
-git clone https://github.com/inauman/barqly-vault.git
+git clone 7,11: git clone https://github.com/barqly/barqly-vault.git
 cd barqly-vault
 npm install && cargo build
 make demo               # Start with interactive demos

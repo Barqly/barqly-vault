@@ -12,7 +12,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/inauman/barqly-vault.git
+git clone 7,11: git clone https://github.com/barqly/barqly-vault.git
 cd barqly-vault
 
 # Install dependencies (from root)
@@ -129,12 +129,12 @@ _✅ Your files are now securely encrypted and ready for backup_
 
 - **First time user?** Start with a small test file
 - **Forgot passphrase?** Unfortunately, we can't recover it - that's the security feature
-- **Questions?** Open a [GitHub Issue](https://github.com/inauman/barqly-vault/issues) with your question
-- **Found a bug?** Report it on [GitHub Issues](https://github.com/inauman/barqly-vault/issues)
+- **Questions?** Open a [GitHub Issue](https://github.com/barqly/barqly-vault/issues) with your question
+- **Found a bug?** Report it on [GitHub Issues](https://github.com/barqly/barqly-vault/issues)
 
 ## What's Next?
 
 - Learn about [advanced features](../Product/Features.md)
 - Explore our [user journey](../Product/User-Journey.md)
 - Check out our [roadmap](../Product/Roadmap.md)
-- [Contribute to the project](https://github.com/inauman/barqly-vault/blob/main/CONTRIBUTING.md)
+- [Contribute to the project](https://github.com/barqly/barqly-vault/blob/main/CONTRIBUTING.md)

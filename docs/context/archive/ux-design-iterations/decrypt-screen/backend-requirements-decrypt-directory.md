@@ -14,7 +14,7 @@ The `decrypt_data` command currently fails with "Output directory not found" err
 
 ```
 Invalid Input
-Validation failed for input: Output directory not found: /Users/nauman/Documents/Barqly-Recovery/2025-08-06_143633
+Validation failed for input: Output directory not found: ~/Documents/Barqly-Recovery/2025-08-06_143633
 ```
 
 ## Requirements
@@ -94,7 +94,7 @@ The frontend is already sending the full path including subdirectories:
 ```typescript
 // Example path being sent from frontend
 const recoveryPath = await join(docsPath, "Barqly-Recovery", `${date}_${time}`);
-// Results in: /Users/nauman/Documents/Barqly-Recovery/2025-08-06_143633
+// Results in: ~/Documents/Barqly-Recovery/2025-08-06_143633
 ```
 
 The frontend expects the backend to handle directory creation, just like it does for encrypt operations.

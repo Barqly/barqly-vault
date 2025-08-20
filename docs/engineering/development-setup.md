@@ -12,7 +12,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/inauman/barqly-vault.git
+git clone 7,11: git clone https://github.com/barqly/barqly-vault.git
 cd barqly-vault
 
 # Install dependencies
@@ -329,7 +329,7 @@ rm -rf src-tauri/target/
 
 - Check the [Validation System](./Validation-System.md)
 - Review [API Documentation](../Architecture/API-Quick-Reference.md)
-- Open a [GitHub Issue](https://github.com/inauman/barqly-vault/issues)
+- Open a [GitHub Issue](https://github.com/barqly/barqly-vault/issues)
 
 ---
 
