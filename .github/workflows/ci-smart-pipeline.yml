@@ -8,13 +8,6 @@ on:
       - '**.md'
       - '.github/workflows/deploy-docs.yml'
   
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'public-docs/**'
-      - '**.md'
-      - '.github/workflows/deploy-docs.yml'
-  
   workflow_dispatch:
     inputs:
       platforms:
