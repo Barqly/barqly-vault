@@ -37,31 +37,20 @@ jobs:
             arch: 'apple-silicon'
             label: 'macOS (Apple M-series)'
           
-          # Linux x64 - Intel/AMD (like Sparrow: .deb, .rpm, .tar.gz)
+          # Linux x64 - Intel/AMD (.deb, .rpm, .appimage, .tar.gz)
+          # Note: Linux x64 binaries work on ARM64 via compatibility layer
           - platform: 'ubuntu-22.04'
             args: '--target x86_64-unknown-linux-gnu'
             arch: 'x64'
             label: 'Linux (Intel/AMD)'
           
-          # Linux ARM64 (like Sparrow: .deb, .rpm, .tar.gz)
-          # NOTE: ARM64 runners are in limited beta. If not available in your org:
-          # 1. Request access: https://github.com/github/roadmap/issues/836
-          # 2. Or use self-hosted ARM64 runner
-          # 3. Or temporarily skip ARM64 builds
-          - platform: 'ubuntu-22.04-arm64'  # Native ARM64 runner (beta)
-            args: '--target aarch64-unknown-linux-gnu'
-            arch: 'arm64'
-            label: 'Linux (ARM64)'
-            continue-on-error: true  # Won't fail the whole workflow if ARM64 runner unavailable
-          
-          # Windows x64 (like Sparrow: .msi and .zip)
+          # Windows x64 (.msi and .zip)
           - platform: 'windows-latest'
             args: '--target x86_64-pc-windows-msvc'
             arch: 'x64'
             label: 'Windows'
 
     runs-on: ${{ matrix.platform }}
-    continue-on-error: ${{ matrix.continue-on-error || false }}
     
     steps:
       - uses: actions/checkout@v4
@@ -76,8 +65,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           # Install the specific target for this matrix job
-          # Each job only builds for ONE specific architecture
-          targets: ${{ matrix.arch == 'intel' && 'x86_64-apple-darwin' || matrix.arch == 'apple-silicon' && 'aarch64-apple-darwin' || matrix.arch == 'x64' && contains(matrix.platform, 'ubuntu') && 'x86_64-unknown-linux-gnu' || matrix.arch == 'arm64' && 'aarch64-unknown-linux-gnu' || matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' }}
+          targets: ${{ matrix.arch == 'intel' && 'x86_64-apple-darwin' || matrix.arch == 'apple-silicon' && 'aarch64-apple-darwin' || matrix.arch == 'x64' && contains(matrix.platform, 'ubuntu') && 'x86_64-unknown-linux-gnu' || matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' }}
       
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -95,13 +83,6 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.0-dev || true
           # Install RPM build tools for creating .rpm packages
           sudo apt-get install -y rpm
-      
-      - name: install ARM64 specific dependencies (native ARM64 runner)
-        if: matrix.arch == 'arm64' && contains(matrix.platform, 'arm64')
-        run: |
-          # On native ARM64 runners, we don't need cross-compilation
-          # Just ensure xdg-utils is installed for AppImage bundling
-          echo "Running on native ARM64 runner - no cross-compilation needed"
       
       - name: install frontend dependencies
         run: npm install --prefix src-ui
