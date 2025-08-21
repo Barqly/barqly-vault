@@ -134,46 +134,17 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
       
-      # Notarize macOS DMG (if signing was successful)
-      - name: Notarize macOS DMG
+      # Skip separate notarization - Tauri action handles it when credentials are provided
+      - name: Check notarization status (info only)
         if: matrix.platform == 'macos-latest' && env.APPLE_ID != '' && env.APPLE_APP_PASSWORD != ''
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Find the DMG file based on architecture
-          if [ "${{ matrix.arch }}" = "intel" ]; then
-            DMG_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/macos"
-          elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
-            DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
-          fi
-          
-          DMG_PATH=$(find "$DMG_DIR" -name "*.dmg" | head -1)
-          
-          if [ -f "$DMG_PATH" ]; then
-            echo "📝 Submitting DMG for notarization: $DMG_PATH"
-            
-            # Submit for notarization
-            xcrun notarytool submit "$DMG_PATH" \
-              --apple-id "$APPLE_ID" \
-              --password "$APPLE_APP_PASSWORD" \
-              --team-id "$APPLE_TEAM_ID" \
-              --wait \
-              --timeout 30m
-            
-            # Staple the notarization ticket
-            echo "📌 Stapling notarization ticket..."
-            xcrun stapler staple "$DMG_PATH"
-            
-            # Verify the notarization
-            echo "✅ Verifying notarization..."
-            xcrun stapler validate "$DMG_PATH"
-            
-            echo "🎉 DMG successfully notarized and stapled"
-          else
-            echo "⚠️ DMG not found at expected location: $DMG_DIR"
-          fi
+          echo "ℹ️ Notarization was handled by Tauri action"
+          echo "📝 If Tauri action completes successfully, DMG will be notarized and stapled"
+          echo "⏳ First-time notarization can take several hours"
           
       # Rename macOS DMG files to include architecture and signing status
       - name: Rename macOS DMG with architecture
