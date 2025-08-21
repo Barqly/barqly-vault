@@ -130,56 +130,72 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
       
-      # Notarize macOS DMG using App Store Connect API key
+      # Notarize macOS DMG using App Store Connect API key (MANDATORY)
       - name: Notarize macOS DMG with API Key
-        if: matrix.platform == 'macos-latest' && env.APPLE_API_KEY != ''
+        if: matrix.platform == 'macos-latest'
         env:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
         run: |
+          # Fail if API credentials are not configured
+          if [ -z "$APPLE_API_KEY" ] || [ -z "$APPLE_API_KEY_ID" ] || [ -z "$APPLE_API_ISSUER_ID" ]; then
+            echo "❌ ERROR: Apple notarization credentials are not configured!"
+            echo "Required secrets: APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER_ID"
+            exit 1
+          fi
+          
           echo "🔐 Setting up App Store Connect API authentication..."
           
           # Create directory and save the API key
           mkdir -p ~/private_keys
           echo "$APPLE_API_KEY" > ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
           
-          # Find the actual DMG file - Tauri puts it in bundle/dmg with version in filename
+          # Find the actual DMG file - Use absolute path from Tauri output
           if [ "${{ matrix.arch }}" = "intel" ]; then
-            DMG_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/dmg"
-            DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f | head -1)
+            DMG_DIR="$GITHUB_WORKSPACE/target/x86_64-apple-darwin/release/bundle/dmg"
+            DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f 2>/dev/null | head -1)
           elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
-            DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
-            DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f | head -1)
+            DMG_DIR="$GITHUB_WORKSPACE/target/aarch64-apple-darwin/release/bundle/dmg"
+            DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f 2>/dev/null | head -1)
           fi
           
-          if [ -f "$DMG_FILE" ]; then
-            echo "📤 Submitting DMG for notarization: $DMG_FILE"
-            
-            # Submit for notarization using API key
-            xcrun notarytool submit "$DMG_FILE" \
-              --key ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8 \
-              --key-id "$APPLE_API_KEY_ID" \
-              --issuer "$APPLE_API_ISSUER_ID" \
-              --wait \
-              --timeout 10m
-            
-            # Staple the notarization ticket
-            echo "📌 Stapling notarization ticket..."
-            xcrun stapler staple "$DMG_FILE"
-            
-            # Verify the notarization
-            echo "✅ Verifying notarization..."
-            xcrun stapler validate "$DMG_FILE"
-            
-            echo "🎉 DMG successfully notarized and stapled"
-          else
-            echo "⚠️ DMG not found at: $DMG_FILE"
-            echo "Searching for DMG files in the entire target directory:"
-            find src-tauri/target -name "*.dmg" -type f || echo "No DMG files found"
-            echo "Contents of expected directory $TARGET_DIR:"
-            ls -la "$TARGET_DIR" || echo "Directory not found"
+          if [ ! -f "$DMG_FILE" ]; then
+            echo "❌ ERROR: DMG not found!"
+            echo "Expected location: $DMG_DIR"
+            echo "Searching for DMG files in workspace:"
+            find "$GITHUB_WORKSPACE" -name "*.dmg" -type f 2>/dev/null || echo "No DMG files found"
+            exit 1
           fi
+          
+          echo "📤 Submitting DMG for notarization: $DMG_FILE"
+          
+          # Submit for notarization using API key (with error handling)
+          if ! xcrun notarytool submit "$DMG_FILE" \
+            --key ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8 \
+            --key-id "$APPLE_API_KEY_ID" \
+            --issuer "$APPLE_API_ISSUER_ID" \
+            --wait \
+            --timeout 10m; then
+            echo "❌ ERROR: Notarization failed!"
+            exit 1
+          fi
+          
+          # Staple the notarization ticket
+          echo "📌 Stapling notarization ticket..."
+          if ! xcrun stapler staple "$DMG_FILE"; then
+            echo "❌ ERROR: Failed to staple notarization ticket!"
+            exit 1
+          fi
+          
+          # Verify the notarization
+          echo "✅ Verifying notarization..."
+          if ! xcrun stapler validate "$DMG_FILE"; then
+            echo "❌ ERROR: Notarization validation failed!"
+            exit 1
+          fi
+          
+          echo "🎉 DMG successfully notarized and stapled"
           
           # Clean up the API key file
           rm -f ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
@@ -187,6 +203,7 @@ jobs:
       # Rename all artifacts with consistent naming convention
       - name: Rename artifacts with consistent naming
         if: always()
+        shell: bash
         run: |
           if [[ "$GITHUB_REF" =~ refs/tags/v?(.+) ]]; then
             VERSION="${BASH_REMATCH[1]}"
@@ -200,32 +217,34 @@ jobs:
           # Handle macOS DMG files
           if [ "${{ matrix.platform }}" = "macos-latest" ]; then
             if [ "${{ matrix.arch }}" = "intel" ]; then
-              DMG_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/dmg"
+              DMG_DIR="$GITHUB_WORKSPACE/target/x86_64-apple-darwin/release/bundle/dmg"
               ARCH_NAME="x64"
             elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
-              DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
+              DMG_DIR="$GITHUB_WORKSPACE/target/aarch64-apple-darwin/release/bundle/dmg"
               ARCH_NAME="aarch64"
             fi
             
             # Find and rename DMG
             DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f 2>/dev/null | head -1)
             if [ -f "$DMG_FILE" ]; then
-              # Check signing status
-              if xcrun stapler validate "$DMG_FILE" 2>/dev/null; then
-                SIGNING_STATUS="-signed-notarized"
-              elif codesign -dv "$DMG_FILE" 2>/dev/null; then
-                SIGNING_STATUS="-signed"
-              else
-                SIGNING_STATUS=""
+              # Verify DMG is properly signed and notarized (MANDATORY)
+              if ! xcrun stapler validate "$DMG_FILE" 2>/dev/null; then
+                echo "❌ ERROR: DMG is not properly notarized!"
+                echo "File: $DMG_FILE"
+                echo "This is a critical security requirement."
+                exit 1
               fi
               
-              NEW_NAME="barqly-vault-$VERSION-macos-${ARCH_NAME}${SIGNING_STATUS}.dmg"
+              NEW_NAME="barqly-vault-$VERSION-macos-${ARCH_NAME}-signed-notarized.dmg"
               cp "$DMG_FILE" "renamed-artifacts/$NEW_NAME"
               echo "✅ Created: $NEW_NAME"
+            else
+              echo "❌ ERROR: No DMG file found in $DMG_DIR"
+              exit 1
             fi
             
             # Also handle .app.tar.gz files
-            APP_TAR=$(find "src-tauri/target" -name "*.app.tar.gz" -type f 2>/dev/null | head -1)
+            APP_TAR=$(find "$GITHUB_WORKSPACE/target" -name "*.app.tar.gz" -type f 2>/dev/null | head -1)
             if [ -f "$APP_TAR" ]; then
               cp "$APP_TAR" "renamed-artifacts/barqly-vault-$VERSION-macos-${ARCH_NAME}.app.tar.gz"
             fi
@@ -234,19 +253,19 @@ jobs:
           # Handle Windows artifacts
           if [ "${{ matrix.platform }}" = "windows-latest" ]; then
             # MSI installer
-            MSI_FILE=$(find "src-tauri/target" -name "*.msi" -type f 2>/dev/null | head -1)
+            MSI_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.msi" -type f 2>/dev/null | head -1)
             if [ -f "$MSI_FILE" ]; then
               cp "$MSI_FILE" "renamed-artifacts/barqly-vault-$VERSION-windows-x64.msi"
             fi
             
             # Setup exe
-            SETUP_FILE=$(find "src-tauri/target" -name "*-setup.exe" -type f 2>/dev/null | head -1)
+            SETUP_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*-setup.exe" -type f 2>/dev/null | head -1)
             if [ -f "$SETUP_FILE" ]; then
               cp "$SETUP_FILE" "renamed-artifacts/barqly-vault-$VERSION-windows-x64-setup.exe"
             fi
             
             # Create standalone ZIP
-            EXE_FILE="src-tauri/target/release/barqly-vault.exe"
+            EXE_FILE="$GITHUB_WORKSPACE/target/release/barqly-vault.exe"
             if [ -f "$EXE_FILE" ]; then
               # Use PowerShell to create ZIP on Windows
               powershell -Command "Compress-Archive -Path '$EXE_FILE' -DestinationPath 'renamed-artifacts/barqly-vault-$VERSION-windows-x64.zip'"
@@ -257,25 +276,25 @@ jobs:
           # Handle Linux artifacts
           if [[ "${{ matrix.platform }}" == *"ubuntu"* ]]; then
             # DEB package
-            DEB_FILE=$(find "src-tauri/target" -name "*.deb" -type f 2>/dev/null | head -1)
+            DEB_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.deb" -type f 2>/dev/null | head -1)
             if [ -f "$DEB_FILE" ]; then
               cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-amd64.deb"
             fi
             
             # RPM package
-            RPM_FILE=$(find "src-tauri/target" -name "*.rpm" -type f 2>/dev/null | head -1)
+            RPM_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.rpm" -type f 2>/dev/null | head -1)
             if [ -f "$RPM_FILE" ]; then
               cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x86_64.rpm"
             fi
             
             # AppImage
-            APPIMAGE_FILE=$(find "src-tauri/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
+            APPIMAGE_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
             if [ -f "$APPIMAGE_FILE" ]; then
               cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x86_64.AppImage"
             fi
             
             # Create standalone tar.gz
-            BINARY_PATH="src-tauri/target/release/barqly-vault"
+            BINARY_PATH="$GITHUB_WORKSPACE/target/release/barqly-vault"
             if [ -f "$BINARY_PATH" ]; then
               tar -czf "renamed-artifacts/barqly-vault-$VERSION-linux-x64.tar.gz" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
               echo "✅ Created standalone tar.gz"
