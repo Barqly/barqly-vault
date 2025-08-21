@@ -146,13 +146,13 @@ jobs:
           
           # Find the DMG file based on architecture
           if [ "${{ matrix.arch }}" = "intel" ]; then
-            DMG_PATH="src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/Barqly Vault_*_x64.dmg"
+            TARGET_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/macos"
           elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
-            DMG_PATH="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/Barqly Vault_*_aarch64.dmg"
+            TARGET_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
           fi
           
-          # Find the actual DMG file
-          DMG_FILE=$(find src-tauri/target -name "*.dmg" -type f | head -1)
+          # Find the actual DMG file (Tauri creates it as "Barqly Vault.dmg")
+          DMG_FILE="$TARGET_DIR/Barqly Vault.dmg"
           
           if [ -f "$DMG_FILE" ]; then
             echo "📤 Submitting DMG for notarization: $DMG_FILE"
@@ -193,35 +193,43 @@ jobs:
             VERSION="dev"
           fi
           
-          # Determine the DMG path based on architecture
+          # Use same path logic as notarization step
           if [ "${{ matrix.arch }}" = "intel" ]; then
             TARGET_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/macos"
-            NEW_NAME="Sparrow-style/Barqly-Vault-$VERSION-x86_64.dmg"
+            ARCH_NAME="x86_64"
           elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
             TARGET_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
-            NEW_NAME="Sparrow-style/Barqly-Vault-$VERSION-aarch64.dmg"
+            ARCH_NAME="aarch64"
           fi
+          
+          # Use consistent DMG file path
+          DMG_FILE="$TARGET_DIR/Barqly Vault.dmg"
           
           # Create Sparrow-style naming directory
           mkdir -p "$TARGET_DIR/Sparrow-style"
           
-          # Find and rename the DMG
-          if [ -f "$TARGET_DIR/Barqly Vault.dmg" ]; then
-            # Check if DMG is signed
-            if codesign -dv "$TARGET_DIR/Barqly Vault.dmg" 2>/dev/null; then
-              echo "✅ DMG is signed"
+          # Rename the DMG if it exists
+          if [ -f "$DMG_FILE" ]; then
+            # Check if DMG is signed and notarized
+            if xcrun stapler validate "$DMG_FILE" 2>/dev/null; then
+              echo "✅ DMG is signed and notarized"
+              SIGNING_STATUS="-signed-notarized"
+            elif codesign -dv "$DMG_FILE" 2>/dev/null; then
+              echo "✅ DMG is signed (not notarized)"
               SIGNING_STATUS="-signed"
             else
               echo "⚠️ DMG is unsigned"
               SIGNING_STATUS=""
             fi
             
-            # Update name with signing status
-            NEW_NAME="Sparrow-style/Barqly-Vault-$VERSION-${{ matrix.arch == 'intel' && 'x86_64' || 'aarch64' }}${SIGNING_STATUS}.dmg"
+            # Create new name with signing status
+            NEW_NAME="Sparrow-style/Barqly-Vault-$VERSION-${ARCH_NAME}${SIGNING_STATUS}.dmg"
             
-            mv "$TARGET_DIR/Barqly Vault.dmg" "$TARGET_DIR/$NEW_NAME"
+            mv "$DMG_FILE" "$TARGET_DIR/$NEW_NAME"
             echo "Renamed DMG to: $(basename $NEW_NAME)"
             echo "DMG_PATH=$TARGET_DIR/$NEW_NAME" >> $GITHUB_ENV
+          else
+            echo "⚠️ DMG not found at: $DMG_FILE"
           fi
       
       # Create standalone .zip for Windows (like Sparrow)
