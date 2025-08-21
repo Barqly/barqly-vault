@@ -82,7 +82,11 @@ jobs:
         if: contains(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xdg-utils
+          # For Ubuntu 24.04 (ubuntu-latest), only 4.1 is available
+          # For Ubuntu 22.04, both 4.0 and 4.1 are available
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xdg-utils
+          # Try to install 4.0 if available (for older Ubuntu)
+          sudo apt-get install -y libwebkit2gtk-4.0-dev || true
           # Install RPM build tools for creating .rpm packages
           sudo apt-get install -y rpm
       
