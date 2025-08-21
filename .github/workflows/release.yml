@@ -119,9 +119,9 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Only pass signing identity - notarization will be handled separately
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
-          # Don't pass APPLE_ID or APPLE_PASSWORD to prevent Tauri from notarizing
+          # Intentionally NOT passing notarization credentials
+          # We handle notarization separately with notarytool
         with:
           tagName: app-v__VERSION__
           releaseName: 'Barqly Vault v__VERSION__'
@@ -149,7 +149,33 @@ jobs:
           
           # Create directory and save the API key (decode from base64)
           mkdir -p ~/private_keys
+          
+          # Debug: Check if secret exists and length
+          if [ -z "$APPLE_API_KEY" ]; then
+            echo "❌ ERROR: APPLE_API_KEY secret is empty!"
+            exit 1
+          fi
+          echo "✅ API key secret exists (length: ${#APPLE_API_KEY} chars)"
+          
+          # Decode the API key
           echo "$APPLE_API_KEY" | base64 --decode > ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
+          
+          # Validate the API key file
+          if [ ! -s ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8 ]; then
+            echo "❌ ERROR: API key file is empty after decode!"
+            exit 1
+          fi
+          
+          if ! grep -q "BEGIN PRIVATE KEY" ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8; then
+            echo "❌ ERROR: API key file is not valid! Check base64 encoding."
+            echo "First few lines of decoded file:"
+            head -3 ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
+            echo "File size: $(wc -c < ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8) bytes"
+            exit 1
+          fi
+          
+          echo "✅ API key file validated"
+          echo "File size: $(wc -c < ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8) bytes"
           
           # Find the actual DMG file - Use absolute path from Tauri output
           if [ "${{ matrix.arch }}" = "intel" ]; then
