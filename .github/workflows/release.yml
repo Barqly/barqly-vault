@@ -151,8 +151,8 @@ jobs:
             TARGET_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
           fi
           
-          # Find the actual DMG file (Tauri creates it as "Barqly Vault.dmg")
-          DMG_FILE="$TARGET_DIR/Barqly Vault.dmg"
+          # DMG file is now "barqly-vault.dmg" in bundle/macos (all lowercase)
+          DMG_FILE="$TARGET_DIR/barqly-vault.dmg"
           
           if [ -f "$DMG_FILE" ]; then
             echo "📤 Submitting DMG for notarization: $DMG_FILE"
@@ -175,9 +175,11 @@ jobs:
             
             echo "🎉 DMG successfully notarized and stapled"
           else
-            echo "⚠️ DMG not found in target directory"
-            echo "Contents of target directory:"
-            find src-tauri/target -name "*.dmg" -type f
+            echo "⚠️ DMG not found at: $DMG_FILE"
+            echo "Searching for DMG files in the entire target directory:"
+            find src-tauri/target -name "*.dmg" -type f || echo "No DMG files found"
+            echo "Contents of expected directory $TARGET_DIR:"
+            ls -la "$TARGET_DIR" || echo "Directory not found"
           fi
           
           # Clean up the API key file
@@ -196,14 +198,14 @@ jobs:
           # Use same path logic as notarization step
           if [ "${{ matrix.arch }}" = "intel" ]; then
             TARGET_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/macos"
-            ARCH_NAME="x86_64"
+            ARCH_NAME="x64"
           elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
             TARGET_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
             ARCH_NAME="aarch64"
           fi
           
-          # Use consistent DMG file path
-          DMG_FILE="$TARGET_DIR/Barqly Vault.dmg"
+          # DMG file is now "barqly-vault.dmg" in bundle/macos (all lowercase)
+          DMG_FILE="$TARGET_DIR/barqly-vault.dmg"
           
           # Create Sparrow-style naming directory
           mkdir -p "$TARGET_DIR/Sparrow-style"
@@ -222,12 +224,18 @@ jobs:
               SIGNING_STATUS=""
             fi
             
-            # Create new name with signing status
-            NEW_NAME="Sparrow-style/Barqly-Vault-$VERSION-${ARCH_NAME}${SIGNING_STATUS}.dmg"
+            # Create new name with signing status (all lowercase with hyphens)
+            NEW_NAME="barqly-vault-$VERSION-macos-${ARCH_NAME}${SIGNING_STATUS}.dmg"
             
-            mv "$DMG_FILE" "$TARGET_DIR/$NEW_NAME"
-            echo "Renamed DMG to: $(basename $NEW_NAME)"
-            echo "DMG_PATH=$TARGET_DIR/$NEW_NAME" >> $GITHUB_ENV
+            # Copy to workspace root for artifact upload
+            cp "$DMG_FILE" "$GITHUB_WORKSPACE/$NEW_NAME"
+            echo "Copied DMG to workspace root: $NEW_NAME"
+            
+            # Also keep in Sparrow-style directory for organization
+            mkdir -p "$TARGET_DIR/Sparrow-style"
+            mv "$DMG_FILE" "$TARGET_DIR/Sparrow-style/$NEW_NAME"
+            
+            echo "DMG_PATH=$GITHUB_WORKSPACE/$NEW_NAME" >> $GITHUB_ENV
           else
             echo "⚠️ DMG not found at: $DMG_FILE"
           fi
@@ -237,8 +245,8 @@ jobs:
         if: matrix.platform == 'windows-latest'
         run: |
           $version = if ($env:GITHUB_REF -match "refs/tags/(.+)") { $matches[1] } else { "dev" }
-          $zipName = "Barqly-Vault-$version-standalone-x64.zip"
-          $appPath = "src-tauri/target/release/Barqly Vault.exe"
+          $zipName = "barqly-vault-$version-windows-x64.zip"
+          $appPath = "src-tauri/target/release/barqly-vault.exe"
           if (Test-Path $appPath) {
             Compress-Archive -Path $appPath -DestinationPath $zipName
             echo "Created standalone ZIP: $zipName"
@@ -256,7 +264,7 @@ jobs:
           
           BINARY_PATH="src-tauri/target/release/barqly-vault"
           if [ -f "$BINARY_PATH" ]; then
-            ARCHIVE_NAME="barqly-vault-$VERSION-${{ matrix.arch }}.tar.gz"
+            ARCHIVE_NAME="barqly-vault-$VERSION-linux-${{ matrix.arch }}.tar.gz"
             tar -czf "$ARCHIVE_NAME" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
             echo "Created standalone archive: $ARCHIVE_NAME"
           fi
