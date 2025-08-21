@@ -147,9 +147,9 @@ jobs:
           
           echo "🔐 Setting up App Store Connect API authentication..."
           
-          # Create directory and save the API key
+          # Create directory and save the API key (decode from base64)
           mkdir -p ~/private_keys
-          echo "$APPLE_API_KEY" > ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
+          echo "$APPLE_API_KEY" | base64 --decode > ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
           
           # Find the actual DMG file - Use absolute path from Tauri output
           if [ "${{ matrix.arch }}" = "intel" ]; then
