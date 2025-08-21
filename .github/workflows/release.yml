@@ -144,15 +144,14 @@ jobs:
           mkdir -p ~/private_keys
           echo "$APPLE_API_KEY" > ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
           
-          # Find the DMG file based on architecture
+          # Find the actual DMG file - Tauri puts it in bundle/dmg with version in filename
           if [ "${{ matrix.arch }}" = "intel" ]; then
-            TARGET_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/macos"
+            DMG_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/dmg"
+            DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f | head -1)
           elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
-            TARGET_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
+            DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
+            DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f | head -1)
           fi
-          
-          # DMG file is now "barqly-vault.dmg" in bundle/macos (all lowercase)
-          DMG_FILE="$TARGET_DIR/barqly-vault.dmg"
           
           if [ -f "$DMG_FILE" ]; then
             echo "📤 Submitting DMG for notarization: $DMG_FILE"
@@ -185,9 +184,9 @@ jobs:
           # Clean up the API key file
           rm -f ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
           
-      # Rename macOS DMG files to include architecture and signing status
-      - name: Rename macOS DMG with architecture
-        if: matrix.platform == 'macos-latest'
+      # Rename all artifacts with consistent naming convention
+      - name: Rename artifacts with consistent naming
+        if: always()
         run: |
           if [[ "$GITHUB_REF" =~ refs/tags/v?(.+) ]]; then
             VERSION="${BASH_REMATCH[1]}"
@@ -195,79 +194,106 @@ jobs:
             VERSION="dev"
           fi
           
-          # Use same path logic as notarization step
-          if [ "${{ matrix.arch }}" = "intel" ]; then
-            TARGET_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/macos"
-            ARCH_NAME="x64"
-          elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
-            TARGET_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
-            ARCH_NAME="aarch64"
-          fi
+          # Create directory for renamed artifacts
+          mkdir -p renamed-artifacts
           
-          # DMG file is now "barqly-vault.dmg" in bundle/macos (all lowercase)
-          DMG_FILE="$TARGET_DIR/barqly-vault.dmg"
-          
-          # Create Sparrow-style naming directory
-          mkdir -p "$TARGET_DIR/Sparrow-style"
-          
-          # Rename the DMG if it exists
-          if [ -f "$DMG_FILE" ]; then
-            # Check if DMG is signed and notarized
-            if xcrun stapler validate "$DMG_FILE" 2>/dev/null; then
-              echo "✅ DMG is signed and notarized"
-              SIGNING_STATUS="-signed-notarized"
-            elif codesign -dv "$DMG_FILE" 2>/dev/null; then
-              echo "✅ DMG is signed (not notarized)"
-              SIGNING_STATUS="-signed"
-            else
-              echo "⚠️ DMG is unsigned"
-              SIGNING_STATUS=""
+          # Handle macOS DMG files
+          if [ "${{ matrix.platform }}" = "macos-latest" ]; then
+            if [ "${{ matrix.arch }}" = "intel" ]; then
+              DMG_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/dmg"
+              ARCH_NAME="x64"
+            elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
+              DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
+              ARCH_NAME="aarch64"
             fi
             
-            # Create new name with signing status (all lowercase with hyphens)
-            NEW_NAME="barqly-vault-$VERSION-macos-${ARCH_NAME}${SIGNING_STATUS}.dmg"
+            # Find and rename DMG
+            DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f 2>/dev/null | head -1)
+            if [ -f "$DMG_FILE" ]; then
+              # Check signing status
+              if xcrun stapler validate "$DMG_FILE" 2>/dev/null; then
+                SIGNING_STATUS="-signed-notarized"
+              elif codesign -dv "$DMG_FILE" 2>/dev/null; then
+                SIGNING_STATUS="-signed"
+              else
+                SIGNING_STATUS=""
+              fi
+              
+              NEW_NAME="barqly-vault-$VERSION-macos-${ARCH_NAME}${SIGNING_STATUS}.dmg"
+              cp "$DMG_FILE" "renamed-artifacts/$NEW_NAME"
+              echo "✅ Created: $NEW_NAME"
+            fi
             
-            # Copy to workspace root for artifact upload
-            cp "$DMG_FILE" "$GITHUB_WORKSPACE/$NEW_NAME"
-            echo "Copied DMG to workspace root: $NEW_NAME"
-            
-            # Also keep in Sparrow-style directory for organization
-            mkdir -p "$TARGET_DIR/Sparrow-style"
-            mv "$DMG_FILE" "$TARGET_DIR/Sparrow-style/$NEW_NAME"
-            
-            echo "DMG_PATH=$GITHUB_WORKSPACE/$NEW_NAME" >> $GITHUB_ENV
-          else
-            echo "⚠️ DMG not found at: $DMG_FILE"
-          fi
-      
-      # Create standalone .zip for Windows (like Sparrow)
-      - name: Create Windows standalone ZIP
-        if: matrix.platform == 'windows-latest'
-        run: |
-          $version = if ($env:GITHUB_REF -match "refs/tags/(.+)") { $matches[1] } else { "dev" }
-          $zipName = "barqly-vault-$version-windows-x64.zip"
-          $appPath = "src-tauri/target/release/barqly-vault.exe"
-          if (Test-Path $appPath) {
-            Compress-Archive -Path $appPath -DestinationPath $zipName
-            echo "Created standalone ZIP: $zipName"
-          }
-      
-      # Create .tar.gz for Linux (like Sparrow)  
-      - name: Create Linux standalone archive
-        if: contains(matrix.platform, 'ubuntu')
-        run: |
-          if [[ "$GITHUB_REF" =~ refs/tags/(.+) ]]; then
-            VERSION="${BASH_REMATCH[1]}"
-          else
-            VERSION="dev"
+            # Also handle .app.tar.gz files
+            APP_TAR=$(find "src-tauri/target" -name "*.app.tar.gz" -type f 2>/dev/null | head -1)
+            if [ -f "$APP_TAR" ]; then
+              cp "$APP_TAR" "renamed-artifacts/barqly-vault-$VERSION-macos-${ARCH_NAME}.app.tar.gz"
+            fi
           fi
           
-          BINARY_PATH="src-tauri/target/release/barqly-vault"
-          if [ -f "$BINARY_PATH" ]; then
-            ARCHIVE_NAME="barqly-vault-$VERSION-linux-${{ matrix.arch }}.tar.gz"
-            tar -czf "$ARCHIVE_NAME" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
-            echo "Created standalone archive: $ARCHIVE_NAME"
+          # Handle Windows artifacts
+          if [ "${{ matrix.platform }}" = "windows-latest" ]; then
+            # MSI installer
+            MSI_FILE=$(find "src-tauri/target" -name "*.msi" -type f 2>/dev/null | head -1)
+            if [ -f "$MSI_FILE" ]; then
+              cp "$MSI_FILE" "renamed-artifacts/barqly-vault-$VERSION-windows-x64.msi"
+            fi
+            
+            # Setup exe
+            SETUP_FILE=$(find "src-tauri/target" -name "*-setup.exe" -type f 2>/dev/null | head -1)
+            if [ -f "$SETUP_FILE" ]; then
+              cp "$SETUP_FILE" "renamed-artifacts/barqly-vault-$VERSION-windows-x64-setup.exe"
+            fi
+            
+            # Create standalone ZIP
+            EXE_FILE="src-tauri/target/release/barqly-vault.exe"
+            if [ -f "$EXE_FILE" ]; then
+              # Use PowerShell to create ZIP on Windows
+              powershell -Command "Compress-Archive -Path '$EXE_FILE' -DestinationPath 'renamed-artifacts/barqly-vault-$VERSION-windows-x64.zip'"
+              echo "✅ Created standalone ZIP"
+            fi
           fi
+          
+          # Handle Linux artifacts
+          if [[ "${{ matrix.platform }}" == *"ubuntu"* ]]; then
+            # DEB package
+            DEB_FILE=$(find "src-tauri/target" -name "*.deb" -type f 2>/dev/null | head -1)
+            if [ -f "$DEB_FILE" ]; then
+              cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-amd64.deb"
+            fi
+            
+            # RPM package
+            RPM_FILE=$(find "src-tauri/target" -name "*.rpm" -type f 2>/dev/null | head -1)
+            if [ -f "$RPM_FILE" ]; then
+              cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x86_64.rpm"
+            fi
+            
+            # AppImage
+            APPIMAGE_FILE=$(find "src-tauri/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
+            if [ -f "$APPIMAGE_FILE" ]; then
+              cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x86_64.AppImage"
+            fi
+            
+            # Create standalone tar.gz
+            BINARY_PATH="src-tauri/target/release/barqly-vault"
+            if [ -f "$BINARY_PATH" ]; then
+              tar -czf "renamed-artifacts/barqly-vault-$VERSION-linux-x64.tar.gz" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
+              echo "✅ Created standalone tar.gz"
+            fi
+          fi
+          
+          # List all renamed artifacts
+          echo "📦 Renamed artifacts:"
+          ls -la renamed-artifacts/ || echo "No artifacts found"
+      
+      # Upload renamed artifacts
+      - name: Upload renamed artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: barqly-vault-${{ matrix.platform }}-${{ matrix.arch }}
+          path: renamed-artifacts/*
+          retention-days: 7
       
       # Cleanup keychain (macOS only)
       - name: Cleanup keychain
