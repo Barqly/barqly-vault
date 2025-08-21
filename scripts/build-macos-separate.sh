@@ -90,6 +90,27 @@ check_prerequisites() {
     print_status "success" "All prerequisites met"
 }
 
+# Function to detect signing capability
+detect_signing() {
+    print_status "info" "Detecting code signing capability..."
+    
+    # Check for signing identity in environment or keychain
+    if [ -n "$APPLE_SIGNING_IDENTITY" ]; then
+        print_status "success" "Signing identity found in environment"
+        echo "  → Identity: $APPLE_SIGNING_IDENTITY"
+        return 0
+    elif security find-identity -v -p codesigning 2>/dev/null | grep -q "Developer ID Application"; then
+        local identity=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        print_status "success" "Signing identity found in keychain"
+        echo "  → Identity: $identity"
+        return 0
+    else
+        print_status "warning" "No signing identity found - DMG will be unsigned"
+        echo "  → For signed builds, configure APPLE_SIGNING_IDENTITY"
+        return 1
+    fi
+}
+
 # Function to install Rust targets
 install_targets() {
     print_status "info" "Checking Rust targets..."
@@ -220,6 +241,9 @@ main() {
     
     # Check prerequisites
     check_prerequisites
+    
+    # Detect signing capability
+    detect_signing
     
     # Install targets
     install_targets

@@ -43,7 +43,9 @@
     "macOS": {
       "entitlements": "entitlements.plist",
       "hardenedRuntime": true,
-      "minimumSystemVersion": "10.13"
+      "minimumSystemVersion": "10.13",
+      "signingIdentity": null,
+      "providerShortName": null
     },
     "linux": {
       "deb": {

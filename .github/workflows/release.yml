@@ -55,6 +55,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      # Setup Apple certificate for macOS signing (if secrets are configured)
+      - name: Setup Apple certificate
+        if: matrix.platform == 'macos-latest' && env.APPLE_CERTIFICATE_P12 != ''
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          
+          # Import certificate from secrets
+          echo "$APPLE_CERTIFICATE_P12" | base64 --decode > $CERTIFICATE_PATH
+          
+          # Create temporary keychain
+          security create-keychain -p "$RUNNER_TEMP" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$RUNNER_TEMP" $KEYCHAIN_PATH
+          
+          # Import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$RUNNER_TEMP" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          
+          # Clean up certificate file
+          rm $CERTIFICATE_PATH
+          
+          echo "✅ Certificate imported successfully"
+      
       - name: setup node
         uses: actions/setup-node@v4
         with:
@@ -90,6 +119,13 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pass signing credentials to Tauri (if available)
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          # Enable notarization if credentials are present
+          ENABLE_NOTARIZATION: ${{ secrets.APPLE_ID != '' && 'true' || 'false' }}
         with:
           tagName: app-v__VERSION__
           releaseName: 'Barqly Vault v__VERSION__'
@@ -97,8 +133,49 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+      
+      # Notarize macOS DMG (if signing was successful)
+      - name: Notarize macOS DMG
+        if: matrix.platform == 'macos-latest' && env.APPLE_ID != '' && env.APPLE_APP_PASSWORD != ''
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Find the DMG file based on architecture
+          if [ "${{ matrix.arch }}" = "intel" ]; then
+            DMG_DIR="src-tauri/target/x86_64-apple-darwin/release/bundle/macos"
+          elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
+            DMG_DIR="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
+          fi
           
-      # Rename macOS DMG files to include architecture (like Sparrow)
+          DMG_PATH=$(find "$DMG_DIR" -name "*.dmg" | head -1)
+          
+          if [ -f "$DMG_PATH" ]; then
+            echo "📝 Submitting DMG for notarization: $DMG_PATH"
+            
+            # Submit for notarization
+            xcrun notarytool submit "$DMG_PATH" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_APP_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" \
+              --wait \
+              --timeout 30m
+            
+            # Staple the notarization ticket
+            echo "📌 Stapling notarization ticket..."
+            xcrun stapler staple "$DMG_PATH"
+            
+            # Verify the notarization
+            echo "✅ Verifying notarization..."
+            xcrun stapler validate "$DMG_PATH"
+            
+            echo "🎉 DMG successfully notarized and stapled"
+          else
+            echo "⚠️ DMG not found at expected location: $DMG_DIR"
+          fi
+          
+      # Rename macOS DMG files to include architecture and signing status
       - name: Rename macOS DMG with architecture
         if: matrix.platform == 'macos-latest'
         run: |
@@ -122,6 +199,18 @@ jobs:
           
           # Find and rename the DMG
           if [ -f "$TARGET_DIR/Barqly Vault.dmg" ]; then
+            # Check if DMG is signed
+            if codesign -dv "$TARGET_DIR/Barqly Vault.dmg" 2>/dev/null; then
+              echo "✅ DMG is signed"
+              SIGNING_STATUS="-signed"
+            else
+              echo "⚠️ DMG is unsigned"
+              SIGNING_STATUS=""
+            fi
+            
+            # Update name with signing status
+            NEW_NAME="Sparrow-style/Barqly-Vault-$VERSION-${{ matrix.arch == 'intel' && 'x86_64' || 'aarch64' }}${SIGNING_STATUS}.dmg"
+            
             mv "$TARGET_DIR/Barqly Vault.dmg" "$TARGET_DIR/$NEW_NAME"
             echo "Renamed DMG to: $(basename $NEW_NAME)"
             echo "DMG_PATH=$TARGET_DIR/$NEW_NAME" >> $GITHUB_ENV
@@ -154,4 +243,13 @@ jobs:
             ARCHIVE_NAME="barqly-vault-$VERSION-${{ matrix.arch }}.tar.gz"
             tar -czf "$ARCHIVE_NAME" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
             echo "Created standalone archive: $ARCHIVE_NAME"
+          fi
+      
+      # Cleanup keychain (macOS only)
+      - name: Cleanup keychain
+        if: always() && matrix.platform == 'macos-latest'
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          if [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain $KEYCHAIN_PATH || true
           fi

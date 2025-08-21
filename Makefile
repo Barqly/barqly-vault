@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure backup and restore for sensitive data & documents
 
-.PHONY: help ui app demo demo-build build app-build dmg-intel dmg-arm dmg-all dmg-quick linux-build preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys pipeline-test pipeline-release
+.PHONY: help ui app demo demo-build build app-build dmg-intel dmg-arm dmg-all dmg-quick linux-build preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys pipeline-test pipeline-release verify-dmg check-notarization
 
 # Default target
 help:
@@ -59,6 +59,10 @@ help:
 	@echo "UI Capture & Analysis:"
 	@echo "  ui-capture    - Start on-demand UI screenshot capture session"
 	@echo "  ui-analyze    - Generate analysis prompt for latest capture session"
+	@echo ""
+	@echo "Code Signing (macOS):"
+	@echo "  verify-dmg    - Verify DMG signature and notarization"
+	@echo "  check-notarization - Check notarization status of DMG"
 	@echo ""
 	@echo "💡 Tip: Run 'make validate' before committing to ensure CI will pass!"
 
@@ -296,3 +300,34 @@ pipeline-release:
 	@echo ""
 	@echo "✅ Release pipeline simulation complete!"
 	@echo "💡 Ready for version tag: git tag v1.0.0 && git push origin v1.0.0"
+
+# Code Signing commands (macOS)
+verify-dmg:
+	@if [ -z "$(DMG)" ]; then \
+		echo "❌ Usage: make verify-dmg DMG=path/to/your.dmg"; \
+		exit 1; \
+	fi
+	@echo "🔍 Verifying DMG signature and notarization..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "📋 Signature verification:"
+	@codesign -dv --verbose=4 "$(DMG)" 2>&1 || echo "⚠️  DMG is not signed"
+	@echo ""
+	@echo "📋 Notarization check:"
+	@xcrun stapler validate "$(DMG)" 2>&1 || echo "⚠️  DMG is not notarized"
+	@echo ""
+	@echo "📋 Gatekeeper assessment:"
+	@spctl -a -t open --context context:primary-signature -v "$(DMG)" 2>&1 || echo "⚠️  Gatekeeper would block this DMG"
+	@echo ""
+	@echo "✅ Verification complete"
+
+check-notarization:
+	@if [ -z "$(DMG)" ]; then \
+		echo "❌ Usage: make check-notarization DMG=path/to/your.dmg"; \
+		exit 1; \
+	fi
+	@echo "🔍 Checking notarization status..."
+	@xcrun stapler validate "$(DMG)" || true
+	@echo ""
+	@echo "💡 For detailed notarization history, use:"
+	@echo "   xcrun notarytool history --apple-id YOUR_APPLE_ID --team-id YOUR_TEAM_ID"
