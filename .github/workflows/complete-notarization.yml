@@ -31,10 +31,13 @@ jobs:
       
       # Download notarization artifacts from the release workflow
       - name: Download Notarization Artifacts
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v6
         with:
+          workflow: release-async.yml
+          workflow_conclusion: success
           name: notarization-${{ matrix.arch }}
           path: notarization-artifacts/
+          run_id: ${{ github.event.inputs.run_id }}
         continue-on-error: true  # Don't fail if artifacts don't exist
       
       - name: Check and Complete Notarization
