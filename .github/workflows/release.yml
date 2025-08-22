@@ -464,49 +464,41 @@ jobs:
           cat checksums.txt
       
       - name: Create draft release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          name: "Barqly Vault v${{ steps.get_version.outputs.VERSION }}"
+          tag_name: "v${{ steps.get_version.outputs.VERSION }}"
+          files: |
+            release-assets/*
+          body: |
+            # Barqly Vault v${{ steps.get_version.outputs.VERSION }}
+            
+            ## 📦 Installation
+            
+            Download the appropriate installer for your platform below.
+            
+            ### macOS
+            - **Apple Silicon (M1/M2/M3)**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-macos-arm64.dmg`
+            - **Intel**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-macos-x86_64.dmg`
+            
+            ### Windows
+            - **Installer**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-x64-setup.exe`
+            - **MSI**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-x64.msi`
+            
+            ### Linux
+            - **Debian/Ubuntu**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-amd64.deb`
+            - **RedHat/Fedora**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-1.x86_64.rpm`
+            - **AppImage**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-amd64.AppImage`
+            
+            ## 🔒 Security
+            
+            All macOS builds are signed and notarized by Apple.
+            
+            Verify your download using the checksums in `checksums.txt`.
+            
+            ## 📝 Changelog
+            
+            See the [full changelog](https://github.com/Barqly/barqly-vault/blob/main/CHANGELOG.md) for details.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ steps.get_version.outputs.VERSION }}"
-          
-          # Create release body
-          cat > release_notes.md << EOF
-          # Barqly Vault v$VERSION
-          
-          ## 📦 Installation
-          
-          Download the appropriate installer for your platform below.
-          
-          ### macOS
-          - **Apple Silicon (M1/M2/M3)**: \`barqly-vault-$VERSION-macos-arm64.dmg\`
-          - **Intel**: \`barqly-vault-$VERSION-macos-x86_64.dmg\`
-          
-          ### Windows
-          - **Installer**: \`barqly-vault-$VERSION-x64-setup.exe\`
-          - **MSI**: \`barqly-vault-$VERSION-x64.msi\`
-          
-          ### Linux
-          - **Debian/Ubuntu**: \`barqly-vault-$VERSION-amd64.deb\`
-          - **RedHat/Fedora**: \`barqly-vault-$VERSION-1.x86_64.rpm\`
-          - **AppImage**: \`barqly-vault-$VERSION-amd64.AppImage\`
-          
-          ## 🔒 Security
-          
-          All macOS builds are signed and notarized by Apple.
-          
-          Verify your download using the checksums in \`checksums.txt\`.
-          
-          ## 📝 Changelog
-          
-          See the [full changelog](https://github.com/Barqly/barqly-vault/blob/main/CHANGELOG.md) for details.
-          EOF
-          
-          # Create the draft release using GitHub CLI
-          gh release create "v$VERSION" \
-            --draft \
-            --title "Barqly Vault v$VERSION" \
-            --notes-file release_notes.md \
-            release-assets/*
-          
-          echo "✅ Draft release created successfully!"
-          echo "🔗 Visit https://github.com/Barqly/barqly-vault/releases to review and publish"
