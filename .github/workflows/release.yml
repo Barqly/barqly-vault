@@ -429,7 +429,12 @@ jobs:
       - name: Extract version from tag
         id: get_version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          # Handle both tag push and workflow_dispatch
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Creating release for version: $VERSION"
       
