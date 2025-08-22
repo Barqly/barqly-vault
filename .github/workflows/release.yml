@@ -196,16 +196,63 @@ jobs:
           
           echo "📤 Submitting DMG for notarization: $DMG_FILE"
           
-          # Submit for notarization using API key (with error handling)
-          # Increased timeout to 60 minutes for busy Apple servers
-          if ! xcrun notarytool submit "$DMG_FILE" \
+          # Submit for notarization and get submission ID
+          SUBMISSION_JSON=$(xcrun notarytool submit "$DMG_FILE" \
             --key ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8 \
             --key-id "$APPLE_API_KEY_ID" \
             --issuer "$APPLE_API_ISSUER_ID" \
-            --wait \
-            --timeout 60m; then
-            echo "❌ ERROR: Notarization failed or timed out!"
-            echo "Check status manually with: xcrun notarytool history"
+            --output-format json)
+          
+          SUBMISSION_ID=$(echo "$SUBMISSION_JSON" | jq -r '.id')
+          
+          if [ -z "$SUBMISSION_ID" ] || [ "$SUBMISSION_ID" = "null" ]; then
+            echo "❌ ERROR: Failed to submit for notarization!"
+            echo "$SUBMISSION_JSON"
+            exit 1
+          fi
+          
+          echo "✅ Submitted successfully. Submission ID: $SUBMISSION_ID"
+          echo "⏳ Polling for notarization status..."
+          
+          # Poll for completion (usually takes 2-5 minutes)
+          MAX_ATTEMPTS=20  # 10 minutes total (20 * 30 seconds)
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            sleep 30
+            
+            STATUS_JSON=$(xcrun notarytool info "$SUBMISSION_ID" \
+              --key ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8 \
+              --key-id "$APPLE_API_KEY_ID" \
+              --issuer "$APPLE_API_ISSUER_ID" \
+              --output-format json)
+            
+            STATUS=$(echo "$STATUS_JSON" | jq -r '.status')
+            
+            echo "  Attempt $i/$MAX_ATTEMPTS: Status = $STATUS"
+            
+            if [ "$STATUS" = "Accepted" ]; then
+              echo "🎉 Notarization accepted!"
+              break
+            elif [ "$STATUS" = "Invalid" ] || [ "$STATUS" = "Rejected" ]; then
+              echo "❌ Notarization failed with status: $STATUS"
+              # Get detailed log
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --key ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8 \
+                --key-id "$APPLE_API_KEY_ID" \
+                --issuer "$APPLE_API_ISSUER_ID"
+              exit 1
+            elif [ "$STATUS" != "In Progress" ]; then
+              echo "❌ Unknown status: $STATUS"
+              echo "$STATUS_JSON"
+              exit 1
+            fi
+            # If "In Progress", continue loop
+          done
+          
+          # Check if we completed successfully
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "❌ ERROR: Notarization did not complete within 10 minutes!"
+            echo "Last status: $STATUS"
+            echo "You can check status manually with: xcrun notarytool info $SUBMISSION_ID"
             exit 1
           fi
           
