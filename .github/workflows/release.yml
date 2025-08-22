@@ -441,8 +441,37 @@ jobs:
       # Download all artifacts from the build job
       - name: Download all artifacts
         uses: actions/download-artifact@v4
+        if: inputs.release_only != true
         with:
           path: release-artifacts
+      
+      # Download artifacts from a previous run when release_only is true
+      - name: Download artifacts from previous run
+        if: inputs.release_only == true
+        run: |
+          echo "🔍 Finding the most recent successful build for v${{ steps.get_version.outputs.VERSION }}..."
+          
+          # Find the most recent successful run with this tag
+          RUN_ID=$(gh run list \
+            --workflow=release.yml \
+            --branch="v${{ steps.get_version.outputs.VERSION }}" \
+            --status=completed \
+            --limit=10 \
+            --json databaseId,conclusion \
+            --jq '.[] | select(.conclusion == "success" or .conclusion == "failure") | .databaseId' | head -1)
+          
+          if [ -z "$RUN_ID" ]; then
+            echo "❌ No previous runs found for v${{ steps.get_version.outputs.VERSION }}"
+            exit 1
+          fi
+          
+          echo "📥 Downloading artifacts from run $RUN_ID..."
+          mkdir -p release-artifacts
+          gh run download $RUN_ID --dir release-artifacts
+          
+          echo "✅ Downloaded artifacts from run $RUN_ID"
+        env:
+          GH_TOKEN: ${{ github.token }}
       
       - name: Display structure of downloaded files
         run: |
