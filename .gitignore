@@ -136,4 +136,11 @@ Cargo.lock
 # but is accessible if someone finds the URL (which is fine for a private repo)
 
 # UI Capture Tool - Screenshots only (keep analysis results)
-docs/ui-captures/sessions/ 
+docs/ui-captures/sessions/
+
+# Temporary notarization check scripts
+#scripts/check-notarization.sh
+#scripts/complete-notarization-locally.sh
+scripts/*-temp.sh
+scripts/test-*.sh 
+scripts/test.md

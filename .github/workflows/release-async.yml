@@ -150,7 +150,7 @@ jobs:
             ARCH_NAME="x64"
           elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
             DMG_DIR="$GITHUB_WORKSPACE/target/aarch64-apple-darwin/release/bundle/dmg"
-            ARCH_NAME="aarch64"
+            ARCH_NAME="arm64"
           fi
           
           DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f 2>/dev/null | head -1)

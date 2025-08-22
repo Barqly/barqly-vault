@@ -138,10 +138,10 @@ jobs:
           if [ "${{ matrix.arch }}" = "intel" ]; then
             ARCH_NAME="x64"
           else
-            ARCH_NAME="aarch64"
+            ARCH_NAME="arm64"
           fi
           
-          NEW_NAME="barqly-vault-${VERSION}-macos-${ARCH_NAME}-signed-notarized.dmg"
+          NEW_NAME="barqly-vault-${VERSION}-macos-${ARCH_NAME}.dmg"
           mv "$DMG_FILE" "$NEW_NAME"
           
           # Mark as completed (remove submission ID file so we don't process again)

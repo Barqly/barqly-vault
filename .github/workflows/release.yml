@@ -249,7 +249,7 @@ jobs:
               ARCH_NAME="x64"
             elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
               DMG_DIR="$GITHUB_WORKSPACE/target/aarch64-apple-darwin/release/bundle/dmg"
-              ARCH_NAME="aarch64"
+              ARCH_NAME="arm64"
             fi
             
             # Find and rename DMG
@@ -263,7 +263,7 @@ jobs:
                 exit 1
               fi
               
-              NEW_NAME="barqly-vault-$VERSION-macos-${ARCH_NAME}-signed-notarized.dmg"
+              NEW_NAME="barqly-vault-$VERSION-macos-${ARCH_NAME}.dmg"
               cp "$DMG_FILE" "renamed-artifacts/$NEW_NAME"
               echo "✅ Created: $NEW_NAME"
             else
@@ -306,19 +306,19 @@ jobs:
             # DEB package
             DEB_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.deb" -type f 2>/dev/null | head -1)
             if [ -f "$DEB_FILE" ]; then
-              cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-amd64.deb"
+              cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x64.deb"
             fi
             
             # RPM package
             RPM_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.rpm" -type f 2>/dev/null | head -1)
             if [ -f "$RPM_FILE" ]; then
-              cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x86_64.rpm"
+              cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x64.rpm"
             fi
             
             # AppImage
             APPIMAGE_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
             if [ -f "$APPIMAGE_FILE" ]; then
-              cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x86_64.AppImage"
+              cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x64.AppImage"
             fi
             
             # Create standalone tar.gz
