@@ -123,11 +123,12 @@ jobs:
           # Intentionally NOT passing notarization credentials
           # We handle notarization separately with notarytool
         with:
-          tagName: app-v__VERSION__
-          releaseName: 'Barqly Vault v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
+          # Disable release creation - we'll create it manually after renaming
+          # tagName: app-v__VERSION__
+          # releaseName: 'Barqly Vault v__VERSION__'
+          # releaseBody: 'See the assets to download this version and install.'
+          # releaseDraft: true
+          # prerelease: false
           args: ${{ matrix.args }}
       
       # Notarize macOS DMG using App Store Connect API key (MANDATORY)
@@ -400,3 +401,112 @@ jobs:
           if [ -f "$KEYCHAIN_PATH" ]; then
             security delete-keychain $KEYCHAIN_PATH || true
           fi
+
+  # Create draft release with renamed artifacts
+  create-release:
+    name: Create Draft Release
+    needs: publish-tauri
+    runs-on: ubuntu-latest
+    # Only run on tag pushes
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Creating release for version: $VERSION"
+      
+      # Download all artifacts from the build job
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+      
+      - name: Display structure of downloaded files
+        run: |
+          echo "📁 Downloaded artifacts structure:"
+          ls -R release-artifacts
+      
+      - name: Prepare release assets
+        run: |
+          # Create a directory for final release assets
+          mkdir -p release-assets
+          
+          # Move all renamed artifacts to release-assets, flattening the structure
+          find release-artifacts -type f \( \
+            -name "*.dmg" -o \
+            -name "*.exe" -o \
+            -name "*.msi" -o \
+            -name "*.deb" -o \
+            -name "*.rpm" -o \
+            -name "*.AppImage" -o \
+            -name "*.tar.gz" -o \
+            -name "*.zip" \
+          \) -exec cp {} release-assets/ \;
+          
+          echo "📦 Final release assets:"
+          ls -la release-assets/
+      
+      - name: Generate checksums
+        run: |
+          cd release-assets
+          
+          # Generate SHA256 checksums for all files
+          echo "📝 Generating SHA256 checksums..."
+          shasum -a 256 * > checksums.txt
+          
+          echo "✅ Checksums:"
+          cat checksums.txt
+      
+      - name: Create draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          
+          # Create release body
+          cat > release_notes.md << EOF
+          # Barqly Vault v$VERSION
+          
+          ## 📦 Installation
+          
+          Download the appropriate installer for your platform below.
+          
+          ### macOS
+          - **Apple Silicon (M1/M2/M3)**: \`barqly-vault-$VERSION-macos-arm64.dmg\`
+          - **Intel**: \`barqly-vault-$VERSION-macos-x86_64.dmg\`
+          
+          ### Windows
+          - **Installer**: \`barqly-vault-$VERSION-x64-setup.exe\`
+          - **MSI**: \`barqly-vault-$VERSION-x64.msi\`
+          
+          ### Linux
+          - **Debian/Ubuntu**: \`barqly-vault-$VERSION-amd64.deb\`
+          - **RedHat/Fedora**: \`barqly-vault-$VERSION-1.x86_64.rpm\`
+          - **AppImage**: \`barqly-vault-$VERSION-amd64.AppImage\`
+          
+          ## 🔒 Security
+          
+          All macOS builds are signed and notarized by Apple.
+          
+          Verify your download using the checksums in \`checksums.txt\`.
+          
+          ## 📝 Changelog
+          
+          See the [full changelog](https://github.com/Barqly/barqly-vault/blob/main/CHANGELOG.md) for details.
+          EOF
+          
+          # Create the draft release using GitHub CLI
+          gh release create "v$VERSION" \
+            --draft \
+            --title "Barqly Vault v$VERSION" \
+            --notes-file release_notes.md \
+            release-assets/*
+          
+          echo "✅ Draft release created successfully!"
+          echo "🔗 Visit https://github.com/Barqly/barqly-vault/releases to review and publish"
