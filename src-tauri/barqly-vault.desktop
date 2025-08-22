@@ -1,5 +1,6 @@
 [Desktop Entry]
 Name=Barqly Vault
+GenericName=File Encryption Tool
 Comment=Secure file encryption for everyone
 Exec=barqly-vault %F
 Icon=barqly-vault
@@ -7,3 +8,4 @@ Type=Application
 Categories=Utility;Security;
 StartupNotify=true
 Terminal=false
+MimeType=application/x-barqly-vault;

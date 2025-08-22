@@ -293,7 +293,7 @@ jobs:
           if [ "${{ matrix.platform }}" = "macos-latest" ]; then
             if [ "${{ matrix.arch }}" = "intel" ]; then
               DMG_DIR="$GITHUB_WORKSPACE/target/x86_64-apple-darwin/release/bundle/dmg"
-              ARCH_NAME="x64"
+              ARCH_NAME="x86_64"
             elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
               DMG_DIR="$GITHUB_WORKSPACE/target/aarch64-apple-darwin/release/bundle/dmg"
               ARCH_NAME="arm64"
@@ -318,25 +318,25 @@ jobs:
               exit 1
             fi
             
-            # Also handle .app.tar.gz files
+            # Also handle .app.tar.gz files (these become .tar.gz without .app)
             APP_TAR=$(find "$GITHUB_WORKSPACE/target" -name "*.app.tar.gz" -type f 2>/dev/null | head -1)
             if [ -f "$APP_TAR" ]; then
-              cp "$APP_TAR" "renamed-artifacts/barqly-vault-$VERSION-macos-${ARCH_NAME}.app.tar.gz"
+              cp "$APP_TAR" "renamed-artifacts/barqly-vault-$VERSION-${ARCH_NAME}.tar.gz"
             fi
           fi
           
           # Handle Windows artifacts
           if [ "${{ matrix.platform }}" = "windows-latest" ]; then
-            # MSI installer
+            # MSI installer (remove language suffix)
             MSI_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.msi" -type f 2>/dev/null | head -1)
             if [ -f "$MSI_FILE" ]; then
-              cp "$MSI_FILE" "renamed-artifacts/barqly-vault-$VERSION-windows-x64.msi"
+              cp "$MSI_FILE" "renamed-artifacts/barqly-vault-$VERSION-x64.msi"
             fi
             
             # Setup exe
             SETUP_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*-setup.exe" -type f 2>/dev/null | head -1)
             if [ -f "$SETUP_FILE" ]; then
-              cp "$SETUP_FILE" "renamed-artifacts/barqly-vault-$VERSION-windows-x64-setup.exe"
+              cp "$SETUP_FILE" "renamed-artifacts/barqly-vault-$VERSION-x64-setup.exe"
             fi
             
             # Create standalone ZIP
@@ -353,25 +353,28 @@ jobs:
             # DEB package
             DEB_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.deb" -type f 2>/dev/null | head -1)
             if [ -f "$DEB_FILE" ]; then
-              cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x64.deb"
+              cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.deb"
             fi
             
-            # RPM package
+            # RPM package (keep original name format with release number)
             RPM_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.rpm" -type f 2>/dev/null | head -1)
             if [ -f "$RPM_FILE" ]; then
-              cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x64.rpm"
+              # RPM files already have the correct format: barqly-vault-0.1.0-1.x86_64.rpm
+              # Just copy without renaming to preserve the standard RPM naming
+              RPM_NAME=$(basename "$RPM_FILE")
+              cp "$RPM_FILE" "renamed-artifacts/$RPM_NAME"
             fi
             
             # AppImage
             APPIMAGE_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
             if [ -f "$APPIMAGE_FILE" ]; then
-              cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-linux-x64.AppImage"
+              cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.AppImage"
             fi
             
-            # Create standalone tar.gz
+            # Create standalone tar.gz (using x86_64 for consistency)
             BINARY_PATH="$GITHUB_WORKSPACE/target/release/barqly-vault"
             if [ -f "$BINARY_PATH" ]; then
-              tar -czf "renamed-artifacts/barqly-vault-$VERSION-linux-x64.tar.gz" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
+              tar -czf "renamed-artifacts/barqly-vault-$VERSION-x86_64.tar.gz" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
               echo "✅ Created standalone tar.gz"
             fi
           fi
