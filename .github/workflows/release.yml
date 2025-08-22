@@ -16,9 +16,16 @@ on:
         description: 'Mark as pre-release'
         type: boolean
         default: false
+      release_only:
+        description: 'Skip build and only create release from existing artifacts'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   publish-tauri:
+    # Skip build if we're only creating a release
+    if: inputs.release_only != true
     permissions:
       contents: write
     strategy:
@@ -405,10 +412,15 @@ jobs:
   # Create draft release with renamed artifacts
   create-release:
     name: Create Draft Release
-    needs: publish-tauri
+    needs: [publish-tauri]
+    # Make build optional if we're just creating a release
+    if: |
+      always() && 
+      (needs.publish-tauri.result == 'success' || inputs.release_only == true) &&
+      (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
-    # Only run on tag pushes
-    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write  # REQUIRED for creating releases
     
     steps:
       - name: Checkout code
@@ -463,12 +475,33 @@ jobs:
           echo "✅ Checksums:"
           cat checksums.txt
       
+      # Clean up any existing release for this tag (in case of retry)
+      - name: Delete existing release if present
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          
+          # Check if a release exists for this tag
+          echo "🔍 Checking for existing release for tag v$VERSION..."
+          
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/v$VERSION --jq '.id' 2>/dev/null || echo "")
+          
+          if [ -n "$RELEASE_ID" ]; then
+            echo "⚠️ Found existing release (ID: $RELEASE_ID), deleting it..."
+            gh api -X DELETE repos/${{ github.repository }}/releases/$RELEASE_ID
+            echo "✅ Existing release deleted"
+          else
+            echo "✅ No existing release found for v$VERSION"
+          fi
+      
       - name: Create draft release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           draft: true
           name: "Barqly Vault v${{ steps.get_version.outputs.VERSION }}"
           tag_name: "v${{ steps.get_version.outputs.VERSION }}"
+          fail_on_unmatched_files: false  # Don't fail if some files are missing
           files: |
             release-assets/*
           body: |
@@ -502,3 +535,56 @@ jobs:
             See the [full changelog](https://github.com/Barqly/barqly-vault/blob/main/CHANGELOG.md) for details.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # Fallback: Use gh CLI if softprops action fails
+      - name: Create release with gh CLI (fallback)
+        if: failure() && steps.check_existing.outputs.exists != 'true'
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          TAG="v$VERSION"
+          
+          echo "⚠️ softprops/action-gh-release failed, using gh CLI as fallback"
+          
+          # Create release with gh CLI
+          gh release create "$TAG" \
+            --draft \
+            --title "Barqly Vault v$VERSION" \
+            --notes-file - <<EOF
+          # Barqly Vault v$VERSION
+          
+          ## 📦 Installation
+          
+          Download the appropriate installer for your platform below.
+          
+          ### macOS
+          - **Apple Silicon (M1/M2/M3)**: \`barqly-vault-$VERSION-macos-arm64.dmg\`
+          - **Intel**: \`barqly-vault-$VERSION-macos-x86_64.dmg\`
+          
+          ### Windows
+          - **Installer**: \`barqly-vault-$VERSION-x64-setup.exe\`
+          - **MSI**: \`barqly-vault-$VERSION-x64.msi\`
+          
+          ### Linux
+          - **Debian/Ubuntu**: \`barqly-vault-$VERSION-amd64.deb\`
+          - **RedHat/Fedora**: \`barqly-vault-$VERSION-1.x86_64.rpm\`
+          - **AppImage**: \`barqly-vault-$VERSION-amd64.AppImage\`
+          
+          ## 🔒 Security
+          
+          All macOS builds are signed and notarized by Apple.
+          
+          Verify your download using the checksums in \`checksums.txt\`.
+          
+          ## 📝 Changelog
+          
+          See the [full changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+          EOF
+          
+          # Upload assets
+          if [ -d release-assets ] && [ "$(ls -A release-assets)" ]; then
+            gh release upload "$TAG" release-assets/* --clobber
+          fi
+          
+          echo "✅ Release created successfully with gh CLI!"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
