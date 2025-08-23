@@ -45,12 +45,15 @@ runs:
         
         # Handle macOS DMG files
         if [[ "$PLATFORM" == "macos-latest" ]]; then
+          # Set architecture name first (needed for both DMG and tar.gz)
           if [ "$ARCH" = "intel" ]; then
             DMG_DIR="$WORKSPACE/target/x86_64-apple-darwin/release/bundle/dmg"
             ARCH_NAME="x86_64"
+            TARGET_DIR="$WORKSPACE/target/x86_64-apple-darwin"
           elif [ "$ARCH" = "apple-silicon" ]; then
             DMG_DIR="$WORKSPACE/target/aarch64-apple-darwin/release/bundle/dmg"
             ARCH_NAME="arm64"
+            TARGET_DIR="$WORKSPACE/target/aarch64-apple-darwin"
           fi
           
           # Find and rename DMG
@@ -71,12 +74,7 @@ runs:
             echo "❌ No DMG file found in $DMG_DIR"
           fi
           
-          # Also handle .app.tar.gz files
-          APP_TAR=$(find "$WORKSPACE/target" -name "*.app.tar.gz" -type f 2>/dev/null | head -1)
-          if [ -f "$APP_TAR" ]; then
-            cp "$APP_TAR" "renamed-artifacts/barqly-vault-$VERSION-${ARCH_NAME}.tar.gz"
-            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
-          fi
+          # Note: We only distribute DMGs for macOS (no tar.gz needed as DMGs are notarized)
         fi
         
         # Handle Windows artifacts
@@ -89,13 +87,7 @@ runs:
             ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
           
-          # Setup exe
-          SETUP_FILE=$(find "$WORKSPACE/target" -name "*-setup.exe" -type f 2>/dev/null | head -1)
-          if [ -f "$SETUP_FILE" ]; then
-            cp "$SETUP_FILE" "renamed-artifacts/barqly-vault-$VERSION-x64-setup.exe"
-            echo "✅ Created: barqly-vault-$VERSION-x64-setup.exe"
-            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
-          fi
+          # Skip setup.exe - we only distribute MSI and ZIP
           
           # Create standalone ZIP
           EXE_FILE="$WORKSPACE/target/release/barqly-vault.exe"
@@ -109,36 +101,56 @@ runs:
         
         # Handle Linux artifacts
         if [[ "$PLATFORM" == *"ubuntu"* ]]; then
+          # Determine architecture-specific names
+          if [ "$ARCH" = "x64" ]; then
+            DEB_ARCH="amd64"
+            RPM_ARCH="x86_64"
+            TAR_ARCH="x86_64"
+            BINARY_PATH="$WORKSPACE/target/x86_64-unknown-linux-gnu/release/barqly-vault"
+            # Fallback to default release path if target-specific doesn't exist
+            if [ ! -f "$BINARY_PATH" ]; then
+              BINARY_PATH="$WORKSPACE/target/release/barqly-vault"
+            fi
+          elif [ "$ARCH" = "arm64" ]; then
+            DEB_ARCH="arm64"
+            RPM_ARCH="aarch64"
+            TAR_ARCH="aarch64"
+            BINARY_PATH="$WORKSPACE/target/aarch64-unknown-linux-gnu/release/barqly-vault"
+          fi
+          
           # DEB package
           DEB_FILE=$(find "$WORKSPACE/target" -name "*.deb" -type f 2>/dev/null | head -1)
           if [ -f "$DEB_FILE" ]; then
-            cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.deb"
-            echo "✅ Created: barqly-vault-$VERSION-amd64.deb"
+            cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-1_${DEB_ARCH}.deb"
+            echo "✅ Created: barqly-vault-$VERSION-1_${DEB_ARCH}.deb"
             ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
           
           # RPM package
           RPM_FILE=$(find "$WORKSPACE/target" -name "*.rpm" -type f 2>/dev/null | head -1)
           if [ -f "$RPM_FILE" ]; then
-            cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-1.x86_64.rpm"
-            echo "✅ Created: barqly-vault-$VERSION-1.x86_64.rpm"
+            cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-1.${RPM_ARCH}.rpm"
+            echo "✅ Created: barqly-vault-$VERSION-1.${RPM_ARCH}.rpm"
             ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
           
-          # AppImage
-          APPIMAGE_FILE=$(find "$WORKSPACE/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
-          if [ -f "$APPIMAGE_FILE" ]; then
-            cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.AppImage"
-            echo "✅ Created: barqly-vault-$VERSION-amd64.AppImage"
-            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
+          # AppImage (typically only for x64)
+          if [ "$ARCH" = "x64" ]; then
+            APPIMAGE_FILE=$(find "$WORKSPACE/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
+            if [ -f "$APPIMAGE_FILE" ]; then
+              cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-1_${DEB_ARCH}.AppImage"
+              echo "✅ Created: barqly-vault-$VERSION-1_${DEB_ARCH}.AppImage"
+              ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
+            fi
           fi
           
           # Create standalone tar.gz
-          BINARY_PATH="$WORKSPACE/target/release/barqly-vault"
           if [ -f "$BINARY_PATH" ]; then
-            tar -czf "renamed-artifacts/barqly-vault-$VERSION-x86_64.tar.gz" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
-            echo "✅ Created standalone tar.gz"
+            tar -czf "renamed-artifacts/barqly-vault-$VERSION-${TAR_ARCH}.tar.gz" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
+            echo "✅ Created: barqly-vault-$VERSION-${TAR_ARCH}.tar.gz"
             ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
+          else
+            echo "⚠️ Binary not found at $BINARY_PATH"
           fi
         fi
         

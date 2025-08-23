@@ -100,7 +100,14 @@ jobs:
             args: '--target x86_64-unknown-linux-gnu'
             arch: 'x64'
             label: 'Linux (Intel/AMD)'
-            platform_id: 'linux'
+            platform_id: 'linux_x64'
+          
+          # Linux ARM64
+          - platform: 'ubuntu-22.04'
+            args: '--target aarch64-unknown-linux-gnu'
+            arch: 'arm64'
+            label: 'Linux (ARM64)'
+            platform_id: 'linux_arm64'
           
           # Windows x64
           - platform: 'windows-latest'
@@ -116,10 +123,68 @@ jobs:
       - name: Check Platform Build Condition
         id: should_build
         run: |
-          # Default behavior: build everything for tag pushes
+          # For tag pushes, check if it's a test tag with platform specifications
           if [[ "${{ github.event_name }}" == "push" ]]; then
-            echo "build=true" >> $GITHUB_OUTPUT
-            echo "✅ Building (tag push - all platforms)"
+            TAG="${GITHUB_REF#refs/tags/}"
+            echo "🏷️ Processing tag: $TAG"
+            
+            # Check if this is a test tag (contains "-test")
+            if [[ "$TAG" == *"-test"* ]]; then
+              echo "🧪 Test tag detected - checking platform specifications..."
+              
+              # Extract platform list after "-test-" if present
+              if [[ "$TAG" =~ -test-(.+)$ ]]; then
+                PLATFORMS="${BASH_REMATCH[1]}"
+                echo "📋 Specified platforms: $PLATFORMS"
+                
+                # Check if current platform is in the list
+                case "${{ matrix.platform_id }}" in
+                  macos_intel|macos_arm)
+                    if [[ "$PLATFORMS" == *"mac"* ]]; then
+                      echo "build=true" >> $GITHUB_OUTPUT
+                      echo "✅ Building macOS (specified in test tag)"
+                    else
+                      echo "build=false" >> $GITHUB_OUTPUT
+                      echo "⏭️ Skipping macOS (not specified in test tag)"
+                    fi
+                    ;;
+                  linux_x64|linux_arm64)
+                    if [[ "$PLATFORMS" == *"linux"* ]]; then
+                      echo "build=true" >> $GITHUB_OUTPUT
+                      echo "✅ Building Linux (specified in test tag)"
+                    else
+                      echo "build=false" >> $GITHUB_OUTPUT
+                      echo "⏭️ Skipping Linux (not specified in test tag)"
+                    fi
+                    ;;
+                  windows)
+                    if [[ "$PLATFORMS" == *"win"* ]]; then
+                      echo "build=true" >> $GITHUB_OUTPUT
+                      echo "✅ Building Windows (specified in test tag)"
+                    else
+                      echo "build=false" >> $GITHUB_OUTPUT
+                      echo "⏭️ Skipping Windows (not specified in test tag)"
+                    fi
+                    ;;
+                esac
+              else
+                # Test tag without platform spec - build minimal (Windows + Linux x64 only)
+                case "${{ matrix.platform_id }}" in
+                  linux_x64|windows)
+                    echo "build=true" >> $GITHUB_OUTPUT
+                    echo "✅ Building (default test platforms: Windows + Linux x64)"
+                    ;;
+                  *)
+                    echo "build=false" >> $GITHUB_OUTPUT
+                    echo "⏭️ Skipping (not in default test platforms)"
+                    ;;
+                esac
+              fi
+            else
+              # Regular tag - build everything
+              echo "build=true" >> $GITHUB_OUTPUT
+              echo "✅ Building (production tag - all platforms)"
+            fi
           # For workflow_dispatch, check selective build settings
           elif [[ "${{ inputs.selective_build }}" != "true" ]]; then
             echo "build=true" >> $GITHUB_OUTPUT
@@ -145,13 +210,13 @@ jobs:
                   echo "⏭️ Skipping macOS ARM (not selected)"
                 fi
                 ;;
-              linux)
+              linux_x64|linux_arm64)
                 if [[ "${{ inputs.build_linux }}" == "true" ]]; then
                   echo "build=true" >> $GITHUB_OUTPUT
-                  echo "✅ Building Linux (selected)"
+                  echo "✅ Building Linux ${{ matrix.arch }} (selected)"
                 else
                   echo "build=false" >> $GITHUB_OUTPUT
-                  echo "⏭️ Skipping Linux (not selected)"
+                  echo "⏭️ Skipping Linux ${{ matrix.arch }} (not selected)"
                 fi
                 ;;
               windows)
@@ -199,7 +264,7 @@ jobs:
         uses: dtolnay/rust-toolchain@87f07835889b686aca1fb3733c2aa2d61586c1e1
         with:
           toolchain: stable
-          targets: ${{ matrix.arch == 'intel' && 'x86_64-apple-darwin' || matrix.arch == 'apple-silicon' && 'aarch64-apple-darwin' || matrix.arch == 'x64' && contains(matrix.platform, 'ubuntu') && 'x86_64-unknown-linux-gnu' || matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' }}
+          targets: ${{ matrix.arch == 'intel' && 'x86_64-apple-darwin' || matrix.arch == 'apple-silicon' && 'aarch64-apple-darwin' || matrix.arch == 'x64' && contains(matrix.platform, 'ubuntu') && 'x86_64-unknown-linux-gnu' || matrix.arch == 'arm64' && contains(matrix.platform, 'ubuntu') && 'aarch64-unknown-linux-gnu' || matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' }}
       
       - name: Rust cache
         if: steps.should_build.outputs.build == 'true'
@@ -214,6 +279,13 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xdg-utils
           sudo apt-get install -y libwebkit2gtk-4.0-dev || true
           sudo apt-get install -y rpm
+          
+          # Install cross-compilation tools for ARM64 if needed
+          if [[ "${{ matrix.arch }}" == "arm64" ]]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+            echo "PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
+            echo "PKG_CONFIG_PATH=/usr/aarch64-linux-gnu/lib/pkgconfig" >> $GITHUB_ENV
+          fi
       
       - name: Install frontend dependencies
         if: steps.should_build.outputs.build == 'true'
