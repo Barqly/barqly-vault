@@ -3,9 +3,11 @@ name: Release Pipeline
 on:
   push:
     tags:
-      - 'v*.*.*'        # Production releases
-      - 'v*.*.*-beta*'  # Beta releases
-      - 'v*.*.*-rc*'    # Release candidates
+      - 'v*.*.*-beta*'   # ONLY beta tags trigger builds
+      # This ensures:
+      # - Alpha tags (checkpoints) don't trigger builds
+      # - Production tags (from promotion) don't trigger builds
+      # - Only intentional beta testing triggers CI/CD
   
   workflow_dispatch:
     inputs:
