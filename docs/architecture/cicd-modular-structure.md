@@ -29,19 +29,49 @@ scripts/
 git tag v1.0.0
 git push origin v1.0.0
 ```
-- Builds for all platforms
-- Signs and notarizes macOS
-- Creates draft release
+- Builds for all platforms (macOS Intel/ARM, Windows, Linux x64/ARM64)
+- Signs and notarizes macOS DMGs
+- Creates draft release with all artifacts
 
-### 2. Beta Release
+### 2. Beta/Alpha Release
 ```bash
 git tag v1.0.0-beta.1
 git push origin v1.0.0-beta.1
 ```
-- Same as standard release
+- Same as standard release (all platforms)
 - Tagged as pre-release
 
-### 3. Promotion (Beta → Production)
+### 3. Test Builds (Selective Platforms)
+The pipeline supports smart selective builds using tag naming conventions:
+
+#### Minimal Test Build
+```bash
+git tag v1.0.0-test
+git push origin v1.0.0-test
+```
+- Builds only Windows + Linux x64 (no macOS, no Linux ARM64)
+- Avoids unnecessary macOS notarization cycles
+
+#### Platform-Specific Test Builds
+```bash
+# Linux only (both x64 and ARM64)
+git tag v1.0.0-test-linux
+git push origin v1.0.0-test-linux
+
+# macOS only (both Intel and ARM)
+git tag v1.0.0-test-mac
+git push origin v1.0.0-test-mac
+
+# Windows only
+git tag v1.0.0-test-win
+git push origin v1.0.0-test-win
+
+# Combinations
+git tag v1.0.0-test-mac-linux    # macOS + Linux
+git tag v1.0.0-test-win-linux    # Windows + Linux
+```
+
+### 4. Promotion (Beta → Production)
 ```bash
 gh workflow run release.yml \
   -f promote_from=1.0.0-beta.1 \
@@ -51,13 +81,18 @@ gh workflow run release.yml \
 - No rebuild required
 - Creates new production release
 
-### 4. Manual Release
+### 5. Manual Release with Selective Build
 ```bash
 gh workflow run release.yml \
-  -f version=1.0.0
+  -f version=1.0.0 \
+  -f selective_build=true \
+  -f build_macos_intel=false \
+  -f build_macos_arm=false \
+  -f build_linux=true \
+  -f build_windows=true
 ```
-- Triggers full build pipeline
-- Useful for hotfixes
+- Manual control over which platforms to build
+- Useful for testing specific platform changes
 
 ## Benefits
 
@@ -107,6 +142,34 @@ gh workflow run release.yml \
 - **Purpose**: Promote beta to production
 - **Features**: Artifact reuse, version renaming
 - **Lines**: ~140
+
+## Release Artifacts
+
+The pipeline generates the following artifacts for each platform:
+
+### macOS (2 files)
+- `barqly-vault-{version}-macos-x86_64.dmg` - Intel processors
+- `barqly-vault-{version}-macos-arm64.dmg` - Apple Silicon (M1/M2/M3)
+
+### Windows (2 files)
+- `barqly-vault-{version}-x64.msi` - MSI installer
+- `barqly-vault-{version}-windows-x64.zip` - Standalone executable
+
+### Linux x86_64 (4 files)
+- `barqly-vault-{version}-1_amd64.deb` - Debian/Ubuntu package
+- `barqly-vault-{version}-1.x86_64.rpm` - RedHat/Fedora package
+- `barqly-vault-{version}-1_amd64.AppImage` - Universal Linux app
+- `barqly-vault-{version}-x86_64.tar.gz` - Standalone binary
+
+### Linux ARM64 (3 files)
+- `barqly-vault-{version}-1_arm64.deb` - Debian/Ubuntu ARM package
+- `barqly-vault-{version}-1.aarch64.rpm` - RedHat/Fedora ARM package
+- `barqly-vault-{version}-aarch64.tar.gz` - Standalone ARM binary
+
+### Additional Files
+- `checksums.txt` - SHA256 checksums for all artifacts
+
+**Note**: The `-1` in Linux package names is the release number, following standard Linux packaging conventions.
 
 ## Testing
 

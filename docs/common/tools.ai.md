@@ -92,6 +92,46 @@ key_storage_locations:
   linux: "~/.config/barqly-vault/"
 ```
 
+## Release Engineering
+
+```yaml
+release_commands:
+  # Smart tag-based selective builds
+  production_release: "git tag v1.0.0 && git push origin v1.0.0"
+  test_minimal: "git tag v1.0.0-test && git push origin v1.0.0-test"
+  test_linux: "git tag v1.0.0-test-linux && git push origin v1.0.0-test-linux"
+  test_macos: "git tag v1.0.0-test-mac && git push origin v1.0.0-test-mac"
+  test_windows: "git tag v1.0.0-test-win && git push origin v1.0.0-test-win"
+  test_combination: "git tag v1.0.0-test-mac-linux && git push origin v1.0.0-test-mac-linux"
+  
+  # Promotion workflow
+  promote_beta:
+    command: "gh workflow run release.yml -f promote_from=1.0.0-beta.1 -f version=1.0.0"
+    purpose: "Reuse tested artifacts without rebuilding"
+  
+  # Manual selective build
+  manual_selective:
+    command: |
+      gh workflow run release.yml \
+        -f version=1.0.0 \
+        -f selective_build=true \
+        -f build_linux=true \
+        -f build_windows=false
+
+platform_matrix:
+  macos_intel: "x86_64-apple-darwin"
+  macos_arm: "aarch64-apple-darwin"
+  linux_x64: "x86_64-unknown-linux-gnu"
+  linux_arm64: "aarch64-unknown-linux-gnu"
+  windows: "x86_64-pc-windows-msvc"
+
+artifacts_generated:
+  macos: ["*.dmg"]  # No tar.gz, only signed DMGs
+  windows: ["*.msi", "*.zip"]  # No setup.exe
+  linux_x64: ["*_amd64.deb", "*.x86_64.rpm", "*_amd64.AppImage", "*x86_64.tar.gz"]
+  linux_arm64: ["*_arm64.deb", "*.aarch64.rpm", "*aarch64.tar.gz"]  # No AppImage for ARM
+```
+
 ## Quick Reference
 
 ```yaml
@@ -100,4 +140,5 @@ frontend_change: ["make validate-ui", "make test-ui"]
 backend_change: ["make validate-rust", "make test-rust"]
 mixed_changes: ["make validate", "make test"]
 before_push: ["make validate", "npm audit", "cargo audit"]
+before_release: ["make validate", "git tag v{version}-test-linux", "verify artifacts"]
 ```

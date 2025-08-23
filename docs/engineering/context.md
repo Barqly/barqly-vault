@@ -329,6 +329,44 @@ npm run demo:disable   # Return to production mode
 cargo clean           # Reset Rust build cache
 ```
 
+## CI/CD and Release Engineering
+
+### Smart Tag-Based Releases
+
+We've implemented an intelligent release system that automatically determines what to build based on your tag name:
+
+```bash
+# Production release - builds all 5 platforms
+git tag v1.0.0 && git push origin v1.0.0
+
+# Test release - selective platforms to save time
+git tag v1.0.0-test-linux && git push origin v1.0.0-test-linux  # Linux only
+git tag v1.0.0-test-mac && git push origin v1.0.0-test-mac      # macOS only
+git tag v1.0.0-test-win && git push origin v1.0.0-test-win      # Windows only
+git tag v1.0.0-test-mac-linux && git push origin v1.0.0-test-mac-linux  # Multiple
+```
+
+This saves hours by avoiding unnecessary macOS notarization when testing Linux or Windows changes.
+
+### Platform Support
+
+We build for **5 platforms** from a single codebase:
+- macOS Intel (x86_64) and Apple Silicon (ARM64) - signed & notarized DMGs
+- Windows x64 - MSI installer and standalone ZIP
+- Linux x86_64 and ARM64 - DEB, RPM, AppImage, and tar.gz
+
+### Release Promotion
+
+Promote beta releases to production without rebuilding:
+
+```bash
+gh workflow run release.yml \
+  -f promote_from=1.0.0-beta.1 \
+  -f version=1.0.0
+```
+
+This reuses the exact tested artifacts, ensuring what you tested is what you ship.
+
 ## What Makes Our Engineering Special
 
 1. **We've solved the demo problem** - Safe, automated switching between demo and production modes
