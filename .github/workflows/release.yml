@@ -121,12 +121,12 @@ jobs:
             TAG="${GITHUB_REF#refs/tags/}"
             echo "🏷️ Processing tag: $TAG"
             
-            # Check if this is a test tag (contains "-test")
-            if [[ "$TAG" == *"-test"* ]]; then
-              echo "🧪 Test tag detected - checking platform specifications..."
+            # Check if this is a beta tag with selective platforms
+            if [[ "$TAG" == *"-beta-"* ]]; then
+              echo "🧪 Beta tag with platform selection detected..."
               
-              # Extract platform list after "-test-" if present
-              if [[ "$TAG" =~ -test-(.+)$ ]]; then
+              # Extract platform list after "-beta-" if present
+              if [[ "$TAG" =~ -beta-(.+)$ ]]; then
                 PLATFORMS="${BASH_REMATCH[1]}"
                 echo "📋 Specified platforms: $PLATFORMS"
                 
@@ -161,17 +161,9 @@ jobs:
                     ;;
                 esac
               else
-                # Test tag without platform spec - build minimal (Windows + Linux only)
-                case "${{ matrix.platform_id }}" in
-                  linux|windows)
-                    echo "build=true" >> $GITHUB_OUTPUT
-                    echo "✅ Building (default test platforms: Windows + Linux)"
-                    ;;
-                  *)
-                    echo "build=false" >> $GITHUB_OUTPUT
-                    echo "⏭️ Skipping (not in default test platforms)"
-                    ;;
-                esac
+                # Beta tag without platform spec - build all platforms
+                echo "build=true" >> $GITHUB_OUTPUT
+                echo "✅ Building (beta release - all platforms)"
               fi
             else
               # Regular tag - build everything

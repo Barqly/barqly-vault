@@ -331,22 +331,43 @@ cargo clean           # Reset Rust build cache
 
 ## CI/CD and Release Engineering
 
-### Smart Tag-Based Releases
+### Smart Tag-Based Release Convention
 
-We've implemented an intelligent release system that automatically determines what to build based on your tag name:
+We use a three-tier tagging system that optimizes CI/CD resource usage:
 
+#### 1. Alpha Tags (Local Checkpoints)
 ```bash
-# Production release - builds all 5 platforms
+git tag v1.0.0-alpha && git push origin v1.0.0-alpha
+```
+- **No CI/CD trigger** - saves resources
+- Use for local development checkpoints
+- Easy rollback points during development
+
+#### 2. Beta Tags (Testing Builds)
+```bash
+# Full build - all platforms
+git tag v1.0.0-beta && git push origin v1.0.0-beta
+
+# Selective platform builds to save time
+git tag v1.0.0-beta-linux && git push origin v1.0.0-beta-linux  # Linux only
+git tag v1.0.0-beta-mac && git push origin v1.0.0-beta-mac      # macOS only
+git tag v1.0.0-beta-win && git push origin v1.0.0-beta-win      # Windows only
+git tag v1.0.0-beta-mac-linux && git push origin v1.0.0-beta-mac-linux  # Multiple
+```
+- Triggers CI/CD builds
+- Use for testing and validation
+- Selective builds save hours of notarization time
+
+#### 3. Production Releases
+```bash
+# Direct production release
 git tag v1.0.0 && git push origin v1.0.0
 
-# Test release - selective platforms to save time
-git tag v1.0.0-test-linux && git push origin v1.0.0-test-linux  # Linux only
-git tag v1.0.0-test-mac && git push origin v1.0.0-test-mac      # macOS only
-git tag v1.0.0-test-win && git push origin v1.0.0-test-win      # Windows only
-git tag v1.0.0-test-mac-linux && git push origin v1.0.0-test-mac-linux  # Multiple
+# Or promote a tested beta
+gh workflow run release.yml -f promote_from=1.0.0-beta -f version=1.0.0
 ```
-
-This saves hours by avoiding unnecessary macOS notarization when testing Linux or Windows changes.
+- Final releases for users
+- Can be created fresh or promoted from beta
 
 ### Platform Support
 

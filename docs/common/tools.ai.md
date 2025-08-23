@@ -96,13 +96,23 @@ key_storage_locations:
 
 ```yaml
 release_commands:
-  # Smart tag-based selective builds
-  production_release: "git tag v1.0.0 && git push origin v1.0.0"
-  test_minimal: "git tag v1.0.0-test && git push origin v1.0.0-test"
-  test_linux: "git tag v1.0.0-test-linux && git push origin v1.0.0-test-linux"
-  test_macos: "git tag v1.0.0-test-mac && git push origin v1.0.0-test-mac"
-  test_windows: "git tag v1.0.0-test-win && git push origin v1.0.0-test-win"
-  test_combination: "git tag v1.0.0-test-mac-linux && git push origin v1.0.0-test-mac-linux"
+  # Version tagging convention:
+  # - alpha: Local checkpoints only (NO CI/CD trigger)
+  # - beta: Testing builds (triggers CI/CD)
+  # - production: Final releases
+  
+  # Local development checkpoints (no build)
+  local_checkpoint: "git tag v1.0.0-alpha && git push origin v1.0.0-alpha"
+  
+  # Beta releases with CI/CD builds
+  beta_full: "git tag v1.0.0-beta && git push origin v1.0.0-beta"
+  beta_linux: "git tag v1.0.0-beta-linux && git push origin v1.0.0-beta-linux"
+  beta_macos: "git tag v1.0.0-beta-mac && git push origin v1.0.0-beta-mac"
+  beta_windows: "git tag v1.0.0-beta-win && git push origin v1.0.0-beta-win"
+  beta_combination: "git tag v1.0.0-beta-mac-linux && git push origin v1.0.0-beta-mac-linux"
+  
+  # Production release
+  production: "git tag v1.0.0 && git push origin v1.0.0"
   
   # Promotion workflow
   promote_beta:

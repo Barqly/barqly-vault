@@ -24,52 +24,52 @@ scripts/
 
 ## Workflow Capabilities
 
-### 1. Standard Release (Tag Push)
+### Tag Convention
+The pipeline follows a three-tier tagging system:
+- **Alpha**: Local checkpoints (NO CI/CD trigger)
+- **Beta**: Testing builds (triggers CI/CD)
+- **Production**: Final releases
+
+### 1. Alpha Tags (Local Development)
+```bash
+git tag v1.0.0-alpha
+git push origin v1.0.0-alpha
+```
+- **Does NOT trigger CI/CD**
+- Use for local version checkpoints
+- Rollback points during development
+- Zero resource consumption
+
+### 2. Beta Releases (Testing)
+```bash
+# Full platform build
+git tag v1.0.0-beta
+git push origin v1.0.0-beta
+```
+- Builds all platforms (macOS Intel/ARM, Windows, Linux)
+- Creates draft release for testing
+
+#### Selective Beta Builds
+```bash
+# Single platform testing
+git tag v1.0.0-beta-linux    # Linux only
+git tag v1.0.0-beta-mac      # macOS only (Intel + ARM)
+git tag v1.0.0-beta-win      # Windows only
+
+# Multi-platform combinations
+git tag v1.0.0-beta-mac-linux    # macOS + Linux
+git tag v1.0.0-beta-win-linux    # Windows + Linux
+```
+- Saves CI/CD time by building only what you need
+- Avoids unnecessary macOS notarization cycles
+
+### 3. Production Releases
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
-- Builds for all platforms (macOS Intel/ARM, Windows, Linux x64/ARM64)
-- Signs and notarizes macOS DMGs
-- Creates draft release with all artifacts
-
-### 2. Beta/Alpha Release
-```bash
-git tag v1.0.0-beta.1
-git push origin v1.0.0-beta.1
-```
-- Same as standard release (all platforms)
-- Tagged as pre-release
-
-### 3. Test Builds (Selective Platforms)
-The pipeline supports smart selective builds using tag naming conventions:
-
-#### Minimal Test Build
-```bash
-git tag v1.0.0-test
-git push origin v1.0.0-test
-```
-- Builds only Windows + Linux x64 (no macOS, no Linux ARM64)
-- Avoids unnecessary macOS notarization cycles
-
-#### Platform-Specific Test Builds
-```bash
-# Linux only (both x64 and ARM64)
-git tag v1.0.0-test-linux
-git push origin v1.0.0-test-linux
-
-# macOS only (both Intel and ARM)
-git tag v1.0.0-test-mac
-git push origin v1.0.0-test-mac
-
-# Windows only
-git tag v1.0.0-test-win
-git push origin v1.0.0-test-win
-
-# Combinations
-git tag v1.0.0-test-mac-linux    # macOS + Linux
-git tag v1.0.0-test-win-linux    # Windows + Linux
-```
+- Full platform build
+- Production-ready release
 
 ### 4. Promotion (Beta → Production)
 ```bash
@@ -168,23 +168,34 @@ The pipeline generates the following artifacts for desktop platforms:
 
 ## Testing
 
-### Test Standard Release
+### Test Alpha Tag (No Build)
 ```bash
-# Create test tag
-git tag v0.7.0-test
-git push origin v0.7.0-test
+# Create alpha tag - should NOT trigger CI/CD
+git tag v0.7.0-alpha
+git push origin v0.7.0-alpha
+# Verify no workflow triggered in Actions tab
+```
 
-# Monitor in Actions tab
+### Test Beta Release
+```bash
+# Create beta tag for testing
+git tag v0.7.0-beta
+git push origin v0.7.0-beta
+
+# Or selective platform testing
+git tag v0.7.0-beta-win
+git push origin v0.7.0-beta-win
+
 # Delete test release when done
-gh release delete v0.7.0-test --yes
-git push --delete origin v0.7.0-test
+gh release delete v0.7.0-beta --yes
+git push --delete origin v0.7.0-beta
 ```
 
 ### Test Promotion
 ```bash
-# Promote existing beta
+# Promote existing beta to production
 gh workflow run release.yml \
-  -f promote_from=0.6.3-alpha \
+  -f promote_from=0.7.0-beta \
   -f version=0.7.0
 ```
 
