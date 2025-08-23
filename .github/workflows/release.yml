@@ -519,11 +519,10 @@ jobs:
           # Check if a release exists for this tag
           echo "🔍 Checking for existing release for tag v$VERSION..."
           
-          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/v$VERSION --jq '.id' 2>/dev/null || echo "")
-          
-          if [ -n "$RELEASE_ID" ]; then
-            echo "⚠️ Found existing release (ID: $RELEASE_ID), deleting it..."
-            gh api -X DELETE repos/${{ github.repository }}/releases/$RELEASE_ID
+          # Use gh release view which handles errors properly
+          if gh release view "v$VERSION" &>/dev/null; then
+            echo "⚠️ Found existing release for v$VERSION, deleting it..."
+            gh release delete "v$VERSION" --yes
             echo "✅ Existing release deleted"
           else
             echo "✅ No existing release found for v$VERSION"
