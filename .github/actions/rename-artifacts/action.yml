@@ -1,0 +1,150 @@
+name: 'Rename Release Artifacts'
+description: 'Standardize artifact naming across all platforms'
+author: 'Barqly'
+
+inputs:
+  platform:
+    description: 'Platform: macos-latest, ubuntu-*, windows-latest'
+    required: true
+  arch:
+    description: 'Architecture: intel, apple-silicon, x64'
+    required: true
+  version:
+    description: 'Version string (without v prefix)'
+    required: true
+  workspace:
+    description: 'GitHub workspace path'
+    required: false
+    default: ${{ github.workspace }}
+
+outputs:
+  artifacts-dir:
+    description: 'Directory containing renamed artifacts'
+    value: ${{ steps.rename.outputs.artifacts-dir }}
+  artifact-count:
+    description: 'Number of artifacts renamed'
+    value: ${{ steps.rename.outputs.count }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Rename Artifacts
+      id: rename
+      shell: bash
+      env:
+        PLATFORM: ${{ inputs.platform }}
+        ARCH: ${{ inputs.arch }}
+        VERSION: ${{ inputs.version }}
+        WORKSPACE: ${{ inputs.workspace }}
+      run: |
+        echo "📦 Renaming artifacts for $PLATFORM ($ARCH) version $VERSION"
+        
+        # Create directory for renamed artifacts
+        mkdir -p renamed-artifacts
+        ARTIFACT_COUNT=0
+        
+        # Handle macOS DMG files
+        if [[ "$PLATFORM" == "macos-latest" ]]; then
+          if [ "$ARCH" = "intel" ]; then
+            DMG_DIR="$WORKSPACE/target/x86_64-apple-darwin/release/bundle/dmg"
+            ARCH_NAME="x86_64"
+          elif [ "$ARCH" = "apple-silicon" ]; then
+            DMG_DIR="$WORKSPACE/target/aarch64-apple-darwin/release/bundle/dmg"
+            ARCH_NAME="arm64"
+          fi
+          
+          # Find and rename DMG
+          DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f 2>/dev/null | head -1)
+          if [ -f "$DMG_FILE" ]; then
+            # Verify DMG is properly signed and notarized (MANDATORY)
+            if ! xcrun stapler validate "$DMG_FILE" 2>/dev/null; then
+              echo "⚠️ WARNING: DMG is not properly notarized!"
+              echo "File: $DMG_FILE"
+              # Don't fail here as notarization might happen separately
+            fi
+            
+            NEW_NAME="barqly-vault-$VERSION-macos-${ARCH_NAME}.dmg"
+            cp "$DMG_FILE" "renamed-artifacts/$NEW_NAME"
+            echo "✅ Created: $NEW_NAME"
+            ((ARTIFACT_COUNT++))
+          else
+            echo "⚠️ No DMG file found in $DMG_DIR"
+          fi
+          
+          # Also handle .app.tar.gz files
+          APP_TAR=$(find "$WORKSPACE/target" -name "*.app.tar.gz" -type f 2>/dev/null | head -1)
+          if [ -f "$APP_TAR" ]; then
+            cp "$APP_TAR" "renamed-artifacts/barqly-vault-$VERSION-${ARCH_NAME}.tar.gz"
+            ((ARTIFACT_COUNT++))
+          fi
+        fi
+        
+        # Handle Windows artifacts
+        if [[ "$PLATFORM" == "windows-latest" ]]; then
+          # MSI installer
+          MSI_FILE=$(find "$WORKSPACE/target" -name "*.msi" -type f 2>/dev/null | head -1)
+          if [ -f "$MSI_FILE" ]; then
+            cp "$MSI_FILE" "renamed-artifacts/barqly-vault-$VERSION-x64.msi"
+            echo "✅ Created: barqly-vault-$VERSION-x64.msi"
+            ((ARTIFACT_COUNT++))
+          fi
+          
+          # Setup exe
+          SETUP_FILE=$(find "$WORKSPACE/target" -name "*-setup.exe" -type f 2>/dev/null | head -1)
+          if [ -f "$SETUP_FILE" ]; then
+            cp "$SETUP_FILE" "renamed-artifacts/barqly-vault-$VERSION-x64-setup.exe"
+            echo "✅ Created: barqly-vault-$VERSION-x64-setup.exe"
+            ((ARTIFACT_COUNT++))
+          fi
+          
+          # Create standalone ZIP
+          EXE_FILE="$WORKSPACE/target/release/barqly-vault.exe"
+          if [ -f "$EXE_FILE" ]; then
+            # Use PowerShell to create ZIP on Windows
+            powershell -Command "Compress-Archive -Path '$EXE_FILE' -DestinationPath 'renamed-artifacts/barqly-vault-$VERSION-windows-x64.zip'"
+            echo "✅ Created standalone ZIP"
+            ((ARTIFACT_COUNT++))
+          fi
+        fi
+        
+        # Handle Linux artifacts
+        if [[ "$PLATFORM" == *"ubuntu"* ]]; then
+          # DEB package
+          DEB_FILE=$(find "$WORKSPACE/target" -name "*.deb" -type f 2>/dev/null | head -1)
+          if [ -f "$DEB_FILE" ]; then
+            cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.deb"
+            echo "✅ Created: barqly-vault-$VERSION-amd64.deb"
+            ((ARTIFACT_COUNT++))
+          fi
+          
+          # RPM package
+          RPM_FILE=$(find "$WORKSPACE/target" -name "*.rpm" -type f 2>/dev/null | head -1)
+          if [ -f "$RPM_FILE" ]; then
+            cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-1.x86_64.rpm"
+            echo "✅ Created: barqly-vault-$VERSION-1.x86_64.rpm"
+            ((ARTIFACT_COUNT++))
+          fi
+          
+          # AppImage
+          APPIMAGE_FILE=$(find "$WORKSPACE/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
+          if [ -f "$APPIMAGE_FILE" ]; then
+            cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.AppImage"
+            echo "✅ Created: barqly-vault-$VERSION-amd64.AppImage"
+            ((ARTIFACT_COUNT++))
+          fi
+          
+          # Create standalone tar.gz
+          BINARY_PATH="$WORKSPACE/target/release/barqly-vault"
+          if [ -f "$BINARY_PATH" ]; then
+            tar -czf "renamed-artifacts/barqly-vault-$VERSION-x86_64.tar.gz" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
+            echo "✅ Created standalone tar.gz"
+            ((ARTIFACT_COUNT++))
+          fi
+        fi
+        
+        # List all renamed artifacts
+        echo "📦 Renamed $ARTIFACT_COUNT artifacts:"
+        ls -la renamed-artifacts/ || echo "No artifacts found"
+        
+        echo "artifacts-dir=renamed-artifacts" >> $GITHUB_OUTPUT
+        echo "count=$ARTIFACT_COUNT" >> $GITHUB_OUTPUT

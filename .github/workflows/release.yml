@@ -11,7 +11,10 @@ on:
     inputs:
       version:
         description: 'Version to release (e.g., 1.0.0)'
-        required: true
+        required: false
+      promote_from:
+        description: 'Beta version to promote (e.g., 1.0.0-beta.1) - leave empty for new build'
+        required: false
       prerelease:
         description: 'Mark as pre-release'
         type: boolean
@@ -23,35 +26,60 @@ on:
         default: false
 
 jobs:
+  # Handle promotion workflow when promote_from is specified
+  promote:
+    if: github.event.inputs.promote_from != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Promote Release
+        uses: ./.github/actions/promote-release
+        with:
+          source-version: ${{ github.event.inputs.promote_from }}
+          target-version: ${{ github.event.inputs.version }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
+      
+      - name: Summary
+        run: |
+          echo "## 🎉 Release Promoted Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **From**: v${{ github.event.inputs.promote_from }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **To**: v${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Draft (ready for manual publish)" >> $GITHUB_STEP_SUMMARY
+
+  # Main build and release workflow
   publish-tauri:
-    # Skip build if we're only creating a release
-    if: inputs.release_only != true
+    # Skip if we're promoting or only creating a release
+    if: github.event.inputs.promote_from == '' && inputs.release_only != true
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          # macOS Intel (like Sparrow)
+          # macOS Intel
           - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin'
             arch: 'intel'
             label: 'macOS (Intel)'
           
-          # macOS Apple Silicon (like Sparrow)  
+          # macOS Apple Silicon
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
             arch: 'apple-silicon'
             label: 'macOS (Apple M-series)'
           
-          # Linux x64 - Intel/AMD (.deb, .rpm, .appimage, .tar.gz)
-          # Note: Linux x64 binaries work on ARM64 via compatibility layer
+          # Linux x64
           - platform: 'ubuntu-22.04'
             args: '--target x86_64-unknown-linux-gnu'
             arch: 'x64'
             label: 'Linux (Intel/AMD)'
           
-          # Windows x64 (.msi and .zip)
+          # Windows x64
           - platform: 'windows-latest'
             args: '--target x86_64-pc-windows-msvc'
             arch: 'x64'
@@ -62,46 +90,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Setup Apple certificate for macOS signing (if secrets are configured)
-      - name: Setup Apple certificate
-        if: matrix.platform == 'macos-latest' && env.APPLE_CERTIFICATE_P12 != ''
-        env:
-          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-        run: |
-          # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-          
-          # Import certificate from secrets
-          echo "$APPLE_CERTIFICATE_P12" | base64 --decode > $CERTIFICATE_PATH
-          
-          # Create temporary keychain
-          security create-keychain -p "$RUNNER_TEMP" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$RUNNER_TEMP" $KEYCHAIN_PATH
-          
-          # Import certificate to keychain
-          security import $CERTIFICATE_PATH -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security set-key-partition-list -S apple-tool:,apple: -k "$RUNNER_TEMP" $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
-          
-          # Clean up certificate file
-          rm $CERTIFICATE_PATH
-          
-          echo "✅ Certificate imported successfully"
+      # Setup Apple certificate for macOS signing
+      - name: Setup Apple Certificate
+        if: matrix.platform == 'macos-latest'
+        uses: ./.github/actions/apple-certificates
+        with:
+          certificate-p12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          certificate-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          operation: setup
       
-      - name: setup node
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: 'npm'
       
-      - name: install Rust stable
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@87f07835889b686aca1fb3733c2aa2d61586c1e1
         with:
           toolchain: stable
-          # Install the specific target for this matrix job
           targets: ${{ matrix.arch == 'intel' && 'x86_64-apple-darwin' || matrix.arch == 'apple-silicon' && 'aarch64-apple-darwin' || matrix.arch == 'x64' && contains(matrix.platform, 'ubuntu') && 'x86_64-unknown-linux-gnu' || matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' }}
       
       - name: Rust cache
@@ -109,327 +116,105 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
       
-      - name: install dependencies (ubuntu only)
+      - name: Install dependencies (Ubuntu only)
         if: contains(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
-          # For Ubuntu 24.04 (ubuntu-latest), only 4.1 is available
-          # For Ubuntu 22.04, both 4.0 and 4.1 are available
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xdg-utils
-          # Try to install 4.0 if available (for older Ubuntu)
           sudo apt-get install -y libwebkit2gtk-4.0-dev || true
-          # Install RPM build tools for creating .rpm packages
           sudo apt-get install -y rpm
       
-      - name: install frontend dependencies
+      - name: Install frontend dependencies
         run: npm install --prefix src-ui
       
-      - uses: tauri-apps/tauri-action@v0
+      - name: Build with Tauri
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
-          # Intentionally NOT passing notarization credentials
-          # We handle notarization separately with notarytool
         with:
-          # Disable release creation - we'll create it manually after renaming
-          # tagName: app-v__VERSION__
-          # releaseName: 'Barqly Vault v__VERSION__'
-          # releaseBody: 'See the assets to download this version and install.'
-          # releaseDraft: true
-          # prerelease: false
           args: ${{ matrix.args }}
       
-      # Notarize macOS DMG using App Store Connect API key (MANDATORY)
-      - name: Notarize macOS DMG with API Key
+      # Find and notarize macOS DMG
+      - name: Find DMG Path
         if: matrix.platform == 'macos-latest'
-        env:
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+        id: find-dmg
         run: |
-          # Fail if API credentials are not configured
-          if [ -z "$APPLE_API_KEY" ] || [ -z "$APPLE_API_KEY_ID" ] || [ -z "$APPLE_API_ISSUER_ID" ]; then
-            echo "❌ ERROR: Apple notarization credentials are not configured!"
-            echo "Required secrets: APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER_ID"
-            exit 1
-          fi
-          
-          echo "🔐 Setting up App Store Connect API authentication..."
-          
-          # Create directory and save the API key (decode from base64)
-          mkdir -p ~/private_keys
-          
-          # Debug: Check if secret exists and length
-          if [ -z "$APPLE_API_KEY" ]; then
-            echo "❌ ERROR: APPLE_API_KEY secret is empty!"
-            exit 1
-          fi
-          echo "✅ API key secret exists (length: ${#APPLE_API_KEY} chars)"
-          
-          # Decode the API key
-          echo "$APPLE_API_KEY" | base64 --decode > ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
-          
-          # Validate the API key file
-          if [ ! -s ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8 ]; then
-            echo "❌ ERROR: API key file is empty after decode!"
-            exit 1
-          fi
-          
-          if ! grep -q "BEGIN PRIVATE KEY" ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8; then
-            echo "❌ ERROR: API key file is not valid! Check base64 encoding."
-            echo "First few lines of decoded file:"
-            head -3 ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
-            echo "File size: $(wc -c < ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8) bytes"
-            exit 1
-          fi
-          
-          echo "✅ API key file validated"
-          echo "File size: $(wc -c < ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8) bytes"
-          
-          # Find the actual DMG file - Use absolute path from Tauri output
           if [ "${{ matrix.arch }}" = "intel" ]; then
-            DMG_DIR="$GITHUB_WORKSPACE/target/x86_64-apple-darwin/release/bundle/dmg"
-            DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f 2>/dev/null | head -1)
-          elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
-            DMG_DIR="$GITHUB_WORKSPACE/target/aarch64-apple-darwin/release/bundle/dmg"
-            DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f 2>/dev/null | head -1)
+            DMG_DIR="${{ github.workspace }}/target/x86_64-apple-darwin/release/bundle/dmg"
+          else
+            DMG_DIR="${{ github.workspace }}/target/aarch64-apple-darwin/release/bundle/dmg"
           fi
-          
-          if [ ! -f "$DMG_FILE" ]; then
-            echo "❌ ERROR: DMG not found!"
-            echo "Expected location: $DMG_DIR"
-            echo "Searching for DMG files in workspace:"
-            find "$GITHUB_WORKSPACE" -name "*.dmg" -type f 2>/dev/null || echo "No DMG files found"
-            exit 1
-          fi
-          
-          echo "📤 Submitting DMG for notarization: $DMG_FILE"
-          
-          # Submit for notarization and get submission ID
-          SUBMISSION_JSON=$(xcrun notarytool submit "$DMG_FILE" \
-            --key ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8 \
-            --key-id "$APPLE_API_KEY_ID" \
-            --issuer "$APPLE_API_ISSUER_ID" \
-            --output-format json)
-          
-          SUBMISSION_ID=$(echo "$SUBMISSION_JSON" | jq -r '.id')
-          
-          if [ -z "$SUBMISSION_ID" ] || [ "$SUBMISSION_ID" = "null" ]; then
-            echo "❌ ERROR: Failed to submit for notarization!"
-            echo "$SUBMISSION_JSON"
-            exit 1
-          fi
-          
-          echo "✅ Submitted successfully. Submission ID: $SUBMISSION_ID"
-          echo "⏳ Polling for notarization status..."
-          
-          # Poll for completion (usually takes 2-5 minutes)
-          MAX_ATTEMPTS=20  # 10 minutes total (20 * 30 seconds)
-          for i in $(seq 1 $MAX_ATTEMPTS); do
-            sleep 30
-            
-            STATUS_JSON=$(xcrun notarytool info "$SUBMISSION_ID" \
-              --key ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8 \
-              --key-id "$APPLE_API_KEY_ID" \
-              --issuer "$APPLE_API_ISSUER_ID" \
-              --output-format json)
-            
-            STATUS=$(echo "$STATUS_JSON" | jq -r '.status')
-            
-            echo "  Attempt $i/$MAX_ATTEMPTS: Status = $STATUS"
-            
-            if [ "$STATUS" = "Accepted" ]; then
-              echo "🎉 Notarization accepted!"
-              break
-            elif [ "$STATUS" = "Invalid" ] || [ "$STATUS" = "Rejected" ]; then
-              echo "❌ Notarization failed with status: $STATUS"
-              # Get detailed log
-              xcrun notarytool log "$SUBMISSION_ID" \
-                --key ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8 \
-                --key-id "$APPLE_API_KEY_ID" \
-                --issuer "$APPLE_API_ISSUER_ID"
-              exit 1
-            elif [ "$STATUS" != "In Progress" ]; then
-              echo "❌ Unknown status: $STATUS"
-              echo "$STATUS_JSON"
-              exit 1
-            fi
-            # If "In Progress", continue loop
-          done
-          
-          # Check if we completed successfully
-          if [ "$STATUS" != "Accepted" ]; then
-            echo "❌ ERROR: Notarization did not complete within 10 minutes!"
-            echo "Last status: $STATUS"
-            echo "You can check status manually with: xcrun notarytool info $SUBMISSION_ID"
-            exit 1
-          fi
-          
-          # Staple the notarization ticket
-          echo "📌 Stapling notarization ticket..."
-          if ! xcrun stapler staple "$DMG_FILE"; then
-            echo "❌ ERROR: Failed to staple notarization ticket!"
-            exit 1
-          fi
-          
-          # Verify the notarization
-          echo "✅ Verifying notarization..."
-          if ! xcrun stapler validate "$DMG_FILE"; then
-            echo "❌ ERROR: Notarization validation failed!"
-            exit 1
-          fi
-          
-          echo "🎉 DMG successfully notarized and stapled"
-          
-          # Clean up the API key file
-          rm -f ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
-          
-      # Rename all artifacts with consistent naming convention
-      - name: Rename artifacts with consistent naming
-        if: always()
+          DMG_PATH=$(find "$DMG_DIR" -name "*.dmg" -type f | head -1)
+          echo "dmg-path=$DMG_PATH" >> $GITHUB_OUTPUT
         shell: bash
+      
+      - name: Notarize macOS DMG
+        if: matrix.platform == 'macos-latest'
+        uses: ./.github/actions/notarize-macos
+        with:
+          dmg-path: ${{ steps.find-dmg.outputs.dmg-path }}
+          api-key: ${{ secrets.APPLE_API_KEY }}
+          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
+          api-issuer-id: ${{ secrets.APPLE_API_ISSUER_ID }}
+      
+      # Extract version from tag or input
+      - name: Extract Version
+        id: version
         run: |
           if [[ "$GITHUB_REF" =~ refs/tags/v?(.+) ]]; then
             VERSION="${BASH_REMATCH[1]}"
+          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
           else
             VERSION="dev"
           fi
-          
-          # Create directory for renamed artifacts
-          mkdir -p renamed-artifacts
-          
-          # Handle macOS DMG files
-          if [ "${{ matrix.platform }}" = "macos-latest" ]; then
-            if [ "${{ matrix.arch }}" = "intel" ]; then
-              DMG_DIR="$GITHUB_WORKSPACE/target/x86_64-apple-darwin/release/bundle/dmg"
-              ARCH_NAME="x86_64"
-            elif [ "${{ matrix.arch }}" = "apple-silicon" ]; then
-              DMG_DIR="$GITHUB_WORKSPACE/target/aarch64-apple-darwin/release/bundle/dmg"
-              ARCH_NAME="arm64"
-            fi
-            
-            # Find and rename DMG
-            DMG_FILE=$(find "$DMG_DIR" -name "*.dmg" -type f 2>/dev/null | head -1)
-            if [ -f "$DMG_FILE" ]; then
-              # Verify DMG is properly signed and notarized (MANDATORY)
-              if ! xcrun stapler validate "$DMG_FILE" 2>/dev/null; then
-                echo "❌ ERROR: DMG is not properly notarized!"
-                echo "File: $DMG_FILE"
-                echo "This is a critical security requirement."
-                exit 1
-              fi
-              
-              NEW_NAME="barqly-vault-$VERSION-macos-${ARCH_NAME}.dmg"
-              cp "$DMG_FILE" "renamed-artifacts/$NEW_NAME"
-              echo "✅ Created: $NEW_NAME"
-            else
-              echo "❌ ERROR: No DMG file found in $DMG_DIR"
-              exit 1
-            fi
-            
-            # Also handle .app.tar.gz files (these become .tar.gz without .app)
-            APP_TAR=$(find "$GITHUB_WORKSPACE/target" -name "*.app.tar.gz" -type f 2>/dev/null | head -1)
-            if [ -f "$APP_TAR" ]; then
-              cp "$APP_TAR" "renamed-artifacts/barqly-vault-$VERSION-${ARCH_NAME}.tar.gz"
-            fi
-          fi
-          
-          # Handle Windows artifacts
-          if [ "${{ matrix.platform }}" = "windows-latest" ]; then
-            # MSI installer (remove language suffix)
-            MSI_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.msi" -type f 2>/dev/null | head -1)
-            if [ -f "$MSI_FILE" ]; then
-              cp "$MSI_FILE" "renamed-artifacts/barqly-vault-$VERSION-x64.msi"
-            fi
-            
-            # Setup exe
-            SETUP_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*-setup.exe" -type f 2>/dev/null | head -1)
-            if [ -f "$SETUP_FILE" ]; then
-              cp "$SETUP_FILE" "renamed-artifacts/barqly-vault-$VERSION-x64-setup.exe"
-            fi
-            
-            # Create standalone ZIP
-            EXE_FILE="$GITHUB_WORKSPACE/target/release/barqly-vault.exe"
-            if [ -f "$EXE_FILE" ]; then
-              # Use PowerShell to create ZIP on Windows
-              powershell -Command "Compress-Archive -Path '$EXE_FILE' -DestinationPath 'renamed-artifacts/barqly-vault-$VERSION-windows-x64.zip'"
-              echo "✅ Created standalone ZIP"
-            fi
-          fi
-          
-          # Handle Linux artifacts
-          if [[ "${{ matrix.platform }}" == *"ubuntu"* ]]; then
-            # DEB package
-            DEB_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.deb" -type f 2>/dev/null | head -1)
-            if [ -f "$DEB_FILE" ]; then
-              cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.deb"
-            fi
-            
-            # RPM package (rename to standard format)
-            RPM_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.rpm" -type f 2>/dev/null | head -1)
-            if [ -f "$RPM_FILE" ]; then
-              # Rename to standard format: barqly-vault-VERSION-1.x86_64.rpm
-              cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-1.x86_64.rpm"
-              echo "✅ Renamed RPM to: barqly-vault-$VERSION-1.x86_64.rpm"
-            fi
-            
-            # AppImage
-            APPIMAGE_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
-            if [ -f "$APPIMAGE_FILE" ]; then
-              cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.AppImage"
-            fi
-            
-            # Create standalone tar.gz (using x86_64 for consistency)
-            BINARY_PATH="$GITHUB_WORKSPACE/target/release/barqly-vault"
-            if [ -f "$BINARY_PATH" ]; then
-              tar -czf "renamed-artifacts/barqly-vault-$VERSION-x86_64.tar.gz" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
-              echo "✅ Created standalone tar.gz"
-            fi
-          fi
-          
-          # List all renamed artifacts
-          echo "📦 Renamed artifacts:"
-          ls -la renamed-artifacts/ || echo "No artifacts found"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        shell: bash
+      
+      # Rename artifacts with consistent naming
+      - name: Rename Artifacts
+        uses: ./.github/actions/rename-artifacts
+        with:
+          platform: ${{ matrix.platform }}
+          arch: ${{ matrix.arch }}
+          version: ${{ steps.version.outputs.version }}
       
       # Upload renamed artifacts
-      - name: Upload renamed artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: barqly-vault-${{ matrix.platform }}-${{ matrix.arch }}
           path: renamed-artifacts/*
           retention-days: 7
       
-      # Cleanup keychain (macOS only)
-      - name: Cleanup keychain
+      # Cleanup Apple keychain
+      - name: Cleanup Apple Keychain
         if: always() && matrix.platform == 'macos-latest'
-        run: |
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-          if [ -f "$KEYCHAIN_PATH" ]; then
-            security delete-keychain $KEYCHAIN_PATH || true
-          fi
+        uses: ./.github/actions/apple-certificates
+        with:
+          operation: cleanup
 
-  # Create draft release with renamed artifacts
+  # Create draft release with all artifacts
   create-release:
     name: Create Draft Release
     needs: [publish-tauri]
-    # Make build optional if we're just creating a release
     if: |
       always() && 
+      github.event.inputs.promote_from == '' &&
       (needs.publish-tauri.result == 'success' || inputs.release_only == true) &&
       (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # REQUIRED for creating releases
+      contents: write
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Extract version from tag
+      - name: Extract version
         id: get_version
         run: |
-          # Handle both tag push and workflow_dispatch
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             VERSION="${{ github.event.inputs.version }}"
           else
@@ -438,20 +223,19 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Creating release for version: $VERSION"
       
-      # Download all artifacts from the build job
+      # Download all artifacts from build job
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         if: inputs.release_only != true
         with:
           path: release-artifacts
       
-      # Download artifacts from a previous run when release_only is true
+      # Download artifacts from previous run when release_only
       - name: Download artifacts from previous run
         if: inputs.release_only == true
         run: |
           echo "🔍 Finding the most recent successful build for v${{ steps.get_version.outputs.VERSION }}..."
           
-          # Find the most recent successful run with this tag
           RUN_ID=$(gh run list \
             --workflow=release.yml \
             --branch="v${{ steps.get_version.outputs.VERSION }}" \
@@ -468,22 +252,15 @@ jobs:
           echo "📥 Downloading artifacts from run $RUN_ID..."
           mkdir -p release-artifacts
           gh run download $RUN_ID --dir release-artifacts
-          
           echo "✅ Downloaded artifacts from run $RUN_ID"
         env:
           GH_TOKEN: ${{ github.token }}
       
-      - name: Display structure of downloaded files
-        run: |
-          echo "📁 Downloaded artifacts structure:"
-          ls -R release-artifacts
-      
       - name: Prepare release assets
         run: |
-          # Create a directory for final release assets
           mkdir -p release-assets
           
-          # Move all renamed artifacts to release-assets, flattening the structure
+          # Move all artifacts to release-assets, flattening structure
           find release-artifacts -type f \( \
             -name "*.dmg" -o \
             -name "*.exe" -o \
@@ -499,117 +276,39 @@ jobs:
           ls -la release-assets/
       
       - name: Generate checksums
-        run: |
-          cd release-assets
-          
-          # Generate SHA256 checksums for all files
-          echo "📝 Generating SHA256 checksums..."
-          shasum -a 256 * > checksums.txt
-          
-          echo "✅ Checksums:"
-          cat checksums.txt
+        uses: ./.github/actions/create-checksums
+        with:
+          artifacts-dir: release-assets
       
-      # Clean up any existing release for this tag (in case of retry)
+      # Clean up any existing release
       - name: Delete existing release if present
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.get_version.outputs.VERSION }}"
           
-          # Check if a release exists for this tag
-          echo "🔍 Checking for existing release for tag v$VERSION..."
-          
-          # Use gh release view which handles errors properly
           if gh release view "v$VERSION" &>/dev/null; then
             echo "⚠️ Found existing release for v$VERSION, deleting it..."
             gh release delete "v$VERSION" --yes
             echo "✅ Existing release deleted"
-          else
-            echo "✅ No existing release found for v$VERSION"
           fi
-      
-      - name: Create draft release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          name: "Barqly Vault v${{ steps.get_version.outputs.VERSION }}"
-          tag_name: "v${{ steps.get_version.outputs.VERSION }}"
-          fail_on_unmatched_files: false  # Don't fail if some files are missing
-          files: |
-            release-assets/*
-          body: |
-            # Barqly Vault v${{ steps.get_version.outputs.VERSION }}
-            
-            ## 📦 Installation
-            
-            Download the appropriate installer for your platform below.
-            
-            ### macOS
-            - **Apple Silicon (M1/M2/M3)**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-macos-arm64.dmg`
-            - **Intel**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-macos-x86_64.dmg`
-            
-            ### Windows
-            - **Installer**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-x64-setup.exe`
-            - **MSI**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-x64.msi`
-            
-            ### Linux
-            - **Debian/Ubuntu**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-amd64.deb`
-            - **RedHat/Fedora**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-1.x86_64.rpm`
-            - **AppImage**: `barqly-vault-${{ steps.get_version.outputs.VERSION }}-amd64.AppImage`
-            
-            ## 🔒 Security
-            
-            All macOS builds are signed and notarized by Apple.
-            
-            Verify your download using the checksums in `checksums.txt`.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      # Fallback: Use gh CLI if softprops action fails
-      - name: Create release with gh CLI (fallback)
-        if: failure()
+      - name: Generate release notes
         run: |
           VERSION="${{ steps.get_version.outputs.VERSION }}"
-          TAG="v$VERSION"
+          ./scripts/ci/generate-release-notes.sh "$VERSION" > release-notes.md
+      
+      - name: Create draft release
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
           
-          echo "⚠️ softprops/action-gh-release failed, using gh CLI as fallback"
-          
-          # Create release with gh CLI
-          gh release create "$TAG" \
+          gh release create "v$VERSION" \
             --draft \
             --title "Barqly Vault v$VERSION" \
-            --notes-file - <<EOF
-          # Barqly Vault v$VERSION
+            --notes-file release-notes.md \
+            release-assets/*
           
-          ## 📦 Installation
-          
-          Download the appropriate installer for your platform below.
-          
-          ### macOS
-          - **Apple Silicon (M1/M2/M3)**: \`barqly-vault-$VERSION-macos-arm64.dmg\`
-          - **Intel**: \`barqly-vault-$VERSION-macos-x86_64.dmg\`
-          
-          ### Windows
-          - **Installer**: \`barqly-vault-$VERSION-x64-setup.exe\`
-          - **MSI**: \`barqly-vault-$VERSION-x64.msi\`
-          
-          ### Linux
-          - **Debian/Ubuntu**: \`barqly-vault-$VERSION-amd64.deb\`
-          - **RedHat/Fedora**: \`barqly-vault-$VERSION-1.x86_64.rpm\`
-          - **AppImage**: \`barqly-vault-$VERSION-amd64.AppImage\`
-          
-          ## 🔒 Security
-          
-          All macOS builds are signed and notarized by Apple.
-          
-          Verify your download using the checksums in \`checksums.txt\`.
-          EOF
-          
-          # Upload assets
-          if [ -d release-assets ] && [ "$(ls -A release-assets)" ]; then
-            gh release upload "$TAG" release-assets/* --clobber
-          fi
-          
-          echo "✅ Release created successfully with gh CLI!"
+          echo "✅ Draft release created for v$VERSION"
+          echo "📝 Review and publish at: https://github.com/${{ github.repository }}/releases"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,177 @@
+name: 'Promote Release'
+description: 'Promote a beta/RC release to production by reusing artifacts'
+author: 'Barqly'
+
+inputs:
+  source-version:
+    description: 'Source version to promote from (e.g., 1.0.0-beta.1)'
+    required: true
+  target-version:
+    description: 'Target version to promote to (e.g., 1.0.0)'
+    required: true
+  github-token:
+    description: 'GitHub token for API operations'
+    required: true
+  create-tag:
+    description: 'Create a new tag for the target version'
+    required: false
+    default: 'true'
+  draft:
+    description: 'Create as draft release'
+    required: false
+    default: 'true'
+
+outputs:
+  release-url:
+    description: 'URL of the created release'
+    value: ${{ steps.create.outputs.release-url }}
+  artifacts-count:
+    description: 'Number of artifacts promoted'
+    value: ${{ steps.download.outputs.count }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Validate Inputs
+      shell: bash
+      run: |
+        echo "🔍 Validating promotion request..."
+        echo "Source: v${{ inputs.source-version }}"
+        echo "Target: v${{ inputs.target-version }}"
+        
+        # Check if source release exists
+        if ! gh release view "v${{ inputs.source-version }}" &>/dev/null; then
+          echo "❌ ERROR: Source release v${{ inputs.source-version }} not found!"
+          exit 1
+        fi
+        
+        # Check if target release already exists
+        if gh release view "v${{ inputs.target-version }}" &>/dev/null; then
+          echo "⚠️ WARNING: Target release v${{ inputs.target-version }} already exists"
+          echo "It will be deleted and recreated"
+        fi
+        
+        echo "✅ Validation passed"
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+    
+    - name: Get Source Release Info
+      id: source
+      shell: bash
+      run: |
+        echo "📋 Getting source release information..."
+        
+        # Get the commit SHA of the source release
+        COMMIT_SHA=$(gh release view "v${{ inputs.source-version }}" --json targetCommitish --jq '.targetCommitish')
+        echo "Source commit: $COMMIT_SHA"
+        echo "commit-sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+        
+        # Get release notes (optional, for reference)
+        gh release view "v${{ inputs.source-version }}" --json body --jq '.body' > /tmp/source-notes.md
+        
+        echo "✅ Source release info retrieved"
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+    
+    - name: Download Source Artifacts
+      id: download
+      shell: bash
+      run: |
+        echo "📥 Downloading artifacts from v${{ inputs.source-version }}..."
+        
+        # Create directory for artifacts
+        mkdir -p promotion-artifacts
+        cd promotion-artifacts
+        
+        # Download all assets from source release
+        gh release download "v${{ inputs.source-version }}"
+        
+        # Count artifacts
+        ARTIFACT_COUNT=$(ls -1 | wc -l)
+        echo "Downloaded $ARTIFACT_COUNT artifacts"
+        
+        # Rename artifacts if version differs
+        SOURCE_VERSION="${{ inputs.source-version }}"
+        TARGET_VERSION="${{ inputs.target-version }}"
+        
+        if [[ "$SOURCE_VERSION" != "$TARGET_VERSION" ]]; then
+          echo "📝 Renaming artifacts from $SOURCE_VERSION to $TARGET_VERSION..."
+          for file in *; do
+            if [[ "$file" == *"$SOURCE_VERSION"* ]]; then
+              new_name="${file//$SOURCE_VERSION/$TARGET_VERSION}"
+              mv "$file" "$new_name"
+              echo "  Renamed: $file → $new_name"
+            fi
+          done
+          
+          # Update checksums if present
+          if [ -f "checksums.txt" ]; then
+            echo "📝 Regenerating checksums..."
+            rm checksums.txt
+            shasum -a 256 * > checksums.txt
+          fi
+        fi
+        
+        echo "count=$ARTIFACT_COUNT" >> $GITHUB_OUTPUT
+        cd ..
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+    
+    - name: Create Target Tag
+      if: inputs.create-tag == 'true'
+      shell: bash
+      run: |
+        echo "🏷️ Creating tag v${{ inputs.target-version }}..."
+        
+        # Create tag at the same commit as source
+        git tag -f "v${{ inputs.target-version }}" "${{ steps.source.outputs.commit-sha }}"
+        git push origin "v${{ inputs.target-version }}" --force
+        
+        echo "✅ Tag created at commit ${{ steps.source.outputs.commit-sha }}"
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+    
+    - name: Delete Existing Target Release
+      shell: bash
+      run: |
+        if gh release view "v${{ inputs.target-version }}" &>/dev/null; then
+          echo "🗑️ Deleting existing release v${{ inputs.target-version }}..."
+          gh release delete "v${{ inputs.target-version }}" --yes
+          echo "✅ Existing release deleted"
+        fi
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+    
+    - name: Create Target Release
+      id: create
+      shell: bash
+      run: |
+        echo "📦 Creating release v${{ inputs.target-version }}..."
+        
+        # Generate release notes
+        VERSION="${{ inputs.target-version }}"
+        bash ${{ github.workspace }}/scripts/ci/generate-release-notes.sh "$VERSION" > release-notes.md
+        
+        # Create release with artifacts
+        DRAFT_FLAG=""
+        if [[ "${{ inputs.draft }}" == "true" ]]; then
+          DRAFT_FLAG="--draft"
+        fi
+        
+        gh release create "v${{ inputs.target-version }}" \
+          $DRAFT_FLAG \
+          --title "Barqly Vault v${{ inputs.target-version }}" \
+          --notes-file release-notes.md \
+          promotion-artifacts/*
+        
+        # Get release URL
+        RELEASE_URL=$(gh release view "v${{ inputs.target-version }}" --json url --jq '.url')
+        echo "release-url=$RELEASE_URL" >> $GITHUB_OUTPUT
+        
+        echo "✅ Release created: $RELEASE_URL"
+        echo ""
+        echo "🎉 Successfully promoted v${{ inputs.source-version }} → v${{ inputs.target-version }}"
+        echo "   Artifacts: ${{ steps.download.outputs.count }}"
+        echo "   Status: $([[ '${{ inputs.draft }}' == 'true' ]] && echo 'Draft' || echo 'Published')"
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}

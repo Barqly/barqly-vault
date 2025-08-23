@@ -1,0 +1,41 @@
+name: 'Create Release Checksums'
+description: 'Generate SHA256 checksums for release artifacts'
+author: 'Barqly'
+
+inputs:
+  artifacts-dir:
+    description: 'Directory containing artifacts'
+    required: true
+    default: 'release-assets'
+
+outputs:
+  checksum-file:
+    description: 'Path to the checksums file'
+    value: ${{ steps.generate.outputs.checksum-file }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate Checksums
+      id: generate
+      shell: bash
+      working-directory: ${{ inputs.artifacts-dir }}
+      run: |
+        echo "📝 Generating SHA256 checksums..."
+        
+        # Count files
+        FILE_COUNT=$(find . -type f ! -name "checksums.txt" | wc -l)
+        echo "Found $FILE_COUNT files to checksum"
+        
+        if [ "$FILE_COUNT" -eq 0 ]; then
+          echo "⚠️ No files found to checksum"
+          exit 1
+        fi
+        
+        # Generate checksums for all files except checksums.txt itself
+        shasum -a 256 $(find . -type f ! -name "checksums.txt" -exec basename {} \;) > checksums.txt
+        
+        echo "✅ Checksums generated:"
+        cat checksums.txt
+        
+        echo "checksum-file=${{ inputs.artifacts-dir }}/checksums.txt" >> $GITHUB_OUTPUT
