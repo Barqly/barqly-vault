@@ -364,13 +364,12 @@ jobs:
               cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.deb"
             fi
             
-            # RPM package (keep original name format with release number)
+            # RPM package (rename to standard format)
             RPM_FILE=$(find "$GITHUB_WORKSPACE/target" -name "*.rpm" -type f 2>/dev/null | head -1)
             if [ -f "$RPM_FILE" ]; then
-              # RPM files already have the correct format: barqly-vault-0.1.0-1.x86_64.rpm
-              # Just copy without renaming to preserve the standard RPM naming
-              RPM_NAME=$(basename "$RPM_FILE")
-              cp "$RPM_FILE" "renamed-artifacts/$RPM_NAME"
+              # Rename to standard format: barqly-vault-VERSION-1.x86_64.rpm
+              cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-1.x86_64.rpm"
+              echo "✅ Renamed RPM to: barqly-vault-$VERSION-1.x86_64.rpm"
             fi
             
             # AppImage
