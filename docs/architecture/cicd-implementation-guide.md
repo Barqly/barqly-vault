@@ -25,10 +25,9 @@ First, test the new workflows alongside existing ones:
 mv .github/workflows/build-linux.yml .github/workflows/build-linux.yml.backup
 mv .github/workflows/deploy-docs.yml .github/workflows/deploy-docs.yml.backup
 
-# 2. The new workflows are already created:
-# - ci-smart-pipeline.yml (intelligent CI)
-# - release.yml (comprehensive releases)
-# - deploy-docs.yml (keep as-is, it's already optimized)
+# 2. Current workflow architecture:
+# - release.yml (comprehensive tag-based releases with signing/notarization)
+# - deploy-docs.yml (automated documentation deployment)
 
 # 3. Restore deploy-docs.yml as it's already well-configured
 mv .github/workflows/deploy-docs.yml.backup .github/workflows/deploy-docs.yml
@@ -41,10 +40,7 @@ mv .github/workflows/deploy-docs.yml.backup .github/workflows/deploy-docs.yml
 1. Go to Settings → Branches
 2. Add rule for `main` branch:
    - ✅ Require pull request reviews
-   - ✅ Require status checks to pass:
-     - `CI Summary`
-     - `Frontend Validation`
-     - `Rust Validation`
+   - ✅ Require status checks to pass (when configured)
    - ✅ Require branches to be up to date
    - ✅ Include administrators (optional)
 
@@ -71,32 +67,20 @@ WINDOWS_CERTIFICATE_PASSWORD # Certificate password
 
 ### Step 3: Test the Workflows
 
-#### Test CI Pipeline
+#### Test Release Pipeline
 
 ```bash
-# Create a test branch
-git checkout -b test/ci-pipeline
+# Create a release tag
+git tag v1.0.0-beta.1
+git push origin v1.0.0-beta.1
 
-# Make a small change to trigger CI
-echo "// CI test" >> src-tauri/src/main.rs
-
-# Commit and push
-git add .
-git commit -m "test: verify CI pipeline"
-git push origin test/ci-pipeline
-
-# Create a PR to see the CI in action
+# Or use manual workflow dispatch:
+# 1. Go to Actions tab
+# 2. Select "Release Pipeline"
+# 3. Click "Run workflow"
+# 4. Enter version (e.g., 1.0.0)
+# 5. Choose pre-release if needed
 ```
-
-#### Test Manual Triggers
-
-1. Go to Actions tab
-2. Select "Smart CI Pipeline"
-3. Click "Run workflow"
-4. Choose options:
-   - Platforms: all
-   - Build type: debug
-   - Run tests: true
 
 #### Test Release Pipeline
 
@@ -254,13 +238,12 @@ git tag v1.0.0
 git push origin v1.0.0
 
 # Manual workflow trigger via CLI
-gh workflow run ci-smart-pipeline.yml \
-  -f platforms=all \
-  -f build_type=release \
-  -f run_tests=true
+gh workflow run release.yml \
+  -f version=1.0.0 \
+  -f prerelease=false
 
 # Check workflow status
-gh run list --workflow=ci-smart-pipeline.yml
+gh run list --workflow=release.yml
 
 # Download artifacts
 gh run download <run-id>

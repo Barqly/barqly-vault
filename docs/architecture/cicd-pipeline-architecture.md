@@ -183,7 +183,7 @@ on:
 ### Implementation Example
 
 ```yaml
-name: Smart CI Pipeline
+# Example workflow structure for selective builds
 
 on:
   pull_request:
