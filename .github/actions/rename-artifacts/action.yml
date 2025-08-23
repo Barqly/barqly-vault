@@ -66,16 +66,15 @@ runs:
             NEW_NAME="barqly-vault-$VERSION-macos-${ARCH_NAME}.dmg"
             cp "$DMG_FILE" "renamed-artifacts/$NEW_NAME"
             echo "✅ Created: $NEW_NAME"
-            ((ARTIFACT_COUNT++))
-          else
-            echo "⚠️ No DMG file found in $DMG_DIR"
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
+ No DMG file found in $DMG_DIR"
           fi
           
           # Also handle .app.tar.gz files
           APP_TAR=$(find "$WORKSPACE/target" -name "*.app.tar.gz" -type f 2>/dev/null | head -1)
           if [ -f "$APP_TAR" ]; then
             cp "$APP_TAR" "renamed-artifacts/barqly-vault-$VERSION-${ARCH_NAME}.tar.gz"
-            ((ARTIFACT_COUNT++))
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
         fi
         
@@ -86,7 +85,7 @@ runs:
           if [ -f "$MSI_FILE" ]; then
             cp "$MSI_FILE" "renamed-artifacts/barqly-vault-$VERSION-x64.msi"
             echo "✅ Created: barqly-vault-$VERSION-x64.msi"
-            ((ARTIFACT_COUNT++))
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
           
           # Setup exe
@@ -94,7 +93,7 @@ runs:
           if [ -f "$SETUP_FILE" ]; then
             cp "$SETUP_FILE" "renamed-artifacts/barqly-vault-$VERSION-x64-setup.exe"
             echo "✅ Created: barqly-vault-$VERSION-x64-setup.exe"
-            ((ARTIFACT_COUNT++))
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
           
           # Create standalone ZIP
@@ -103,7 +102,7 @@ runs:
             # Use PowerShell to create ZIP on Windows
             powershell -Command "Compress-Archive -Path '$EXE_FILE' -DestinationPath 'renamed-artifacts/barqly-vault-$VERSION-windows-x64.zip'"
             echo "✅ Created standalone ZIP"
-            ((ARTIFACT_COUNT++))
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
         fi
         
@@ -114,7 +113,7 @@ runs:
           if [ -f "$DEB_FILE" ]; then
             cp "$DEB_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.deb"
             echo "✅ Created: barqly-vault-$VERSION-amd64.deb"
-            ((ARTIFACT_COUNT++))
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
           
           # RPM package
@@ -122,7 +121,7 @@ runs:
           if [ -f "$RPM_FILE" ]; then
             cp "$RPM_FILE" "renamed-artifacts/barqly-vault-$VERSION-1.x86_64.rpm"
             echo "✅ Created: barqly-vault-$VERSION-1.x86_64.rpm"
-            ((ARTIFACT_COUNT++))
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
           
           # AppImage
@@ -130,7 +129,7 @@ runs:
           if [ -f "$APPIMAGE_FILE" ]; then
             cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-amd64.AppImage"
             echo "✅ Created: barqly-vault-$VERSION-amd64.AppImage"
-            ((ARTIFACT_COUNT++))
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
           
           # Create standalone tar.gz
@@ -138,7 +137,7 @@ runs:
           if [ -f "$BINARY_PATH" ]; then
             tar -czf "renamed-artifacts/barqly-vault-$VERSION-x86_64.tar.gz" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
             echo "✅ Created standalone tar.gz"
-            ((ARTIFACT_COUNT++))
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
         fi
         
