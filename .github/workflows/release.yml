@@ -24,6 +24,26 @@ on:
         required: false
         type: boolean
         default: false
+      selective_build:
+        description: 'Enable selective platform building (for testing)'
+        type: boolean
+        default: false
+      build_macos_intel:
+        description: 'Build macOS Intel (x86_64)'
+        type: boolean
+        default: true
+      build_macos_arm:
+        description: 'Build macOS ARM (Apple Silicon)'
+        type: boolean
+        default: true
+      build_linux:
+        description: 'Build Linux'
+        type: boolean
+        default: true
+      build_windows:
+        description: 'Build Windows'
+        type: boolean
+        default: true
 
 jobs:
   # Handle promotion workflow when promote_from is specified
@@ -66,33 +86,101 @@ jobs:
             args: '--target x86_64-apple-darwin'
             arch: 'intel'
             label: 'macOS (Intel)'
+            platform_id: 'macos_intel'
           
           # macOS Apple Silicon
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
             arch: 'apple-silicon'
             label: 'macOS (Apple M-series)'
+            platform_id: 'macos_arm'
           
           # Linux x64
           - platform: 'ubuntu-22.04'
             args: '--target x86_64-unknown-linux-gnu'
             arch: 'x64'
             label: 'Linux (Intel/AMD)'
+            platform_id: 'linux'
           
           # Windows x64
           - platform: 'windows-latest'
             args: '--target x86_64-pc-windows-msvc'
             arch: 'x64'
             label: 'Windows'
+            platform_id: 'windows'
 
     runs-on: ${{ matrix.platform }}
     
     steps:
+      # Check if this platform should be built based on selective build settings
+      - name: Check Platform Build Condition
+        id: should_build
+        run: |
+          # Default behavior: build everything for tag pushes
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "build=true" >> $GITHUB_OUTPUT
+            echo "✅ Building (tag push - all platforms)"
+          # For workflow_dispatch, check selective build settings
+          elif [[ "${{ inputs.selective_build }}" != "true" ]]; then
+            echo "build=true" >> $GITHUB_OUTPUT
+            echo "✅ Building (selective build disabled - all platforms)"
+          else
+            # Selective build is enabled, check individual platform settings
+            case "${{ matrix.platform_id }}" in
+              macos_intel)
+                if [[ "${{ inputs.build_macos_intel }}" == "true" ]]; then
+                  echo "build=true" >> $GITHUB_OUTPUT
+                  echo "✅ Building macOS Intel (selected)"
+                else
+                  echo "build=false" >> $GITHUB_OUTPUT
+                  echo "⏭️ Skipping macOS Intel (not selected)"
+                fi
+                ;;
+              macos_arm)
+                if [[ "${{ inputs.build_macos_arm }}" == "true" ]]; then
+                  echo "build=true" >> $GITHUB_OUTPUT
+                  echo "✅ Building macOS ARM (selected)"
+                else
+                  echo "build=false" >> $GITHUB_OUTPUT
+                  echo "⏭️ Skipping macOS ARM (not selected)"
+                fi
+                ;;
+              linux)
+                if [[ "${{ inputs.build_linux }}" == "true" ]]; then
+                  echo "build=true" >> $GITHUB_OUTPUT
+                  echo "✅ Building Linux (selected)"
+                else
+                  echo "build=false" >> $GITHUB_OUTPUT
+                  echo "⏭️ Skipping Linux (not selected)"
+                fi
+                ;;
+              windows)
+                if [[ "${{ inputs.build_windows }}" == "true" ]]; then
+                  echo "build=true" >> $GITHUB_OUTPUT
+                  echo "✅ Building Windows (selected)"
+                else
+                  echo "build=false" >> $GITHUB_OUTPUT
+                  echo "⏭️ Skipping Windows (not selected)"
+                fi
+                ;;
+            esac
+          fi
+        shell: bash
+      
+      # Skip this job if platform is not selected
+      - name: Skip Job if Platform Not Selected
+        if: steps.should_build.outputs.build == 'false'
+        run: |
+          echo "Platform not selected for build, exiting successfully"
+          exit 0
+        shell: bash
+      
       - uses: actions/checkout@v4
+        if: steps.should_build.outputs.build == 'true'
       
       # Setup Apple certificate for macOS signing
       - name: Setup Apple Certificate
-        if: matrix.platform == 'macos-latest'
+        if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
         uses: ./.github/actions/apple-certificates
         with:
           certificate-p12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
@@ -100,24 +188,27 @@ jobs:
           operation: setup
       
       - name: Setup Node
+        if: steps.should_build.outputs.build == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: 'npm'
       
       - name: Install Rust stable
+        if: steps.should_build.outputs.build == 'true'
         uses: dtolnay/rust-toolchain@87f07835889b686aca1fb3733c2aa2d61586c1e1
         with:
           toolchain: stable
           targets: ${{ matrix.arch == 'intel' && 'x86_64-apple-darwin' || matrix.arch == 'apple-silicon' && 'aarch64-apple-darwin' || matrix.arch == 'x64' && contains(matrix.platform, 'ubuntu') && 'x86_64-unknown-linux-gnu' || matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' }}
       
       - name: Rust cache
+        if: steps.should_build.outputs.build == 'true'
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
       
       - name: Install dependencies (Ubuntu only)
-        if: contains(matrix.platform, 'ubuntu')
+        if: contains(matrix.platform, 'ubuntu') && steps.should_build.outputs.build == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xdg-utils
@@ -125,9 +216,11 @@ jobs:
           sudo apt-get install -y rpm
       
       - name: Install frontend dependencies
+        if: steps.should_build.outputs.build == 'true'
         run: npm install --prefix src-ui
       
       - name: Build with Tauri
+        if: steps.should_build.outputs.build == 'true'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -137,7 +230,7 @@ jobs:
       
       # Find and notarize macOS DMG
       - name: Find DMG Path
-        if: matrix.platform == 'macos-latest'
+        if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
         id: find-dmg
         run: |
           if [ "${{ matrix.arch }}" = "intel" ]; then
@@ -150,7 +243,7 @@ jobs:
         shell: bash
       
       - name: Notarize macOS DMG
-        if: matrix.platform == 'macos-latest'
+        if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
         uses: ./.github/actions/notarize-macos
         with:
           dmg-path: ${{ steps.find-dmg.outputs.dmg-path }}
@@ -160,6 +253,7 @@ jobs:
       
       # Extract version from tag or input
       - name: Extract Version
+        if: steps.should_build.outputs.build == 'true'
         id: version
         run: |
           if [[ "$GITHUB_REF" =~ refs/tags/v?(.+) ]]; then
@@ -174,6 +268,7 @@ jobs:
       
       # Rename artifacts with consistent naming
       - name: Rename Artifacts
+        if: steps.should_build.outputs.build == 'true'
         uses: ./.github/actions/rename-artifacts
         with:
           platform: ${{ matrix.platform }}
@@ -182,6 +277,7 @@ jobs:
       
       # Upload renamed artifacts
       - name: Upload artifacts
+        if: steps.should_build.outputs.build == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: barqly-vault-${{ matrix.platform }}-${{ matrix.arch }}
@@ -190,7 +286,7 @@ jobs:
       
       # Cleanup Apple keychain
       - name: Cleanup Apple Keychain
-        if: always() && matrix.platform == 'macos-latest'
+        if: always() && matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
         uses: ./.github/actions/apple-certificates
         with:
           operation: cleanup
