@@ -562,10 +562,6 @@ jobs:
             All macOS builds are signed and notarized by Apple.
             
             Verify your download using the checksums in `checksums.txt`.
-            
-            ## 📝 Changelog
-            
-            See the [full changelog](https://github.com/Barqly/barqly-vault/blob/main/CHANGELOG.md) for details.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
@@ -607,10 +603,6 @@ jobs:
           All macOS builds are signed and notarized by Apple.
           
           Verify your download using the checksums in \`checksums.txt\`.
-          
-          ## 📝 Changelog
-          
-          See the [full changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
           EOF
           
           # Upload assets
