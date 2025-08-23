@@ -92,10 +92,17 @@ runs:
           # Create standalone ZIP
           EXE_FILE="$WORKSPACE/target/release/barqly-vault.exe"
           if [ -f "$EXE_FILE" ]; then
-            # Use PowerShell to create ZIP on Windows
-            powershell -Command "Compress-Archive -Path '$EXE_FILE' -DestinationPath 'renamed-artifacts/barqly-vault-$VERSION-windows-x64.zip'"
-            echo "✅ Created standalone ZIP"
-            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
+            # On Windows runner, we need to use PowerShell via bash
+            echo "Creating Windows standalone ZIP..."
+            powershell.exe -NoProfile -Command "Compress-Archive -Path '$EXE_FILE' -DestinationPath 'renamed-artifacts/barqly-vault-$VERSION-windows-x64.zip' -Force"
+            if [ -f "renamed-artifacts/barqly-vault-$VERSION-windows-x64.zip" ]; then
+              echo "✅ Created: barqly-vault-$VERSION-windows-x64.zip"
+              ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
+            else
+              echo "⚠️ Failed to create Windows ZIP"
+            fi
+          else
+            echo "⚠️ Windows executable not found at: $EXE_FILE"
           fi
         fi
         
