@@ -100,6 +100,7 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@87f07835889b686aca1fb3733c2aa2d61586c1e1
         with:
+          toolchain: stable
           # Install the specific target for this matrix job
           targets: ${{ matrix.arch == 'intel' && 'x86_64-apple-darwin' || matrix.arch == 'apple-silicon' && 'aarch64-apple-darwin' || matrix.arch == 'x64' && contains(matrix.platform, 'ubuntu') && 'x86_64-unknown-linux-gnu' || matrix.platform == 'windows-latest' && 'x86_64-pc-windows-msvc' }}
       
@@ -570,7 +571,7 @@ jobs:
       
       # Fallback: Use gh CLI if softprops action fails
       - name: Create release with gh CLI (fallback)
-        if: failure() && steps.check_existing.outputs.exists != 'true'
+        if: failure()
         run: |
           VERSION="${{ steps.get_version.outputs.VERSION }}"
           TAG="v$VERSION"
