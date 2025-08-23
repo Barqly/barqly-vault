@@ -67,7 +67,8 @@ runs:
             cp "$DMG_FILE" "renamed-artifacts/$NEW_NAME"
             echo "✅ Created: $NEW_NAME"
             ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
- No DMG file found in $DMG_DIR"
+          else
+            echo "❌ No DMG file found in $DMG_DIR"
           fi
           
           # Also handle .app.tar.gz files
