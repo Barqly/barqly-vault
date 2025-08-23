@@ -350,10 +350,11 @@ This saves hours by avoiding unnecessary macOS notarization when testing Linux o
 
 ### Platform Support
 
-We build for **5 platforms** from a single codebase:
-- macOS Intel (x86_64) and Apple Silicon (ARM64) - signed & notarized DMGs
+We build for **4 desktop platforms** from a single codebase:
+- macOS Intel (x86_64) - signed & notarized DMG
+- macOS Apple Silicon (ARM64) - signed & notarized DMG
 - Windows x64 - MSI installer and standalone ZIP
-- Linux x86_64 and ARM64 - DEB, RPM, AppImage, and tar.gz
+- Linux x64 - DEB, RPM, AppImage, and tar.gz
 
 ### Release Promotion
 

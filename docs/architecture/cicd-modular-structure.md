@@ -145,7 +145,7 @@ gh workflow run release.yml \
 
 ## Release Artifacts
 
-The pipeline generates the following artifacts for each platform:
+The pipeline generates the following artifacts for desktop platforms:
 
 ### macOS (2 files)
 - `barqly-vault-{version}-macos-x86_64.dmg` - Intel processors
@@ -155,16 +155,11 @@ The pipeline generates the following artifacts for each platform:
 - `barqly-vault-{version}-x64.msi` - MSI installer
 - `barqly-vault-{version}-windows-x64.zip` - Standalone executable
 
-### Linux x86_64 (4 files)
+### Linux (4 files)
 - `barqly-vault-{version}-1_amd64.deb` - Debian/Ubuntu package
 - `barqly-vault-{version}-1.x86_64.rpm` - RedHat/Fedora package
 - `barqly-vault-{version}-1_amd64.AppImage` - Universal Linux app
 - `barqly-vault-{version}-x86_64.tar.gz` - Standalone binary
-
-### Linux ARM64 (3 files)
-- `barqly-vault-{version}-1_arm64.deb` - Debian/Ubuntu ARM package
-- `barqly-vault-{version}-1.aarch64.rpm` - RedHat/Fedora ARM package
-- `barqly-vault-{version}-aarch64.tar.gz` - Standalone ARM binary
 
 ### Additional Files
 - `checksums.txt` - SHA256 checksums for all artifacts
@@ -201,10 +196,11 @@ The refactored pipeline is backward compatible:
 - Same release format
 - Added promotion capability
 
+
 ## Future Enhancements
 
 1. **Platform-specific workflows**: Further split by OS
 2. **Parallel testing**: Add test job in parallel with build
 3. **Automatic changelogs**: Generate from commit history
-4. **Multi-arch Linux**: Add ARM64 builds
-5. **Incremental releases**: Delta updates for faster downloads
+4. **Incremental releases**: Delta updates for faster downloads
+5. **Auto-update mechanism**: In-app update notifications

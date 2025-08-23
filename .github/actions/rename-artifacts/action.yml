@@ -7,7 +7,7 @@ inputs:
     description: 'Platform: macos-latest, ubuntu-*, windows-latest'
     required: true
   arch:
-    description: 'Architecture: intel, apple-silicon, x64'
+    description: 'Architecture: intel, apple-silicon, or x64'
     required: true
   version:
     description: 'Version string (without v prefix)'
@@ -101,21 +101,14 @@ runs:
         
         # Handle Linux artifacts
         if [[ "$PLATFORM" == *"ubuntu"* ]]; then
-          # Determine architecture-specific names
-          if [ "$ARCH" = "x64" ]; then
-            DEB_ARCH="amd64"
-            RPM_ARCH="x86_64"
-            TAR_ARCH="x86_64"
-            BINARY_PATH="$WORKSPACE/target/x86_64-unknown-linux-gnu/release/barqly-vault"
-            # Fallback to default release path if target-specific doesn't exist
-            if [ ! -f "$BINARY_PATH" ]; then
-              BINARY_PATH="$WORKSPACE/target/release/barqly-vault"
-            fi
-          elif [ "$ARCH" = "arm64" ]; then
-            DEB_ARCH="arm64"
-            RPM_ARCH="aarch64"
-            TAR_ARCH="aarch64"
-            BINARY_PATH="$WORKSPACE/target/aarch64-unknown-linux-gnu/release/barqly-vault"
+          # Linux is always x64 for desktop platforms
+          DEB_ARCH="amd64"
+          RPM_ARCH="x86_64"
+          TAR_ARCH="x86_64"
+          BINARY_PATH="$WORKSPACE/target/x86_64-unknown-linux-gnu/release/barqly-vault"
+          # Fallback to default release path if target-specific doesn't exist
+          if [ ! -f "$BINARY_PATH" ]; then
+            BINARY_PATH="$WORKSPACE/target/release/barqly-vault"
           fi
           
           # DEB package
@@ -134,14 +127,12 @@ runs:
             ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
           
-          # AppImage (typically only for x64)
-          if [ "$ARCH" = "x64" ]; then
-            APPIMAGE_FILE=$(find "$WORKSPACE/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
-            if [ -f "$APPIMAGE_FILE" ]; then
-              cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-1_${DEB_ARCH}.AppImage"
-              echo "✅ Created: barqly-vault-$VERSION-1_${DEB_ARCH}.AppImage"
-              ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
-            fi
+          # AppImage
+          APPIMAGE_FILE=$(find "$WORKSPACE/target" -name "*.AppImage" -type f 2>/dev/null | head -1)
+          if [ -f "$APPIMAGE_FILE" ]; then
+            cp "$APPIMAGE_FILE" "renamed-artifacts/barqly-vault-$VERSION-1_${DEB_ARCH}.AppImage"
+            echo "✅ Created: barqly-vault-$VERSION-1_${DEB_ARCH}.AppImage"
+            ARTIFACT_COUNT=$((ARTIFACT_COUNT + 1))
           fi
           
           # Create standalone tar.gz

@@ -121,15 +121,13 @@ release_commands:
 platform_matrix:
   macos_intel: "x86_64-apple-darwin"
   macos_arm: "aarch64-apple-darwin"
-  linux_x64: "x86_64-unknown-linux-gnu"
-  linux_arm64: "aarch64-unknown-linux-gnu"
+  linux: "x86_64-unknown-linux-gnu"
   windows: "x86_64-pc-windows-msvc"
 
 artifacts_generated:
-  macos: ["*.dmg"]  # No tar.gz, only signed DMGs
-  windows: ["*.msi", "*.zip"]  # No setup.exe
-  linux_x64: ["*_amd64.deb", "*.x86_64.rpm", "*_amd64.AppImage", "*x86_64.tar.gz"]
-  linux_arm64: ["*_arm64.deb", "*.aarch64.rpm", "*aarch64.tar.gz"]  # No AppImage for ARM
+  macos: ["*.dmg"]  # Signed & notarized DMGs only
+  windows: ["*.msi", "*.zip"]  # MSI installer + standalone ZIP
+  linux: ["*_amd64.deb", "*.x86_64.rpm", "*_amd64.AppImage", "*x86_64.tar.gz"]
 ```
 
 ## Quick Reference
