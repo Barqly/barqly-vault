@@ -343,9 +343,9 @@ jobs:
         with:
           operation: cleanup
 
-  # Create draft release with all artifacts
-  create-release:
-    name: Create Draft Release
+  # Create beta release with all artifacts
+  create-beta-release:
+    name: Create Beta Release
     needs: [publish-tauri]
     if: |
       always() && 
@@ -456,7 +456,79 @@ jobs:
             --notes-file release-notes.md \
             release-assets/*
           
-          echo "✅ Draft release created for v$VERSION"
+          echo "✅ Beta release created for v$VERSION"
           echo "📝 Review and publish at: https://github.com/${{ github.repository }}/releases"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Automatically create production release draft when beta is created
+  create-production-release:
+    name: Create Production Release
+    needs: [create-beta-release]
+    if: |
+      needs.create-beta-release.result == 'success' && 
+      contains(github.ref, '-beta')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Extract version and create production version
+        id: get_version
+        run: |
+          # Get the beta version from tag
+          BETA_VERSION=${GITHUB_REF#refs/tags/v}
+          echo "BETA_VERSION=$BETA_VERSION" >> $GITHUB_OUTPUT
+          
+          # Remove -beta suffix to get production version
+          PROD_VERSION=${BETA_VERSION%-beta*}
+          echo "PROD_VERSION=$PROD_VERSION" >> $GITHUB_OUTPUT
+          
+          echo "📦 Creating production release draft for v$PROD_VERSION from beta v$BETA_VERSION"
+      
+      - name: Download beta release assets
+        run: |
+          # Download all assets from the beta release
+          mkdir -p production-assets
+          
+          gh release download "v${{ steps.get_version.outputs.BETA_VERSION }}" \
+            --dir production-assets \
+            --repo ${{ github.repository }}
+          
+          echo "📥 Downloaded beta assets:"
+          ls -la production-assets/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create production tag
+        run: |
+          # Create a production tag pointing to the same commit as beta
+          git tag "v${{ steps.get_version.outputs.PROD_VERSION }}" -m "Production release from v${{ steps.get_version.outputs.BETA_VERSION }}"
+          git push origin "v${{ steps.get_version.outputs.PROD_VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Generate production release notes
+        run: |
+          PROD_VERSION="${{ steps.get_version.outputs.PROD_VERSION }}"
+          ./scripts/ci/generate-release-notes.sh "$PROD_VERSION" > release-notes.md
+      
+      - name: Create production draft release
+        run: |
+          PROD_VERSION="${{ steps.get_version.outputs.PROD_VERSION }}"
+          
+          gh release create "v$PROD_VERSION" \
+            --draft \
+            --title "Barqly Vault v$PROD_VERSION" \
+            --notes-file release-notes.md \
+            production-assets/*
+          
+          echo "✅ Production draft release created for v$PROD_VERSION"
+          echo "📝 Ready to publish at: https://github.com/${{ github.repository }}/releases"
+          echo ""
+          echo "⚠️ This is a DRAFT - manually publish when ready for production!"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
