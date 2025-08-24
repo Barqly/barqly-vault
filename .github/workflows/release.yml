@@ -505,6 +505,10 @@ jobs:
       
       - name: Create production tag
         run: |
+          # Configure git identity for tagging
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+          
           # Create a production tag pointing to the same commit as beta
           git tag "v${{ steps.get_version.outputs.PROD_VERSION }}" -m "Production release from v${{ steps.get_version.outputs.BETA_VERSION }}"
           git push origin "v${{ steps.get_version.outputs.PROD_VERSION }}"
