@@ -503,6 +503,35 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Rename artifacts for production
+        run: |
+          cd production-assets
+          
+          BETA_VERSION="${{ steps.get_version.outputs.BETA_VERSION }}"
+          PROD_VERSION="${{ steps.get_version.outputs.PROD_VERSION }}"
+          
+          echo "📝 Renaming artifacts from $BETA_VERSION to $PROD_VERSION..."
+          
+          # Rename all files that contain the beta version string
+          for file in *; do
+            if [[ "$file" == *"$BETA_VERSION"* ]]; then
+              new_name="${file//$BETA_VERSION/$PROD_VERSION}"
+              mv "$file" "$new_name"
+              echo "  Renamed: $file → $new_name"
+            fi
+          done
+          
+          # Regenerate checksums with new filenames
+          if [ -f "checksums.txt" ]; then
+            echo "📝 Regenerating checksums..."
+            rm checksums.txt
+            shasum -a 256 * > checksums.txt
+            echo "✅ Checksums regenerated"
+          fi
+          
+          echo "📦 Final production artifacts:"
+          ls -la
+      
       - name: Create production tag
         run: |
           # Configure git identity for tagging
