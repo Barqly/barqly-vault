@@ -509,6 +509,9 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "GitHub Actions"
           
+          # Delete existing tag if it exists (from previous failed runs)
+          git push origin --delete "v${{ steps.get_version.outputs.PROD_VERSION }}" 2>/dev/null || true
+          
           # Create a production tag pointing to the same commit as beta
           git tag "v${{ steps.get_version.outputs.PROD_VERSION }}" -m "Production release from v${{ steps.get_version.outputs.BETA_VERSION }}"
           git push origin "v${{ steps.get_version.outputs.PROD_VERSION }}"
