@@ -3,6 +3,7 @@
 //! This module handles the extraction of TAR.GZ archives.
 
 use crate::file_ops::utils::calculate_file_hash;
+use crate::file_ops::validation::contains_traversal_attempt;
 use crate::file_ops::{FileInfo, FileOpsConfig, FileOpsError, Result};
 use flate2::read::GzDecoder;
 use std::fs::{self, File};
@@ -80,14 +81,53 @@ pub fn extract_archive(
             })?
             .to_path_buf();
 
+        // Validate path for security - prevent directory traversal attacks
+        if contains_traversal_attempt(&path) {
+            return Err(FileOpsError::PathValidationFailed {
+                path: path.clone(),
+                reason: "Directory traversal attempt detected in archive entry".to_string(),
+            });
+        }
+
         let output_path = output_dir.join(&path);
 
-        // Create parent directories if needed
-        if let Some(parent) = output_path.parent() {
-            fs::create_dir_all(parent).map_err(|e| FileOpsError::IoError {
+        // Ensure the resolved path is still within the output directory
+        // This catches symbolic links and other path resolution attacks
+        let canonical_output_dir = output_dir
+            .canonicalize()
+            .unwrap_or_else(|_| output_dir.to_path_buf());
+
+        // For the output path, we need to check the parent directory since the file doesn't exist yet
+        let output_parent =
+            output_path
+                .parent()
+                .ok_or_else(|| FileOpsError::PathValidationFailed {
+                    path: output_path.clone(),
+                    reason: "Invalid output path".to_string(),
+                })?;
+
+        // Create parent directories if needed (we'll validate after creation)
+        if !output_parent.exists() {
+            fs::create_dir_all(output_parent).map_err(|e| FileOpsError::IoError {
                 message: format!("Failed to create parent directory: {e}"),
                 source: e,
             })?;
+        }
+
+        // Now canonicalize the parent and verify it's within output_dir
+        let canonical_parent =
+            output_parent
+                .canonicalize()
+                .map_err(|e| FileOpsError::PathValidationFailed {
+                    path: output_parent.to_path_buf(),
+                    reason: format!("Failed to resolve output parent directory: {e}"),
+                })?;
+
+        if !canonical_parent.starts_with(&canonical_output_dir) {
+            return Err(FileOpsError::PathValidationFailed {
+                path: output_path.clone(),
+                reason: "Archive entry would extract outside of output directory".to_string(),
+            });
         }
 
         // Extract file

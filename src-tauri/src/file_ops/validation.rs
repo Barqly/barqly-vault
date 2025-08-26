@@ -82,7 +82,7 @@ pub fn validate_file_size(path: &Path, max_size: u64) -> Result<()> {
 }
 
 /// Check if path contains directory traversal attempts
-fn contains_traversal_attempt(path: &Path) -> bool {
+pub fn contains_traversal_attempt(path: &Path) -> bool {
     let path_str = path.to_string_lossy();
 
     // Check for common traversal patterns

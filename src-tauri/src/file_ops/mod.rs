@@ -41,7 +41,7 @@ pub use external_manifest::{
 };
 pub use selection::{FileSelection, SelectionType};
 pub use staging::StagingArea;
-pub use validation::{validate_file_size, validate_paths};
+pub use validation::{contains_traversal_attempt, validate_file_size, validate_paths};
 
 /// Result type for file operations
 pub type Result<T> = std::result::Result<T, FileOpsError>;
