@@ -50,23 +50,20 @@ Cargo.lock text eol=lf merge=ours
 
 # --- GitHub Linguist tuning (affects language stats) ---
 
-# Count Rust correctly (sometimes helpful in mixed repos)
+# Rust backend
 src-tauri/** linguist-language=Rust
 
-# Exclude generated/built/lock artifacts from language stats
-src-ui/dist/**        linguist-generated
-src-ui/coverage/**    linguist-generated
+# Exclude generated/built artifacts
+src-ui/dist/**         linguist-generated
+src-ui/coverage/**     linguist-generated
 src-ui/node_modules/** linguist-generated
-node_modules/**       linguist-generated
-notarized-dmgs/**     linguist-generated
+node_modules/**        linguist-generated
+notarized-dmgs/**      linguist-generated
 
-*.min.js              linguist-generated
-*.map                 linguist-generated
-package-lock.json     linguist-generated
-yarn.lock             linguist-generated
-pnpm-lock.yaml        linguist-generated
-Cargo.lock            linguist-generated
+*.min.js               linguist-generated
+*.map                  linguist-generated
+package-lock.json      linguist-generated
+yarn.lock              linguist-generated
+pnpm-lock.yaml         linguist-generated
+Cargo.lock             linguist-generated
 
-# Down-weight UI so Rust can become the primary language,
-# but still keep the UI code searchable on GitHub.
-src-ui/**             linguist-detectable=false
