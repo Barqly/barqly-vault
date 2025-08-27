@@ -37,7 +37,19 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-slate-800">Barqly Vault</h1>
+              <img
+                src="/barqly-vault-text-hdr.svg"
+                alt="Barqly Vault"
+                className="h-10"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (nextElement) {
+                    nextElement.style.display = 'block';
+                  }
+                }}
+              />
+              <h1 className="text-xl font-semibold text-slate-800 hidden">Barqly Vault</h1>
             </div>
             <span className="text-sm text-slate-500">
               Secure backup and restore for sensitive data & documents
