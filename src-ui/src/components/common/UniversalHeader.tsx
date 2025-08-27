@@ -34,7 +34,7 @@ const UniversalHeader: React.FC<UniversalHeaderProps> = ({
 
       <div className="mx-auto max-w-[960px] px-6 h-16 flex items-center justify-between">
         {/* Left side: Icon and Title */}
-        <h1 className="flex items-center gap-3 text-2xl font-semibold text-slate-900">
+        <h1 className="flex items-center gap-3 text-2xl font-semibold" style={{ color: '#565555' }}>
           <Icon className="h-5 w-5 text-blue-600" aria-hidden="true" />
           {title}
         </h1>
