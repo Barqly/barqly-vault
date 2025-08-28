@@ -175,3 +175,10 @@ runs:
         echo "   Status: $([[ '${{ inputs.draft }}' == 'true' ]] && echo 'Draft' || echo 'Published')"
       env:
         GH_TOKEN: ${{ inputs.github-token }}
+    
+    - name: Update Downloads Page
+      if: inputs.draft != 'true'
+      uses: ./.github/actions/update-download-page
+      with:
+        version: ${{ inputs.target-version }}
+        github-token: ${{ inputs.github-token }}

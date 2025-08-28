@@ -1,0 +1,45 @@
+# Download Barqly Vault
+
+**Get the latest stable version of Barqly Vault**
+
+---
+
+## Latest Release
+
+*No production releases available yet. Check back soon!*
+
+---
+
+## Version History
+
+*Release history will appear here once the first production release is available.*
+
+---
+
+## Installation Instructions
+
+### macOS
+- Download the `.dmg` file appropriate for your Mac:
+  - **Apple Silicon** (M1/M2/M3): Use the `arm64` version
+  - **Intel**: Use the `x86_64` version
+- Open the `.dmg` file and drag Barqly Vault to Applications
+
+### Windows
+- **Installer (Recommended)**: Download the `.msi` file and run it
+- **Portable**: Download the `.zip` file, extract, and run the executable
+
+### Linux
+- **AppImage (Universal)**: Download, make executable (`chmod +x`), and run
+- **Debian/Ubuntu**: Download the `.deb` file and install with `dpkg -i`
+- **RedHat/Fedora**: Download the `.rpm` file and install with `rpm -i`
+- **Standalone**: Download the `.tar.gz` file and extract
+
+---
+
+## Checksums
+
+For security verification, always check the SHA256 checksums against the `checksums.txt` file included with each release.
+
+---
+
+_Looking for beta releases or source code? Visit our [GitHub repository](https://github.com/barqly/barqly-vault)._

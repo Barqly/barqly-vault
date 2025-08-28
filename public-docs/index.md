@@ -38,9 +38,10 @@ Professional-grade encryption, without the complexity. No cloud. No accounts. No
 
 ---
 
-## 🚀 Get Involved
+## 🚀 Get Started
 
-👉 [Try the Alpha Preview](https://github.com/barqly/barqly-vault)  
+👉 **[Download Barqly Vault](/downloads)** - Get the latest stable release  
+👉 [Try the Alpha Preview](https://github.com/barqly/barqly-vault) - Development builds  
 👉 [Star the Repo](https://github.com/barqly/barqly-vault/stargazers)  
 👉 [Contribute Feedback](https://github.com/barqly/barqly-vault/issues)
 
