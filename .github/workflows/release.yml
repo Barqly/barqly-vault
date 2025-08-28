@@ -3,12 +3,14 @@ name: Release Pipeline
 on:
   push:
     tags:
-      - 'v*.*.*-beta*'   # Beta tags (both old format and new .N format)
-      - 'v*.*.*-beta.*'  # New incremental format: v1.0.0-beta.1, v1.0.0-beta.2, etc.
+      - 'v*.*.*-beta.*'  # Incremental beta format: v1.0.0-beta.1, v1.0.0-beta.2, etc.
       # This ensures:
       # - Alpha tags (checkpoints) don't trigger builds
       # - Production tags (from promotion) don't trigger builds
       # - Only intentional beta testing triggers CI/CD
+  
+  release:
+    types: [published]    # Trigger when production release is manually published
   
   workflow_dispatch:
     inputs:
@@ -16,7 +18,7 @@ on:
         description: 'Version to release (e.g., 1.0.0)'
         required: false
       promote_from:
-        description: 'Beta version to promote (e.g., 1.0.0-beta.3 or 1.0.0-beta) - leave empty for new build'
+        description: 'Beta version to promote (e.g., 1.0.0-beta.3) - leave empty for new build'
         required: false
       list_available_betas:
         description: 'List available beta releases for promotion (check this to see options)'
@@ -171,8 +173,8 @@ jobs:
             if [[ "$TAG" == *"-beta-"* ]]; then
               echo "🧪 Beta tag with platform selection detected..."
               
-              # Extract platform list after "-beta-" if present (skip .N format)
-              if [[ "$TAG" =~ -beta-(.+)$ ]] && [[ ! "$TAG" =~ -beta\.[0-9]+$ ]]; then
+              # Extract platform list after "-beta-" if present (new format doesn't support platform selection in tags)
+              if [[ "$TAG" =~ -beta-(.+)$ ]]; then
                 PLATFORMS="${BASH_REMATCH[1]}"
                 echo "📋 Specified platforms: $PLATFORMS"
                 
@@ -527,12 +529,12 @@ jobs:
           BETA_VERSION=${GITHUB_REF#refs/tags/v}
           echo "BETA_VERSION=$BETA_VERSION" >> $GITHUB_OUTPUT
           
-          # Remove -beta suffix to get production version (handles both -beta and -beta.N formats)
-          if [[ "$BETA_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-beta(\.[0-9]+)?$ ]]; then
+          # Extract production version from beta.N format (e.g., 1.0.0-beta.3 -> 1.0.0)
+          if [[ "$BETA_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-beta\.[0-9]+$ ]]; then
             PROD_VERSION="${BASH_REMATCH[1]}"
           else
-            # Fallback for old format
-            PROD_VERSION=${BETA_VERSION%-beta*}
+            echo "❌ ERROR: Invalid beta version format. Expected format: X.Y.Z-beta.N"
+            exit 1
           fi
           echo "PROD_VERSION=$PROD_VERSION" >> $GITHUB_OUTPUT
           
@@ -617,3 +619,40 @@ jobs:
           echo "⚠️ This is a DRAFT - manually publish when ready for production!"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Update download page when production release is published
+  update-downloads-on-publish:
+    name: Update Downloads Page
+    if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.event.release.tag_name, '-beta')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Extract version from published release
+        id: get_version
+        run: |
+          # Get version from the published release tag (remove 'v' prefix)
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION=${VERSION#v}  # Remove 'v' prefix
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Updating downloads page for published release: v$VERSION"
+      
+      - name: Update Downloads Page
+        uses: ./.github/actions/update-download-page
+        with:
+          version: ${{ steps.get_version.outputs.VERSION }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Success Summary
+        run: |
+          echo "## ✅ Downloads Page Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY  
+          echo "- **Version**: v${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release**: Published" >> $GITHUB_STEP_SUMMARY
+          echo "- **Downloads Page**: Updated and committed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Live Downloads**: https://barqly.com/vault/downloads/" >> $GITHUB_STEP_SUMMARY
