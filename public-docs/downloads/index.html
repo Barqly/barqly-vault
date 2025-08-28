@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,7 +8,22 @@
       name="description"
       content="Download Barqly Vault for macOS, Windows, and Linux. Simple, secure file encryption for Bitcoin and beyond."
     />
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
     <style>
+      :root {
+        --bitcoin-orange: #ff8a00;
+        --brand-gray: #565555;
+        --primary-blue: #2563EB;
+        --dark-gray: #1E293B;
+        --medium-gray: #64748B;
+        --light-gray: #F8FAFC;
+        --white: #FFFFFF;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.15);
+        --border-color: rgba(226, 232, 240, 0.5);
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -20,122 +35,320 @@
           -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
           Cantarell, sans-serif;
         line-height: 1.6;
-        color: #334155;
-        background: #f8fafc;
+        color: var(--brand-gray);
+        background: linear-gradient(135deg, #F8FAFC 0%, #F0F9FF 100%);
+        min-height: 100vh;
       }
 
       .container {
-        max-width: 900px;
+        max-width: 800px;
         margin: 0 auto;
         padding: 2rem;
+      }
+
+      /* Dark Mode Styles */
+      [data-theme="dark"] {
+        --bitcoin-orange: #ff8a00;
+        --brand-gray: #9CA3AF;
+        --primary-blue: #60A5FA;
+        --dark-gray: #F9FAFB;
+        --medium-gray: #D1D5DB;
+        --light-gray: #1F2937;
+        --white: #111827;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.2);
+        --border-color: rgba(75, 85, 99, 0.3);
+      }
+
+      [data-theme="dark"] body {
+        background: linear-gradient(135deg, #111827 0%, #1F2937 100%);
+        color: var(--medium-gray);
+      }
+
+      [data-theme="dark"] .navbar {
+        background: rgba(17, 24, 39, 0.95);
+        border-bottom: 1px solid rgba(255, 138, 0, 0.2);
+      }
+
+      [data-theme="dark"] .header {
+        background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+        border-top-color: var(--bitcoin-orange);
+      }
+
+      [data-theme="dark"] .section {
+        background: var(--white);
+        border-color: var(--border-color);
+      }
+
+      [data-theme="dark"] .instruction-card {
+        background: var(--white);
+        border-color: var(--border-color);
+      }
+
+      [data-theme="dark"] .download-table {
+        background: var(--white);
+        border-color: var(--border-color);
+      }
+
+      [data-theme="dark"] .download-table th {
+        background: var(--light-gray);
+        color: var(--medium-gray);
+        border-color: var(--border-color);
+      }
+
+      [data-theme="dark"] .download-table td {
+        border-color: var(--border-color);
+      }
+
+      [data-theme="dark"] .download-table tr:hover {
+        background: var(--light-gray);
+      }
+
+      .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(248, 250, 252, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        z-index: 1000;
+        padding: 1rem 0;
+        transition: all 0.3s ease;
+      }
+
+      .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 2rem;
+      }
+
+      .nav-logo {
+        height: 40px;
+        width: auto;
+        transition: transform 0.2s ease;
+      }
+
+      .nav-logo:hover {
+        transform: scale(1.05);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--medium-gray);
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        color: var(--bitcoin-orange);
+        background: rgba(255, 138, 0, 0.1);
+      }
+
+      .nav-links a.active {
+        color: var(--bitcoin-orange);
+        background: rgba(255, 138, 0, 0.1);
+      }
+
+      .nav-links .download-btn {
+        background: linear-gradient(135deg, var(--bitcoin-orange) 0%, #FF7A00 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        box-shadow: 0 2px 10px rgba(255, 138, 0, 0.3);
+      }
+
+      .nav-links .download-btn:hover {
+        background: linear-gradient(135deg, #FF7A00 0%, var(--bitcoin-orange) 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(255, 138, 0, 0.4);
+      }
+
+      .theme-toggle {
+        background: var(--bitcoin-orange);
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin-left: 1rem;
+      }
+
+      .theme-toggle:hover {
+        transform: scale(1.05);
+        background: #FF7A00;
+      }
+
+      .main-content {
+        margin-top: 80px;
       }
 
       .header {
         text-align: center;
         margin-bottom: 3rem;
-        padding: 2rem;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        border: 1px solid #E2E8F0;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, var(--white) 0%, #FFF9F5 100%);
+        border-radius: 20px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        border-top: 4px solid var(--bitcoin-orange);
+        position: relative;
+        overflow: hidden;
       }
 
-      .header h1 {
-        font-size: 2.5rem;
-        color: #1E293B;
-        margin-bottom: 1rem;
+      .header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--bitcoin-orange), transparent);
+        opacity: 0.6;
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .logo {
+        height: 80px;
+        width: auto;
+        transition: transform 0.3s ease;
+      }
+
+      .logo:hover {
+        transform: scale(1.05);
       }
 
       .header .tagline {
-        font-size: 1.2rem;
-        color: #64748B;
-        font-weight: 500;
+        font-size: 1rem;
+        color: var(--brand-gray);
+        font-weight: 400;
+        max-width: 600px;
+        margin: 0.25rem auto 0;
+        line-height: 1.6;
       }
 
       .section {
-        background: white;
+        background: var(--white);
         margin-bottom: 2rem;
-        padding: 2rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        border: 1px solid #E2E8F0;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+      }
+
+      .section:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--hover-shadow);
       }
 
       .section h2 {
-        color: #1E293B;
+        color: var(--brand-gray);
         margin-bottom: 1.5rem;
-        border-bottom: 2px solid #2563EB;
-        padding-bottom: 0.5rem;
-      }
-
-      .section h3 {
-        color: #1E293B;
-        margin-bottom: 1rem;
-        margin-top: 2rem;
+        border-bottom: 3px solid var(--bitcoin-orange);
+        padding-bottom: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: 600;
       }
 
       .download-table {
         width: 100%;
         border-collapse: collapse;
         margin: 1.5rem 0;
-        background: white;
-        border-radius: 8px;
+        background: var(--white);
+        border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
       }
 
       .download-table th,
       .download-table td {
-        padding: 1rem;
+        padding: 1.25rem;
         text-align: left;
-        border-bottom: 1px solid #E2E8F0;
+        border-bottom: 1px solid var(--border-color);
       }
 
       .download-table th {
-        background: #F8FAFC;
+        background: var(--light-gray);
         font-weight: 600;
-        color: #1E293B;
+        color: var(--brand-gray);
       }
 
       .download-table tr:hover {
-        background: #F8FAFC;
+        background: rgba(255, 138, 0, 0.05);
       }
 
       .download-table a {
-        color: #2563EB;
+        color: var(--bitcoin-orange);
         text-decoration: none;
         font-weight: 500;
+        transition: all 0.2s ease;
       }
 
       .download-table a:hover {
         text-decoration: underline;
+        color: #FF7A00;
       }
 
       .no-releases {
         text-align: center;
         padding: 3rem;
-        color: #64748B;
+        color: var(--medium-gray);
         font-style: italic;
+        background: var(--light-gray);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
       }
 
       .instructions {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 1.5rem;
         margin-top: 1.5rem;
       }
 
       .instruction-card {
         padding: 1.5rem;
-        background: #f8fafc;
-        border-radius: 8px;
-        border: 1px solid #E2E8F0;
+        background: var(--white);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .instruction-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(255, 138, 0, 0.12);
       }
 
       .instruction-card h4 {
-        color: #1E293B;
+        color: var(--brand-gray);
         margin-bottom: 0.75rem;
         font-size: 1.1rem;
+        font-weight: 600;
       }
 
       .instruction-card ul {
@@ -144,35 +357,74 @@
 
       .instruction-card ul li {
         margin-bottom: 0.5rem;
+        color: var(--brand-gray);
       }
 
-      .back-link {
-        display: inline-block;
-        margin-bottom: 2rem;
-        color: #2563EB;
-        text-decoration: none;
+      .instruction-card code {
+        background: rgba(86, 85, 85, 0.1);
+        color: var(--brand-gray);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
         font-weight: 500;
-      }
-
-      .back-link:hover {
-        text-decoration: underline;
       }
 
       .footer {
         text-align: center;
         margin-top: 3rem;
         padding: 2rem;
-        color: #64748B;
+        color: var(--medium-gray);
         font-style: italic;
+        font-size: 1.1rem;
+      }
+
+      .footer a {
+        color: var(--bitcoin-orange);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
       }
 
       @media (max-width: 768px) {
+        .nav-container {
+          padding: 0 1rem;
+        }
+
+        .nav-links {
+          gap: 1rem;
+        }
+
+        .nav-links a {
+          padding: 0.5rem 0.75rem;
+          font-size: 0.9rem;
+        }
+
+        .nav-links .download-btn {
+          padding: 0.6rem 1rem;
+        }
+
+        .theme-toggle {
+          padding: 0.4rem;
+          margin-left: 0.5rem;
+        }
+
         .container {
           padding: 1rem;
         }
 
+        .header {
+          padding: 2rem 1.5rem;
+        }
+
         .header h1 {
           font-size: 2rem;
+        }
+
+        .section {
+          padding: 1.5rem;
         }
 
         .download-table {
@@ -191,77 +443,168 @@
     </style>
   </head>
   <body>
-    <div class="container">
-      <a href="../" class="back-link">← Back to Home</a>
-      
-      <div class="header">
-        <h1>Download Barqly Vault</h1>
-        <p class="tagline">
-          Get the latest stable version of Barqly Vault
-        </p>
-      </div>
-
-      <div class="section">
-        <h2>Latest Release</h2>
-        <div class="no-releases">
-          <p>No production releases available yet. Check back soon!</p>
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="../" onclick="scrollToTop()">
+          <img src="../assets/barqly-vault-logo-dark.svg" alt="Barqly Vault" class="nav-logo" id="nav-logo">
+        </a>
+        
+        <div class="nav-links">
+          <a href="../">Home</a>
+          <a href="./" class="active">Download</a>
+          <a href="https://btcpay.barqly.com" target="_blank" rel="noopener">Donate</a>
+          <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+            ☀️
+          </button>
         </div>
       </div>
-
-      <div class="section">
-        <h2>Version History</h2>
-        <div class="no-releases">
-          <p>Release history will appear here once the first production release is available.</p>
+    </nav>
+    
+    <div class="main-content">
+      <div class="container">
+        <div class="header">
+          <div class="logo-container">
+            <img src="../assets/barqly-vault-logo-dark.svg" alt="Barqly Vault" class="logo">
+          </div>
+          <p class="tagline">
+            Simple, secure, open-source file encryption for Bitcoin and beyond.
+          </p>
         </div>
-      </div>
 
-      <div class="section">
-        <h2>Installation Instructions</h2>
-        <div class="instructions">
-          <div class="instruction-card">
-            <h4>macOS</h4>
-            <ul>
-              <li>Download the <code>.dmg</code> file appropriate for your Mac:</li>
-              <li><strong>Apple Silicon</strong> (M1/M2/M3): Use the <code>arm64</code> version</li>
-              <li><strong>Intel</strong>: Use the <code>x86_64</code> version</li>
-              <li>Open the <code>.dmg</code> file and drag Barqly Vault to Applications</li>
-            </ul>
+        <div class="section">
+          <h2>Latest Release</h2>
+          <div class="no-releases">
+            <p>No production releases available yet. Check back soon!</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Version History</h2>
+          <div class="no-releases">
+            <p>Release history will appear here once the first production release is available.</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Installation Instructions</h2>
+          <div class="instructions">
+            <div class="instruction-card">
+              <h4>macOS</h4>
+              <ul>
+                <li>Download the <code>.dmg</code> file appropriate for your Mac:</li>
+                <li><strong>Apple Silicon</strong> (M1/M2/M3): Use the <code>arm64</code> version</li>
+                <li><strong>Intel</strong>: Use the <code>x86_64</code> version</li>
+                <li>Open the <code>.dmg</code> file and drag Barqly Vault to Applications</li>
+              </ul>
+            </div>
+            
+            <div class="instruction-card">
+              <h4>Windows</h4>
+              <ul>
+                <li><strong>Installer (Recommended)</strong>: Download the <code>.msi</code> file and run it</li>
+                <li><strong>Portable</strong>: Download the <code>.zip</code> file, extract, and run the executable</li>
+              </ul>
+            </div>
+            
+            <div class="instruction-card">
+              <h4>Linux</h4>
+              <ul>
+                <li><strong>AppImage (Universal)</strong>: Download, make executable (<code>chmod +x</code>), and run</li>
+                <li><strong>Debian/Ubuntu</strong>: Download the <code>.deb</code> file and install with <code>dpkg -i</code></li>
+                <li><strong>RedHat/Fedora</strong>: Download the <code>.rpm</code> file and install with <code>rpm -i</code></li>
+                <li><strong>Standalone</strong>: Download the <code>.tar.gz</code> file and extract</li>
+              </ul>
+            </div>
           </div>
           
-          <div class="instruction-card">
-            <h4>Windows</h4>
-            <ul>
-              <li><strong>Installer (Recommended)</strong>: Download the <code>.msi</code> file and run it</li>
-              <li><strong>Portable</strong>: Download the <code>.zip</code> file, extract, and run the executable</li>
-            </ul>
-          </div>
-          
-          <div class="instruction-card">
-            <h4>Linux</h4>
-            <ul>
-              <li><strong>AppImage (Universal)</strong>: Download, make executable (<code>chmod +x</code>), and run</li>
-              <li><strong>Debian/Ubuntu</strong>: Download the <code>.deb</code> file and install with <code>dpkg -i</code></li>
-              <li><strong>RedHat/Fedora</strong>: Download the <code>.rpm</code> file and install with <code>rpm -i</code></li>
-              <li><strong>Standalone</strong>: Download the <code>.tar.gz</code> file and extract</li>
-            </ul>
-          </div>
+          <p style="margin-top: 2rem; color: var(--brand-gray); font-size: 0.95rem;">
+            <strong>Security Note:</strong> For verification, always check the SHA256 checksums against the <code>checksums.txt</code> file included with each release.
+          </p>
         </div>
-      </div>
 
-      <div class="section">
-        <h2>Checksums</h2>
-        <p>
-          For security verification, always check the SHA256 checksums against the 
-          <code>checksums.txt</code> file included with each release.
-        </p>
-      </div>
-
-      <div class="footer">
-        <p>
-          Looking for beta releases or source code? Visit our 
-          <a href="https://github.com/barqly/barqly-vault" target="_blank" style="color: #2563EB;">GitHub repository</a>.
-        </p>
+        <div class="footer">
+          <p>
+            Looking for beta releases or source code? Visit our 
+            <a href="https://github.com/barqly/barqly-vault" target="_blank">GitHub repository</a>.
+          </p>
+        </div>
       </div>
     </div>
+
+    <script>
+      // Navigation functionality
+      function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Theme toggle functionality
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        
+        // Update logos
+        const logo = document.querySelector('.logo');
+        const navLogo = document.querySelector('.nav-logo');
+        if (newTheme === 'dark') {
+          logo.src = '../assets/barqly-vault-logo-dark.svg';
+          navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+          document.querySelector('.theme-toggle').textContent = '☀️';
+        } else {
+          logo.src = '../assets/barqly-vault-logo-light.svg';
+          navLogo.src = '../assets/barqly-vault-logo-light.svg';
+          document.querySelector('.theme-toggle').textContent = '🌙';
+        }
+        
+        // Save preference
+        localStorage.setItem('theme', newTheme);
+      }
+
+      // Initialize theme on page load
+      function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        // If no saved preference, default to dark
+        const defaultTheme = savedTheme || 'dark';
+        
+        document.documentElement.setAttribute('data-theme', defaultTheme);
+        
+        // Update logos based on the actual theme
+        const logo = document.querySelector('.logo');
+        const navLogo = document.querySelector('.nav-logo');
+        if (defaultTheme === 'dark') {
+          logo.src = '../assets/barqly-vault-logo-dark.svg';
+          navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+          document.querySelector('.theme-toggle').textContent = '☀️';
+        } else {
+          logo.src = '../assets/barqly-vault-logo-light.svg';
+          navLogo.src = '../assets/barqly-vault-logo-light.svg';
+          document.querySelector('.theme-toggle').textContent = '🌙';
+        }
+      }
+
+      // Initialize theme when page loads
+      document.addEventListener('DOMContentLoaded', initTheme);
+
+      // Listen for system theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('theme')) {
+          const newTheme = e.matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', newTheme);
+          
+          const logo = document.querySelector('.logo');
+          const navLogo = document.querySelector('.nav-logo');
+          if (newTheme === 'dark') {
+            logo.src = '../assets/barqly-vault-logo-dark.svg';
+            navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+            document.querySelector('.theme-toggle').textContent = '☀️';
+          } else {
+            logo.src = '../assets/barqly-vault-logo-light.svg';
+            navLogo.src = '../assets/barqly-vault-logo-light.svg';
+            document.querySelector('.theme-toggle').textContent = '🌙';
+          }
+        }
+      });
+    </script>
   </body>
 </html>
