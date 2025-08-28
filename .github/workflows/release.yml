@@ -3,7 +3,8 @@ name: Release Pipeline
 on:
   push:
     tags:
-      - 'v*.*.*-beta*'   # ONLY beta tags trigger builds
+      - 'v*.*.*-beta*'   # Beta tags (both old format and new .N format)
+      - 'v*.*.*-beta.*'  # New incremental format: v1.0.0-beta.1, v1.0.0-beta.2, etc.
       # This ensures:
       # - Alpha tags (checkpoints) don't trigger builds
       # - Production tags (from promotion) don't trigger builds
@@ -15,8 +16,12 @@ on:
         description: 'Version to release (e.g., 1.0.0)'
         required: false
       promote_from:
-        description: 'Beta version to promote (e.g., 1.0.0-beta.1) - leave empty for new build'
+        description: 'Beta version to promote (e.g., 1.0.0-beta.3 or 1.0.0-beta) - leave empty for new build'
         required: false
+      list_available_betas:
+        description: 'List available beta releases for promotion (check this to see options)'
+        type: boolean
+        default: false
       prerelease:
         description: 'Mark as pre-release'
         type: boolean
@@ -48,6 +53,45 @@ on:
         default: true
 
 jobs:
+  # List available beta releases for promotion
+  list-betas:
+    if: github.event.inputs.list_available_betas == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: List Available Beta Releases
+        run: |
+          echo "## 📋 Available Beta Releases for Promotion" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | Created | Status | Assets |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|---------|---------|" >> $GITHUB_STEP_SUMMARY
+          
+          # List all beta releases (published and draft)
+          gh release list \
+            --repo ${{ github.repository }} \
+            --limit 20 \
+            --json tagName,name,createdAt,isDraft \
+            --jq '.[] | select(.tagName | test("-beta")) | [.tagName, .createdAt[:10], (if .isDraft then "Draft" else "Published" end)] | @csv' \
+          | while IFS=',' read -r tag date status; do
+            # Clean up CSV formatting
+            tag=$(echo "$tag" | tr -d '"')
+            date=$(echo "$date" | tr -d '"')
+            status=$(echo "$status" | tr -d '"')
+            
+            # Count assets for this release
+            asset_count=$(gh release view "$tag" --repo ${{ github.repository }} --json assets --jq '.assets | length' 2>/dev/null || echo "0")
+            
+            echo "| \`$tag\` | $date | $status | $asset_count |" >> $GITHUB_STEP_SUMMARY
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Usage:** Re-run this workflow with \`promote_from\` set to one of the beta versions above." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Example:** \`promote_from: 1.0.0-beta.3\` and \`version: 1.0.0\`" >> $GITHUB_STEP_SUMMARY
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   # Handle promotion workflow when promote_from is specified
   promote:
     if: github.event.inputs.promote_from != ''
@@ -127,8 +171,8 @@ jobs:
             if [[ "$TAG" == *"-beta-"* ]]; then
               echo "🧪 Beta tag with platform selection detected..."
               
-              # Extract platform list after "-beta-" if present
-              if [[ "$TAG" =~ -beta-(.+)$ ]]; then
+              # Extract platform list after "-beta-" if present (skip .N format)
+              if [[ "$TAG" =~ -beta-(.+)$ ]] && [[ ! "$TAG" =~ -beta\.[0-9]+$ ]]; then
                 PLATFORMS="${BASH_REMATCH[1]}"
                 echo "📋 Specified platforms: $PLATFORMS"
                 
@@ -483,8 +527,13 @@ jobs:
           BETA_VERSION=${GITHUB_REF#refs/tags/v}
           echo "BETA_VERSION=$BETA_VERSION" >> $GITHUB_OUTPUT
           
-          # Remove -beta suffix to get production version
-          PROD_VERSION=${BETA_VERSION%-beta*}
+          # Remove -beta suffix to get production version (handles both -beta and -beta.N formats)
+          if [[ "$BETA_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-beta(\.[0-9]+)?$ ]]; then
+            PROD_VERSION="${BASH_REMATCH[1]}"
+          else
+            # Fallback for old format
+            PROD_VERSION=${BETA_VERSION%-beta*}
+          fi
           echo "PROD_VERSION=$PROD_VERSION" >> $GITHUB_OUTPUT
           
           echo "📦 Creating production release draft for v$PROD_VERSION from beta v$BETA_VERSION"
