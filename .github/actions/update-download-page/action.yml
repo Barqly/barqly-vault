@@ -221,12 +221,17 @@ runs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
+        # Switch to main branch first (we're in detached HEAD from tag checkout)
+        git fetch origin main
+        git checkout main
+        git pull origin main
+        
         git add public-docs/downloads.md public-docs/downloads/index.html
         
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
           git commit -m "docs: update downloads page for v${{ inputs.version }}"
-          git push
+          git push origin main
           echo "✅ Downloads page committed and pushed"
         fi
