@@ -1,7 +1,7 @@
 # Barqly Vault - Monorepo Makefile
 # Secure backup and restore for sensitive data & documents
 
-.PHONY: help ui app demo demo-build build app-build dmg-intel dmg-arm dmg-all dmg-quick linux-build preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys pipeline-test pipeline-release verify-dmg check-notarization
+.PHONY: help ui app demo demo-build build app-build dmg-intel dmg-arm dmg-all dmg-quick linux-build preview app-preview lint fmt rust-lint rust-fmt clean clean-releases install validate test test-ui test-rust validate-ui validate-rust dev-reset dev-keys bench clean-keys pipeline-test pipeline-release verify-dmg check-notarization publish-prod list-betas promote-beta
 
 # Default target
 help:
@@ -55,6 +55,11 @@ help:
 	@echo "Pipeline & CI/CD:"
 	@echo "  pipeline-test    - Test CI pipeline locally (simulate GitHub Actions)"
 	@echo "  pipeline-release - Simulate release pipeline locally"
+	@echo ""
+	@echo "Release Management:"
+	@echo "  list-betas       - List available beta releases for promotion"
+	@echo "  promote-beta     - Promote a beta release to production draft"
+	@echo "  publish-prod     - Publish production release and update downloads"
 	@echo ""
 	@echo "UI Capture & Analysis:"
 	@echo "  ui-capture    - Start on-demand UI screenshot capture session"
@@ -331,3 +336,50 @@ check-notarization:
 	@echo ""
 	@echo "💡 For detailed notarization history, use:"
 	@echo "   xcrun notarytool history --apple-id YOUR_APPLE_ID --team-id YOUR_TEAM_ID"
+
+# List available beta releases
+list-betas:
+	@echo "📋 Listing available beta releases..."
+	@chmod +x scripts/promote-beta.sh
+	@./scripts/promote-beta.sh --list
+
+# Promote beta release to production draft
+promote-beta:
+	@if [ -z "$(FROM)" ] || [ -z "$(TO)" ]; then \
+		echo "❌ Usage: make promote-beta FROM=0.1.0-beta.3 TO=0.1.0"; \
+		echo ""; \
+		echo "This command will:"; \
+		echo "  1. Verify the beta release exists"; \
+		echo "  2. Trigger the promotion workflow"; \
+		echo "  3. Create a draft production release with beta artifacts"; \
+		echo ""; \
+		echo "To see available betas: make list-betas"; \
+		echo ""; \
+		echo "Examples:"; \
+		echo "  make list-betas                           # List all beta releases"; \
+		echo "  make promote-beta FROM=0.1.0-beta.3 TO=0.1.0  # Promote specific beta"; \
+		exit 1; \
+	fi
+	@echo "🚀 Promoting beta v$(FROM) to production v$(TO)..."
+	@chmod +x scripts/promote-beta.sh
+	@./scripts/promote-beta.sh --from "$(FROM)" --to "$(TO)"
+
+# Publish production release from draft
+publish-prod:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "❌ Usage: make publish-prod VERSION=0.1.0"; \
+		echo ""; \
+		echo "This command will:"; \
+		echo "  1. Publish the draft release on GitHub"; \
+		echo "  2. Update the downloads documentation"; \
+		echo "  3. Commit and push the changes"; \
+		echo ""; \
+		echo "Prerequisites:"; \
+		echo "  - Draft release must exist for the specified version"; \
+		echo "  - You must have admin permissions to push to main"; \
+		exit 1; \
+	fi
+	@echo "🚀 Publishing production release v$(VERSION)..."
+	@chmod +x scripts/publish-production.sh
+	@chmod +x scripts/update-downloads.sh
+	@./scripts/publish-production.sh "$(VERSION)"
