@@ -22,9 +22,15 @@ runs:
         echo "🔄 Updating downloads page for version $VERSION"
         
         # Get release information from GitHub API
-        RELEASE_DATA=$(gh api repos/${{ github.repository }}/releases/tags/v$VERSION)
-        RELEASE_URL=$(echo "$RELEASE_DATA" | jq -r '.html_url')
-        PUBLISHED_DATE=$(echo "$RELEASE_DATA" | jq -r '.published_at' | cut -d'T' -f1)
+        RELEASE_DATA=$(gh api repos/${{ github.repository }}/releases/tags/v$VERSION 2>/dev/null || echo "{}")
+        if [ "$RELEASE_DATA" = "{}" ]; then
+          echo "⚠️ Warning: Could not fetch release data from API, using defaults"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
+          PUBLISHED_DATE=$(date +%Y-%m-%d)
+        else
+          RELEASE_URL=$(echo "$RELEASE_DATA" | jq -r '.html_url // empty')
+          PUBLISHED_DATE=$(echo "$RELEASE_DATA" | jq -r '.published_at // empty' | cut -d'T' -f1)
+        fi
         
         # Create downloads table for this version
         cat > /tmp/version_section.md << EOF

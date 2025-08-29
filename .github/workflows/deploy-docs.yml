@@ -53,6 +53,8 @@ jobs:
           echo "🌐 **Live Downloads**: https://barqly.com/vault/downloads/" >> $GITHUB_STEP_SUMMARY
 
   build:
+    # Skip build if this is a release event (only update-downloads should run)
+    if: ${{ github.event_name != 'release' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -79,6 +81,8 @@ jobs:
           path: "./public-docs"
 
   deploy:
+    # Skip deploy if this is a release event (only update-downloads should run)
+    if: ${{ github.event_name != 'release' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
