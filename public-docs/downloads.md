@@ -6,15 +6,34 @@
 
 ## Latest Release
 
-*No production releases available yet. Check back soon!*
+## Version 0.1.6
+
+**Released:** 2025-08-29  
+**Release Notes:** [View on GitHub](https://github.com/Barqly/barqly-vault/releases/tag/v0.1.6)
+
+| Platform | Type | Download |
+|----------|------|----------|
+| macOS (Apple Silicon) | DMG | [barqly-vault-0.1.6-macos-arm64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.1.6/barqly-vault-0.1.6-macos-arm64.dmg) |
+| macOS (Intel) | DMG | [barqly-vault-0.1.6-macos-x86_64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.1.6/barqly-vault-0.1.6-macos-x86_64.dmg) |
+| Windows | MSI Installer | [barqly-vault-0.1.6-x64.msi](https://github.com/barqly/barqly-vault/releases/download/v0.1.6/barqly-vault-0.1.6-x64.msi) |
+| Windows | ZIP Archive | [barqly-vault-0.1.6-windows-x64.zip](https://github.com/barqly/barqly-vault/releases/download/v0.1.6/barqly-vault-0.1.6-windows-x64.zip) |
+| Linux | DEB Package | [barqly-vault-0.1.6-1_amd64.deb](https://github.com/barqly/barqly-vault/releases/download/v0.1.6/barqly-vault-0.1.6-1_amd64.deb) |
+| Linux | RPM Package | [barqly-vault-0.1.6-1.x86_64.rpm](https://github.com/barqly/barqly-vault/releases/download/v0.1.6/barqly-vault-0.1.6-1.x86_64.rpm) |
+| Linux | AppImage | [barqly-vault-0.1.6-1_amd64.AppImage](https://github.com/barqly/barqly-vault/releases/download/v0.1.6/barqly-vault-0.1.6-1_amd64.AppImage) |
+| Linux | TAR.GZ | [barqly-vault-0.1.6-x86_64.tar.gz](https://github.com/barqly/barqly-vault/releases/download/v0.1.6/barqly-vault-0.1.6-x86_64.tar.gz) |
+
+**Checksums:** [checksums.txt](https://github.com/barqly/barqly-vault/releases/download/v0.1.6/checksums.txt)
 
 ---
 
 ## Version History
 
-*Release history will appear here once the first production release is available.*
-
----
+- [Version 0.1.5](https://github.com/barqly/barqly-vault/releases/tag/v0.1.5)
+- [Version 0.1.4](https://github.com/barqly/barqly-vault/releases/tag/v0.1.4)
+- [Version 0.1.3](https://github.com/barqly/barqly-vault/releases/tag/v0.1.3)
+- [Version 0.1.2](https://github.com/barqly/barqly-vault/releases/tag/v0.1.2)
+- [Version 0.1.1](https://github.com/barqly/barqly-vault/releases/tag/v0.1.1)
+- [Version 0.1.0](https://github.com/barqly/barqly-vault/releases/tag/v0.1.0)
 
 ## Installation Instructions
 
