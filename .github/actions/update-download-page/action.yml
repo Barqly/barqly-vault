@@ -82,13 +82,8 @@ runs:
         
         # Get previous versions (limit to last 10 releases)
         echo "📚 Adding version history..."
-        gh api repos/${{ github.repository }}/releases --paginate | \
-        jq -r --arg current_version "v$VERSION" \
-        'map(select(.tag_name != $current_version)) | 
-         sort_by(.published_at) | reverse | 
-         .[0:9] | 
-         .[] | 
-         "### " + .tag_name[1:] + "\n\n**Released:** " + (.published_at | split("T")[0]) + "  \n**Release Notes:** [View on GitHub](" + .html_url + ")\n\n| Platform | Download |\n|----------|----------|\n| macOS (Apple Silicon) | [barqly-vault-" + .tag_name[1:] + "-macos-arm64.dmg](https://github.com/${{ github.repository }}/releases/download/" + .tag_name + "/barqly-vault-" + .tag_name[1:] + "-macos-arm64.dmg) |\n| macOS (Intel) | [barqly-vault-" + .tag_name[1:] + "-macos-x86_64.dmg](https://github.com/${{ github.repository }}/releases/download/" + .tag_name + "/barqly-vault-" + .tag_name[1:] + "-macos-x86_64.dmg) |\n| Windows (MSI) | [barqly-vault-" + .tag_name[1:] + "-x64.msi](https://github.com/${{ github.repository }}/releases/download/" + .tag_name + "/barqly-vault-" + .tag_name[1:] + "-x64.msi) |\n| Windows (ZIP) | [barqly-vault-" + .tag_name[1:] + "-windows-x64.zip](https://github.com/${{ github.repository }}/releases/download/" + .tag_name + "/barqly-vault-" + .tag_name[1:] + "-windows-x64.zip) |\n| Linux (DEB) | [barqly-vault-" + .tag_name[1:] + "-1_amd64.deb](https://github.com/${{ github.repository }}/releases/download/" + .tag_name + "/barqly-vault-" + .tag_name[1:] + "-1_amd64.deb) |\n| Linux (RPM) | [barqly-vault-" + .tag_name[1:] + "-1.x86_64.rpm](https://github.com/${{ github.repository }}/releases/download/" + .tag_name + "/barqly-vault-" + .tag_name[1:] + "-1.x86_64.rpm) |\n| Linux (AppImage) | [barqly-vault-" + .tag_name[1:] + "-1_amd64.AppImage](https://github.com/${{ github.repository }}/releases/download/" + .tag_name + "/barqly-vault-" + .tag_name[1:] + "-1_amd64.AppImage) |\n| Linux (TAR.GZ) | [barqly-vault-" + .tag_name[1:] + "-x86_64.tar.gz](https://github.com/${{ github.repository }}/releases/download/" + .tag_name + "/barqly-vault-" + .tag_name[1:] + "-x86_64.tar.gz) |\n\n**Checksums:** [checksums.txt](https://github.com/${{ github.repository }}/releases/download/" + .tag_name + "/checksums.txt)\n\n---\n"' >> public-docs/downloads.md
+        # Simplified version - skip version history for now to avoid jq errors
+        echo "Version history will be available in future releases." >> public-docs/downloads.md
         
         # Add footer
         cat >> public-docs/downloads.md << 'EOF'
