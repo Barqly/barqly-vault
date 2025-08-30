@@ -4,27 +4,28 @@
 
 ---
 
-## Latest Release (Version 0.2.3)
+## Latest Release (Version 0.2.4)
 
-**Released:** 2025-08-30 | **Release Notes:** [View on GitHub](https://github.com/Barqly/barqly-vault/releases/tag/v0.2.3)
+**Released:** 2025-08-30 | **Release Notes:** [View on GitHub](https://github.com/Barqly/barqly-vault/releases/tag/v0.2.4)
 
 | Platform | Size | Download |
 |----------|------|----------|
-| macOS (Apple Silicon) | TBD MB | [barqly-vault-0.2.3-macos-arm64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.3/barqly-vault-0.2.3-macos-arm64.dmg) |
-| macOS (Intel) | TBD MB | [barqly-vault-0.2.3-macos-x86_64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.3/barqly-vault-0.2.3-macos-x86_64.dmg) |
-| Windows | TBD MB | [barqly-vault-0.2.3-x64.msi](https://github.com/barqly/barqly-vault/releases/download/v0.2.3/barqly-vault-0.2.3-x64.msi) |
-| Windows | TBD MB | [barqly-vault-0.2.3-windows-x64.zip](https://github.com/barqly/barqly-vault/releases/download/v0.2.3/barqly-vault-0.2.3-windows-x64.zip) |
-| Linux | TBD MB | [barqly-vault-0.2.3-1_amd64.deb](https://github.com/barqly/barqly-vault/releases/download/v0.2.3/barqly-vault-0.2.3-1_amd64.deb) |
-| Linux | TBD MB | [barqly-vault-0.2.3-1.x86_64.rpm](https://github.com/barqly/barqly-vault/releases/download/v0.2.3/barqly-vault-0.2.3-1.x86_64.rpm) |
-| Linux | TBD MB | [barqly-vault-0.2.3-1_amd64.AppImage](https://github.com/barqly/barqly-vault/releases/download/v0.2.3/barqly-vault-0.2.3-1_amd64.AppImage) |
-| Linux | TBD MB | [barqly-vault-0.2.3-x86_64.tar.gz](https://github.com/barqly/barqly-vault/releases/download/v0.2.3/barqly-vault-0.2.3-x86_64.tar.gz) |
+| macOS (Apple Silicon) | TBD MB | [barqly-vault-0.2.4-macos-arm64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.4/barqly-vault-0.2.4-macos-arm64.dmg) |
+| macOS (Intel) | TBD MB | [barqly-vault-0.2.4-macos-x86_64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.4/barqly-vault-0.2.4-macos-x86_64.dmg) |
+| Windows | TBD MB | [barqly-vault-0.2.4-x64.msi](https://github.com/barqly/barqly-vault/releases/download/v0.2.4/barqly-vault-0.2.4-x64.msi) |
+| Windows | TBD MB | [barqly-vault-0.2.4-windows-x64.zip](https://github.com/barqly/barqly-vault/releases/download/v0.2.4/barqly-vault-0.2.4-windows-x64.zip) |
+| Linux | TBD MB | [barqly-vault-0.2.4-1_amd64.deb](https://github.com/barqly/barqly-vault/releases/download/v0.2.4/barqly-vault-0.2.4-1_amd64.deb) |
+| Linux | TBD MB | [barqly-vault-0.2.4-1.x86_64.rpm](https://github.com/barqly/barqly-vault/releases/download/v0.2.4/barqly-vault-0.2.4-1.x86_64.rpm) |
+| Linux | TBD MB | [barqly-vault-0.2.4-1_amd64.AppImage](https://github.com/barqly/barqly-vault/releases/download/v0.2.4/barqly-vault-0.2.4-1_amd64.AppImage) |
+| Linux | TBD MB | [barqly-vault-0.2.4-x86_64.tar.gz](https://github.com/barqly/barqly-vault/releases/download/v0.2.4/barqly-vault-0.2.4-x86_64.tar.gz) |
 
-**Checksums:** [checksums.txt](https://github.com/barqly/barqly-vault/releases/download/v0.2.3/checksums.txt)
+**Checksums:** [checksums.txt](https://github.com/barqly/barqly-vault/releases/download/v0.2.4/checksums.txt)
 
 ---
 
 ## Version History
 
+- [Version 0.2.3](https://github.com/Barqly/barqly-vault/releases/tag/v0.2.3)
 - [Version 0.2.2](https://github.com/Barqly/barqly-vault/releases/tag/v0.2.2)
 - [Version 0.2.1](https://github.com/Barqly/barqly-vault/releases/tag/v0.2.1)
 - [Version 0.2.0](https://github.com/Barqly/barqly-vault/releases/tag/v0.2.0)
