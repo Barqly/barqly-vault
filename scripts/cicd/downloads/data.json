@@ -10,64 +10,69 @@
     "linux_tar": "barqly-vault-{VERSION}-x86_64.tar.gz"
   },
   "latest": {
-    "version": "0.2.0",
+    "version": "0.2.1",
     "release_date": "2025-08-30",
-    "github_release_url": "https://github.com/Barqly/barqly-vault/releases/tag/v0.2.0",
+    "github_release_url": "https://github.com/Barqly/barqly-vault/releases/tag/v0.2.1",
     "downloads": {
       "macos_arm64": {
-        "filename": "barqly-vault-0.2.0-macos-arm64.dmg",
+        "filename": "barqly-vault-0.2.1-macos-arm64.dmg",
         "size": "TBD MB",
         "size_bytes": 0,
         "sha256": "TBD..."
       },
       "macos_x64": {
-        "filename": "barqly-vault-0.2.0-macos-x86_64.dmg",
+        "filename": "barqly-vault-0.2.1-macos-x86_64.dmg",
         "size": "TBD MB",
         "size_bytes": 0,
         "sha256": "TBD..."
       },
       "windows_msi": {
-        "filename": "barqly-vault-0.2.0-x64.msi",
+        "filename": "barqly-vault-0.2.1-x64.msi",
         "size": "TBD MB",
         "size_bytes": 0,
         "sha256": "TBD..."
       },
       "windows_zip": {
-        "filename": "barqly-vault-0.2.0-windows-x64.zip",
+        "filename": "barqly-vault-0.2.1-windows-x64.zip",
         "size": "TBD MB",
         "size_bytes": 0,
         "sha256": "TBD..."
       },
       "linux_deb": {
-        "filename": "barqly-vault-0.2.0-1_amd64.deb",
+        "filename": "barqly-vault-0.2.1-1_amd64.deb",
         "size": "TBD MB",
         "size_bytes": 0,
         "sha256": "TBD..."
       },
       "linux_rpm": {
-        "filename": "barqly-vault-0.2.0-1.x86_64.rpm",
+        "filename": "barqly-vault-0.2.1-1.x86_64.rpm",
         "size": "TBD MB",
         "size_bytes": 0,
         "sha256": "TBD..."
       },
       "linux_appimage": {
-        "filename": "barqly-vault-0.2.0-1_amd64.AppImage",
+        "filename": "barqly-vault-0.2.1-1_amd64.AppImage",
         "size": "TBD MB",
         "size_bytes": 0,
         "sha256": "TBD..."
       },
       "linux_tar": {
-        "filename": "barqly-vault-0.2.0-x86_64.tar.gz",
+        "filename": "barqly-vault-0.2.1-x86_64.tar.gz",
         "size": "TBD MB",
         "size_bytes": 0,
         "sha256": "TBD..."
       }
     },
     "verification": {
-      "checksums_url": "https://github.com/barqly/barqly-vault/releases/download/v0.2.0/checksums.txt"
+      "checksums_url": "https://github.com/barqly/barqly-vault/releases/download/v0.2.1/checksums.txt"
     }
   },
   "archive": [
+    {
+      "version": "0.2.0",
+      "release_date": "2025-08-30",
+      "github_release_url": "https://github.com/Barqly/barqly-vault/releases/tag/v0.2.0"
+    },
     {
       "version": "0.1.9",
       "release_date": "2025-08-30",
