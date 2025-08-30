@@ -6,10 +6,10 @@
 
 ## Latest Release
 
-## Version 0.1.7
+## Version {{LATEST_VERSION}}
 
-**Released:** 2025-08-29  
-**Release Notes:** [View on GitHub](https://github.com/Barqly/barqly-vault/releases/tag/v0.1.7)
+**Released:** {{RELEASE_DATE}}  
+**Release Notes:** [View on GitHub]({{GITHUB_RELEASE_URL}})
 
 | Platform | Type | Download |
 |----------|------|----------|
@@ -22,7 +22,7 @@
 | Linux | AppImage | [barqly-vault-0.1.7-1_amd64.AppImage](https://github.com/barqly/barqly-vault/releases/download/v0.1.7/barqly-vault-0.1.7-1_amd64.AppImage) |
 | Linux | TAR.GZ | [barqly-vault-0.1.7-x86_64.tar.gz](https://github.com/barqly/barqly-vault/releases/download/v0.1.7/barqly-vault-0.1.7-x86_64.tar.gz) |
 
-**Checksums:** [checksums.txt](https://github.com/Barqly/barqly-vault/releases/download/v0.1.7/checksums.txt)
+**Checksums:** [checksums.txt]({{CHECKSUMS_URL}})
 
 ---
 

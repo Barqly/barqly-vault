@@ -1,0 +1,10 @@
+{
+  "latest": {
+    "version": "0.1.7",
+    "release_date": "2025-08-29",
+    "github_release_url": "https://github.com/Barqly/barqly-vault/releases/tag/v0.1.7",
+    "verification": {
+      "checksums_url": "https://github.com/Barqly/barqly-vault/releases/download/v0.1.7/checksums.txt"
+    }
+  }
+}
