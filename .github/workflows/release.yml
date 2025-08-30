@@ -487,7 +487,7 @@ jobs:
       - name: Generate release notes
         run: |
           VERSION="${{ steps.get_version.outputs.VERSION }}"
-          ./scripts/ci/generate-release-notes.sh "$VERSION" > release-notes.md
+          ./scripts/cicd/generate-release-notes.sh "$VERSION" > release-notes.md
       
       - name: Create draft release
         run: |
@@ -598,7 +598,7 @@ jobs:
       - name: Generate production release notes
         run: |
           PROD_VERSION="${{ steps.get_version.outputs.PROD_VERSION }}"
-          ./scripts/ci/generate-release-notes.sh "$PROD_VERSION" > release-notes.md
+          ./scripts/cicd/generate-release-notes.sh "$PROD_VERSION" > release-notes.md
       
       - name: Create production draft release
         run: |

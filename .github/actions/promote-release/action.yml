@@ -150,7 +150,7 @@ runs:
         
         # Generate release notes
         VERSION="${{ inputs.target-version }}"
-        bash ${{ github.workspace }}/scripts/ci/generate-release-notes.sh "$VERSION" > release-notes.md
+        bash ${{ github.workspace }}/scripts/cicd/generate-release-notes.sh "$VERSION" > release-notes.md
         
         # Create release with artifacts
         DRAFT_FLAG=""
