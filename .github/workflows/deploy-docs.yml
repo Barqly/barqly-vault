@@ -4,8 +4,7 @@ on:
   push:
     branches: ["main"]
     paths: ["public-docs/**"] # Only trigger when docs change
-  release:
-    types: [published] # Trigger when production release is published
+  # Note: Release updates handled by publish-production.sh locally, not by automation
   workflow_dispatch: # Allow manual deployment
 
 permissions:
@@ -18,43 +17,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Update download page when production release is published
-  update-downloads:
-    if: github.event_name == 'release' && !contains(github.event.release.tag_name, '-beta')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Extract version from published release
-        id: get_version
-        run: |
-          VERSION="${{ github.event.release.tag_name }}"
-          VERSION=${VERSION#v}  # Remove 'v' prefix
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Updating downloads page for published release: v$VERSION"
-      
-      - name: Update Downloads Page
-        uses: ./.github/actions/update-download-page
-        with:
-          version: ${{ steps.get_version.outputs.VERSION }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Success Summary
-        run: |
-          echo "## ✅ Downloads Page Updated" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY  
-          echo "- **Version**: v${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Release**: Published" >> $GITHUB_STEP_SUMMARY
-          echo "- **Downloads Page**: Updated and committed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🌐 **Live Downloads**: https://barqly.com/vault/downloads/" >> $GITHUB_STEP_SUMMARY
-
   build:
-    # Skip build if this is a release event (only update-downloads should run)
-    if: ${{ github.event_name != 'release' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -81,8 +44,6 @@ jobs:
           path: "./public-docs"
 
   deploy:
-    # Skip deploy if this is a release event (only update-downloads should run)
-    if: ${{ github.event_name != 'release' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
