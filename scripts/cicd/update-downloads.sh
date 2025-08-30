@@ -9,7 +9,7 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
+ORANGE='\033[38;5;208m'  # Brand orange for better visibility
 NC='\033[0m' # No Color
 
 # Check if version is provided
@@ -23,7 +23,7 @@ fi
 VERSION="$1"
 REPO="barqly/barqly-vault"
 
-echo -e "${BLUE}🔄 Updating downloads page for version $VERSION${NC}"
+echo -e "${ORANGE}🔄 Updating downloads page for version $VERSION${NC}"
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

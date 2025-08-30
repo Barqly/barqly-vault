@@ -9,7 +9,7 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
+ORANGE='\033[38;5;208m'  # Brand orange for better visibility
 NC='\033[0m' # No Color
 
 # Check if version is provided
@@ -23,7 +23,7 @@ fi
 VERSION="$1"
 REPO="barqly/barqly-vault"
 
-echo -e "${BLUE}🚀 Publishing Production Release v$VERSION${NC}"
+echo -e "${ORANGE}🚀 Publishing Production Release v$VERSION${NC}"
 echo "================================================"
 
 # Step 1: Verify draft release exists
@@ -121,9 +121,9 @@ echo -e "\n${GREEN}========================================${NC}"
 echo -e "${GREEN}✅ Production Release Published!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo -e "📦 Version: ${BLUE}v$VERSION${NC}"
-echo -e "🔗 Release: ${BLUE}$RELEASE_URL${NC}"
-echo -e "📄 Downloads: ${BLUE}https://barqly.com/vault/downloads/${NC}"
+echo -e "📦 Version: ${ORANGE}v$VERSION${NC}"
+echo -e "🔗 Release: ${ORANGE}$RELEASE_URL${NC}"
+echo -e "📄 Downloads: ${ORANGE}https://barqly.com/vault/downloads/${NC}"
 echo ""
 
 # Optional: Trigger documentation deployment

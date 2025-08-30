@@ -9,14 +9,14 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
+ORANGE='\033[38;5;208m'  # Brand orange for better visibility
 NC='\033[0m' # No Color
 
 REPO="barqly/barqly-vault"
 
 # Function to list available betas
 list_betas() {
-    echo -e "${BLUE}📋 Available Beta Releases:${NC}"
+    echo -e "${ORANGE}📋 Available Beta Releases:${NC}"
     echo "================================================"
     
     # Get all beta releases
@@ -113,7 +113,7 @@ if [ -z "$BETA_VERSION" ] || [ -z "$PROD_VERSION" ]; then
     exit 1
 fi
 
-echo -e "${BLUE}🚀 Promoting Beta to Production${NC}"
+echo -e "${ORANGE}🚀 Promoting Beta to Production${NC}"
 echo "================================================"
 echo -e "From: ${YELLOW}v$BETA_VERSION${NC}"
 echo -e "To:   ${GREEN}v$PROD_VERSION${NC} (draft)"
@@ -178,10 +178,10 @@ if [ $? -eq 0 ]; then
     RUN_URL=$(gh run list --workflow=release.yml --limit=1 --json url --jq '.[0].url')
     
     if [ -n "$RUN_URL" ]; then
-        echo -e "Workflow URL: ${BLUE}$RUN_URL${NC}"
+        echo -e "Workflow URL: ${ORANGE}$RUN_URL${NC}"
         echo ""
         echo -e "${YELLOW}You can monitor the progress at the URL above${NC}"
-        echo -e "Or use: ${BLUE}gh run watch${NC}"
+        echo -e "Or use: ${ORANGE}gh run watch${NC}"
     fi
     
     echo -e "\n${GREEN}========================================${NC}"
@@ -194,7 +194,7 @@ if [ $? -eq 0 ]; then
     echo ""
     echo -e "${YELLOW}Next steps after workflow completes:${NC}"
     echo -e "1. Review the draft release on GitHub"
-    echo -e "2. When ready to publish: ${BLUE}make publish-prod VERSION=$PROD_VERSION${NC}"
+    echo -e "2. When ready to publish: ${ORANGE}make publish-prod VERSION=$PROD_VERSION${NC}"
     echo ""
 else
     echo -e "${RED}❌ Error: Failed to trigger workflow${NC}"
