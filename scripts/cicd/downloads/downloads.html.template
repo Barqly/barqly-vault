@@ -606,12 +606,7 @@
           </p>
         </div>
 
-        <div class="footer">
-          <p>
-            Looking for beta releases or source code? Visit our 
-            <a href="https://github.com/barqly/barqly-vault" target="_blank">GitHub repository</a>.
-          </p>
-        </div>
+{{FOOTER}}
       </div>
     </div>
 

@@ -67,6 +67,15 @@ def generate_content(template_path, data, variables):
     for var, value in variables.items():
         content = content.replace(f'{{{{{var}}}}}', value)
     
+    # Handle includes (like footer)
+    if '{{FOOTER}}' in content:
+        script_dir = Path(__file__).parent
+        footer_file = script_dir / "downloads" / "includes" / "footer.html"
+        if footer_file.exists():
+            with open(footer_file) as f:
+                footer_content = f.read()
+            content = content.replace('{{FOOTER}}', footer_content)
+    
     # Generate download table rows for HTML/Markdown
     if '{{DOWNLOAD_ROWS}}' in content:
         downloads = data['latest']['downloads']
