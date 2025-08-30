@@ -88,7 +88,7 @@ fi
 
 # Step 4: Update download pages
 echo -e "\n${YELLOW}4. Updating download documentation...${NC}"
-./scripts/update-downloads.sh "$VERSION"
+./scripts/cicd/update-downloads.sh "$VERSION"
 
 # Step 5: Review changes
 echo -e "\n${YELLOW}5. Review changes...${NC}"

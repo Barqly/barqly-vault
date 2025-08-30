@@ -340,8 +340,8 @@ check-notarization:
 # List available beta releases
 list-betas:
 	@echo "📋 Listing available beta releases..."
-	@chmod +x scripts/promote-beta.sh
-	@./scripts/promote-beta.sh --list
+	@chmod +x scripts/cicd/promote-beta.sh
+	@./scripts/cicd/promote-beta.sh --list
 
 # Promote beta release to production draft
 promote-beta:
@@ -361,8 +361,8 @@ promote-beta:
 		exit 1; \
 	fi
 	@echo "🚀 Promoting beta v$(FROM) to production v$(TO)..."
-	@chmod +x scripts/promote-beta.sh
-	@./scripts/promote-beta.sh --from "$(FROM)" --to "$(TO)"
+	@chmod +x scripts/cicd/promote-beta.sh
+	@./scripts/cicd/promote-beta.sh --from "$(FROM)" --to "$(TO)"
 
 # Publish production release from draft
 publish-prod:
@@ -380,6 +380,6 @@ publish-prod:
 		exit 1; \
 	fi
 	@echo "🚀 Publishing production release v$(VERSION)..."
-	@chmod +x scripts/publish-production.sh
-	@chmod +x scripts/update-downloads.sh
-	@./scripts/publish-production.sh "$(VERSION)"
+	@chmod +x scripts/cicd/publish-production.sh
+	@chmod +x scripts/cicd/update-downloads.sh
+	@./scripts/cicd/publish-production.sh "$(VERSION)"
