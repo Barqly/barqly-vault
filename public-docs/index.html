@@ -22,6 +22,8 @@
         --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.15);
         --border-color: rgba(226, 232, 240, 0.5);
+        --link-color: #2563EB;
+        --link-hover-color: #1D4ED8;
       }
 
       * {
@@ -41,7 +43,7 @@
       }
 
       .container {
-        max-width: 800px;
+        max-width: 1000px;
         margin: 0 auto;
         padding: 2rem;
       }
@@ -125,7 +127,7 @@
 
       .benefits {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
         margin-top: 1.5rem;
       }
@@ -344,6 +346,8 @@
         --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.2);
         --border-color: rgba(75, 85, 99, 0.3);
+        --link-color: #60A5FA;
+        --link-hover-color: #93C5FD;
       }
 
       [data-theme="dark"] body {
@@ -377,6 +381,37 @@
         background: linear-gradient(135deg, #374151, #1F2937);
         border-color: rgba(255, 138, 0, 0.3);
         color: var(--medium-gray);
+      }
+
+      /* General link styles for accessibility */
+      a {
+        color: var(--link-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+      }
+
+      a:hover {
+        text-decoration: underline;
+        color: var(--link-hover-color);
+      }
+
+      /* Special button and branded links keep their styling */
+      .btn-primary a,
+      .btn-secondary a,
+      .nav-links .download-btn {
+        color: inherit;
+      }
+
+      /* Footer links use theme-appropriate colors */
+      .footer-link {
+        color: var(--link-color) !important;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+
+      .footer-link:hover {
+        color: var(--link-hover-color) !important;
+        text-decoration: underline;
       }
 
       .navbar {
@@ -573,7 +608,7 @@
         <h2>What is Barqly Vault?</h2>
         <p>
           Barqly Vault is a minimal, open-source desktop app that lets you encrypt and
-          backup your most important digital files - like Bitcoin output
+          backup your most important digital files - like Bitcoin script trees in P2TR (Taproot), multisig walletoutput
           descriptors, Lightning node backups, family documents, or any
           sensitive data you need to protect.
         </p>
@@ -698,11 +733,11 @@
       <div class="footer">
         <p>Built with ❤️ for the Bitcoin community</p>
         <p style="margin-top: 1rem;">
-          <a href="https://github.com/barqly/barqly-vault/issues" target="_blank" style="color: var(--bitcoin-orange); text-decoration: none; font-weight: 500;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+          <a href="https://github.com/barqly/barqly-vault/issues" target="_blank" class="footer-link">
             💬 Contribute Feedback
           </a>
           ·
-          <a href="https://github.com/barqly/barqly-vault" target="_blank" style="color: var(--medium-gray); text-decoration: none; margin-left: 1rem;" onmouseover="this.style.color='var(--bitcoin-orange)'" onmouseout="this.style.color='var(--medium-gray)'">
+          <a href="https://github.com/barqly/barqly-vault" target="_blank" class="footer-link" style="margin-left: 1rem;">
             GitHub
           </a>
         </p>
