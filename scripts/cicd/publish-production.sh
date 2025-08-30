@@ -101,29 +101,20 @@ echo "✅ Version history updated"
 echo "✅ All template files generated"
 
 # Step 6: Commit and push
-echo -e "\n${YELLOW}6. Commit and push changes...${NC}"
-read -p "Do you want to commit and push these changes? (Y/n): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Nn]$ ]]; then
-    echo -e "${YELLOW}⚠️  Changes not committed. You can manually commit with:${NC}"
-    echo "   git add public-docs/downloads.*"
-    echo "   git commit -m \"docs: update downloads for v$VERSION\""
-    echo "   git push"
-else
-    echo "Committing changes..."
-    git add public-docs/downloads.md public-docs/downloads/ scripts/cicd/downloads/data.json
-    git commit --no-verify -m "docs: update downloads for v$VERSION
+echo -e "\n${YELLOW}6. Committing and pushing changes...${NC}"
+echo "Committing changes..."
+git add public-docs/downloads.md public-docs/downloads/ scripts/cicd/downloads/data.json
+git commit --no-verify -m "docs: update downloads for v$VERSION
 
 - Published production release v$VERSION
 - Updated downloads.md and index.html with latest version
 - Updated data.json with release information
 - Updated version history"
-    
-    echo "Pushing to remote..."
-    git push origin main
-    
-    echo -e "${GREEN}✅ Changes committed and pushed${NC}"
-fi
+
+echo "Pushing to remote..."
+git push origin main
+
+echo -e "${GREEN}✅ Changes committed and pushed${NC}"
 
 # Step 7: Summary
 echo -e "\n${GREEN}========================================${NC}"
