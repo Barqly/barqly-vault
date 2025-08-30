@@ -93,10 +93,12 @@ echo -e "\n${YELLOW}4. Updating download documentation...${NC}"
 # Step 5: Review changes
 echo -e "\n${YELLOW}5. Review changes...${NC}"
 echo "Modified files:"
-git status --short public-docs/
+git status --short public-docs/ scripts/cicd/downloads/data.json
 
-echo -e "\n${YELLOW}Preview of changes:${NC}"
-git diff --stat public-docs/
+echo -e "\n${YELLOW}Summary:${NC}"
+echo "✅ Downloads updated to v$VERSION"
+echo "✅ Version history updated"
+echo "✅ All template files generated"
 
 # Step 6: Commit and push
 echo -e "\n${YELLOW}6. Commit and push changes...${NC}"
