@@ -109,7 +109,7 @@ if [[ $REPLY =~ ^[Nn]$ ]]; then
     echo "   git push"
 else
     echo "Committing changes..."
-    git add public-docs/downloads.* scripts/cicd/downloads/data.json
+    git add public-docs/downloads.md public-docs/downloads/ scripts/cicd/downloads/data.json
     git commit --no-verify -m "docs: update downloads for v$VERSION
 
 - Published production release v$VERSION
