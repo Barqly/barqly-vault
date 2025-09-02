@@ -6,12 +6,21 @@ Barqly Vault is a minimal, open-source desktop tool to **encrypt sensitive data 
 
 ⚠️ **Disclaimer:** Barqly Vault is **not intended for private key or seed phrase storage**. It is designed for documents and configuration files that, if compromised, would not directly expose customer Bitcoin or other assets.
 
-
-
 ## Quickstart
-1. Download a release binary from **Releases**.
+1. Download a release binary from **[Releases](https://barqly.com/downloads/)**.
 2. Run the app and select files/folders to encrypt.
 3. Choose output location; verify integrity manifest.
+
+## Screenshots
+
+### Setup Screen
+![Setup Screen](screenshots/Setup.png)
+
+### Encrypt Files
+![Encrypt Screen](screenshots/Encrypt.png)
+
+### Decrypt Files
+![Decrypt Screen](screenshots/Detup.png)
 
 ## Why
 - Reduce risk when using cloud storage by pre-encrypting critical Bitcoin data.
@@ -34,6 +43,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details on both AI-enhanced and tradi
 
 ## Contributing
 Issues and PRs welcome. Please see [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+
+## Contact
+Project maintained by Mohammad Nauman - reach out on Nostr: `npub1uy4l2uqwddck85xdv0pwmjua73r4tqqg23nxlq0xef7gmnqx55pq8q2g2m`
 
 ## License
 MIT
