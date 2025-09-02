@@ -1,8 +1,15 @@
 # CI/CD Modular Pipeline Architecture
 
+**Created**: 2025-08-20  
+**Updated**: 2025-09-02  
+**Status**: Active Implementation  
+**Author**: System Architect
+
 ## Overview
 
-The release pipeline has been refactored from a monolithic 615-line workflow into a modular, maintainable architecture using composite actions.
+The release pipeline uses a modular architecture with composite actions, implementing a three-tier release process (alpha/beta/production) optimized for cost efficiency and security compliance.
+
+**For detailed release process steps, see [release-process.md](./release-process.md)**
 
 ## Structure
 
@@ -18,81 +25,89 @@ The release pipeline has been refactored from a monolithic 615-line workflow int
 │   └── release.yml                # Main orchestrator (301 lines, down from 615)
 
 scripts/
-└── ci/
-    └── generate-release-notes.sh  # Release notes generation
+└── cicd/                         # CI/CD automation scripts
+    ├── generate-release-notes.sh  # Release notes generation
+    ├── promote-beta.sh            # Beta to production promotion
+    ├── publish-production.sh      # Production publication
+    ├── update-downloads.sh        # Download page updates
+    └── generate-downloads.py      # Template-based page generation
 ```
 
 ## Workflow Capabilities
 
 ### Tag Convention
-The pipeline follows a three-tier tagging system:
-- **Alpha**: Local checkpoints (NO CI/CD trigger)
-- **Beta**: Testing builds (triggers CI/CD)
-- **Production**: Final releases
+The pipeline follows a three-tier tagging system with incremental versioning:
+- **Alpha**: `v{VERSION}-alpha.{N}` - Development checkpoints (NO CI/CD trigger)
+- **Beta**: `v{VERSION}-beta.{N}` - Testing builds (triggers full CI/CD)
+- **Production**: `v{VERSION}` - Final releases (manual promotion)
 
-### 1. Alpha Tags (Local Development)
+### 1. Alpha Tags (Development Checkpoints)
 ```bash
-git tag v1.0.0-alpha
-git push origin v1.0.0-alpha
+# Incremental alpha development
+git tag v0.3.0-alpha.1
+git push origin v0.3.0-alpha.1
+
+git tag v0.3.0-alpha.2
+git push origin v0.3.0-alpha.2
 ```
 - **Does NOT trigger CI/CD**
-- Use for local version checkpoints
-- Rollback points during development
-- Zero resource consumption
+- Use for development milestones and feature completion markers
+- Allows multiple iterations on same base version
+- Zero resource consumption, purely organizational
 
-### 2. Beta Releases (Testing)
+### 2. Beta Releases (Full Build + Testing)
 ```bash
-# Full platform build
-git tag v1.0.0-beta
-git push origin v1.0.0-beta
+# Incremental beta testing
+git tag v0.3.0-beta.1
+git push origin v0.3.0-beta.1
+
+# If issues found, iterate
+git tag v0.3.0-beta.2
+git push origin v0.3.0-beta.2
 ```
+- Triggers complete CI/CD pipeline
 - Builds all platforms (macOS Intel/ARM, Windows, Linux)
-- Creates draft release for testing
+- Includes macOS DMG notarization and code signing
+- Creates beta draft release with all artifacts
+- Auto-creates corresponding production draft release
+- **Cost-efficient**: Only betas trigger expensive builds
 
-#### Selective Beta Builds
+### 3. Production Releases (Manual Promotion)
 ```bash
-# Single platform testing
-git tag v1.0.0-beta-linux    # Linux only
-git tag v1.0.0-beta-mac      # macOS only (Intel + ARM)
-git tag v1.0.0-beta-win      # Windows only
-
-# Multi-platform combinations
-git tag v1.0.0-beta-mac-linux    # macOS + Linux
-git tag v1.0.0-beta-win-linux    # Windows + Linux
+# Promote stable beta to production
+make promote-beta FROM=0.3.0-beta.2 TO=0.3.0
+# OR: ./scripts/cicd/promote-beta.sh --from 0.3.0-beta.2 --to 0.3.0
 ```
-- Saves CI/CD time by building only what you need
-- Avoids unnecessary macOS notarization cycles
+- **Reuses beta artifacts** - no rebuild required
+- **Renames files** to remove "-beta" suffix (standardized naming)
+- **Creates production tag** and draft release
+- **Security-compliant** - manual approval gate
 
-### 3. Production Releases
+### 4. Production Publication (Manual Security Gate)
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+# Publish production release and update documentation
+make publish-prod VERSION=0.3.0
+# OR: ./scripts/cicd/publish-production.sh 0.3.0
 ```
-- Full platform build
-- Production-ready release
+- **Publishes GitHub release** from draft to public
+- **Updates documentation** (downloads page, version history)
+- **Commits changes** to main branch with bypass
+- **Maintains compliance** with branch protection rules
 
-### 4. Promotion (Beta → Production)
+### 5. Manual Workflow Dispatch (Testing)
 ```bash
+# Manual workflow trigger with platform selection
 gh workflow run release.yml \
-  -f promote_from=1.0.0-beta.1 \
-  -f version=1.0.0
-```
-- Reuses beta artifacts
-- No rebuild required
-- Creates new production release
-
-### 5. Manual Release with Selective Build
-```bash
-gh workflow run release.yml \
-  -f version=1.0.0 \
+  -f version=0.3.0 \
   -f selective_build=true \
   -f build_macos_intel=false \
-  -f build_macos_arm=false \
+  -f build_macos_arm=true \
   -f build_linux=true \
-  -f build_windows=true
+  -f build_windows=false
 ```
 - Manual control over which platforms to build
 - Useful for testing specific platform changes
+- Available for debugging and special cases
 
 ## Benefits
 
@@ -171,32 +186,36 @@ The pipeline generates the following artifacts for desktop platforms:
 ### Test Alpha Tag (No Build)
 ```bash
 # Create alpha tag - should NOT trigger CI/CD
-git tag v0.7.0-alpha
-git push origin v0.7.0-alpha
+git tag v0.3.0-alpha.1
+git push origin v0.3.0-alpha.1
 # Verify no workflow triggered in Actions tab
 ```
 
 ### Test Beta Release
 ```bash
 # Create beta tag for testing
-git tag v0.7.0-beta
-git push origin v0.7.0-beta
+git tag v0.3.0-beta.1
+git push origin v0.3.0-beta.1
 
-# Or selective platform testing
-git tag v0.7.0-beta-win
-git push origin v0.7.0-beta-win
+# Monitor build progress
+gh run list --workflow=release.yml --limit 5
 
 # Delete test release when done
-gh release delete v0.7.0-beta --yes
-git push --delete origin v0.7.0-beta
+gh release delete v0.3.0-beta.1 --yes
+git tag -d v0.3.0-beta.1
+git push --delete origin v0.3.0-beta.1
 ```
 
-### Test Promotion
+### Test Full Release Cycle
 ```bash
-# Promote existing beta to production
-gh workflow run release.yml \
-  -f promote_from=0.7.0-beta \
-  -f version=0.7.0
+# 1. Create beta
+git tag v0.3.0-beta.1 && git push origin v0.3.0-beta.1
+
+# 2. Wait for build completion, then promote
+make promote-beta FROM=0.3.0-beta.1 TO=0.3.0
+
+# 3. Publish production
+make publish-prod VERSION=0.3.0
 ```
 
 ## Migration from Old Pipeline

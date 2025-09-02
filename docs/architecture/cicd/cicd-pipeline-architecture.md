@@ -1,12 +1,15 @@
 # CI/CD Pipeline Architecture for Barqly Vault
 
 **Created**: 2025-08-20  
-**Status**: Proposed Architecture  
+**Updated**: 2025-09-02  
+**Status**: Active Implementation  
 **Author**: System Architect
 
 ## Executive Summary
 
-This document presents a comprehensive CI/CD architecture for Barqly Vault, a cross-platform desktop encryption application built with Tauri. The architecture addresses intelligent build triggers, selective compilation, cross-platform distribution, automated testing, and scalable deployment strategies while maintaining security standards appropriate for a Bitcoin custody backup tool.
+This document presents the implemented CI/CD architecture for Barqly Vault, a cross-platform desktop encryption application built with Tauri. The architecture implements a three-tier release process (alpha/beta/production) with automated builds, cross-platform distribution, and manual publication gates while maintaining security standards appropriate for a Bitcoin custody backup tool.
+
+**Note**: For detailed release process steps, see [release-process.md](./release-process.md).
 
 ## Table of Contents
 
@@ -129,19 +132,24 @@ on:
 #### 3. Release Triggers
 
 ```yaml
-# Tag-based releases
+# Tag-based releases - Three-tier system
 on:
   push:
     tags:
-      - 'v*.*.*'  # Semantic versioning
-      - 'v*.*.*-beta*'  # Beta releases
-      - 'v*.*.*-rc*'  # Release candidates
+      - 'v*.*.*-beta.*'  # Beta releases only (triggers full CI/CD)
+      # Alpha tags: v*.*.*-alpha.* (no CI/CD trigger - checkpoints only)
+      # Production tags: v*.*.* (manual promotion only)
 ```
 
+**Current Implementation**:
+- **Alpha tags** (`v0.3.0-alpha.1`): Development checkpoints, no automated builds
+- **Beta tags** (`v0.3.0-beta.1`): Triggers full CI/CD pipeline with macOS notarization
+- **Production tags** (`v0.3.0`): Created via manual promotion from beta releases
+
 **Rationale**:
-- Explicit release control via git tags
-- Supports different release channels
-- Clear versioning strategy
+- **Cost efficient**: Only beta tags trigger expensive builds and notarization
+- **Flexible iteration**: Alpha tags allow multiple development cycles
+- **Security compliance**: Production releases require manual approval gate
 
 #### 4. Manual Triggers
 
@@ -786,6 +794,63 @@ security-checks:
 | **Total** | | | | **1,150** |
 
 *Well within free tier limits*
+
+## Current Release Workflow
+
+The implemented workflow follows a three-tier release process:
+
+### Alpha → Beta → Production Pipeline
+
+```mermaid
+graph TB
+    subgraph "Development Phase"
+        Alpha1[v0.3.0-alpha.1]
+        Alpha2[v0.3.0-alpha.2]
+        AlphaN[v0.3.0-alpha.N]
+    end
+    
+    subgraph "Testing Phase"
+        Beta1[v0.3.0-beta.1]
+        Beta2[v0.3.0-beta.2]
+        BetaN[v0.3.0-beta.N]
+    end
+    
+    subgraph "Production Phase"  
+        Promotion[make promote-beta]
+        Publication[make publish-prod]
+        Production[v0.3.0]
+    end
+    
+    Alpha1 --> Alpha2
+    Alpha2 --> AlphaN
+    AlphaN --> Beta1
+    
+    Beta1 --> |"Issues Found"| Beta2
+    Beta2 --> |"More Issues"| BetaN
+    BetaN --> |"Stable"| Promotion
+    
+    Promotion --> Publication
+    Publication --> Production
+    
+    Beta1 --> |"Full CI/CD"| BuildArtifacts[Build Artifacts]
+    Beta2 --> |"Full CI/CD"| BuildArtifacts
+    BetaN --> |"Full CI/CD"| BuildArtifacts
+    
+    BuildArtifacts --> Promotion
+```
+
+### Key Implementation Details
+
+1. **Alpha Tags**: Development checkpoints only, no automated processes
+2. **Beta Tags**: Trigger complete CI/CD including macOS notarization
+3. **Production**: Manual promotion with standardized file naming
+4. **Publication**: Manual security gate maintaining branch protection
+
+### Automation vs Manual Control
+
+- **Automated**: Beta builds, artifact generation, notarization
+- **Manual**: Production promotion, release publication, documentation updates
+- **Rationale**: Balances efficiency with security compliance requirements
 
 ## Conclusion
 

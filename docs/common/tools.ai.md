@@ -96,35 +96,38 @@ key_storage_locations:
 
 ```yaml
 release_commands:
-  # Version tagging convention:
-  # - alpha: Local checkpoints only (NO CI/CD trigger)
-  # - beta: Testing builds (triggers CI/CD)
-  # - production: Final releases
+  # Current three-tier tagging convention with incremental versioning:
+  # - alpha: v{VERSION}-alpha.{N} - Development checkpoints (NO CI/CD trigger)
+  # - beta: v{VERSION}-beta.{N} - Testing builds (triggers full CI/CD)
+  # - production: v{VERSION} - Final releases (manual promotion only)
   
-  # Local development checkpoints (no build)
-  local_checkpoint: "git tag v1.0.0-alpha && git push origin v1.0.0-alpha"
+  # Alpha development checkpoints (no build)
+  alpha_checkpoint: "git tag v0.3.0-alpha.1 && git push origin v0.3.0-alpha.1"
+  alpha_iteration: "git tag v0.3.0-alpha.2 && git push origin v0.3.0-alpha.2"
   
-  # Beta releases with CI/CD builds
-  beta_full: "git tag v1.0.0-beta && git push origin v1.0.0-beta"
-  beta_linux: "git tag v1.0.0-beta-linux && git push origin v1.0.0-beta-linux"
-  beta_macos: "git tag v1.0.0-beta-mac && git push origin v1.0.0-beta-mac"
-  beta_windows: "git tag v1.0.0-beta-win && git push origin v1.0.0-beta-win"
-  beta_combination: "git tag v1.0.0-beta-mac-linux && git push origin v1.0.0-beta-mac-linux"
+  # Beta releases with full CI/CD builds
+  beta_testing: "git tag v0.3.0-beta.1 && git push origin v0.3.0-beta.1"
+  beta_iteration: "git tag v0.3.0-beta.2 && git push origin v0.3.0-beta.2"
   
-  # Production release
-  production: "git tag v1.0.0 && git push origin v1.0.0"
+  # Production promotion (no rebuild - reuses beta artifacts)
+  promote_beta: "make promote-beta FROM=0.3.0-beta.2 TO=0.3.0"
+  promote_beta_alt: "./scripts/cicd/promote-beta.sh --from 0.3.0-beta.2 --to 0.3.0"
   
-  # Promotion workflow
-  promote_beta:
-    command: "gh workflow run release.yml -f promote_from=1.0.0-beta.1 -f version=1.0.0"
-    purpose: "Reuse tested artifacts without rebuilding"
+  # Production publication (manual security gate)
+  publish_production: "make publish-prod VERSION=0.3.0"
+  publish_production_alt: "./scripts/cicd/publish-production.sh 0.3.0"
   
-  # Manual selective build
+  # List available betas for promotion
+  list_betas: "./scripts/cicd/promote-beta.sh --list"
+  
+  # Manual workflow dispatch (testing only)
   manual_selective:
     command: |
       gh workflow run release.yml \
-        -f version=1.0.0 \
+        -f version=0.3.0 \
         -f selective_build=true \
+        -f build_macos_intel=false \
+        -f build_macos_arm=true \
         -f build_linux=true \
         -f build_windows=false
 
@@ -148,5 +151,15 @@ frontend_change: ["make validate-ui", "make test-ui"]
 backend_change: ["make validate-rust", "make test-rust"]
 mixed_changes: ["make validate", "make test"]
 before_push: ["make validate", "npm audit", "cargo audit"]
-before_release: ["make validate", "git tag v{version}-test-linux", "verify artifacts"]
+
+# Release cycle workflow
+before_beta: ["make validate", "git tag v{version}-alpha.{N}"] # checkpoint
+create_beta: ["git tag v{version}-beta.1", "monitor CI/CD build"]
+promote_to_prod: ["make promote-beta FROM={version}-beta.{N} TO={version}"]
+publish_release: ["make publish-prod VERSION={version}"]
+
+# Monitoring and troubleshooting
+check_releases: ["gh release list --limit 10"]
+check_workflows: ["gh run list --workflow=release.yml --limit 5"]
+check_betas: ["./scripts/cicd/promote-beta.sh --list"]
 ```

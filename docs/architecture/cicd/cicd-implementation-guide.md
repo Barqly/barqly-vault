@@ -1,266 +1,312 @@
 # CI/CD Implementation Guide
 
-**Quick Start Guide for Transitioning to the New CI/CD Architecture**
+**Created**: 2025-08-20  
+**Updated**: 2025-09-02  
+**Status**: Active Implementation Guide  
+**Author**: System Architect
 
-## Current State Analysis
+## Overview
 
-### Existing Workflows
-1. **build-linux.yml** - Manual trigger + tag-based Linux builds
-2. **deploy-docs.yml** - Auto-deploy documentation to GitHub Pages
+This guide documents the implemented CI/CD system for Barqly Vault, focusing on the three-tier release process (alpha/beta/production) and operational procedures.
 
-### Issues Identified
-- Builds triggering on every push (resource waste)
-- Both workflows sometimes building unnecessarily
-- No intelligent path filtering
-- Missing cross-platform testing
+**For detailed release process steps, see [release-process.md](./release-process.md)**
 
-## Migration Steps
+## Current Implementation Status
 
-### Step 1: Test New Workflows (Safe)
+### ✅ Implemented Components
 
-First, test the new workflows alongside existing ones:
+1. **GitHub Actions Workflows**
+   - `release.yml` - Beta-triggered builds with full cross-platform support
+   - `deploy-docs.yml` - Automatic documentation deployment
+
+2. **Release Scripts**
+   - `scripts/cicd/promote-beta.sh` - Beta to production promotion
+   - `scripts/cicd/publish-production.sh` - Production publication and docs update
+   - `scripts/cicd/update-downloads.sh` - Download page generation
+   - `scripts/cicd/generate-downloads.py` - Template-based page generation
+
+3. **Automation Features**
+   - macOS DMG notarization and code signing
+   - Cross-platform artifact generation (macOS, Windows, Linux)
+   - Automated file renaming during promotion
+   - Documentation updates with version synchronization
+
+### 🎯 Key Features
+
+- **Cost-Efficient**: Only beta tags trigger expensive builds
+- **Security-Compliant**: Manual publication maintains branch protection
+- **Standardized**: Consistent file naming across all platforms
+- **Automated**: Full build pipeline with minimal manual intervention
+
+## Operational Workflow
+
+### 1. Development Phase (Alpha Tags)
+
+Create development checkpoints without triggering builds:
 
 ```bash
-# 1. Keep existing workflows but rename them
-mv .github/workflows/build-linux.yml .github/workflows/build-linux.yml.backup
-mv .github/workflows/deploy-docs.yml .github/workflows/deploy-docs.yml.backup
+# Create alpha checkpoint
+git tag v0.3.0-alpha.1
+git push origin v0.3.0-alpha.1
 
-# 2. Current workflow architecture:
-# - release.yml (comprehensive tag-based releases with signing/notarization)
-# - deploy-docs.yml (automated documentation deployment)
-
-# 3. Restore deploy-docs.yml as it's already well-configured
-mv .github/workflows/deploy-docs.yml.backup .github/workflows/deploy-docs.yml
+# Continue development
+git tag v0.3.0-alpha.2  
+git push origin v0.3.0-alpha.2
 ```
 
-### Step 2: Configure Repository Settings
+**What happens**: Nothing automated - purely organizational markers
 
-#### Branch Protection Rules
+### 2. Testing Phase (Beta Tags)
 
-1. Go to Settings → Branches
-2. Add rule for `main` branch:
-   - ✅ Require pull request reviews
-   - ✅ Require status checks to pass (when configured)
-   - ✅ Require branches to be up to date
-   - ✅ Include administrators (optional)
+Trigger full CI/CD pipeline for testing:
 
-#### Secrets Configuration
+```bash
+# Create beta release (triggers full build)
+git tag v0.3.0-beta.1
+git push origin v0.3.0-beta.1
+```
 
-Add these secrets in Settings → Secrets and variables → Actions:
+**What happens automatically**:
+1. GitHub Actions `release.yml` workflow triggers
+2. Cross-platform builds (macOS Intel/ARM, Windows, Linux)
+3. macOS DMG notarization and code signing
+4. Creates beta draft release with all artifacts
+5. Auto-creates production draft release (`v0.3.0`)
+
+### 3. Beta Testing & Iteration
+
+```bash
+# If issues found, create new beta
+git tag v0.3.0-beta.2
+git push origin v0.3.0-beta.2
+
+# Monitor releases
+gh release list --limit 10
+```
+
+### 4. Production Promotion
+
+Promote stable beta to production:
+
+```bash
+# List available betas
+make promote-beta --list
+# OR: ./scripts/cicd/promote-beta.sh --list
+
+# Promote specific beta
+make promote-beta FROM=0.3.0-beta.2 TO=0.3.0
+# OR: ./scripts/cicd/promote-beta.sh --from 0.3.0-beta.2 --to 0.3.0
+```
+
+**What happens**:
+1. Downloads all artifacts from beta release
+2. Renames files to remove "-beta" suffix
+3. Creates/updates production tag
+4. Creates production draft release with standardized naming
+
+### 5. Production Publication
+
+Publish production release and update documentation:
+
+```bash
+# Publish to production
+make publish-prod VERSION=0.3.0
+# OR: ./scripts/cicd/publish-production.sh 0.3.0
+```
+
+**What happens**:
+1. Converts GitHub draft to published release
+2. Updates `public-docs/downloads/index.html` with new version
+3. Updates `scripts/cicd/downloads/data.json` with release data
+4. Commits and pushes documentation changes
+5. Triggers automatic documentation deployment
+
+## Repository Configuration
+
+### Branch Protection Rules
+
+The `main` branch has the following protection rules:
+
+- ✅ Require pull request reviews
+- ✅ Require status checks to pass before merging
+- ✅ Require branches to be up to date before merging
+- ✅ Include administrators in restrictions
+
+**Why**: Maintains security while allowing manual publication scripts to bypass for documentation updates
+
+### Required GitHub Secrets
 
 ```yaml
-# Required for releases (optional for development)
+# Apple Developer Program (for macOS signing)
+APPLE_CERTIFICATE_P12         # Base64 encoded .p12 certificate
+APPLE_CERTIFICATE_PASSWORD    # Certificate password
+APPLE_DEVELOPER_ID            # Developer ID Application
+APPLE_API_KEY                 # App Store Connect API key
+APPLE_API_KEY_ID             # API key ID
+APPLE_API_ISSUER_ID          # API issuer ID
+
+# Tauri (for app updates)
 TAURI_SIGNING_PRIVATE_KEY    # For update mechanism
 
-# macOS (optional, for signed releases)
-APPLE_CERTIFICATE             # Base64 encoded .p12
-APPLE_CERTIFICATE_PASSWORD   # Certificate password
-APPLE_SIGNING_IDENTITY       # Developer ID Application
-APPLE_ID                      # Apple ID for notarization
-APPLE_PASSWORD                # App-specific password
-APPLE_TEAM_ID                # Team ID
-
 # Windows (optional, for signed releases)
-WINDOWS_CERTIFICATE           # Base64 encoded .pfx
+WINDOWS_CERTIFICATE          # Base64 encoded .pfx
 WINDOWS_CERTIFICATE_PASSWORD # Certificate password
 ```
 
-### Step 3: Test the Workflows
+## File Naming Conventions
 
-#### Test Release Pipeline
-
-```bash
-# Create a release tag
-git tag v1.0.0-beta.1
-git push origin v1.0.0-beta.1
-
-# Or use manual workflow dispatch:
-# 1. Go to Actions tab
-# 2. Select "Release Pipeline"
-# 3. Click "Run workflow"
-# 4. Enter version (e.g., 1.0.0)
-# 5. Choose pre-release if needed
+### Beta Artifacts (Auto-Generated)
+```
+barqly-vault-{VERSION}-beta.{N}-macos-arm64.dmg
+barqly-vault-{VERSION}-beta.{N}-macos-x86_64.dmg
+barqly-vault-{VERSION}-beta.{N}-x64.msi
+barqly-vault-{VERSION}-beta.{N}-windows-x64.zip
+barqly-vault-{VERSION}-beta.{N}-1_amd64.deb
+barqly-vault-{VERSION}-beta.{N}-1.x86_64.rpm
+barqly-vault-{VERSION}-beta.{N}-1_amd64.AppImage
+barqly-vault-{VERSION}-beta.{N}-x86_64.tar.gz
 ```
 
-#### Test Release Pipeline
-
-```bash
-# Create a test tag (use beta for safety)
-git tag v0.1.0-beta.1
-git push origin v0.1.0-beta.1
-
-# This will trigger the release workflow
-# Check Actions tab to monitor progress
+### Production Artifacts (After Promotion)
+```
+barqly-vault-{VERSION}-macos-arm64.dmg
+barqly-vault-{VERSION}-macos-x86_64.dmg
+barqly-vault-{VERSION}-x64.msi
+barqly-vault-{VERSION}-windows-x64.zip
+barqly-vault-{VERSION}-1_amd64.deb
+barqly-vault-{VERSION}-1.x86_64.rpm
+barqly-vault-{VERSION}-1_amd64.AppImage
+barqly-vault-{VERSION}-x86_64.tar.gz
+checksums.txt (regenerated)
 ```
 
-### Step 4: Optimization Tips
+## Platform-Specific Details
 
-#### Reducing Build Times
+### macOS
+- **Separate builds** for Intel (x86_64) and Apple Silicon (aarch64)
+- **Code signing** with Developer ID certificates
+- **Notarization** via Apple App Store Connect API
+- **DMG distribution** for both architectures
 
-1. **Use Path Filters Effectively**
-   ```yaml
-   # In your PR, if you only changed docs:
-   # The CI will skip Rust/Frontend validation automatically
-   ```
+### Windows
+- **MSI installer** for standard installation
+- **ZIP archive** for portable deployment
+- **Optional code signing** with Authenticode certificates
 
-2. **Manual Control for Expensive Operations**
-   ```bash
-   # Use labels on PRs to control builds
-   # Add label: "skip-ci" to skip CI
-   # Add label: "full-build" to force all platforms
-   ```
-
-3. **Cache Warming**
-   ```bash
-   # Run a manual build weekly to keep caches warm
-   # Schedule this in the workflow or manually
-   ```
-
-## Quick Answers to Your Questions
-
-### Q1: "Is firing on every push standard practice?"
-
-**Answer**: No, it's not optimal. The new architecture uses:
-- **Pull Request triggers** for development (more controlled)
-- **Main branch triggers** only after PR merge (production readiness)
-- **Tag triggers** for releases (explicit control)
-- **Manual triggers** for special cases (maximum flexibility)
-
-### Q2: "How to build only changed code?"
-
-**Answer**: Implemented via path filtering:
-```yaml
-# The new CI automatically detects:
-- Frontend changes → runs only frontend validation
-- Rust changes → runs only Rust validation
-- Doc changes → skips code validation entirely
-- Uses dorny/paths-filter for intelligent detection
-```
-
-### Q3: "Universal distribution for Linux/Windows?"
-
-**Answer**: 
-- **Linux**: AppImage is closest to universal (works on most distros)
-- **Windows**: MSIX for modern Windows, MSI for compatibility
-- **Strategy**: Build multiple formats, let users choose
-
-### Q4: "Cross-platform testing without machines?"
-
-**Answer**: Multiple solutions implemented:
-1. **GitHub Actions** - Free runners for all platforms
-2. **Container testing** - Linux variants via Docker
-3. **Future options**:
-   - BrowserStack (free for open source)
-   - Self-hosted runners on your PopOS machine
-   - Community testing via beta releases
+### Linux
+- **AppImage** for universal compatibility
+- **.deb packages** for Debian/Ubuntu
+- **.rpm packages** for RedHat/Fedora
+- **.tar.gz archives** for manual installation
 
 ## Monitoring and Maintenance
 
 ### Weekly Tasks
-- Review Action run times in Insights → Actions
-- Check cache hit rates
-- Update dependencies if needed
+- Monitor GitHub Actions usage and costs
+- Review release metrics and build times
+- Clean up old draft releases if needed
 
 ### Monthly Tasks
-- Review and optimize slow jobs
-- Clean up old workflow runs
-- Update runner versions if available
+- Update GitHub Actions runner versions
+- Review and optimize caching strategies
+- Audit security certificates expiration
 
-### Metrics to Track
-- Average CI time: Target < 5 minutes for PRs
-- Release build time: Target < 30 minutes for all platforms
-- Cache hit rate: Target > 80%
-- Monthly minute usage: Stay under 2000 (free tier)
+### Key Metrics
+- **Build Time**: Target <30 minutes for full release
+- **Success Rate**: Target >95% for beta builds
+- **Cost**: Stay within GitHub Actions free tier limits
 
 ## Troubleshooting
 
-### Common Issues and Solutions
+### Common Issues
 
-1. **"Workflow not triggering"**
-   ```bash
-   # Check path filters
-   # Ensure changes match trigger paths
-   # Verify branch protection settings
-   ```
-
-2. **"Build failing on Linux"**
-   ```bash
-   # Usually missing dependencies
-   # Check the apt-get install section
-   # May need to add more libraries
-   ```
-
-3. **"Cache not working"**
-   ```bash
-   # Check cache keys
-   # Ensure paths are correct
-   # Verify restore-keys fallback
-   ```
-
-4. **"Releases not publishing"**
-   ```bash
-   # Check secrets configuration
-   # Verify tag format (v*.*.*)
-   # Ensure permissions are set
-   ```
-
-## Cost Estimation
-
-With the optimized pipeline:
-
-| Scenario | Minutes/Month | Cost |
-|----------|---------------|------|
-| 10 PRs/week | ~200 | Free |
-| Daily builds | ~600 | Free |
-| 2 releases | ~60 | Free |
-| **Total** | **~860** | **$0** |
-
-Well within GitHub's free tier (2,000 minutes)!
-
-## Next Steps
-
-1. **Week 1**: Test new CI pipeline with PRs
-2. **Week 2**: Test release pipeline with beta tag
-3. **Week 3**: Add platform-specific tests
-4. **Week 4**: Enable security scanning
-5. **Month 2**: Consider code signing setup
-
-## Quick Commands Reference
-
+#### 1. Beta Build Failures
 ```bash
-# Run CI locally (approximate)
-make validate        # Full validation
-make validate-ui     # Frontend only
-make validate-rust   # Backend only
+# Check workflow logs
+gh run list --workflow=release.yml --limit 5
 
-# Create a release
-git tag v1.0.0
-git push origin v1.0.0
-
-# Manual workflow trigger via CLI
-gh workflow run release.yml \
-  -f version=1.0.0 \
-  -f prerelease=false
-
-# Check workflow status
-gh run list --workflow=release.yml
-
-# Download artifacts
-gh run download <run-id>
+# View specific run
+gh run view <run-id> --log
 ```
 
-## Summary
+#### 2. Promotion Failures
+```bash
+# Verify beta release exists
+gh release view v0.3.0-beta.1
 
-The new CI/CD architecture provides:
-- ✅ Smart triggers (no more waste)
-- ✅ Selective building (only what changed)
-- ✅ Cross-platform support (all major OS)
-- ✅ Automated testing (quality gates)
-- ✅ Cost-efficient (stays in free tier)
-- ✅ Manual control when needed
+# Check available artifacts
+gh release view v0.3.0-beta.1 --json assets
+```
 
-Start with the CI pipeline for PRs, then gradually adopt the release pipeline. The architecture is designed to grow with your project!
+#### 3. Publication Issues
+```bash
+# Verify draft release exists
+gh release view v0.3.0
+
+# Check branch protection status
+gh api repos/barqly/barqly-vault/branches/main/protection
+```
+
+### Emergency Procedures
+
+#### Rollback Release
+```bash
+# Delete problematic release
+gh release delete v0.3.0 --yes
+
+# Delete tag
+git tag -d v0.3.0
+git push origin --delete v0.3.0
+```
+
+#### Manual Documentation Update
+```bash
+# Update downloads directly
+./scripts/cicd/update-downloads.sh 0.3.0
+
+# Commit changes
+git add public-docs/ scripts/cicd/downloads/
+git commit -m "docs: manual update for v0.3.0"
+git push origin main
+```
+
+## Quick Reference Commands
+
+```bash
+# Development
+git tag v0.3.0-alpha.1 && git push origin v0.3.0-alpha.1
+
+# Beta testing
+git tag v0.3.0-beta.1 && git push origin v0.3.0-beta.1
+
+# Production promotion
+make promote-beta FROM=0.3.0-beta.2 TO=0.3.0
+
+# Production publication  
+make publish-prod VERSION=0.3.0
+
+# Monitoring
+gh release list --limit 10
+gh run list --workflow=release.yml --limit 5
+```
+
+## Security Considerations
+
+### Branch Protection Compliance
+- Manual publication maintains branch protection rules
+- No GitHub bot permissions required for production releases
+- Human approval gate for all public releases
+
+### Code Signing
+- All macOS builds are notarized via Apple Developer Program
+- Windows builds can be optionally signed with Authenticode
+- Linux builds include SHA256 checksums for verification
+
+### Secrets Management
+- All sensitive credentials stored in GitHub Secrets
+- Certificate expiration monitoring
+- Regular credential rotation (annually)
 
 ---
 
-*For detailed architecture documentation, see [cicd-pipeline-architecture.md](./cicd-pipeline-architecture.md)*
+*This implementation guide reflects the current operational CI/CD system. Updates should be made as the system evolves.*

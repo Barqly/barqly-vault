@@ -331,43 +331,42 @@ cargo clean           # Reset Rust build cache
 
 ## CI/CD and Release Engineering
 
-### Smart Tag-Based Release Convention
+### Three-Tier Release Process
 
-We use a three-tier tagging system that optimizes CI/CD resource usage:
+We use an incremental tagging system optimized for cost efficiency and security compliance:
 
-#### 1. Alpha Tags (Local Checkpoints)
+#### 1. Alpha Tags (Development Checkpoints)
 ```bash
-git tag v1.0.0-alpha && git push origin v1.0.0-alpha
+# Incremental alpha development
+git tag v0.3.0-alpha.1 && git push origin v0.3.0-alpha.1
+git tag v0.3.0-alpha.2 && git push origin v0.3.0-alpha.2
 ```
-- **No CI/CD trigger** - saves resources
-- Use for local development checkpoints
-- Easy rollback points during development
+- **No CI/CD trigger** - zero cost for checkpoints
+- Use for development milestones and feature completion markers
+- Allows multiple iterations on same base version
 
-#### 2. Beta Tags (Testing Builds)
+#### 2. Beta Tags (Full Build + Testing)
 ```bash
-# Full build - all platforms
-git tag v1.0.0-beta && git push origin v1.0.0-beta
-
-# Selective platform builds to save time
-git tag v1.0.0-beta-linux && git push origin v1.0.0-beta-linux  # Linux only
-git tag v1.0.0-beta-mac && git push origin v1.0.0-beta-mac      # macOS only
-git tag v1.0.0-beta-win && git push origin v1.0.0-beta-win      # Windows only
-git tag v1.0.0-beta-mac-linux && git push origin v1.0.0-beta-mac-linux  # Multiple
+# Incremental beta testing
+git tag v0.3.0-beta.1 && git push origin v0.3.0-beta.1
+git tag v0.3.0-beta.2 && git push origin v0.3.0-beta.2
 ```
-- Triggers CI/CD builds
-- Use for testing and validation
-- Selective builds save hours of notarization time
+- **Triggers complete CI/CD** including macOS notarization
+- Builds all platforms (macOS Intel/ARM, Windows, Linux)
+- Creates both beta and production draft releases
+- **Cost-efficient**: Only betas trigger expensive builds
 
-#### 3. Production Releases
+#### 3. Production Releases (Manual Promotion)
 ```bash
-# Direct production release
-git tag v1.0.0 && git push origin v1.0.0
+# Promote stable beta to production (reuses artifacts)
+make promote-beta FROM=0.3.0-beta.2 TO=0.3.0
 
-# Or promote a tested beta
-gh workflow run release.yml -f promote_from=1.0.0-beta -f version=1.0.0
+# Publish production release and update documentation  
+make publish-prod VERSION=0.3.0
 ```
-- Final releases for users
-- Can be created fresh or promoted from beta
+- **Manual promotion** reuses tested beta artifacts
+- **Security-compliant** with manual approval gates
+- **Standardized naming** removes beta suffixes from files
 
 ### Platform Support
 
@@ -377,15 +376,26 @@ We build for **4 desktop platforms** from a single codebase:
 - Windows x64 - MSI installer and standalone ZIP
 - Linux x64 - DEB, RPM, AppImage, and tar.gz
 
-### Release Promotion
+### Release Workflow
 
-Promote beta releases to production without rebuilding:
+Complete release cycle from development to production:
 
 ```bash
-gh workflow run release.yml \
-  -f promote_from=1.0.0-beta.1 \
-  -f version=1.0.0
+# 1. Development checkpoints (no builds)
+git tag v0.3.0-alpha.1 && git push origin v0.3.0-alpha.1
+
+# 2. Testing builds (full CI/CD)
+git tag v0.3.0-beta.1 && git push origin v0.3.0-beta.1
+
+# 3. Promotion (reuses artifacts, manual security gate)
+make promote-beta FROM=0.3.0-beta.1 TO=0.3.0
+make publish-prod VERSION=0.3.0
 ```
+
+**Key Benefits**:
+- **Cost-efficient**: Only beta builds trigger expensive notarization
+- **Security-compliant**: Manual publication maintains branch protection  
+- **Reliable**: Promotion reuses tested artifacts without rebuilding
 
 This reuses the exact tested artifacts, ensuring what you tested is what you ship.
 
