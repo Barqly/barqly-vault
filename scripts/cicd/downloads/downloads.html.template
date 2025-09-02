@@ -452,6 +452,18 @@
         font-size: 1.1rem;
       }
 
+      /* Footer links use theme-appropriate colors */
+      .footer-link {
+        color: var(--link-color) !important;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+
+      .footer-link:hover {
+        color: var(--link-hover-color) !important;
+        text-decoration: underline;
+      }
+
       .footer a {
         color: var(--bitcoin-orange);
         text-decoration: none;
