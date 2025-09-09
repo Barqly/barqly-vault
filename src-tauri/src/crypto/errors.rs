@@ -17,6 +17,9 @@ pub enum CryptoError {
     #[error("Invalid recipient key")]
     InvalidRecipient,
 
+    #[error("Invalid key: {0}")]
+    InvalidKey(String),
+
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 

@@ -39,6 +39,7 @@
 pub mod cache;
 pub mod errors;
 pub mod key_store;
+pub mod metadata_v2;
 pub mod path_management;
 
 use std::path::PathBuf;
@@ -49,6 +50,7 @@ pub use key_store::{
     delete_key, get_key_info, key_exists, list_keys, load_encrypted_key, save_encrypted_key,
     KeyInfo,
 };
+pub use metadata_v2::{MetadataV2Storage, RecipientInfo, RecipientType, VaultMetadataV2};
 pub use path_management::{get_key_file_path, get_key_metadata_path};
 
 /// Result type for storage operations

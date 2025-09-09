@@ -119,9 +119,8 @@ If you decide to use auto-generated types later:
 
 1. Run `cargo build --features generate-types`
 2. Copy generated types to a new file (e.g., `generated-types.ts`)
-3. Keep manual additions in `api-types.ts`
-4. Import generated types into `api-types.ts`
-5. Re-export with manual enhancements
+3. Import generated types into `api-types.ts`
+4. Re-export with manual enhancements
 
 ## Conclusion
 

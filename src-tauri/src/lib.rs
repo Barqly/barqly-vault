@@ -26,6 +26,18 @@ use commands::{
     validate_passphrase,
     verify_key_passphrase,
     verify_manifest,
+    yubikey_check_setup_status,
+    yubikey_decrypt_file,
+    yubikey_devices_available,
+    yubikey_get_available_unlock_methods,
+    yubikey_get_device_info,
+    yubikey_get_setup_recommendations,
+    yubikey_initialize,
+    // YubiKey commands
+    yubikey_list_devices,
+    yubikey_test_connection,
+    yubikey_test_unlock_credentials,
+    yubikey_validate_pin,
 };
 
 use logging::{init_logging, log_info, LogLevel};
@@ -61,6 +73,18 @@ pub fn run() {
             select_directory,
             get_file_info,
             create_manifest,
+            // YubiKey commands
+            yubikey_list_devices,
+            yubikey_devices_available,
+            yubikey_get_device_info,
+            yubikey_test_connection,
+            yubikey_initialize,
+            yubikey_get_setup_recommendations,
+            yubikey_validate_pin,
+            yubikey_check_setup_status,
+            yubikey_decrypt_file,
+            yubikey_get_available_unlock_methods,
+            yubikey_test_unlock_credentials,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

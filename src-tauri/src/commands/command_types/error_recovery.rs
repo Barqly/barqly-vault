@@ -154,5 +154,75 @@ pub fn get_recovery_guidance(code: &ErrorCode) -> (Option<String>, bool) {
             Some("Configuration is corrupted. Try reinstalling the application or delete the config folder and restart".to_string()),
             false,
         ),
+
+        // YubiKey Hardware Errors - user actionable
+        ErrorCode::YubiKeyNotFound => (
+            Some("Insert your YubiKey device and ensure it's properly connected. Try a different USB port if necessary".to_string()),
+            true,
+        ),
+        ErrorCode::YubiKeyPinRequired => (
+            Some("Enter your 6-8 digit YubiKey PIN. This is the PIN you set when you first configured your YubiKey".to_string()),
+            true,
+        ),
+        ErrorCode::YubiKeyPinBlocked => (
+            Some("Your YubiKey PIN is blocked after too many incorrect attempts. Use your PUK (PIN Unblocking Key) to reset it".to_string()),
+            true,
+        ),
+        ErrorCode::YubiKeyTouchRequired => (
+            Some("Touch the gold contact on your YubiKey when it blinks or glows to confirm the operation".to_string()),
+            true,
+        ),
+        ErrorCode::YubiKeyTouchTimeout => (
+            Some("Touch confirmation timed out. Try the operation again and touch your YubiKey more quickly when it blinks".to_string()),
+            true,
+        ),
+        ErrorCode::WrongYubiKey => (
+            Some("The connected YubiKey is not the one used to create this vault. Connect the correct YubiKey or use an alternative unlock method".to_string()),
+            true,
+        ),
+        ErrorCode::YubiKeySlotInUse => (
+            Some("The selected PIV slot already contains a key. Choose a different slot or use a different YubiKey".to_string()),
+            true,
+        ),
+        ErrorCode::YubiKeyInitializationFailed => (
+            Some("YubiKey setup failed. Try resetting the PIV applet using YubiKey Manager, or use a different YubiKey".to_string()),
+            true,
+        ),
+        ErrorCode::YubiKeyCommunicationError => (
+            Some("Unable to communicate with YubiKey. Try reconnecting the device or restarting the application".to_string()),
+            true,
+        ),
+
+        // Plugin Errors - some user actionable
+        ErrorCode::PluginNotFound => (
+            Some("YubiKey plugin is missing. Restart the application to reinstall the plugin automatically".to_string()),
+            true,
+        ),
+        ErrorCode::PluginVersionMismatch => (
+            Some("YubiKey plugin version is incompatible. Update the application to get the latest plugin version".to_string()),
+            true,
+        ),
+        ErrorCode::PluginExecutionFailed => (
+            Some("YubiKey plugin failed to execute. Ensure your YubiKey is connected and try again".to_string()),
+            true,
+        ),
+        ErrorCode::PluginDeploymentFailed => (
+            Some("Failed to install YubiKey plugin. Check file permissions and restart the application as administrator".to_string()),
+            true,
+        ),
+
+        // Multi-recipient Errors - user actionable
+        ErrorCode::NoUnlockMethodAvailable => (
+            Some("No valid unlock methods are currently available. Connect your YubiKey or ensure you have the correct passphrase".to_string()),
+            true,
+        ),
+        ErrorCode::RecipientMismatch => (
+            Some("The provided credentials don't match any recipients for this vault. Check your YubiKey serial number or passphrase key label".to_string()),
+            true,
+        ),
+        ErrorCode::MultiRecipientSetupFailed => (
+            Some("Failed to set up multiple unlock methods. Try setting up protection modes one at a time".to_string()),
+            true,
+        ),
     }
 }

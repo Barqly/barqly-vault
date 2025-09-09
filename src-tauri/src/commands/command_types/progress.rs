@@ -106,4 +106,39 @@ pub enum ProgressDetails {
         /// Current file being verified
         current_file: String,
     },
+    /// YubiKey operation progress
+    YubiKeyOperation {
+        /// Type of YubiKey operation
+        operation: YubiKeyOperationType,
+        /// Current phase of the operation
+        phase: YubiKeyPhase,
+        /// Whether user interaction is required
+        requires_interaction: bool,
+        /// Additional context information
+        context: Option<String>,
+    },
+}
+
+/// Types of YubiKey operations
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum YubiKeyOperationType {
+    Detection,
+    Initialization,
+    Authentication,
+    KeyGeneration,
+    Encryption,
+    Decryption,
+    PluginDeployment,
+}
+
+/// Phases of YubiKey operations
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum YubiKeyPhase {
+    Starting,
+    InProgress { percentage: Option<u8> },
+    WaitingForPin,
+    WaitingForTouch,
+    Completing,
+    Completed,
+    Failed { error: String },
 }

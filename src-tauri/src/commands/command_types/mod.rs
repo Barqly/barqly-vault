@@ -37,6 +37,6 @@ pub use core::{CommandResponse, CommandResult, ProgressCallback};
 pub use error::CommandError;
 pub use error_code::ErrorCode;
 pub use error_handler::ErrorHandler;
-pub use progress::{ProgressDetails, ProgressUpdate};
+pub use progress::{ProgressDetails, ProgressUpdate, YubiKeyOperationType, YubiKeyPhase};
 pub use progress_manager::ProgressManager;
 pub use validation::{ValidateInput, ValidateInputDetailed, ValidationHelper};

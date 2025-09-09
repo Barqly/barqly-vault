@@ -68,6 +68,28 @@ pub enum ErrorCode {
     TamperedData,
     UnauthorizedAccess,
 
+    // YubiKey Hardware Errors
+    YubiKeyNotFound,
+    YubiKeyPinRequired,
+    YubiKeyPinBlocked,
+    YubiKeyTouchRequired,
+    YubiKeyTouchTimeout,
+    WrongYubiKey,
+    YubiKeySlotInUse,
+    YubiKeyInitializationFailed,
+    YubiKeyCommunicationError,
+
+    // Plugin Errors
+    PluginNotFound,
+    PluginVersionMismatch,
+    PluginExecutionFailed,
+    PluginDeploymentFailed,
+
+    // Multi-recipient Errors
+    NoUnlockMethodAvailable,
+    RecipientMismatch,
+    MultiRecipientSetupFailed,
+
     // Internal errors
     InternalError,
     UnexpectedError,
