@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Donate to Barqly Vault - Simple, Secure File Encryption</title>
+    <meta
+      name="description"
+      content="Support the development of Barqly Vault. Donate with Bitcoin or traditional currencies to help build simple, secure file encryption for everyone."
+    />
+    
+    <!-- Open Graph / LinkedIn -->
+    <meta property="og:title" content="Donate to Barqly Vault - Simple, Secure File Encryption" />
+    <meta property="og:description" content="Support the development of open-source file encryption for Bitcoin and beyond." />
+    <meta property="og:image" content="https://barqly.com/assets/barqly-vault-social.png" />
+    <meta property="og:url" content="https://barqly.com/donate/" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Donate to Barqly Vault" />
+    <meta name="twitter:description" content="Support open-source file encryption development." />
+    <meta name="twitter:image" content="https://barqly.com/assets/barqly-vault-social.png" />
+    
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
+    <style>
+      :root {
+        --bitcoin-orange: #ff8a00;
+        --brand-gray: #565555;
+        --primary-blue: #2563EB;
+        --dark-gray: #1E293B;
+        --medium-gray: #64748B;
+        --light-gray: #F8FAFC;
+        --white: #FFFFFF;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.15);
+        --border-color: rgba(226, 232, 240, 0.5);
+        --link-color: #2563EB;
+        --link-hover-color: #1D4ED8;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        line-height: 1.6;
+        color: var(--brand-gray);
+        background: linear-gradient(135deg, #F8FAFC 0%, #F0F9FF 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, var(--white) 0%, #FFF9F5 100%);
+        border-radius: 20px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        border-top: 4px solid var(--bitcoin-orange);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--bitcoin-orange), transparent);
+        opacity: 0.6;
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .logo {
+        height: 80px;
+        width: auto;
+        transition: transform 0.3s ease;
+      }
+
+      .logo:hover {
+        transform: scale(1.05);
+      }
+
+      .header .tagline {
+        font-size: 1rem;
+        color: var(--brand-gray);
+        font-weight: 400;
+        max-width: 600px;
+        margin: 0.25rem auto 0;
+        line-height: 1.6;
+      }
+
+      .section {
+        background: var(--white);
+        margin-bottom: 2rem;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+      }
+
+      .section:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--hover-shadow);
+      }
+
+      .section h2 {
+        color: var(--brand-gray);
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--bitcoin-orange);
+        padding-bottom: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .donation-form-container {
+        display: flex;
+        justify-content: center;
+        padding: 2rem 0;
+        margin: 1.5rem 0;
+      }
+
+      /* Dark Mode Styles */
+      [data-theme="dark"] {
+        --bitcoin-orange: #ff8a00;
+        --brand-gray: #9CA3AF;
+        --primary-blue: #60A5FA;
+        --dark-gray: #F9FAFB;
+        --medium-gray: #D1D5DB;
+        --light-gray: #1F2937;
+        --white: #111827;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.2);
+        --border-color: rgba(75, 85, 99, 0.3);
+        --link-color: #60A5FA;
+        --link-hover-color: #93C5FD;
+      }
+
+      [data-theme="dark"] body {
+        background: linear-gradient(135deg, #111827 0%, #1F2937 100%);
+        color: var(--medium-gray);
+      }
+
+      [data-theme="dark"] .header {
+        background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+        border-top-color: var(--bitcoin-orange);
+      }
+
+      [data-theme="dark"] .section {
+        background: var(--white);
+        border-color: var(--border-color);
+      }
+
+      .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(17, 24, 39, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 138, 0, 0.2);
+        z-index: 1000;
+        padding: 1rem 0;
+        transition: all 0.3s ease;
+      }
+
+      [data-theme="light"] .navbar {
+        background: rgba(248, 250, 252, 0.95);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+      }
+
+      .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 2rem;
+      }
+
+      .nav-logo {
+        height: 40px;
+        width: auto;
+        transition: transform 0.2s ease;
+      }
+
+      .nav-logo:hover {
+        transform: scale(1.05);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--medium-gray);
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        color: var(--bitcoin-orange);
+        background: rgba(255, 138, 0, 0.1);
+      }
+
+      .nav-links a.active {
+        color: var(--bitcoin-orange);
+        background: rgba(255, 138, 0, 0.1);
+      }
+
+      .theme-toggle {
+        background: var(--bitcoin-orange);
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin-left: 1rem;
+      }
+
+      .theme-toggle:hover {
+        transform: scale(1.05);
+        background: #FF7A00;
+      }
+
+      .main-content {
+        margin-top: 80px;
+      }
+
+      /* General link styles for accessibility */
+      a {
+        color: var(--link-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+      }
+
+      a:hover {
+        text-decoration: underline;
+        color: var(--link-hover-color);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 2rem;
+        color: var(--medium-gray);
+        font-style: italic;
+        font-size: 1.1rem;
+      }
+
+      .footer-link {
+        color: var(--link-color) !important;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+
+      .footer-link:hover {
+        color: var(--link-hover-color) !important;
+        text-decoration: underline;
+      }
+
+      @media (max-width: 768px) {
+        .nav-container {
+          padding: 0 1rem;
+        }
+
+        .nav-links {
+          gap: 1rem;
+        }
+
+        .nav-links a {
+          padding: 0.5rem 0.75rem;
+          font-size: 0.9rem;
+        }
+
+        .theme-toggle {
+          padding: 0.4rem;
+          margin-left: 0.5rem;
+        }
+
+        .container {
+          padding: 1rem;
+        }
+
+        .header {
+          padding: 2rem 1.5rem;
+        }
+
+        .logo {
+          height: 60px;
+        }
+
+        .header .tagline {
+          font-size: 1.1rem;
+        }
+
+        .section {
+          padding: 1.5rem;
+        }
+
+        .section h2 {
+          font-size: 1.3rem;
+        }
+      }
+
+      /* BTCPay Form Styles - Override defaults to match our theme */
+      .btcpay-form {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      .btcpay-form--block {
+        flex-direction: column;
+      }
+
+      .btcpay-form--block select {
+        margin-bottom: 10px;
+      }
+
+      .btcpay-form .btcpay-custom-container {
+        text-align: center;
+      }
+
+      .btcpay-custom {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btcpay-form .plus-minus {
+        cursor: pointer;
+        font-size: 25px;
+        line-height: 25px;
+        background: var(--bitcoin-orange);
+        color: white;
+        height: 30px;
+        width: 45px;
+        border: none;
+        border-radius: 60px;
+        margin: auto 5px;
+        display: inline-flex;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .btcpay-form .plus-minus:hover {
+        background: #FF7A00;
+        transform: scale(1.05);
+      }
+
+      .btcpay-form select {
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        appearance: none;
+        color: var(--brand-gray);
+        background: var(--white);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        display: block;
+        padding: 8px 16px;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 14px;
+        cursor: pointer;
+        transition: border-color 0.2s ease;
+      }
+
+      .btcpay-form select:hover {
+        border-color: var(--bitcoin-orange);
+      }
+
+      .btcpay-form option {
+        color: var(--brand-gray);
+        background: var(--white);
+      }
+
+      .btcpay-input-price {
+        -moz-appearance: textfield;
+        border: 2px solid var(--border-color);
+        box-shadow: none;
+        text-align: center;
+        font-size: 25px;
+        margin: auto;
+        border-radius: 12px;
+        line-height: 35px;
+        background: var(--white);
+        color: var(--brand-gray);
+        transition: border-color 0.3s ease;
+        padding: 8px;
+      }
+
+      .btcpay-input-price:focus {
+        outline: none;
+        border-color: var(--bitcoin-orange);
+      }
+
+      .btcpay-input-price::-webkit-outer-spin-button,
+      .btcpay-input-price::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      .btcpay-form .submit {
+        margin-top: 1.5rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 12px;
+      }
+
+      .btcpay-form .submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(255, 138, 0, 0.3);
+      }
+
+      [data-theme="dark"] .btcpay-form select,
+      [data-theme="dark"] .btcpay-input-price {
+        background: var(--white);
+        color: var(--medium-gray);
+        border-color: var(--border-color);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="../" onclick="scrollToTop()">
+          <img src="../assets/barqly-vault-logo-dark.svg" alt="Barqly Vault" class="nav-logo" id="nav-logo">
+        </a>
+        
+        <div class="nav-links">
+          <a href="../">Home</a>
+          <a href="../downloads/">Download</a>
+          <a href="./" class="active">Donate</a>
+          <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+            ☀️
+          </button>
+        </div>
+      </div>
+    </nav>
+    
+    <div class="main-content">
+      <div class="container">
+        <div class="header">
+          <div class="logo-container">
+            <img src="../assets/barqly-vault-logo-dark.svg" alt="Barqly Vault" class="logo">
+          </div>
+          <p class="tagline">
+            Support the development of simple, secure, open-source file encryption.
+          </p>
+        </div>
+
+        <div class="section">
+          <h2>Why Donate?</h2>
+          <p>
+            Barqly Vault is developed as an open-source project to serve the Bitcoin community and anyone who needs secure file encryption. Your donations help cover development costs, security audits, and infrastructure needed to make this tool available to everyone.
+          </p>
+        </div>
+
+        <div class="section">
+          <h2>Make a Donation</h2>
+          <p style="text-align: center; margin-bottom: 2rem; color: var(--brand-gray);">
+            Choose your preferred amount and currency. All donations go directly toward development and maintenance.
+          </p>
+          
+          <div class="donation-form-container">
+            <!-- BTCPay Donate Button code - Start -->
+            <form method="POST" action="https://donate.barqly.com/api/v1/invoices" class="btcpay-form btcpay-form--block">
+              <input type="hidden" name="storeId" value="qLWg6tdD5bf6t6AXYLZgiVb9vxmfcQZRNAHgJnC1zoN" />
+              <input type="hidden" name="notifyEmail" value="nauman@barqly.com" />
+              <div class="btcpay-custom-container">
+                <div class="btcpay-custom">
+                  <button class="plus-minus" type="button" data-type="-" data-step="1" data-min="1" data-max="10000000">-</button>
+                  <input class="btcpay-input-price" type="number" name="price" min="1" max="10000000" step="1" value="1" data-price="1" style="width:3em;" />
+                  <button class="plus-minus" type="button" data-type="+" data-step="1" data-min="1" data-max="10000000">+</button>
+                </div>
+                <select name="currency">
+                  <option value="USD" selected>USD</option>
+                  <option value="GBP">GBP</option>
+                  <option value="EUR">EUR</option>
+                  <option value="BTC">BTC</option>
+                </select>
+              </div>
+              <input type="image" class="submit" name="submit" src="https://ipduxnoimr7fhktd3gioyiba3jlyi3syhr6s2zzhgvn4pcqavnxzksyd.local/img/paybutton/pay.svg" style="width:209px" alt="Pay with BTCPay Server, a Self-Hosted Bitcoin Payment Processor">
+            </form>
+            <!-- BTCPay Donate Button code - End -->
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>What Your Donation Supports</h2>
+          <ul style="margin-left: 2rem; color: var(--brand-gray);">
+            <li><strong>Development:</strong> Core features, bug fixes, and platform support</li>
+            <li><strong>Security:</strong> Regular security audits and cryptographic reviews</li>
+            <li><strong>Infrastructure:</strong> Build servers, code signing certificates, and hosting</li>
+            <li><strong>Documentation:</strong> User guides, tutorials, and developer resources</li>
+            <li><strong>Community:</strong> Support channels and user assistance</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h2>Alternative Ways to Support</h2>
+          <p style="margin-bottom: 1rem;">Can't donate right now? Here are other ways to help:</p>
+          <ul style="margin-left: 2rem; color: var(--brand-gray);">
+            <li>⭐ <a href="https://github.com/barqly/barqly-vault" target="_blank">Star the project on GitHub</a></li>
+            <li>🐛 <a href="https://github.com/barqly/barqly-vault/issues" target="_blank">Report bugs or request features</a></li>
+            <li>📢 Share with others who might find it useful</li>
+            <li>📝 Contribute documentation or translations</li>
+            <li>🔍 Help with testing and feedback</li>
+          </ul>
+        </div>
+
+        <div class="footer">
+          <p>Built with ❤️ for the Bitcoin community</p>
+          <p style="margin-top: 1rem;">
+            <a href="https://github.com/barqly/barqly-vault/issues" target="_blank" class="footer-link">
+              💬 Contribute Feedback
+            </a>
+            <a href="https://github.com/barqly/barqly-vault" target="_blank" class="footer-link" style="margin-left: 1rem;">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 0.5rem; vertical-align: text-bottom;">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+              </svg>
+              GitHub
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Navigation functionality
+      function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Theme toggle functionality
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        
+        // Update logos
+        const logo = document.querySelector('.logo');
+        const navLogo = document.querySelector('.nav-logo');
+        if (newTheme === 'dark') {
+          logo.src = '../assets/barqly-vault-logo-dark.svg';
+          navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+          document.querySelector('.theme-toggle').textContent = '☀️';
+        } else {
+          logo.src = '../assets/barqly-vault-logo-light.svg';
+          navLogo.src = '../assets/barqly-vault-logo-light.svg';
+          document.querySelector('.theme-toggle').textContent = '🌙';
+        }
+        
+        // Save preference
+        localStorage.setItem('theme', newTheme);
+      }
+
+      // Initialize theme on page load
+      function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        // If no saved preference, default to dark
+        const defaultTheme = savedTheme || 'dark';
+        
+        document.documentElement.setAttribute('data-theme', defaultTheme);
+        
+        // Update logos based on the actual theme
+        if (defaultTheme === 'dark') {
+          document.querySelector('.logo').src = '../assets/barqly-vault-logo-dark.svg';
+          document.querySelector('.nav-logo').src = '../assets/barqly-vault-logo-dark.svg';
+          document.querySelector('.theme-toggle').textContent = '☀️';
+        } else {
+          document.querySelector('.logo').src = '../assets/barqly-vault-logo-light.svg';
+          document.querySelector('.nav-logo').src = '../assets/barqly-vault-logo-light.svg';
+          document.querySelector('.theme-toggle').textContent = '🌙';
+        }
+      }
+
+      // Initialize theme when page loads
+      document.addEventListener('DOMContentLoaded', initTheme);
+
+      // Listen for system theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('theme')) {
+          const newTheme = e.matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', newTheme);
+          
+          const logo = document.querySelector('.logo');
+          const navLogo = document.querySelector('.nav-logo');
+          if (newTheme === 'dark') {
+            logo.src = '../assets/barqly-vault-logo-dark.svg';
+            navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+            document.querySelector('.theme-toggle').textContent = '☀️';
+          } else {
+            logo.src = '../assets/barqly-vault-logo-light.svg';
+            navLogo.src = '../assets/barqly-vault-logo-light.svg';
+            document.querySelector('.theme-toggle').textContent = '🌙';
+          }
+        }
+      });
+
+      // BTCPay Form JavaScript
+      function handlePlusMinus(event) {
+        event.preventDefault();
+        const root = event.target.closest('.btcpay-form');
+        const el = root.querySelector('.btcpay-input-price');
+        const step = parseInt(event.target.dataset.step) || 1;
+        const min = parseInt(event.target.dataset.min) || 1;
+        const max = parseInt(event.target.dataset.max);
+        const type = event.target.dataset.type;
+        const price = parseInt(el.value) || min;
+        if (type === '-') {
+          el.value = price - step < min ? min : price - step;
+        } else if (type === '+') {
+          el.value = price + step > max ? max : price + step;
+        }
+      }
+
+      document.querySelectorAll(".btcpay-form .plus-minus").forEach(function(el) {
+        if (!el.dataset.initialized) {
+          el.addEventListener('click', handlePlusMinus);
+          el.dataset.initialized = true;
+        }
+      });
+      
+      function handlePriceInput(event) {
+        event.preventDefault();
+        const root = event.target.closest('.btcpay-form');
+        const price = parseInt(event.target.dataset.price);
+        if (isNaN(event.target.value)) root.querySelector('.btcpay-input-price').value = price;
+        const min = parseInt(event.target.getAttribute('min')) || 1;
+        const max = parseInt(event.target.getAttribute('max'));
+        if (event.target.value < min) {
+          event.target.value = min;
+        } else if (event.target.value > max) { 
+          event.target.value = max;
+        }
+      }
+
+      document.querySelectorAll(".btcpay-form .btcpay-input-price").forEach(function(el) {
+        if (!el.dataset.initialized) {
+          el.addEventListener('input', handlePriceInput);
+          el.dataset.initialized = true;
+        }
+      });
+    </script>
+  </body>
+</html>
