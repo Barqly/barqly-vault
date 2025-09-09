@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import MainLayout from './components/layout/MainLayout';
 import { LoadingSpinner } from './components/ui/loading-spinner';
 // Lazy load page components for better initial render performance
-const SetupPage = lazy(() => import('./pages/SetupPage'));
+const SetupPage = lazy(() => import('./pages/EnhancedSetupPage'));
 const EncryptPage = lazy(() => import('./pages/EncryptPage'));
 const DecryptPage = lazy(() => import('./pages/DecryptPage'));
 
