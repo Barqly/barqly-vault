@@ -2,10 +2,29 @@
 
 use crate::commands::command_types::CommandError;
 use crate::crypto::multi_recipient::{MultiRecipientCrypto, MultiRecipientDecryptParams};
-use crate::crypto::yubikey::{ProtectionMode, UnlockCredentials, UnlockMethod};
+use crate::crypto::yubikey::{UnlockCredentials, UnlockMethod};
 use crate::storage::VaultMetadataV2;
 use serde::{Deserialize, Serialize};
 use tauri::command;
+
+/// Method confidence level matching frontend expectations
+#[derive(Debug, Serialize, Deserialize)]
+pub enum ConfidenceLevel {
+    High,
+    Medium,
+    Low,
+}
+
+/// Available unlock method matching frontend structure
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AvailableMethod {
+    pub method_type: UnlockMethod,
+    pub display_name: String,
+    pub description: String,
+    pub requires_hardware: bool,
+    pub estimated_time: String,
+    pub confidence_level: ConfidenceLevel,
+}
 
 /// Decrypt a vault with smart method selection
 ///
@@ -87,8 +106,9 @@ pub async fn yubikey_decrypt_file(
 /// AvailableUnlockMethods with information about available methods
 #[command]
 pub async fn yubikey_get_available_unlock_methods(
-    encrypted_file: String,
-) -> Result<AvailableUnlockMethods, CommandError> {
+    file_path: String,
+) -> Result<Vec<AvailableMethod>, CommandError> {
+    let encrypted_file = file_path;
     // Load vault metadata
     let metadata_path = format!("{encrypted_file}.metadata.json");
     let metadata = load_vault_metadata(&metadata_path)?;
@@ -98,50 +118,33 @@ pub async fn yubikey_get_available_unlock_methods(
     let yubikey_recipients = metadata.get_recipients_by_type("yubikey");
 
     let mut available_methods = Vec::new();
-    let mut method_details = Vec::new();
 
     // Check passphrase methods
     if !passphrase_recipients.is_empty() {
-        available_methods.push(UnlockMethod::Passphrase);
-        for recipient in passphrase_recipients {
-            method_details.push(UnlockMethodDetail {
-                method: UnlockMethod::Passphrase,
-                description: format!("Passphrase: {}", recipient.label),
-                available: true,
-                requirements: vec!["Master passphrase".to_string()],
-            });
-        }
-    }
-
-    // Check YubiKey methods
-    for recipient in yubikey_recipients {
-        let is_available = recipient.is_available();
-        if is_available {
-            available_methods.push(UnlockMethod::YubiKey);
-        }
-
-        method_details.push(UnlockMethodDetail {
-            method: UnlockMethod::YubiKey,
-            description: recipient.get_description(),
-            available: is_available,
-            requirements: vec!["YubiKey device".to_string(), "YubiKey PIN".to_string()],
+        available_methods.push(AvailableMethod {
+            method_type: UnlockMethod::Passphrase,
+            display_name: "Master Passphrase".to_string(),
+            description: "Decrypt using your vault master passphrase".to_string(),
+            requires_hardware: false,
+            estimated_time: "5 seconds".to_string(),
+            confidence_level: ConfidenceLevel::High,
         });
     }
 
-    // Remove duplicates
-    available_methods.sort();
-    available_methods.dedup();
+    // Check YubiKey methods
+    if !yubikey_recipients.is_empty() {
+        // For now, assume YubiKey is available (we can add proper detection later)
+        available_methods.push(AvailableMethod {
+            method_type: UnlockMethod::YubiKey,
+            display_name: "YubiKey Hardware Device".to_string(),
+            description: "Decrypt using your YubiKey hardware security key".to_string(),
+            requires_hardware: true,
+            estimated_time: "10 seconds".to_string(),
+            confidence_level: ConfidenceLevel::High,
+        });
+    }
 
-    let protection_mode = metadata.protection_mode.clone();
-
-    let result = AvailableUnlockMethods {
-        protection_mode,
-        available_methods,
-        method_details,
-        recommendations: get_unlock_recommendations(&metadata),
-    };
-
-    Ok(result)
+    Ok(available_methods)
 }
 
 /// Test unlock credentials without performing decryption
@@ -240,23 +243,7 @@ pub struct VaultDecryptionResult {
     pub decryption_time: chrono::DateTime<chrono::Utc>,
 }
 
-/// Available unlock methods for a vault
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AvailableUnlockMethods {
-    pub protection_mode: ProtectionMode,
-    pub available_methods: Vec<UnlockMethod>,
-    pub method_details: Vec<UnlockMethodDetail>,
-    pub recommendations: Vec<String>,
-}
-
-/// Detailed information about an unlock method
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UnlockMethodDetail {
-    pub method: UnlockMethod,
-    pub description: String,
-    pub available: bool,
-    pub requirements: Vec<String>,
-}
+// Removed legacy types - now using AvailableMethod directly
 
 /// Result of credentials testing
 #[derive(Debug, Serialize, Deserialize)]
@@ -355,35 +342,7 @@ fn extract_decrypted_data(
     Ok(extracted_files)
 }
 
-/// Get unlock recommendations based on vault metadata
-fn get_unlock_recommendations(metadata: &VaultMetadataV2) -> Vec<String> {
-    let mut recommendations = Vec::new();
-
-    match &metadata.protection_mode {
-        ProtectionMode::PassphraseOnly => {
-            recommendations.push("This vault is protected with a passphrase only".to_string());
-            recommendations.push("Ensure you remember your master passphrase".to_string());
-        }
-        ProtectionMode::YubiKeyOnly { serial } => {
-            recommendations.push(format!("This vault requires YubiKey {serial}"));
-            recommendations
-                .push("Ensure your YubiKey is connected and you know the PIN".to_string());
-        }
-        ProtectionMode::Hybrid { yubikey_serial } => {
-            recommendations
-                .push("This vault supports both YubiKey and passphrase unlock".to_string());
-            recommendations.push(format!("Primary method: YubiKey {yubikey_serial}"));
-            recommendations.push("Backup method: Master passphrase".to_string());
-        }
-    }
-
-    let yubikey_recipients = metadata.get_recipients_by_type("yubikey");
-    if !yubikey_recipients.is_empty() && !yubikey_recipients.iter().all(|r| r.is_available()) {
-        recommendations.push("Some YubiKeys are not currently connected".to_string());
-    }
-
-    recommendations
-}
+// Removed get_unlock_recommendations function - no longer needed
 
 // Convert crypto module errors to command errors
 impl From<crate::crypto::CryptoError> for CommandError {

@@ -114,6 +114,28 @@ export enum ErrorCode {
   TAMPERED_DATA = 'TAMPERED_DATA',
   UNAUTHORIZED_ACCESS = 'UNAUTHORIZED_ACCESS',
   
+  // YubiKey Hardware Errors
+  YUBIKEY_NOT_FOUND = 'YUBIKEY_NOT_FOUND',
+  YUBIKEY_PIN_REQUIRED = 'YUBIKEY_PIN_REQUIRED',
+  YUBIKEY_PIN_BLOCKED = 'YUBIKEY_PIN_BLOCKED',
+  YUBIKEY_TOUCH_REQUIRED = 'YUBIKEY_TOUCH_REQUIRED',
+  YUBIKEY_TOUCH_TIMEOUT = 'YUBIKEY_TOUCH_TIMEOUT',
+  WRONG_YUBIKEY = 'WRONG_YUBIKEY',
+  YUBIKEY_SLOT_IN_USE = 'YUBIKEY_SLOT_IN_USE',
+  YUBIKEY_INITIALIZATION_FAILED = 'YUBIKEY_INITIALIZATION_FAILED',
+  YUBIKEY_COMMUNICATION_ERROR = 'YUBIKEY_COMMUNICATION_ERROR',
+
+  // Plugin Errors
+  PLUGIN_NOT_FOUND = 'PLUGIN_NOT_FOUND',
+  PLUGIN_VERSION_MISMATCH = 'PLUGIN_VERSION_MISMATCH',
+  PLUGIN_EXECUTION_FAILED = 'PLUGIN_EXECUTION_FAILED',
+  PLUGIN_DEPLOYMENT_FAILED = 'PLUGIN_DEPLOYMENT_FAILED',
+
+  // Multi-recipient Errors
+  NO_UNLOCK_METHOD_AVAILABLE = 'NO_UNLOCK_METHOD_AVAILABLE',
+  RECIPIENT_MISMATCH = 'RECIPIENT_MISMATCH',
+  MULTI_RECIPIENT_SETUP_FAILED = 'MULTI_RECIPIENT_SETUP_FAILED',
+
   // Internal errors
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   UNEXPECTED_ERROR = 'UNEXPECTED_ERROR',
@@ -288,6 +310,103 @@ export interface Manifest {
   file_count: number;
 }
 
+// YubiKey command types
+export interface YubiKeyDevice {
+  device_id: string;
+  name: string;
+  serial_number?: string;
+  firmware_version?: string;
+  has_piv: boolean;
+  has_oath: boolean;
+  has_fido: boolean;
+}
+
+export interface YubiKeyInfo {
+  device_id: string;
+  name: string;
+  serial_number?: string;
+  firmware_version?: string;
+  piv_slots: number[];
+  has_management_key: boolean;
+  pin_policy: string;
+  touch_policy: string;
+}
+
+export interface YubiKeyInitParams {
+  device_id: string;
+  pin: string;
+  slot?: number;
+  force_overwrite?: boolean;
+}
+
+export interface SetupRecommendations {
+  recommended_protection_mode: ProtectionMode;
+  yubikey_available: boolean;
+  pin_complexity_requirements: string;
+  recommended_slots: number[];
+  security_notes: string[];
+}
+
+export interface ValidationResult {
+  is_valid: boolean;
+  message: string;
+  attempts_remaining?: number;
+}
+
+export interface YubiKeyDecryptParams {
+  file_path: string;
+  device_id: string;
+  pin: string;
+  output_dir: string;
+}
+
+export interface AvailableMethod {
+  method_type: UnlockMethodType;
+  display_name: string;
+  description: string;
+  requires_hardware: boolean;
+  estimated_time: string;
+  confidence_level: ConfidenceLevel;
+}
+
+export interface CredentialTest {
+  method_type: UnlockMethodType;
+  file_path: string;
+  credentials: Record<string, string>;
+}
+
+export interface ConnectionStatus {
+  is_connected: boolean;
+  device_info?: YubiKeyInfo;
+  error_message?: string;
+}
+
+export interface SetupStatus {
+  is_setup_complete: boolean;
+  has_yubikey_protection: boolean;
+  has_passphrase_protection: boolean;
+  protection_mode: ProtectionMode;
+  setup_recommendations?: SetupRecommendations;
+}
+
+export enum ProtectionMode {
+  PASSPHRASE_ONLY = 'PassphraseOnly',
+  YUBIKEY_ONLY = 'YubiKeyOnly',
+  HYBRID = 'Hybrid',
+}
+
+export enum UnlockMethodType {
+  PASSPHRASE = 'Passphrase',
+  YUBIKEY = 'YubiKey',
+  HYBRID = 'Hybrid',
+}
+
+export enum ConfidenceLevel {
+  HIGH = 'High',
+  MEDIUM = 'Medium',
+  LOW = 'Low',
+}
+
 // Command invocation helper
 export async function invokeCommand<T>(
   cmd: string,
@@ -364,6 +483,32 @@ export class CommandErrorClass extends Error {
 
   isRecoverable(): boolean {
     return this.user_actionable && !this.isSecurityError();
+  }
+
+  isYubiKeyError(): boolean {
+    return [
+      ErrorCode.YUBIKEY_NOT_FOUND,
+      ErrorCode.YUBIKEY_PIN_REQUIRED,
+      ErrorCode.YUBIKEY_PIN_BLOCKED,
+      ErrorCode.YUBIKEY_TOUCH_REQUIRED,
+      ErrorCode.YUBIKEY_TOUCH_TIMEOUT,
+      ErrorCode.WRONG_YUBIKEY,
+      ErrorCode.YUBIKEY_SLOT_IN_USE,
+      ErrorCode.YUBIKEY_INITIALIZATION_FAILED,
+      ErrorCode.YUBIKEY_COMMUNICATION_ERROR,
+    ].includes(this.code);
+  }
+
+  isYubiKeyActionRequired(): boolean {
+    return [ErrorCode.YUBIKEY_PIN_REQUIRED, ErrorCode.YUBIKEY_TOUCH_REQUIRED].includes(this.code);
+  }
+
+  isYubiKeyHardwareIssue(): boolean {
+    return [
+      ErrorCode.YUBIKEY_NOT_FOUND,
+      ErrorCode.YUBIKEY_COMMUNICATION_ERROR,
+      ErrorCode.WRONG_YUBIKEY,
+    ].includes(this.code);
   }
 }
 "#.replace("{timestamp}", &timestamp)
