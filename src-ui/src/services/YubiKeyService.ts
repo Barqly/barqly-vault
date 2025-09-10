@@ -112,9 +112,16 @@ export class YubiKeyService {
     this.emit({ type: 'DETECTION_STARTED' });
 
     try {
+      console.log('🔍 YubiKeyService: About to call yubikey_list_devices backend command...');
       logger.logComponentLifecycle('YubiKeyService', 'Starting YubiKey device detection');
 
       const devices = await invokeCommand<YubiKeyDevice[]>('yubikey_list_devices');
+
+      console.log('✅ YubiKeyService: Backend command returned:', { 
+        deviceCount: devices.length, 
+        rawDevices: devices,
+        isArray: Array.isArray(devices)
+      });
 
       // Update cache
       this.detectionCache = {
@@ -130,6 +137,14 @@ export class YubiKeyService {
       this.emit({ type: 'DETECTION_COMPLETED', devices });
       return devices;
     } catch (error: any) {
+      console.error('❌ YubiKeyService: Backend command failed:', {
+        error: error.message,
+        errorCode: error.code,
+        errorDetails: error.details,
+        recoveryGuidance: error.recovery_guidance,
+        fullError: error
+      });
+
       logger.logComponentLifecycle('YubiKeyService', 'Device detection failed', {
         error: error.message,
       });
@@ -148,9 +163,12 @@ export class YubiKeyService {
    */
   async isAvailable(): Promise<boolean> {
     try {
+      console.log('🔍 YubiKeyService: Checking YubiKey availability...');
       const available = await invokeCommand<boolean>('yubikey_devices_available');
+      console.log('✅ YubiKeyService: Availability check result:', available);
       return available;
     } catch (error: any) {
+      console.error('❌ YubiKeyService: Availability check failed:', error);
       logger.logComponentLifecycle('YubiKeyService', 'Availability check failed', {
         error: error.message,
       });

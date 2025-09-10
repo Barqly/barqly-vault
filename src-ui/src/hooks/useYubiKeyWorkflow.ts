@@ -79,21 +79,27 @@ export function useYubiKeyWorkflow(
 
   // Service event handler
   const handleServiceEvent = useCallback((event: YubiKeyServiceEvent) => {
+    console.log('📡 YubiKeyWorkflow: Received service event:', event);
+    
     switch (event.type) {
       case 'DETECTION_STARTED':
+        console.log('🔍 YubiKeyWorkflow: Detection started event received');
         // State machine handles this via commitToYubiKey action
         break;
 
       case 'DETECTION_COMPLETED':
+        console.log('✅ YubiKeyWorkflow: Detection completed event received, devices:', event.devices);
         dispatch({ type: 'DETECTION_SUCCESS', devices: event.devices });
         break;
 
       case 'DETECTION_FAILED':
+        console.error('❌ YubiKeyWorkflow: Detection failed event received, error:', event.error);
         dispatch({ type: 'DETECTION_FAILED', error: event.error });
         break;
 
       // Handle other service events as needed
       default:
+        console.log('📡 YubiKeyWorkflow: Unhandled service event:', event.type);
         break;
     }
   }, []);
@@ -141,6 +147,7 @@ export function useYubiKeyWorkflow(
      * This is the proper timing for hardware detection
      */
     commitToYubiKey: useCallback(async () => {
+      console.log('🚀 YubiKeyWorkflow: commitToYubiKey() called - user committed to YubiKey');
       logger.logComponentLifecycle(
         'YubiKeyWorkflow',
         'User committed to YubiKey, starting hardware detection',
@@ -149,10 +156,13 @@ export function useYubiKeyWorkflow(
       dispatch({ type: 'COMMIT_TO_YUBIKEY' });
 
       try {
+        console.log('🔄 YubiKeyWorkflow: About to call service.detectDevices()...');
         // This is the ONLY place hardware detection is triggered
         await service.detectDevices({ useCache: false });
+        console.log('✅ YubiKeyWorkflow: service.detectDevices() completed successfully');
         // Service will emit events that update the state machine
       } catch (error: any) {
+        console.error('❌ YubiKeyWorkflow: service.detectDevices() failed:', error);
         // Service already emitted error event, state machine will handle it
         logger.logComponentLifecycle('YubiKeyWorkflow', 'Hardware detection failed', {
           error: error.message,
