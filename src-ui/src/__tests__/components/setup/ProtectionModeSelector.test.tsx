@@ -84,11 +84,24 @@ describe('ProtectionModeSelector - User Experience', () => {
     });
 
     it('user can select YubiKey-only protection when device available', async () => {
+      const mockDevices = [
+        {
+          device_id: 'test-1',
+          name: 'YubiKey 5 NFC',
+          serial_number: '123456',
+          firmware_version: '5.4.3',
+          has_piv: true,
+          has_oath: true,
+          has_fido: true,
+        },
+      ];
+
       await act(async () => {
         render(
           <ProtectionModeSelector
             onModeChange={mockOnModeChange}
             onYubiKeySelected={mockOnYubiKeySelected}
+            availableDevices={mockDevices}
           />,
         );
       });
@@ -107,11 +120,24 @@ describe('ProtectionModeSelector - User Experience', () => {
     });
 
     it('user can select hybrid protection when device available', async () => {
+      const mockDevices = [
+        {
+          device_id: 'test-1',
+          name: 'YubiKey 5 NFC',
+          serial_number: '123456',
+          firmware_version: '5.4.3',
+          has_piv: true,
+          has_oath: true,
+          has_fido: true,
+        },
+      ];
+
       await act(async () => {
         render(
           <ProtectionModeSelector
             onModeChange={mockOnModeChange}
             onYubiKeySelected={mockOnYubiKeySelected}
+            availableDevices={mockDevices}
           />,
         );
       });

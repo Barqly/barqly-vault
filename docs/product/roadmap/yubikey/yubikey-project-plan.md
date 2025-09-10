@@ -413,3 +413,40 @@ _Live tracking document for YubiKey feature implementation in Barqly Vault_
 - [✅] Smart defaults with lazy hardware detection - COMPLETED (YK-6.1)
 - [✅] Complete design system compliance - COMPLETED (YK-6.1)
 - [✅] UI/UX analysis document with improvement recommendations - COMPLETED (ui-analysis-and-improvements.md)
+
+### Milestone YK-7: Architecture Fixes & Production Readiness (System Architect + Backend Engineer)
+
+**Goal**: Address fundamental architectural issues identified in production deployment analysis
+
+**🚨 CRITICAL FINDING**: Current implementation has systemic architecture flaws that require comprehensive fixes before production release.
+
+- [ ] YK-7.1: Critical Infrastructure (P0 - Blocking) - IMMEDIATE (2 days)
+  - [ ] YK-7.1.1: Setup age-plugin-yubikey development environment and installation scripts
+  - [ ] YK-7.1.2: Implement proper error classification system (replace string-based filtering)
+  - [ ] YK-7.1.3: Fix progressive disclosure violations (remove premature hardware detection)
+  - [ ] YK-7.1.4: Create development setup documentation and CLAUDE.md updates
+- [ ] YK-7.2: Architecture Refactoring (P1 - Next) - HIGH PRIORITY (3 days)
+  - [ ] YK-7.2.1: Centralize state management with single source of truth pattern
+  - [ ] YK-7.2.2: Implement graceful degradation for missing dependencies
+  - [ ] YK-7.2.3: Add production binary bundling for cross-platform deployment
+  - [ ] YK-7.2.4: Create proper provider factory with fallback chains
+- [ ] YK-7.3: User Experience Polish (P2 - Later) - REFINEMENT (2 days)
+  - [ ] YK-7.3.1: Enhanced error recovery with contextual guidance
+  - [ ] YK-7.3.2: Performance optimization with caching and timeouts
+  - [ ] YK-7.3.3: User-friendly troubleshooting flows
+
+**YK-7 Architecture Analysis**:
+- [✅] Comprehensive system analysis identifying root causes - COMPLETED
+- [✅] Documentation of systematic fixes required - COMPLETED (architecture-analysis-systematic-fixes.md)
+- [✅] Implementation plan with phases and timelines - COMPLETED
+- [✅] Risk assessment and mitigation strategies - COMPLETED
+
+**Root Causes Identified**:
+1. **Missing Dependency Management**: age-plugin-yubikey binary not bundled or managed
+2. **Fragile Error Handling**: String-based error filtering instead of proper classification
+3. **Progressive Disclosure Violations**: Eager hardware detection contradicting documented principles
+4. **State Management Issues**: Multiple sources of truth creating confusion and errors
+
+**Impact**: Current implementation will fail in production and create poor user experience. These are not cosmetic issues but fundamental architectural flaws requiring systematic fixes.
+
+**Priority**: P0 (Critical) - Blocks production release until resolved

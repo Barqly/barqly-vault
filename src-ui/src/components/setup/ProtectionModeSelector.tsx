@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Shield, Key, Fingerprint, CheckCircle } from 'lucide-react';
-import { ProtectionMode, YubiKeyDevice, invokeCommand } from '../../lib/api-types';
+import { ProtectionMode, YubiKeyDevice } from '../../lib/api-types';
 import { LoadingSpinner } from '../ui/loading-spinner';
 
 interface ProtectionModeSelectorProps {
   selectedMode?: ProtectionMode;
   onModeChange: (mode: ProtectionMode) => void;
   onYubiKeySelected?: (device: YubiKeyDevice | null) => void;
-  onError?: (error: string | null) => void;
+  availableDevices?: YubiKeyDevice[];
+  isCheckingDevices?: boolean;
   isLoading?: boolean;
 }
 
@@ -57,13 +58,10 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
   selectedMode,
   onModeChange,
   onYubiKeySelected,
-  onError,
+  availableDevices = [],
+  isCheckingDevices = false,
   isLoading = false,
 }) => {
-  const [availableDevices, setAvailableDevices] = useState<YubiKeyDevice[]>([]);
-  const [isCheckingDevices, setIsCheckingDevices] = useState(false);
-  const [hasCheckedDevices, setHasCheckedDevices] = useState(false);
-
   // Auto-select passphrase-only mode as smart default
   useEffect(() => {
     if (!selectedMode) {
@@ -71,46 +69,11 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
     }
   }, [selectedMode, onModeChange]);
 
-  // YubiKey detection is now lazy - only when user shows interest
-
-  const checkForYubiKeys = async () => {
-    setIsCheckingDevices(true);
-    if (onError) onError(null); // Clear parent errors
-
-    try {
-      const devices = await invokeCommand<YubiKeyDevice[]>('yubikey_list_devices');
-      setAvailableDevices(devices);
-      setHasCheckedDevices(true);
-
-      // Auto-select first device if available and YubiKey mode is selected
-      if (devices.length > 0 && onYubiKeySelected) {
-        onYubiKeySelected(devices[0]);
-      }
-    } catch (error: any) {
-      console.warn('YubiKey detection failed:', error.message);
-      const errorMessage = 'Failed to check for YubiKey devices';
-      setAvailableDevices([]);
-      setHasCheckedDevices(true);
-
-      // Bubble error to parent instead of showing locally
-      if (onError) {
-        onError(`${errorMessage}: ${error.message}`);
-      }
-    } finally {
-      setIsCheckingDevices(false);
-    }
-  };
-
   const handleModeSelect = (mode: ProtectionMode) => {
     onModeChange(mode);
 
-    // Lazy YubiKey detection - only check when user selects YubiKey mode
+    // Auto-select first device when available YubiKey modes are selected
     if (
-      (mode === ProtectionMode.YUBIKEY_ONLY || mode === ProtectionMode.HYBRID) &&
-      !hasCheckedDevices
-    ) {
-      checkForYubiKeys();
-    } else if (
       (mode === ProtectionMode.YUBIKEY_ONLY || mode === ProtectionMode.HYBRID) &&
       availableDevices.length > 0 &&
       onYubiKeySelected
@@ -125,8 +88,9 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
 
   const isModeAvailable = (mode: ProtectionMode) => {
     if (isYubiKeyRequired(mode)) {
-      // Don't mark as unavailable until we've actually checked
-      return !hasCheckedDevices || availableDevices.length > 0;
+      // Truly lazy approach - always show as available until user tries to use them
+      // This follows the "no upfront blocking" principle in the test
+      return true;
     }
     return true;
   };
@@ -150,7 +114,7 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
       )}
 
       {/* Success message - only show when devices found and not loading */}
-      {hasCheckedDevices && availableDevices.length > 0 && !isCheckingDevices && (
+      {availableDevices.length > 0 && !isCheckingDevices && (
         <div className="flex items-center py-3 px-4 bg-green-50 rounded-lg border border-green-200">
           <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0" />
           <div>

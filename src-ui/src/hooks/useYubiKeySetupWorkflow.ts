@@ -65,7 +65,20 @@ export const useYubiKeySetupWorkflow = () => {
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Device detection failed', {
         error: error.message,
       });
-      setDeviceError(error.message);
+
+      // TODO: Replace this fragile string-based error filtering with proper error classification
+      // See: /docs/product/roadmap/yubikey/architecture-analysis-systematic-fixes.md
+      // This is a temporary band-aid - the real fix is implementing YubiKeyError types
+      // and proper graceful degradation when age-plugin-yubikey is unavailable
+      if (
+        !error.message.includes('No YubiKey devices found') &&
+        !error.message.includes('not found') &&
+        !error.message.includes('not available') &&
+        !error.message.includes('age-plugin-yubikey binary not found') &&
+        !error.message.includes('binary not found')
+      ) {
+        setDeviceError(error.message);
+      }
       setAvailableDevices([]);
       setHasCheckedDevices(true);
     } finally {
