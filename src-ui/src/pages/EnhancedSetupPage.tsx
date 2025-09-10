@@ -77,8 +77,8 @@ const EnhancedSetupPage: React.FC = () => {
   // Handler for protection mode changes
   const handleProtectionModeChange = (mode: ProtectionMode) => {
     yubiKeyActions.selectProtectionMode(mode);
-    // For now, automatically proceed to configuration
-    setSetupStep('configuration');
+    // Don't auto-navigate - wait for user to click Continue
+    // setSetupStep('configuration');
   };
 
   // Handler for device selection
@@ -124,6 +124,13 @@ const EnhancedSetupPage: React.FC = () => {
         setSetupStep('generation');
       } else {
         setSetupStep('configuration');
+        // When user commits to YubiKey mode, trigger hardware detection
+        if (
+          protectionMode === ProtectionMode.YUBIKEY_ONLY ||
+          protectionMode === ProtectionMode.HYBRID
+        ) {
+          yubiKeyActions.commitToYubiKey();
+        }
       }
     } else if (setupStep === 'configuration') {
       setSetupStep('generation');
@@ -157,7 +164,34 @@ const EnhancedSetupPage: React.FC = () => {
         );
 
       case 'configuration':
-        if (protectionMode === ProtectionMode.HYBRID) {
+        if (protectionMode === ProtectionMode.PASSPHRASE_ONLY) {
+          return (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Configure Passphrase Protection
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Set up your vault with passphrase-only protection
+                </p>
+              </div>
+
+              {/* SetupForm for passphrase configuration */}
+              <SetupForm
+                keyLabel={keyLabel}
+                passphrase={passphrase}
+                confirmPassphrase={confirmPassphrase}
+                isFormValid={Boolean(isFormValid)}
+                isLoading={isLoading}
+                onKeyLabelChange={handleKeyLabelChange}
+                onPassphraseChange={handlePassphraseChange}
+                onConfirmPassphraseChange={setConfirmPassphrase}
+                onSubmit={handleKeyGeneration}
+                onReset={handleReset}
+              />
+            </div>
+          );
+        } else if (protectionMode === ProtectionMode.HYBRID) {
           return (
             <HybridProtectionSetup
               keyLabel={keyLabel}
@@ -340,7 +374,9 @@ const EnhancedSetupPage: React.FC = () => {
 
                     <button
                       onClick={handleNextStep}
-                      disabled={!canProceedToNextStep}
+                      disabled={
+                        setupStep === 'mode-selection' ? !protectionMode : !canProceedToNextStep
+                      }
                       className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {setupStep === 'mode-selection'

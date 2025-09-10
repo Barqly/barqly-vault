@@ -82,17 +82,14 @@ export function yubiKeyWorkflowReducer(
     case 'idle':
       switch (event.type) {
         case 'SELECT_MODE':
-          if (event.mode === ProtectionMode.YUBIKEY_ONLY || event.mode === ProtectionMode.HYBRID) {
-            return {
-              state: 'mode_selected',
-              context: {
-                ...context,
-                selectedMode: event.mode,
-                error: null,
-              },
-            };
-          }
-          return { state, context }; // No state change for non-YubiKey modes
+          return {
+            state: event.mode === ProtectionMode.PASSPHRASE_ONLY ? 'idle' : 'mode_selected',
+            context: {
+              ...context,
+              selectedMode: event.mode,
+              error: null,
+            },
+          };
 
         default:
           return { state, context };

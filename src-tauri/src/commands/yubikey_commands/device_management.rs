@@ -1,9 +1,22 @@
 //! YubiKey device management commands using provider abstraction
 
 use crate::commands::command_types::CommandError;
-use crate::crypto::yubikey::{list_yubikey_devices, YubiIdentityProviderFactory, YubiKeyDevice};
+use crate::crypto::yubikey::YubiIdentityProviderFactory;
 use serde::{Deserialize, Serialize};
 use tauri::command;
+
+/// Frontend-compatible YubiKey device information
+/// This structure matches the TypeScript interface expected by the frontend
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct YubiKeyDevice {
+    pub device_id: String,
+    pub name: String,
+    pub serial_number: Option<String>,
+    pub firmware_version: Option<String>,
+    pub has_piv: bool,
+    pub has_oath: bool,
+    pub has_fido: bool,
+}
 
 /// List all available YubiKey recipients using age-plugin-yubikey
 ///
@@ -25,11 +38,17 @@ pub async fn yubikey_list_devices() -> Result<Vec<YubiKeyDevice>, CommandError> 
             let devices: Vec<YubiKeyDevice> = recipients
                 .into_iter()
                 .map(|recipient| YubiKeyDevice {
-                    serial: recipient.serial,
-                    model: "YubiKey (age-plugin-yubikey)".to_string(),
-                    version: "age-plugin".to_string(),
-                    status: crate::crypto::yubikey::detection::DeviceStatus::Ready,
-                    available_slots: vec![recipient.slot],
+                    device_id: recipient.serial.clone(),
+                    name: if recipient.label.is_empty() {
+                        format!("YubiKey {}", recipient.serial)
+                    } else {
+                        recipient.label
+                    },
+                    serial_number: Some(recipient.serial),
+                    firmware_version: Some("age-plugin-yubikey".to_string()),
+                    has_piv: true, // YubiKeys accessed via age-plugin-yubikey have PIV capability
+                    has_oath: true, // Most YubiKeys have OATH capability
+                    has_fido: true, // Most modern YubiKeys have FIDO capability
                 })
                 .collect();
 
@@ -42,7 +61,7 @@ pub async fn yubikey_list_devices() -> Result<Vec<YubiKeyDevice>, CommandError> 
             for device in &devices {
                 crate::logging::log_debug(&format!(
                     "YubiKey recipient: {} - {}",
-                    device.serial, device.model
+                    device.device_id, device.name
                 ));
             }
 
@@ -50,11 +69,11 @@ pub async fn yubikey_list_devices() -> Result<Vec<YubiKeyDevice>, CommandError> 
         }
         Err(e) => {
             crate::logging::log_warn(&format!("Failed to list YubiKey recipients: {e}"));
-            // Fall back to legacy implementation for transition period
-            match list_yubikey_devices() {
-                Ok(devices) => Ok(devices),
-                Err(_) => Ok(Vec::new()), // Return empty list rather than error
-            }
+            // Fall back to empty list for transition period
+            crate::logging::log_warn(
+                "No YubiKey recipients found via age-plugin-yubikey, returning empty list",
+            );
+            Ok(Vec::new())
         }
     }
 }
@@ -98,15 +117,62 @@ pub async fn yubikey_devices_available() -> Result<bool, CommandError> {
 /// - `YubiKeyCommunicationError` if unable to communicate with the device
 #[command]
 pub async fn yubikey_get_device_info(serial: String) -> Result<YubiKeyDevice, CommandError> {
-    let device = crate::crypto::yubikey::detection::find_yubikey_by_serial(&serial)
-        .map_err(CommandError::from)?;
+    // Try to find the device using the provider first
+    let provider = YubiIdentityProviderFactory::create_default().map_err(CommandError::from)?;
 
-    crate::logging::log_debug(&format!(
-        "Retrieved info for YubiKey: {} - {}",
-        device.serial, device.model
-    ));
+    match provider.list_recipients().await {
+        Ok(recipients) => {
+            if let Some(recipient) = recipients.iter().find(|r| r.serial == serial) {
+                let device = YubiKeyDevice {
+                    device_id: recipient.serial.clone(),
+                    name: if recipient.label.is_empty() {
+                        format!("YubiKey {}", recipient.serial)
+                    } else {
+                        recipient.label.clone()
+                    },
+                    serial_number: Some(recipient.serial.clone()),
+                    firmware_version: Some("age-plugin-yubikey".to_string()),
+                    has_piv: true,
+                    has_oath: true,
+                    has_fido: true,
+                };
 
-    Ok(device)
+                crate::logging::log_debug(&format!(
+                    "Retrieved info for YubiKey: {} - {}",
+                    device.device_id, device.name
+                ));
+
+                Ok(device)
+            } else {
+                Err(CommandError::from(
+                    crate::crypto::yubikey::errors::YubiKeyError::DeviceNotFound(serial.clone()),
+                ))
+            }
+        }
+        Err(_) => {
+            // Fall back to legacy detection for transition period
+            let legacy_device = crate::crypto::yubikey::detection::find_yubikey_by_serial(&serial)
+                .map_err(CommandError::from)?;
+
+            // Convert legacy device to frontend format
+            let device = YubiKeyDevice {
+                device_id: legacy_device.serial.clone(),
+                name: legacy_device.model.clone(),
+                serial_number: Some(legacy_device.serial),
+                firmware_version: Some(legacy_device.version),
+                has_piv: true,  // Assume PIV capability
+                has_oath: true, // Assume OATH capability
+                has_fido: true, // Assume FIDO capability
+            };
+
+            crate::logging::log_debug(&format!(
+                "Retrieved info for YubiKey (legacy): {} - {}",
+                device.device_id, device.name
+            ));
+
+            Ok(device)
+        }
+    }
 }
 
 /// Test YubiKey connectivity using age-plugin-yubikey
