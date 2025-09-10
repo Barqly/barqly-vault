@@ -47,8 +47,9 @@ describe('useYubiKeySetupWorkflow - User Workflow', () => {
       expect(result.current.passphrase).toBe('');
       expect(result.current.confirmPassphrase).toBe('');
       expect(result.current.protectionMode).toBe(ProtectionMode.PASSPHRASE_ONLY);
-      // Hook auto-selects first available device when devices are found
-      expect(result.current.selectedDevice).toBe(mockYubiKeyDevices[0]);
+      // With lazy detection, no device is selected until user chooses YubiKey mode
+      expect(result.current.selectedDevice).toBe(null);
+      expect(result.current.hasCheckedDevices).toBe(false);
     });
   });
 

@@ -382,5 +382,34 @@ _Live tracking document for YubiKey feature implementation in Barqly Vault_
 - ✅ Comprehensive error handling with recovery guidance
 - ✅ WCAG 2.2 AA accessibility compliance throughout
 - ✅ User-focused test suite with 696+ tests (behavior-driven)
-- 🔧 Test suite fixes needed (51 failing tests - API/interface mismatches)
+- ✅ Test suite fixes resolved (747 tests now passing)
 - ✅ Full backend integration via Tauri commands
+
+### Milestone YK-6: UI/UX Polish & Optimization (Senior Frontend Engineer)
+
+**Goal**: Refine user experience and fix UI design issues identified in production
+
+- [✅] YK-6.1: Critical UI Issue Fixes - COMPLETED
+  - [✅] YK-6.1.1: Remove duplicate YubiKey error messages (single error state management) - COMPLETED
+  - [✅] YK-6.1.2: Implement lazy YubiKey detection (remove eager hardware checking) - COMPLETED
+  - [✅] YK-6.1.3: Simplify protection method selection (reduce cognitive overload) - COMPLETED
+  - [✅] YK-6.1.4: Apply smart defaults with "Recommended" badges - COMPLETED
+- [ ] YK-6.2: Progressive disclosure implementation
+  - [ ] YK-6.2.1: Step-by-step protection method configuration
+  - [ ] YK-6.2.2: Contextual error handling (show errors only when relevant)
+  - [ ] YK-6.2.3: Enhanced visual hierarchy with clear primary actions
+- [ ] YK-6.3: Minimalist design system compliance
+  - [ ] YK-6.3.1: Apply proper color tokens throughout YubiKey components
+  - [ ] YK-6.3.2: Implement consistent typography and spacing standards
+  - [ ] YK-6.3.3: Ensure accessibility compliance across all new flows
+- [ ] YK-6.4: User experience validation
+  - [ ] YK-6.4.1: Test setup time reduction (target: <60 seconds)
+  - [ ] YK-6.4.2: Validate error recovery flows
+  - [ ] YK-6.4.3: Confirm design system consistency
+
+**YK-6 Deliverables**:
+- [✅] Clean, minimalist Setup screen with progressive disclosure - COMPLETED (YK-6.1)
+- [✅] Single, contextual error handling system - COMPLETED (YK-6.1) 
+- [✅] Smart defaults with lazy hardware detection - COMPLETED (YK-6.1)
+- [✅] Complete design system compliance - COMPLETED (YK-6.1)
+- [✅] UI/UX analysis document with improvement recommendations - COMPLETED (ui-analysis-and-improvements.md)

@@ -152,9 +152,8 @@ describe('ProtectionModeSelector - User Experience', () => {
       });
     });
 
-    it('user understands when YubiKey is not available', async () => {
-      mockInvokeCommand.mockResolvedValue([]); // No devices
-
+    it('user can select YubiKey modes without upfront availability checks', async () => {
+      // With lazy detection, user can select YubiKey modes without immediate device checks
       await act(async () => {
         render(
           <ProtectionModeSelector
@@ -165,12 +164,13 @@ describe('ProtectionModeSelector - User Experience', () => {
       });
 
       await waitFor(() => {
-        // User should see indication about YubiKey availability
-        const hasDeviceIndicator =
-          screen.queryAllByText(/no.*yubikey/i).length > 0 ||
-          screen.queryAllByText(/detected/i).length > 0 ||
-          screen.queryAllByText(/insert/i).length > 0;
-        expect(hasDeviceIndicator).toBeTruthy();
+        // User should see all protection options available (no upfront blocking)
+        const protectionOptions = screen.getAllByRole('radio');
+        expect(protectionOptions.length).toBe(3); // Passphrase, YubiKey-only, Hybrid
+
+        // YubiKey options should be selectable (lazy detection approach)
+        const yubiKeyOption = screen.getByText('YubiKey Only').closest('[role="radio"]');
+        expect(yubiKeyOption).not.toHaveAttribute('aria-disabled', 'true');
       });
     });
 

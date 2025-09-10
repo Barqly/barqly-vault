@@ -129,6 +129,13 @@ const EnhancedSetupPage: React.FC = () => {
             selectedMode={protectionMode}
             onModeChange={handleProtectionModeChange}
             onYubiKeySelected={(device) => device && handleDeviceSelect(device)}
+            onError={(error) => {
+              // Handle errors bubbled up from ProtectionModeSelector
+              if (error) {
+                // Use existing workflow error handling
+                console.error('YubiKey detection error:', error);
+              }
+            }}
             isLoading={isLoading || isCheckingDevices}
           />
         );

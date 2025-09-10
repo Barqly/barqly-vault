@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Key, Fingerprint, AlertCircle, CheckCircle } from 'lucide-react';
+import { Shield, Key, Fingerprint, CheckCircle } from 'lucide-react';
 import { ProtectionMode, YubiKeyDevice, invokeCommand } from '../../lib/api-types';
 import { LoadingSpinner } from '../ui/loading-spinner';
-import { ErrorMessage } from '../ui/error-message';
 
 interface ProtectionModeSelectorProps {
   selectedMode?: ProtectionMode;
   onModeChange: (mode: ProtectionMode) => void;
   onYubiKeySelected?: (device: YubiKeyDevice | null) => void;
+  onError?: (error: string | null) => void;
   isLoading?: boolean;
 }
 
@@ -29,6 +29,7 @@ const PROTECTION_MODES: ProtectionModeOption[] = [
     icon: Key,
     pros: ['Works on any device', 'No hardware required', 'Fastest setup'],
     cons: ['Must remember passphrase', 'Vulnerable to keyloggers'],
+    recommended: true, // Make passphrase the default recommended option
   },
   {
     mode: ProtectionMode.YUBIKEY_ONLY,
@@ -45,7 +46,6 @@ const PROTECTION_MODES: ProtectionModeOption[] = [
     icon: Shield,
     pros: ['Dual-factor protection', 'Recovery options', 'Enterprise grade'],
     cons: ['Requires YubiKey device', 'Slightly more complex setup'],
-    recommended: true,
   },
 ];
 
@@ -57,21 +57,26 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
   selectedMode,
   onModeChange,
   onYubiKeySelected,
+  onError,
   isLoading = false,
 }) => {
   const [availableDevices, setAvailableDevices] = useState<YubiKeyDevice[]>([]);
   const [isCheckingDevices, setIsCheckingDevices] = useState(false);
-  const [deviceError, setDeviceError] = useState<string | null>(null);
   const [hasCheckedDevices, setHasCheckedDevices] = useState(false);
 
-  // Check for available YubiKey devices when component mounts
+  // Auto-select passphrase-only mode as smart default
   useEffect(() => {
-    checkForYubiKeys();
-  }, []);
+    if (!selectedMode) {
+      onModeChange(ProtectionMode.PASSPHRASE_ONLY);
+    }
+  }, [selectedMode, onModeChange]);
+
+  // YubiKey detection is now lazy - only when user shows interest
 
   const checkForYubiKeys = async () => {
     setIsCheckingDevices(true);
-    setDeviceError(null);
+    if (onError) onError(null); // Clear parent errors
+
     try {
       const devices = await invokeCommand<YubiKeyDevice[]>('yubikey_list_devices');
       setAvailableDevices(devices);
@@ -83,9 +88,14 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
       }
     } catch (error: any) {
       console.warn('YubiKey detection failed:', error.message);
-      setDeviceError(error.message);
+      const errorMessage = 'Failed to check for YubiKey devices';
       setAvailableDevices([]);
       setHasCheckedDevices(true);
+
+      // Bubble error to parent instead of showing locally
+      if (onError) {
+        onError(`${errorMessage}: ${error.message}`);
+      }
     } finally {
       setIsCheckingDevices(false);
     }
@@ -94,8 +104,13 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
   const handleModeSelect = (mode: ProtectionMode) => {
     onModeChange(mode);
 
-    // Auto-select first YubiKey device for YubiKey modes
+    // Lazy YubiKey detection - only check when user selects YubiKey mode
     if (
+      (mode === ProtectionMode.YUBIKEY_ONLY || mode === ProtectionMode.HYBRID) &&
+      !hasCheckedDevices
+    ) {
+      checkForYubiKeys();
+    } else if (
       (mode === ProtectionMode.YUBIKEY_ONLY || mode === ProtectionMode.HYBRID) &&
       availableDevices.length > 0 &&
       onYubiKeySelected
@@ -110,7 +125,8 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
 
   const isModeAvailable = (mode: ProtectionMode) => {
     if (isYubiKeyRequired(mode)) {
-      return hasCheckedDevices && availableDevices.length > 0;
+      // Don't mark as unavailable until we've actually checked
+      return !hasCheckedDevices || availableDevices.length > 0;
     }
     return true;
   };
@@ -125,7 +141,7 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
         </p>
       </div>
 
-      {/* YubiKey Detection Status */}
+      {/* YubiKey Detection Status - Only show when actively checking */}
       {isCheckingDevices && (
         <div className="flex items-center justify-center py-4 bg-blue-50 rounded-lg border border-blue-200">
           <LoadingSpinner size="sm" className="mr-2" />
@@ -133,7 +149,8 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
         </div>
       )}
 
-      {hasCheckedDevices && availableDevices.length > 0 && (
+      {/* Success message - only show when devices found and not loading */}
+      {hasCheckedDevices && availableDevices.length > 0 && !isCheckingDevices && (
         <div className="flex items-center py-3 px-4 bg-green-50 rounded-lg border border-green-200">
           <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0" />
           <div>
@@ -147,32 +164,6 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
             )}
           </div>
         </div>
-      )}
-
-      {hasCheckedDevices && availableDevices.length === 0 && !deviceError && (
-        <div className="flex items-center py-3 px-4 bg-yellow-50 rounded-lg border border-yellow-200">
-          <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0" />
-          <div>
-            <span className="text-sm text-yellow-800 font-medium">No YubiKey detected</span>
-            <p className="text-xs text-yellow-700 mt-1">
-              Insert your YubiKey to enable hardware protection options
-            </p>
-          </div>
-        </div>
-      )}
-
-      {deviceError && (
-        <ErrorMessage
-          error={{
-            code: 'YUBIKEY_COMMUNICATION_ERROR' as any,
-            message: 'Failed to check for YubiKey devices',
-            details: deviceError,
-            user_actionable: true,
-            recovery_guidance: 'Make sure your YubiKey is properly inserted and try again',
-          }}
-          showRecoveryGuidance={true}
-          onClose={() => setDeviceError(null)}
-        />
       )}
 
       {/* Protection Mode Options */}
@@ -236,56 +227,19 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
                 {isSelected && <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />}
               </div>
 
-              {/* Availability warning for YubiKey modes */}
-              {isYubiKeyRequired(option.mode) && !isAvailable && (
-                <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                  <AlertCircle className="w-4 h-4 inline mr-1" />
-                  Requires YubiKey device
-                </div>
-              )}
-
-              {/* Pros and Cons */}
-              <div className="space-y-2">
-                <div>
-                  <div className="text-xs font-medium text-green-700 mb-1">Benefits:</div>
-                  <ul className="text-xs text-green-600 space-y-0.5">
-                    {option.pros.map((pro, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-green-500 mr-1">•</span>
-                        {pro}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-gray-700 mb-1">Considerations:</div>
-                  <ul className="text-xs text-gray-600 space-y-0.5">
-                    {option.cons.map((con, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-gray-400 mr-1">•</span>
-                        {con}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              {/* Simplified key benefits - only show most important */}
+              <div className="text-xs text-gray-600">
+                {option.pros.slice(0, 2).map((pro, index) => (
+                  <div key={index} className="flex items-start mb-1">
+                    <span className="text-green-500 mr-1 mt-0.5">•</span>
+                    {pro}
+                  </div>
+                ))}
               </div>
             </div>
           );
         })}
       </div>
-
-      {/* Retry button for device detection */}
-      {hasCheckedDevices && availableDevices.length === 0 && (
-        <div className="text-center">
-          <button
-            onClick={checkForYubiKeys}
-            disabled={isCheckingDevices}
-            className="text-sm text-blue-600 hover:text-blue-800 underline disabled:opacity-50"
-          >
-            {isCheckingDevices ? 'Checking...' : 'Retry YubiKey Detection'}
-          </button>
-        </div>
-      )}
     </div>
   );
 };

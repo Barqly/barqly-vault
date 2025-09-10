@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useSetupWorkflow } from './useSetupWorkflow';
 import {
   ProtectionMode,
@@ -25,15 +25,13 @@ export const useYubiKeySetupWorkflow = () => {
   const [selectedDevice, setSelectedDevice] = useState<YubiKeyDevice | null>(null);
   const [yubiKeyInfo, setYubiKeyInfo] = useState<YubiKeyInfo | null>(null);
   const [isCheckingDevices, setIsCheckingDevices] = useState(false);
+  const [hasCheckedDevices, setHasCheckedDevices] = useState(false);
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [setupStep, setSetupStep] = useState<'mode-selection' | 'configuration' | 'generation'>(
     'mode-selection',
   );
 
-  // Check for YubiKey devices on mount
-  useEffect(() => {
-    checkForYubiKeys();
-  }, []);
+  // YubiKey detection is now lazy - only happens when user selects YubiKey modes
 
   const checkForYubiKeys = useCallback(async () => {
     setIsCheckingDevices(true);
@@ -44,6 +42,7 @@ export const useYubiKeySetupWorkflow = () => {
       const devices = await invokeCommand<YubiKeyDevice[]>('yubikey_list_devices');
 
       setAvailableDevices(devices);
+      setHasCheckedDevices(true);
 
       // Auto-select first device if available
       if (devices.length > 0 && !selectedDevice) {
@@ -68,6 +67,7 @@ export const useYubiKeySetupWorkflow = () => {
       });
       setDeviceError(error.message);
       setAvailableDevices([]);
+      setHasCheckedDevices(true);
     } finally {
       setIsCheckingDevices(false);
     }
@@ -78,14 +78,15 @@ export const useYubiKeySetupWorkflow = () => {
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Protection mode changed', { mode });
       setProtectionMode(mode);
 
-      // Auto-advance to configuration step for non-passphrase modes
-      if (mode !== ProtectionMode.PASSPHRASE_ONLY && availableDevices.length > 0) {
-        setSetupStep('configuration');
-      } else if (mode === ProtectionMode.PASSPHRASE_ONLY) {
-        setSetupStep('generation');
+      // Trigger lazy YubiKey detection only when user selects YubiKey modes
+      if (mode === ProtectionMode.YUBIKEY_ONLY || mode === ProtectionMode.HYBRID) {
+        // Only check if we haven't checked yet
+        if (!hasCheckedDevices && !isCheckingDevices) {
+          checkForYubiKeys();
+        }
       }
     },
-    [availableDevices.length],
+    [hasCheckedDevices, isCheckingDevices, checkForYubiKeys],
   );
 
   const handleDeviceSelect = useCallback((device: YubiKeyDevice) => {
@@ -245,6 +246,7 @@ export const useYubiKeySetupWorkflow = () => {
     selectedDevice,
     yubiKeyInfo,
     isCheckingDevices,
+    hasCheckedDevices,
     deviceError,
     setupStep,
 
