@@ -6,7 +6,7 @@
  * and encryption/decryption operations.
  */
 
-import { invokeCommand } from '../lib/api-types';
+import { safeInvoke } from '../lib/tauri-safe';
 import { logger } from '../lib/logger';
 
 // Types
@@ -115,12 +115,16 @@ export class YubiKeyService {
       console.log('🔍 YubiKeyService: About to call yubikey_list_devices backend command...');
       logger.logComponentLifecycle('YubiKeyService', 'Starting YubiKey device detection');
 
-      const devices = await invokeCommand<YubiKeyDevice[]>('yubikey_list_devices');
+      const devices = await safeInvoke<YubiKeyDevice[]>(
+        'yubikey_list_devices',
+        undefined,
+        'YubiKeyService.detectDevices',
+      );
 
-      console.log('✅ YubiKeyService: Backend command returned:', { 
-        deviceCount: devices.length, 
+      console.log('✅ YubiKeyService: Backend command returned:', {
+        deviceCount: devices.length,
         rawDevices: devices,
-        isArray: Array.isArray(devices)
+        isArray: Array.isArray(devices),
       });
 
       // Update cache
@@ -142,7 +146,7 @@ export class YubiKeyService {
         errorCode: error.code,
         errorDetails: error.details,
         recoveryGuidance: error.recovery_guidance,
-        fullError: error
+        fullError: error,
       });
 
       logger.logComponentLifecycle('YubiKeyService', 'Device detection failed', {
@@ -164,7 +168,11 @@ export class YubiKeyService {
   async isAvailable(): Promise<boolean> {
     try {
       console.log('🔍 YubiKeyService: Checking YubiKey availability...');
-      const available = await invokeCommand<boolean>('yubikey_devices_available');
+      const available = await safeInvoke<boolean>(
+        'yubikey_devices_available',
+        undefined,
+        'YubiKeyService.checkAvailability',
+      );
       console.log('✅ YubiKeyService: Availability check result:', available);
       return available;
     } catch (error: any) {
@@ -184,7 +192,11 @@ export class YubiKeyService {
     pin: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      await invokeCommand('yubikey_test_connection', { device_id: deviceId, pin });
+      await safeInvoke(
+        'yubikey_test_connection',
+        { device_id: deviceId, pin },
+        'YubiKeyService.testConnection',
+      );
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -196,7 +208,11 @@ export class YubiKeyService {
    */
   async initializeDevice(deviceId: string, pin: string, slot: number): Promise<void> {
     try {
-      await invokeCommand('yubikey_initialize', { device_id: deviceId, pin, slot });
+      await safeInvoke(
+        'yubikey_initialize',
+        { device_id: deviceId, pin, slot },
+        'YubiKeyService.initializeDevice',
+      );
       logger.logComponentLifecycle('YubiKeyService', 'Device initialized successfully', {
         device_id: deviceId,
         slot,
@@ -215,7 +231,11 @@ export class YubiKeyService {
    */
   async getDeviceInfo(deviceId: string): Promise<YubiKeyDevice> {
     try {
-      return await invokeCommand<YubiKeyDevice>('yubikey_get_device_info', { device_id: deviceId });
+      return await safeInvoke<YubiKeyDevice>(
+        'yubikey_get_device_info',
+        { device_id: deviceId },
+        'YubiKeyService.getDeviceInfo',
+      );
     } catch (error: any) {
       logger.logComponentLifecycle('YubiKeyService', 'Failed to get device info', {
         device_id: deviceId,

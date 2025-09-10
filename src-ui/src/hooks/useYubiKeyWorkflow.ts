@@ -80,7 +80,7 @@ export function useYubiKeyWorkflow(
   // Service event handler
   const handleServiceEvent = useCallback((event: YubiKeyServiceEvent) => {
     console.log('📡 YubiKeyWorkflow: Received service event:', event);
-    
+
     switch (event.type) {
       case 'DETECTION_STARTED':
         console.log('🔍 YubiKeyWorkflow: Detection started event received');
@@ -88,7 +88,10 @@ export function useYubiKeyWorkflow(
         break;
 
       case 'DETECTION_COMPLETED':
-        console.log('✅ YubiKeyWorkflow: Detection completed event received, devices:', event.devices);
+        console.log(
+          '✅ YubiKeyWorkflow: Detection completed event received, devices:',
+          event.devices,
+        );
         dispatch({ type: 'DETECTION_SUCCESS', devices: event.devices });
         break;
 

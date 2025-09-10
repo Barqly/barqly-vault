@@ -6,6 +6,9 @@ pub mod device_management;
 pub mod initialization;
 pub mod smart_decryption;
 
+#[cfg(test)]
+pub mod hardware_test;
+
 pub use device_management::*;
 pub use initialization::*;
 pub use smart_decryption::*;

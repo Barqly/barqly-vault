@@ -38,8 +38,12 @@ const SetupForm: React.FC<SetupFormProps> = ({
   const isStrongPassphrase = passphraseStrength.isStrong;
   const passphraseMatch = confirmPassphrase.length > 0 && passphrase === confirmPassphrase;
 
-  // Form is valid only when key label exists, passphrase is strong, and passwords match
-  const isActuallyFormValid = keyLabel.trim().length > 0 && isStrongPassphrase && passphraseMatch;
+  // Use validation from parent workflow (supports different protection modes)
+  // Fallback to local validation for backward compatibility
+  const localValidation = keyLabel.trim().length > 0 && isStrongPassphrase && passphraseMatch;
+  const isActuallyFormValid = isFormValid !== undefined 
+    ? isFormValid 
+    : localValidation;
 
   const handleTooltipShow = () => {
     if (tooltipTimeoutId) {

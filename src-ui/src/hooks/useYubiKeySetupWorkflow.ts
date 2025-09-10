@@ -1,12 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useSetupWorkflow } from './useSetupWorkflow';
-import {
-  ProtectionMode,
-  YubiKeyDevice,
-  YubiKeyInfo,
-  invokeCommand,
-  CommandErrorClass,
-} from '../lib/api-types';
+import { ProtectionMode, YubiKeyDevice, YubiKeyInfo, CommandErrorClass } from '../lib/api-types';
+import { safeInvoke } from '../lib/tauri-safe';
 import { logger } from '../lib/logger';
 
 /**
@@ -39,7 +34,11 @@ export const useYubiKeySetupWorkflow = () => {
 
     try {
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Checking for YubiKey devices');
-      const devices = await invokeCommand<YubiKeyDevice[]>('yubikey_list_devices');
+      const devices = await safeInvoke<YubiKeyDevice[]>(
+        'yubikey_list_devices',
+        undefined,
+        'useYubiKeySetupWorkflow.checkForYubiKeys',
+      );
 
       setAvailableDevices(devices);
       setHasCheckedDevices(true);
@@ -53,13 +52,14 @@ export const useYubiKeySetupWorkflow = () => {
         });
       }
 
-      // If no devices found and YubiKey protection is selected, fall back to passphrase-only
+      // Note: Don't auto-fallback to passphrase mode - respect user's choice
+      // User can proceed with YubiKey-only mode even if no device detected yet
       if (devices.length === 0 && protectionMode !== ProtectionMode.PASSPHRASE_ONLY) {
         logger.logComponentLifecycle(
           'useYubiKeySetupWorkflow',
-          'No devices found, falling back to passphrase-only',
+          'No YubiKey devices detected - user will need to initialize YubiKey for age encryption',
         );
-        setProtectionMode(ProtectionMode.PASSPHRASE_ONLY);
+        setDeviceError('YubiKey will need to be initialized for age encryption when connected');
       }
     } catch (error: any) {
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Device detection failed', {
@@ -117,11 +117,22 @@ export const useYubiKeySetupWorkflow = () => {
       slots: info.piv_slots,
     });
     setYubiKeyInfo(info);
-    setSetupStep('generation');
+    // Don't auto-advance steps - user should click "Create Key" button
+    console.log('🔧 YubiKey configured but staying in configuration step - user must click Create Key');
   }, []);
 
   const handleEnhancedKeyGeneration = useCallback(async () => {
     try {
+      // Advance to generation step when user clicks "Create Key"
+      setSetupStep('generation');
+      
+      console.log('🚀 Starting enhanced key generation:', {
+        protectionMode,
+        hasYubiKey: !!selectedDevice,
+        keyLabel: baseWorkflow.keyLabel,
+        deviceCount: availableDevices.length,
+      });
+      
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Enhanced key generation started', {
         protectionMode,
         hasYubiKey: !!selectedDevice,
@@ -191,7 +202,9 @@ export const useYubiKeySetupWorkflow = () => {
       case ProtectionMode.PASSPHRASE_ONLY:
         return baseValid;
       case ProtectionMode.YUBIKEY_ONLY:
-        return baseWorkflow.keyLabel.trim().length > 0 && selectedDevice && yubiKeyInfo;
+        // For YubiKey-only mode, only require key label
+        // YubiKey can be connected and configured later
+        return baseWorkflow.keyLabel.trim().length > 0;
       case ProtectionMode.HYBRID:
         return baseValid && selectedDevice && yubiKeyInfo;
       default:
@@ -213,11 +226,13 @@ export const useYubiKeySetupWorkflow = () => {
       case 'configuration':
         if (protectionMode === ProtectionMode.PASSPHRASE_ONLY) {
           return baseWorkflow.isFormValid;
+        } else if (protectionMode === ProtectionMode.YUBIKEY_ONLY) {
+          // For YubiKey-only mode, only require key label - YubiKey can be connected later
+          return baseWorkflow.keyLabel.trim().length > 0;
+        } else {
+          // Hybrid mode requires both passphrase validation and YubiKey
+          return baseWorkflow.isFormValid && selectedDevice;
         }
-        return (
-          selectedDevice &&
-          (protectionMode === ProtectionMode.YUBIKEY_ONLY ? true : baseWorkflow.isFormValid)
-        );
       case 'generation':
         return isSetupValid();
       default:

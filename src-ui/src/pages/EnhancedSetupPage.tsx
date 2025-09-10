@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useYubiKeyWorkflow } from '../hooks/useYubiKeyWorkflow';
-import { useSetupWorkflow } from '../hooks/useSetupWorkflow';
+import { useYubiKeySetupWorkflow } from '../hooks/useYubiKeySetupWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import { Shield } from 'lucide-react';
 import { ProtectionMode } from '../lib/api-types';
@@ -37,59 +36,47 @@ const EnhancedSetupPage: React.FC = () => {
   logger.logComponentLifecycle('EnhancedSetupPage', 'Mount');
   const navigate = useNavigate();
 
-  // Separate workflows for cleaner architecture
-  const yubiKeyWorkflow = useYubiKeyWorkflow();
-  const setupWorkflow = useSetupWorkflow();
+  // Combined YubiKey setup workflow
+  const workflow = useYubiKeySetupWorkflow();
 
-  // Extract state from workflows
-  const { state: yubiKeyState, context: yubiKeyContext, actions: yubiKeyActions } = yubiKeyWorkflow;
-
+  // Extract state and actions
   const {
+    // Form state
     keyLabel,
     passphrase,
     confirmPassphrase,
     isFormValid,
     canProceedToNextStep,
-    isLoading: setupLoading,
+    isLoading,
     error,
     success,
     progress,
+
+    // Form handlers
     handleKeyLabelChange,
     handlePassphraseChange,
     setConfirmPassphrase,
     handleKeyGeneration,
     handleReset,
     clearError,
-  } = setupWorkflow;
 
-  // Derived state for backward compatibility
-  const protectionMode = yubiKeyContext.selectedMode;
-  const availableDevices = yubiKeyContext.availableDevices;
-  const selectedDevice = yubiKeyContext.selectedDevice;
-  const isCheckingDevices = yubiKeyState === 'hardware_detecting';
-  const isLoading = setupLoading || yubiKeyWorkflow.isLoading;
+    // YubiKey state
+    protectionMode,
+    availableDevices,
+    selectedDevice,
+    yubiKeyInfo,
+    isCheckingDevices,
+    hasCheckedDevices,
+    deviceError,
+    setupStep,
 
-  // Simple step management (will be enhanced with proper state machine later)
-  const [setupStep, setSetupStep] = useState<'mode-selection' | 'configuration' | 'generation'>(
-    'mode-selection',
-  );
-
-  // Handler for protection mode changes
-  const handleProtectionModeChange = (mode: ProtectionMode) => {
-    yubiKeyActions.selectProtectionMode(mode);
-    // Don't auto-navigate - wait for user to click Continue
-    // setSetupStep('configuration');
-  };
-
-  // Handler for device selection
-  const handleDeviceSelect = (device: any) => {
-    yubiKeyActions.selectDevice(device);
-  };
-
-  // Handler for YubiKey configuration completion
-  const handleYubiKeyConfigured = () => {
-    setSetupStep('generation');
-  };
+    // YubiKey actions
+    handleProtectionModeChange,
+    handleYubiKeyConfigured,
+    checkForYubiKeys,
+    handleDeviceSelect,
+    setSetupStep,
+  } = workflow;
 
   const handleEncryptVault = () => {
     navigate('/encrypt');
@@ -119,6 +106,12 @@ const EnhancedSetupPage: React.FC = () => {
   };
 
   const handleNextStep = () => {
+    console.log('👆 EnhancedSetupPage handleNextStep clicked:', {
+      setupStep,
+      protectionMode,
+      canProceedToNextStep,
+    });
+    
     if (setupStep === 'mode-selection') {
       if (protectionMode === ProtectionMode.PASSPHRASE_ONLY) {
         setSetupStep('generation');
@@ -129,11 +122,13 @@ const EnhancedSetupPage: React.FC = () => {
           protectionMode === ProtectionMode.YUBIKEY_ONLY ||
           protectionMode === ProtectionMode.HYBRID
         ) {
-          yubiKeyActions.commitToYubiKey();
+          // Move to configuration step
+          setSetupStep('configuration');
         }
       }
     } else if (setupStep === 'configuration') {
-      setSetupStep('generation');
+      console.log('🔑 "Create Key" clicked - calling handleKeyGeneration');
+      handleKeyGeneration();
     }
   };
 
@@ -150,6 +145,17 @@ const EnhancedSetupPage: React.FC = () => {
   };
 
   const renderStepContent = () => {
+    console.log('🖥️ EnhancedSetupPage renderStepContent:', {
+      setupStep,
+      protectionMode,
+      keyLabel,
+      isLoading,
+      success,
+      error,
+      hasCheckedDevices,
+      deviceCount: availableDevices.length,
+    });
+    
     switch (setupStep) {
       case 'mode-selection':
         return (

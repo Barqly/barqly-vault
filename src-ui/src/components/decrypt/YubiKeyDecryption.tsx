@@ -9,12 +9,8 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import {
-  YubiKeyDevice,
-  YubiKeyDecryptParams,
-  ConnectionStatus,
-  invokeCommand,
-} from '../../lib/api-types';
+import { YubiKeyDevice, YubiKeyDecryptParams, ConnectionStatus } from '../../lib/api-types';
+import { safeInvoke } from '../../lib/tauri-safe';
 import { LoadingSpinner } from '../ui/loading-spinner';
 import { ErrorMessage } from '../ui/error-message';
 import EnhancedInput from '../forms/EnhancedInput';
@@ -64,7 +60,11 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
   const loadAvailableDevices = async () => {
     setIsLoadingDevices(true);
     try {
-      const devices = await invokeCommand<YubiKeyDevice[]>('yubikey_list_devices');
+      const devices = await safeInvoke<YubiKeyDevice[]>(
+        'yubikey_list_devices',
+        undefined,
+        'YubiKeyDecryption.loadDevices',
+      );
       setAvailableDevices(devices);
 
       // Auto-select first device if none selected
@@ -83,9 +83,13 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
     setConnectionStatus(null);
 
     try {
-      const status = await invokeCommand<ConnectionStatus>('yubikey_test_connection', {
-        device_id: device.device_id,
-      });
+      const status = await safeInvoke<ConnectionStatus>(
+        'yubikey_test_connection',
+        {
+          device_id: device.device_id,
+        },
+        'YubiKeyDecryption.testConnection',
+      );
       setConnectionStatus(status);
     } catch (error: any) {
       setConnectionStatus({

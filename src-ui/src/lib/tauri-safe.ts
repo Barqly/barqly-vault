@@ -103,6 +103,13 @@ export async function safeInvoke<T>(
       select_files: 'selectionType', // Takes SelectionType wrapped in 'selectionType' parameter
       get_file_info: 'paths',
       create_manifest: 'file_paths',
+
+      // YubiKey commands
+      yubikey_list_devices: null, // No parameters
+      yubikey_devices_available: null, // No parameters
+      yubikey_get_device_info: null, // Takes device_id directly
+      yubikey_test_connection: null, // Takes device_id and pin
+      yubikey_initialize: null, // Takes device_id, pin, slot
     };
 
     let invokeArgs = args;
