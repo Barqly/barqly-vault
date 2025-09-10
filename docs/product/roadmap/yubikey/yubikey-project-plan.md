@@ -247,6 +247,87 @@ _Live tracking document for YubiKey feature implementation in Barqly Vault_
 
 **Product Owner Total Investment**: ~12 days over 11 weeks (25% time allocation)
 
+## Milestone YK-7: Frontend Architecture Refactor (URGENT - BLOCKING)
+
+**Status**: IN PROGRESS  
+**Priority**: P0 (Blocking all YubiKey work)  
+**Owner**: Senior Frontend Engineer  
+**Duration**: 3-5 days  
+
+### Problem Statement
+Current YubiKey implementation has critical architectural flaws discovered during integration testing:
+
+1. **Tight Coupling**: UI components directly trigger hardware operations
+2. **Premature Hardware Detection**: YubiKey detection happens on card click, not commitment
+3. **Scattered State Management**: 198+ useState/useEffect across 48 files
+4. **Fragile Component Design**: UI styling changes require business logic changes
+
+### Root Cause Analysis
+The fundamental issue is **violation of separation of concerns**:
+- **UI Components** contain business logic 
+- **Hardware Detection** happens during exploration, not commitment
+- **State Management** is distributed without clear boundaries
+- **User Journey** doesn't map to technical implementation
+
+### Architecture Refactor Plan
+
+#### Phase 1: Separate UI from Business Logic (2 days)
+- **Extract YubiKey Service**: Move all hardware operations to dedicated service layer
+- **Pure Presentational Components**: ProtectionModeSelector becomes stateless UI
+- **State Machine Implementation**: Clear workflow states with explicit transitions
+- **Centralized State Management**: Single source of truth for YubiKey workflow
+
+#### Phase 2: Fix User Flow Timing (1 day)  
+- **Defer Hardware Checks**: No hardware operations during card selection
+- **Progressive Disclosure**: Show requirements → commitment → hardware interaction
+- **Clear Commitment Points**: Hardware detection only after "Continue" clicks
+
+#### Phase 3: Modular Architecture (1-2 days)
+- **Composable Components**: Inject styling without affecting logic
+- **Injectable Dependencies**: YubiKey service can be mocked/swapped
+- **Clear Component Boundaries**: Presentation ↔ Container ↔ Service layers
+
+### Implementation Tasks
+
+#### Task YK-7.1: Service Layer Extraction
+- [ ] Create `YubiKeyService` class with all hardware operations
+- [ ] Extract state management into `useYubiKeyWorkflow` hook
+- [ ] Implement state machine with clear transitions
+- [ ] Create service interfaces for testability
+
+#### Task YK-7.2: Component Decoupling  
+- [ ] Make `ProtectionModeSelector` pure presentational component
+- [ ] Remove hardware detection from card click handlers
+- [ ] Create container components for business logic
+- [ ] Implement proper event boundaries
+
+#### Task YK-7.3: User Flow Correction
+- [ ] Map user journey to technical states
+- [ ] Implement commitment-based hardware detection
+- [ ] Add progressive disclosure for hardware requirements
+- [ ] Create proper error boundaries and recovery
+
+#### Task YK-7.4: Testing & Validation
+- [ ] Unit tests for service layer
+- [ ] Integration tests for user workflows  
+- [ ] Visual regression tests for UI components
+- [ ] Validate no premature hardware detection
+
+### Success Criteria
+1. **No Hardware Calls on Card Click**: Clicking YubiKey/Hybrid cards shows only UI changes
+2. **Clear Separation**: UI components contain no hardware detection logic
+3. **Proper User Journey**: Hardware detection only happens at commitment points
+4. **Maintainable Code**: UI styling changes don't affect business logic
+5. **Composable Architecture**: Components can be easily modified/extended
+
+### Risk Mitigation
+- **Testing Strategy**: Comprehensive unit/integration tests before refactor
+- **Incremental Approach**: Refactor one component at a time with validation
+- **Rollback Plan**: Git branching strategy for safe iteration
+- **User Validation**: Continuous testing of user flows during refactor
+
+**This milestone MUST be completed before any further YubiKey development work.**
+
 ---
 
 **Status**: YK-1, YK-2, YK-3, YK-4 MOSTLY COMPLETE - Frontend Implementation Done, Test Suite Needs Fixes

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useYubiKeySetupWorkflow } from '../hooks/useYubiKeySetupWorkflow';
+import { useYubiKeyWorkflow } from '../hooks/useYubiKeyWorkflow';
+import { useSetupWorkflow } from '../hooks/useSetupWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import { Shield } from 'lucide-react';
 import { ProtectionMode } from '../lib/api-types';
@@ -15,7 +16,7 @@ import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 
 // New YubiKey components
-import ProtectionModeSelector from '../components/setup/ProtectionModeSelector';
+import ProtectionModeSelectorContainer from '../components/setup/ProtectionModeSelectorContainer';
 import YubiKeyDeviceList from '../components/setup/YubiKeyDeviceList';
 import YubiKeyInitialization from '../components/setup/YubiKeyInitialization';
 import HybridProtectionSetup from '../components/setup/HybridProtectionSetup';
@@ -36,39 +37,59 @@ const EnhancedSetupPage: React.FC = () => {
   logger.logComponentLifecycle('EnhancedSetupPage', 'Mount');
   const navigate = useNavigate();
 
+  // Separate workflows for cleaner architecture
+  const yubiKeyWorkflow = useYubiKeyWorkflow();
+  const setupWorkflow = useSetupWorkflow();
+
+  // Extract state from workflows
+  const { state: yubiKeyState, context: yubiKeyContext, actions: yubiKeyActions } = yubiKeyWorkflow;
+
   const {
-    // Base state
     keyLabel,
     passphrase,
     confirmPassphrase,
     isFormValid,
     canProceedToNextStep,
-    isLoading,
+    isLoading: setupLoading,
     error,
     success,
     progress,
-
-    // YubiKey state
-    protectionMode,
-    availableDevices,
-    selectedDevice,
-    isCheckingDevices,
-    setupStep,
-
-    // Handlers
     handleKeyLabelChange,
     handlePassphraseChange,
     setConfirmPassphrase,
     handleKeyGeneration,
     handleReset,
     clearError,
+  } = setupWorkflow;
 
-    // YubiKey handlers
-    handleProtectionModeChange,
-    handleDeviceSelect,
-    handleYubiKeyConfigured,
-    setSetupStep,
-  } = useYubiKeySetupWorkflow();
+  // Derived state for backward compatibility
+  const protectionMode = yubiKeyContext.selectedMode;
+  const availableDevices = yubiKeyContext.availableDevices;
+  const selectedDevice = yubiKeyContext.selectedDevice;
+  const isCheckingDevices = yubiKeyState === 'hardware_detecting';
+  const isLoading = setupLoading || yubiKeyWorkflow.isLoading;
+
+  // Simple step management (will be enhanced with proper state machine later)
+  const [setupStep, setSetupStep] = useState<'mode-selection' | 'configuration' | 'generation'>(
+    'mode-selection',
+  );
+
+  // Handler for protection mode changes
+  const handleProtectionModeChange = (mode: ProtectionMode) => {
+    yubiKeyActions.selectProtectionMode(mode);
+    // For now, automatically proceed to configuration
+    setSetupStep('configuration');
+  };
+
+  // Handler for device selection
+  const handleDeviceSelect = (device: any) => {
+    yubiKeyActions.selectDevice(device);
+  };
+
+  // Handler for YubiKey configuration completion
+  const handleYubiKeyConfigured = () => {
+    setSetupStep('generation');
+  };
 
   const handleEncryptVault = () => {
     navigate('/encrypt');
@@ -125,8 +146,8 @@ const EnhancedSetupPage: React.FC = () => {
     switch (setupStep) {
       case 'mode-selection':
         return (
-          <ProtectionModeSelector
-            selectedMode={protectionMode}
+          <ProtectionModeSelectorContainer
+            selectedMode={protectionMode || undefined}
             onModeChange={handleProtectionModeChange}
             onYubiKeySelected={(device) => device && handleDeviceSelect(device)}
             availableDevices={availableDevices}
@@ -189,7 +210,7 @@ const EnhancedSetupPage: React.FC = () => {
               {selectedDevice && Boolean(keyLabel.trim().length > 0) && (
                 <YubiKeyInitialization
                   device={selectedDevice}
-                  onInitializationComplete={(info) => handleYubiKeyConfigured(selectedDevice, info)}
+                  onInitializationComplete={handleYubiKeyConfigured}
                   onCancel={handlePreviousStep}
                   isLoading={isLoading}
                 />

@@ -130,6 +130,7 @@ export const useSetupWorkflow = () => {
     passphrase,
     confirmPassphrase,
     isFormValid,
+    canProceedToNextStep: isFormValid,
     isLoading,
     error,
     success,

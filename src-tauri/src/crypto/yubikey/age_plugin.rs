@@ -54,6 +54,17 @@ impl AgePluginProvider {
             return Ok(path);
         }
 
+        // Try common Cargo installation directory
+        if let Ok(home_dir) = std::env::var("HOME") {
+            let cargo_bin_path = PathBuf::from(home_dir)
+                .join(".cargo")
+                .join("bin")
+                .join("age-plugin-yubikey");
+            if cargo_bin_path.exists() && cargo_bin_path.is_file() {
+                return Ok(cargo_bin_path);
+            }
+        }
+
         // Try application-specific locations
         if let Ok(app_dir) = crate::storage::get_application_directory() {
             let runtime_path = app_dir.join("runtime").join("age-plugin-yubikey");
@@ -68,7 +79,8 @@ impl AgePluginProvider {
         }
 
         Err(YubiKeyError::PluginError(
-            "age-plugin-yubikey binary not found in PATH or application directories".to_string(),
+            "age-plugin-yubikey binary not found in PATH, ~/.cargo/bin, or application directories"
+                .to_string(),
         ))
     }
 
