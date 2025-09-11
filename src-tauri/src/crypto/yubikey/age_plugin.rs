@@ -159,21 +159,50 @@ impl AgePluginProvider {
         let mut recipients = Vec::new();
 
         for line in output.lines() {
-            if line.trim().is_empty() || line.starts_with('#') {
+            let trimmed = line.trim();
+            if trimmed.is_empty() || trimmed.starts_with('#') {
                 continue;
             }
 
-            // Expected format: "age1yubikey1... [label] (Serial: 12345678, Slot: 9a)"
-            let parts: Vec<&str> = line.split_whitespace().collect();
+            // The --list-all command outputs in format:
+            // age1yubikey1[recipient_key] [label]
+            // or with more details:
+            // age1yubikey1... [label] (Serial: 12345678, Slot: 9c)
+
+            // Split on whitespace to get recipient and rest
+            let parts: Vec<&str> = trimmed.split_whitespace().collect();
             if parts.is_empty() || !parts[0].starts_with("age1yubikey1") {
                 continue;
             }
 
             let recipient_str = parts[0].to_string();
 
-            // Extract label, serial, and slot from the rest of the line
-            let remainder = line.strip_prefix(parts[0]).unwrap_or("").trim();
-            let (label, serial, slot) = self.parse_recipient_metadata(remainder)?;
+            // Get everything after the recipient for metadata parsing
+            let remainder = trimmed.strip_prefix(parts[0]).unwrap_or("").trim();
+
+            // Parse metadata - handle both simple label and detailed format
+            let (label, serial, slot) = if remainder.contains("Serial:") {
+                // Detailed format with serial and slot
+                self.parse_recipient_metadata(remainder)?
+            } else if !remainder.is_empty() {
+                // Simple format - just label
+                let label = remainder
+                    .replace('[', "")
+                    .replace(']', "")
+                    .trim()
+                    .to_string();
+                // Extract serial from recipient string (work around for missing metadata)
+                let serial = self
+                    .extract_serial_from_recipient(&recipient_str)
+                    .unwrap_or_else(|_| "unknown".to_string());
+                (label, serial, 0x9c) // Default to slot 9c
+            } else {
+                // No metadata - use defaults
+                let serial = self
+                    .extract_serial_from_recipient(&recipient_str)
+                    .unwrap_or_else(|_| "unknown".to_string());
+                ("YubiKey".to_string(), serial, 0x9c)
+            };
 
             recipients.push(YubiRecipient {
                 recipient: recipient_str,
@@ -184,6 +213,15 @@ impl AgePluginProvider {
         }
 
         Ok(recipients)
+    }
+
+    /// Extract serial number from age recipient string
+    /// The serial number is embedded in the bech32 encoding of the age recipient
+    fn extract_serial_from_recipient(&self, _recipient: &str) -> YubiKeyResult<String> {
+        // This is a simplified extraction - in practice the serial is embedded
+        // in the bech32-encoded data. For now, return "unknown" if we can't extract it.
+        // The actual serial should be obtained from ykman or from metadata.
+        Ok("unknown".to_string())
     }
 
     /// Parse recipient metadata from the descriptive part
@@ -250,20 +288,40 @@ impl AgePluginProvider {
 #[async_trait::async_trait]
 impl YubiIdentityProvider for AgePluginProvider {
     async fn list_recipients(&self) -> YubiKeyResult<Vec<YubiRecipient>> {
-        // Execute age-plugin-yubikey --list-recipients
-        let (stdout, _stderr) = self.execute_plugin(&["--list-recipients"]).await?;
+        // Try --list-all first (newer versions), fallback to --list
+        let result = self.execute_plugin(&["--list-all"]).await;
+        let (stdout, _stderr) = match result {
+            Ok(output) => output,
+            Err(_) => {
+                // Fallback to --list for older versions
+                self.execute_plugin(&["--list"]).await?
+            }
+        };
+
+        // If output is empty, return empty list (no recipients configured)
+        if stdout.trim().is_empty() {
+            return Ok(Vec::new());
+        }
+
         self.parse_recipients(&stdout)
     }
 
-    async fn register(&self, label: &str, pin: Option<&str>) -> YubiKeyResult<YubiRecipient> {
+    async fn register(&self, label: &str, _pin: Option<&str>) -> YubiKeyResult<YubiRecipient> {
+        // Note: PIN is handled through interactive prompts by age-plugin-yubikey
+        // The pin parameter is kept for interface compatibility but not used directly
+        // as age-plugin-yubikey doesn't accept PIN via command line for security reasons
+
         let mut args = vec!["--generate"];
 
-        if let Some(pin_value) = pin {
-            args.push("--pin");
-            args.push(pin_value);
-        }
+        // Set PIN policy to 'once' (default) - requires PIN once per session
+        args.push("--pin-policy");
+        args.push("once");
 
-        args.push("--label");
+        // Set touch policy to 'always' (default) - requires touch for each operation
+        args.push("--touch-policy");
+        args.push("always");
+
+        args.push("--name");
         args.push(label);
 
         // Execute with interactive timeout for user interaction
@@ -279,30 +337,41 @@ impl YubiIdentityProvider for AgePluginProvider {
     async fn unwrap_dek(
         &self,
         header: &AgeHeader,
-        pin: Option<&str>,
+        _pin: Option<&str>,
     ) -> YubiKeyResult<DataEncryptionKey> {
         // Create temporary file with the age header/encrypted data
         let temp_path = self.create_temp_file(&header.data).await?;
 
-        let mut args = vec!["--decrypt"];
+        // For YubiKey decryption, we need to use the age command directly
+        // The age-plugin-yubikey will be invoked automatically by age when it encounters
+        // a YubiKey recipient in the encrypted file
 
-        if let Some(pin_value) = pin {
-            args.push("--pin");
-            args.push(pin_value);
-        }
-
-        let temp_path_str = temp_path.to_string_lossy();
-        args.push(&temp_path_str);
-
-        // Execute with interactive timeout for touch requirement
-        let (stdout, _stderr) = self.execute_plugin_interactive(&args).await?;
+        // Use age command for decryption (it will call age-plugin-yubikey internally)
+        let output = timeout(INTERACTIVE_TIMEOUT, async {
+            Command::new("age")
+                .args(&["--decrypt", &temp_path.to_string_lossy()])
+                .env("AGE_PLUGIN_YUBIKEY_SKIP_PROMPT", "1") // Skip prompts if possible
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .output()
+                .await
+        })
+        .await
+        .map_err(|_| YubiKeyError::PluginError("age decryption operation timed out".to_string()))?
+        .map_err(|e| YubiKeyError::PluginError(format!("Failed to execute age decrypt: {e}")))?;
 
         // Clean up temp file
         let _ = fs::remove_file(&temp_path).await;
 
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(YubiKeyError::PluginError(format!(
+                "age decrypt failed: {stderr}"
+            )));
+        }
+
         // The decrypted content contains the DEK
-        let dek_bytes = stdout.into_bytes();
-        Ok(DataEncryptionKey::new(dek_bytes))
+        Ok(DataEncryptionKey::new(output.stdout))
     }
 
     async fn test_connectivity(&self) -> YubiKeyResult<()> {

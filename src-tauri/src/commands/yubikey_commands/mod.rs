@@ -5,13 +5,21 @@
 pub mod device_management;
 pub mod initialization;
 pub mod smart_decryption;
+pub mod streamlined;
 
 #[cfg(test)]
 pub mod hardware_test;
 
+#[cfg(test)]
+pub mod test_generate_key_multi;
+
+#[cfg(test)]
+pub mod test_streamlined_api;
+
 pub use device_management::*;
 pub use initialization::*;
 pub use smart_decryption::*;
+pub use streamlined::*;
 
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::crypto::yubikey::YubiKeyError;

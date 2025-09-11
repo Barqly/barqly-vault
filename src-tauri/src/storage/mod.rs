@@ -48,7 +48,7 @@ pub use cache::{get_cache, CacheMetrics, StorageCache};
 pub use errors::StorageError;
 pub use key_store::{
     delete_key, get_key_info, key_exists, list_keys, load_encrypted_key, save_encrypted_key,
-    KeyInfo,
+    save_encrypted_key_with_metadata, save_yubikey_metadata, KeyInfo,
 };
 pub use metadata_v2::{MetadataV2Storage, RecipientInfo, RecipientType, VaultMetadataV2};
 pub use path_management::{get_key_file_path, get_key_metadata_path};

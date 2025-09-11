@@ -224,5 +224,11 @@ pub fn get_recovery_guidance(code: &ErrorCode) -> (Option<String>, bool) {
             Some("Failed to set up multiple unlock methods. Try setting up protection modes one at a time".to_string()),
             true,
         ),
+
+        // Generic YubiKey error
+        ErrorCode::YubiKeyError => (
+            Some("YubiKey operation failed. Ensure the device is connected and try again".to_string()),
+            true,
+        ),
     }
 }

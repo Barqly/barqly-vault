@@ -165,6 +165,14 @@ export interface GenerateKeyInput {
   passphrase: string;
 }
 
+export interface GenerateKeyMultiInput {
+  label: string;
+  passphrase?: string;
+  protection_mode?: ProtectionMode;
+  yubikey_device_id?: string;
+  yubikey_info?: YubiKeyInfo;
+}
+
 export interface GenerateKeyResponse {
   public_key: string;
   key_id: string;

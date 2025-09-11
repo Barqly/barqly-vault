@@ -297,18 +297,21 @@ mod tests {
         // Test the command directly - this should never panic or return an error
         // regardless of whether age-plugin-yubikey is installed or not
         let result = yubikey_list_devices().await;
-        
+
         // The command should ALWAYS return Ok(Vec<YubiKeyDevice>)
-        assert!(result.is_ok(), "yubikey_list_devices should never return an error");
-        
+        assert!(
+            result.is_ok(),
+            "yubikey_list_devices should never return an error"
+        );
+
         let devices = result.unwrap();
-        
+
         // The result should always be a Vec, even if empty
         assert!(
             devices.is_empty() || !devices.is_empty(),
             "Result should always be a valid Vec<YubiKeyDevice>"
         );
-        
+
         // Log the result for debugging
         println!("yubikey_list_devices returned {} devices", devices.len());
         for device in &devices {
@@ -321,29 +324,41 @@ mod tests {
     async fn test_yubikey_list_devices_graceful_provider_failure() {
         // This test verifies that our fix handles provider creation failures correctly
         let result = yubikey_list_devices().await;
-        
+
         // Should always return Ok, never Error
-        assert!(result.is_ok(), "Should return Ok even when provider creation fails");
-        
+        assert!(
+            result.is_ok(),
+            "Should return Ok even when provider creation fails"
+        );
+
         let devices = result.unwrap();
-        
+
         // Result should be a valid Vec (empty if no YubiKeys or plugin not installed)
-        assert!(devices.len() >= 0, "Should return valid empty or populated Vec");
+        assert!(
+            devices.len() >= 0,
+            "Should return valid empty or populated Vec"
+        );
     }
 
     /// Test that yubikey_devices_available always returns a boolean
     #[tokio::test]
     async fn test_yubikey_devices_available_always_returns_bool() {
         let result = yubikey_devices_available().await;
-        
+
         // Should always return Ok(bool), never Error
-        assert!(result.is_ok(), "yubikey_devices_available should never return an error");
-        
+        assert!(
+            result.is_ok(),
+            "yubikey_devices_available should never return an error"
+        );
+
         let available = result.unwrap();
-        
+
         // Should be either true or false
-        assert!(available == true || available == false, "Should return a valid boolean");
-        
+        assert!(
+            available == true || available == false,
+            "Should return a valid boolean"
+        );
+
         println!("yubikey_devices_available returned: {}", available);
     }
 
@@ -362,8 +377,9 @@ mod tests {
 
         // Test JSON serialization/deserialization
         let json = serde_json::to_string(&device).expect("Should serialize to JSON");
-        let deserialized: YubiKeyDevice = serde_json::from_str(&json).expect("Should deserialize from JSON");
-        
+        let deserialized: YubiKeyDevice =
+            serde_json::from_str(&json).expect("Should deserialize from JSON");
+
         assert_eq!(device.device_id, deserialized.device_id);
         assert_eq!(device.name, deserialized.name);
         assert_eq!(device.serial_number, deserialized.serial_number);
@@ -371,7 +387,7 @@ mod tests {
         assert_eq!(device.has_piv, deserialized.has_piv);
         assert_eq!(device.has_oath, deserialized.has_oath);
         assert_eq!(device.has_fido, deserialized.has_fido);
-        
+
         println!("YubiKeyDevice JSON: {}", json);
     }
 
@@ -379,16 +395,25 @@ mod tests {
     #[test]
     fn test_empty_device_array_serialization() {
         let empty_devices: Vec<YubiKeyDevice> = Vec::new();
-        
+
         // Test that empty Vec serializes to "[]" not "undefined"
-        let json = serde_json::to_string(&empty_devices).expect("Should serialize empty Vec to JSON");
+        let json =
+            serde_json::to_string(&empty_devices).expect("Should serialize empty Vec to JSON");
         assert_eq!(json, "[]", "Empty Vec should serialize to empty JSON array");
-        
+
         // Test deserialization
-        let deserialized: Vec<YubiKeyDevice> = serde_json::from_str(&json).expect("Should deserialize from JSON");
-        assert!(deserialized.is_empty(), "Deserialized array should be empty");
-        assert_eq!(deserialized.len(), 0, "Deserialized array length should be 0");
-        
+        let deserialized: Vec<YubiKeyDevice> =
+            serde_json::from_str(&json).expect("Should deserialize from JSON");
+        assert!(
+            deserialized.is_empty(),
+            "Deserialized array should be empty"
+        );
+        assert_eq!(
+            deserialized.len(),
+            0,
+            "Deserialized array length should be 0"
+        );
+
         println!("Empty devices JSON: {}", json);
     }
 
@@ -397,19 +422,22 @@ mod tests {
     async fn test_complete_yubikey_detection_workflow() {
         // Test the complete workflow that the frontend uses
         println!("Testing complete YubiKey detection workflow...");
-        
+
         // Step 1: Check availability
         let availability_result = yubikey_devices_available().await;
-        assert!(availability_result.is_ok(), "Availability check should never fail");
+        assert!(
+            availability_result.is_ok(),
+            "Availability check should never fail"
+        );
         let available = availability_result.unwrap();
         println!("YubiKey devices available: {}", available);
-        
+
         // Step 2: List devices
         let devices_result = yubikey_list_devices().await;
         assert!(devices_result.is_ok(), "Device listing should never fail");
         let devices = devices_result.unwrap();
         println!("Found {} YubiKey devices", devices.len());
-        
+
         // Step 3: Verify consistency
         if available {
             // If available, we should have at least one device (or this could be a timing issue)
@@ -418,15 +446,24 @@ mod tests {
             // If not available, we should have no devices
             println!("No devices available, found {} devices", devices.len());
         }
-        
+
         // Step 4: Test JSON serialization (this is what gets sent to frontend)
         let json = serde_json::to_string(&devices).expect("Should serialize to JSON");
         println!("Devices JSON: {}", json);
-        
+
         // Verify JSON is never "undefined" or null
-        assert!(!json.contains("undefined"), "JSON should never contain 'undefined'");
-        assert!(!json.contains("null"), "JSON should never contain 'null' for the array itself");
-        assert!(json.starts_with('['), "JSON should start with '[' for array");
+        assert!(
+            !json.contains("undefined"),
+            "JSON should never contain 'undefined'"
+        );
+        assert!(
+            !json.contains("null"),
+            "JSON should never contain 'null' for the array itself"
+        );
+        assert!(
+            json.starts_with('['),
+            "JSON should start with '[' for array"
+        );
         assert!(json.ends_with(']'), "JSON should end with ']' for array");
     }
 }

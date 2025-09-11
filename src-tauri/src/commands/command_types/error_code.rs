@@ -69,6 +69,7 @@ pub enum ErrorCode {
     UnauthorizedAccess,
 
     // YubiKey Hardware Errors
+    YubiKeyError,
     YubiKeyNotFound,
     YubiKeyPinRequired,
     YubiKeyPinBlocked,

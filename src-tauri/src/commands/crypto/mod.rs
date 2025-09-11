@@ -7,6 +7,7 @@ pub mod decryption;
 pub mod encryption;
 pub mod file_helpers;
 pub mod key_generation;
+pub mod key_generation_multi;
 pub mod manifest;
 pub mod progress;
 pub mod validation;
@@ -15,6 +16,9 @@ pub mod validation;
 pub use decryption::{decrypt_data, DecryptDataInput, DecryptionResult};
 pub use encryption::{encrypt_files, EncryptDataInput};
 pub use key_generation::{generate_key, GenerateKeyInput, GenerateKeyResponse};
+pub use key_generation_multi::{
+    generate_key_multi, GenerateKeyMultiInput, GenerateKeyMultiResponse,
+};
 pub use manifest::{verify_manifest, VerifyManifestInput, VerifyManifestResponse};
 pub use progress::{
     get_encryption_status, get_progress, EncryptionStatus, EncryptionStatusResponse,

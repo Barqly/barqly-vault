@@ -25,7 +25,10 @@ use std::path::PathBuf;
 
 // Re-export public functions
 pub use metadata::{get_key_info, list_keys};
-pub use operations::{delete_key, key_exists, load_encrypted_key, save_encrypted_key};
+pub use operations::{
+    delete_key, key_exists, load_encrypted_key, save_encrypted_key,
+    save_encrypted_key_with_metadata, save_yubikey_metadata,
+};
 
 // Internal-only exports for use within this module
 pub(crate) use metadata::update_key_metadata_access_time;

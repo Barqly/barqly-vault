@@ -12,13 +12,19 @@ use commands::{
     encrypt_files,
     // Crypto commands
     generate_key,
+    generate_key_multi,
     get_cache_metrics,
     get_config,
     get_encryption_status,
     get_file_info,
+    get_identities,
     get_progress,
+    init_yubikey,
     // Storage commands
     list_keys_command,
+    // Streamlined YubiKey commands
+    list_yubikeys,
+    register_yubikey,
     select_directory,
     // File commands
     select_files,
@@ -55,6 +61,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             // Crypto commands
             generate_key,
+            generate_key_multi,
             validate_passphrase,
             verify_key_passphrase,
             encrypt_files,
@@ -85,6 +92,11 @@ pub fn run() {
             yubikey_decrypt_file,
             yubikey_get_available_unlock_methods,
             yubikey_test_unlock_credentials,
+            // Streamlined YubiKey commands
+            list_yubikeys,
+            init_yubikey,
+            register_yubikey,
+            get_identities,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

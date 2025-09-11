@@ -191,3 +191,107 @@ pub fn key_exists(label: &str) -> Result<bool, StorageError> {
     let key_path = get_key_file_path(label)?;
     Ok(key_path.exists())
 }
+
+/// Save an encrypted key with associated metadata
+///
+/// This function saves both the encrypted key and its metadata, supporting
+/// multi-recipient encryption modes.
+///
+/// # Arguments
+/// * `label` - The label for the key
+/// * `encrypted_key` - The encrypted key bytes
+/// * `public_key` - Optional public key string
+/// * `metadata` - The vault metadata containing recipient information
+///
+/// # Returns
+/// The path where the key was saved
+///
+/// # Errors
+/// - `StorageError::InvalidLabel` if the label is unsafe
+/// - `StorageError::KeyAlreadyExists` if a key with this label already exists
+/// - `StorageError::IoError` if file operations fail
+pub fn save_encrypted_key_with_metadata(
+    label: &str,
+    encrypted_key: &[u8],
+    public_key: Option<&str>,
+    metadata: &crate::storage::metadata_v2::VaultMetadataV2,
+) -> Result<PathBuf, StorageError> {
+    // First save the encrypted key using the existing function
+    let key_path = save_encrypted_key(label, encrypted_key, public_key)?;
+
+    // Then save the v2 metadata
+    let metadata_path = get_key_metadata_path(label)?.with_file_name(format!("{}.v2.json", label));
+    crate::storage::metadata_v2::MetadataV2Storage::save_metadata(metadata, &metadata_path)?;
+
+    Ok(key_path)
+}
+
+/// Save YubiKey metadata without an encrypted private key
+///
+/// For YubiKey-only mode, we don't store an encrypted private key since
+/// the YubiKey itself holds the identity.
+///
+/// # Arguments
+/// * `label` - The label for the key
+/// * `metadata` - The vault metadata containing YubiKey recipient information
+/// * `public_key` - Optional public key string (YubiKey recipient string)
+///
+/// # Returns
+/// The path where the metadata was saved
+///
+/// # Errors
+/// - `StorageError::InvalidLabel` if the label is unsafe
+/// - `StorageError::KeyAlreadyExists` if a key with this label already exists
+/// - `StorageError::IoError` if file operations fail
+pub fn save_yubikey_metadata(
+    label: &str,
+    metadata: &crate::storage::metadata_v2::VaultMetadataV2,
+    public_key: Option<&str>,
+) -> Result<PathBuf, StorageError> {
+    // Get the key file path (even though we won't store an encrypted key)
+    let key_path = get_key_file_path(label)?;
+
+    // Check if key already exists
+    if key_path.exists() {
+        return Err(StorageError::KeyAlreadyExists(label.to_string()));
+    }
+
+    // Create a placeholder file to indicate this key exists
+    // This helps with key listing and prevents duplicate labels
+    let placeholder_content = b"YubiKey-protected key (no encrypted data stored)";
+    fs::write(&key_path, placeholder_content).map_err(StorageError::IoError)?;
+
+    // Set restrictive permissions on Unix systems
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = fs::metadata(&key_path)
+            .map_err(StorageError::IoError)?
+            .permissions();
+        perms.set_mode(0o600);
+        fs::set_permissions(&key_path, perms).map_err(StorageError::IoError)?;
+    }
+
+    // Create basic metadata for key listing
+    let key_info = KeyInfo::new(
+        label.to_string(),
+        key_path.clone(),
+        public_key.map(|s| s.to_string()),
+    );
+
+    let meta_path = get_key_metadata_path(label)?;
+    let metadata_json =
+        serde_json::to_string_pretty(&key_info).map_err(StorageError::SerializationError)?;
+
+    fs::write(&meta_path, metadata_json).map_err(StorageError::IoError)?;
+
+    // Save the v2 metadata
+    let metadata_path = get_key_metadata_path(label)?.with_file_name(format!("{}.v2.json", label));
+    crate::storage::metadata_v2::MetadataV2Storage::save_metadata(metadata, &metadata_path)?;
+
+    // Invalidate key list cache since we added a new key
+    let cache = get_cache();
+    cache.invalidate_key_list();
+
+    Ok(key_path)
+}

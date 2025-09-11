@@ -1,5 +1,5 @@
 //! Hardware integration test for YubiKey detection
-//! 
+//!
 //! Run this test with an actual YubiKey plugged in:
 //! ```bash
 //! cargo test test_yubikey_hardware_detection --ignored -- --nocapture
@@ -12,15 +12,15 @@ use super::device_management::yubikey_list_devices;
 async fn test_yubikey_hardware_detection() {
     println!("🔌 Testing YubiKey hardware detection...");
     println!("📝 Make sure your YubiKey is plugged in before running this test");
-    
+
     // Call the actual command that the frontend uses
     let result = yubikey_list_devices().await;
-    
+
     match result {
         Ok(devices) => {
             println!("✅ SUCCESS: yubikey_list_devices returned Ok(Vec)");
             println!("📊 Found {} device(s)", devices.len());
-            
+
             if devices.is_empty() {
                 println!("⚠️  No YubiKey devices detected");
                 println!("💡 This could mean:");
@@ -38,8 +38,10 @@ async fn test_yubikey_hardware_detection() {
                     if let Some(version) = &device.firmware_version {
                         println!("     Version: {}", version);
                     }
-                    println!("     PIV: {}, OATH: {}, FIDO: {}", 
-                        device.has_piv, device.has_oath, device.has_fido);
+                    println!(
+                        "     PIV: {}, OATH: {}, FIDO: {}",
+                        device.has_piv, device.has_oath, device.has_fido
+                    );
                 }
             }
         }
@@ -49,11 +51,11 @@ async fn test_yubikey_hardware_detection() {
             panic!("Hardware test failed - this should not happen with the recent fixes");
         }
     }
-    
+
     println!("✅ Test completed - function returned proper Result type");
 }
 
-#[tokio::test] 
+#[tokio::test]
 #[ignore] // Requires actual YubiKey hardware
 async fn test_yubikey_hot_plugging() {
     println!("🔄 Testing YubiKey hot-plugging behavior...");
@@ -62,7 +64,7 @@ async fn test_yubikey_hot_plugging() {
     println!("   2. Test will check for devices");
     println!("   3. Unplug YubiKey when prompted");
     println!("   4. Plug it back in when prompted");
-    
+
     // First check - should find devices
     println!("\n🔌 Phase 1: Checking with YubiKey plugged in...");
     let result1 = yubikey_list_devices().await;
@@ -70,11 +72,11 @@ async fn test_yubikey_hot_plugging() {
         Ok(devices) => println!("✅ Found {} device(s)", devices.len()),
         Err(e) => println!("❌ Error: {e}"),
     }
-    
+
     println!("\n⏸️  MANUAL ACTION: Unplug your YubiKey now and press Enter...");
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).unwrap();
-    
+
     // Second check - should return empty array (not error)
     println!("🔌 Phase 2: Checking with YubiKey unplugged...");
     let result2 = yubikey_list_devices().await;
@@ -90,11 +92,11 @@ async fn test_yubikey_hot_plugging() {
             panic!("Backend should return Ok(vec![]) when no devices, not error");
         }
     }
-    
+
     println!("\n⏸️  MANUAL ACTION: Plug your YubiKey back in and press Enter...");
     input.clear();
     std::io::stdin().read_line(&mut input).unwrap();
-    
+
     // Third check - should find devices again
     println!("🔌 Phase 3: Checking with YubiKey plugged back in...");
     let result3 = yubikey_list_devices().await;
@@ -107,6 +109,6 @@ async fn test_yubikey_hot_plugging() {
         }
         Err(e) => println!("❌ Error: {e}"),
     }
-    
+
     println!("✅ Hot-plugging test completed");
 }
