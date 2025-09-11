@@ -117,6 +117,12 @@ impl YubiIdentityProviderFactory {
         Ok(Box::new(AgePluginProvider::new()?))
     }
 
+    /// Create a PTY-based age-plugin-yubikey provider (recommended for interactive operations)
+    pub fn create_pty_provider() -> YubiKeyResult<Box<dyn YubiIdentityProvider>> {
+        use super::age_plugin::AgePluginPtyProvider;
+        Ok(Box::new(AgePluginPtyProvider::new()?))
+    }
+
     /// Create a direct hardware provider (future implementation)
     #[allow(dead_code)]
     pub fn create_direct_provider() -> YubiKeyResult<Box<dyn YubiIdentityProvider>> {

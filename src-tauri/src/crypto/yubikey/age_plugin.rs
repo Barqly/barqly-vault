@@ -15,6 +15,9 @@ use tokio::fs;
 // AsyncReadExt, AsyncWriteExt removed - not currently used
 use tokio::process::Command;
 use tokio::time::timeout;
+// PTY support
+use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use std::io::{BufRead, BufReader, Write};
 
 /// Default timeout for age-plugin-yubikey operations
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
@@ -22,9 +25,27 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 /// Extended timeout for operations requiring user interaction
 const INTERACTIVE_TIMEOUT: Duration = Duration::from_secs(120);
 
+/// YubiKey state classification for smart UI workflows
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum YubiKeyState {
+    /// Brand new YubiKey with default PIN (123456)
+    New,
+    /// YubiKey with custom PIN but no age identity registered
+    Reused,
+    /// YubiKey with age identity already registered and ready to use
+    Registered,
+}
+
 /// age-plugin-yubikey provider implementation
 #[derive(Debug)]
 pub struct AgePluginProvider {
+    plugin_path: PathBuf,
+    timeout: Duration,
+}
+
+/// PTY-based age-plugin-yubikey provider for interactive operations
+#[derive(Debug)]
+pub struct AgePluginPtyProvider {
     plugin_path: PathBuf,
     timeout: Duration,
 }
@@ -220,7 +241,7 @@ impl AgePluginProvider {
     fn extract_serial_from_recipient(&self, _recipient: &str) -> YubiKeyResult<String> {
         // This is a simplified extraction - in practice the serial is embedded
         // in the bech32-encoded data. For now, return "unknown" if we can't extract it.
-        // The actual serial should be obtained from ykman or from metadata.
+        // The actual serial should be obtained from age-plugin-yubikey or from metadata.
         Ok("unknown".to_string())
     }
 
@@ -391,6 +412,317 @@ impl YubiIdentityProvider for AgePluginProvider {
                 "unwrap_dek".to_string(),
                 "hardware_security".to_string(),
                 "touch_authentication".to_string(),
+            ],
+        }
+    }
+}
+
+impl AgePluginPtyProvider {
+    /// Create a new PTY-based age-plugin-yubikey provider
+    pub fn new() -> YubiKeyResult<Self> {
+        let plugin_path = AgePluginProvider::find_plugin_binary()?;
+        Ok(Self {
+            plugin_path,
+            timeout: DEFAULT_TIMEOUT,
+        })
+    }
+
+    /// Create provider with custom plugin path and timeout
+    pub fn with_config(plugin_path: PathBuf, timeout: Duration) -> Self {
+        Self {
+            plugin_path,
+            timeout,
+        }
+    }
+
+    /// Execute age-plugin-yubikey with PTY support for interactive operations
+    async fn execute_plugin_with_pty(
+        &self,
+        args: &[&str],
+        pin: Option<&str>,
+    ) -> YubiKeyResult<(String, String)> {
+        #[cfg(debug_assertions)]
+        eprintln!(
+            "Executing with PTY: {} {}",
+            self.plugin_path.display(),
+            args.join(" ")
+        );
+
+        // Create PTY system and open a new PTY
+        let pty_system = native_pty_system();
+        let pty_pair = pty_system
+            .openpty(PtySize {
+                rows: 24,
+                cols: 80,
+                pixel_width: 0,
+                pixel_height: 0,
+            })
+            .map_err(|e| YubiKeyError::PluginError(format!("Failed to create PTY: {e}")))?;
+
+        // Build command
+        let mut cmd = CommandBuilder::new(&self.plugin_path);
+        for arg in args {
+            cmd.arg(arg);
+        }
+
+        // Spawn command in PTY
+        let mut child = pty_pair.slave.spawn_command(cmd).map_err(|e| {
+            YubiKeyError::PluginError(format!("Failed to spawn command in PTY: {e}"))
+        })?;
+
+        // Create reader and writer for PTY master
+        let reader = pty_pair
+            .master
+            .try_clone_reader()
+            .map_err(|e| YubiKeyError::PluginError(format!("Failed to clone PTY reader: {e}")))?;
+        let mut writer = pty_pair
+            .master
+            .take_writer()
+            .map_err(|e| YubiKeyError::PluginError(format!("Failed to take PTY writer: {e}")))?;
+
+        let mut buf_reader = BufReader::new(reader);
+        let mut output = String::new();
+        let mut line = String::new();
+        let mut pin_sent = false;
+
+        // Handle the interaction with timeout
+        let result = timeout(self.timeout, async {
+            loop {
+                line.clear();
+                match buf_reader.read_line(&mut line) {
+                    Ok(0) => {
+                        // EOF - check if process finished
+                        match child.try_wait() {
+                            Ok(Some(status)) => return Ok((status, output.clone())),
+                            Ok(None) => {
+                                // Process still running, wait a bit more
+                                tokio::time::sleep(Duration::from_millis(100)).await;
+                                continue;
+                            }
+                            Err(e) => {
+                                return Err(YubiKeyError::PluginError(format!(
+                                    "Process wait error: {e}"
+                                )))
+                            }
+                        }
+                    }
+                    Ok(_) => {
+                        output.push_str(&line);
+
+                        #[cfg(debug_assertions)]
+                        eprint!("PTY output: {}", line);
+
+                        // Handle PIN prompt
+                        if !pin_sent
+                            && (line.contains("PIN:")
+                                || line.contains("Enter PIN")
+                                || line.contains("pin:"))
+                        {
+                            if let Some(p) = pin {
+                                #[cfg(debug_assertions)]
+                                eprintln!("Sending PIN to PTY");
+
+                                writeln!(writer, "{}", p).map_err(|e| {
+                                    YubiKeyError::PluginError(format!("Failed to write PIN: {e}"))
+                                })?;
+                                pin_sent = true;
+                            }
+                        }
+
+                        // Handle touch prompt (just log for now, will emit events later)
+                        if line.contains("Touch your YubiKey") || line.contains("touch") {
+                            #[cfg(debug_assertions)]
+                            eprintln!("Touch prompt detected - waiting for user interaction");
+                            // TODO: Emit Tauri event here
+                            // app_handle.emit_all("yubikey-touch-required", ()).ok();
+                        }
+                    }
+                    Err(e) => {
+                        // Check if process finished
+                        match child.try_wait() {
+                            Ok(Some(status)) => return Ok((status, output.clone())),
+                            Ok(None) => {
+                                return Err(YubiKeyError::PluginError(format!(
+                                    "PTY read error: {e}"
+                                )))
+                            }
+                            Err(wait_err) => {
+                                return Err(YubiKeyError::PluginError(format!(
+                                    "Process error: {wait_err}"
+                                )))
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        .await;
+
+        // Handle timeout and get final result
+        let (status, full_output) = result
+            .map_err(|_| YubiKeyError::PluginError("PTY operation timed out".to_string()))??;
+
+        #[cfg(debug_assertions)]
+        eprintln!(
+            "PTY finished - Status: {:?}, output length: {}",
+            status,
+            full_output.len()
+        );
+
+        if !status.success() {
+            return Err(YubiKeyError::PluginError(format!(
+                "age-plugin-yubikey failed: {full_output}"
+            )));
+        }
+
+        // age-plugin-yubikey typically outputs to stderr, but PTY combines streams
+        // Return empty stdout and the output as stderr for compatibility with existing code
+        Ok((String::new(), full_output))
+    }
+
+    /// Execute plugin with standard timeout
+    async fn execute_plugin(&self, args: &[&str]) -> YubiKeyResult<(String, String)> {
+        self.execute_plugin_with_pty(args, None).await
+    }
+
+    /// Execute plugin with interactive timeout for PIN/touch operations
+    async fn execute_plugin_interactive(
+        &self,
+        args: &[&str],
+        pin: Option<&str>,
+    ) -> YubiKeyResult<(String, String)> {
+        // Use longer timeout for interactive operations
+        let provider = Self {
+            plugin_path: self.plugin_path.clone(),
+            timeout: INTERACTIVE_TIMEOUT,
+        };
+        provider.execute_plugin_with_pty(args, pin).await
+    }
+
+    /// Parse YubiKey recipients from plugin output (reuse AgePluginProvider's method)
+    fn parse_recipients(&self, output: &str) -> YubiKeyResult<Vec<YubiRecipient>> {
+        // Create temporary AgePluginProvider to reuse parsing logic
+        let temp_provider = AgePluginProvider {
+            plugin_path: self.plugin_path.clone(),
+            timeout: self.timeout,
+        };
+        temp_provider.parse_recipients(output)
+    }
+
+    /// Create a temporary file for age operations (reuse AgePluginProvider's method)
+    async fn create_temp_file(&self, content: &[u8]) -> YubiKeyResult<PathBuf> {
+        let temp_provider = AgePluginProvider {
+            plugin_path: self.plugin_path.clone(),
+            timeout: self.timeout,
+        };
+        temp_provider.create_temp_file(content).await
+    }
+}
+
+#[async_trait::async_trait]
+impl YubiIdentityProvider for AgePluginPtyProvider {
+    async fn list_recipients(&self) -> YubiKeyResult<Vec<YubiRecipient>> {
+        // Try --list-all first (newer versions), fallback to --list
+        let result = self.execute_plugin(&["--list-all"]).await;
+        let (_stdout, stderr) = match result {
+            Ok(output) => output,
+            Err(_) => {
+                // Fallback to --list for older versions
+                self.execute_plugin(&["--list"]).await?
+            }
+        };
+
+        // If output is empty, return empty list (no recipients configured)
+        if stderr.trim().is_empty() {
+            return Ok(Vec::new());
+        }
+
+        self.parse_recipients(&stderr)
+    }
+
+    async fn register(&self, label: &str, pin: Option<&str>) -> YubiKeyResult<YubiRecipient> {
+        let mut args = vec!["--generate"];
+
+        // Set PIN policy to 'once' (default) - requires PIN once per session
+        args.push("--pin-policy");
+        args.push("once");
+
+        // Set touch policy to 'always' (default) - requires touch for each operation
+        args.push("--touch-policy");
+        args.push("always");
+
+        args.push("--name");
+        args.push(label);
+
+        // Execute with interactive timeout and PIN support
+        let (_stdout, stderr) = self.execute_plugin_interactive(&args, pin).await?;
+
+        // Parse the generated recipient from output
+        let recipients = self.parse_recipients(&stderr)?;
+        recipients.into_iter().next().ok_or_else(|| {
+            YubiKeyError::PluginError("No recipient generated by age-plugin-yubikey".to_string())
+        })
+    }
+
+    async fn unwrap_dek(
+        &self,
+        header: &AgeHeader,
+        _pin: Option<&str>,
+    ) -> YubiKeyResult<DataEncryptionKey> {
+        // Create temporary file with the age header/encrypted data
+        let temp_path = self.create_temp_file(&header.data).await?;
+
+        // For YubiKey decryption, we need to use the age command directly
+        // The age-plugin-yubikey will be invoked automatically by age when it encounters
+        // a YubiKey recipient in the encrypted file
+
+        // TODO: Consider PTY for age decryption as well if it needs PIN input
+        let output = timeout(INTERACTIVE_TIMEOUT, async {
+            Command::new("age")
+                .args(&["--decrypt", &temp_path.to_string_lossy()])
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .output()
+                .await
+        })
+        .await
+        .map_err(|_| YubiKeyError::PluginError("age decryption operation timed out".to_string()))?
+        .map_err(|e| YubiKeyError::PluginError(format!("Failed to execute age decrypt: {e}")))?;
+
+        // Clean up temp file
+        let _ = fs::remove_file(&temp_path).await;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(YubiKeyError::PluginError(format!(
+                "age decrypt failed: {stderr}"
+            )));
+        }
+
+        // The decrypted content contains the DEK
+        Ok(DataEncryptionKey::new(output.stdout))
+    }
+
+    async fn test_connectivity(&self) -> YubiKeyResult<()> {
+        // Test by checking version
+        let (_stdout, _stderr) = self.execute_plugin(&["--version"]).await?;
+        Ok(())
+    }
+
+    fn get_provider_info(&self) -> ProviderInfo {
+        ProviderInfo {
+            name: "age-plugin-yubikey-pty".to_string(),
+            version: "0.5.x".to_string(),
+            description: "PTY-based YubiKey identity provider using age-plugin-yubikey binary"
+                .to_string(),
+            capabilities: vec![
+                "list_recipients".to_string(),
+                "register".to_string(),
+                "unwrap_dek".to_string(),
+                "hardware_security".to_string(),
+                "touch_authentication".to_string(),
+                "interactive_pin_input".to_string(),
+                "pty_support".to_string(),
             ],
         }
     }

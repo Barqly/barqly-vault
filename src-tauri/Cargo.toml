@@ -27,6 +27,8 @@ log = "0.4"
 directories = "5.0"
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
+# Fix PATH inheritance for GUI apps (needed for age-plugin-yubikey)
+fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = { version = "0.4", features = ["serde"] }
@@ -40,10 +42,14 @@ thiserror = "1.0"
 rand = "0.8"
 # Enhanced crypto support - keeping p256 for future direct integration option
 p256 = "0.13"
+# YubiKey PIV operations for initialization and default-fixing flows
+yubikey = { version = "0.8", features = ["untested"] }
 # Process management for plugin execution
 tokio = { version = "1.0", features = ["process", "io-util", "fs", "time", "macros"] }
 futures = "0.3"
 async-trait = "0.1"
+# PTY support for interactive CLI tools
+portable-pty = "0.8"
 # Testing utilities
 lazy_static = "1.4"
 # File operations dependencies

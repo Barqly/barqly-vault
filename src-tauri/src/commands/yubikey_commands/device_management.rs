@@ -331,13 +331,10 @@ mod tests {
             "Should return Ok even when provider creation fails"
         );
 
-        let devices = result.unwrap();
+        let _devices = result.unwrap();
 
         // Result should be a valid Vec (empty if no YubiKeys or plugin not installed)
-        assert!(
-            devices.len() >= 0,
-            "Should return valid empty or populated Vec"
-        );
+        // Simply verify the Vec was successfully returned (no assertion needed as len() is always >= 0)
     }
 
     /// Test that yubikey_devices_available always returns a boolean
@@ -353,13 +350,9 @@ mod tests {
 
         let available = result.unwrap();
 
-        // Should be either true or false
-        assert!(
-            available == true || available == false,
-            "Should return a valid boolean"
-        );
+        // Simply verify we got a boolean value (no assertion needed as it's always valid)
 
-        println!("yubikey_devices_available returned: {}", available);
+        println!("yubikey_devices_available returned: {available}");
     }
 
     /// Test the YubiKeyDevice structure serialization
@@ -388,7 +381,7 @@ mod tests {
         assert_eq!(device.has_oath, deserialized.has_oath);
         assert_eq!(device.has_fido, deserialized.has_fido);
 
-        println!("YubiKeyDevice JSON: {}", json);
+        println!("YubiKeyDevice JSON: {json}");
     }
 
     /// Test that empty device arrays serialize properly to JSON
@@ -414,7 +407,7 @@ mod tests {
             "Deserialized array length should be 0"
         );
 
-        println!("Empty devices JSON: {}", json);
+        println!("Empty devices JSON: {json}");
     }
 
     /// Integration test for the complete workflow
@@ -430,7 +423,7 @@ mod tests {
             "Availability check should never fail"
         );
         let available = availability_result.unwrap();
-        println!("YubiKey devices available: {}", available);
+        println!("YubiKey devices available: {available}");
 
         // Step 2: List devices
         let devices_result = yubikey_list_devices().await;
@@ -449,7 +442,7 @@ mod tests {
 
         // Step 4: Test JSON serialization (this is what gets sent to frontend)
         let json = serde_json::to_string(&devices).expect("Should serialize to JSON");
-        println!("Devices JSON: {}", json);
+        println!("Devices JSON: {json}");
 
         // Verify JSON is never "undefined" or null
         assert!(

@@ -25,6 +25,7 @@ pub struct GenerateKeyMultiInput {
     pub protection_mode: Option<ProtectionMode>, // Defaults to PassphraseOnly for backward compat
     pub yubikey_device_id: Option<String>, // For YubiKey modes
     pub yubikey_info: Option<YubiKeyInfo>, // YubiKey configuration
+    pub yubikey_pin: Option<String>, // YubiKey PIN for hardware operations
 }
 
 /// Response from key generation
@@ -126,7 +127,7 @@ pub async fn generate_key_multi(
     attributes.insert("label".to_string(), input.label.clone());
     attributes.insert(
         "protection_mode".to_string(),
-        format!("{:?}", protection_mode),
+        format!("{protection_mode:?}"),
     );
     log_operation(
         crate::logging::LogLevel::Info,
@@ -161,12 +162,13 @@ pub async fn generate_key_multi(
             .await?
         }
         ProtectionMode::YubiKeyOnly { serial } => {
-            // YubiKey-only key generation
-            generate_yubikey_only_key(
+            // YubiKey-only key generation with auto-initialization
+            generate_yubikey_only_key_with_initialization(
                 &input.label,
                 serial,
                 input.yubikey_device_id.as_deref(),
                 input.yubikey_info.as_ref(),
+                input.yubikey_pin.as_deref(),
                 &error_handler,
             )
             .await?
@@ -179,6 +181,7 @@ pub async fn generate_key_multi(
                 yubikey_serial,
                 input.yubikey_device_id.as_deref(),
                 input.yubikey_info.as_ref(),
+                input.yubikey_pin.as_deref(),
                 &error_handler,
             )
             .await?
@@ -265,22 +268,79 @@ async fn generate_passphrase_only_key(
 }
 
 /// Generate a YubiKey-only protected key
-async fn generate_yubikey_only_key(
+/// Generate YubiKey-only key (age-plugin-yubikey handles all setup)
+async fn generate_yubikey_only_key_with_initialization(
     label: &str,
     serial: &str,
     device_id: Option<&str>,
-    yubikey_info: Option<&YubiKeyInfo>,
+    _yubikey_info: Option<&YubiKeyInfo>,
+    yubikey_pin: Option<&str>,
     error_handler: &ErrorHandler,
 ) -> Result<(String, std::path::PathBuf, Vec<String>), CommandError> {
-    // Create YubiKey provider
+    // First, run the streamlined initialization sequence (cg6.md: TDES → PIN → PUK → age-plugin-yubikey)
+    if let Some(pin) = yubikey_pin {
+        // Use the streamlined initialization from the yubikey_commands module
+        use crate::commands::yubikey_commands::streamlined::init_yubikey;
+        
+        // Initialize YubiKey with the proper sequence before using age-plugin-yubikey
+        let _init_result = init_yubikey(serial.to_string(), pin.to_string(), label.to_string())
+            .await?;
+            
+        // The init_yubikey already generated the age identity, so we can return early
+        // with the initialization result
+        return Ok((
+            _init_result.recipient.clone(),
+            error_handler.handle_operation_error(
+                crate::storage::save_yubikey_metadata(
+                    label,
+                    &crate::storage::VaultMetadataV2::new(
+                        crate::crypto::yubikey::ProtectionMode::YubiKeyOnly {
+                            serial: serial.to_string(),
+                        },
+                        vec![crate::storage::RecipientInfo {
+                            recipient_type: crate::storage::RecipientType::YubiKey {
+                                serial: serial.to_string(),
+                                slot: u8::from_str_radix(&_init_result.slot, 16).unwrap_or(0x9c),
+                                model: device_id.unwrap_or("YubiKey").to_string(),
+                            },
+                            public_key: _init_result.recipient.clone(),
+                            label: label.to_string(),
+                            created_at: chrono::Utc::now(),
+                        }],
+                        1,
+                        0,
+                        String::new(),
+                    ),
+                    Some(&_init_result.recipient),
+                ),
+                "save_yubikey_metadata",
+                crate::commands::types::ErrorCode::StorageFailed,
+            )?,
+            vec![label.to_string()],
+        ));
+    }
+    
+    // After initialization, use age-plugin-yubikey for key generation
+    generate_yubikey_only_key_internal(label, serial, device_id, yubikey_pin, error_handler).await
+}
+
+/// Original YubiKey key generation logic (renamed)
+async fn generate_yubikey_only_key_internal(
+    label: &str,
+    serial: &str,
+    device_id: Option<&str>,
+    yubikey_pin: Option<&str>,
+    error_handler: &ErrorHandler,
+) -> Result<(String, std::path::PathBuf, Vec<String>), CommandError> {
+    // Create YubiKey provider with PTY support for interactive operations
     let provider =
-        YubiIdentityProviderFactory::create_default().map_err(|e| CommandError::from(e))?;
+        YubiIdentityProviderFactory::create_pty_provider().map_err(CommandError::from)?;
 
     // Check if YubiKey is already initialized for age
     let existing_recipients = provider
         .list_recipients()
         .await
-        .map_err(|e| CommandError::from(e))?;
+        .map_err(CommandError::from)?;
 
     // Find or create YubiKey recipient
     let yubikey_recipient =
@@ -288,17 +348,11 @@ async fn generate_yubikey_only_key(
             // Use existing YubiKey identity
             existing.clone()
         } else {
-            // Initialize new YubiKey identity
-            let pin = if yubikey_info.is_some() {
-                Some("123456") // TODO: Get PIN from user or secure storage
-            } else {
-                Some("123456") // Default PIN for testing
-            };
-
+            // Initialize new YubiKey identity using provided PIN
             provider
-                .register(label, pin)
+                .register(label, yubikey_pin)
                 .await
-                .map_err(|e| CommandError::from(e))?
+                .map_err(CommandError::from)?
         };
 
     // For YubiKey-only mode, we don't generate a local keypair
@@ -348,7 +402,8 @@ async fn generate_hybrid_key(
     passphrase: &str,
     yubikey_serial: &str,
     device_id: Option<&str>,
-    yubikey_info: Option<&YubiKeyInfo>,
+    _yubikey_info: Option<&YubiKeyInfo>,
+    yubikey_pin: Option<&str>,
     error_handler: &ErrorHandler,
 ) -> Result<(String, std::path::PathBuf, Vec<String>), CommandError> {
     // Generate keypair
@@ -361,17 +416,16 @@ async fn generate_hybrid_key(
     // Create passphrase recipient
     let passphrase_recipient = RecipientInfo::new_passphrase(
         keypair.public_key.to_string(),
-        format!("{}_passphrase", label),
+        format!("{label}_passphrase"),
     );
 
     // Create YubiKey provider and get/create recipient
-    let provider =
-        YubiIdentityProviderFactory::create_default().map_err(|e| CommandError::from(e))?;
+    let provider = YubiIdentityProviderFactory::create_default().map_err(CommandError::from)?;
 
     let existing_recipients = provider
         .list_recipients()
         .await
-        .map_err(|e| CommandError::from(e))?;
+        .map_err(CommandError::from)?;
 
     let yubikey_recipient_info = if let Some(existing) = existing_recipients
         .iter()
@@ -379,16 +433,11 @@ async fn generate_hybrid_key(
     {
         existing.clone()
     } else {
-        let pin = if yubikey_info.is_some() {
-            Some("123456") // TODO: Get PIN from user or secure storage
-        } else {
-            Some("123456") // Default PIN for testing
-        };
-
+        // Use provided YubiKey PIN
         provider
-            .register(&format!("{}_yubikey", label), pin)
+            .register(&format!("{label}_yubikey"), yubikey_pin)
             .await
-            .map_err(|e| CommandError::from(e))?
+            .map_err(CommandError::from)?
     };
 
     // Create YubiKey recipient info
@@ -399,7 +448,7 @@ async fn generate_hybrid_key(
             model: device_id.unwrap_or("YubiKey").to_string(),
         },
         public_key: yubikey_recipient_info.recipient.clone(),
-        label: format!("{}_yubikey", label),
+        label: format!("{label}_yubikey"),
         created_at: chrono::Utc::now(),
     };
 

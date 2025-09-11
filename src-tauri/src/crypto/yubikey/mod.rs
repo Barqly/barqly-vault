@@ -18,6 +18,7 @@ pub mod plugin;
 // pub mod tests;
 
 // New primary exports using provider abstraction
+pub use age_plugin::{AgePluginProvider, AgePluginPtyProvider, YubiKeyState};
 pub use provider::{
     AgeHeader, DataEncryptionKey, ProviderInfo, YubiIdentityProvider, YubiIdentityProviderFactory,
     YubiRecipient,

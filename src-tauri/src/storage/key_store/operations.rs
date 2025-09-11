@@ -220,7 +220,7 @@ pub fn save_encrypted_key_with_metadata(
     let key_path = save_encrypted_key(label, encrypted_key, public_key)?;
 
     // Then save the v2 metadata
-    let metadata_path = get_key_metadata_path(label)?.with_file_name(format!("{}.v2.json", label));
+    let metadata_path = get_key_metadata_path(label)?.with_file_name(format!("{label}.v2.json"));
     crate::storage::metadata_v2::MetadataV2Storage::save_metadata(metadata, &metadata_path)?;
 
     Ok(key_path)
@@ -286,7 +286,7 @@ pub fn save_yubikey_metadata(
     fs::write(&meta_path, metadata_json).map_err(StorageError::IoError)?;
 
     // Save the v2 metadata
-    let metadata_path = get_key_metadata_path(label)?.with_file_name(format!("{}.v2.json", label));
+    let metadata_path = get_key_metadata_path(label)?.with_file_name(format!("{label}.v2.json"));
     crate::storage::metadata_v2::MetadataV2Storage::save_metadata(metadata, &metadata_path)?;
 
     // Invalidate key list cache since we added a new key

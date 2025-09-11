@@ -22,9 +22,10 @@ async fn test_generate_key_multi_yubikey_only() {
         }),
         yubikey_device_id: Some("auto-detect".to_string()), // Placeholder for backend
         yubikey_info: None,                                 // No device info
+        yubikey_pin: Some("123456".to_string()),            // Default PIN for testing
     };
 
-    println!("📤 Test parameters: {:#?}", test_params);
+    println!("📤 Test parameters: {test_params:#?}");
 
     // Call the command
     let result = generate_key_multi(test_params).await;
@@ -32,7 +33,7 @@ async fn test_generate_key_multi_yubikey_only() {
     match result {
         Ok(response) => {
             println!("✅ SUCCESS: generate_key_multi worked!");
-            println!("📊 Response: {:#?}", response);
+            println!("📊 Response: {response:#?}");
         }
         Err(e) => {
             println!("❌ ERROR: {}", e.message);
@@ -55,16 +56,17 @@ async fn test_generate_key_multi_passphrase_only() {
         protection_mode: Some(ProtectionMode::PassphraseOnly),
         yubikey_device_id: None,
         yubikey_info: None,
+        yubikey_pin: None, // No PIN needed for passphrase-only mode
     };
 
-    println!("📤 Test parameters: {:#?}", test_params);
+    println!("📤 Test parameters: {test_params:#?}");
 
     let result = generate_key_multi(test_params).await;
 
     match result {
         Ok(response) => {
             println!("✅ SUCCESS: Passphrase-only mode worked!");
-            println!("📊 Response: {:#?}", response);
+            println!("📊 Response: {response:#?}");
         }
         Err(e) => {
             println!("❌ ERROR: {}", e.message);

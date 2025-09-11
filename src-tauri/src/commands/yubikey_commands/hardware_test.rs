@@ -33,10 +33,10 @@ async fn test_yubikey_hardware_detection() {
                     println!("   Device {}: {}", i + 1, device.name);
                     println!("     ID: {}", device.device_id);
                     if let Some(serial) = &device.serial_number {
-                        println!("     Serial: {}", serial);
+                        println!("     Serial: {serial}");
                     }
                     if let Some(version) = &device.firmware_version {
-                        println!("     Version: {}", version);
+                        println!("     Version: {version}");
                     }
                     println!(
                         "     PIV: {}, OATH: {}, FIDO: {}",
