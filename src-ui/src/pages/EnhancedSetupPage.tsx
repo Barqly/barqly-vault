@@ -16,7 +16,7 @@ import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 
 // New YubiKey components
 import ProtectionModeSelectorContainer from '../components/setup/ProtectionModeSelectorContainer';
-import YubiKeyDeviceList from '../components/setup/YubiKeyDeviceList';
+import StreamlinedYubiKeySetup from '../components/setup/StreamlinedYubiKeySetup';
 import YubiKeyInitialization from '../components/setup/YubiKeyInitialization';
 import HybridProtectionSetup from '../components/setup/HybridProtectionSetup';
 
@@ -63,6 +63,7 @@ const EnhancedSetupPage: React.FC = () => {
     // YubiKey state
     protectionMode,
     availableDevices,
+    yubiKeyStates,
     selectedDevice,
     yubiKeyInfo,
     isCheckingDevices,
@@ -239,11 +240,9 @@ const EnhancedSetupPage: React.FC = () => {
               </div>
 
               {/* YubiKey Device Selection */}
-              <YubiKeyDeviceList
-                devices={availableDevices}
-                selectedDevice={selectedDevice}
-                onDeviceSelect={handleDeviceSelect}
-                isLoading={isLoading}
+              <StreamlinedYubiKeySetup
+                yubikeys={yubiKeyStates}
+                isLoading={isCheckingDevices}
               />
 
               {/* YubiKey Initialization */}

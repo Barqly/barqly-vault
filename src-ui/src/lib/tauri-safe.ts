@@ -84,6 +84,7 @@ export async function safeInvoke<T>(
     const commandParameterMap: Record<string, string | null> = {
       // Crypto commands with 'input' parameter
       generate_key: 'input',
+      generate_key_multi: 'input',
       validate_passphrase: 'input',
       verify_key_passphrase: 'input',
       encrypt_files: 'input', // Takes EncryptDataInput wrapped in 'input'
@@ -104,12 +105,18 @@ export async function safeInvoke<T>(
       get_file_info: 'paths',
       create_manifest: 'file_paths',
 
-      // YubiKey commands
+      // YubiKey commands (legacy)
       yubikey_list_devices: null, // No parameters
       yubikey_devices_available: null, // No parameters
       yubikey_get_device_info: null, // Takes device_id directly
       yubikey_test_connection: null, // Takes device_id and pin
       yubikey_initialize: null, // Takes device_id, pin, slot
+
+      // Streamlined YubiKey commands
+      list_yubikeys: null, // No parameters - returns intelligent state info
+      init_yubikey: null, // Takes serial, new_pin, label
+      register_yubikey: null, // Takes serial, label  
+      get_identities: null, // Takes serial
     };
 
     let invokeArgs = args;
@@ -133,6 +140,17 @@ export async function safeInvoke<T>(
       argTypes: invokeArgs ? Object.entries(invokeArgs).map(([k, v]) => [k, typeof v]) : null,
       wrapped: invokeArgs !== args,
     });
+    
+    // Extra debug for generate_key_multi
+    if (cmd === 'generate_key_multi') {
+      console.log('🔍 TauriSafe: generate_key_multi debug:', {
+        originalArgs: args,
+        finalInvokeArgs: invokeArgs,
+        paramName,
+        hasInput: invokeArgs && 'input' in invokeArgs,
+        inputValue: invokeArgs?.input,
+      });
+    }
 
     const result = await invoke<T>(cmd, invokeArgs);
     const duration = performance.now() - startTime;
