@@ -41,9 +41,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
   // Use validation from parent workflow (supports different protection modes)
   // Fallback to local validation for backward compatibility
   const localValidation = keyLabel.trim().length > 0 && isStrongPassphrase && passphraseMatch;
-  const isActuallyFormValid = isFormValid !== undefined 
-    ? isFormValid 
-    : localValidation;
+  const isActuallyFormValid = _isFormValid !== undefined ? _isFormValid : localValidation;
 
   const handleTooltipShow = () => {
     if (tooltipTimeoutId) {

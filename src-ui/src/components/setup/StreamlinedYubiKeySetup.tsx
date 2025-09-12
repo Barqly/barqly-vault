@@ -16,7 +16,7 @@ export const StreamlinedYubiKeySetup: React.FC<StreamlinedYubiKeySetupProps> = (
   onRegisterComplete,
 }) => {
   const [selectedYubiKey, setSelectedYubiKey] = useState<YubiKeyStateInfo | null>(
-    yubikeys.length === 1 ? yubikeys[0] : null
+    yubikeys.length === 1 ? yubikeys[0] : null,
   );
 
   if (isLoading) {
@@ -33,7 +33,9 @@ export const StreamlinedYubiKeySetup: React.FC<StreamlinedYubiKeySetupProps> = (
       <div className="text-center py-8">
         <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">No YubiKey Detected</h3>
-        <p className="text-gray-600">Please insert your YubiKey to continue with hardware protection</p>
+        <p className="text-gray-600">
+          Please insert your YubiKey to continue with hardware protection
+        </p>
       </div>
     );
   }
@@ -94,9 +96,7 @@ const YubiKeyStateCard: React.FC<{ yubikey: YubiKeyStateInfo }> = ({ yubikey }) 
       <div className="flex items-center">
         <Shield className="h-6 w-6 text-blue-600 mr-3" />
         <div>
-          <div className="font-medium">
-            {yubikey.label || `YubiKey (${yubikey.serial})`}
-          </div>
+          <div className="font-medium">{yubikey.label || `YubiKey (${yubikey.serial})`}</div>
           <div className="text-sm text-gray-600">Serial: {yubikey.serial}</div>
         </div>
       </div>
@@ -154,9 +154,7 @@ const NewYubiKeySetup: React.FC<{
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            YubiKey Label
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">YubiKey Label</label>
           <input
             type="text"
             value={label}
@@ -181,9 +179,7 @@ const NewYubiKeySetup: React.FC<{
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Confirm PIN
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm PIN</label>
           <input
             type="password"
             value={confirmPin}
@@ -229,9 +225,7 @@ const ReusedYubiKeySetup: React.FC<{
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            YubiKey Label
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">YubiKey Label</label>
           <input
             type="text"
             value={label}

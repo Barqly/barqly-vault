@@ -207,11 +207,7 @@ impl AgePluginProvider {
                 self.parse_recipient_metadata(remainder)?
             } else if !remainder.is_empty() {
                 // Simple format - just label
-                let label = remainder
-                    .replace('[', "")
-                    .replace(']', "")
-                    .trim()
-                    .to_string();
+                let label = remainder.replace(['[', ']'], "").trim().to_string();
                 // Extract serial from recipient string (work around for missing metadata)
                 let serial = self
                     .extract_serial_from_recipient(&recipient_str)
@@ -338,9 +334,10 @@ impl YubiIdentityProvider for AgePluginProvider {
         args.push("--pin-policy");
         args.push("once");
 
-        // Set touch policy to 'always' (default) - requires touch for each operation
+        // Set touch policy to 'cached' - requires touch once, then allows 15s window
+        // This prevents multiple touch requirements during key generation process
         args.push("--touch-policy");
-        args.push("always");
+        args.push("cached");
 
         args.push("--name");
         args.push(label);
@@ -370,7 +367,7 @@ impl YubiIdentityProvider for AgePluginProvider {
         // Use age command for decryption (it will call age-plugin-yubikey internally)
         let output = timeout(INTERACTIVE_TIMEOUT, async {
             Command::new("age")
-                .args(&["--decrypt", &temp_path.to_string_lossy()])
+                .args(["--decrypt", &temp_path.to_string_lossy()])
                 .env("AGE_PLUGIN_YUBIKEY_SKIP_PROMPT", "1") // Skip prompts if possible
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
@@ -459,11 +456,24 @@ impl AgePluginPtyProvider {
             })
             .map_err(|e| YubiKeyError::PluginError(format!("Failed to create PTY: {e}")))?;
 
-        // Build command
+        // Build command with proper terminal environment
         let mut cmd = CommandBuilder::new(&self.plugin_path);
         for arg in args {
             cmd.arg(arg);
         }
+
+        // Set comprehensive environment variables to ensure proper terminal behavior
+        cmd.env("TERM", "xterm-256color");
+        cmd.env("AGE_PLUGIN_YUBIKEY_FORCE_TTY", "1");
+        cmd.env("FORCE_COLOR", "1");
+        // Additional terminal detection variables
+        cmd.env("CI", "false"); // Ensure it doesn't think it's in CI
+        cmd.env("COLORTERM", "truecolor");
+        // Force interactive mode
+        cmd.env("RUST_LOG", "debug"); // Enable debug logging in age-plugin-yubikey
+
+        // Ensure stdin/stdout/stderr are properly connected
+        println!("🔧 TRACER: Setting up PTY environment for age-plugin-yubikey");
 
         // Spawn command in PTY
         let mut child = pty_pair.slave.spawn_command(cmd).map_err(|e| {
@@ -475,7 +485,7 @@ impl AgePluginPtyProvider {
             .master
             .try_clone_reader()
             .map_err(|e| YubiKeyError::PluginError(format!("Failed to clone PTY reader: {e}")))?;
-        let mut writer = pty_pair
+        let writer = pty_pair
             .master
             .take_writer()
             .map_err(|e| YubiKeyError::PluginError(format!("Failed to take PTY writer: {e}")))?;
@@ -485,21 +495,47 @@ impl AgePluginPtyProvider {
         let mut line = String::new();
         let mut pin_sent = false;
 
+        // Add comprehensive debug logging for touch detection
+        println!(
+            "🎯 TRACER: PTY interaction starting - timeout: {:?}",
+            self.timeout
+        );
+        println!(
+            "🎯 TRACER: Running command: {} {}",
+            self.plugin_path.display(),
+            args.join(" ")
+        );
+
+        // Clone output for timeout error handling before it's moved
+        let output_for_timeout = output.clone();
+
         // Handle the interaction with timeout
-        let result = timeout(self.timeout, async {
+        // CRITICAL: Keep writer alive throughout the entire async block to ensure
+        // stdin stays open for the age-plugin-yubikey process
+        let result = timeout(self.timeout, async move {
+            // Move writer into the async block to ensure it stays alive
+            let mut writer = writer;
+            println!("🔧 TRACER: PTY loop starting - writer handle secured");
             loop {
                 line.clear();
                 match buf_reader.read_line(&mut line) {
                     Ok(0) => {
+                        println!("📄 TRACER: EOF detected - checking if process finished");
                         // EOF - check if process finished
                         match child.try_wait() {
-                            Ok(Some(status)) => return Ok((status, output.clone())),
+                            Ok(Some(status)) => {
+                                println!("✅ TRACER: Process finished with status: {status:?}");
+                                return Ok((status, output.clone()));
+                            },
                             Ok(None) => {
+                                println!("⏳ TRACER: Process still running after EOF - waiting...");
+                                println!("⏳ TRACER: This might be when YubiKey is waiting for touch - process alive but no output");
                                 // Process still running, wait a bit more
-                                tokio::time::sleep(Duration::from_millis(100)).await;
+                                tokio::time::sleep(Duration::from_millis(500)).await;
                                 continue;
                             }
                             Err(e) => {
+                                println!("❌ TRACER: Process wait error: {e}");
                                 return Err(YubiKeyError::PluginError(format!(
                                     "Process wait error: {e}"
                                 )))
@@ -509,44 +545,81 @@ impl AgePluginPtyProvider {
                     Ok(_) => {
                         output.push_str(&line);
 
-                        #[cfg(debug_assertions)]
-                        eprint!("PTY output: {}", line);
+                        // Enhanced logging for all PTY output
+                        println!("📡 TRACER: PTY output: {}", line.trim());
 
-                        // Handle PIN prompt
-                        if !pin_sent
-                            && (line.contains("PIN:")
-                                || line.contains("Enter PIN")
-                                || line.contains("pin:"))
+                        // Handle PIN prompt - allow multiple PIN prompts during generation
+                        if line.contains("PIN:")
+                            || line.contains("Enter PIN")
+                            || line.contains("pin:")
                         {
                             if let Some(p) = pin {
-                                #[cfg(debug_assertions)]
-                                eprintln!("Sending PIN to PTY");
+                                if !pin_sent {
+                                    println!("🔑 TRACER: First PIN prompt detected - sending PIN to PTY");
+                                } else {
+                                    println!("🔑 TRACER: Additional PIN prompt detected - sending PIN again");
+                                }
 
-                                writeln!(writer, "{}", p).map_err(|e| {
+                                writeln!(writer, "{p}").map_err(|e| {
                                     YubiKeyError::PluginError(format!("Failed to write PIN: {e}"))
                                 })?;
+                                // CRITICAL: Flush the writer to ensure PIN is sent immediately
+                                writer.flush().map_err(|e| {
+                                    YubiKeyError::PluginError(format!("Failed to flush PIN: {e}"))
+                                })?;
+                                // CRITICAL: Do NOT drop writer after sending PIN
                                 pin_sent = true;
+                                println!("✅ TRACER: PIN sent and flushed successfully - KEEPING writer alive");
+                            } else {
+                                println!("❌ TRACER: PIN prompt detected but no PIN provided");
                             }
                         }
 
-                        // Handle touch prompt (just log for now, will emit events later)
-                        if line.contains("Touch your YubiKey") || line.contains("touch") {
-                            #[cfg(debug_assertions)]
-                            eprintln!("Touch prompt detected - waiting for user interaction");
+                        // Enhanced touch prompt detection with multiple triggers
+                        if line.to_lowercase().contains("touch") 
+                            || line.contains("Touch your YubiKey") 
+                            || line.contains("Please touch")
+                            || line.contains("Generating key")
+                            || line.contains("🎲") {
+                            println!("👆 TRACER: TOUCH REQUIRED - YubiKey touch detected!");
+                            println!("👆 TRACER: Full line: '{}'", line.trim());
+                            println!("👆 TRACER: Waiting for user to touch YubiKey...");
+                            println!("👆 TRACER: ** CRITICAL ** - stdin writer is ALIVE - continuing loop");
                             // TODO: Emit Tauri event here
                             // app_handle.emit_all("yubikey-touch-required", ()).ok();
                         }
+
+                        // Don't automatically send input on empty lines - this was causing premature newlines
+                        // age-plugin-yubikey will handle touch detection internally
+                        // We just need to keep the PTY loop alive until the process completes
+
+                        // Log potential completion indicators
+                        if line.contains("age1yubikey") || line.contains("Generated") || line.contains("Success") {
+                            println!("🎉 TRACER: Potential completion detected: '{}'", line.trim());
+                        }
+
+                        // Log error indicators  
+                        if line.to_lowercase().contains("error") || line.to_lowercase().contains("failed") {
+                            println!("❌ TRACER: Error detected: '{}'", line.trim());
+                        }
                     }
                     Err(e) => {
-                        // Check if process finished
+                        println!("⚠️ TRACER: PTY read error: {e} - checking process status");
+                        // IMPORTANT: Only return on read error if process is actually finished
+                        // Don't close the connection prematurely due to temporary read issues
                         match child.try_wait() {
-                            Ok(Some(status)) => return Ok((status, output.clone())),
+                            Ok(Some(status)) => {
+                                println!("✅ TRACER: Process finished after read error - status: {status:?}");
+                                return Ok((status, output.clone()));
+                            },
                             Ok(None) => {
-                                return Err(YubiKeyError::PluginError(format!(
-                                    "PTY read error: {e}"
-                                )))
+                                println!("⚠️ TRACER: Read error but process still running - this might be the issue!");
+                                println!("⚠️ TRACER: Treating as temporary error - waiting and continuing...");
+                                tokio::time::sleep(Duration::from_millis(200)).await;
+                                continue;  // Don't abort on read errors if process is still running
                             }
                             Err(wait_err) => {
+                                println!("❌ TRACER: Process error during read error handling: {wait_err}");
                                 return Err(YubiKeyError::PluginError(format!(
                                     "Process error: {wait_err}"
                                 )))
@@ -559,14 +632,40 @@ impl AgePluginPtyProvider {
         .await;
 
         // Handle timeout and get final result
-        let (status, full_output) = result
-            .map_err(|_| YubiKeyError::PluginError("PTY operation timed out".to_string()))??;
+        let (status, full_output) = result.map_err(|_| {
+            println!(
+                "⏰ TRACER: PTY operation TIMED OUT after {:?}",
+                self.timeout
+            );
+            println!(
+                "⏰ TRACER: Last output received: '{}'",
+                output_for_timeout
+                    .chars()
+                    .rev()
+                    .take(200)
+                    .collect::<String>()
+                    .chars()
+                    .rev()
+                    .collect::<String>()
+            );
+            YubiKeyError::PluginError("PTY operation timed out".to_string())
+        })??;
 
-        #[cfg(debug_assertions)]
-        eprintln!(
-            "PTY finished - Status: {:?}, output length: {}",
+        println!(
+            "🏁 TRACER: PTY finished - Status: {:?}, output length: {}",
             status,
             full_output.len()
+        );
+        println!(
+            "🏁 TRACER: Final output: '{}'",
+            full_output
+                .chars()
+                .rev()
+                .take(500)
+                .collect::<String>()
+                .chars()
+                .rev()
+                .collect::<String>()
         );
 
         if !status.success() {
@@ -647,9 +746,10 @@ impl YubiIdentityProvider for AgePluginPtyProvider {
         args.push("--pin-policy");
         args.push("once");
 
-        // Set touch policy to 'always' (default) - requires touch for each operation
+        // Set touch policy to 'cached' - requires touch once, then allows 15s window
+        // This prevents multiple touch requirements during key generation process
         args.push("--touch-policy");
-        args.push("always");
+        args.push("cached");
 
         args.push("--name");
         args.push(label);
@@ -679,7 +779,7 @@ impl YubiIdentityProvider for AgePluginPtyProvider {
         // TODO: Consider PTY for age decryption as well if it needs PIN input
         let output = timeout(INTERACTIVE_TIMEOUT, async {
             Command::new("age")
-                .args(&["--decrypt", &temp_path.to_string_lossy()])
+                .args(["--decrypt", &temp_path.to_string_lossy()])
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .output()

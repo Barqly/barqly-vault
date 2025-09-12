@@ -115,7 +115,7 @@ export async function safeInvoke<T>(
       // Streamlined YubiKey commands
       list_yubikeys: null, // No parameters - returns intelligent state info
       init_yubikey: null, // Takes serial, new_pin, label
-      register_yubikey: null, // Takes serial, label  
+      register_yubikey: null, // Takes serial, label
       get_identities: null, // Takes serial
     };
 
@@ -140,7 +140,7 @@ export async function safeInvoke<T>(
       argTypes: invokeArgs ? Object.entries(invokeArgs).map(([k, v]) => [k, typeof v]) : null,
       wrapped: invokeArgs !== args,
     });
-    
+
     // Extra debug for generate_key_multi
     if (cmd === 'generate_key_multi') {
       console.log('🔍 TauriSafe: generate_key_multi debug:', {

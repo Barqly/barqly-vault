@@ -1,12 +1,13 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSetupWorkflow } from './useSetupWorkflow';
-import { 
-  ProtectionMode, 
-  YubiKeyDevice, 
-  YubiKeyInfo, 
+import { useKeyGeneration } from './useKeyGeneration';
+import {
+  ProtectionMode,
+  YubiKeyDevice,
+  YubiKeyInfo,
   CommandErrorClass,
   YubiKeyStateInfo,
-  YubiKeyState 
+  YubiKeyState,
 } from '../lib/api-types';
 import { safeInvoke } from '../lib/tauri-safe';
 import { logger } from '../lib/logger';
@@ -18,6 +19,9 @@ import { logger } from '../lib/logger';
 export const useYubiKeySetupWorkflow = () => {
   // Use existing setup workflow as base
   const baseWorkflow = useSetupWorkflow();
+
+  // Also get direct access to key generation for state management
+  const keyGeneration = useKeyGeneration();
 
   // YubiKey-specific state
   const [protectionMode, setProtectionMode] = useState<ProtectionMode>(
@@ -33,8 +37,14 @@ export const useYubiKeySetupWorkflow = () => {
   const [setupStep, setSetupStep] = useState<'mode-selection' | 'configuration' | 'generation'>(
     'mode-selection',
   );
+  const [yubiKeyPin, setYubiKeyPin] = useState<string>('');
 
-  // YubiKey detection is now lazy - only happens when user selects YubiKey modes
+  // Enhanced loading state for YubiKey operations
+  const [isEnhancedLoading, setIsEnhancedLoading] = useState<boolean>(false);
+  const [enhancedSuccess, setEnhancedSuccess] = useState<any>(null);
+  const [enhancedError, setEnhancedError] = useState<any>(null);
+
+  // YubiKey detection is now triggered when configuration step loads
 
   const checkForYubiKeys = useCallback(async () => {
     setIsCheckingDevices(true);
@@ -47,15 +57,19 @@ export const useYubiKeySetupWorkflow = () => {
         undefined,
         'useYubiKeySetupWorkflow.checkForYubiKeys',
       );
-      
-      console.log('🎯 Streamlined YubiKey detection:', yubikeys);
+
+      console.log('🎯 Streamlined YubiKey detection DEBUG:', {
+        yubikeys,
+        yukikeysLength: yubikeys.length,
+        firstYubikey: yubikeys[0],
+      });
 
       // Store the YubiKey state information
       setYubiKeyStates(yubikeys);
 
       // Convert YubiKeyStateInfo to YubiKeyDevice format for backward compatibility
-      const devices: YubiKeyDevice[] = yubikeys.map(yk => ({
-        device_id: yk.serial,
+      const devices: YubiKeyDevice[] = yubikeys.map((yk) => ({
+        device_id: yk.serial, // Use serial as device_id
         name: yk.label || `YubiKey (${yk.serial})`,
         serial_number: yk.serial,
         firmware_version: undefined,
@@ -67,21 +81,31 @@ export const useYubiKeySetupWorkflow = () => {
       setAvailableDevices(devices);
       setHasCheckedDevices(true);
 
+      // Auto-select the first (and typically only) YubiKey
+      if (devices.length > 0 && !selectedDevice) {
+        console.log('🎯 Auto-selecting first YubiKey:', devices[0]);
+        setSelectedDevice(devices[0]);
+      }
+
       // Check YubiKey states and provide appropriate messaging
-      const registeredKeys = yubikeys.filter(yk => yk.state === YubiKeyState.REGISTERED);
-      const newKeys = yubikeys.filter(yk => yk.state === YubiKeyState.NEW);
-      const reusedKeys = yubikeys.filter(yk => yk.state === YubiKeyState.REUSED);
+      const registeredKeys = yubikeys.filter((yk) => yk.state === YubiKeyState.REGISTERED);
+      const newKeys = yubikeys.filter((yk) => yk.state === YubiKeyState.NEW);
+      const reusedKeys = yubikeys.filter((yk) => yk.state === YubiKeyState.REUSED);
 
       if (registeredKeys.length > 0) {
         console.log('✅ Found registered YubiKey(s):', registeredKeys);
         // Auto-select first registered device
         if (!selectedDevice) {
           setSelectedDevice(devices[0]);
-          logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Auto-selected registered YubiKey', {
-            deviceName: registeredKeys[0].label,
-            serial: registeredKeys[0].serial,
-            state: registeredKeys[0].state,
-          });
+          logger.logComponentLifecycle(
+            'useYubiKeySetupWorkflow',
+            'Auto-selected registered YubiKey',
+            {
+              deviceName: registeredKeys[0].label,
+              serial: registeredKeys[0].serial,
+              state: registeredKeys[0].state,
+            },
+          );
         }
       } else if (newKeys.length > 0 || reusedKeys.length > 0) {
         setDeviceError(`YubiKey needs setup: ${newKeys.length} new, ${reusedKeys.length} reused`);
@@ -113,20 +137,37 @@ export const useYubiKeySetupWorkflow = () => {
     }
   }, [selectedDevice, protectionMode]);
 
+  // Auto-trigger YubiKey detection when entering configuration step for YubiKey modes
+  useEffect(() => {
+    if (
+      setupStep === 'configuration' &&
+      (protectionMode === ProtectionMode.YUBIKEY_ONLY ||
+        protectionMode === ProtectionMode.HYBRID) &&
+      !hasCheckedDevices &&
+      !isCheckingDevices
+    ) {
+      console.log('🚀 Configuration step reached for YubiKey mode - triggering detection');
+      checkForYubiKeys();
+    }
+  }, [setupStep, protectionMode, hasCheckedDevices, isCheckingDevices, checkForYubiKeys]);
+
   const handleProtectionModeChange = useCallback(
     (mode: ProtectionMode) => {
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Protection mode changed', { mode });
       setProtectionMode(mode);
 
-      // Trigger lazy YubiKey detection only when user selects YubiKey modes
-      if (mode === ProtectionMode.YUBIKEY_ONLY || mode === ProtectionMode.HYBRID) {
-        // Only check if we haven't checked yet
-        if (!hasCheckedDevices && !isCheckingDevices) {
-          checkForYubiKeys();
-        }
+      // Trigger YubiKey detection immediately for YubiKey modes when entering configuration step
+      if (
+        (mode === ProtectionMode.YUBIKEY_ONLY || mode === ProtectionMode.HYBRID) &&
+        !hasCheckedDevices
+      ) {
+        console.log(
+          '🔍 YubiKey mode selected - triggering immediate detection for configuration step',
+        );
+        setTimeout(() => checkForYubiKeys(), 100); // Small delay to ensure state is updated
       }
     },
-    [hasCheckedDevices, isCheckingDevices, checkForYubiKeys],
+    [hasCheckedDevices, checkForYubiKeys],
   );
 
   const handleDeviceSelect = useCallback((device: YubiKeyDevice) => {
@@ -145,31 +186,106 @@ export const useYubiKeySetupWorkflow = () => {
     });
     setYubiKeyInfo(info);
     // Don't auto-advance steps - user should click "Create Key" button
-    console.log('🔧 YubiKey configured but staying in configuration step - user must click Create Key');
+    console.log(
+      '🔧 YubiKey configured but staying in configuration step - user must click Create Key',
+    );
   }, []);
 
+  // Handler for when vault label changes - trigger YubiKey detection for YubiKey modes
+  const handleVaultLabelChange = useCallback(
+    (label: string) => {
+      console.log('🏷️ Vault label change DEBUG:', {
+        label,
+        protectionMode,
+        hasCheckedDevices,
+        isCheckingDevices,
+        shouldTriggerDetection:
+          (protectionMode === ProtectionMode.YUBIKEY_ONLY ||
+            protectionMode === ProtectionMode.HYBRID) &&
+          label.trim().length > 0 &&
+          !hasCheckedDevices &&
+          !isCheckingDevices,
+      });
+
+      baseWorkflow.handleKeyLabelChange(label);
+
+      // Trigger YubiKey detection when user enters vault label for YubiKey modes
+      if (
+        (protectionMode === ProtectionMode.YUBIKEY_ONLY ||
+          protectionMode === ProtectionMode.HYBRID) &&
+        label.trim().length > 0 &&
+        !hasCheckedDevices &&
+        !isCheckingDevices
+      ) {
+        console.log('🔍 Vault label entered, triggering YubiKey detection:', label);
+        checkForYubiKeys();
+      }
+    },
+    [protectionMode, hasCheckedDevices, isCheckingDevices, checkForYubiKeys, baseWorkflow],
+  );
+
   const handleEnhancedKeyGeneration = useCallback(async () => {
+    console.log('🎯 TRACER: handleEnhancedKeyGeneration called - START', {
+      protectionMode,
+      hasCheckedDevices,
+      isCheckingDevices,
+      yubiKeyPin: yubiKeyPin ? `[${yubiKeyPin.length} chars]` : 'null/empty',
+      keyLabel: baseWorkflow.keyLabel,
+      selectedDevice: selectedDevice
+        ? `${selectedDevice.name} (${selectedDevice.serial_number})`
+        : 'null',
+      timestamp: new Date().toISOString(),
+    });
+
+    // For passphrase-only mode, delegate to base workflow entirely
+    if (protectionMode === ProtectionMode.PASSPHRASE_ONLY) {
+      console.log('🎯 TRACER: Passphrase-only mode - delegating to base workflow');
+      return await baseWorkflow.handleKeyGeneration();
+    }
+
     try {
-      // Advance to generation step when user clicks "Create Key"
-      setSetupStep('generation');
-      
-      console.log('🚀 Starting enhanced key generation:', {
+      // For YubiKey modes, ensure we have detected devices before proceeding
+      if (
+        (protectionMode === ProtectionMode.YUBIKEY_ONLY ||
+          protectionMode === ProtectionMode.HYBRID) &&
+        !hasCheckedDevices
+      ) {
+        console.log(
+          '🔍 TRACER: YubiKey mode detected but no devices checked - triggering detection now',
+        );
+        await checkForYubiKeys();
+      }
+
+      // For YubiKey-only mode, skip generation step and show loading immediately
+      if (protectionMode === ProtectionMode.YUBIKEY_ONLY) {
+        console.log('🎯 TRACER: YubiKey-only mode - staying in configuration step');
+        // Stay on current step but start loading
+      } else {
+        console.log('🎯 TRACER: Non-YubiKey mode - advancing to generation step');
+        // For other modes, advance to generation step
+        setSetupStep('generation');
+      }
+
+      console.log('🚀 TRACER: Starting enhanced key generation with state:', {
         protectionMode,
         hasYubiKey: !!selectedDevice,
         keyLabel: baseWorkflow.keyLabel,
         deviceCount: availableDevices.length,
+        yubiKeyStatesCount: yubiKeyStates.length,
       });
-      
+
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Enhanced key generation started', {
         protectionMode,
         hasYubiKey: !!selectedDevice,
         keyLabel: baseWorkflow.keyLabel,
       });
 
-      if (protectionMode === ProtectionMode.PASSPHRASE_ONLY) {
-        // Use standard key generation for passphrase-only mode
-        return await baseWorkflow.handleKeyGeneration();
-      }
+      // Clear any existing errors and set enhanced loading state
+      baseWorkflow.clearError();
+      setEnhancedError(null);
+      setEnhancedSuccess(null);
+      setIsEnhancedLoading(true);
+      console.log('⏳ TRACER: Starting enhanced key generation with enhanced loading state');
 
       // For YubiKey modes, use the new multi-recipient key generation
       // Clean parameter object - no undefined values
@@ -178,60 +294,117 @@ export const useYubiKeySetupWorkflow = () => {
       };
 
       // Set protection mode with correct backend structure
+      // Use the actual serial number from the selected device or first available YubiKey
+      const yubiKeySerial =
+        selectedDevice?.serial_number || // This should now be the actual serial
+        yubiKeyStates[0]?.serial || // Fallback to first YubiKey's serial
+        'auto-detect'; // Last resort fallback
+
+      console.log('🔍 YubiKey serial resolution DEBUG:', {
+        selectedDevice,
+        selectedDeviceSerial: selectedDevice?.serial_number,
+        selectedDeviceId: selectedDevice?.device_id,
+        yubiKeyStatesLength: yubiKeyStates.length,
+        yubiKeyStates,
+        firstYubiKeyState: yubiKeyStates[0]?.serial,
+        resolvedSerial: yubiKeySerial,
+        yubiKeyPin,
+      });
+
       if (protectionMode === ProtectionMode.YUBIKEY_ONLY) {
-        generateKeyParams.protection_mode = { 
-          YubiKeyOnly: { 
-            serial: selectedDevice?.serial_number || "unknown" 
-          } 
+        generateKeyParams.protection_mode = {
+          YubiKeyOnly: {
+            serial: yubiKeySerial,
+          },
         };
       } else if (protectionMode === ProtectionMode.HYBRID) {
-        generateKeyParams.protection_mode = { 
-          Hybrid: { 
-            yubikey_serial: selectedDevice?.serial_number || "unknown" 
-          } 
+        generateKeyParams.protection_mode = {
+          Hybrid: {
+            yubikey_serial: yubiKeySerial,
+          },
         };
       } else {
-        generateKeyParams.protection_mode = "PassphraseOnly";
+        generateKeyParams.protection_mode = 'PassphraseOnly';
       }
 
       // Add YubiKey parameters - required for YubiKey modes
-      if (protectionMode === ProtectionMode.YUBIKEY_ONLY || protectionMode === ProtectionMode.HYBRID) {
-        // Use detected device or placeholder for backend to handle
-        generateKeyParams.yubikey_device_id = selectedDevice?.device_id || "auto-detect";
+      if (
+        protectionMode === ProtectionMode.YUBIKEY_ONLY ||
+        protectionMode === ProtectionMode.HYBRID
+      ) {
+        // Use the actual serial number as device_id (they should be the same now)
+        generateKeyParams.yubikey_device_id = yubiKeySerial;
         generateKeyParams.yubikey_info = yubiKeyInfo || null;
+        generateKeyParams.yubikey_pin = yubiKeyPin || null; // Add PIN for initialization
       }
 
       // Only include passphrase for hybrid mode
       if (protectionMode === ProtectionMode.HYBRID && baseWorkflow.passphrase?.trim()) {
         generateKeyParams.passphrase = baseWorkflow.passphrase;
       }
-      
-      console.log('🔍 Clean parameters (no undefined):', generateKeyParams);
 
-      console.log('🔑 Calling generate_key_multi with parameters:', generateKeyParams);
+      console.log('🔍 TRACER: Clean parameters (no undefined):', {
+        ...generateKeyParams,
+        yubikey_pin: generateKeyParams.yubikey_pin
+          ? `[${generateKeyParams.yubikey_pin.length} chars]`
+          : 'null/empty',
+        passphrase: generateKeyParams.passphrase ? '[REDACTED]' : 'null/empty',
+      });
+
+      console.log('🔑 TRACER: Calling generate_key_multi with parameters:', {
+        ...generateKeyParams,
+        yubikey_pin: generateKeyParams.yubikey_pin
+          ? `[${generateKeyParams.yubikey_pin.length} chars]`
+          : 'null/empty',
+        passphrase: generateKeyParams.passphrase ? '[REDACTED]' : 'null/empty',
+        timestamp: new Date().toISOString(),
+      });
 
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Calling enhanced key generation', {
         params: {
           ...generateKeyParams,
           passphrase: generateKeyParams.passphrase ? '[REDACTED]' : undefined,
+          yubikey_pin: generateKeyParams.yubikey_pin ? '[REDACTED]' : undefined,
         },
       });
 
       // Use new multi-recipient key generation command
-      const result = await safeInvoke('generate_key_multi', generateKeyParams, 'useYubiKeySetupWorkflow.generateKey');
+      console.log('📡 TRACER: About to call safeInvoke - generate_key_multi');
+      const result = await safeInvoke(
+        'generate_key_multi',
+        generateKeyParams,
+        'useYubiKeySetupWorkflow.generateKey',
+      );
+
+      console.log('✅ TRACER: generate_key_multi successful:', result);
       
-      console.log('✅ generate_key_multi successful:', result);
+      // Set enhanced success state
+      setIsEnhancedLoading(false);
+      setEnhancedSuccess(result);
+      console.log('🎉 TRACER: Enhanced loading complete - success state set');
+      
       return result;
     } catch (error: any) {
+      console.log('❌ TRACER: Enhanced key generation failed:', error);
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Enhanced key generation failed', {
         error: error.message,
       });
+      
+      // Set enhanced error state
+      setIsEnhancedLoading(false);
+      setEnhancedError(error);
+      console.log('💥 TRACER: Enhanced loading complete - error state set');
+      
       throw error;
     }
   }, [
     protectionMode,
     selectedDevice,
     yubiKeyInfo,
+    yubiKeyPin,
+    yubiKeyStates,
+    hasCheckedDevices,
+    checkForYubiKeys,
     baseWorkflow.handleKeyGeneration,
     baseWorkflow.keyLabel,
     baseWorkflow.passphrase,
@@ -312,19 +485,51 @@ export const useYubiKeySetupWorkflow = () => {
     return baseWorkflow.error;
   }, [deviceError, baseWorkflow.error]);
 
-  return {
-    // Base workflow properties
-    ...baseWorkflow,
+  // Enhanced state management: Override base workflow state when enhanced operations are active
+  const getEffectiveLoadingState = () => {
+    return isEnhancedLoading || baseWorkflow.isLoading;
+  };
 
-    // Override key generation handler
+  const getEffectiveSuccessState = () => {
+    return enhancedSuccess || baseWorkflow.success;
+  };
+
+  const getEffectiveErrorState = () => {
+    return enhancedError || baseWorkflow.error;
+  };
+
+  const handleEnhancedReset = useCallback(() => {
+    console.log('🔄 TRACER: Enhanced reset called - clearing enhanced states');
+    setIsEnhancedLoading(false);
+    setEnhancedSuccess(null);
+    setEnhancedError(null);
+    handleReset();
+  }, [handleReset]);
+
+  const handleEnhancedClearError = useCallback(() => {
+    console.log('🧹 TRACER: Enhanced clear error called');
+    setEnhancedError(null);
+    baseWorkflow.clearError();
+  }, [baseWorkflow]);
+
+  return {
+    // Base workflow properties (overridden by enhanced state)
+    ...baseWorkflow,
+    
+    // Override state with enhanced state when active
+    isLoading: getEffectiveLoadingState(),
+    success: getEffectiveSuccessState(), 
+    error: getEffectiveErrorState(),
+
+    // Override key generation and label change handlers
     handleKeyGeneration: handleEnhancedKeyGeneration,
-    handleReset,
-    clearError,
+    handleKeyLabelChange: handleVaultLabelChange,
+    handleReset: handleEnhancedReset,
+    clearError: handleEnhancedClearError,
 
     // Enhanced validation
     isFormValid: isSetupValid(),
     canProceedToNextStep: canProceedToNextStep(),
-    error: getCurrentError(),
 
     // YubiKey-specific properties
     protectionMode,
@@ -336,6 +541,7 @@ export const useYubiKeySetupWorkflow = () => {
     hasCheckedDevices,
     deviceError,
     setupStep,
+    yubiKeyPin,
 
     // YubiKey-specific handlers
     handleProtectionModeChange,
@@ -343,5 +549,6 @@ export const useYubiKeySetupWorkflow = () => {
     handleYubiKeyConfigured,
     checkForYubiKeys,
     setSetupStep,
+    setYubiKeyPin,
   };
 };

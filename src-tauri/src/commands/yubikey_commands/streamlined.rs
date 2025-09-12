@@ -107,26 +107,42 @@ pub async fn init_yubikey(
     new_pin: String,
     label: String,
 ) -> Result<YubiKeyInitResult, CommandError> {
+    println!("🎯 TRACER: init_yubikey - YUBIKEY INITIALIZATION START");
+    println!("  - serial: {serial}");
+    println!("  - new_pin: [{}]", new_pin.len());
+    println!("  - label: {label}");
+
     // Validate PIN format
+    println!("📝 TRACER: Validating PIN format");
     let manager = YubiKeyManager::new();
     manager.validate_pin(&new_pin).map_err(CommandError::from)?;
+    println!("✅ TRACER: PIN format validation passed");
 
     // Validate label
     if label.trim().is_empty() {
         return Err(CommandError::validation("Label cannot be empty"));
     }
+    println!("✅ TRACER: Label validation passed");
 
     // Step 1: Change management key to TDES+protect (per cg6.md)
+    println!("🔑 TRACER: Step 1 - Changing management key to TDES+protect");
     change_management_key(&serial).await?;
+    println!("✅ TRACER: Step 1 completed - Management key changed");
 
     // Step 2: Change PIN from default (123456) to user PIN (per cg6.md)
+    println!("📌 TRACER: Step 2 - Changing PIN from default to user PIN");
     change_pin(&serial, "123456", &new_pin).await?;
+    println!("✅ TRACER: Step 2 completed - PIN changed");
 
     // Step 3: Change PUK to same as PIN (per cg6.md)
+    println!("🔒 TRACER: Step 3 - Changing PUK to same as PIN");
     change_puk(&serial, "12345678", &new_pin).await?;
+    println!("✅ TRACER: Step 3 completed - PUK changed");
 
     // Step 4: Generate age identity with the new PIN using age-plugin-yubikey
+    println!("🎯 TRACER: Step 4 - Generating age identity with age-plugin-yubikey");
     let recipient_info = generate_age_identity(&serial, &new_pin, &label).await?;
+    println!("✅ TRACER: Step 4 completed - Age identity generated: {recipient_info:?}");
 
     Ok(YubiKeyInitResult {
         serial,

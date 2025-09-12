@@ -122,6 +122,30 @@ pub async fn generate_key_multi(
         .clone()
         .unwrap_or(ProtectionMode::PassphraseOnly);
 
+    // TRACER: Enhanced logging for debugging
+    println!("🎯 TRACER: generate_key_multi - BACKEND ENTRY POINT");
+    println!("🔑 TRACER: Input parameters:");
+    println!("  - label: {}", input.label);
+    println!("  - protection_mode: {:?}", protection_mode);
+    println!("  - yubikey_device_id: {:?}", input.yubikey_device_id);
+    println!(
+        "  - yubikey_pin: {}",
+        if input.yubikey_pin.is_some() {
+            "[PRESENT]"
+        } else {
+            "[MISSING]"
+        }
+    );
+    println!(
+        "  - passphrase: {}",
+        if input.passphrase.is_some() {
+            "[PRESENT]"
+        } else {
+            "[MISSING]"
+        }
+    );
+    println!("  - yubikey_info: {:?}", input.yubikey_info);
+
     // Log operation start with structured context
     let mut attributes = HashMap::new();
     attributes.insert("label".to_string(), input.label.clone());
@@ -277,15 +301,37 @@ async fn generate_yubikey_only_key_with_initialization(
     yubikey_pin: Option<&str>,
     error_handler: &ErrorHandler,
 ) -> Result<(String, std::path::PathBuf, Vec<String>), CommandError> {
+    println!("🎯 TRACER: generate_yubikey_only_key_with_initialization - START");
+    println!("  - serial: {serial}");
+    println!("  - device_id: {device_id:?}");
+    println!(
+        "  - yubikey_pin: {}",
+        if yubikey_pin.is_some() {
+            "[PRESENT]"
+        } else {
+            "[MISSING]"
+        }
+    );
+
     // First, run the streamlined initialization sequence (cg6.md: TDES → PIN → PUK → age-plugin-yubikey)
     if let Some(pin) = yubikey_pin {
+        println!("🔐 TRACER: YubiKey PIN provided - calling init_yubikey");
+        println!("  - PIN length: {}", pin.len());
+
         // Use the streamlined initialization from the yubikey_commands module
         use crate::commands::yubikey_commands::streamlined::init_yubikey;
-        
+
         // Initialize YubiKey with the proper sequence before using age-plugin-yubikey
-        let _init_result = init_yubikey(serial.to_string(), pin.to_string(), label.to_string())
-            .await?;
-            
+        println!(
+            "🚀 TRACER: About to call init_yubikey with serial: {}, PIN: [{}], label: {}",
+            serial,
+            pin.len(),
+            label
+        );
+        let _init_result =
+            init_yubikey(serial.to_string(), pin.to_string(), label.to_string()).await?;
+        println!("✅ TRACER: init_yubikey completed successfully: {_init_result:?}");
+
         // The init_yubikey already generated the age identity, so we can return early
         // with the initialization result
         return Ok((
@@ -319,8 +365,8 @@ async fn generate_yubikey_only_key_with_initialization(
             vec![label.to_string()],
         ));
     }
-    
-    // After initialization, use age-plugin-yubikey for key generation
+
+    // If no PIN provided, fall back to old logic (should not happen in normal flow)
     generate_yubikey_only_key_internal(label, serial, device_id, yubikey_pin, error_handler).await
 }
 
