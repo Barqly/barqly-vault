@@ -7,6 +7,7 @@ pub mod age_plugin;
 pub mod errors;
 pub mod progress;
 pub mod provider;
+pub mod state_cache;
 
 // Legacy modules (deprecated - will be removed)
 pub mod detection;

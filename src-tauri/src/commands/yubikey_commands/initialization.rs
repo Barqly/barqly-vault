@@ -63,7 +63,7 @@ pub async fn yubikey_initialize(
         public_key: recipient.recipient.clone(), // age recipient format
         slot: recipient.slot,
         touch_required: true, // age-plugin-yubikey typically requires touch
-        pin_policy: crate::crypto::yubikey::management::PinPolicy::Always,
+        pin_policy: crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY,
     };
 
     crate::logging::log_info(&format!(

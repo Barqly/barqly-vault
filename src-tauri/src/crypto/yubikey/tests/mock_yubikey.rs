@@ -245,8 +245,8 @@ impl MockYubiKeyManager {
             serial: serial.to_string(),
             slot: target_slot,
             public_key,
-            pin_policy: PinPolicy::Always,
-            touch_policy: crate::crypto::yubikey::TouchPolicy::Always,
+            pin_policy: crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY,
+            touch_policy: crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY,
             label: format!("Mock YubiKey {}", serial),
         })
     }

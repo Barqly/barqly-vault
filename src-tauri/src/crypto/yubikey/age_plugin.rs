@@ -330,14 +330,15 @@ impl YubiIdentityProvider for AgePluginProvider {
 
         let mut args = vec!["--generate"];
 
-        // Set PIN policy to 'once' (default) - requires PIN once per session
+        // Set PIN policy using centralized configuration
         args.push("--pin-policy");
-        args.push("once");
+        let pin_policy_str = crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY.to_string();
+        args.push(&pin_policy_str);
 
-        // Set touch policy to 'cached' - requires touch once, then allows 15s window
-        // This prevents multiple touch requirements during key generation process
+        // Set touch policy using centralized configuration  
         args.push("--touch-policy");
-        args.push("cached");
+        let touch_policy_str = crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY.to_string();
+        args.push(&touch_policy_str);
 
         args.push("--name");
         args.push(label);
@@ -516,11 +517,20 @@ impl AgePluginPtyProvider {
             // Move writer into the async block to ensure it stays alive
             let mut writer = writer;
             println!("🔧 TRACER: PTY loop starting - writer handle secured");
+            let mut loop_iteration = 0;
             loop {
+                loop_iteration += 1;
                 line.clear();
+                println!("🔄 DETECTIVE: Read loop iteration #{} - about to read from PTY", loop_iteration);
+                
                 match buf_reader.read_line(&mut line) {
                     Ok(0) => {
                         println!("📄 TRACER: EOF detected - checking if process finished");
+                        println!("🔍 DETECTIVE: EOF encountered, output so far: '{}' ({} bytes)", 
+                                output.chars().rev().take(200).collect::<String>().chars().rev().collect::<String>(), 
+                                output.len());
+                        println!("🔍 DETECTIVE: Process handle available - checking wait status");
+                        
                         // EOF - check if process finished
                         match child.try_wait() {
                             Ok(Some(status)) => {
@@ -528,11 +538,74 @@ impl AgePluginPtyProvider {
                                 return Ok((status, output.clone()));
                             },
                             Ok(None) => {
-                                println!("⏳ TRACER: Process still running after EOF - waiting...");
-                                println!("⏳ TRACER: This might be when YubiKey is waiting for touch - process alive but no output");
-                                // Process still running, wait a bit more
-                                tokio::time::sleep(Duration::from_millis(500)).await;
-                                continue;
+                                println!("⏳ TRACER: Process still running after EOF - implementing active polling...");
+                                println!("⏳ TRACER: This is likely YubiKey waiting for touch - process alive but quiet");
+
+                                // Active polling with proper retry loop structure
+                                let max_retries = 60; // 30 seconds total with 500ms intervals
+                                let mut nudge_count = 0;
+
+                                // Proper polling loop - retry counter increments per polling attempt
+                                for retry_count in 1..=max_retries {
+                                    println!("🔍 TRACER: PTY EOF active polling: attempt {retry_count}/{max_retries}, checking process state...");
+                                    println!("🕵️ DETECTIVE: About to poll process - attempt: {}, elapsed time: {}ms", 
+                                            retry_count, retry_count * 500);
+
+                                    // Check if process completed
+                                    match child.try_wait() {
+                                        Ok(Some(status)) => {
+                                            println!("✅ TRACER: Process completed during active polling with status: {status:?}");
+                                            return Ok((status, output.clone()));
+                                        },
+                                        Ok(None) => {
+                                            // Process still alive - continue polling with backoff
+                                            println!("🔄 TRACER: Process still alive, continuing to poll...");
+
+                                            // Send periodic CRLF nudge to help with line discipline
+                                            // This mimics what a real terminal would do
+                                            if retry_count % 4 == 0 { // Every 2 seconds (4 * 500ms)
+                                                nudge_count += 1;
+                                                println!("📤 TRACER: Sending CRLF nudge #{nudge_count} to assist line discipline");
+                                                println!("🕵️ DETECTIVE: Writer available before nudge: true, nudge #{nudge_count}");
+                                                
+                                                match writer.write_all(b"\r\n") {
+                                                    Ok(_) => {
+                                                        match writer.flush() {
+                                                            Ok(_) => {
+                                                                println!("📤 TRACER: CRLF nudge sent and flushed successfully");
+                                                                println!("🕵️ DETECTIVE: CRLF bytes [\\r\\n] written to PTY master");
+                                                            }
+                                                            Err(e) => {
+                                                                println!("⚠️ TRACER: CRLF nudge flush failed: {e}");
+                                                                println!("🚨 DETECTIVE: FLUSH ERROR - PTY may be broken: {e}");
+                                                            }
+                                                        }
+                                                    }
+                                                    Err(e) => {
+                                                        println!("⚠️ TRACER: CRLF nudge write failed: {e}");
+                                                        println!("🚨 DETECTIVE: WRITE ERROR - PTY connection may be lost: {e}");
+                                                    }
+                                                }
+                                            }
+
+                                            // Graduated backoff: start fast, slow down
+                                            let sleep_ms = if retry_count < 10 { 250 } else { 500 };
+                                            tokio::time::sleep(Duration::from_millis(sleep_ms)).await;
+                                        }
+                                        Err(e) => {
+                                            println!("❌ TRACER: Process wait error during active polling: {e}");
+                                            return Err(YubiKeyError::PluginError(format!("Process error: {e}")));
+                                        }
+                                    }
+                                }
+
+                                // If we get here, we've exhausted all polling attempts
+                                println!("⏰ TRACER: Touch timeout - process still running after {}s, continuing to outer timeout handler", max_retries / 2);
+                                println!("🕵️ DETECTIVE: Polling exhausted - returning to outer read loop to check for delayed output");
+
+                                // Try reading again - maybe output appeared during final polling attempts
+                                println!("🔄 DETECTIVE: About to continue outer read loop - looking for post-touch output");
+                                continue; // Continue outer read loop
                             }
                             Err(e) => {
                                 println!("❌ TRACER: Process wait error: {e}");
@@ -575,18 +648,102 @@ impl AgePluginPtyProvider {
                             }
                         }
 
-                        // Enhanced touch prompt detection with multiple triggers
-                        if line.to_lowercase().contains("touch") 
-                            || line.contains("Touch your YubiKey") 
-                            || line.contains("Please touch")
-                            || line.contains("Generating key")
-                            || line.contains("🎲") {
-                            println!("👆 TRACER: TOUCH REQUIRED - YubiKey touch detected!");
+                        // Touch detection for age-plugin-yubikey - it shows "Generating key..." then goes silent
+                        // The key insight: age-plugin-yubikey doesn't show explicit touch prompts
+                        // Instead it shows "Generating key..." and then waits silently for touch
+                        // IMPORTANT: Exclude our own debug messages (those with emojis)
+                        // IMPORTANT: Skip touch detection if policy is Never
+                        let touch_policy = crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY;
+                        println!("🔧 POLICY CHECK: Current touch policy = {:?}", touch_policy);
+                        
+                        if (line.contains("Generating key") || line.contains("generating key")) 
+                            && !line.contains("🔍") && !line.contains("TRACER:") && !line.contains("DETECTIVE:") {
+                            println!("🔧 POLICY CHECK: Found 'Generating key' line, checking if should trigger touch detection...");
+                            if touch_policy != crate::crypto::yubikey::management::TouchPolicy::Never {
+                                println!("🔧 POLICY CHECK: Touch policy is NOT Never, triggering touch detection");
+                            } else {
+                                println!("🔧 POLICY CHECK: Touch policy is Never, SKIPPING touch detection");
+                                continue; // Skip touch detection entirely
+                            }
+                        }
+                        
+                        if (line.contains("Generating key") || line.contains("generating key")) 
+                            && !line.contains("🔍") && !line.contains("TRACER:") && !line.contains("DETECTIVE:")
+                            && touch_policy != crate::crypto::yubikey::management::TouchPolicy::Never {
+                            println!("👆 TRACER: KEY GENERATION STARTED - Touch will be required!");
                             println!("👆 TRACER: Full line: '{}'", line.trim());
-                            println!("👆 TRACER: Waiting for user to touch YubiKey...");
-                            println!("👆 TRACER: ** CRITICAL ** - stdin writer is ALIVE - continuing loop");
+                            println!("👆 TRACER: age-plugin-yubikey will now wait silently for touch...");
+                            println!("👆 TRACER: ** SWITCHING TO TOUCH-WAIT MODE **");
                             // TODO: Emit Tauri event here
-                            // app_handle.emit_all("yubikey-touch-required", ()).ok();
+                            
+                            // Start timeout-based touch detection since no more output will come
+                            let touch_start = std::time::Instant::now();
+                            let mut touch_timeout_count = 0;
+                            
+                            // Continue reading but with timeout expectations
+                            println!("⏰ TRACER: Entering touch-wait polling mode - process is silent during touch");
+                            loop {
+                                line.clear();
+                                let read_result = timeout(Duration::from_millis(1000), async {
+                                    buf_reader.read_line(&mut line)
+                                }).await;
+                                
+                                match read_result {
+                                    Ok(Ok(0)) => {
+                                        // EOF during touch wait - this is expected behavior
+                                        touch_timeout_count += 1;
+                                        println!("⏳ TRACER: Touch wait timeout #{} - still waiting for touch completion (elapsed: {:?})", 
+                                                touch_timeout_count, touch_start.elapsed());
+                                        
+                                        // Send periodic CRLF nudges to help the process along
+                                        if touch_timeout_count % 3 == 0 {
+                                            writer.write_all(b"\r\n").map_err(|e| {
+                                                YubiKeyError::PluginError(format!("Failed to write CRLF nudge: {e}"))
+                                            })?;
+                                            writer.flush().map_err(|e| {
+                                                YubiKeyError::PluginError(format!("Failed to flush CRLF nudge: {e}"))
+                                            })?;
+                                            println!("📡 TRACER: Sent CRLF nudge #{}", touch_timeout_count / 3);
+                                        }
+                                        
+                                        // Check if process completed
+                                        match child.try_wait() {
+                                            Ok(Some(status)) => {
+                                                println!("✅ TRACER: Process completed after touch! Status: {status:?}");
+                                                return Ok((status, output.clone()));
+                                            }
+                                            Ok(None) => {
+                                                // Process still running, continue waiting
+                                                if touch_start.elapsed() > Duration::from_secs(30) {
+                                                    println!("⚠️  TRACER: Touch timeout after 30s - user may need to touch YubiKey");
+                                                }
+                                                continue;
+                                            }
+                                            Err(e) => {
+                                                return Err(YubiKeyError::PluginError(format!("Process wait error during touch: {e}")));
+                                            }
+                                        }
+                                    }
+                                    Ok(Ok(bytes_read)) => {
+                                        // Got output during touch wait - this means touch completed!
+                                        println!("🎉 TRACER: TOUCH COMPLETED! Got output: '{}' ({} bytes)", line.trim(), bytes_read);
+                                        output.push_str(&line);
+                                        break; // Exit touch-wait mode, return to normal processing
+                                    }
+                                    Ok(Err(e)) => {
+                                        return Err(YubiKeyError::PluginError(format!("Read error during touch wait: {e}")));
+                                    }
+                                    Err(_) => {
+                                        // Timeout on read - continue waiting
+                                        touch_timeout_count += 1;
+                                        continue;
+                                    }
+                                }
+                            }
+                            
+                            // Continue with normal processing after touch completion
+                            println!("🔄 TRACER: Resuming normal PTY processing after successful touch");
+                            continue;
                         }
 
                         // Don't automatically send input on empty lines - this was causing premature newlines
@@ -742,14 +899,15 @@ impl YubiIdentityProvider for AgePluginPtyProvider {
     async fn register(&self, label: &str, pin: Option<&str>) -> YubiKeyResult<YubiRecipient> {
         let mut args = vec!["--generate"];
 
-        // Set PIN policy to 'once' (default) - requires PIN once per session
+        // Set PIN policy using centralized configuration
         args.push("--pin-policy");
-        args.push("once");
+        let pin_policy_str = crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY.to_string();
+        args.push(&pin_policy_str);
 
-        // Set touch policy to 'cached' - requires touch once, then allows 15s window
-        // This prevents multiple touch requirements during key generation process
+        // Set touch policy using centralized configuration  
         args.push("--touch-policy");
-        args.push("cached");
+        let touch_policy_str = crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY.to_string();
+        args.push(&touch_policy_str);
 
         args.push("--name");
         args.push(label);

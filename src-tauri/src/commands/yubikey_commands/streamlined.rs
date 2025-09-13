@@ -4,6 +4,7 @@
 //! as specified in the expert UX design document.
 
 use crate::commands::command_types::CommandError;
+use crate::crypto::yubikey::state_cache::YUBIKEY_STATE_CACHE;
 use crate::crypto::yubikey::{YubiIdentityProviderFactory, YubiKeyManager, YubiKeyState};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -112,6 +113,30 @@ pub async fn init_yubikey(
     println!("  - new_pin: [{}]", new_pin.len());
     println!("  - label: {label}");
 
+    // Check if YubiKey is already initialized to prevent lockouts
+    if YUBIKEY_STATE_CACHE.is_initialized(&serial) {
+        println!(
+            "⚠️ TRACER: YubiKey {} already initialized, skipping hardware initialization steps",
+            serial
+        );
+        println!("🔄 TRACER: Proceeding directly to key generation (if needed)");
+
+        // Skip hardware init, go directly to key generation
+        // This prevents PIN lockouts during testing
+        println!("🎯 TRACER: Using cached state - generating key directly");
+        let recipient_info = generate_age_identity(&serial, &new_pin, &label).await?;
+
+        // Mark key as generated in cache
+        YUBIKEY_STATE_CACHE.add_generated_key(&serial, label.clone());
+
+        return Ok(YubiKeyInitResult {
+            serial: serial.clone(),
+            slot: format!("{:02x}", recipient_info.slot),
+            recipient: recipient_info.recipient,
+            label,
+        });
+    }
+
     // Validate PIN format
     println!("📝 TRACER: Validating PIN format");
     let manager = YubiKeyManager::new();
@@ -143,6 +168,15 @@ pub async fn init_yubikey(
     println!("🎯 TRACER: Step 4 - Generating age identity with age-plugin-yubikey");
     let recipient_info = generate_age_identity(&serial, &new_pin, &label).await?;
     println!("✅ TRACER: Step 4 completed - Age identity generated: {recipient_info:?}");
+
+    // Step 5: Update state cache to prevent re-initialization
+    println!("📊 TRACER: Step 5 - Updating state cache");
+    YUBIKEY_STATE_CACHE.mark_pin_changed(&serial);
+    YUBIKEY_STATE_CACHE.mark_initialization_complete(&serial);
+    YUBIKEY_STATE_CACHE.add_generated_key(&serial, label.clone());
+    println!("✅ TRACER: Step 5 completed - State cache updated");
+
+    println!("🎉 TRACER: YubiKey initialization COMPLETE");
 
     Ok(YubiKeyInitResult {
         serial,
@@ -759,6 +793,36 @@ struct StoredYubiKey {
     slot: u8,
     recipient: String,
     label: String,
+}
+
+/// 🕵️ DETECTIVE: Diagnostic command to test basic PTY functionality
+#[command]
+pub async fn yubikey_pty_diagnostic() -> Result<String, CommandError> {
+    println!("🕵️ DETECTIVE: Starting PTY diagnostic test");
+    
+    let provider = YubiIdentityProviderFactory::create_pty_provider().map_err(CommandError::from)?;
+    
+    println!("🕵️ DETECTIVE: Testing basic age-plugin-yubikey --list command via PTY");
+    
+    // Test basic list command (should not require touch)
+    match provider.list_recipients().await {
+        Ok(recipients) => {
+            let result = format!("✅ PTY DIAGNOSTIC SUCCESS: Found {} recipients", recipients.len());
+            println!("🕵️ DETECTIVE: {}", result);
+            for recipient in &recipients {
+                println!("🕵️ DETECTIVE: Recipient found - {}", recipient.label);
+            }
+            Ok(result)
+        }
+        Err(e) => {
+            let error = format!("❌ PTY DIAGNOSTIC FAILED: {}", e);
+            println!("🕵️ DETECTIVE: {}", error);
+            Err(CommandError::operation(
+                crate::commands::command_types::ErrorCode::YubiKeyInitializationFailed,
+                error,
+            ))
+        }
+    }
 }
 
 #[cfg(test)]

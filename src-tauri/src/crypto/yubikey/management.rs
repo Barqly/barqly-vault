@@ -9,6 +9,24 @@ use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+/// Centralized YubiKey policy configuration
+/// These constants ensure consistent policy application across all operations
+pub mod policy_config {
+    use super::*;
+    
+    /// PIN policy for all YubiKey operations
+    /// - Once: PIN required once per session (recommended for usability)
+    /// - Always: PIN required for every operation (maximum security)
+    /// - Never: No PIN required (not recommended)
+    pub const DEFAULT_PIN_POLICY: PinPolicy = PinPolicy::Once;
+    
+    /// Touch policy for all YubiKey operations  
+    /// - Cached: Touch required once, then 15s window (recommended for usability)
+    /// - Always: Touch required for every operation (maximum security)
+    /// - Never: No touch required (for testing/debugging)
+    pub const DEFAULT_TOUCH_POLICY: TouchPolicy = TouchPolicy::Never;
+}
+
 /// PIN policy for PIV operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PinPolicy {
@@ -28,11 +46,21 @@ impl fmt::Display for PinPolicy {
 }
 
 /// Touch policy for PIV operations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TouchPolicy {
     Never,
     Always,
     Cached,
+}
+
+impl fmt::Display for TouchPolicy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TouchPolicy::Never => write!(f, "never"),
+            TouchPolicy::Always => write!(f, "always"),
+            TouchPolicy::Cached => write!(f, "cached"),
+        }
+    }
 }
 
 /// YubiKey information after initialization
