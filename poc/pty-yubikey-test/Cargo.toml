@@ -1,0 +1,18 @@
+[package]
+name = "pty-yubikey-test"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+portable-pty = "0.8"
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.11"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[features]
+default = []

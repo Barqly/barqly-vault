@@ -1,0 +1,366 @@
+
+# nauman at #mbp.local in ~/projects/barqly-vault/poc/pty-yubikey-test on git:main ✖︎ [12:50:34]
+→ RUST_LOG=info cargo run
+warning: fields `timestamp`, `bytes_read`, and `error` are never read
+   --> src/main.rs:507:5
+    |
+506 | struct ReadEvent {
+    |        --------- fields in this struct
+507 |     timestamp: Duration,
+    |     ^^^^^^^^^
+508 |     event_type: ReadEventType,
+509 |     bytes_read: usize,
+    |     ^^^^^^^^^^
+510 |     error: Option<String>,
+    |     ^^^^^
+    |
+    = note: `ReadEvent` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+    = note: `#[warn(dead_code)]` on by default
+
+warning: `pty-yubikey-test` (bin "pty-yubikey-test") generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running `target/debug/pty-yubikey-test`
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Starting PTY YubiKey Test POC - Phase 1: Complete YubiKey Workflow with PIN Automation
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] === PHASE 1 OBJECTIVES ===
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] 1. Initialize YubiKey (change PIN/PUK from defaults to 212121)
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] 2. Demonstrate programmatic PIN input via PTY stdin
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] 3. Complete age-plugin-yubikey workflow without hanging
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] 4. Prove TouchPolicy::Never + automated PIN = success
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test]
+    === STEP 1: YubiKey Initialization ===
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] === YubiKey Initialization Phase ===
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Using ykman CLI commands for YubiKey initialization
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] YubiKey detected: Device type: YubiKey 5C NFC
+    Serial number: 31310420
+    Firmware version: 5.7.1
+    Form factor: Keychain (USB-C)
+    Enabled USB interfaces: FIDO, CCID
+    NFC transport is enabled
+
+    Applications	USB     	NFC
+    Yubico OTP  	Disabled	Enabled
+    FIDO U2F    	Enabled 	Enabled
+    FIDO2       	Enabled 	Enabled
+    OATH        	Enabled 	Enabled
+    PIV         	Enabled 	Enabled
+    OpenPGP     	Enabled 	Enabled
+    YubiHSM Auth	Enabled 	Enabled
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Note: YubiKey PIN/PUK changes require interactive input
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] For automated testing, we'll use ykman commands with PTY automation in tests
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Assuming YubiKey PIN is set to 212121 (change manually if needed)
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] YubiKey initialization completed successfully
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test]
+    === STEP 2: PTY + PIN Automation Tests ===
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test]
+    --- Running Test 1/4: Simple echo command - should complete quickly ---
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] === Starting PTY Test ===
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Description: Simple echo command - should complete quickly
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Command: ["echo", "hello world"]
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Timeout: 5s
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Expects PIN Input: false
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] PIN to provide: None
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Created PTY pair with size: PtySize { rows: 24, cols: 80, pixel_width: 0, pixel_height: 0 }
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] === COMMAND DETAILS ===
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Executable: echo
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Arguments: ["hello world"]
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Full command: ["echo", "hello world"]
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Spawned process with PID: Some(16117)
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Cloned PTY master reader and writer for PIN automation
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Read 13 bytes: "hello world\r\n"
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Process completed with exit status: ExitStatus { code: 0, signal: None }
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Final read returned 0 bytes (clean EOF after process exit)
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] === FULL COMMAND OUTPUT ===
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Output: hello world
+
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Output length: 13 bytes
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] === Test Completed ===
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Success: true
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Duration: 15.143625ms
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Total bytes read: 13
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Completion reason: ProcessExit
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Exit code: Some(0)
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Read events: 2
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Test 1 completed successfully
+[2025-09-13T19:50:46Z INFO  pty_yubikey_test] Waiting 3 seconds before next test...
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test]
+    --- Running Test 2/4: age-plugin-yubikey help - no YubiKey interaction ---
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] === Starting PTY Test ===
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Description: age-plugin-yubikey help - no YubiKey interaction
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Command: ["age-plugin-yubikey", "--help"]
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Timeout: 10s
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Expects PIN Input: false
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] PIN to provide: None
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Created PTY pair with size: PtySize { rows: 24, cols: 80, pixel_width: 0, pixel_height: 0 }
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] === COMMAND DETAILS ===
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Executable: age-plugin-yubikey
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Arguments: ["--help"]
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Full command: ["age-plugin-yubikey", "--help"]
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] AGE-PLUGIN-YUBIKEY OPERATION:
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test]   Arg[0]: age-plugin-yubikey
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test]   Arg[1]: --help
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Spawned process with PID: Some(16124)
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Cloned PTY master reader and writer for PIN automation
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Read 208 bytes: "\u{1b}[0m\u{1b}[38;5;8m[\u{1b}[0m\u{1b}[0m\u{1b}[32mINFO \u{1b}[0m i18n_embed::requester\u{1b}[0m\u{1b}[38;5;8m]\u{1b}[0m Current Locale: [LanguageIdentifier { language: Language(Some(\"en\")), script: None, region: Some(Region(\"US\")), variants: None }]\r\n"
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] YubiKey Operation Output: [INFO  i18n_embed::requester] Current Locale: [LanguageIdentifier { language: Language(Some("en")), script: None, region: Some(Region("US")), variants: None }]
+
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Read 1024 bytes: "Usage: age-plugin-yubikey [OPTIONS]\r\n\r\nOptional arguments:\r\n  -h, --help                  Print this help message and exit.\r\n  -V, --version               Print version info and exit.\r\n  --age-plugin STATE-MACHINE  Run the given age plugin state machine. Internal use only.\r\n  -f, --force                 Force --generate to overwrite a filled slot.\r\n  -g, --generate              Generate a new YubiKey identity.\r\n  -i, --identity              Print identities stored in connected YubiKeys.\r\n  -l, --list                  List recipients for age identities in connected YubiKeys.\r\n  --list-all                  List recipients for all YubiKey keys that are compatible with age.\r\n  --name NAME                 Name for the generated identity. Defaults to 'age identity HEX_TAG'.\r\n  --pin-policy PIN-POLICY     One of [always, once, never]. Defaults to 'once'.\r\n  --serial SERIAL             Specify which YubiKey to use, if more than one is plugged in.\r\n  --slot SLOT                 Specify which slot to use. Defaults to f"
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] YubiKey Operation Output: Usage: age-plugin-yubikey [OPTIONS]
+
+    Optional arguments:
+      -h, --help                  Print this help message and exit.
+      -V, --version               Print version info and exit.
+      --age-plugin STATE-MACHINE  Run the given age plugin state machine. Internal use only.
+      -f, --force                 Force --generate to overwrite a filled slot.
+      -g, --generate              Generate a new YubiKey identity.
+      -i, --identity              Print identities stored in connected YubiKeys.
+      -l, --list                  List recipients for age identities in connected YubiKeys.
+      --list-all                  List recipients for all YubiKey keys that are compatible with age.
+      --name NAME                 Name for the generated identity. Defaults to 'age identity HEX_TAG'.
+      --pin-policy PIN-POLICY     One of [always, once, never]. Defaults to 'once'.
+      --serial SERIAL             Specify which YubiKey to use, if more than one is plugged in.
+      --slot SLOT                 Specify which slot to use. Defaults to f
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Command success indicator: Usage: age-plugin-yubikey [OPTIONS]
+
+    Optional arguments:
+      -h, --help                  Print this help message and exit.
+      -V, --version               Print version info and exit.
+      --age-plugin STATE-MACHINE  Run the given age plugin state machine. Internal use only.
+      -f, --force                 Force --generate to overwrite a filled slot.
+      -g, --generate              Generate a new YubiKey identity.
+      -i, --identity              Print identities stored in connected YubiKeys.
+      -l, --list                  List recipients for age identities in connected YubiKeys.
+      --list-all                  List recipients for all YubiKey keys that are compatible with age.
+      --name NAME                 Name for the generated identity. Defaults to 'age identity HEX_TAG'.
+      --pin-policy PIN-POLICY     One of [always, once, never]. Defaults to 'once'.
+      --serial SERIAL             Specify which YubiKey to use, if more than one is plugged in.
+      --slot SLOT                 Specify which slot to use. Defaults to f
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Read 104 bytes: "irst usable slot.\r\n  --touch-policy TOUCH-POLICY One of [always, cached, never]. Defaults to 'always'.\r\n"
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] YubiKey Operation Output: irst usable slot.
+      --touch-policy TOUCH-POLICY One of [always, cached, never]. Defaults to 'always'.
+
+[2025-09-13T19:50:49Z WARN  pty_yubikey_test] Command appears to be waiting for touch: irst usable slot.
+      --touch-policy TOUCH-POLICY One of [always, cached, never]. Defaults to 'always'.
+
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Process completed with exit status: ExitStatus { code: 0, signal: None }
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Final read returned 0 bytes (clean EOF after process exit)
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] === FULL COMMAND OUTPUT ===
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Output: [INFO  i18n_embed::requester] Current Locale: [LanguageIdentifier { language: Language(Some("en")), script: None, region: Some(Region("US")), variants: None }]
+    Usage: age-plugin-yubikey [OPTIONS]
+
+    Optional arguments:
+      -h, --help                  Print this help message and exit.
+      -V, --version               Print version info and exit.
+      --age-plugin STATE-MACHINE  Run the given age plugin state machine. Internal use only.
+      -f, --force                 Force --generate to overwrite a filled slot.
+      -g, --generate              Generate a new YubiKey identity.
+      -i, --identity              Print identities stored in connected YubiKeys.
+      -l, --list                  List recipients for age identities in connected YubiKeys.
+      --list-all                  List recipients for all YubiKey keys that are compatible with age.
+      --name NAME                 Name for the generated identity. Defaults to 'age identity HEX_TAG'.
+      --pin-policy PIN-POLICY     One of [always, once, never]. Defaults to 'once'.
+      --serial SERIAL             Specify which YubiKey to use, if more than one is plugged in.
+      --slot SLOT                 Specify which slot to use. Defaults to first usable slot.
+      --touch-policy TOUCH-POLICY One of [always, cached, never]. Defaults to 'always'.
+
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Output length: 1336 bytes
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] === YUBIKEY OPERATION ANALYSIS ===
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] YubiKey detected in output
+[2025-09-13T19:50:49Z WARN  pty_yubikey_test] Touch requirement detected - this might cause hanging
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Touch policy argument recognized
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] === Test Completed ===
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Success: true
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Duration: 49.636ms
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Total bytes read: 1336
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Completion reason: ProcessExit
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Exit code: Some(0)
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Read events: 4
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Test 2 completed successfully
+[2025-09-13T19:50:49Z INFO  pty_yubikey_test] Waiting 3 seconds before next test...
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test]
+    --- Running Test 3/4: Generate age key with TouchPolicy::Never + automated PIN input ---
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] This test will automatically provide PIN: Some("212121")
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] === Starting PTY Test ===
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Description: Generate age key with TouchPolicy::Never + automated PIN input
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Command: ["age-plugin-yubikey", "--generate", "--touch-policy", "never", "--name", "test-key-automated"]
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Timeout: 120s
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Expects PIN Input: true
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] PIN to provide: Some("212121")
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Created PTY pair with size: PtySize { rows: 24, cols: 80, pixel_width: 0, pixel_height: 0 }
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] === COMMAND DETAILS ===
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Executable: age-plugin-yubikey
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Arguments: ["--generate", "--touch-policy", "never", "--name", "test-key-automated"]
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Full command: ["age-plugin-yubikey", "--generate", "--touch-policy", "never", "--name", "test-key-automated"]
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] AGE-PLUGIN-YUBIKEY OPERATION:
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test]   Arg[0]: age-plugin-yubikey
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test]   Arg[1]: --generate
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test]   Arg[2]: --touch-policy
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test]   Arg[3]: never
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test]   Arg[4]: --name
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test]   Arg[5]: test-key-automated
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test]   TOUCH POLICY: never (this is critical for hanging behavior)
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Spawned process with PID: Some(16125)
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Cloned PTY master reader and writer for PIN automation
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Read 208 bytes: "\u{1b}[0m\u{1b}[38;5;8m[\u{1b}[0m\u{1b}[0m\u{1b}[32mINFO \u{1b}[0m i18n_embed::requester\u{1b}[0m\u{1b}[38;5;8m]\u{1b}[0m Current Locale: [LanguageIdentifier { language: Language(Some(\"en\")), script: None, region: Some(Region(\"US\")), variants: None }]\r\n"
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] YubiKey Operation Output: [INFO  i18n_embed::requester] Current Locale: [LanguageIdentifier { language: Language(Some("en")), script: None, region: Some(Region("US")), variants: None }]
+
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Read 119 bytes: "\u{1b}[0m\u{1b}[38;5;8m[\u{1b}[0m\u{1b}[0m\u{1b}[32mINFO \u{1b}[0m yubikey::yubikey\u{1b}[0m\u{1b}[38;5;8m]\u{1b}[0m connected to reader: Yubico YubiKey FIDO+CCID\r\n"
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] YubiKey Operation Output: [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Read 238 bytes: "\u{1b}[0m\u{1b}[38;5;8m[\u{1b}[0m\u{1b}[0m\u{1b}[32mINFO \u{1b}[0m yubikey::yubikey\u{1b}[0m\u{1b}[38;5;8m]\u{1b}[0m connected to reader: Yubico YubiKey FIDO+CCID\r\n\u{1b}[0m\u{1b}[38;5;8m[\u{1b}[0m\u{1b}[0m\u{1b}[32mINFO \u{1b}[0m yubikey::yubikey\u{1b}[0m\u{1b}[38;5;8m]\u{1b}[0m connected to reader: Yubico YubiKey FIDO+CCID\r\n"
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] YubiKey Operation Output: [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+    [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Read 119 bytes: "\u{1b}[0m\u{1b}[38;5;8m[\u{1b}[0m\u{1b}[0m\u{1b}[32mINFO \u{1b}[0m yubikey::yubikey\u{1b}[0m\u{1b}[38;5;8m]\u{1b}[0m connected to reader: Yubico YubiKey FIDO+CCID\r\n"
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] YubiKey Operation Output: [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Read 26 bytes: "🎲 Generating key...\r\n\r\n"
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] YubiKey Operation Output: 🎲 Generating key...
+
+
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Read 65 bytes: "\rEnter PIN for YubiKey with serial 31310420 (default is 123456): "
+Enter PIN for YubiKey with serial 31310420 (default is 123456): Output:
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] PIN prompt detected! Automatically providing PIN: 212121
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] Successfully wrote PIN to PTY stdin
+[2025-09-13T19:50:52Z INFO  pty_yubikey_test] PTY stdin flushed successfully
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Read 298 bytes: "\r\n\u{1b}[1A\r\u{1b}[2K\u{1b}[1B\u{1b}[1AEnter PIN for YubiKey with serial 31310420 (default is 123456): [hidden]\r\nError: Invalid PIN (2 tries remaining before it is blocked)\r\n\r\n[ Did this not do what you expected? Could an error be more useful? ]\r\n[ Tell us: https://str4d.xyz/age-plugin-yubikey/report              ]\r\n"
+Enter PIN for YubiKey with serial 31310420 (default is 123456): [hidden]
+    Error: Invalid PIN (2 tries remaining before it is blocked)
+
+    [ Did this not do what you expected? Could an error be more useful? ]
+    [ Tell us: https://str4d.xyz/age-plugin-yubikey/report              ]
+
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] PIN prompt detected! Automatically providing PIN: 212121
+[2025-09-13T19:50:53Z ERROR pty_yubikey_test] Failed to write PIN to PTY stdin: Os { code: 5, kind: Uncategorized, message: "Input/output error" }
+Enter PIN for YubiKey with serial 31310420 (default is 123456): [hidden]
+    Error: Invalid PIN (2 tries remaining before it is blocked)
+
+    [ Did this not do what you expected? Could an error be more useful? ]
+    [ Tell us: https://str4d.xyz/age-plugin-yubikey/report              ]
+
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Process completed with exit status: ExitStatus { code: 1, signal: None }
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Final read returned 0 bytes (clean EOF after process exit)
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] === FULL COMMAND OUTPUT ===
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Output: [INFO  i18n_embed::requester] Current Locale: [LanguageIdentifier { language: Language(Some("en")), script: None, region: Some(Region("US")), variants: None }]
+    [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+    [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+    [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+    [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+    🎲 Generating key...
+
+Enter PIN for YubiKey with serial 31310420 (default is 123456): [hidden]
+    Error: Invalid PIN (2 tries remaining before it is blocked)
+
+    [ Did this not do what you expected? Could an error be more useful? ]
+    [ Tell us: https://str4d.xyz/age-plugin-yubikey/report              ]
+
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Output length: 1073 bytes
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] === YUBIKEY OPERATION ANALYSIS ===
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] YubiKey detected in output
+[2025-09-13T19:50:53Z WARN  pty_yubikey_test] PIN prompt detected - command waiting for input
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] === Test Completed ===
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Success: true
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Duration: 119.239416ms
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Total bytes read: 1073
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Completion reason: ProcessExit
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Exit code: Some(1)
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Read events: 8
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Test 3 completed successfully
+[2025-09-13T19:50:53Z INFO  pty_yubikey_test] Waiting 3 seconds before next test...
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]
+    --- Running Test 4/4: List age identities with automated PIN input ---
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] This test will automatically provide PIN: Some("212121")
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] === Starting PTY Test ===
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Description: List age identities with automated PIN input
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Command: ["age-plugin-yubikey", "--identity"]
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Timeout: 60s
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Expects PIN Input: true
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] PIN to provide: Some("212121")
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Created PTY pair with size: PtySize { rows: 24, cols: 80, pixel_width: 0, pixel_height: 0 }
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] === COMMAND DETAILS ===
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Executable: age-plugin-yubikey
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Arguments: ["--identity"]
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Full command: ["age-plugin-yubikey", "--identity"]
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] AGE-PLUGIN-YUBIKEY OPERATION:
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Arg[0]: age-plugin-yubikey
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Arg[1]: --identity
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Spawned process with PID: Some(16127)
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Cloned PTY master reader and writer for PIN automation
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Read 208 bytes: "\u{1b}[0m\u{1b}[38;5;8m[\u{1b}[0m\u{1b}[0m\u{1b}[32mINFO \u{1b}[0m i18n_embed::requester\u{1b}[0m\u{1b}[38;5;8m]\u{1b}[0m Current Locale: [LanguageIdentifier { language: Language(Some(\"en\")), script: None, region: Some(Region(\"US\")), variants: None }]\r\n"
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] YubiKey Operation Output: [INFO  i18n_embed::requester] Current Locale: [LanguageIdentifier { language: Language(Some("en")), script: None, region: Some(Region("US")), variants: None }]
+
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Read 119 bytes: "\u{1b}[0m\u{1b}[38;5;8m[\u{1b}[0m\u{1b}[0m\u{1b}[32mINFO \u{1b}[0m yubikey::yubikey\u{1b}[0m\u{1b}[38;5;8m]\u{1b}[0m connected to reader: Yubico YubiKey FIDO+CCID\r\n"
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] YubiKey Operation Output: [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Read 119 bytes: "\u{1b}[0m\u{1b}[38;5;8m[\u{1b}[0m\u{1b}[0m\u{1b}[32mINFO \u{1b}[0m yubikey::yubikey\u{1b}[0m\u{1b}[38;5;8m]\u{1b}[0m connected to reader: Yubico YubiKey FIDO+CCID\r\n"
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] YubiKey Operation Output: [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Read 2 bytes: "\r\n"
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] YubiKey Operation Output:
+
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Process completed with exit status: ExitStatus { code: 0, signal: None }
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Final read returned 0 bytes (clean EOF after process exit)
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] === FULL COMMAND OUTPUT ===
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Output: [INFO  i18n_embed::requester] Current Locale: [LanguageIdentifier { language: Language(Some("en")), script: None, region: Some(Region("US")), variants: None }]
+    [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+    [INFO  yubikey::yubikey] connected to reader: Yubico YubiKey FIDO+CCID
+
+
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Output length: 448 bytes
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] === YUBIKEY OPERATION ANALYSIS ===
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] YubiKey detected in output
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] === Test Completed ===
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Success: true
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Duration: 83.222959ms
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Total bytes read: 448
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Completion reason: ProcessExit
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Exit code: Some(0)
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Read events: 5
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Test 4 completed successfully
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]
+    === STEP 3: PHASE 1 RESULTS ANALYSIS ===
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Completed 4 tests
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Overall successful tests: 4/4
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] age-plugin-yubikey successful tests: 3/3
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]
+    Test 1: ["echo", "hello world"]
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Success: true
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Duration: 15.143625ms
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Bytes read: 13
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Completion: ProcessExit
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Exit code: Some(0)
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Read events: 2
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]     EOF events: 0, Data events: 1, Error events: 0
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]
+    Test 2: ["age-plugin-yubikey", "--help"]
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Success: true
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Duration: 49.636ms
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Bytes read: 1336
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Completion: ProcessExit
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Exit code: Some(0)
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Read events: 4
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]     EOF events: 0, Data events: 3, Error events: 0
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]
+    Test 3: ["age-plugin-yubikey", "--generate", "--touch-policy", "never", "--name", "test-key-automated"]
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Success: true
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Duration: 119.239416ms
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Bytes read: 1073
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Completion: ProcessExit
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Exit code: Some(1)
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Read events: 8
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]     EOF events: 0, Data events: 7, Error events: 0
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]
+    Test 4: ["age-plugin-yubikey", "--identity"]
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Success: true
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Duration: 83.222959ms
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Bytes read: 448
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Completion: ProcessExit
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Exit code: Some(0)
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]   Read events: 5
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]     EOF events: 0, Data events: 4, Error events: 0
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test]
+    === PHASE 1 CONCLUSION ===
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] ✓ PHASE 1 SUCCESS: All age-plugin-yubikey tests completed without hanging!
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] ✓ PIN automation via PTY stdin works correctly
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] ✓ TouchPolicy::Never + automated PIN = complete workflow
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] ✓ Proved the hanging issue is PIN input related, not touch policy
+[2025-09-13T19:50:56Z INFO  pty_yubikey_test] Phase 1 data collection complete. Ready for Phase 2 (touch policy comparison).
