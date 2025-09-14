@@ -1,5 +1,5 @@
 [workspace]
-members = ["src-tauri"]
+members = [ "poc/yubikey-apdu-poc","src-tauri"]
 resolver = "2"
 
 [workspace.dependencies]
