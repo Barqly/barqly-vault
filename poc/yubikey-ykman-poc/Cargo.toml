@@ -1,0 +1,21 @@
+[package]
+name = "yubikey-ykman-poc"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "yubikey-setup"
+path = "src/main.rs"
+
+[dependencies]
+portable-pty = "0.8"
+nix = { version = "0.27", features = ["term"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4"
+env_logger = "0.11"
+thiserror = "1.0"
