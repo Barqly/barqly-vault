@@ -92,13 +92,24 @@ pub fn decrypt_with_state_machine(
     let current_path = std::env::var("PATH").unwrap_or_default();
     let new_path = format!("{}:{}", bundled_bin_dir.display(), current_path);
 
-    // Use age binary
-    let age_path = if std::path::Path::new("/opt/homebrew/bin/age").exists() {
-        "/opt/homebrew/bin/age"
-    } else if std::path::Path::new("/usr/local/bin/age").exists() {
-        "/usr/local/bin/age"
+    // Use age binary based on configuration
+    use crate::USE_AGE_CRATE;
+    let age_path = if USE_AGE_CRATE {
+        // Use system age (would be from crate if it supported plugins)
+        if std::path::Path::new("/usr/local/bin/age").exists() {
+            "/usr/local/bin/age"
+        } else {
+            "age"
+        }
     } else {
-        "age"
+        // Explicitly use homebrew age
+        if std::path::Path::new("/opt/homebrew/bin/age").exists() {
+            "/opt/homebrew/bin/age"
+        } else if std::path::Path::new("/usr/local/bin/age").exists() {
+            "/usr/local/bin/age"
+        } else {
+            "age"
+        }
     };
 
     log_age!("Using age binary at: {}", age_path);

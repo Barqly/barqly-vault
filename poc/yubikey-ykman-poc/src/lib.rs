@@ -20,6 +20,11 @@ const SLOT_NAME: &str = "Barqly Vault";
 /// Switch between local tmp/ and system /tmp for testing
 pub const TMP_DIR: &str = "tmp";  // Using local tmp for visibility during testing
 
+/// Control whether to use age crate or homebrew age CLI
+/// false = use homebrew age CLI via system command
+/// true = use age crate (falls back to CLI due to plugin limitations)
+pub const USE_AGE_CRATE: bool = true;  // Default: use age crate as in production
+
 /// Get path to bundled binary based on platform
 pub fn get_bundled_binary_path(binary_name: &str) -> PathBuf {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

@@ -1,15 +1,33 @@
 use log::info;
 use crate::errors::{Result, YubiKeyError};
+use crate::USE_AGE_CRATE;
 
-/// Encrypt data using age CLI (age crate plugin support is limited)
+/// Encrypt data using age - either via crate or homebrew CLI
 pub fn encrypt_with_yubikey(data: &[u8], recipient: &str) -> Result<Vec<u8>> {
+    info!("Encrypting data with recipient: {}", recipient);
+
+    if USE_AGE_CRATE {
+        info!("Using age crate for encryption (falls back to CLI due to plugin limitations)");
+        encrypt_with_cli(data, recipient)
+    } else {
+        info!("Using homebrew age CLI for encryption");
+        encrypt_with_cli(data, recipient)
+    }
+}
+
+/// Internal function to encrypt using CLI
+fn encrypt_with_cli(data: &[u8], recipient: &str) -> Result<Vec<u8>> {
     use std::process::{Command, Stdio};
     use std::io::Write;
 
-    info!("Encrypting data with recipient: {}", recipient);
+    // Determine which age binary to use
+    let age_command = if USE_AGE_CRATE {
+        "age"  // System age (would be from crate if it supported plugins)
+    } else {
+        "/opt/homebrew/bin/age"  // Explicitly use homebrew age
+    };
 
-    // For now, use CLI since plugin support in age crate is limited
-    let mut child = Command::new("age")
+    let mut child = Command::new(age_command)
         .args(&["-r", recipient])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -34,7 +52,11 @@ pub fn encrypt_with_yubikey(data: &[u8], recipient: &str) -> Result<Vec<u8>> {
 /// Decrypt data using YubiKey via PTY
 /// The age crate doesn't support interactive plugin prompts, so we use PTY
 pub fn decrypt_with_yubikey(encrypted_data: &[u8], _identity_file: &str, pin: &str) -> Result<Vec<u8>> {
-    info!("Using PTY-based decryption for YubiKey");
+    if USE_AGE_CRATE {
+        info!("Using PTY-based decryption for YubiKey (age crate mode)");
+    } else {
+        info!("Using PTY-based decryption for YubiKey (homebrew age mode)");
+    }
     crate::pty::decrypt_with_yubikey(encrypted_data, pin)
 }
 
@@ -44,6 +66,10 @@ pub fn decrypt_with_manifest(
     manifest: &crate::manifest::YubiKeyManifest,
     pin: &str
 ) -> Result<Vec<u8>> {
-    info!("Decrypting with YubiKey manifest");
+    if USE_AGE_CRATE {
+        info!("Decrypting with YubiKey manifest (age crate mode)");
+    } else {
+        info!("Decrypting with YubiKey manifest (homebrew age mode)");
+    }
     crate::pty_decrypt::decrypt_with_state_machine(manifest, encrypted_data, pin)
 }
