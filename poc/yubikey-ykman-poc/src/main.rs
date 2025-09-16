@@ -99,10 +99,17 @@ fn main() {
             println!("📝 Testing encryption and decryption...\n");
             
             // Read test message from file
-            let test_file = "test-message.txt";
+            let test_file = "tmp/bitcoin-od.txt";
             let test_message = match std::fs::read_to_string(test_file) {
-                Ok(content) => content,
-                Err(_) => "Hello from YubiKey POC! This is a secret message.".to_string()
+                Ok(content) => {
+                    println!("📖 Using file: {}", test_file);
+                    content
+                },
+                Err(e) => {
+                    println!("⚠️ Could not read {}: {}", test_file, e);
+                    println!("📝 Using default test message instead");
+                    "Hello from YubiKey POC! This is a secret message.".to_string()
+                }
             };
             
             println!("Original message:\n{}", test_message);
@@ -114,7 +121,7 @@ fn main() {
                     println!("✅ Encrypted successfully ({} bytes)", encrypted.len());
                     
                     // Save encrypted file
-                    let encrypted_file = "test-message.age";
+                    let encrypted_file = "tmp/bitcoin-od.age";
                     if let Err(e) = std::fs::write(encrypted_file, &encrypted) {
                         println!("⚠️ Failed to save encrypted file: {}", e);
                     } else {

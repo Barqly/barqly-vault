@@ -53,26 +53,34 @@ pub fn decrypt_with_state_machine(
 
     // Create tmp directory if it doesn't exist
     use crate::TMP_DIR;
-    let _ = std::fs::create_dir_all(TMP_DIR);
-
-    // Use absolute paths for age command
     let cwd = std::env::current_dir()?;
+    let tmp_dir = cwd.join(TMP_DIR);
+    let _ = std::fs::create_dir_all(&tmp_dir);
 
-    // Write encrypted data to temp file
-    let temp_encrypted = cwd.join(format!("{}/yubikey_decrypt_{}.age", TMP_DIR, std::process::id()));
-    let temp_encrypted_str = temp_encrypted.to_string_lossy().to_string();
+    // Write encrypted data to temp file (using absolute path)
+    let temp_encrypted = tmp_dir.join(format!("yubikey_decrypt_{}.age", std::process::id()));
+    let temp_encrypted_str = temp_encrypted.display().to_string();
     std::fs::write(&temp_encrypted, encrypted_data)?;
     log_age!("Written encrypted data to: {} ({} bytes)", temp_encrypted_str, encrypted_data.len());
 
-    // Create identity file from manifest (returns relative path)
-    let temp_identity_rel = manifest.create_temp_identity_file()?;
-    let temp_identity = cwd.join(&temp_identity_rel);
-    let temp_identity_str = temp_identity.to_string_lossy().to_string();
+    // Create identity file from manifest (using absolute path)
+    let temp_identity_path = tmp_dir.join(format!("yubikey_identity_{}.txt", manifest.yubikey.serial));
+    let temp_identity_str = temp_identity_path.display().to_string();
+    let content = format!(
+        "#       Serial: {}, Slot: {}\n#   PIN policy: {}\n# Touch policy: {}\n#    Recipient: {}\n{}\n",
+        manifest.yubikey.serial,
+        manifest.yubikey.slot,
+        manifest.yubikey.pin_policy,
+        manifest.yubikey.touch_policy,
+        manifest.age.recipient,
+        manifest.age.identity
+    );
+    std::fs::write(&temp_identity_path, content)?;
     log_age!("Created identity file at: {}", temp_identity_str);
 
-    // Create output file path
-    let temp_output = cwd.join(format!("{}/yubikey_decrypt_{}.txt", TMP_DIR, std::process::id()));
-    let temp_output_str = temp_output.to_string_lossy().to_string();
+    // Create output file path (using absolute path)
+    let temp_output = tmp_dir.join(format!("yubikey_decrypt_{}.txt", std::process::id()));
+    let temp_output_str = temp_output.display().to_string();
     log_age!("Output will be written to: {}", temp_output_str);
 
     // Set up PTY (exactly like key generation)

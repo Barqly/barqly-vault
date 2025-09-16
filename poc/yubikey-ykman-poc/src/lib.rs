@@ -18,7 +18,7 @@ const SLOT_NAME: &str = "Barqly Vault";
 
 /// Temporary directory for YubiKey operations
 /// Switch between local tmp/ and system /tmp for testing
-pub const TMP_DIR: &str = "tmp";  // Using local tmp for visibility during testing
+pub const TMP_DIR: &str = "tmp";  // Using local project tmp folder
 
 /// Control whether to use age crate or homebrew age CLI
 /// false = use homebrew age CLI via system command

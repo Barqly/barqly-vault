@@ -92,15 +92,19 @@ impl YubiKeyManifest {
     /// Create a temporary identity file from manifest
     pub fn create_temp_identity_file(&self) -> Result<String> {
         use crate::TMP_DIR;
+        use std::env;
         // Create tmp directory if it doesn't exist
-        let _ = fs::create_dir_all(TMP_DIR);
-        let temp_path = format!("{}/yubikey_identity_{}.txt", TMP_DIR, self.yubikey.serial);
+        let cwd = env::current_dir()
+            .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to get current dir: {}", e)))?;
+        let tmp_dir = cwd.join(TMP_DIR);
+        let _ = fs::create_dir_all(&tmp_dir);
+        let temp_path = tmp_dir.join(format!("yubikey_identity_{}.txt", self.yubikey.serial));
         let content = self.create_identity_content();
 
         fs::write(&temp_path, content)
             .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to create identity file: {}", e)))?;
 
-        Ok(temp_path)
+        Ok(temp_path.display().to_string())
     }
 }
 
