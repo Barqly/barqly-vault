@@ -1,4 +1,5 @@
 use crate::errors::{Result, YubiKeyError, YubiKeyInfo};
+use crate::get_ykman_path;
 use std::process::Command;
 use log::{debug, info, warn};
 
@@ -30,7 +31,10 @@ const DEFAULT_MGMT_KEY: &str = "010203040506070801020304050607080102030405060708
 pub fn check_ykman() -> Result<Option<String>> {
     debug!("Checking for ykman installation");
     
-    let output = Command::new("ykman")
+    let ykman_path = get_ykman_path();
+    debug!("Using bundled ykman at: {:?}", ykman_path);
+    
+    let output = Command::new(&ykman_path)
         .arg("--version")
         .output();
     
@@ -50,7 +54,10 @@ pub fn check_ykman() -> Result<Option<String>> {
 pub fn check_age_plugin() -> Result<Option<String>> {
     debug!("Checking for age-plugin-yubikey installation");
     
-    let output = Command::new("age-plugin-yubikey")
+    let age_plugin_path = crate::get_age_plugin_path();
+    debug!("Using bundled age-plugin-yubikey at: {:?}", age_plugin_path);
+    
+    let output = Command::new(&age_plugin_path)
         .arg("--version")
         .output();
     
@@ -70,7 +77,7 @@ pub fn check_age_plugin() -> Result<Option<String>> {
 pub fn get_yubikey_info() -> Result<Option<YubiKeyInfo>> {
     debug!("Getting YubiKey PIV info");
     
-    let output = Command::new("ykman")
+    let output = Command::new(&get_ykman_path())
         .args(&["piv", "info"])
         .output()?;
     
@@ -161,7 +168,7 @@ pub fn change_pin(old_pin: &str, new_pin: &str) -> Result<()> {
         return Err(YubiKeyError::InvalidPin);
     }
     
-    let output = Command::new("ykman")
+    let output = Command::new(&get_ykman_path())
         .args(&["piv", "access", "change-pin"])
         .arg("-P").arg(old_pin)
         .arg("-n").arg(new_pin)
@@ -189,7 +196,7 @@ pub fn change_puk(old_puk: &str, new_puk: &str) -> Result<()> {
         return Err(YubiKeyError::InvalidPin);
     }
     
-    let output = Command::new("ykman")
+    let output = Command::new(&get_ykman_path())
         .args(&["piv", "access", "change-puk"])
         .arg("-p").arg(old_puk)
         .arg("-n").arg(new_puk)
@@ -234,7 +241,7 @@ pub fn set_management_key_protected(pin: &str) -> Result<()> {
     info!("Will set protected TDES management key (PIN-derived, secure)");
     
     // Use piped stdin instead of PTY - simpler and works fine with ykman
-    let mut child = Command::new("ykman")
+    let mut child = Command::new(&get_ykman_path())
         .args(&["piv", "access", "change-management-key"])
         .args(&["-a", "TDES"])
         .arg("--protect")

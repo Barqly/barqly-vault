@@ -1,0 +1,18 @@
+# Local temporary files
+tmp/
+*.tmp
+
+# Log files
+logs/
+*.log
+
+# Test output files
+test-output.txt
+decrypted.txt
+
+# YubiKey identity files (contain sensitive data)
+yubikey-identity.txt
+yubikey-identity-new.txt
+
+# Encrypted test files
+*.age

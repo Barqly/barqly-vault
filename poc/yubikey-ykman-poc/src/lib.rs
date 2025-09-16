@@ -2,13 +2,52 @@ pub mod errors;
 pub mod ykman;
 pub mod ykman_pty;
 pub mod pty;
+pub mod pty_decrypt;
+pub mod manifest;
+pub mod age_crate;
+pub mod logger;
 
 use errors::{Result, YubiKeyError, Requirements, InitStatus};
 use log::{info, warn};
+use std::path::PathBuf;
+use manifest::{YubiKeyManifest, DEFAULT_MANIFEST_PATH};
 
 const NEW_PIN: &str = "212121";
 const TOUCH_POLICY: &str = "cached";
 const SLOT_NAME: &str = "Barqly Vault";
+
+/// Get path to bundled binary based on platform
+pub fn get_bundled_binary_path(binary_name: &str) -> PathBuf {
+    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    
+    #[cfg(target_os = "macos")]
+    path.push("bin/darwin");
+    
+    #[cfg(target_os = "linux")]
+    path.push("bin/linux");
+    
+    #[cfg(target_os = "windows")]
+    path.push("bin/windows");
+    
+    path.push(binary_name);
+    
+    // Add .exe extension on Windows
+    #[cfg(target_os = "windows")]
+    path.set_extension("exe");
+    
+    path
+}
+
+/// Get path to bundled ykman
+pub fn get_ykman_path() -> PathBuf {
+    // For POC, use system ykman
+    PathBuf::from("ykman")
+}
+
+/// Get path to bundled age-plugin-yubikey
+pub fn get_age_plugin_path() -> PathBuf {
+    get_bundled_binary_path("age-plugin-yubikey")
+}
 
 /// Check all requirements for YubiKey operations
 pub fn check_requirements() -> Result<Requirements> {
@@ -98,84 +137,125 @@ pub fn generate_age_identity(pin: &str) -> Result<String> {
         ));
     }
     
-    // Check if identity already exists
+    // Check if identity already exists (returns recipient, not identity)
     if let Ok(existing) = pty::list_identities() {
-        if !existing.is_empty() {
-            info!("Age identity already exists: {}", existing);
+        if !existing.is_empty() && existing.starts_with("age1yubikey") {
+            info!("Age recipient already exists: {}", existing);
             return Ok(existing);
         }
     }
     
-    // Generate identity via PTY
+    // Generate identity via PTY (returns recipient)
     let recipient = pty::generate_age_identity(pin, TOUCH_POLICY, SLOT_NAME)?;
     
-    info!("Successfully generated age identity: {}", recipient);
+    info!("Successfully generated age recipient: {}", recipient);
     Ok(recipient)
 }
 
 /// Encrypt data using the age recipient
 pub fn encrypt_data(data: &[u8], recipient: &str) -> Result<Vec<u8>> {
-    use std::process::{Command, Stdio};
-    use std::io::Write;
-    
     info!("Encrypting data with recipient: {}", recipient);
-    
-    let mut child = Command::new("age")
-        .args(&["-r", recipient])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
-    
-    // Write data to stdin
-    if let Some(mut stdin) = child.stdin.take() {
-        stdin.write_all(data)?;
-    }
-    
-    let output = child.wait_with_output()?;
-    
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(YubiKeyError::OperationFailed(format!("Encryption failed: {}", stderr)));
-    }
-    
-    Ok(output.stdout)
+
+    // Use the age crate for encryption (this actually uses the crate, not CLI!)
+    age_crate::encrypt_with_yubikey(data, recipient)
 }
 
 /// Decrypt data using YubiKey (requires PIN and touch)
 pub fn decrypt_data(encrypted_data: &[u8], pin: &str) -> Result<Vec<u8>> {
     info!("Starting decryption - YubiKey touch will be required");
-    
-    // Use PTY for decryption to handle PIN and touch prompts
-    pty::decrypt_with_yubikey(encrypted_data, pin)
+
+    // Try to load manifest and use age crate implementation
+    if let Ok(manifest) = manifest::YubiKeyManifest::load_from_file("yubikey-manifest.json") {
+        // Use age crate with manifest
+        return age_crate::decrypt_with_manifest(encrypted_data, &manifest, pin);
+    }
+
+    // Fallback: try to use identity file directly if it exists
+    if std::path::Path::new("yubikey-identity.txt").exists() {
+        return age_crate::decrypt_with_yubikey(encrypted_data, "yubikey-identity.txt", pin);
+    }
+
+    Err(YubiKeyError::OperationFailed(
+        "No YubiKey identity found. Please run setup first.".to_string()
+    ))
+}
+
+/// Get YubiKey identity info (both recipient and identity string)
+fn get_yubikey_identity_info() -> Result<(String, String)> {
+    use std::process::Command;
+
+    let output = Command::new(get_age_plugin_path())
+        .arg("--identity")
+        .output()?;
+
+    if !output.status.success() {
+        return Err(YubiKeyError::OperationFailed("Failed to get identity info".to_string()));
+    }
+
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    let mut recipient = String::new();
+    let mut identity = String::new();
+
+    for line in output_str.lines() {
+        if line.starts_with("#    Recipient:") {
+            recipient = line.replace("#    Recipient:", "").trim().to_string();
+        } else if line.starts_with("AGE-PLUGIN-YUBIKEY") {
+            identity = line.trim().to_string();
+        }
+    }
+
+    if recipient.is_empty() || identity.is_empty() {
+        return Err(YubiKeyError::OperationFailed("Could not parse identity info".to_string()));
+    }
+
+    Ok((recipient, identity))
 }
 
 /// Complete setup workflow: initialize and generate identity
 pub fn complete_setup(pin: Option<&str>) -> Result<String> {
     let pin = pin.unwrap_or(NEW_PIN);
-    
+
     info!("Starting complete YubiKey setup");
-    
+
     // Check requirements
     let reqs = check_requirements()?;
-    info!("Requirements met: ykman={:?}, age-plugin={:?}", 
+    info!("Requirements met: ykman={:?}, age-plugin={:?}",
           reqs.ykman_version, reqs.age_plugin_version);
-    
+
     // Initialize YubiKey
     let init_status = initialize_yubikey(pin)?;
     info!("Initialization status: {:?}", init_status);
-    
+
     if !init_status.ready_for_generation {
         return Err(YubiKeyError::OperationFailed(
             "YubiKey initialization failed".to_string()
         ));
     }
-    
+
     // Generate age identity
     let recipient = generate_age_identity(pin)?;
-    
+
+    // Get both recipient and identity for manifest
+    let (recipient_verified, identity) = get_yubikey_identity_info()?;
+
+    // Get YubiKey info for manifest
+    let info = ykman::get_yubikey_info()?.ok_or(YubiKeyError::NoYubiKey)?;
+
+    // Create and save manifest
+    let manifest = YubiKeyManifest::new(
+        info.serial.clone(),
+        1, // Slot 1 (RETIRED1 = slot 82 in PIV, but we call it slot 1)
+        "once".to_string(),
+        TOUCH_POLICY.to_string(),
+        recipient_verified.clone(),
+        identity,
+    );
+
+    manifest.save_to_file(DEFAULT_MANIFEST_PATH)?;
+    info!("Saved YubiKey manifest to {}", DEFAULT_MANIFEST_PATH);
+
     info!("Complete setup successful");
-    Ok(recipient)
+    Ok(recipient_verified)
 }
 
 #[cfg(test)]

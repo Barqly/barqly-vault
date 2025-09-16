@@ -1,3 +1,0 @@
-Hello from YubiKey POC!
-This is a secret message that will be encrypted and then decrypted.
-The decryption will require your YubiKey touch.
