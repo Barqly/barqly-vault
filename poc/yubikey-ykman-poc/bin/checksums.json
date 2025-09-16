@@ -1,0 +1,14 @@
+{
+  "age-plugin-yubikey": {
+    "version": "0.5.0",
+    "updated": "2025-09-16T19:44:03Z",
+    "checksums": {
+      "darwin": {
+        "platform": "arm64-darwin",
+        "sha256": "006396d1524b9ef9ad96d084684ab81fe7893b1a0a179aea96829c7bbc95d903",
+        "size": 4140272
+      }
+    },
+    "download_url_template": "https://github.com/str4d/age-plugin-yubikey/releases/download/v{version}/age-plugin-yubikey-v{version}-{platform}.tar.gz"
+  }
+}
