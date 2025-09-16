@@ -52,13 +52,14 @@ pub fn decrypt_with_state_machine(
     log_age!("Starting decryption process for manifest with serial: {}", manifest.yubikey.serial);
 
     // Create tmp directory if it doesn't exist
-    let _ = std::fs::create_dir_all("tmp");
+    use crate::TMP_DIR;
+    let _ = std::fs::create_dir_all(TMP_DIR);
 
     // Use absolute paths for age command
     let cwd = std::env::current_dir()?;
 
     // Write encrypted data to temp file
-    let temp_encrypted = cwd.join(format!("tmp/yubikey_decrypt_{}.age", std::process::id()));
+    let temp_encrypted = cwd.join(format!("{}/yubikey_decrypt_{}.age", TMP_DIR, std::process::id()));
     let temp_encrypted_str = temp_encrypted.to_string_lossy().to_string();
     std::fs::write(&temp_encrypted, encrypted_data)?;
     log_age!("Written encrypted data to: {} ({} bytes)", temp_encrypted_str, encrypted_data.len());
@@ -70,7 +71,7 @@ pub fn decrypt_with_state_machine(
     log_age!("Created identity file at: {}", temp_identity_str);
 
     // Create output file path
-    let temp_output = cwd.join(format!("tmp/yubikey_decrypt_{}.txt", std::process::id()));
+    let temp_output = cwd.join(format!("{}/yubikey_decrypt_{}.txt", TMP_DIR, std::process::id()));
     let temp_output_str = temp_output.to_string_lossy().to_string();
     log_age!("Output will be written to: {}", temp_output_str);
 

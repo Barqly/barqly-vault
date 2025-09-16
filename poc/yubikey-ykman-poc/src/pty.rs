@@ -220,15 +220,16 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
 
     // Write encrypted data to temp file
     // Create tmp directory if it doesn't exist
-    let _ = std::fs::create_dir_all("tmp");
-    let temp_encrypted = format!("tmp/yubikey_decrypt_{}.age", std::process::id());
+    use crate::TMP_DIR;
+    let _ = std::fs::create_dir_all(TMP_DIR);
+    let temp_encrypted = format!("{}/yubikey_decrypt_{}.age", TMP_DIR, std::process::id());
     std::fs::write(&temp_encrypted, encrypted_data)?;
 
     // Create identity file from manifest
     let temp_identity = manifest.create_temp_identity_file()?;
 
     // Output file for decrypted data
-    let temp_output = format!("tmp/yubikey_decrypted_{}.txt", std::process::id());
+    let temp_output = format!("{}/yubikey_decrypted_{}.txt", TMP_DIR, std::process::id());
 
     // Set up PTY
     let pty_system = native_pty_system();
@@ -445,8 +446,9 @@ pub fn decrypt_without_pty(manifest: &YubiKeyManifest, encrypted_data: &[u8]) ->
 
     // Write encrypted data to temp file
     // Create tmp directory if it doesn't exist
-    let _ = std::fs::create_dir_all("tmp");
-    let temp_encrypted = format!("tmp/yubikey_decrypt_test_{}.age", std::process::id());
+    use crate::TMP_DIR;
+    let _ = std::fs::create_dir_all(TMP_DIR);
+    let temp_encrypted = format!("{}/yubikey_decrypt_test_{}.age", TMP_DIR, std::process::id());
     std::fs::write(&temp_encrypted, encrypted_data)?;
 
     // Create identity file from manifest

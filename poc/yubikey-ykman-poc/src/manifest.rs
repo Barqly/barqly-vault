@@ -91,9 +91,10 @@ impl YubiKeyManifest {
 
     /// Create a temporary identity file from manifest
     pub fn create_temp_identity_file(&self) -> Result<String> {
+        use crate::TMP_DIR;
         // Create tmp directory if it doesn't exist
-        let _ = fs::create_dir_all("tmp");
-        let temp_path = format!("tmp/yubikey_identity_{}.txt", self.yubikey.serial);
+        let _ = fs::create_dir_all(TMP_DIR);
+        let temp_path = format!("{}/yubikey_identity_{}.txt", TMP_DIR, self.yubikey.serial);
         let content = self.create_identity_content();
 
         fs::write(&temp_path, content)

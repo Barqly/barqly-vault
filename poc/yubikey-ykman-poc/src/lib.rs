@@ -16,6 +16,10 @@ const NEW_PIN: &str = "212121";
 const TOUCH_POLICY: &str = "cached";
 const SLOT_NAME: &str = "Barqly Vault";
 
+/// Temporary directory for YubiKey operations
+/// Switch between local tmp/ and system /tmp for testing
+pub const TMP_DIR: &str = "tmp";  // Using local tmp for visibility during testing
+
 /// Get path to bundled binary based on platform
 pub fn get_bundled_binary_path(binary_name: &str) -> PathBuf {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
