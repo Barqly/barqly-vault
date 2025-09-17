@@ -10,5 +10,13 @@
       }
     },
     "download_url_template": "https://github.com/str4d/age-plugin-yubikey/releases/download/v{version}/age-plugin-yubikey-v{version}-{platform}.tar.gz"
+  },
+  "ykman": {
+    "version": "5.8.0",
+    "updated": "2025-09-17T02:01:48Z",
+    "build_method": "pyinstaller",
+    "platform": "darwin",
+    "sha256": "0c55a77a079e9e5528ff833a345a1cc06a62d16d43a352142775de8830ac87c4",
+    "source_url": "https://github.com/Yubico/yubikey-manager/tree/5.8.0"
   }
 }

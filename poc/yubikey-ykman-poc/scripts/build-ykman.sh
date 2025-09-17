@@ -136,73 +136,27 @@ build_ykman() {
 
     print_info "Building standalone binary with PyInstaller..."
 
-    # Check if ykman.spec exists
-    if [ ! -f "ykman.spec" ]; then
-        print_warning "ykman.spec not found, creating one..."
-
-        # Create a basic spec file
-        cat > ykman.spec << 'EOF'
-# -*- mode: python ; coding: utf-8 -*-
-
-block_cipher = None
-
-a = Analysis(
-    ['ykman/__main__.py'],
-    pathex=[],
-    binaries=[],
-    datas=[
-        ('ykman', 'ykman'),
-    ],
-    hiddenimports=[
-        'ykman',
-        'yubikit',
-        'cryptography',
-        'fido2',
-        'smartcard',
-        'usb',
-    ],
-    hookspath=[],
-    hooksconfig={},
-    runtime_hooks=[],
-    excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
-    noarchive=False,
-)
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,
-    name='ykman',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    console=True,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-)
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name='ykman',
-)
-EOF
+    # Download official spec files from Yubico
+    print_info "Downloading official ykman.spec from Yubico..."
+    if ! curl -L https://raw.githubusercontent.com/Yubico/yubikey-manager/${YKMAN_VERSION}/ykman.spec -o ykman.spec; then
+        print_error "Failed to download ykman.spec"
+        exit 1
     fi
 
-    # Build with PyInstaller
+    if ! curl -L https://raw.githubusercontent.com/Yubico/yubikey-manager/${YKMAN_VERSION}/version_info.txt.in -o version_info.txt.in; then
+        print_error "Failed to download version_info.txt.in"
+        exit 1
+    fi
+
+    # Modify spec for ARM64 instead of universal2 (for Apple Silicon)
+    local arch=$(uname -m)
+    if [ "$arch" = "arm64" ]; then
+        print_info "Modifying spec for ARM64 architecture..."
+        sed -i.bak 's/target_arch="universal2"/target_arch="arm64"/' ykman.spec
+    fi
+
+    # Build with PyInstaller using official spec
+    print_info "Building with official Yubico spec file..."
     if ! pyinstaller ykman.spec; then
         print_error "PyInstaller build failed"
         exit 1
@@ -215,6 +169,7 @@ EOF
 test_binary() {
     print_info "Testing built binary..."
 
+    # With official spec, binary is in dist/ykman/ directory
     local binary_path="$BUILD_DIR/yubikey-manager/dist/ykman/ykman"
 
     if [ ! -f "$binary_path" ]; then
@@ -247,29 +202,29 @@ install_binary() {
         mv "$target_dir/ykman" "$target_dir/$backup_name"
     fi
 
-    # Clean up old broken installation if it exists
+    # Clean up old broken installations if they exist
     if [ -d "$target_dir/ykman" ]; then
         print_warning "Removing old broken ykman directory installation"
         rm -rf "$target_dir/ykman"
     fi
+    if [ -d "$target_dir/ykman-bundle" ]; then
+        print_warning "Removing old ykman-bundle directory"
+        rm -rf "$target_dir/ykman-bundle"
+    fi
 
-    # For PyInstaller bundles, we need to copy the entire directory
-    if [ -d "$BUILD_DIR/yubikey-manager/dist/ykman" ]; then
-        print_info "Copying PyInstaller bundle..."
-        cp -R "$BUILD_DIR/yubikey-manager/dist/ykman" "$target_dir/ykman-bundle"
+    # With official spec, we have a directory structure in dist/ykman/
+    print_info "Copying ykman bundle..."
+    cp -R "$BUILD_DIR/yubikey-manager/dist/ykman" "$target_dir/ykman-bundle"
 
-        # Create a wrapper script
-        cat > "$target_dir/ykman" << EOF
+    # Create a wrapper script that calls the actual binary
+    print_info "Creating wrapper script..."
+    cat > "$target_dir/ykman" << 'EOF'
 #!/bin/bash
 # Wrapper script for ykman
-exec "\$(dirname "\$0")/ykman-bundle/ykman" "\$@"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+exec "$SCRIPT_DIR/ykman-bundle/ykman" "$@"
 EOF
-        chmod +x "$target_dir/ykman"
-    else
-        # Single binary (unlikely with PyInstaller but just in case)
-        cp "$BUILD_DIR/yubikey-manager/dist/ykman/ykman" "$target_dir/ykman"
-        chmod +x "$target_dir/ykman"
-    fi
+    chmod +x "$target_dir/ykman"
 
     print_info "Binary installed successfully"
 }
