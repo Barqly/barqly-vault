@@ -20,6 +20,7 @@ This POC implements the pivot strategy from `tbd/cg20.md`:
 
 ## Requirements
 
+### Using System Package Managers
 ```bash
 # macOS
 brew install yubikey-manager age-plugin-yubikey
@@ -33,6 +34,19 @@ apt install yubikey-manager pcscd
 cargo install age-plugin-yubikey
 ```
 
+### Using Bundled Binaries (Production)
+For production deployments, the project includes scripts to download/build pinned versions:
+
+```bash
+# Download age-plugin-yubikey v0.5.0
+./scripts/download-age-plugin.sh
+
+# Build ykman v5.8.0 from source
+./scripts/build-ykman.sh
+```
+
+The binaries are managed in `bin/` directory with SHA256 verification. See `bin/README.md` for CI/CD integration details.
+
 ## Quick Test
 
 ```bash
@@ -45,6 +59,37 @@ RUST_LOG=info cargo run -- --auto
 # Reset YubiKey to test again
 ykman piv reset -f
 ```
+
+## Testing Options
+
+The POC provides three testing modes:
+
+### Option 1: Full Cycle (Reset YubiKey Scenario)
+```bash
+cargo run -- --auto
+# Does: init → key gen → manifest → enc/dec test
+```
+Use this after resetting your YubiKey to perform complete initialization, generate age identity, create manifest, and test encryption/decryption.
+
+### Option 2: Test Only (Existing Setup)
+```bash
+cargo run -- --test-only
+# Does: enc/dec using existing manifest
+```
+Use this when you already have a manifest and want to test encryption/decryption without reinitializing.
+
+### Option 3: Manual Mode (With Prompts)
+```bash
+cargo run
+# Does: Same as --auto but with user confirmation prompts
+```
+Use this for step-by-step execution with manual confirmations.
+
+### Important Notes
+- The manifest (`yubikey-manifest.json`) stores the YubiKey serial, recipient, and identity
+- Identity files are created dynamically from the manifest during decryption
+- All temporary files are cleaned up after successful operations
+- Failed operations keep temp files in `/tmp` for debugging
 
 ## Integration into Tauri App
 

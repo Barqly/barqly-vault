@@ -30,14 +30,14 @@ const DEFAULT_MGMT_KEY: &str = "010203040506070801020304050607080102030405060708
 
 pub fn check_ykman() -> Result<Option<String>> {
     debug!("Checking for ykman installation");
-    
+
     let ykman_path = get_ykman_path();
     debug!("Using bundled ykman at: {:?}", ykman_path);
-    
+
     let output = Command::new(&ykman_path)
         .arg("--version")
         .output();
-    
+
     match output {
         Ok(out) if out.status.success() => {
             let version = String::from_utf8_lossy(&out.stdout).trim().to_string();
@@ -49,6 +49,38 @@ pub fn check_ykman() -> Result<Option<String>> {
             Ok(None)
         }
     }
+}
+
+/// Get YubiKey serial number from ykman list output
+/// This returns the decimal serial number format that age-plugin-yubikey expects
+pub fn get_yubikey_serial() -> Result<String> {
+    debug!("Getting YubiKey serial from ykman list");
+
+    let output = Command::new(&get_ykman_path())
+        .arg("list")
+        .output()?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        if stderr.contains("No YubiKey detected") {
+            return Err(YubiKeyError::NoYubiKey);
+        }
+        return Err(YubiKeyError::OperationFailed(stderr.to_string()));
+    }
+
+    let list_output = String::from_utf8_lossy(&output.stdout);
+    debug!("ykman list output: {}", list_output);
+
+    // Parse serial from output like: "YubiKey 5C NFC (5.7.1) [FIDO+CCID] Serial: 31310420"
+    for line in list_output.lines() {
+        if let Some(serial_part) = line.split("Serial:").nth(1) {
+            let serial = serial_part.trim().to_string();
+            info!("Found YubiKey serial: {}", serial);
+            return Ok(serial);
+        }
+    }
+
+    Err(YubiKeyError::OperationFailed("Could not parse serial from ykman list".to_string()))
 }
 
 pub fn check_age_plugin() -> Result<Option<String>> {

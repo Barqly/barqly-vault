@@ -18,7 +18,7 @@ const SLOT_NAME: &str = "Barqly Vault";
 
 /// Temporary directory for YubiKey operations
 /// Switch between local tmp/ and system /tmp for testing
-pub const TMP_DIR: &str = "tmp";  // Using local project tmp folder
+pub const TMP_DIR: &str = "/tmp";  // Using OS temp directory
 
 /// Control whether to use age crate or homebrew age CLI
 /// false = use homebrew age CLI via system command
@@ -247,12 +247,12 @@ pub fn complete_setup(pin: Option<&str>) -> Result<String> {
     // Get both recipient and identity for manifest
     let (recipient_verified, identity) = get_yubikey_identity_info()?;
 
-    // Get YubiKey info for manifest
-    let info = ykman::get_yubikey_info()?.ok_or(YubiKeyError::NoYubiKey)?;
+    // Get YubiKey serial in decimal format (what age-plugin-yubikey expects)
+    let serial = ykman::get_yubikey_serial()?;
 
     // Create and save manifest
     let manifest = YubiKeyManifest::new(
-        info.serial.clone(),
+        serial,
         1, // Slot 1 (RETIRED1 = slot 82 in PIV, but we call it slot 1)
         "once".to_string(),
         TOUCH_POLICY.to_string(),

@@ -295,8 +295,11 @@ pub fn decrypt_with_state_machine(
                             // Read the decrypted output from file
                             match std::fs::read(&temp_output) {
                                 Ok(decrypted_data) => {
-                                    // Don't clean up temp files on success - keep for debugging
-                                    log_age!("SUCCESS! Decrypted data available at: {}", temp_output_str);
+                                    // Clean up temp files after successful decryption
+                                    let _ = std::fs::remove_file(&temp_encrypted);
+                                    let _ = std::fs::remove_file(&temp_identity_path);
+                                    let _ = std::fs::remove_file(&temp_output);
+                                    log_age!("SUCCESS! Cleaned up temp files");
                                     info!("Decryption successful, got {} bytes", decrypted_data.len());
                                     return Ok(decrypted_data);
                                 }

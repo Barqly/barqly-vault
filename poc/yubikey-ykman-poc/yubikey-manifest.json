@@ -1,13 +1,13 @@
 {
   "yubikey": {
-    "serial": "3a",
+    "serial": "31310420",
     "slot": 1,
     "pin_policy": "once",
     "touch_policy": "cached",
-    "created_at": "2025-09-16T18:29:28.899992+00:00"
+    "created_at": "2025-09-17T03:20:36.300259+00:00"
   },
   "age": {
-    "recipient": "age1yubikey1qd0ec65gaedr9gnflc2eftmez6yfd3fxwm6n6274efshc3r0yh4ucrqc4s5",
-    "identity": "AGE-PLUGIN-YUBIKEY-12NPD6QVZMJYQCNG9KMU7P"
+    "recipient": "age1yubikey1qvmhkhy6uvfyx0y8vufjm5lup0wsfcv9d4u2q7rmd7ew5fppamm0jck2wk6",
+    "identity": "AGE-PLUGIN-YUBIKEY-12NPD6QVZQDSNYKGDE2HHA"
   }
 }

@@ -97,32 +97,22 @@ fn main() {
             
             // Test encryption/decryption
             println!("📝 Testing encryption and decryption...\n");
-            
-            // Read test message from file
-            let test_file = "tmp/bitcoin-od.txt";
-            let test_message = match std::fs::read_to_string(test_file) {
-                Ok(content) => {
-                    println!("📖 Using file: {}", test_file);
-                    content
-                },
-                Err(e) => {
-                    println!("⚠️ Could not read {}: {}", test_file, e);
-                    println!("📝 Using default test message instead");
-                    "Hello from YubiKey POC! This is a secret message.".to_string()
-                }
-            };
-            
-            println!("Original message:\n{}", test_message);
+
+            // Use test message
+            let test_message = "Bitcoin Test Data\nSatoshi's Genesis Block Message: The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
+
+            println!("📝 Test message:");
+            println!("{}", test_message);
             println!("---");
-            
+
             // Encrypt
             match yubikey_ykman_poc::encrypt_data(test_message.as_bytes(), &recipient) {
                 Ok(encrypted) => {
                     println!("✅ Encrypted successfully ({} bytes)", encrypted.len());
-                    
-                    // Save encrypted file
-                    let encrypted_file = "tmp/bitcoin-od.age";
-                    if let Err(e) = std::fs::write(encrypted_file, &encrypted) {
+
+                    // Save encrypted file to OS temp
+                    let encrypted_file = format!("/tmp/yubikey_test_{}.age", std::process::id());
+                    if let Err(e) = std::fs::write(&encrypted_file, &encrypted) {
                         println!("⚠️ Failed to save encrypted file: {}", e);
                     } else {
                         println!("📁 Saved encrypted file: {}", encrypted_file);
