@@ -9,7 +9,7 @@ use crate::commands::types::{
 use crate::crypto::{encrypt_private_key, generate_keypair};
 use crate::logging::{log_operation, SpanContext};
 use crate::storage;
-use secrecy::SecretString;
+use age::secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::instrument;

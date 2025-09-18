@@ -5,9 +5,11 @@
 
 pub mod age_plugin;
 pub mod errors;
+pub mod manifest; // YubiKey manifest management
 pub mod progress;
 pub mod provider;
 pub mod state_cache;
+pub mod pty; // PTY automation for YubiKey operations
 
 // Legacy modules (deprecated - will be removed)
 pub mod detection;

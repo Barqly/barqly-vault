@@ -6,6 +6,7 @@ import { LoadingSpinner } from './components/ui/loading-spinner';
 const SetupPage = lazy(() => import('./pages/EnhancedSetupPage'));
 const EncryptPage = lazy(() => import('./pages/EncryptPage'));
 const DecryptPage = lazy(() => import('./pages/DecryptPage'));
+const YubiKeySetupPage = lazy(() => import('./pages/YubiKeySetupPage'));
 
 function App(): ReactElement {
   return (
@@ -34,6 +35,14 @@ function App(): ReactElement {
             element={
               <MainLayout>
                 <DecryptPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/yubikey-setup"
+            element={
+              <MainLayout>
+                <YubiKeySetupPage />
               </MainLayout>
             }
           />

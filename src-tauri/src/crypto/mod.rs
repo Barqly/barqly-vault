@@ -29,7 +29,7 @@ pub mod key_mgmt;
 pub mod multi_recipient;
 pub mod yubikey;
 
-use secrecy::{ExposeSecret, SecretString};
+use age::secrecy::{ExposeSecret, SecretString};
 use std::fmt;
 
 pub use errors::CryptoError;

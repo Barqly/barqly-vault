@@ -134,8 +134,10 @@ impl MultiRecipientCrypto {
         data: &[u8],
         recipients: Vec<Box<dyn Recipient + Send>>,
     ) -> Result<Vec<u8>> {
-        let encryptor = age::Encryptor::with_recipients(recipients)
-            .ok_or_else(|| CryptoError::EncryptionFailed("No recipients provided".to_string()))?;
+        // age 0.11 expects an iterator of references
+        let encryptor = age::Encryptor::with_recipients(
+            recipients.iter().map(|r| r.as_ref() as &dyn Recipient)
+        ).expect("at least one recipient");
 
         let mut encrypted_output = Vec::new();
         let mut writer = encryptor

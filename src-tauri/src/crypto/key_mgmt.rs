@@ -1,6 +1,7 @@
 use age::x25519::Identity;
-use secrecy::{ExposeSecret, SecretString};
+use age::secrecy::{ExposeSecret, SecretString};
 use std::io::Write;
+use std::str::FromStr;
 
 use super::{CryptoError, KeyPair, PrivateKey, PublicKey, Result};
 
@@ -52,8 +53,8 @@ pub fn encrypt_private_key(private_key: &PrivateKey, passphrase: SecretString) -
     // Create a writer to collect encrypted bytes
     let mut encrypted = Vec::new();
 
-    // Create encryptor with scrypt passphrase
-    let encryptor = age::Encryptor::with_user_passphrase(passphrase);
+    // Create encryptor with scrypt passphrase (age 0.11 expects SecretString directly)
+    let encryptor = age::Encryptor::with_user_passphrase(passphrase.clone());
 
     // Create writer
     let mut writer = encryptor
@@ -85,28 +86,20 @@ pub fn decrypt_private_key(encrypted_key: &[u8], passphrase: SecretString) -> Re
         "Passphrase cannot be empty"
     );
 
-    // Create decryptor with passphrase
+    // Create decryptor
     let decryptor = age::Decryptor::new(encrypted_key)
         .map_err(|e| CryptoError::DecryptionFailed(e.to_string()))?;
 
     let mut decrypted = Vec::new();
 
-    match decryptor {
-        age::Decryptor::Passphrase(decryptor) => {
-            // Decrypt with passphrase
-            let mut reader = decryptor
-                .decrypt(&passphrase, None)
-                .map_err(|_| CryptoError::WrongPassphrase)?;
+    // In age 0.11, use scrypt::Identity for passphrase decryption
+    let identity = age::scrypt::Identity::new(passphrase.clone());
+    let mut reader = decryptor
+        .decrypt(std::iter::once(&identity as &dyn age::Identity))
+        .map_err(|_| CryptoError::WrongPassphrase)?;
 
-            // Read decrypted data
-            std::io::copy(&mut reader, &mut decrypted).map_err(CryptoError::IoError)?;
-        }
-        _ => {
-            return Err(CryptoError::DecryptionFailed(
-                "Encrypted key is not passphrase-protected".to_string(),
-            ));
-        }
-    }
+    // Read decrypted data
+    std::io::copy(&mut reader, &mut decrypted).map_err(CryptoError::IoError)?;
 
     // Convert to string and validate it's a valid age key
     let private_key_str =
@@ -125,5 +118,3 @@ pub fn decrypt_private_key(encrypted_key: &[u8], passphrase: SecretString) -> Re
 
     Ok(PrivateKey::from(SecretString::from(private_key_str)))
 }
-
-use std::str::FromStr;

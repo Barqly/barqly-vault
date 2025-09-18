@@ -397,6 +397,7 @@ export enum YubiKeyState {
   NEW = 'new',
   REUSED = 'reused',
   REGISTERED = 'registered',
+  ORPHANED = 'orphaned',
 }
 
 export enum PinStatus {
@@ -407,17 +408,20 @@ export enum PinStatus {
 export interface YubiKeyStateInfo {
   serial: string;
   state: YubiKeyState;
-  slot?: string;
+  slot?: number;  // Retired slot number (1-20)
   recipient?: string;
+  identity_tag?: string;
   label?: string;
   pin_status: PinStatus;
 }
 
 export interface YubiKeyInitResult {
   serial: string;
-  slot: string;
+  slot: number;  // Retired slot number
   recipient: string;
+  identity_tag: string;
   label: string;
+  recovery_code: string;  // One-time display to user
 }
 
 // Command invocation helper

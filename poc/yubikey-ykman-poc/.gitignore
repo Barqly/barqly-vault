@@ -15,4 +15,4 @@ decrypted.txt
 *.age
 
 # bin files
-bin/
+#bin/

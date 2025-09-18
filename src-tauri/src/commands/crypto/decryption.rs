@@ -12,7 +12,7 @@ use crate::constants::*;
 use crate::file_ops;
 use crate::logging::{log_operation, SpanContext};
 use crate::storage;
-use secrecy::SecretString;
+use age::secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;

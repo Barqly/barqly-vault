@@ -10,7 +10,7 @@ use crate::constants::*;
 use crate::crypto::key_mgmt::decrypt_private_key;
 use crate::logging::{log_operation, SpanContext};
 use crate::storage::key_store::load_encrypted_key;
-use secrecy::SecretString;
+use age::secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::instrument;

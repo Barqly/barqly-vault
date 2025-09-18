@@ -5,7 +5,7 @@
 pub mod device_management;
 pub mod initialization;
 pub mod smart_decryption;
-pub mod streamlined;
+pub mod streamlined; // PTY-based implementation from POC
 
 #[cfg(test)]
 pub mod hardware_test;

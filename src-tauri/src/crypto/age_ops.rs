@@ -1,5 +1,7 @@
 use age::x25519::{Identity, Recipient};
 use std::io::Write;
+use std::iter;
+use std::str::FromStr;
 
 use super::{CryptoError, PrivateKey, PublicKey, Result};
 
@@ -25,9 +27,11 @@ pub fn encrypt_data(data: &[u8], recipient: &PublicKey) -> Result<Vec<u8>> {
     // Create a writer to collect encrypted bytes
     let mut encrypted = Vec::new();
 
-    // Create age::Encryptor with recipient
-    let encryptor = age::Encryptor::with_recipients(vec![Box::new(recipient_key)])
-        .ok_or_else(|| CryptoError::EncryptionFailed("Failed to create encryptor".to_string()))?;
+    // Create age::Encryptor with recipient (age 0.11 expects an iterator of references)
+    let recipients: Vec<Box<dyn age::Recipient + Send>> = vec![Box::new(recipient_key)];
+    let encryptor = age::Encryptor::with_recipients(
+        recipients.iter().map(|r| r.as_ref() as &dyn age::Recipient)
+    ).expect("at least one recipient");
 
     // Create writer (use armor(false) for binary output)
     let mut writer = encryptor
@@ -66,25 +70,13 @@ pub fn decrypt_data(encrypted_data: &[u8], private_key: &PrivateKey) -> Result<V
 
     let mut decrypted = Vec::new();
 
-    match decryptor {
-        age::Decryptor::Recipients(decryptor) => {
-            // Decrypt with the identity
-            let mut reader = decryptor
-                .decrypt(iter::once(&identity as &dyn age::Identity))
-                .map_err(|e| CryptoError::DecryptionFailed(e.to_string()))?;
+    // In age 0.11, decrypt directly without matching on enum variants
+    let mut reader = decryptor
+        .decrypt(iter::once(&identity as &dyn age::Identity))
+        .map_err(|e| CryptoError::DecryptionFailed(e.to_string()))?;
 
-            // Read decrypted data
-            std::io::copy(&mut reader, &mut decrypted).map_err(CryptoError::IoError)?;
-        }
-        _ => {
-            return Err(CryptoError::DecryptionFailed(
-                "Encrypted data is not recipient-encrypted".to_string(),
-            ));
-        }
-    }
+    // Read decrypted data
+    std::io::copy(&mut reader, &mut decrypted).map_err(CryptoError::IoError)?;
 
     Ok(decrypted)
 }
-
-use std::iter;
-use std::str::FromStr;

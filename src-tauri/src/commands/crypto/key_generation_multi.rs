@@ -12,7 +12,7 @@ use crate::crypto::yubikey::{ProtectionMode, YubiIdentityProviderFactory, YubiKe
 use crate::crypto::{encrypt_private_key, generate_keypair};
 use crate::logging::{log_operation, SpanContext};
 use crate::storage::{self, RecipientInfo, RecipientType, VaultMetadataV2};
-use secrecy::SecretString;
+use age::secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::instrument;
@@ -346,7 +346,7 @@ async fn generate_yubikey_only_key_with_initialization(
                         vec![crate::storage::RecipientInfo {
                             recipient_type: crate::storage::RecipientType::YubiKey {
                                 serial: serial.to_string(),
-                                slot: u8::from_str_radix(&_init_result.slot, 16).unwrap_or(0x9c),
+                                slot: _init_result.slot,
                                 model: device_id.unwrap_or("YubiKey").to_string(),
                             },
                             public_key: _init_result.recipient.clone(),
