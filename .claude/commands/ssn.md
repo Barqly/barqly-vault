@@ -1,21 +1,51 @@
 # Resume from Previous Session
 
-Load context from the most recent session summary and continue work.
+Load context from the most recent session summary and continue work, optionally with a specific agent.
 
 ## Instructions
 
-1. Find and read the most recent quick start file in `tbd/ssn*.quick.md`
+## Step 1: Handle Agent Selection (if provided)
+
+Check if an agent was specified: `{ARG}`
+
+If `{ARG}` is provided:
+- Switch to the `{ARG}` agent before loading context
+- Agent name shortcuts:
+    - `sbe` → sr-backend-engineer
+    - `jbe` → jr-backend-engineer  
+    - `sfe` → sr-frontend-engineer
+    - `jfe` → jr-frontend-engineer
+    - `sa` or `arch` → system-architect
+    - `po` → product-owner
+    - `zm` or `zen` → zenmaster
+    - `re` → research-engineer
+    - `devops` or `do` → devops-engineer
+    - `ux` or `uxd` → ux-designer
+    - `qa` → qa-engineer
+    - Full agent names also work
+
+If `{ARG}` is empty:
+- Continue with current/default agent
+
+## Step 2: Load Session Context
+
+1. Find and read the most recent quick start file in `tbd/ssn*.quick.md` or `tbd/ssd*-quick.md`
 2. Also reference the corresponding detailed summary `tbd/ssd*.md` for full context
-3. Present understanding and wait for user input:
+3. If multiple files exist, use the most recent one
+
+## Step 3: Present Understanding and Wait
+
+Present understanding filtered through the active agent's perspective:
 
 ```
 🔄 Session Resumed
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+🤖 Agent: [Current agent - either {ARG} or default]
 📚 I've loaded the context from your previous session. Here's my understanding:
 
 **What we were working on:**
-[Brief summary of the main objective]
+[Brief summary of the main objective - from agent's perspective]
 
 **Current state:**
 [Where things stand - what's working, what's not]
@@ -44,6 +74,12 @@ Load context from the most recent session summary and continue work.
 Waiting for your input before making any changes...
 ```
 
+## Usage
+
+- `/ssn` - Resume with current/default agent
+- `/ssn sr-backend-engineer` - Resume with backend engineer agent
+- `/ssn fe` - Resume with frontend engineer agent (using shortcut)
+
 ## Important
 
 - Do NOT start coding immediately
@@ -51,5 +87,5 @@ Waiting for your input before making any changes...
 - DO wait for user direction
 - DO be ready to adjust based on user's current priorities
 - The user might want to pivot or address something different first
-- If multiple quick start files exist, use the most recent one
-   ```
+- If agent switch fails, continue with current agent but notify user
+- Agent switch (if any) happens BEFORE loading context to avoid waste
