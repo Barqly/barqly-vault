@@ -161,4 +161,3 @@ impl Default for YubiKeyStateCache {
 lazy_static::lazy_static! {
     pub static ref YUBIKEY_STATE_CACHE: YubiKeyStateCache = YubiKeyStateCache::new();
 }
-

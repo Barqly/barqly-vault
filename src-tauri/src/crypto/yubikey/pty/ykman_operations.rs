@@ -1,8 +1,9 @@
 /// Ykman-specific PTY operations for YubiKey management
 /// Handles PIN changes, PUK changes, and management key operations
-
 use super::core::{run_ykman_command, PtyError, Result};
-use log::{info, debug};
+#[cfg(test)]
+use log::warn;
+use log::{debug, info};
 
 const DEFAULT_PIN: &str = "123456";
 const DEFAULT_PUK: &str = "12345678";
@@ -33,7 +34,7 @@ pub fn change_pin_pty(old_pin: &str, new_pin: &str) -> Result<()> {
 
     if new_pin.len() < 6 || new_pin.len() > 8 {
         return Err(PtyError::PinFailed(
-            "PIN must be 6-8 characters".to_string()
+            "PIN must be 6-8 characters".to_string(),
         ));
     }
 
@@ -59,7 +60,7 @@ pub fn change_puk_pty(old_puk: &str, new_puk: &str) -> Result<()> {
 
     if new_puk.len() < 6 || new_puk.len() > 8 {
         return Err(PtyError::PinFailed(
-            "PUK must be 6-8 characters".to_string()
+            "PUK must be 6-8 characters".to_string(),
         ));
     }
 
@@ -146,14 +147,14 @@ pub fn get_yubikey_serial() -> Result<String> {
         if line.contains("Serial:") {
             if let Some(serial) = line.split("Serial:").nth(1) {
                 let serial = serial.trim();
-                debug!("Found YubiKey serial: {}", serial);
+                debug!("Found YubiKey serial: {serial}");
                 return Ok(serial.to_string());
             }
         }
     }
 
     Err(PtyError::PtyOperation(
-        "Could not find serial in ykman output".to_string()
+        "Could not find serial in ykman output".to_string(),
     ))
 }
 
@@ -161,10 +162,7 @@ pub fn get_yubikey_serial() -> Result<String> {
 pub fn get_piv_info(pin: &str) -> Result<String> {
     info!("Getting YubiKey PIV info");
 
-    let args = vec![
-        "piv".to_string(),
-        "info".to_string(),
-    ];
+    let args = vec!["piv".to_string(), "info".to_string()];
 
     let output = run_ykman_command(args, Some(pin))?;
     Ok(output)

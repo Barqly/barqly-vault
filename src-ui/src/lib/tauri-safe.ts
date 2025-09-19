@@ -117,6 +117,27 @@ export async function safeInvoke<T>(
       init_yubikey: null, // Takes serial, new_pin, label
       register_yubikey: null, // Takes serial, label
       get_identities: null, // Takes serial
+
+      // Vault commands
+      create_vault: 'input', // Takes CreateVaultRequest
+      list_vaults: null, // No parameters
+      get_current_vault: null, // No parameters
+      set_current_vault: 'input', // Takes SetCurrentVaultRequest
+      delete_vault: 'input', // Takes DeleteVaultRequest
+      get_vault_keys: 'input', // Takes GetVaultKeysRequest
+      add_key_to_vault: 'input', // Takes AddKeyToVaultRequest
+      remove_key_from_vault: 'input', // Takes RemoveKeyFromVaultRequest
+      update_key_label: 'input', // Takes UpdateKeyLabelRequest
+      check_yubikey_availability: 'input', // Takes CheckYubiKeyAvailabilityRequest
+
+      // New passphrase/YubiKey vault integration commands
+      validate_passphrase_strength: null, // Takes passphrase as string directly
+      add_passphrase_key_to_vault: 'input', // Takes AddPassphraseKeyRequest
+      validate_vault_passphrase_key: null, // Takes vault_id as string
+      init_yubikey_for_vault: 'input', // Takes YubiKeyInitForVaultParams
+      register_yubikey_for_vault: 'input', // Takes RegisterYubiKeyForVaultParams
+      list_available_yubikeys: null, // Takes vault_id as string
+      check_yubikey_slot_availability: null, // Takes vault_id as string
     };
 
     let invokeArgs = args;

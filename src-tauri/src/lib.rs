@@ -3,6 +3,7 @@ pub mod constants; // Centralized constants for the application
 pub mod crypto; // Public for tests, but should be treated as private for external use
 pub mod file_ops; // Public for tests, but should be treated as private for external use
 pub mod logging; // Public for tests, but should be treated as private for external use
+pub mod models; // Vault and key management models
 pub mod storage; // Public for tests, but should be treated as private for external use
 
 use commands::{
@@ -30,6 +31,15 @@ use commands::{
     select_files,
     update_config,
     validate_passphrase,
+    validate_passphrase_strength,
+    // Vault commands
+    vault_commands::{
+        add_key_to_vault, add_passphrase_key_to_vault, check_yubikey_availability,
+        check_yubikey_slot_availability, create_vault, delete_vault, get_current_vault,
+        get_vault_keys, init_yubikey_for_vault, list_available_yubikeys, list_vaults,
+        register_yubikey_for_vault, remove_key_from_vault, set_current_vault, update_key_label,
+        validate_vault_passphrase_key,
+    },
     verify_key_passphrase,
     verify_manifest,
     yubikey_check_setup_status,
@@ -64,6 +74,7 @@ pub fn run() {
             generate_key_multi,
             validate_passphrase,
             verify_key_passphrase,
+            validate_passphrase_strength,
             encrypt_files,
             get_encryption_status,
             decrypt_data,
@@ -80,6 +91,24 @@ pub fn run() {
             select_directory,
             get_file_info,
             create_manifest,
+            // Vault commands
+            create_vault,
+            list_vaults,
+            get_current_vault,
+            set_current_vault,
+            delete_vault,
+            get_vault_keys,
+            add_key_to_vault,
+            remove_key_from_vault,
+            update_key_label,
+            check_yubikey_availability,
+            // Passphrase/YubiKey vault integration
+            add_passphrase_key_to_vault,
+            validate_vault_passphrase_key,
+            init_yubikey_for_vault,
+            register_yubikey_for_vault,
+            list_available_yubikeys,
+            check_yubikey_slot_availability,
             // YubiKey commands
             yubikey_list_devices,
             yubikey_devices_available,

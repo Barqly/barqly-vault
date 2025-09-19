@@ -332,12 +332,14 @@ impl YubiIdentityProvider for AgePluginProvider {
 
         // Set PIN policy using centralized configuration
         args.push("--pin-policy");
-        let pin_policy_str = crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY.to_string();
+        let pin_policy_str =
+            crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY.to_string();
         args.push(&pin_policy_str);
 
-        // Set touch policy using centralized configuration  
+        // Set touch policy using centralized configuration
         args.push("--touch-policy");
-        let touch_policy_str = crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY.to_string();
+        let touch_policy_str =
+            crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY.to_string();
         args.push(&touch_policy_str);
 
         args.push("--name");
@@ -521,16 +523,14 @@ impl AgePluginPtyProvider {
             loop {
                 loop_iteration += 1;
                 line.clear();
-                println!("🔄 DETECTIVE: Read loop iteration #{} - about to read from PTY", loop_iteration);
-                
+                println!("🔄 DETECTIVE: Read loop iteration #{loop_iteration} - about to read from PTY");
                 match buf_reader.read_line(&mut line) {
                     Ok(0) => {
                         println!("📄 TRACER: EOF detected - checking if process finished");
-                        println!("🔍 DETECTIVE: EOF encountered, output so far: '{}' ({} bytes)", 
-                                output.chars().rev().take(200).collect::<String>().chars().rev().collect::<String>(), 
+                        println!("🔍 DETECTIVE: EOF encountered, output so far: '{}' ({} bytes)",
+                                output.chars().rev().take(200).collect::<String>().chars().rev().collect::<String>(),
                                 output.len());
                         println!("🔍 DETECTIVE: Process handle available - checking wait status");
-                        
                         // EOF - check if process finished
                         match child.try_wait() {
                             Ok(Some(status)) => {
@@ -548,7 +548,7 @@ impl AgePluginPtyProvider {
                                 // Proper polling loop - retry counter increments per polling attempt
                                 for retry_count in 1..=max_retries {
                                     println!("🔍 TRACER: PTY EOF active polling: attempt {retry_count}/{max_retries}, checking process state...");
-                                    println!("🕵️ DETECTIVE: About to poll process - attempt: {}, elapsed time: {}ms", 
+                                    println!("🕵️ DETECTIVE: About to poll process - attempt: {}, elapsed time: {}ms",
                                             retry_count, retry_count * 500);
 
                                     // Check if process completed
@@ -567,7 +567,7 @@ impl AgePluginPtyProvider {
                                                 nudge_count += 1;
                                                 println!("📤 TRACER: Sending CRLF nudge #{nudge_count} to assist line discipline");
                                                 println!("🕵️ DETECTIVE: Writer available before nudge: true, nudge #{nudge_count}");
-                                                
+
                                                 match writer.write_all(b"\r\n") {
                                                     Ok(_) => {
                                                         match writer.flush() {
@@ -654,9 +654,9 @@ impl AgePluginPtyProvider {
                         // IMPORTANT: Exclude our own debug messages (those with emojis)
                         // IMPORTANT: Skip touch detection if policy is Never
                         let touch_policy = crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY;
-                        println!("🔧 POLICY CHECK: Current touch policy = {:?}", touch_policy);
-                        
-                        if (line.contains("Generating key") || line.contains("generating key")) 
+                        println!("🔧 POLICY CHECK: Current touch policy = {touch_policy:?}");
+
+                        if (line.contains("Generating key") || line.contains("generating key"))
                             && !line.contains("🔍") && !line.contains("TRACER:") && !line.contains("DETECTIVE:") {
                             println!("🔧 POLICY CHECK: Found 'Generating key' line, checking if should trigger touch detection...");
                             if touch_policy != crate::crypto::yubikey::management::TouchPolicy::Never {
@@ -666,8 +666,8 @@ impl AgePluginPtyProvider {
                                 continue; // Skip touch detection entirely
                             }
                         }
-                        
-                        if (line.contains("Generating key") || line.contains("generating key")) 
+
+                        if (line.contains("Generating key") || line.contains("generating key"))
                             && !line.contains("🔍") && !line.contains("TRACER:") && !line.contains("DETECTIVE:")
                             && touch_policy != crate::crypto::yubikey::management::TouchPolicy::Never {
                             println!("👆 TRACER: KEY GENERATION STARTED - Touch will be required!");
@@ -675,11 +675,11 @@ impl AgePluginPtyProvider {
                             println!("👆 TRACER: age-plugin-yubikey will now wait silently for touch...");
                             println!("👆 TRACER: ** SWITCHING TO TOUCH-WAIT MODE **");
                             // TODO: Emit Tauri event here
-                            
+
                             // Start timeout-based touch detection since no more output will come
                             let touch_start = std::time::Instant::now();
                             let mut touch_timeout_count = 0;
-                            
+
                             // Continue reading but with timeout expectations
                             println!("⏰ TRACER: Entering touch-wait polling mode - process is silent during touch");
                             loop {
@@ -687,14 +687,14 @@ impl AgePluginPtyProvider {
                                 let read_result = timeout(Duration::from_millis(1000), async {
                                     buf_reader.read_line(&mut line)
                                 }).await;
-                                
+
                                 match read_result {
                                     Ok(Ok(0)) => {
                                         // EOF during touch wait - this is expected behavior
                                         touch_timeout_count += 1;
-                                        println!("⏳ TRACER: Touch wait timeout #{} - still waiting for touch completion (elapsed: {:?})", 
+                                        println!("⏳ TRACER: Touch wait timeout #{} - still waiting for touch completion (elapsed: {:?})",
                                                 touch_timeout_count, touch_start.elapsed());
-                                        
+
                                         // Send periodic CRLF nudges to help the process along
                                         if touch_timeout_count % 3 == 0 {
                                             writer.write_all(b"\r\n").map_err(|e| {
@@ -705,7 +705,7 @@ impl AgePluginPtyProvider {
                                             })?;
                                             println!("📡 TRACER: Sent CRLF nudge #{}", touch_timeout_count / 3);
                                         }
-                                        
+
                                         // Check if process completed
                                         match child.try_wait() {
                                             Ok(Some(status)) => {
@@ -740,7 +740,7 @@ impl AgePluginPtyProvider {
                                     }
                                 }
                             }
-                            
+
                             // Continue with normal processing after touch completion
                             println!("🔄 TRACER: Resuming normal PTY processing after successful touch");
                             continue;
@@ -755,7 +755,7 @@ impl AgePluginPtyProvider {
                             println!("🎉 TRACER: Potential completion detected: '{}'", line.trim());
                         }
 
-                        // Log error indicators  
+                        // Log error indicators
                         if line.to_lowercase().contains("error") || line.to_lowercase().contains("failed") {
                             println!("❌ TRACER: Error detected: '{}'", line.trim());
                         }
@@ -901,12 +901,14 @@ impl YubiIdentityProvider for AgePluginPtyProvider {
 
         // Set PIN policy using centralized configuration
         args.push("--pin-policy");
-        let pin_policy_str = crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY.to_string();
+        let pin_policy_str =
+            crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY.to_string();
         args.push(&pin_policy_str);
 
-        // Set touch policy using centralized configuration  
+        // Set touch policy using centralized configuration
         args.push("--touch-policy");
-        let touch_policy_str = crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY.to_string();
+        let touch_policy_str =
+            crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY.to_string();
         args.push(&touch_policy_str);
 
         args.push("--name");

@@ -80,6 +80,11 @@ pub enum ErrorCode {
     YubiKeyInitializationFailed,
     YubiKeyCommunicationError,
 
+    // Vault Errors
+    VaultNotFound,
+    VaultAlreadyExists,
+    VaultKeyLimitExceeded,
+
     // Plugin Errors
     PluginNotFound,
     PluginVersionMismatch,

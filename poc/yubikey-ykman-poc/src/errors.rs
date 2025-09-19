@@ -4,37 +4,37 @@ use thiserror::Error;
 pub enum YubiKeyError {
     #[error("ykman not found. Please install: brew install yubikey-manager")]
     YkmanNotFound,
-    
+
     #[error("age-plugin-yubikey not found. Please install: brew install age-plugin-yubikey")]
     AgePluginNotFound,
-    
+
     #[error("No YubiKey detected. Please insert your YubiKey")]
     NoYubiKey,
-    
+
     #[error("YubiKey operation failed: {0}")]
     OperationFailed(String),
-    
+
     #[error("PIN verification failed. Attempts remaining: {0}")]
     PinFailed(u8),
-    
+
     #[error("PUK verification failed. Attempts remaining: {0}")]
     PukFailed(u8),
-    
+
     #[error("Touch timeout. Please touch your YubiKey when it blinks")]
     TouchTimeout,
-    
+
     #[error("PTY operation failed: {0}")]
     PtyError(String),
-    
+
     #[error("Invalid PIN format. PIN must be 6-8 digits")]
     InvalidPin,
-    
+
     #[error("Management key setup failed: {0}")]
     ManagementKeyError(String),
-    
+
     #[error("Unexpected output from command: {0}")]
     UnexpectedOutput(String),
-    
+
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 }

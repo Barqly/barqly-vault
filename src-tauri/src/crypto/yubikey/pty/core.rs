@@ -1,6 +1,6 @@
+use log::{debug, info, warn};
 /// Core PTY functionality for YubiKey operations
 /// Provides low-level PTY command execution
-
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
@@ -9,7 +9,6 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 use thiserror::Error;
-use log::{debug, info, warn};
 
 #[derive(Debug, Error)]
 pub enum PtyError {
@@ -48,15 +47,16 @@ pub enum PtyState {
 /// Get path to age-plugin-yubikey binary
 pub fn get_age_plugin_path() -> PathBuf {
     // First try bundled binary
-    let bundled = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("bin")
-        .join(if cfg!(target_os = "macos") {
-            "darwin/age-plugin-yubikey"
-        } else if cfg!(target_os = "linux") {
-            "linux/age-plugin-yubikey"
-        } else {
-            "windows/age-plugin-yubikey.exe"
-        });
+    let bundled =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("bin")
+            .join(if cfg!(target_os = "macos") {
+                "darwin/age-plugin-yubikey"
+            } else if cfg!(target_os = "linux") {
+                "linux/age-plugin-yubikey"
+            } else {
+                "windows/age-plugin-yubikey.exe"
+            });
 
     if bundled.exists() {
         return bundled;
@@ -69,15 +69,16 @@ pub fn get_age_plugin_path() -> PathBuf {
 /// Get path to ykman binary
 pub fn get_ykman_path() -> PathBuf {
     // First try bundled binary
-    let bundled = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("bin")
-        .join(if cfg!(target_os = "macos") {
-            "darwin/ykman"
-        } else if cfg!(target_os = "linux") {
-            "linux/ykman"
-        } else {
-            "windows/ykman.exe"
-        });
+    let bundled =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("bin")
+            .join(if cfg!(target_os = "macos") {
+                "darwin/ykman"
+            } else if cfg!(target_os = "linux") {
+                "linux/ykman"
+            } else {
+                "windows/ykman.exe"
+            });
 
     if bundled.exists() {
         return bundled;
@@ -103,7 +104,7 @@ pub fn run_age_plugin_yubikey(
             pixel_width: 0,
             pixel_height: 0,
         })
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to open PTY: {}", e)))?;
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to open PTY: {e}")))?;
 
     let mut cmd = CommandBuilder::new(get_age_plugin_path().to_str().unwrap());
     for arg in args {
@@ -113,13 +114,15 @@ pub fn run_age_plugin_yubikey(
     let mut child = pair
         .slave
         .spawn_command(cmd)
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to spawn command: {}", e)))?;
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to spawn command: {e}")))?;
 
     let (tx, rx) = mpsc::channel::<PtyState>();
 
     // Reader thread
-    let reader = pair.master.try_clone_reader()
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to clone reader: {}", e)))?;
+    let reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to clone reader: {e}")))?;
 
     let tx_reader = tx.clone();
     thread::spawn(move || {
@@ -133,7 +136,7 @@ pub fn run_age_plugin_yubikey(
                 Ok(0) => break, // EOF
                 Ok(_) => {
                     let line = buffer.trim();
-                    debug!("PTY output: {}", line);
+                    debug!("PTY output: {line}");
                     output.push_str(&buffer);
 
                     if line.contains("PIN:") || line.contains("Enter PIN") {
@@ -147,7 +150,7 @@ pub fn run_age_plugin_yubikey(
                     }
                 }
                 Err(e) => {
-                    warn!("Error reading PTY: {}", e);
+                    warn!("Error reading PTY: {e}");
                     break;
                 }
             }
@@ -156,9 +159,10 @@ pub fn run_age_plugin_yubikey(
         let _ = tx_reader.send(PtyState::Complete(output));
     });
 
-    let mut writer = pair.master
+    let mut writer = pair
+        .master
         .take_writer()
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to get writer: {}", e)))?;
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to get writer: {e}")))?;
 
     let start = Instant::now();
     let mut pin_sent = false;
@@ -171,32 +175,30 @@ pub fn run_age_plugin_yubikey(
         }
 
         match rx.recv_timeout(Duration::from_millis(100)) {
-            Ok(state) => {
-                match state {
-                    PtyState::WaitingForPin if pin.is_some() && !pin_sent => {
-                        thread::sleep(PIN_INJECT_DELAY);
-                        writeln!(writer, "{}", pin.unwrap())?;
-                        writer.flush()?;
-                        pin_sent = true;
-                        debug!("PIN sent to age-plugin-yubikey");
-                    }
-                    PtyState::WaitingForTouch => {
-                        info!("Touch your YubiKey now...");
-                        if expect_touch && start.elapsed() > TOUCH_TIMEOUT {
-                            let _ = child.kill();
-                            return Err(PtyError::TouchTimeout);
-                        }
-                    }
-                    PtyState::Complete(output) => {
-                        result = output;
-                        break;
-                    }
-                    PtyState::Failed(error) => {
-                        return Err(PtyError::PtyOperation(error));
-                    }
-                    _ => {}
+            Ok(state) => match state {
+                PtyState::WaitingForPin if pin.is_some() && !pin_sent => {
+                    thread::sleep(PIN_INJECT_DELAY);
+                    writeln!(writer, "{}", pin.unwrap())?;
+                    writer.flush()?;
+                    pin_sent = true;
+                    debug!("PIN sent to age-plugin-yubikey");
                 }
-            }
+                PtyState::WaitingForTouch => {
+                    info!("Touch your YubiKey now...");
+                    if expect_touch && start.elapsed() > TOUCH_TIMEOUT {
+                        let _ = child.kill();
+                        return Err(PtyError::TouchTimeout);
+                    }
+                }
+                PtyState::Complete(output) => {
+                    result = output;
+                    break;
+                }
+                PtyState::Failed(error) => {
+                    return Err(PtyError::PtyOperation(error));
+                }
+                _ => {}
+            },
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 // Check if process has exited
                 match child.try_wait() {
@@ -226,13 +228,11 @@ pub fn run_ykman_command(args: Vec<String>, pin: Option<&str>) -> Result<String>
         run_ykman_pty(args, pin)?
     } else {
         // Use simple command execution for non-interactive commands
-        let output = Command::new(get_ykman_path())
-            .args(args)
-            .output()?;
+        let output = Command::new(get_ykman_path()).args(args).output()?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(PtyError::PtyOperation(format!("ykman failed: {}", stderr)));
+            return Err(PtyError::PtyOperation(format!("ykman failed: {stderr}")));
         }
 
         String::from_utf8_lossy(&output.stdout).to_string()
@@ -251,28 +251,35 @@ fn run_ykman_pty(args: Vec<String>, pin: Option<&str>) -> Result<String> {
             pixel_width: 0,
             pixel_height: 0,
         })
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to open PTY: {}", e)))?;
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to open PTY: {e}")))?;
 
     let mut cmd = CommandBuilder::new(get_ykman_path().to_str().unwrap());
     for arg in args {
         cmd.arg(arg);
     }
 
-    let mut child = pair.slave.spawn_command(cmd)
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to spawn command: {}", e)))?;
+    let mut child = pair
+        .slave
+        .spawn_command(cmd)
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to spawn command: {e}")))?;
 
     // Similar PTY handling as age-plugin-yubikey
     // but adapted for ykman's output patterns
 
     let mut output = String::new();
-    let reader = BufReader::new(pair.master.try_clone_reader()
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to clone reader: {}", e)))?);
-    let mut writer = pair.master.take_writer()
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to take writer: {}", e)))?;
+    let reader = BufReader::new(
+        pair.master
+            .try_clone_reader()
+            .map_err(|e| PtyError::PtyOperation(format!("Failed to clone reader: {e}")))?,
+    );
+    let mut writer = pair
+        .master
+        .take_writer()
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to take writer: {e}")))?;
 
     for line in reader.lines() {
         let line = line?;
-        debug!("ykman output: {}", line);
+        debug!("ykman output: {line}");
         output.push_str(&line);
         output.push('\n');
 
@@ -285,7 +292,7 @@ fn run_ykman_pty(args: Vec<String>, pin: Option<&str>) -> Result<String> {
 
     let status = child.wait()?;
     if !status.success() {
-        return Err(PtyError::PtyOperation(format!("ykman failed: {}", output)));
+        return Err(PtyError::PtyOperation(format!("ykman failed: {output}")));
     }
 
     Ok(output)

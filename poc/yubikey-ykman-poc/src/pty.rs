@@ -1,13 +1,13 @@
 use crate::errors::{Result, YubiKeyError};
 use crate::get_age_plugin_path;
+use crate::manifest::YubiKeyManifest;
+use log::{debug, info, warn};
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use std::io::{BufRead, BufReader, Write};
 use std::process::Command;
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
-use log::{debug, info, warn};
-use crate::manifest::YubiKeyManifest;
 
 const TOUCH_TIMEOUT: Duration = Duration::from_secs(30);
 const PIN_INJECT_DELAY: Duration = Duration::from_millis(300);
@@ -23,9 +23,7 @@ enum PtyState {
 
 /// List existing YubiKey identities
 pub fn list_identities() -> Result<String> {
-    let output = Command::new(&get_age_plugin_path())
-        .arg("--list")
-        .output()?;
+    let output = Command::new(get_age_plugin_path()).arg("--list").output()?;
 
     if !output.status.success() {
         return Ok(String::new()); // No identities
@@ -54,7 +52,7 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
             pixel_width: 0,
             pixel_height: 0,
         })
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to open PTY: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to open PTY: {e}")))?;
 
     let mut cmd = CommandBuilder::new(get_age_plugin_path().to_str().unwrap());
     cmd.arg("-g");
@@ -66,14 +64,16 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
     let mut child = pair
         .slave
         .spawn_command(cmd)
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to spawn command: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to spawn command: {e}")))?;
 
     // Set up channels for communication
     let (tx, rx) = mpsc::channel::<PtyState>();
 
     // Reader thread for PTY output
-    let reader = pair.master.try_clone_reader()
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to clone reader: {}", e)))?;
+    let reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to clone reader: {e}")))?;
 
     let tx_reader = tx.clone();
     thread::spawn(move || {
@@ -93,7 +93,7 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
                 }
                 Ok(_) => {
                     let line = buffer.trim();
-                    debug!("PTY output: {}", line);
+                    debug!("PTY output: {line}");
 
                     if line.starts_with("age1yubikey") {
                         // This is the recipient we need for encryption
@@ -120,7 +120,7 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
                     }
                 }
                 Err(e) => {
-                    warn!("Error reading PTY: {}", e);
+                    warn!("Error reading PTY: {e}");
                     break;
                 }
             }
@@ -128,9 +128,10 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
     });
 
     // Get writer for sending PIN
-    let mut writer = pair.master
+    let mut writer = pair
+        .master
         .take_writer()
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to get writer: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to get writer: {e}")))?;
 
     // State machine for handling the interaction
     let start = Instant::now();
@@ -153,10 +154,12 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
                             // Send PIN proactively after a small delay
                             thread::sleep(PIN_INJECT_DELAY);
                             debug!("Sending PIN to PTY");
-                            writeln!(writer, "{}", pin)
-                                .map_err(|e| YubiKeyError::PtyError(format!("Failed to send PIN: {}", e)))?;
-                            writer.flush()
-                                .map_err(|e| YubiKeyError::PtyError(format!("Failed to flush: {}", e)))?;
+                            writeln!(writer, "{pin}").map_err(|e| {
+                                YubiKeyError::PtyError(format!("Failed to send PIN: {e}"))
+                            })?;
+                            writer.flush().map_err(|e| {
+                                YubiKeyError::PtyError(format!("Failed to flush: {e}"))
+                            })?;
                             pin_sent = true;
                         }
                     }
@@ -164,7 +167,7 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
                         info!("Waiting for YubiKey touch...");
                         // Optionally send a nudge to keep PTY alive
                         thread::sleep(Duration::from_secs(1));
-                        let _ = writeln!(writer, "");
+                        let _ = writeln!(writer);
                     }
                     PtyState::Complete(rec) => {
                         info!("Successfully generated age identity");
@@ -172,7 +175,7 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
                         break;
                     }
                     PtyState::Failed(err) => {
-                        warn!("Generation failed: {}", err);
+                        warn!("Generation failed: {err}");
                         let _ = child.kill();
                         return Err(YubiKeyError::OperationFailed(err));
                     }
@@ -184,9 +187,9 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
                 match child.try_wait() {
                     Ok(Some(status)) => {
                         if !status.success() && recipient.is_empty() {
-                            return Err(YubiKeyError::OperationFailed(
-                                format!("Process exited with status: {:?}", status)
-                            ));
+                            return Err(YubiKeyError::OperationFailed(format!(
+                                "Process exited with status: {status:?}"
+                            )));
                         }
                         if !recipient.is_empty() {
                             break;
@@ -196,7 +199,9 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
                         // Still running, continue
                     }
                     Err(e) => {
-                        return Err(YubiKeyError::PtyError(format!("Failed to check process: {}", e)));
+                        return Err(YubiKeyError::PtyError(format!(
+                            "Failed to check process: {e}"
+                        )));
                     }
                 }
             }
@@ -208,14 +213,20 @@ pub fn generate_age_identity(pin: &str, touch_policy: &str, slot_name: &str) -> 
     let _ = child.wait();
 
     if recipient.is_empty() {
-        return Err(YubiKeyError::UnexpectedOutput("No age recipient generated".to_string()));
+        return Err(YubiKeyError::UnexpectedOutput(
+            "No age recipient generated".to_string(),
+        ));
     }
 
     Ok(recipient)
 }
 
 /// Decrypt data using YubiKey with manifest - USING -o FLAG
-pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], pin: &str) -> Result<Vec<u8>> {
+pub fn decrypt_with_manifest(
+    manifest: &YubiKeyManifest,
+    encrypted_data: &[u8],
+    pin: &str,
+) -> Result<Vec<u8>> {
     info!("Starting YubiKey decryption with manifest (using -o flag)");
 
     // Write encrypted data to temp file
@@ -240,7 +251,7 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
             pixel_width: 0,
             pixel_height: 0,
         })
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to open PTY: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to open PTY: {e}")))?;
 
     // Set PATH for plugin
     let age_plugin_path = get_age_plugin_path();
@@ -261,8 +272,8 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
     cmd.arg("-d");
     cmd.arg("-i");
     cmd.arg(&temp_identity);
-    cmd.arg("-o");  // Output flag
-    cmd.arg(&temp_output);  // Output file
+    cmd.arg("-o"); // Output flag
+    cmd.arg(&temp_output); // Output file
     cmd.arg(&temp_encrypted);
     cmd.env("PATH", new_path);
     // Set PIN in environment for the plugin
@@ -271,7 +282,7 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
     let mut child = pair
         .slave
         .spawn_command(cmd)
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to spawn age: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to spawn age: {e}")))?;
 
     info!("Age decryption process started");
 
@@ -283,8 +294,10 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
 
     // Create a reader thread to consume PTY output (prevents blocking)
     // This is critical - without this, the plugin blocks trying to write status messages
-    let reader = pair.master.try_clone_reader()
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to clone reader: {}", e)))?;
+    let reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to clone reader: {e}")))?;
 
     let (tx, rx) = mpsc::channel();
     thread::spawn(move || {
@@ -301,13 +314,13 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
                 }
                 Ok(_) => {
                     let line = buffer.trim();
-                    debug!("PTY output: {}", line);
+                    debug!("PTY output: {line}");
 
                     // Send the line to main thread for processing
                     let _ = tx.send(line.to_string());
                 }
                 Err(e) => {
-                    debug!("PTY read error: {}", e);
+                    debug!("PTY read error: {e}");
                     break;
                 }
             }
@@ -316,9 +329,10 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
     });
 
     // Get writer for sending periodic nudges (like in key generation)
-    let mut writer = pair.master
+    let mut writer = pair
+        .master
         .take_writer()
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to get writer: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to get writer: {e}")))?;
 
     // Since we're using -o flag, we don't need to capture stdout
     // Just wait for the process to complete and read the output file
@@ -340,7 +354,7 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
         // Check process status
         match child.try_wait() {
             Ok(Some(status)) => {
-                debug!("Process exited with status: {:?}", status);
+                debug!("Process exited with status: {status:?}");
                 // Process ended
                 if status.success() {
                     // Read the decrypted output from file
@@ -360,9 +374,9 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
                             let _ = std::fs::remove_file(&temp_identity);
                             let _ = std::fs::remove_file(&temp_output);
 
-                            return Err(YubiKeyError::OperationFailed(
-                                format!("Failed to read decrypted output file: {}", e)
-                            ));
+                            return Err(YubiKeyError::OperationFailed(format!(
+                                "Failed to read decrypted output file: {e}"
+                            )));
                         }
                     }
                 } else {
@@ -385,12 +399,12 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
                     let error_msg = if !error_output.is_empty() {
                         String::from_utf8_lossy(&error_output).to_string()
                     } else {
-                        format!("Process exited with status: {:?}", status)
+                        format!("Process exited with status: {status:?}")
                     };
 
-                    return Err(YubiKeyError::OperationFailed(
-                        format!("Decryption failed: {}", error_msg)
-                    ));
+                    return Err(YubiKeyError::OperationFailed(format!(
+                        "Decryption failed: {error_msg}"
+                    )));
                 }
             }
             Ok(None) => {
@@ -399,8 +413,8 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
                 if let Ok(msg) = rx.try_recv() {
                     if msg.contains("Enter PIN") && !pin_sent {
                         // Send the actual PIN, not empty line
-                        debug!("PIN prompt detected, sending PIN: {}", pin);
-                        let _ = writeln!(writer, "{}", pin);
+                        debug!("PIN prompt detected, sending PIN: {pin}");
+                        let _ = writeln!(writer, "{pin}");
                         let _ = writer.flush();
                         pin_sent = true;
                         // Don't send nudges right after PIN
@@ -432,7 +446,7 @@ pub fn decrypt_with_manifest(manifest: &YubiKeyManifest, encrypted_data: &[u8], 
                 let _ = std::fs::remove_file(&temp_encrypted);
                 let _ = std::fs::remove_file(&temp_identity);
                 let _ = std::fs::remove_file(&temp_output);
-                return Err(YubiKeyError::PtyError(format!("Process error: {}", e)));
+                return Err(YubiKeyError::PtyError(format!("Process error: {e}")));
             }
         }
     }
@@ -448,7 +462,11 @@ pub fn decrypt_without_pty(manifest: &YubiKeyManifest, encrypted_data: &[u8]) ->
     // Create tmp directory if it doesn't exist
     use crate::TMP_DIR;
     let _ = std::fs::create_dir_all(TMP_DIR);
-    let temp_encrypted = format!("{}/yubikey_decrypt_test_{}.age", TMP_DIR, std::process::id());
+    let temp_encrypted = format!(
+        "{}/yubikey_decrypt_test_{}.age",
+        TMP_DIR,
+        std::process::id()
+    );
     std::fs::write(&temp_encrypted, encrypted_data)?;
 
     // Create identity file from manifest
@@ -476,7 +494,7 @@ pub fn decrypt_without_pty(manifest: &YubiKeyManifest, encrypted_data: &[u8]) ->
 
     // Run age with simple pipes (no PTY)
     let output = Command::new(age_path)
-        .args(&["-d", "-i", &temp_identity, &temp_encrypted])
+        .args(["-d", "-i", &temp_identity, &temp_encrypted])
         .env("PATH", new_path)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -491,8 +509,10 @@ pub fn decrypt_without_pty(manifest: &YubiKeyManifest, encrypted_data: &[u8]) ->
         Ok(output.stdout)
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        warn!("Decryption failed: {}", stderr);
-        Err(YubiKeyError::OperationFailed(format!("Decryption failed: {}", stderr)))
+        warn!("Decryption failed: {stderr}");
+        Err(YubiKeyError::OperationFailed(format!(
+            "Decryption failed: {stderr}"
+        )))
     }
 }
 
@@ -505,11 +525,17 @@ pub fn decrypt_with_yubikey(encrypted_data: &[u8], pin: &str) -> Result<Vec<u8>>
     }
 
     // Fallback to old method (should not reach here if manifest exists)
-    Err(YubiKeyError::OperationFailed("No manifest found. Please run setup first.".to_string()))
+    Err(YubiKeyError::OperationFailed(
+        "No manifest found. Please run setup first.".to_string(),
+    ))
 }
 
 // Keep old decrypt_with_identity function for compatibility
-pub fn decrypt_with_identity(identity_file: &str, encrypted_file: &str, _pin: &str) -> Result<Vec<u8>> {
+pub fn decrypt_with_identity(
+    identity_file: &str,
+    encrypted_file: &str,
+    _pin: &str,
+) -> Result<Vec<u8>> {
     use std::io::Read;
 
     let pty_system = native_pty_system();
@@ -520,7 +546,7 @@ pub fn decrypt_with_identity(identity_file: &str, encrypted_file: &str, _pin: &s
             pixel_width: 0,
             pixel_height: 0,
         })
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to open PTY: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to open PTY: {e}")))?;
 
     let age_plugin_path = get_age_plugin_path();
     let bundled_bin_dir = age_plugin_path.parent().unwrap();
@@ -537,10 +563,12 @@ pub fn decrypt_with_identity(identity_file: &str, encrypted_file: &str, _pin: &s
     let _child = pair
         .slave
         .spawn_command(cmd)
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to spawn age: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to spawn age: {e}")))?;
 
-    let mut reader = pair.master.try_clone_reader()
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to clone reader: {}", e)))?;
+    let mut reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to clone reader: {e}")))?;
 
     let mut output = Vec::new();
     reader.read_to_end(&mut output)?;

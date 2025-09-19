@@ -8,6 +8,7 @@ pub mod command_types;
 pub mod crypto;
 pub mod file_commands;
 pub mod storage_commands;
+pub mod vault_commands;
 pub mod yubikey_commands;
 
 // Re-export command types for backward compatibility

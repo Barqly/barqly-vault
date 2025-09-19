@@ -30,8 +30,9 @@ pub fn encrypt_data(data: &[u8], recipient: &PublicKey) -> Result<Vec<u8>> {
     // Create age::Encryptor with recipient (age 0.11 expects an iterator of references)
     let recipients: Vec<Box<dyn age::Recipient + Send>> = vec![Box::new(recipient_key)];
     let encryptor = age::Encryptor::with_recipients(
-        recipients.iter().map(|r| r.as_ref() as &dyn age::Recipient)
-    ).expect("at least one recipient");
+        recipients.iter().map(|r| r.as_ref() as &dyn age::Recipient),
+    )
+    .expect("at least one recipient");
 
     // Create writer (use armor(false) for binary output)
     let mut writer = encryptor

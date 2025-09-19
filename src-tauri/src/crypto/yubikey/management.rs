@@ -13,13 +13,13 @@ use std::fmt;
 /// These constants ensure consistent policy application across all operations
 pub mod policy_config {
     use super::*;
-    
+
     /// PIN policy for all YubiKey operations
     /// - Once: PIN required once per session (recommended for usability)
     /// - Always: PIN required for every operation (maximum security)
     /// - Never: No PIN required (not recommended)
     pub const DEFAULT_PIN_POLICY: PinPolicy = PinPolicy::Once;
-    
+
     /// Touch policy for all YubiKey operations  
     /// - Cached: Touch required once, then 15s window (recommended for usability)
     /// - Always: Touch required for every operation (maximum security)

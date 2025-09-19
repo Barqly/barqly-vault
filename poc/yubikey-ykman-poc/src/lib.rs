@@ -1,16 +1,16 @@
+pub mod age_crate;
 pub mod errors;
-pub mod ykman;
-pub mod ykman_pty;
+pub mod logger;
+pub mod manifest;
 pub mod pty;
 pub mod pty_decrypt;
-pub mod manifest;
-pub mod age_crate;
-pub mod logger;
+pub mod ykman;
+pub mod ykman_pty;
 
-use errors::{Result, YubiKeyError, Requirements, InitStatus};
+use errors::{InitStatus, Requirements, Result, YubiKeyError};
 use log::{info, warn};
-use std::path::PathBuf;
 use manifest::{YubiKeyManifest, DEFAULT_MANIFEST_PATH};
+use std::path::PathBuf;
 
 const NEW_PIN: &str = "212121";
 const TOUCH_POLICY: &str = "cached";
@@ -18,32 +18,32 @@ const SLOT_NAME: &str = "Barqly Vault";
 
 /// Temporary directory for YubiKey operations
 /// Switch between local tmp/ and system /tmp for testing
-pub const TMP_DIR: &str = "/tmp";  // Using OS temp directory
+pub const TMP_DIR: &str = "/tmp"; // Using OS temp directory
 
 /// Control whether to use age crate or homebrew age CLI
 /// false = use homebrew age CLI via system command
 /// true = use age crate (falls back to CLI due to plugin limitations)
-pub const USE_AGE_CRATE: bool = true;  // Default: use age crate as in production
+pub const USE_AGE_CRATE: bool = true; // Default: use age crate as in production
 
 /// Get path to bundled binary based on platform
 pub fn get_bundled_binary_path(binary_name: &str) -> PathBuf {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    
+
     #[cfg(target_os = "macos")]
     path.push("bin/darwin");
-    
+
     #[cfg(target_os = "linux")]
     path.push("bin/linux");
-    
+
     #[cfg(target_os = "windows")]
     path.push("bin/windows");
-    
+
     path.push(binary_name);
-    
+
     // Add .exe extension on Windows
     #[cfg(target_os = "windows")]
     path.set_extension("exe");
-    
+
     path
 }
 
@@ -61,11 +61,11 @@ pub fn get_age_plugin_path() -> PathBuf {
 /// Check all requirements for YubiKey operations
 pub fn check_requirements() -> Result<Requirements> {
     info!("Checking YubiKey requirements");
-    
+
     let ykman_version = ykman::check_ykman()?;
     let age_plugin_version = ykman::check_age_plugin()?;
     let yubikey_info = ykman::get_yubikey_info()?;
-    
+
     let requirements = Requirements {
         ykman_installed: ykman_version.is_some(),
         ykman_version,
@@ -74,29 +74,29 @@ pub fn check_requirements() -> Result<Requirements> {
         yubikey_present: yubikey_info.is_some(),
         yubikey_info,
     };
-    
+
     if !requirements.ykman_installed {
         return Err(YubiKeyError::YkmanNotFound);
     }
-    
+
     if !requirements.age_plugin_installed {
         return Err(YubiKeyError::AgePluginNotFound);
     }
-    
+
     if !requirements.yubikey_present {
         return Err(YubiKeyError::NoYubiKey);
     }
-    
+
     Ok(requirements)
 }
 
 /// Initialize YubiKey with new PIN/PUK and protected management key
 pub fn initialize_yubikey(pin: &str) -> Result<InitStatus> {
     info!("Initializing YubiKey");
-    
+
     // Check current state
     let info = ykman::get_yubikey_info()?.ok_or(YubiKeyError::NoYubiKey)?;
-    
+
     let mut status = InitStatus {
         pin_changed: false,
         puk_changed: false,
@@ -104,20 +104,21 @@ pub fn initialize_yubikey(pin: &str) -> Result<InitStatus> {
         ready_for_generation: false,
         message: String::new(),
     };
-    
+
     // Check if already initialized
-    if info.management_key_protected && 
-       info.management_key_algorithm == "TDES" &&
-       !info.management_key_is_default {
+    if info.management_key_protected
+        && info.management_key_algorithm == "TDES"
+        && !info.management_key_is_default
+    {
         info!("YubiKey already initialized");
         status.ready_for_generation = true;
         status.message = "YubiKey already initialized and ready".to_string();
         return Ok(status);
     }
-    
+
     // Initialize with new settings
     let changed = ykman::ensure_initialized(pin)?;
-    
+
     if changed {
         status.pin_changed = true;
         status.puk_changed = true;
@@ -128,42 +129,42 @@ pub fn initialize_yubikey(pin: &str) -> Result<InitStatus> {
         status.ready_for_generation = true;
         status.message = "YubiKey was already configured".to_string();
     }
-    
+
     Ok(status)
 }
 
 /// Generate age identity using the initialized YubiKey
 pub fn generate_age_identity(pin: &str) -> Result<String> {
     info!("Generating age identity");
-    
+
     // Verify YubiKey is ready
     let info = ykman::get_yubikey_info()?.ok_or(YubiKeyError::NoYubiKey)?;
-    
+
     if !info.management_key_protected || info.management_key_algorithm != "TDES" {
         warn!("YubiKey not properly initialized");
         return Err(YubiKeyError::OperationFailed(
-            "YubiKey must be initialized first".to_string()
+            "YubiKey must be initialized first".to_string(),
         ));
     }
-    
+
     // Check if identity already exists (returns recipient, not identity)
     if let Ok(existing) = pty::list_identities() {
         if !existing.is_empty() && existing.starts_with("age1yubikey") {
-            info!("Age recipient already exists: {}", existing);
+            info!("Age recipient already exists: {existing}");
             return Ok(existing);
         }
     }
-    
+
     // Generate identity via PTY (returns recipient)
     let recipient = pty::generate_age_identity(pin, TOUCH_POLICY, SLOT_NAME)?;
-    
-    info!("Successfully generated age recipient: {}", recipient);
+
+    info!("Successfully generated age recipient: {recipient}");
     Ok(recipient)
 }
 
 /// Encrypt data using the age recipient
 pub fn encrypt_data(data: &[u8], recipient: &str) -> Result<Vec<u8>> {
-    info!("Encrypting data with recipient: {}", recipient);
+    info!("Encrypting data with recipient: {recipient}");
 
     // Use the age crate for encryption (this actually uses the crate, not CLI!)
     age_crate::encrypt_with_yubikey(data, recipient)
@@ -185,7 +186,7 @@ pub fn decrypt_data(encrypted_data: &[u8], pin: &str) -> Result<Vec<u8>> {
     }
 
     Err(YubiKeyError::OperationFailed(
-        "No YubiKey identity found. Please run setup first.".to_string()
+        "No YubiKey identity found. Please run setup first.".to_string(),
     ))
 }
 
@@ -198,7 +199,9 @@ fn get_yubikey_identity_info() -> Result<(String, String)> {
         .output()?;
 
     if !output.status.success() {
-        return Err(YubiKeyError::OperationFailed("Failed to get identity info".to_string()));
+        return Err(YubiKeyError::OperationFailed(
+            "Failed to get identity info".to_string(),
+        ));
     }
 
     let output_str = String::from_utf8_lossy(&output.stdout);
@@ -214,7 +217,9 @@ fn get_yubikey_identity_info() -> Result<(String, String)> {
     }
 
     if recipient.is_empty() || identity.is_empty() {
-        return Err(YubiKeyError::OperationFailed("Could not parse identity info".to_string()));
+        return Err(YubiKeyError::OperationFailed(
+            "Could not parse identity info".to_string(),
+        ));
     }
 
     Ok((recipient, identity))
@@ -228,16 +233,18 @@ pub fn complete_setup(pin: Option<&str>) -> Result<String> {
 
     // Check requirements
     let reqs = check_requirements()?;
-    info!("Requirements met: ykman={:?}, age-plugin={:?}",
-          reqs.ykman_version, reqs.age_plugin_version);
+    info!(
+        "Requirements met: ykman={:?}, age-plugin={:?}",
+        reqs.ykman_version, reqs.age_plugin_version
+    );
 
     // Initialize YubiKey
     let init_status = initialize_yubikey(pin)?;
-    info!("Initialization status: {:?}", init_status);
+    info!("Initialization status: {init_status:?}");
 
     if !init_status.ready_for_generation {
         return Err(YubiKeyError::OperationFailed(
-            "YubiKey initialization failed".to_string()
+            "YubiKey initialization failed".to_string(),
         ));
     }
 
@@ -261,7 +268,7 @@ pub fn complete_setup(pin: Option<&str>) -> Result<String> {
     );
 
     manifest.save_to_file(DEFAULT_MANIFEST_PATH)?;
-    info!("Saved YubiKey manifest to {}", DEFAULT_MANIFEST_PATH);
+    info!("Saved YubiKey manifest to {DEFAULT_MANIFEST_PATH}");
 
     info!("Complete setup successful");
     Ok(recipient_verified)
@@ -270,7 +277,7 @@ pub fn complete_setup(pin: Option<&str>) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_requirements_check() {
         // This will fail if ykman not installed

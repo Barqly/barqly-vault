@@ -31,20 +31,23 @@ impl CryptoFixtures {
 
     /// Create a test passphrase
     pub fn create_test_passphrase() -> SecretString {
-        SecretString::new("test_passphrase_123".to_string())
+        SecretString::new("test_passphrase_123".to_string().into())
     }
 
     /// Create test passphrases with different strengths
     pub fn create_test_passphrases() -> HashMap<String, SecretString> {
         let mut passphrases = HashMap::new();
-        passphrases.insert("weak".to_string(), SecretString::new("123".to_string()));
+        passphrases.insert(
+            "weak".to_string(),
+            SecretString::new("123".to_string().into()),
+        );
         passphrases.insert(
             "medium".to_string(),
-            SecretString::new("test_pass_123".to_string()),
+            SecretString::new("test_pass_123".to_string().into()),
         );
         passphrases.insert(
             "strong".to_string(),
-            SecretString::new("SuperSecurePassphrase123!@#".to_string()),
+            SecretString::new("SuperSecurePassphrase123!@#".to_string().into()),
         );
         passphrases
     }

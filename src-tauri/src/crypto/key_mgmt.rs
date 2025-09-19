@@ -1,5 +1,5 @@
-use age::x25519::Identity;
 use age::secrecy::{ExposeSecret, SecretString};
+use age::x25519::Identity;
 use std::io::Write;
 use std::str::FromStr;
 

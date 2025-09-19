@@ -41,6 +41,7 @@ pub mod errors;
 pub mod key_store;
 pub mod metadata_v2;
 pub mod path_management;
+pub mod vault_store;
 
 use std::path::PathBuf;
 

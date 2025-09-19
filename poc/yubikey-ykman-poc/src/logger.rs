@@ -1,9 +1,9 @@
+use chrono::Local;
+use log::{Level, LevelFilter, Log, Metadata, Record};
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use chrono::Local;
-use log::{Level, LevelFilter, Log, Metadata, Record};
 
 pub struct FileLogger {
     debug_file: Arc<Mutex<File>>,
@@ -21,9 +21,9 @@ impl FileLogger {
         let timestamp = Local::now().format("%Y-%m-%d_%H-%M-%S");
 
         // Create log files
-        let debug_path = PathBuf::from(log_dir).join(format!("{}_debug.log", timestamp));
-        let pty_path = PathBuf::from(log_dir).join(format!("{}_pty.log", timestamp));
-        let age_path = PathBuf::from(log_dir).join(format!("{}_age.log", timestamp));
+        let debug_path = PathBuf::from(log_dir).join(format!("{timestamp}_debug.log"));
+        let pty_path = PathBuf::from(log_dir).join(format!("{timestamp}_pty.log"));
+        let age_path = PathBuf::from(log_dir).join(format!("{timestamp}_age.log"));
 
         let debug_file = File::create(&debug_path)?;
         let pty_file = File::create(&pty_path)?;
@@ -114,18 +114,16 @@ impl Log for FileLogger {
 
 pub fn init_logger(console_level: Option<LevelFilter>) -> Result<(), Box<dyn std::error::Error>> {
     // Determine console level from env or parameter
-    let console_level = console_level.unwrap_or_else(|| {
-        match std::env::var("RUST_LOG") {
-            Ok(level) => match level.to_lowercase().as_str() {
-                "trace" => LevelFilter::Trace,
-                "debug" => LevelFilter::Debug,
-                "info" => LevelFilter::Info,
-                "warn" => LevelFilter::Warn,
-                "error" => LevelFilter::Error,
-                _ => LevelFilter::Info,
-            },
-            Err(_) => LevelFilter::Info,
-        }
+    let console_level = console_level.unwrap_or_else(|| match std::env::var("RUST_LOG") {
+        Ok(level) => match level.to_lowercase().as_str() {
+            "trace" => LevelFilter::Trace,
+            "debug" => LevelFilter::Debug,
+            "info" => LevelFilter::Info,
+            "warn" => LevelFilter::Warn,
+            "error" => LevelFilter::Error,
+            _ => LevelFilter::Info,
+        },
+        Err(_) => LevelFilter::Info,
     });
 
     let logger = FileLogger::new("logs", console_level)?;

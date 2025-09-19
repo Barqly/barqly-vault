@@ -13,6 +13,10 @@ fn main() {
     println!("cargo:rerun-if-changed=src/commands/crypto_commands.rs");
     println!("cargo:rerun-if-changed=src/commands/storage_commands.rs");
     println!("cargo:rerun-if-changed=src/commands/file_commands.rs");
+    println!("cargo:rerun-if-changed=src/commands/vault_commands.rs");
+    println!("cargo:rerun-if-changed=src/commands/crypto/passphrase_validation.rs");
+    println!("cargo:rerun-if-changed=src/commands/vault_commands/passphrase_integration.rs");
+    println!("cargo:rerun-if-changed=src/commands/vault_commands/yubikey_integration.rs");
 
     // Build Tauri application
     tauri_build::build()
@@ -318,6 +322,177 @@ export interface Manifest {
   file_count: number;
 }
 
+// Vault command types
+export interface CreateVaultRequest {
+  name: string;
+  description?: string;
+}
+
+export interface CreateVaultResponse {
+  vault: VaultSummary;
+}
+
+export interface VaultSummary {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  key_count: number;
+  is_current: boolean;
+}
+
+export interface ListVaultsResponse {
+  vaults: VaultSummary[];
+}
+
+export interface GetCurrentVaultResponse {
+  vault?: VaultSummary;
+}
+
+export interface SetCurrentVaultRequest {
+  vault_id: string;
+}
+
+export interface SetCurrentVaultResponse {
+  success: boolean;
+  vault: VaultSummary;
+}
+
+export interface DeleteVaultRequest {
+  vault_id: string;
+  force: boolean;
+}
+
+export interface DeleteVaultResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface GetVaultKeysRequest {
+  vault_id: string;
+}
+
+export interface GetVaultKeysResponse {
+  vault_id: string;
+  keys: KeyReference[];
+}
+
+export interface KeyReference {
+  id: string;
+  key_type: KeyType;
+  label: string;
+  state: KeyState;
+  created_at: string;
+  last_used?: string;
+}
+
+export type KeyType =
+  | { type: 'passphrase'; key_id: string }
+  | { type: 'yubikey'; serial: string; slot_index: number; piv_slot: number };
+
+export enum KeyState {
+  Active = 'active',
+  Registered = 'registered',
+  Orphaned = 'orphaned',
+}
+
+export interface AddKeyToVaultRequest {
+  vault_id: string;
+  key_type: string;
+  passphrase?: string;
+  yubikey_serial?: string;
+  label: string;
+}
+
+export interface AddKeyToVaultResponse {
+  success: boolean;
+  key_reference: KeyReference;
+}
+
+export interface RemoveKeyFromVaultRequest {
+  vault_id: string;
+  key_id: string;
+}
+
+export interface RemoveKeyFromVaultResponse {
+  success: boolean;
+}
+
+export interface UpdateKeyLabelRequest {
+  vault_id: string;
+  key_id: string;
+  new_label: string;
+}
+
+export interface UpdateKeyLabelResponse {
+  success: boolean;
+}
+
+export interface CheckYubiKeyAvailabilityRequest {
+  serial: string;
+}
+
+export interface CheckYubiKeyAvailabilityResponse {
+  is_inserted: boolean;
+  is_configured: boolean;
+  needs_recovery: boolean;
+}
+
+// Passphrase validation types
+export interface PassphraseValidationResult {
+  is_valid: boolean;
+  strength: 'weak' | 'fair' | 'good' | 'strong';
+  feedback: string[];
+  score: number;
+}
+
+// Passphrase key integration types
+export interface AddPassphraseKeyRequest {
+  vault_id: string;
+  label: string;
+  passphrase: string;
+}
+
+export interface AddPassphraseKeyResponse {
+  key_reference: KeyReference;
+  public_key: string;
+}
+
+// YubiKey vault integration types
+export interface YubiKeyInitForVaultParams {
+  serial: string;
+  pin: string;
+  label: string;
+  vault_id: string;
+  slot_index: number;
+}
+
+export interface YubiKeyInitResult {
+  success: boolean;
+  key_reference: KeyReference;
+  recovery_code?: string;
+}
+
+export interface RegisterYubiKeyForVaultParams {
+  serial: string;
+  pin: string;
+  label: string;
+  vault_id: string;
+  slot_index: number;
+}
+
+export interface RegisterYubiKeyResult {
+  success: boolean;
+  key_reference: KeyReference;
+}
+
+export interface YubiKeyStateInfo {
+  serial: string;
+  state: 'NEW' | 'INITIALIZED' | 'REUSED' | 'UNKNOWN';
+  vault_keys: string[];
+  available_slots: number[];
+}
+
 // YubiKey command types
 export interface YubiKeyDevice {
   device_id: string;
@@ -413,6 +588,38 @@ export enum ConfidenceLevel {
   HIGH = 'High',
   MEDIUM = 'Medium',
   LOW = 'Low',
+}
+
+// Streamlined YubiKey API types
+export enum YubiKeyState {
+  NEW = 'new',
+  REUSED = 'reused',
+  REGISTERED = 'registered',
+  ORPHANED = 'orphaned',
+}
+
+export enum PinStatus {
+  DEFAULT = 'default',
+  SET = 'set',
+}
+
+export interface YubiKeyStateInfo {
+  serial: string;
+  state: YubiKeyState;
+  slot?: number;  // Retired slot number (1-20)
+  recipient?: string;
+  identity_tag?: string;
+  label?: string;
+  pin_status: PinStatus;
+}
+
+export interface YubiKeyInitResult {
+  serial: string;
+  slot: number;  // Retired slot number
+  recipient: string;
+  identity_tag: string;
+  label: string;
+  recovery_code: string;  // One-time display to user
 }
 
 // Command invocation helper

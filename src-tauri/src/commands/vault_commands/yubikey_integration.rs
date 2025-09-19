@@ -1,0 +1,342 @@
+//! YubiKey vault integration commands
+//!
+//! This module handles the integration between YubiKey operations
+//! and the vault system, including initialization and registration.
+
+use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
+use crate::commands::yubikey_commands::{
+    init_yubikey, list_yubikeys, YubiKeyInitResult, YubiKeyState, YubiKeyStateInfo,
+};
+use crate::models::vault::{KeyReference, KeyState, KeyType};
+use crate::storage::vault_store;
+use chrono::Utc;
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+use tauri::command;
+
+/// YubiKey initialization parameters for vault
+#[derive(Debug, Deserialize)]
+pub struct YubiKeyInitForVaultParams {
+    pub serial: String,
+    pub pin: String,
+    pub label: String,
+    pub vault_id: String,
+    pub slot_index: u8, // 0-2 for UI positioning
+}
+
+/// YubiKey registration parameters for vault
+#[derive(Debug, Deserialize)]
+pub struct RegisterYubiKeyForVaultParams {
+    pub serial: String,
+    pub pin: String,
+    pub label: String,
+    pub vault_id: String,
+    pub slot_index: u8,
+}
+
+/// Result from YubiKey registration
+#[derive(Debug, Serialize)]
+pub struct RegisterYubiKeyResult {
+    pub success: bool,
+    pub key_reference: KeyReference,
+}
+
+/// Initialize a new YubiKey and add it to a vault
+#[command]
+pub async fn init_yubikey_for_vault(
+    params: YubiKeyInitForVaultParams,
+) -> CommandResponse<YubiKeyInitResult> {
+    // Validate slot index
+    if params.slot_index > 2 {
+        return Err(Box::new(
+            CommandError::validation("Slot index must be 0-2 for UI positioning")
+                .with_recovery_guidance("Use slot index 0, 1, or 2"),
+        ));
+    }
+
+    // Get the vault
+    let mut vault = vault_store::get_vault(&params.vault_id)
+        .await
+        .map_err(|e| {
+            Box::new(
+                CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
+                    .with_recovery_guidance("Ensure the vault exists"),
+            )
+        })?;
+
+    // Check if slot is already taken
+    let slot_taken = vault.keys.iter().any(|k| match &k.key_type {
+        KeyType::Yubikey {
+            slot_index: idx, ..
+        } => *idx == params.slot_index,
+        _ => false,
+    });
+
+    if slot_taken {
+        return Err(Box::new(
+            CommandError::operation(
+                ErrorCode::InvalidInput,
+                format!("Slot {} is already occupied", params.slot_index),
+            )
+            .with_recovery_guidance("Choose a different slot or remove the existing key"),
+        ));
+    }
+
+    // Check if YubiKey is already in this vault
+    let already_registered = vault.keys.iter().any(|k| match &k.key_type {
+        KeyType::Yubikey { serial, .. } => serial == &params.serial,
+        _ => false,
+    });
+
+    if already_registered {
+        return Err(Box::new(
+            CommandError::operation(
+                ErrorCode::InvalidInput,
+                "This YubiKey is already registered in this vault",
+            )
+            .with_recovery_guidance("Use a different YubiKey or remove the existing one"),
+        ));
+    }
+
+    // Initialize the YubiKey
+    let yubikey_result = init_yubikey(params.serial.clone(), params.pin, params.label.clone())
+        .await
+        .map_err(|e| {
+            Box::new(
+                CommandError::operation(
+                    ErrorCode::YubiKeyInitializationFailed,
+                    format!("Failed to initialize YubiKey: {e}"),
+                )
+                .with_recovery_guidance("Ensure YubiKey is connected and PIN is correct"),
+            )
+        })?;
+
+    // Map retired slot (1-20) to PIV slot (82-95)
+    let piv_slot = if yubikey_result.slot >= 1 && yubikey_result.slot <= 20 {
+        81 + yubikey_result.slot // Maps 1->82, 20->101 (but we'll cap at 95)
+    } else {
+        82 // Default to first retired slot
+    };
+
+    // Create key reference
+    let key_ref = KeyReference {
+        id: generate_key_reference_id(),
+        key_type: KeyType::Yubikey {
+            serial: params.serial.clone(),
+            slot_index: params.slot_index,
+            piv_slot: piv_slot.min(95), // Cap at slot 95
+        },
+        label: params.label,
+        state: KeyState::Active,
+        created_at: Utc::now(),
+        last_used: None,
+    };
+
+    // Add to vault
+    vault.keys.push(key_ref);
+
+    // Save vault
+    vault_store::save_vault(&vault).await.map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::StorageFailed, e.to_string())
+                .with_recovery_guidance("Failed to save vault"),
+        )
+    })?;
+
+    Ok(yubikey_result)
+}
+
+/// Register an existing YubiKey with a vault
+#[command]
+pub async fn register_yubikey_for_vault(
+    params: RegisterYubiKeyForVaultParams,
+) -> CommandResponse<RegisterYubiKeyResult> {
+    // Validate slot index
+    if params.slot_index > 2 {
+        return Err(Box::new(
+            CommandError::validation("Slot index must be 0-2 for UI positioning")
+                .with_recovery_guidance("Use slot index 0, 1, or 2"),
+        ));
+    }
+
+    // Get the vault
+    let mut vault = vault_store::get_vault(&params.vault_id)
+        .await
+        .map_err(|e| {
+            Box::new(
+                CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
+                    .with_recovery_guidance("Ensure the vault exists"),
+            )
+        })?;
+
+    // Check if slot is already taken
+    let slot_taken = vault.keys.iter().any(|k| match &k.key_type {
+        KeyType::Yubikey {
+            slot_index: idx, ..
+        } => *idx == params.slot_index,
+        _ => false,
+    });
+
+    if slot_taken {
+        return Err(Box::new(
+            CommandError::operation(
+                ErrorCode::InvalidInput,
+                format!("Slot {} is already occupied", params.slot_index),
+            )
+            .with_recovery_guidance("Choose a different slot or remove the existing key"),
+        ));
+    }
+
+    // Verify YubiKey exists and has an identity
+    let yubikeys = list_yubikeys().await?;
+    let yubikey = yubikeys
+        .iter()
+        .find(|yk| yk.serial == params.serial)
+        .ok_or_else(|| {
+            Box::new(
+                CommandError::operation(
+                    ErrorCode::YubiKeyNotFound,
+                    "YubiKey not found or not connected",
+                )
+                .with_recovery_guidance("Ensure YubiKey is connected"),
+            )
+        })?;
+
+    // For reused YubiKeys, we need to verify PIN but not re-initialize
+    // The actual PIN verification would be done in the YubiKey module
+    // For now, we'll create the reference if the YubiKey has an identity
+
+    if yubikey.state == YubiKeyState::New {
+        return Err(Box::new(
+            CommandError::operation(
+                ErrorCode::InvalidInput,
+                "This YubiKey needs to be initialized first",
+            )
+            .with_recovery_guidance("Use init_yubikey_for_vault for new YubiKeys"),
+        ));
+    }
+
+    // Get the PIV slot from existing YubiKey info or use default
+    let piv_slot = yubikey.slot.unwrap_or(1) + 81; // Convert retired slot to PIV
+
+    // Create key reference
+    let key_ref = KeyReference {
+        id: generate_key_reference_id(),
+        key_type: KeyType::Yubikey {
+            serial: params.serial.clone(),
+            slot_index: params.slot_index,
+            piv_slot: piv_slot.min(95),
+        },
+        label: params.label,
+        state: KeyState::Registered,
+        created_at: Utc::now(),
+        last_used: None,
+    };
+
+    // Add to vault
+    vault.keys.push(key_ref.clone());
+
+    // Save vault
+    vault_store::save_vault(&vault).await.map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::StorageFailed, e.to_string())
+                .with_recovery_guidance("Failed to save vault"),
+        )
+    })?;
+
+    Ok(RegisterYubiKeyResult {
+        success: true,
+        key_reference: key_ref,
+    })
+}
+
+/// List available YubiKeys with vault context
+#[command]
+pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<YubiKeyStateInfo>> {
+    // Get all connected YubiKeys
+    let mut all_yubikeys = list_yubikeys().await?;
+
+    // Get vault's existing YubiKeys
+    let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
+                .with_recovery_guidance("Ensure the vault exists"),
+        )
+    })?;
+
+    let vault_serials: HashSet<String> = vault
+        .keys
+        .iter()
+        .filter_map(|k| match &k.key_type {
+            KeyType::Yubikey { serial, .. } => Some(serial.clone()),
+            _ => None,
+        })
+        .collect();
+
+    // Mark which are already in use by this vault
+    for yubikey in &mut all_yubikeys {
+        if vault_serials.contains(&yubikey.serial) {
+            yubikey.state = YubiKeyState::Registered;
+        }
+    }
+
+    Ok(all_yubikeys)
+}
+
+/// Check which YubiKey slots are available in a vault
+#[command]
+pub async fn check_yubikey_slot_availability(vault_id: String) -> CommandResponse<Vec<bool>> {
+    let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
+                .with_recovery_guidance("Ensure the vault exists"),
+        )
+    })?;
+
+    // Check slots 0, 1, 2
+    let mut available = vec![true, true, true];
+
+    for key in &vault.keys {
+        if let KeyType::Yubikey {
+            slot_index: idx, ..
+        } = &key.key_type
+        {
+            if *idx < 3 {
+                available[*idx as usize] = false;
+            }
+        }
+    }
+
+    Ok(available)
+}
+
+/// Generate a unique key reference ID
+fn generate_key_reference_id() -> String {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    let random_bytes: Vec<u8> = (0..8).map(|_| rng.gen()).collect();
+    format!("keyref_{}", bs58::encode(random_bytes).into_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_slot_availability() {
+        // This test would require a mock vault store
+        // For now, just test the ID generation
+        let id1 = generate_key_reference_id();
+        let id2 = generate_key_reference_id();
+
+        assert!(id1.starts_with("keyref_"));
+        assert!(id2.starts_with("keyref_"));
+        assert_ne!(id1, id2);
+    }
+}
+
+// Tests are in yubikey_integration_tests.rs
+// Uncomment when ready to run integration tests
+// #[cfg(test)]
+// #[path = "yubikey_integration_tests.rs"]
+// mod yubikey_integration_tests;

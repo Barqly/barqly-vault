@@ -40,6 +40,7 @@ secrecy = { version = "0.10.3", features = ["serde"] }
 zeroize = "1.8"
 thiserror = "1.0"
 rand = "0.8"
+bs58 = "0.5"
 # Enhanced crypto support - keeping p256 for future direct integration option
 p256 = "0.13"
 # YubiKey PIV operations for initialization and default-fixing flows

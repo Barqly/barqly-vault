@@ -1,18 +1,13 @@
 /// Age-specific PTY operations for YubiKey
 /// Handles identity generation and decryption with age-plugin-yubikey
-
 use super::core::{run_age_plugin_yubikey, PtyError, Result};
+use log::{debug, info};
 use std::fs;
 use std::path::Path;
-use log::{info, debug};
 
 /// Generate age identity via PTY with YubiKey
-pub fn generate_age_identity_pty(
-    pin: &str,
-    touch_policy: &str,
-    slot_name: &str,
-) -> Result<String> {
-    info!("Generating age identity with touch_policy={}, slot_name={}", touch_policy, slot_name);
+pub fn generate_age_identity_pty(pin: &str, touch_policy: &str, slot_name: &str) -> Result<String> {
+    info!("Generating age identity with touch_policy={touch_policy}, slot_name={slot_name}");
 
     // Let age-plugin-yubikey choose the first available retired slot
     // Don't specify --slot to use default behavior
@@ -31,7 +26,7 @@ pub fn generate_age_identity_pty(
     for line in output.lines() {
         let trimmed = line.trim();
         if trimmed.starts_with("age1yubikey") {
-            info!("Generated age recipient: {}", trimmed);
+            info!("Generated age recipient: {trimmed}");
             return Ok(trimmed.to_string());
         }
     }
@@ -41,14 +36,14 @@ pub fn generate_age_identity_pty(
         if line.contains("Recipient:") && line.contains("age1yubikey") {
             if let Some(recipient) = line.split("Recipient:").nth(1) {
                 let recipient = recipient.trim();
-                info!("Generated age recipient: {}", recipient);
+                info!("Generated age recipient: {recipient}");
                 return Ok(recipient.to_string());
             }
         }
     }
 
     Err(PtyError::PtyOperation(
-        "Failed to extract age recipient from output".to_string()
+        "Failed to extract age recipient from output".to_string(),
     ))
 }
 
@@ -73,7 +68,7 @@ pub fn list_yubikey_identities() -> Result<Vec<String>> {
 
 /// Get identity for specific YubiKey serial
 pub fn get_identity_for_serial(serial: &str) -> Result<String> {
-    info!("Getting identity for YubiKey serial: {}", serial);
+    info!("Getting identity for YubiKey serial: {serial}");
 
     let args = vec![
         "--identity".to_string(),
@@ -87,9 +82,9 @@ pub fn get_identity_for_serial(serial: &str) -> Result<String> {
     if output.contains("AGE-PLUGIN-YUBIKEY") {
         Ok(output.trim().to_string())
     } else {
-        Err(PtyError::PtyOperation(
-            format!("No identity found for serial {}", serial)
-        ))
+        Err(PtyError::PtyOperation(format!(
+            "No identity found for serial {serial}"
+        )))
     }
 }
 
@@ -100,14 +95,13 @@ pub fn decrypt_with_age_pty(
     identity: &str,
     pin: &str,
 ) -> Result<()> {
-    info!("Decrypting file with YubiKey: {:?} -> {:?}", encrypted_file, output_file);
+    info!("Decrypting file with YubiKey: {encrypted_file:?} -> {output_file:?}");
 
     // First, write the identity to a temporary file
-    let temp_identity = std::env::temp_dir().join(format!("yubikey-identity-{}.txt",
-        std::process::id()));
+    let temp_identity =
+        std::env::temp_dir().join(format!("yubikey-identity-{}.txt", std::process::id()));
 
-    fs::write(&temp_identity, identity)
-        .map_err(|e| PtyError::Io(e))?;
+    fs::write(&temp_identity, identity).map_err(PtyError::Io)?;
 
     // Use age command with the identity file
     let args = vec![
@@ -129,7 +123,7 @@ pub fn decrypt_with_age_pty(
 
     if !output_file.exists() {
         return Err(PtyError::PtyOperation(
-            "Decryption succeeded but output file not found".to_string()
+            "Decryption succeeded but output file not found".to_string(),
         ));
     }
 
@@ -138,12 +132,8 @@ pub fn decrypt_with_age_pty(
 }
 
 /// Encrypt data for YubiKey recipient
-pub fn encrypt_for_yubikey(
-    input_file: &Path,
-    output_file: &Path,
-    recipient: &str,
-) -> Result<()> {
-    info!("Encrypting file for YubiKey recipient: {:?} -> {:?}", input_file, output_file);
+pub fn encrypt_for_yubikey(input_file: &Path, output_file: &Path, recipient: &str) -> Result<()> {
+    info!("Encrypting file for YubiKey recipient: {input_file:?} -> {output_file:?}");
 
     // age encryption doesn't require PIN or touch, only the recipient
     let args = vec![
@@ -159,7 +149,7 @@ pub fn encrypt_for_yubikey(
 
     if !output_file.exists() {
         return Err(PtyError::PtyOperation(
-            "Encryption succeeded but output file not found".to_string()
+            "Encryption succeeded but output file not found".to_string(),
         ));
     }
 

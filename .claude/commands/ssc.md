@@ -29,7 +29,7 @@ If `{ARG}` is empty, set Target Agent as "N/A" (normal checkpoint)
 1. **Filename Format**: `ssc{DD}{MM}.{n}.md` where:
    - DD = current day of month (01-31)
    - MM = current month (01-12)
-   - n = counter starting at 1, increment if file exists. NEVER overwrite.
+   - n = counter starting at 1. Check if file exists. If yes, increment to 2, 3, etc. NEVER overwrite existing files.
 
 2. **Location**: Save in `./tbd/` folder (create if it doesn't exist)
 

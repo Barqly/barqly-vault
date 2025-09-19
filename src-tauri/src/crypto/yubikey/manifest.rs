@@ -2,23 +2,23 @@
 //!
 //! Stores YubiKey registration data in keys directory for recovery
 
+use crate::storage::path_management::get_keys_dir;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::PathBuf;
-use crate::storage::path_management::get_keys_dir;
-use sha2::{Sha256, Digest};
 
 /// YubiKey registration entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YubiKeyEntry {
     pub serial: String,
-    pub slot: u8,  // Retired slot number (1-20)
-    pub recipient: String,  // age1yubikey...
-    pub identity_tag: String,  // AGE-PLUGIN-YUBIKEY-...
+    pub slot: u8,             // Retired slot number (1-20)
+    pub recipient: String,    // age1yubikey...
+    pub identity_tag: String, // AGE-PLUGIN-YUBIKEY-...
     pub label: String,
     pub created_at: DateTime<Utc>,
-    pub recovery_code_hash: String,  // SHA256 hash for verification
+    pub recovery_code_hash: String, // SHA256 hash for verification
 }
 
 /// YubiKey manifest containing all registered keys
@@ -26,6 +26,12 @@ pub struct YubiKeyEntry {
 pub struct YubiKeyManifest {
     pub version: String,
     pub yubikeys: Vec<YubiKeyEntry>,
+}
+
+impl Default for YubiKeyManifest {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl YubiKeyManifest {
@@ -174,14 +180,16 @@ mod tests {
         let mut manifest = YubiKeyManifest::new();
         let recovery_code = "Nx2mBtQa";
 
-        manifest.register_yubikey(
-            "12345678".to_string(),
-            1,
-            "age1yubikey...".to_string(),
-            "AGE-PLUGIN...".to_string(),
-            "Test Key".to_string(),
-            recovery_code,
-        ).unwrap();
+        manifest
+            .register_yubikey(
+                "12345678".to_string(),
+                1,
+                "age1yubikey...".to_string(),
+                "AGE-PLUGIN...".to_string(),
+                "Test Key".to_string(),
+                recovery_code,
+            )
+            .unwrap();
 
         assert!(manifest.verify_recovery_code("12345678", recovery_code));
         assert!(!manifest.verify_recovery_code("12345678", "WrongCode"));

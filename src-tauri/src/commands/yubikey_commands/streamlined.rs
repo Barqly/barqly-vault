@@ -6,13 +6,13 @@
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::crypto::yubikey::manifest::YubiKeyManifest;
 use crate::crypto::yubikey::pty::{
-    age_operations::{generate_age_identity_pty, list_yubikey_identities, get_identity_for_serial},
+    age_operations::{generate_age_identity_pty, get_identity_for_serial, list_yubikey_identities},
     ykman_operations::{initialize_yubikey_with_recovery, list_yubikeys as list_yk_devices},
 };
 use age::secrecy::{ExposeSecret, SecretString};
+use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
 use tauri::command;
-use log::{info, debug, warn};
 
 /// YubiKey state classification
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -28,8 +28,8 @@ pub enum YubiKeyState {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum PinStatus {
-    Default,    // Still using 123456
-    Set,        // Custom PIN configured
+    Default, // Still using 123456
+    Set,     // Custom PIN configured
 }
 
 /// YubiKey state information
@@ -37,7 +37,7 @@ pub enum PinStatus {
 pub struct YubiKeyStateInfo {
     pub serial: String,
     pub state: YubiKeyState,
-    pub slot: Option<u8>,  // Retired slot number (1-20)
+    pub slot: Option<u8>, // Retired slot number (1-20)
     pub recipient: Option<String>,
     pub identity_tag: Option<String>,
     pub label: Option<String>,
@@ -48,11 +48,11 @@ pub struct YubiKeyStateInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YubiKeyInitResult {
     pub serial: String,
-    pub slot: u8,  // Retired slot number
+    pub slot: u8, // Retired slot number
     pub recipient: String,
     pub identity_tag: String,
     pub label: String,
-    pub recovery_code: String,  // One-time display to user
+    pub recovery_code: String, // One-time display to user
 }
 
 /// List YubiKeys with intelligent state detection
@@ -61,26 +61,25 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
     info!("Listing YubiKeys with state detection");
 
     // Load manifest first
-    let manifest = YubiKeyManifest::load()
-        .unwrap_or_else(|e| {
-            warn!("Failed to load YubiKey manifest: {}", e);
-            YubiKeyManifest::new()
-        });
+    let manifest = YubiKeyManifest::load().unwrap_or_else(|e| {
+        warn!("Failed to load YubiKey manifest: {e}");
+        YubiKeyManifest::new()
+    });
 
     // Get list of connected YubiKeys
-    let devices = list_yk_devices()
-        .map_err(|e| CommandError::operation(
+    let devices = list_yk_devices().map_err(|e| {
+        CommandError::operation(
             ErrorCode::YubiKeyCommunicationError,
-            format!("Failed to list YubiKey devices: {}", e)
-        ))?;
+            format!("Failed to list YubiKey devices: {e}"),
+        )
+    })?;
 
     if devices.is_empty() {
         return Ok(Vec::new());
     }
 
     // Get existing age identities
-    let identities = list_yubikey_identities()
-        .unwrap_or_else(|_| Vec::new());
+    let identities = list_yubikey_identities().unwrap_or_else(|_| Vec::new());
 
     let mut yubikeys = Vec::new();
 
@@ -95,18 +94,17 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         let manifest_entry = manifest.find_by_serial(&serial);
 
         // Check if this YubiKey has an age identity
-        let has_identity = identities.iter()
-            .any(|id| id.contains(&serial));
+        let has_identity = identities.iter().any(|id| id.contains(&serial));
 
         // Determine state based on manifest and identity presence
         let state = match (manifest_entry.is_some(), has_identity) {
-            (true, true) => YubiKeyState::Registered,  // In manifest and has identity
-            (false, true) => YubiKeyState::Orphaned,   // Has identity but not in manifest
+            (true, true) => YubiKeyState::Registered, // In manifest and has identity
+            (false, true) => YubiKeyState::Orphaned,  // Has identity but not in manifest
             (true, false) => {
                 // In manifest but no identity found - might be disconnected/reset
-                warn!("YubiKey {} in manifest but no identity found", serial);
+                warn!("YubiKey {serial} in manifest but no identity found");
                 YubiKeyState::Reused
-            },
+            }
             (false, false) => {
                 // Check PIN status to determine if new or reused
                 // For now, assume new (in production, would check with ykman)
@@ -125,14 +123,20 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
             serial: serial.clone(),
             state,
             slot: manifest_entry.as_ref().map(|e| e.slot),
-            recipient: manifest_entry.as_ref().map(|e| e.recipient.clone())
+            recipient: manifest_entry
+                .as_ref()
+                .map(|e| e.recipient.clone())
                 .or_else(|| identities.iter().find(|id| id.contains(&serial)).cloned()),
             identity_tag: manifest_entry.as_ref().map(|e| e.identity_tag.clone()),
-            label: manifest_entry.as_ref().map(|e| e.label.clone())
-                .or_else(|| if has_identity {
-                    Some(format!("YubiKey-{}", &serial[..4.min(serial.len())]))
-                } else {
-                    None
+            label: manifest_entry
+                .as_ref()
+                .map(|e| e.label.clone())
+                .or_else(|| {
+                    if has_identity {
+                        Some(format!("YubiKey-{}", &serial[..4.min(serial.len())]))
+                    } else {
+                        None
+                    }
                 }),
             pin_status,
         });
@@ -148,7 +152,7 @@ pub async fn init_yubikey(
     new_pin: String,
     label: String,
 ) -> Result<YubiKeyInitResult, CommandError> {
-    debug!("Initializing YubiKey with label {}", label);
+    debug!("Initializing YubiKey with label {label}");
 
     // Wrap PIN in SecretString for security
     let pin = SecretString::from(new_pin);
@@ -164,38 +168,44 @@ pub async fn init_yubikey(
     }
 
     // Initialize YubiKey with auto-generated recovery code
-    let recovery_code = initialize_yubikey_with_recovery(pin_str)
-        .map_err(|e| CommandError::operation(
+    let recovery_code = initialize_yubikey_with_recovery(pin_str).map_err(|e| {
+        CommandError::operation(
             ErrorCode::YubiKeyInitializationFailed,
-            format!("Failed to initialize YubiKey: {}", e)
-        ))?;
+            format!("Failed to initialize YubiKey: {e}"),
+        )
+    })?;
 
     // Generate age identity (uses first available retired slot)
-    let recipient = generate_age_identity_pty(pin.expose_secret(), "cached", &label)
-        .map_err(|e| CommandError::operation(
-            ErrorCode::YubiKeyInitializationFailed,
-            format!("Failed to generate age identity: {}", e)
-        ))?;
+    let recipient =
+        generate_age_identity_pty(pin.expose_secret(), "cached", &label).map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                format!("Failed to generate age identity: {e}"),
+            )
+        })?;
 
     // Get the identity tag for manifest
     let identity_tag = get_identity_for_serial(&serial)
         .unwrap_or_else(|_| format!("AGE-PLUGIN-YUBIKEY-{}", &serial[..6.min(serial.len())]));
 
     // Save to manifest
-    let mut manifest = YubiKeyManifest::load()
-        .unwrap_or_else(|_| YubiKeyManifest::new());
+    let mut manifest = YubiKeyManifest::load().unwrap_or_else(|_| YubiKeyManifest::new());
 
-    manifest.register_yubikey(
-        serial.clone(),
-        1, // Default to slot 1 (will be actual slot from age-plugin)
-        recipient.clone(),
-        identity_tag.clone(),
-        label.clone(),
-        &recovery_code,
-    ).map_err(|e| CommandError::operation(
-        ErrorCode::YubiKeyInitializationFailed,
-        format!("Failed to save YubiKey manifest: {}", e)
-    ))?;
+    manifest
+        .register_yubikey(
+            serial.clone(),
+            1, // Default to slot 1 (will be actual slot from age-plugin)
+            recipient.clone(),
+            identity_tag.clone(),
+            label.clone(),
+            &recovery_code,
+        )
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                format!("Failed to save YubiKey manifest: {e}"),
+            )
+        })?;
 
     debug!("Successfully initialized YubiKey");
 
@@ -205,7 +215,7 @@ pub async fn init_yubikey(
         recipient,
         identity_tag,
         label,
-        recovery_code,  // Return to UI for one-time display
+        recovery_code, // Return to UI for one-time display
     })
 }
 
@@ -216,7 +226,7 @@ pub async fn register_yubikey(
     label: String,
     pin: String,
 ) -> Result<YubiKeyInitResult, CommandError> {
-    debug!("Registering reused YubiKey with label {}", label);
+    debug!("Registering reused YubiKey with label {label}");
 
     // Wrap PIN in SecretString for security
     let pin_secret = SecretString::from(pin);
@@ -232,11 +242,12 @@ pub async fn register_yubikey(
     }
 
     // Generate age identity (no init needed, YubiKey already configured)
-    let recipient = generate_age_identity_pty(pin_str, "cached", &label)
-        .map_err(|e| CommandError::operation(
+    let recipient = generate_age_identity_pty(pin_str, "cached", &label).map_err(|e| {
+        CommandError::operation(
             ErrorCode::YubiKeyInitializationFailed,
-            format!("Failed to generate age identity: {}", e)
-        ))?;
+            format!("Failed to generate age identity: {e}"),
+        )
+    })?;
 
     // Get the identity tag for manifest
     let identity_tag = get_identity_for_serial(&serial)
@@ -246,20 +257,23 @@ pub async fn register_yubikey(
     let recovery_code = "<existing>".to_string();
 
     // Save to manifest
-    let mut manifest = YubiKeyManifest::load()
-        .unwrap_or_else(|_| YubiKeyManifest::new());
+    let mut manifest = YubiKeyManifest::load().unwrap_or_else(|_| YubiKeyManifest::new());
 
-    manifest.register_yubikey(
-        serial.clone(),
-        1, // Default to slot 1
-        recipient.clone(),
-        identity_tag.clone(),
-        label.clone(),
-        &recovery_code,
-    ).map_err(|e| CommandError::operation(
-        ErrorCode::YubiKeyInitializationFailed,
-        format!("Failed to save YubiKey manifest: {}", e)
-    ))?;
+    manifest
+        .register_yubikey(
+            serial.clone(),
+            1, // Default to slot 1
+            recipient.clone(),
+            identity_tag.clone(),
+            label.clone(),
+            &recovery_code,
+        )
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                format!("Failed to save YubiKey manifest: {e}"),
+            )
+        })?;
 
     debug!("Successfully registered YubiKey");
 
@@ -276,23 +290,25 @@ pub async fn register_yubikey(
 /// Get identities for a specific YubiKey
 #[command]
 pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError> {
-    info!("Getting identities for YubiKey {}", serial);
+    info!("Getting identities for YubiKey {serial}");
 
-    let identities = list_yubikey_identities()
-        .map_err(|e| CommandError::operation(
+    let identities = list_yubikey_identities().map_err(|e| {
+        CommandError::operation(
             ErrorCode::YubiKeyCommunicationError,
-            format!("Failed to list identities: {}", e)
-        ))?;
+            format!("Failed to list identities: {e}"),
+        )
+    })?;
 
     // Filter identities for this serial
-    let filtered: Vec<String> = identities.into_iter()
+    let filtered: Vec<String> = identities
+        .into_iter()
         .filter(|id| id.contains(&serial))
         .collect();
 
     if filtered.is_empty() {
         return Err(CommandError::operation(
             ErrorCode::YubiKeyNotFound,
-            format!("No identities found for YubiKey {}", serial)
+            format!("No identities found for YubiKey {serial}"),
         ));
     }
 
@@ -303,7 +319,7 @@ pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError>
 fn extract_serial(device_str: &str) -> String {
     if let Some(pos) = device_str.find("Serial:") {
         let serial_part = &device_str[pos + 7..];
-        serial_part.trim()
+        serial_part
             .split_whitespace()
             .next()
             .unwrap_or("")

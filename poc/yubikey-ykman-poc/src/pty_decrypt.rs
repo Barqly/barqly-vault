@@ -1,13 +1,13 @@
 use crate::errors::{Result, YubiKeyError};
 use crate::get_age_plugin_path;
 use crate::manifest::YubiKeyManifest;
-use crate::{log_pty, log_pty_raw, log_age, log_cmd};
+use crate::{log_age, log_cmd, log_pty, log_pty_raw};
+use log::{debug, info, warn};
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
-use log::{debug, info, warn, trace};
 
 const TOUCH_TIMEOUT: Duration = Duration::from_secs(60);
 const PIN_INJECT_DELAY: Duration = Duration::from_millis(300);
@@ -49,7 +49,10 @@ pub fn decrypt_with_state_machine(
     pin: &str,
 ) -> Result<Vec<u8>> {
     info!("Starting YubiKey decryption with state machine pattern");
-    log_age!("Starting decryption process for manifest with serial: {}", manifest.yubikey.serial);
+    log_age!(
+        "Starting decryption process for manifest with serial: {}",
+        manifest.yubikey.serial
+    );
 
     // Create tmp directory if it doesn't exist
     use crate::TMP_DIR;
@@ -61,10 +64,15 @@ pub fn decrypt_with_state_machine(
     let temp_encrypted = tmp_dir.join(format!("yubikey_decrypt_{}.age", std::process::id()));
     let temp_encrypted_str = temp_encrypted.display().to_string();
     std::fs::write(&temp_encrypted, encrypted_data)?;
-    log_age!("Written encrypted data to: {} ({} bytes)", temp_encrypted_str, encrypted_data.len());
+    log_age!(
+        "Written encrypted data to: {} ({} bytes)",
+        temp_encrypted_str,
+        encrypted_data.len()
+    );
 
     // Create identity file from manifest (using absolute path)
-    let temp_identity_path = tmp_dir.join(format!("yubikey_identity_{}.txt", manifest.yubikey.serial));
+    let temp_identity_path =
+        tmp_dir.join(format!("yubikey_identity_{}.txt", manifest.yubikey.serial));
     let temp_identity_str = temp_identity_path.display().to_string();
     let content = format!(
         "#       Serial: {}, Slot: {}\n#   PIN policy: {}\n# Touch policy: {}\n#    Recipient: {}\n{}\n",
@@ -92,7 +100,7 @@ pub fn decrypt_with_state_machine(
             pixel_width: 0,
             pixel_height: 0,
         })
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to open PTY: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to open PTY: {e}")))?;
 
     // Set PATH for plugin
     let age_plugin_path = get_age_plugin_path();
@@ -129,35 +137,48 @@ pub fn decrypt_with_state_machine(
     cmd.arg("-d");
     cmd.arg("-i");
     cmd.arg(&temp_identity_str);
-    cmd.arg("-o");  // Output flag
-    cmd.arg(&temp_output_str);  // Output file
+    cmd.arg("-o"); // Output flag
+    cmd.arg(&temp_output_str); // Output file
     cmd.arg(&temp_encrypted_str);
     cmd.env("PATH", new_path);
-    cmd.env("AGE_DEBUG", "1");  // Enable age debug output
-    cmd.env("RUST_LOG", "trace");  // Enable plugin debug output
-    // Don't set PIN in env - we'll send it interactively like in key gen
+    cmd.env("AGE_DEBUG", "1"); // Enable age debug output
+    cmd.env("RUST_LOG", "trace"); // Enable plugin debug output
+                                  // Don't set PIN in env - we'll send it interactively like in key gen
 
-    log_cmd!(age_path, vec!["-d", "-i", &temp_identity_str, "-o", &temp_output_str, &temp_encrypted_str]);
+    log_cmd!(
+        age_path,
+        vec![
+            "-d",
+            "-i",
+            &temp_identity_str,
+            "-o",
+            &temp_output_str,
+            &temp_encrypted_str
+        ]
+    );
 
     let mut child = pair
         .slave
         .spawn_command(cmd)
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to spawn age: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to spawn age: {e}")))?;
 
     info!("Age decryption process started with PID");
     log_pty!("PTY master/slave pair created successfully");
 
     // Get writer early to ensure we can send input
-    let mut writer = pair.master
+    let mut writer = pair
+        .master
         .take_writer()
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to get writer: {}", e)))?;
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to get writer: {e}")))?;
 
     // Set up channels for communication (exactly like key generation)
     let (tx, rx) = mpsc::channel::<DecryptState>();
 
     // Reader thread for PTY output (exactly like key generation)
-    let reader = pair.master.try_clone_reader()
-        .map_err(|e| YubiKeyError::PtyError(format!("Failed to clone reader: {}", e)))?;
+    let reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| YubiKeyError::PtyError(format!("Failed to clone reader: {e}")))?;
 
     let tx_reader = tx.clone();
     thread::spawn(move || {
@@ -236,18 +257,25 @@ pub fn decrypt_with_state_machine(
 
     loop {
         if start.elapsed() > TOUCH_TIMEOUT {
-            warn!("Operation timed out after {} seconds", TOUCH_TIMEOUT.as_secs());
+            warn!(
+                "Operation timed out after {} seconds",
+                TOUCH_TIMEOUT.as_secs()
+            );
             let _ = child.kill();
             // Don't clean up temp files on timeout - keep for debugging
-            log_age!("TIMEOUT: Files kept for debugging at: {}, {}", temp_encrypted_str, temp_identity_str);
+            log_age!(
+                "TIMEOUT: Files kept for debugging at: {}, {}",
+                temp_encrypted_str,
+                temp_identity_str
+            );
             return Err(YubiKeyError::TouchTimeout);
         }
 
         // Check for state updates from reader thread
         match rx.recv_timeout(Duration::from_millis(100)) {
             Ok(state) => {
-                debug!("Received state from reader: {:?}", state);
-                debug!("State transition: {:?} -> {:?}", current_state, state);
+                debug!("Received state from reader: {state:?}");
+                debug!("State transition: {current_state:?} -> {state:?}");
                 current_state = state.clone();
 
                 match state {
@@ -256,10 +284,12 @@ pub fn decrypt_with_state_machine(
                             // Send PIN after a small delay (like in key gen)
                             thread::sleep(PIN_INJECT_DELAY);
                             debug!("Sending PIN to PTY");
-                            writeln!(writer, "{}", pin)
-                                .map_err(|e| YubiKeyError::PtyError(format!("Failed to send PIN: {}", e)))?;
-                            writer.flush()
-                                .map_err(|e| YubiKeyError::PtyError(format!("Failed to flush: {}", e)))?;
+                            writeln!(writer, "{pin}").map_err(|e| {
+                                YubiKeyError::PtyError(format!("Failed to send PIN: {e}"))
+                            })?;
+                            writer.flush().map_err(|e| {
+                                YubiKeyError::PtyError(format!("Failed to flush: {e}"))
+                            })?;
                             pin_sent = true;
                             current_state = DecryptState::PinSent;
                         }
@@ -268,17 +298,21 @@ pub fn decrypt_with_state_machine(
                         info!("Waiting for YubiKey touch...");
                         // Send periodic nudges to keep PTY alive (exactly like key gen)
                         thread::sleep(Duration::from_secs(1));
-                        let _ = writeln!(writer, "");
+                        let _ = writeln!(writer);
                         let _ = writer.flush();
                     }
                     DecryptState::Decrypting => {
                         info!("Decryption in progress...");
                     }
                     DecryptState::Failed(err) => {
-                        warn!("Decryption failed: {}", err);
+                        warn!("Decryption failed: {err}");
                         let _ = child.kill();
                         // Don't clean up temp files on failure - keep for debugging
-                        log_age!("FAILED: Files kept for debugging at: {}, {}", temp_encrypted_str, temp_identity_str);
+                        log_age!(
+                            "FAILED: Files kept for debugging at: {}, {}",
+                            temp_encrypted_str,
+                            temp_identity_str
+                        );
                         return Err(YubiKeyError::OperationFailed(err));
                     }
                     _ => {}
@@ -286,10 +320,10 @@ pub fn decrypt_with_state_machine(
             }
             Err(e) => {
                 // No state update, check process status
-                debug!("No state update received: {:?}", e);
+                debug!("No state update received: {e:?}");
                 match child.try_wait() {
                     Ok(Some(status)) => {
-                        debug!("Process exited with status: {:?}", status);
+                        debug!("Process exited with status: {status:?}");
 
                         if status.success() {
                             // Read the decrypted output from file
@@ -300,37 +334,49 @@ pub fn decrypt_with_state_machine(
                                     let _ = std::fs::remove_file(&temp_identity_path);
                                     let _ = std::fs::remove_file(&temp_output);
                                     log_age!("SUCCESS! Cleaned up temp files");
-                                    info!("Decryption successful, got {} bytes", decrypted_data.len());
+                                    info!(
+                                        "Decryption successful, got {} bytes",
+                                        decrypted_data.len()
+                                    );
                                     return Ok(decrypted_data);
                                 }
                                 Err(e) => {
                                     // Don't clean up temp files on error - keep for debugging
-                                    log_age!("ERROR: Failed to read output file: {}", temp_output_str);
-                                    return Err(YubiKeyError::OperationFailed(
-                                        format!("Failed to read decrypted output: {}", e)
-                                    ));
+                                    log_age!(
+                                        "ERROR: Failed to read output file: {}",
+                                        temp_output_str
+                                    );
+                                    return Err(YubiKeyError::OperationFailed(format!(
+                                        "Failed to read decrypted output: {e}"
+                                    )));
                                 }
                             }
                         } else {
                             // Don't clean up temp files on error - keep for debugging
-                            log_age!("ERROR: Process failed. Files kept at: {}, {}", temp_encrypted_str, temp_identity_str);
-                            return Err(YubiKeyError::OperationFailed(
-                                format!("Process exited with status: {:?}", status)
-                            ));
+                            log_age!(
+                                "ERROR: Process failed. Files kept at: {}, {}",
+                                temp_encrypted_str,
+                                temp_identity_str
+                            );
+                            return Err(YubiKeyError::OperationFailed(format!(
+                                "Process exited with status: {status:?}"
+                            )));
                         }
                     }
                     Ok(None) => {
                         // Still running, send periodic nudges if waiting for touch
                         if matches!(current_state, DecryptState::WaitingForTouch) {
                             // Send empty line to keep PTY alive
-                            let _ = writeln!(writer, "");
+                            let _ = writeln!(writer);
                             let _ = writer.flush();
                         }
                     }
                     Err(e) => {
                         // Don't clean up temp files on error - keep for debugging
                         log_age!("ERROR: Process check failed. Files kept for debugging");
-                        return Err(YubiKeyError::PtyError(format!("Failed to check process: {}", e)));
+                        return Err(YubiKeyError::PtyError(format!(
+                            "Failed to check process: {e}"
+                        )));
                     }
                 }
             }

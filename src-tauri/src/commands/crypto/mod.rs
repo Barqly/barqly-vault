@@ -9,6 +9,7 @@ pub mod file_helpers;
 pub mod key_generation;
 pub mod key_generation_multi;
 pub mod manifest;
+pub mod passphrase_validation;
 pub mod progress;
 pub mod validation;
 
@@ -20,6 +21,9 @@ pub use key_generation_multi::{
     generate_key_multi, GenerateKeyMultiInput, GenerateKeyMultiResponse,
 };
 pub use manifest::{verify_manifest, VerifyManifestInput, VerifyManifestResponse};
+pub use passphrase_validation::{
+    validate_passphrase_strength, PassphraseStrength, PassphraseValidationResult,
+};
 pub use progress::{
     get_encryption_status, get_progress, EncryptionStatus, EncryptionStatusResponse,
     GetEncryptionStatusInput, GetProgressInput, GetProgressResponse,

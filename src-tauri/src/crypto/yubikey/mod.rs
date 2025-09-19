@@ -8,8 +8,8 @@ pub mod errors;
 pub mod manifest; // YubiKey manifest management
 pub mod progress;
 pub mod provider;
-pub mod state_cache;
-pub mod pty; // PTY automation for YubiKey operations
+pub mod pty;
+pub mod state_cache; // PTY automation for YubiKey operations
 
 // Legacy modules (deprecated - will be removed)
 pub mod detection;

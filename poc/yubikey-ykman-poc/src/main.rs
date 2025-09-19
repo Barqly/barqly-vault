@@ -1,14 +1,14 @@
-use yubikey_ykman_poc::{check_requirements, complete_setup, encrypt_data, decrypt_data};
-use yubikey_ykman_poc::manifest::{YubiKeyManifest, DEFAULT_MANIFEST_PATH};
 use log::{error, info};
 use std::env;
+use yubikey_ykman_poc::manifest::{YubiKeyManifest, DEFAULT_MANIFEST_PATH};
+use yubikey_ykman_poc::{check_requirements, complete_setup, decrypt_data, encrypt_data};
 
 const DEFAULT_PIN: &str = "212121";
 
 fn main() {
     // Initialize our custom file logger
     if let Err(e) = yubikey_ykman_poc::logger::init_logger(None) {
-        eprintln!("Failed to initialize logger: {}", e);
+        eprintln!("Failed to initialize logger: {e}");
         env_logger::init(); // Fallback to env_logger
     }
 
@@ -23,43 +23,50 @@ fn main() {
     }
 
     info!("=== YubiKey Setup POC ===");
-    info!("This will initialize your YubiKey with PIN={}", DEFAULT_PIN);
-    
+    info!("This will initialize your YubiKey with PIN={DEFAULT_PIN}");
+
     if !auto_mode {
         println!("\n⚠️  YubiKey Setup POC");
         println!("This will:");
-        println!("1. Change your YubiKey PIN from default (123456) to {}", DEFAULT_PIN);
+        println!("1. Change your YubiKey PIN from default (123456) to {DEFAULT_PIN}");
         println!("2. Set PUK to match PIN");
         println!("3. Set management key to protected TDES");
         println!("4. Generate an age identity");
         println!("\nRun with --auto to proceed automatically");
         println!("Press Enter to continue or Ctrl+C to abort...");
-        
+
         let mut input = String::new();
-        std::io::stdin().read_line(&mut input).expect("Failed to read input");
+        std::io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read input");
     }
-    
+
     // Check requirements first
     match check_requirements() {
         Ok(reqs) => {
             println!("\n✅ Requirements Check:");
             println!("  ykman: {:?}", reqs.ykman_version);
             println!("  age-plugin: {:?}", reqs.age_plugin_version);
-            
+
             if let Some(info) = &reqs.yubikey_info {
                 println!("\n📱 YubiKey Status:");
                 println!("  Serial: {}", info.serial);
                 println!("  Version: {}", info.version);
                 println!("  PIN attempts: {}/3", info.pin_attempts);
-                println!("  Management key: {} ({})", 
+                println!(
+                    "  Management key: {} ({})",
                     info.management_key_algorithm,
-                    if info.management_key_protected { "protected" } else { "unprotected" }
+                    if info.management_key_protected {
+                        "protected"
+                    } else {
+                        "unprotected"
+                    }
                 );
             }
         }
         Err(e) => {
-            error!("Requirements check failed: {}", e);
-            
+            error!("Requirements check failed: {e}");
+
             match e {
                 yubikey_ykman_poc::errors::YubiKeyError::YkmanNotFound => {
                     println!("\n❌ ykman not found!");
@@ -79,22 +86,22 @@ fn main() {
                     println!("Please insert your YubiKey and try again.");
                 }
                 _ => {
-                    println!("\n❌ Error: {}", e);
+                    println!("\n❌ Error: {e}");
                 }
             }
             std::process::exit(1);
         }
     }
-    
+
     // Run complete setup
     println!("\n🔧 Starting YubiKey setup...");
-    
+
     match complete_setup(Some(DEFAULT_PIN)) {
         Ok(recipient) => {
             println!("\n✅ Setup Complete!\n");
             println!("🔑 Your age recipient (for encryption):");
-            println!("{}\n", recipient);
-            
+            println!("{recipient}\n");
+
             // Test encryption/decryption
             println!("📝 Testing encryption and decryption...\n");
 
@@ -102,7 +109,7 @@ fn main() {
             let test_message = "Bitcoin Test Data\nSatoshi's Genesis Block Message: The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
 
             println!("📝 Test message:");
-            println!("{}", test_message);
+            println!("{test_message}");
             println!("---");
 
             // Encrypt
@@ -113,30 +120,33 @@ fn main() {
                     // Save encrypted file to OS temp
                     let encrypted_file = format!("/tmp/yubikey_test_{}.age", std::process::id());
                     if let Err(e) = std::fs::write(&encrypted_file, &encrypted) {
-                        println!("⚠️ Failed to save encrypted file: {}", e);
+                        println!("⚠️ Failed to save encrypted file: {e}");
                     } else {
-                        println!("📁 Saved encrypted file: {}", encrypted_file);
+                        println!("📁 Saved encrypted file: {encrypted_file}");
                     }
-                    
+
                     // Decrypt - will prompt for touch
                     println!("\n🔓 Now decrypting (PIN will be auto-provided)...");
                     match yubikey_ykman_poc::decrypt_data(&encrypted, DEFAULT_PIN) {
                         Ok(decrypted) => {
                             let decrypted_text = String::from_utf8_lossy(&decrypted);
-                            println!("\n✅ Decrypted message:\n{}", decrypted_text);
+                            println!("\n✅ Decrypted message:\n{decrypted_text}");
                             println!("---");
-                            
+
                             if decrypted_text.trim() == test_message.trim() {
                                 println!("\n🎉 Success! Encryption/decryption working perfectly!");
                             } else {
                                 println!("\n⚠️ Warning: Decrypted text doesn't match original");
-                                println!("Original length: {}, Decrypted length: {}", 
-                                        test_message.trim().len(), decrypted_text.trim().len());
+                                println!(
+                                    "Original length: {}, Decrypted length: {}",
+                                    test_message.trim().len(),
+                                    decrypted_text.trim().len()
+                                );
                             }
                         }
                         Err(e) => {
-                            println!("\n❌ Decryption failed: {}", e);
-                            
+                            println!("\n❌ Decryption failed: {e}");
+
                             // Try manual decryption command for debugging
                             println!("\n📝 You can try manual decryption with:");
                             println!("  age -d test-message.age");
@@ -144,17 +154,17 @@ fn main() {
                     }
                 }
                 Err(e) => {
-                    println!("❌ Encryption failed: {}", e);
+                    println!("❌ Encryption failed: {e}");
                 }
             }
-            
+
             println!("\n📝 Manual usage example:");
-            println!("  echo 'secret' | age -r {} -o secret.age", recipient);
+            println!("  echo 'secret' | age -r {recipient} -o secret.age");
             println!("  age -d -i age-plugin-yubikey secret.age");
         }
         Err(e) => {
-            error!("Setup failed: {}", e);
-            
+            error!("Setup failed: {e}");
+
             match e {
                 yubikey_ykman_poc::errors::YubiKeyError::TouchTimeout => {
                     println!("\n⏱️ Touch timeout!");
@@ -162,13 +172,13 @@ fn main() {
                 }
                 yubikey_ykman_poc::errors::YubiKeyError::PinFailed(attempts) => {
                     println!("\n❌ Incorrect PIN!");
-                    println!("Attempts remaining: {}", attempts);
+                    println!("Attempts remaining: {attempts}");
                     if attempts == 0 {
                         println!("⚠️  YubiKey is locked! Use PUK to unlock.");
                     }
                 }
                 _ => {
-                    println!("\n❌ Error: {}", e);
+                    println!("\n❌ Error: {e}");
                 }
             }
             std::process::exit(1);
@@ -182,14 +192,14 @@ fn run_test_only() {
     // Load manifest
     let manifest = match YubiKeyManifest::load_from_file(DEFAULT_MANIFEST_PATH) {
         Ok(m) => {
-            println!("✅ Loaded manifest from {}", DEFAULT_MANIFEST_PATH);
+            println!("✅ Loaded manifest from {DEFAULT_MANIFEST_PATH}");
             println!("  YubiKey Serial: {}", m.yubikey.serial);
             println!("  Touch Policy: {}", m.yubikey.touch_policy);
             println!("  Recipient: {}", m.age.recipient);
             m
         }
         Err(e) => {
-            println!("❌ Failed to load manifest: {}", e);
+            println!("❌ Failed to load manifest: {e}");
             println!("Please run setup first with: cargo run -- --auto");
             std::process::exit(1);
         }
@@ -198,7 +208,7 @@ fn run_test_only() {
     // Test message
     let test_message = "🔐 Secret test message for YubiKey encryption/decryption POC!";
     println!("\n📝 Test message:");
-    println!("{}", test_message);
+    println!("{test_message}");
     println!("---");
 
     // Encrypt using recipient from manifest
@@ -213,7 +223,7 @@ fn run_test_only() {
             } else {
                 String::from_utf8_lossy(&encrypted).to_string()
             };
-            println!("Encrypted preview: {}", preview);
+            println!("Encrypted preview: {preview}");
 
             // Decrypt using manifest
             println!("\n🔓 Decrypting with YubiKey (PIN will be auto-provided)...");
@@ -224,7 +234,7 @@ fn run_test_only() {
                     let decrypted_text = String::from_utf8_lossy(&decrypted);
                     println!("\n✅ Decrypted successfully!");
                     println!("Decrypted message:");
-                    println!("{}", decrypted_text);
+                    println!("{decrypted_text}");
                     println!("---");
 
                     if decrypted_text.trim() == test_message.trim() {
@@ -232,22 +242,25 @@ fn run_test_only() {
                         println!("✅ Original and decrypted messages match exactly.");
                     } else {
                         println!("\n⚠️ Warning: Messages don't match exactly");
-                        println!("Original length: {}, Decrypted length: {}",
-                                test_message.len(), decrypted_text.trim().len());
+                        println!(
+                            "Original length: {}, Decrypted length: {}",
+                            test_message.len(),
+                            decrypted_text.trim().len()
+                        );
                     }
                 }
                 Err(e) => {
-                    println!("\n❌ Decryption failed: {}", e);
+                    println!("\n❌ Decryption failed: {e}");
                     println!("\nTroubleshooting:");
                     println!("1. Make sure you touched the YubiKey when it blinked");
-                    println!("2. Verify PIN is correct: {}", DEFAULT_PIN);
+                    println!("2. Verify PIN is correct: {DEFAULT_PIN}");
                     println!("3. Check if identity file exists: yubikey-identity.txt");
                     std::process::exit(1);
                 }
             }
         }
         Err(e) => {
-            println!("❌ Encryption failed: {}", e);
+            println!("❌ Encryption failed: {e}");
             std::process::exit(1);
         }
     }
@@ -260,8 +273,8 @@ fn run_test_only() {
         Ok(encrypted) => {
             // Save to file
             let encrypted_file = "test-file.age";
-            if let Ok(_) = std::fs::write(encrypted_file, &encrypted) {
-                println!("✅ Encrypted file saved: {}", encrypted_file);
+            if std::fs::write(encrypted_file, &encrypted).is_ok() {
+                println!("✅ Encrypted file saved: {encrypted_file}");
 
                 // Decrypt from file
                 match std::fs::read(encrypted_file) {
@@ -274,21 +287,21 @@ fn run_test_only() {
                                     println!("✅ File decryption successful!");
 
                                     // Save decrypted file
-                                    if let Ok(_) = std::fs::write("decrypted.txt", &decrypted) {
+                                    if std::fs::write("decrypted.txt", &decrypted).is_ok() {
                                         println!("📁 Decrypted content saved to: decrypted.txt");
                                     }
                                 } else {
                                     println!("⚠️ File content mismatch");
                                 }
                             }
-                            Err(e) => println!("❌ File decryption failed: {}", e),
+                            Err(e) => println!("❌ File decryption failed: {e}"),
                         }
                     }
-                    Err(e) => println!("❌ Failed to read encrypted file: {}", e),
+                    Err(e) => println!("❌ Failed to read encrypted file: {e}"),
                 }
             }
         }
-        Err(e) => println!("❌ File encryption failed: {}", e),
+        Err(e) => println!("❌ File encryption failed: {e}"),
     }
 
     println!("\n✅ Test mode complete!");

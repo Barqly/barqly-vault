@@ -230,5 +230,19 @@ pub fn get_recovery_guidance(code: &ErrorCode) -> (Option<String>, bool) {
             Some("YubiKey operation failed. Ensure the device is connected and try again".to_string()),
             true,
         ),
+
+        // Vault errors
+        ErrorCode::VaultNotFound => (
+            Some("Vault not found. Create a new vault or check the vault ID".to_string()),
+            true,
+        ),
+        ErrorCode::VaultAlreadyExists => (
+            Some("A vault with this name already exists. Choose a different name".to_string()),
+            true,
+        ),
+        ErrorCode::VaultKeyLimitExceeded => (
+            Some("Vault key limit exceeded. Each vault can have 1 passphrase and up to 3 YubiKeys".to_string()),
+            true,
+        ),
     }
 }

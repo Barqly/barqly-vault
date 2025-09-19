@@ -1,7 +1,7 @@
+use crate::errors::{Result, YubiKeyError};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
-use crate::errors::{Result, YubiKeyError};
 
 /// YubiKey manifest that stores metadata after key generation
 #[derive(Debug, Serialize, Deserialize)]
@@ -52,11 +52,12 @@ impl YubiKeyManifest {
 
     /// Save manifest to JSON file
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        let json = serde_json::to_string_pretty(self)
-            .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to serialize manifest: {}", e)))?;
+        let json = serde_json::to_string_pretty(self).map_err(|e| {
+            YubiKeyError::OperationFailed(format!("Failed to serialize manifest: {e}"))
+        })?;
 
         fs::write(path, json)
-            .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to write manifest: {}", e)))?;
+            .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to write manifest: {e}")))?;
 
         Ok(())
     }
@@ -64,10 +65,10 @@ impl YubiKeyManifest {
     /// Load manifest from JSON file
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let json = fs::read_to_string(path)
-            .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to read manifest: {}", e)))?;
+            .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to read manifest: {e}")))?;
 
         let manifest = serde_json::from_str(&json)
-            .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to parse manifest: {}", e)))?;
+            .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to parse manifest: {e}")))?;
 
         Ok(manifest)
     }
@@ -94,15 +95,17 @@ impl YubiKeyManifest {
         use crate::TMP_DIR;
         use std::env;
         // Create tmp directory if it doesn't exist
-        let cwd = env::current_dir()
-            .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to get current dir: {}", e)))?;
+        let cwd = env::current_dir().map_err(|e| {
+            YubiKeyError::OperationFailed(format!("Failed to get current dir: {e}"))
+        })?;
         let tmp_dir = cwd.join(TMP_DIR);
         let _ = fs::create_dir_all(&tmp_dir);
         let temp_path = tmp_dir.join(format!("yubikey_identity_{}.txt", self.yubikey.serial));
         let content = self.create_identity_content();
 
-        fs::write(&temp_path, content)
-            .map_err(|e| YubiKeyError::OperationFailed(format!("Failed to create identity file: {}", e)))?;
+        fs::write(&temp_path, content).map_err(|e| {
+            YubiKeyError::OperationFailed(format!("Failed to create identity file: {e}"))
+        })?;
 
         Ok(temp_path.display().to_string())
     }

@@ -1,5 +1,6 @@
 [workspace]
-members = [ "poc/yubikey-apdu-poc", "poc/yubikey-ykman-poc","src-tauri"]
+members = ["src-tauri"]
+exclude = ["poc/yubikey-apdu-poc", "poc/yubikey-ykman-poc"]
 resolver = "2"
 
 [workspace.dependencies]
