@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Key, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useVault } from '../../contexts/VaultContext';
 import { logger } from '../../lib/logger';
+import { safeInvoke } from '../../lib/tauri-safe';
+import { PassphraseValidationResult, AddPassphraseKeyRequest } from '../../lib/api-types';
 
 interface PassphraseKeyDialogProps {
   isOpen: boolean;
@@ -17,33 +19,84 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { currentVault, addKeyToVault } = useVault();
+  const { currentVault, refreshKeys } = useVault();
   const [label, setLabel] = useState('');
   const [passphrase, setPassphrase] = useState('');
   const [confirmPassphrase, setConfirmPassphrase] = useState('');
   const [showPassphrase, setShowPassphrase] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validation, setValidation] = useState<PassphraseValidationResult | null>(null);
+  const [isValidating, setIsValidating] = useState(false); // Loading state for validation
 
-  const validatePassphrase = (): string | null => {
+  // Real-time passphrase validation
+  useEffect(() => {
+    if (!passphrase) {
+      setValidation(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsValidating(true);
+      try {
+        const result = await safeInvoke<PassphraseValidationResult>(
+          'validate_passphrase_strength',
+          passphrase,
+          'PassphraseKeyDialog.validate',
+        );
+        setValidation(result);
+      } catch (err) {
+        logger.error('PassphraseKeyDialog', 'Failed to validate passphrase', err as Error);
+      } finally {
+        setIsValidating(false);
+      }
+    }, 300); // Debounce for 300ms
+
+    return () => clearTimeout(timer);
+  }, [passphrase]);
+
+  const validateForm = (): string | null => {
     if (!label.trim()) {
       return 'Key label is required';
     }
-    if (passphrase.length < 12) {
-      return 'Passphrase must be at least 12 characters';
+    if (!validation?.is_valid) {
+      return 'Passphrase does not meet security requirements';
     }
     if (passphrase !== confirmPassphrase) {
       return 'Passphrases do not match';
     }
-    // TODO: Backend engineer needs to implement validate_passphrase API
-    // See /docs/handoff/passphrase-validation-api.md
     return null;
+  };
+
+  const getStrengthColor = () => {
+    if (!validation) return 'bg-gray-200';
+    switch (validation.strength) {
+      case 'weak':
+        return 'bg-red-500';
+      case 'fair':
+        return 'bg-yellow-500';
+      case 'good':
+        return 'bg-blue-500';
+      case 'strong':
+        return 'bg-green-500';
+      default:
+        return 'bg-gray-200';
+    }
+  };
+
+  const getStrengthWidth = () => {
+    if (!validation) return 'w-0';
+    const percentage = Math.min(validation.score, 100);
+    if (percentage <= 25) return 'w-1/4';
+    if (percentage <= 50) return 'w-1/2';
+    if (percentage <= 75) return 'w-3/4';
+    return 'w-full';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validationError = validatePassphrase();
+    const validationError = validateForm();
     if (validationError) {
       setError(validationError);
       return;
@@ -58,12 +111,22 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
     setError(null);
 
     try {
-      // TODO: Backend engineer needs to integrate with generate_key command
-      // Currently addKeyToVault creates placeholder, needs actual key generation
-      // See /docs/handoff/passphrase-key-creation-api.md
-      await addKeyToVault('passphrase', label.trim(), { passphrase });
+      const request: AddPassphraseKeyRequest = {
+        vault_id: currentVault.id,
+        label: label.trim(),
+        passphrase,
+      };
 
-      logger.info('PassphraseKeyDialog', 'Passphrase key created successfully');
+      const result = await safeInvoke<{ key_reference: any; public_key: string }>(
+        'add_passphrase_key_to_vault',
+        request,
+        'PassphraseKeyDialog.create',
+      );
+
+      logger.info('PassphraseKeyDialog', 'Passphrase key created successfully', result);
+
+      // Refresh the vault keys to show the new key
+      await refreshKeys();
 
       // Clear form
       setLabel('');
@@ -104,14 +167,13 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <Key className="h-6 w-6 text-blue-600" />
-              <h2 className="text-xl font-semibold text-gray-900">
-                Add Passphrase Key
-              </h2>
+              <h2 className="text-xl font-semibold text-gray-900">Add Passphrase Key</h2>
             </div>
             <button
               onClick={handleCancel}
               disabled={isCreating}
               className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+              aria-label="Close"
             >
               <X className="h-5 w-5" />
             </button>
@@ -120,10 +182,11 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="key-label" className="block text-sm font-medium text-gray-700 mb-2">
                 Key Label *
               </label>
               <input
+                id="key-label"
                 type="text"
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
@@ -135,11 +198,12 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="passphrase" className="block text-sm font-medium text-gray-700 mb-2">
                 Passphrase * (min. 12 characters)
               </label>
               <div className="relative">
                 <input
+                  id="passphrase"
                   type={showPassphrase ? 'text' : 'password'}
                   value={passphrase}
                   onChange={(e) => setPassphrase(e.target.value)}
@@ -151,6 +215,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                   type="button"
                   onClick={() => setShowPassphrase(!showPassphrase)}
                   className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassphrase ? 'Hide passphrase' : 'Show passphrase'}
                 >
                   {showPassphrase ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -163,10 +228,14 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="confirm-passphrase"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Confirm Passphrase *
               </label>
               <input
+                id="confirm-passphrase"
                 type={showPassphrase ? 'text' : 'password'}
                 value={confirmPassphrase}
                 onChange={(e) => setConfirmPassphrase(e.target.value)}
@@ -178,6 +247,44 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                 <p className="text-xs text-red-600 mt-1">Passphrases do not match</p>
               )}
             </div>
+
+            {/* Passphrase Strength Indicator */}
+            {passphrase && (validation || isValidating) && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Strength:</span>
+                  {isValidating ? (
+                    <span className="text-gray-500">Checking...</span>
+                  ) : validation ? (
+                    <span
+                      className={`font-medium ${
+                        validation.strength === 'weak'
+                          ? 'text-red-600'
+                          : validation.strength === 'fair'
+                            ? 'text-yellow-600'
+                            : validation.strength === 'good'
+                              ? 'text-blue-600'
+                              : 'text-green-600'
+                      }`}
+                    >
+                      {validation.strength.charAt(0).toUpperCase() + validation.strength.slice(1)}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${getStrengthColor()} ${getStrengthWidth()}`}
+                  />
+                </div>
+                {validation?.feedback && validation.feedback.length > 0 && (
+                  <ul className="text-xs text-gray-600 space-y-1">
+                    {validation.feedback.map((item, idx) => (
+                      <li key={idx}>• {item}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
 
             {/* Security Note */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -203,7 +310,12 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
             <div className="flex gap-3 pt-2">
               <button
                 type="submit"
-                disabled={isCreating || !label.trim() || !passphrase || !confirmPassphrase}
+                disabled={
+                  isCreating ||
+                  !label.trim() ||
+                  !validation?.is_valid ||
+                  passphrase !== confirmPassphrase
+                }
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isCreating ? (

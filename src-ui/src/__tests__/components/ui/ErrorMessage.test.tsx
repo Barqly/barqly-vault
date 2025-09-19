@@ -28,8 +28,6 @@ describe('ErrorMessage', () => {
         details: 'Technical details here',
         recovery_guidance: 'Please check your input',
         user_actionable: true,
-        trace_id: 'trace-123',
-        span_id: 'span-456',
       };
 
       render(<ErrorMessage error={error} />);

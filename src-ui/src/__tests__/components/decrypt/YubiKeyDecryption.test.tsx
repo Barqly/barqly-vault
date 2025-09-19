@@ -3,18 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import YubiKeyDecryption from '../../../components/decrypt/YubiKeyDecryption';
 import { YubiKeyDevice } from '../../../lib/api-types';
-import * as apiTypes from '../../../lib/api-types';
+import * as tauriSafe from '../../../lib/tauri-safe';
 
-// Mock the API types module
-vi.mock('../../../lib/api-types', async () => {
-  const actual = await vi.importActual('../../../lib/api-types');
-  return {
-    ...actual,
-    invokeCommand: vi.fn(),
-  };
-});
+// Mock the tauri-safe module
+vi.mock('../../../lib/tauri-safe', () => ({
+  safeInvoke: vi.fn(),
+}));
 
-const mockInvokeCommand = vi.mocked(apiTypes.invokeCommand);
+const mockSafeInvoke = vi.mocked(tauriSafe.safeInvoke);
 
 const mockYubiKeyDevices: YubiKeyDevice[] = [
   {
@@ -42,7 +38,12 @@ describe('YubiKeyDecryption - User Experience', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockInvokeCommand.mockResolvedValue(mockYubiKeyDevices);
+    mockSafeInvoke.mockImplementation((cmd) => {
+      if (cmd === 'yubikey_list_devices') {
+        return Promise.resolve(mockYubiKeyDevices);
+      }
+      return Promise.resolve(null);
+    });
   });
 
   afterEach(() => {
@@ -75,7 +76,12 @@ describe('YubiKeyDecryption - User Experience', () => {
     });
 
     it('user receives feedback when no devices are found', async () => {
-      mockInvokeCommand.mockResolvedValue([]);
+      mockSafeInvoke.mockImplementation((cmd) => {
+        if (cmd === 'yubikey_list_devices') {
+          return Promise.resolve([]);
+        }
+        return Promise.resolve(null);
+      });
 
       await act(async () => {
         render(<YubiKeyDecryption {...defaultProps} />);
@@ -118,7 +124,12 @@ describe('YubiKeyDecryption - User Experience', () => {
           has_fido: true,
         },
       ];
-      mockInvokeCommand.mockResolvedValue(multipleDevices);
+      mockSafeInvoke.mockImplementation((cmd) => {
+        if (cmd === 'yubikey_list_devices') {
+          return Promise.resolve(multipleDevices);
+        }
+        return Promise.resolve(null);
+      });
 
       await act(async () => {
         render(<YubiKeyDecryption {...defaultProps} />);
@@ -141,7 +152,7 @@ describe('YubiKeyDecryption - User Experience', () => {
 
   describe('User gets helpful feedback and error handling', () => {
     it('user receives feedback when device detection fails', async () => {
-      mockInvokeCommand.mockRejectedValue(new Error('Failed to detect devices'));
+      mockSafeInvoke.mockRejectedValue(new Error('Failed to detect devices'));
 
       await act(async () => {
         render(<YubiKeyDecryption {...defaultProps} />);
@@ -160,8 +171,8 @@ describe('YubiKeyDecryption - User Experience', () => {
     });
 
     it('user can retry device detection when it fails', async () => {
-      mockInvokeCommand.mockRejectedValueOnce(new Error('Detection failed'));
-      mockInvokeCommand.mockResolvedValueOnce(mockYubiKeyDevices);
+      mockSafeInvoke.mockRejectedValueOnce(new Error('Detection failed'));
+      mockSafeInvoke.mockResolvedValueOnce(mockYubiKeyDevices);
 
       await act(async () => {
         render(<YubiKeyDecryption {...defaultProps} />);
@@ -176,7 +187,7 @@ describe('YubiKeyDecryption - User Experience', () => {
       const buttons = screen.queryAllByRole('button');
       if (buttons.length > 0) {
         await user.click(buttons[0]); // Click first available button
-        expect(mockInvokeCommand).toHaveBeenCalledTimes(2);
+        expect(mockSafeInvoke).toHaveBeenCalledTimes(2);
       }
     });
   });

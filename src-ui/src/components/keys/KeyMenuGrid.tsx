@@ -15,10 +15,7 @@ interface KeyMenuGridProps {
  * Displays a 2x2 grid with 1 passphrase slot and 3 YubiKey slots
  * Part of the new vault-centric architecture replacing protection modes
  */
-export const KeyMenuGrid: React.FC<KeyMenuGridProps> = ({
-  onKeySelect,
-  className = '',
-}) => {
+export const KeyMenuGrid: React.FC<KeyMenuGridProps> = ({ onKeySelect, className = '' }) => {
   const { currentVault, vaultKeys, isLoadingKeys } = useVault();
 
   // Map KeyState enum to YubiKeySlotState
@@ -37,12 +34,12 @@ export const KeyMenuGrid: React.FC<KeyMenuGridProps> = ({
 
   // Process keys from vault
   const { passphraseKey, yubiKeys } = useMemo(() => {
-    const passphrase = vaultKeys.find(k =>
-      k.key_type && 'type' in k.key_type && k.key_type.type === 'passphrase'
+    const passphrase = vaultKeys.find(
+      (k) => k.key_type && 'type' in k.key_type && k.key_type.type === 'passphrase',
     );
 
-    const yubis = vaultKeys.filter(k =>
-      k.key_type && 'type' in k.key_type && k.key_type.type === 'yubikey'
+    const yubis = vaultKeys.filter(
+      (k) => k.key_type && 'type' in k.key_type && k.key_type.type === 'yubikey',
     );
 
     return { passphraseKey: passphrase, yubiKeys: yubis };
@@ -58,10 +55,12 @@ export const KeyMenuGrid: React.FC<KeyMenuGridProps> = ({
 
   // Helper to get YubiKey data for a specific slot
   const getYubiKeyForSlot = (slotIndex: number): KeyReference | undefined => {
-    return yubiKeys.find(k => {
-      const keyType = k.key_type as any;
-      return keyType?.slot_index === slotIndex;
-    }) || yubiKeys[slotIndex]; // Fallback to array index if slot_index not set
+    return (
+      yubiKeys.find((k) => {
+        const keyType = k.key_type as any;
+        return keyType?.slot_index === slotIndex;
+      }) || yubiKeys[slotIndex]
+    ); // Fallback to array index if slot_index not set
   };
 
   if (isLoadingKeys) {

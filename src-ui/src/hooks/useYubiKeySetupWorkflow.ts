@@ -1,13 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSetupWorkflow } from './useSetupWorkflow';
-import { useKeyGeneration } from './useKeyGeneration';
+// import { useKeyGeneration } from './useKeyGeneration'; // Commented out - not currently used
 import {
   ProtectionMode,
   YubiKeyDevice,
   YubiKeyInfo,
-  CommandErrorClass,
+  // CommandErrorClass, // Commented out - not currently used
   YubiKeyStateInfo,
-  YubiKeyState,
 } from '../lib/api-types';
 import { safeInvoke } from '../lib/tauri-safe';
 import { logger } from '../lib/logger';
@@ -21,7 +20,7 @@ export const useYubiKeySetupWorkflow = () => {
   const baseWorkflow = useSetupWorkflow();
 
   // Also get direct access to key generation for state management
-  const keyGeneration = useKeyGeneration();
+  // const keyGeneration = useKeyGeneration(); // Commented out - not currently used
 
   // YubiKey-specific state
   const [protectionMode, setProtectionMode] = useState<ProtectionMode>(
@@ -70,7 +69,7 @@ export const useYubiKeySetupWorkflow = () => {
       // Convert YubiKeyStateInfo to YubiKeyDevice format for backward compatibility
       const devices: YubiKeyDevice[] = yubikeys.map((yk) => ({
         device_id: yk.serial, // Use serial as device_id
-        name: yk.label || `YubiKey (${yk.serial})`,
+        name: (yk as any).label || `YubiKey (${yk.serial})`,
         serial_number: yk.serial,
         firmware_version: undefined,
         has_piv: true,
@@ -88,9 +87,9 @@ export const useYubiKeySetupWorkflow = () => {
       }
 
       // Check YubiKey states and provide appropriate messaging
-      const registeredKeys = yubikeys.filter((yk) => yk.state === YubiKeyState.REGISTERED);
-      const newKeys = yubikeys.filter((yk) => yk.state === YubiKeyState.NEW);
-      const reusedKeys = yubikeys.filter((yk) => yk.state === YubiKeyState.REUSED);
+      const registeredKeys = yubikeys.filter((yk) => yk.state === 'INITIALIZED');
+      const newKeys = yubikeys.filter((yk) => yk.state === 'NEW');
+      const reusedKeys = yubikeys.filter((yk) => yk.state === 'REUSED');
 
       if (registeredKeys.length > 0) {
         console.log('✅ Found registered YubiKey(s):', registeredKeys);
@@ -101,7 +100,7 @@ export const useYubiKeySetupWorkflow = () => {
             'useYubiKeySetupWorkflow',
             'Auto-selected registered YubiKey',
             {
-              deviceName: registeredKeys[0].label,
+              deviceName: (registeredKeys[0] as any).label,
               serial: registeredKeys[0].serial,
               state: registeredKeys[0].state,
             },
@@ -377,24 +376,24 @@ export const useYubiKeySetupWorkflow = () => {
       );
 
       console.log('✅ TRACER: generate_key_multi successful:', result);
-      
+
       // Set enhanced success state
       setIsEnhancedLoading(false);
       setEnhancedSuccess(result);
       console.log('🎉 TRACER: Enhanced loading complete - success state set');
-      
+
       return result;
     } catch (error: any) {
       console.log('❌ TRACER: Enhanced key generation failed:', error);
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Enhanced key generation failed', {
         error: error.message,
       });
-      
+
       // Set enhanced error state
       setIsEnhancedLoading(false);
       setEnhancedError(error);
       console.log('💥 TRACER: Enhanced loading complete - error state set');
-      
+
       throw error;
     }
   }, [
@@ -420,10 +419,11 @@ export const useYubiKeySetupWorkflow = () => {
     setDeviceError(null);
   }, [baseWorkflow.handleReset]);
 
-  const clearError = useCallback(() => {
-    baseWorkflow.clearError();
-    setDeviceError(null);
-  }, [baseWorkflow.clearError]);
+  // Unused but keeping for potential future use
+  // const clearError = useCallback(() => {
+  //   baseWorkflow.clearError();
+  //   setDeviceError(null);
+  // }, [baseWorkflow.clearError]);
 
   // Enhanced validation that considers protection mode
   const isSetupValid = useCallback(() => {
@@ -471,19 +471,19 @@ export const useYubiKeySetupWorkflow = () => {
     }
   }, [setupStep, protectionMode, selectedDevice, baseWorkflow.isFormValid, isSetupValid]);
 
-  // Get current error (either from base workflow or device error)
-  const getCurrentError = useCallback(() => {
-    if (deviceError) {
-      return new CommandErrorClass({
-        code: 'YUBIKEY_COMMUNICATION_ERROR' as any,
-        message: 'YubiKey device error',
-        details: deviceError,
-        user_actionable: true,
-        recovery_guidance: 'Check your YubiKey connection and try again',
-      });
-    }
-    return baseWorkflow.error;
-  }, [deviceError, baseWorkflow.error]);
+  // Unused but keeping for potential future use
+  // const getCurrentError = useCallback(() => {
+  //   if (deviceError) {
+  //     return new CommandErrorClass({
+  //       code: 'YUBIKEY_COMMUNICATION_ERROR' as any,
+  //       message: 'YubiKey device error',
+  //       details: deviceError,
+  //       user_actionable: true,
+  //       recovery_guidance: 'Check your YubiKey connection and try again',
+  //     });
+  //   }
+  //   return baseWorkflow.error;
+  // }, [deviceError, baseWorkflow.error]);
 
   // Enhanced state management: Override base workflow state when enhanced operations are active
   const getEffectiveLoadingState = () => {
@@ -515,10 +515,10 @@ export const useYubiKeySetupWorkflow = () => {
   return {
     // Base workflow properties (overridden by enhanced state)
     ...baseWorkflow,
-    
+
     // Override state with enhanced state when active
     isLoading: getEffectiveLoadingState(),
-    success: getEffectiveSuccessState(), 
+    success: getEffectiveSuccessState(),
     error: getEffectiveErrorState(),
 
     // Override key generation and label change handlers

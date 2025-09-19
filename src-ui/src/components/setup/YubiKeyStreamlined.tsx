@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Key, Shield, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { YubiKeyStateInfo, YubiKeyState, YubiKeyInitResult } from '../../lib/api-types';
+import { YubiKeyStateInfo, YubiKeyInitResult } from '../../lib/api-types';
 import { safeInvoke } from '../../lib/tauri-safe';
 import { logger } from '../../lib/logger';
 
@@ -13,10 +13,7 @@ interface YubiKeyStreamlinedProps {
  * Minimal YubiKey setup component with PIN confirmation
  * Supports multiple YubiKeys for backup
  */
-export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
-  onComplete,
-  onCancel
-}) => {
+export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComplete, onCancel }) => {
   const [yubikeys, setYubikeys] = useState<YubiKeyStateInfo[]>([]);
   const [selectedKey, setSelectedKey] = useState<YubiKeyStateInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +27,9 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
   const [showRecoveryWarning, setShowRecoveryWarning] = useState(false);
 
   // Operation state
-  const [operation, setOperation] = useState<'detect' | 'setup' | 'recovery' | 'complete'>('detect');
+  const [operation, setOperation] = useState<'detect' | 'setup' | 'recovery' | 'complete'>(
+    'detect',
+  );
 
   useEffect(() => {
     detectYubiKeys();
@@ -44,7 +43,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
       const keys = await safeInvoke<YubiKeyStateInfo[]>(
         'list_yubikeys',
         undefined,
-        'YubiKeyStreamlined.detectYubiKeys'
+        'YubiKeyStreamlined.detectYubiKeys',
       );
 
       setYubikeys(keys);
@@ -71,27 +70,27 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
     try {
       let result: YubiKeyInitResult;
 
-      if (selectedKey.state === YubiKeyState.NEW) {
+      if (selectedKey.state === 'NEW') {
         // Initialize new YubiKey
         result = await safeInvoke<YubiKeyInitResult>(
           'init_yubikey',
           {
             serial: selectedKey.serial,
             new_pin: pin,
-            label: label || `YubiKey-${selectedKey.serial.substring(0, 6)}`
+            label: label || `YubiKey-${selectedKey.serial.substring(0, 6)}`,
           },
-          'YubiKeyStreamlined.initYubiKey'
+          'YubiKeyStreamlined.initYubiKey',
         );
-      } else if (selectedKey.state === YubiKeyState.REUSED) {
+      } else if (selectedKey.state === 'REUSED') {
         // Register reused YubiKey
         result = await safeInvoke<YubiKeyInitResult>(
           'register_yubikey',
           {
             serial: selectedKey.serial,
             label: label || `YubiKey-${selectedKey.serial.substring(0, 6)}`,
-            pin: pin
+            pin: pin,
           },
-          'YubiKeyStreamlined.registerYubiKey'
+          'YubiKeyStreamlined.registerYubiKey',
         );
       } else {
         throw new Error('YubiKey is already registered');
@@ -114,30 +113,30 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
     }
   };
 
-  const getStateColor = (state: YubiKeyState) => {
+  const getStateColor = (state: string) => {
     switch (state) {
-      case YubiKeyState.NEW:
+      case 'NEW':
         return 'text-green-600';
-      case YubiKeyState.REUSED:
+      case 'REUSED':
         return 'text-blue-600';
-      case YubiKeyState.REGISTERED:
+      case 'INITIALIZED':
         return 'text-gray-500';
-      case YubiKeyState.ORPHANED:
+      case 'UNKNOWN':
         return 'text-yellow-600';
       default:
         return 'text-gray-400';
     }
   };
 
-  const getStateLabel = (state: YubiKeyState) => {
+  const getStateLabel = (state: string) => {
     switch (state) {
-      case YubiKeyState.NEW:
+      case 'NEW':
         return 'New (Ready for setup)';
-      case YubiKeyState.REUSED:
+      case 'REUSED':
         return 'Reused (Needs registration)';
-      case YubiKeyState.REGISTERED:
+      case 'INITIALIZED':
         return 'Already registered';
-      case YubiKeyState.ORPHANED:
+      case 'UNKNOWN':
         return 'Needs recovery (manifest missing)';
       default:
         return 'Unknown';
@@ -161,8 +160,8 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
             {/* YubiKey Detection */}
             <div className="space-y-4">
               <p className="text-gray-600">
-                Connect your YubiKey to set up hardware-based encryption.
-                We recommend having at least 2 YubiKeys for backup.
+                Connect your YubiKey to set up hardware-based encryption. We recommend having at
+                least 2 YubiKeys for backup.
               </p>
 
               {isLoading ? (
@@ -187,15 +186,15 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
                     <button
                       key={yk.serial}
                       onClick={() => {
-                        if (yk.state !== YubiKeyState.REGISTERED) {
+                        if (yk.state !== 'INITIALIZED') {
                           setSelectedKey(yk);
                           setLabel(`YubiKey-${yk.serial.substring(0, 6)}`);
                           setOperation('setup');
                         }
                       }}
-                      disabled={yk.state === YubiKeyState.REGISTERED}
+                      disabled={yk.state === 'INITIALIZED'}
                       className={`w-full p-4 border rounded-lg text-left transition-colors ${
-                        yk.state === YubiKeyState.REGISTERED
+                        yk.state === 'INITIALIZED'
                           ? 'bg-gray-50 border-gray-200 cursor-not-allowed'
                           : 'hover:bg-blue-50 hover:border-blue-300 cursor-pointer'
                       } ${selectedKey?.serial === yk.serial ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -205,14 +204,14 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
                           <Key className="h-5 w-5 text-gray-600" />
                           <div>
                             <p className="font-medium text-gray-900">
-                              {yk.label || `YubiKey ${yk.serial.substring(0, 8)}`}
+                              {(yk as any).label || `YubiKey ${yk.serial.substring(0, 8)}`}
                             </p>
                             <p className={`text-sm ${getStateColor(yk.state)}`}>
                               {getStateLabel(yk.state)}
                             </p>
                           </div>
                         </div>
-                        {yk.state === YubiKeyState.REGISTERED && (
+                        {yk.state === 'INITIALIZED' && (
                           <CheckCircle2 className="h-5 w-5 text-green-600" />
                         )}
                       </div>
@@ -247,19 +246,20 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  Setting up: <strong>{selectedKey.label || `YubiKey ${selectedKey.serial.substring(0, 8)}`}</strong>
+                  Setting up:{' '}
+                  <strong>
+                    {(selectedKey as any).label || `YubiKey ${selectedKey.serial.substring(0, 8)}`}
+                  </strong>
                 </p>
                 <p className="text-sm text-blue-700 mt-1">
-                  {selectedKey.state === YubiKeyState.NEW
+                  {selectedKey.state === 'NEW'
                     ? 'This is a new YubiKey. We will initialize it for you.'
                     : 'This YubiKey is already configured. Enter your existing PIN.'}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Label
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Label</label>
                 <input
                   type="text"
                   value={label}
@@ -271,7 +271,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {selectedKey.state === YubiKeyState.NEW ? 'Create PIN' : 'Enter PIN'}
+                  {selectedKey.state === 'NEW' ? 'Create PIN' : 'Enter PIN'}
                   <span className="text-gray-500 ml-2">(6-8 digits)</span>
                 </label>
                 <input
@@ -288,9 +288,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm PIN
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm PIN</label>
                 <input
                   type="password"
                   value={pinConfirm}
@@ -306,8 +304,8 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> We'll generate a secure recovery code for you.
-                  This code can unlock your PIN if you forget it.
+                  <strong>Note:</strong> We'll generate a secure recovery code for you. This code
+                  can unlock your PIN if you forget it.
                 </p>
               </div>
 
@@ -354,9 +352,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-6 w-6 text-yellow-600 flex-shrink-0 mt-0.5" />
                 <div className="space-y-3 flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Save Your Recovery Code
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Save Your Recovery Code</h3>
                   <p className="text-sm text-gray-700">
                     This recovery code can unlock your YubiKey PIN if you forget it.
                     <strong className="block mt-2 text-red-600">
@@ -390,14 +386,14 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
                 onClick={() => {
                   setOperation('complete');
                   if (selectedKey) {
-                    const result: YubiKeyInitResult = {
-                      serial: selectedKey.serial,
-                      slot: 1, // Default slot
-                      recipient: selectedKey.recipient || '',
-                      identity_tag: selectedKey.identity_tag || '',
-                      label: label,
-                      recovery_code: '' // Don't pass recovery code forward
-                    };
+                    const result = {
+                      success: true,
+                      key_reference: {
+                        id: selectedKey.serial,
+                        label: label,
+                      } as any,
+                      recovery_code: recoveryCode || undefined,
+                    } as YubiKeyInitResult;
                     onComplete?.(result);
                   }
                 }}
@@ -417,9 +413,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
         {operation === 'complete' && (
           <div className="text-center py-8">
             <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              YubiKey Setup Complete!
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">YubiKey Setup Complete!</h3>
             <p className="text-gray-600">
               Your YubiKey has been successfully configured for use with Barqly Vault.
             </p>
@@ -435,8 +429,8 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({
             <div>
               <p className="text-sm font-medium text-blue-900">Security Recommendation</p>
               <p className="text-sm text-blue-800 mt-1">
-                We recommend setting up at least 2 YubiKeys. This ensures you have a backup
-                if one is lost or damaged.
+                We recommend setting up at least 2 YubiKeys. This ensures you have a backup if one
+                is lost or damaged.
               </p>
             </div>
           </div>

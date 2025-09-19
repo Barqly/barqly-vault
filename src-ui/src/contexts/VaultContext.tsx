@@ -9,7 +9,6 @@ import {
   GetCurrentVaultResponse,
   GetVaultKeysResponse,
   SetCurrentVaultRequest,
-  AddKeyToVaultRequest,
   RemoveKeyFromVaultRequest,
 } from '../lib/api-types';
 
@@ -31,7 +30,6 @@ interface VaultContextType {
   setCurrentVault: (vaultId: string) => Promise<void>;
   refreshVaults: () => Promise<void>;
   refreshKeys: () => Promise<void>;
-  addKeyToVault: (keyType: 'passphrase' | 'yubikey', label: string, credentials?: any) => Promise<void>;
   removeKeyFromVault: (keyId: string) => Promise<void>;
 }
 
@@ -68,7 +66,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const vaultsResponse = await safeInvoke<ListVaultsResponse>(
         'list_vaults',
         undefined,
-        'VaultContext.refreshVaults'
+        'VaultContext.refreshVaults',
       );
       setVaults(vaultsResponse.vaults);
 
@@ -76,7 +74,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const currentResponse = await safeInvoke<GetCurrentVaultResponse>(
         'get_current_vault',
         undefined,
-        'VaultContext.getCurrentVault'
+        'VaultContext.getCurrentVault',
       );
 
       if (currentResponse.vault) {
@@ -103,7 +101,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const keysResponse = await safeInvoke<GetVaultKeysResponse>(
         'get_vault_keys',
         { vault_id: currentVault.id },
-        'VaultContext.refreshKeys'
+        'VaultContext.refreshKeys',
       );
       setVaultKeys(keysResponse.keys);
     } catch (err: any) {
@@ -119,11 +117,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     try {
       const request: CreateVaultRequest = { name, description };
-      await safeInvoke(
-        'create_vault',
-        request,
-        'VaultContext.createVault'
-      );
+      await safeInvoke('create_vault', request, 'VaultContext.createVault');
       await refreshVaults();
     } catch (err: any) {
       logger.error('VaultContext', 'Failed to create vault', err);
@@ -140,7 +134,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const response = await safeInvoke<any>(
         'set_current_vault',
         request,
-        'VaultContext.setCurrentVault'
+        'VaultContext.setCurrentVault',
       );
 
       if (response.vault) {
@@ -149,39 +143,6 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } catch (err: any) {
       logger.error('VaultContext', 'Failed to set current vault', err);
       setError(err.message || 'Failed to set current vault');
-      throw err;
-    }
-  };
-
-  const addKeyToVault = async (
-    keyType: 'passphrase' | 'yubikey',
-    label: string,
-    credentials?: any
-  ) => {
-    if (!currentVault) {
-      setError('No vault selected');
-      return;
-    }
-
-    setError(null);
-
-    try {
-      const request: AddKeyToVaultRequest = {
-        vault_id: currentVault.id,
-        key_type: keyType,
-        label,
-        ...credentials,
-      };
-
-      await safeInvoke(
-        'add_key_to_vault',
-        request,
-        'VaultContext.addKeyToVault'
-      );
-      await refreshKeys();
-    } catch (err: any) {
-      logger.error('VaultContext', 'Failed to add key to vault', err);
-      setError(err.message || 'Failed to add key');
       throw err;
     }
   };
@@ -200,11 +161,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         key_id: keyId,
       };
 
-      await safeInvoke(
-        'remove_key_from_vault',
-        request,
-        'VaultContext.removeKeyFromVault'
-      );
+      await safeInvoke('remove_key_from_vault', request, 'VaultContext.removeKeyFromVault');
       await refreshKeys();
     } catch (err: any) {
       logger.error('VaultContext', 'Failed to remove key from vault', err);
@@ -226,7 +183,6 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setCurrentVault,
         refreshVaults,
         refreshKeys,
-        addKeyToVault,
         removeKeyFromVault,
       }}
     >

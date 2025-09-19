@@ -3,7 +3,12 @@ import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info } from 'lucide
 import { useVault } from '../../contexts/VaultContext';
 import { logger } from '../../lib/logger';
 import { safeInvoke } from '../../lib/tauri-safe';
-import { YubiKeyStateInfo, YubiKeyState } from '../../lib/api-types';
+import {
+  YubiKeyStateInfo,
+  YubiKeyInitForVaultParams,
+  RegisterYubiKeyForVaultParams,
+  YubiKeyInitResult,
+} from '../../lib/api-types';
 
 interface YubiKeySetupDialogProps {
   isOpen: boolean;
@@ -22,7 +27,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
   onSuccess,
   slotIndex,
 }) => {
-  const { currentVault, addKeyToVault } = useVault();
+  const { currentVault, refreshKeys } = useVault();
   const [yubikeys, setYubikeys] = useState<YubiKeyStateInfo[]>([]);
   const [selectedKey, setSelectedKey] = useState<YubiKeyStateInfo | null>(null);
   const [label, setLabel] = useState('');
@@ -45,20 +50,16 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
     setError(null);
 
     try {
-      // TODO: Backend engineer needs to implement list_yubikeys for vault context
-      // Currently using global list, needs vault-specific filtering
-      // See /docs/handoff/yubikey-vault-integration-api.md
+      // Get available YubiKeys for this vault
       const keys = await safeInvoke<YubiKeyStateInfo[]>(
-        'list_yubikeys',
-        undefined,
-        'YubiKeySetupDialog.detectYubiKeys'
+        'list_available_yubikeys',
+        currentVault?.id,
+        'YubiKeySetupDialog.detectYubiKeys',
       );
 
       // Filter out already registered keys for this vault
-      const availableKeys = keys.filter(k =>
-        k.state === YubiKeyState.NEW ||
-        k.state === YubiKeyState.REUSED ||
-        k.state === YubiKeyState.ORPHANED
+      const availableKeys = keys.filter(
+        (k) => k.state === 'NEW' || k.state === 'REUSED' || k.state === 'UNKNOWN',
       );
 
       setYubikeys(availableKeys);
@@ -108,41 +109,58 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
     setError(null);
 
     try {
-      // TODO: Backend engineer needs to implement YubiKey initialization
-      // This should call init_yubikey or register_yubikey based on state
-      // And integrate with add_key_to_vault
-      // See /docs/handoff/yubikey-vault-integration-api.md
-
-      if (selectedKey.state === YubiKeyState.NEW) {
+      if (selectedKey.state === 'NEW') {
         // Initialize new YubiKey
         logger.info('YubiKeySetupDialog', 'Initializing new YubiKey', {
-          serial: selectedKey.serial
+          serial: selectedKey.serial,
         });
 
-        // Placeholder - needs backend integration
-        const result = {
-          recovery_code: 'DEMO-RECO-VERY-CODE', // Will come from backend
+        const initParams: YubiKeyInitForVaultParams = {
+          serial: selectedKey.serial,
+          pin,
+          label: label.trim(),
+          vault_id: currentVault.id,
+          slot_index: slotIndex,
         };
+
+        const result = await safeInvoke<YubiKeyInitResult>(
+          'init_yubikey_for_vault',
+          initParams,
+          'YubiKeySetupDialog.initYubiKey',
+        );
 
         if (result.recovery_code) {
           setRecoveryCode(result.recovery_code);
           setStep('recovery');
+
+          // Refresh keys to show the newly added YubiKey
+          await refreshKeys();
           return;
         }
       } else {
-        // Register existing YubiKey
+        // Register existing YubiKey (REUSED or ORPHANED)
         logger.info('YubiKeySetupDialog', 'Registering existing YubiKey', {
-          serial: selectedKey.serial
+          serial: selectedKey.serial,
+          state: selectedKey.state,
         });
+
+        const registerParams: RegisterYubiKeyForVaultParams = {
+          serial: selectedKey.serial,
+          pin,
+          label: label.trim(),
+          vault_id: currentVault.id,
+          slot_index: slotIndex,
+        };
+
+        await safeInvoke<{ success: boolean }>(
+          'register_yubikey_for_vault',
+          registerParams,
+          'YubiKeySetupDialog.registerYubiKey',
+        );
       }
 
-      // Add to vault with slot index
-      await addKeyToVault('yubikey', label.trim(), {
-        yubikey_serial: selectedKey.serial,
-        slot_index: slotIndex,
-        pin: pin, // Backend should not store this
-      });
-
+      // Refresh keys to show the newly added YubiKey
+      await refreshKeys();
       handleSuccess();
     } catch (err: any) {
       logger.error('YubiKeySetupDialog', 'Failed to setup YubiKey', err);
@@ -152,7 +170,8 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
     }
   };
 
-  const handleRecoveryAcknowledge = () => {
+  const handleRecoveryAcknowledge = async () => {
+    // Keys are already refreshed when recovery code is generated
     handleSuccess();
   };
 
@@ -196,9 +215,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <Fingerprint className="h-6 w-6 text-blue-600" />
-              <h2 className="text-xl font-semibold text-gray-900">
-                Setup YubiKey {slotIndex + 1}
-              </h2>
+              <h2 className="text-xl font-semibold text-gray-900">Setup YubiKey {slotIndex + 1}</h2>
             </div>
             <button
               onClick={handleCancel}
@@ -263,14 +280,14 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                                 YubiKey {yk.serial.substring(0, 8)}
                               </p>
                               <p className="text-xs text-gray-500">
-                                {yk.state === YubiKeyState.NEW
+                                {yk.state === 'NEW'
                                   ? 'New device - will be initialized'
-                                  : yk.state === YubiKeyState.ORPHANED
-                                  ? 'Needs recovery'
-                                  : 'Ready to register'}
+                                  : yk.state === 'UNKNOWN'
+                                    ? 'Needs recovery'
+                                    : 'Ready to register'}
                               </p>
                             </div>
-                            {yk.state === YubiKeyState.NEW && (
+                            {yk.state === 'NEW' && (
                               <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
                                 New
                               </span>
@@ -300,9 +317,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Label *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Label *</label>
                   <input
                     type="text"
                     value={label}
@@ -314,7 +329,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {selectedKey.state === YubiKeyState.NEW ? 'Create PIN' : 'Enter PIN'}
+                    {selectedKey.state === 'NEW' ? 'Create PIN' : 'Enter PIN'}
                     <span className="text-gray-500 ml-2">(6-8 digits)</span>
                   </label>
                   <input
@@ -341,7 +356,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                   />
                 </div>
 
-                {selectedKey.state === YubiKeyState.NEW && (
+                {selectedKey.state === 'NEW' && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                     <div className="flex gap-2">
                       <Info className="h-5 w-5 text-green-600 flex-shrink-0" />
@@ -422,8 +437,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                   onClick={handleRecoveryAcknowledge}
                   className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
                 >
-                  <CheckCircle2 className="h-5 w-5" />
-                  I Have Saved My Recovery Code
+                  <CheckCircle2 className="h-5 w-5" />I Have Saved My Recovery Code
                 </button>
               </div>
             )}

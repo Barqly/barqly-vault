@@ -69,9 +69,7 @@ export const CreateVaultDialog: React.FC<CreateVaultDialogProps> = ({
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <Database className="h-6 w-6 text-blue-600" />
-              <h2 className="text-xl font-semibold text-gray-900">
-                Create New Vault
-              </h2>
+              <h2 className="text-xl font-semibold text-gray-900">Create New Vault</h2>
             </div>
             <button
               onClick={handleCancel}
@@ -85,10 +83,7 @@ export const CreateVaultDialog: React.FC<CreateVaultDialogProps> = ({
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div>
-              <label
-                htmlFor="vault-name"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="vault-name" className="block text-sm font-medium text-gray-700 mb-2">
                 Vault Name *
               </label>
               <input

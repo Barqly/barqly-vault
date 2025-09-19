@@ -11,10 +11,7 @@ interface VaultSelectorProps {
  * Vault selector dropdown component
  * Allows switching between vaults and creating new ones
  */
-export const VaultSelector: React.FC<VaultSelectorProps> = ({
-  onCreateVault,
-  className = '',
-}) => {
+export const VaultSelector: React.FC<VaultSelectorProps> = ({ onCreateVault, className = '' }) => {
   const { currentVault, vaults, setCurrentVault, isLoading } = useVault();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -69,10 +66,7 @@ export const VaultSelector: React.FC<VaultSelectorProps> = ({
       {isOpen && (
         <>
           {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
 
           {/* Dropdown */}
           <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
@@ -87,26 +81,20 @@ export const VaultSelector: React.FC<VaultSelectorProps> = ({
                 <div className="flex items-center gap-2">
                   <Database
                     className={`h-4 w-4 ${
-                      vault.id === currentVault?.id
-                        ? 'text-blue-600'
-                        : 'text-gray-400'
+                      vault.id === currentVault?.id ? 'text-blue-600' : 'text-gray-400'
                     }`}
                   />
                   <div>
                     <p className="font-medium text-gray-900">{vault.name}</p>
                     {vault.description && (
-                      <p className="text-xs text-gray-500">
-                        {vault.description}
-                      </p>
+                      <p className="text-xs text-gray-500">{vault.description}</p>
                     )}
                     <p className="text-xs text-gray-400">
                       {vault.key_count} key{vault.key_count !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
-                {vault.id === currentVault?.id && (
-                  <Check className="h-4 w-4 text-blue-600" />
-                )}
+                {vault.id === currentVault?.id && <Check className="h-4 w-4 text-blue-600" />}
               </button>
             ))}
 
