@@ -2,8 +2,10 @@ import { type ReactElement, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import { LoadingSpinner } from './components/ui/loading-spinner';
+import { VaultProvider } from './contexts/VaultContext';
+
 // Lazy load page components for better initial render performance
-const SetupPage = lazy(() => import('./pages/EnhancedSetupPage'));
+const SetupPage = lazy(() => import('./pages/SetupPage'));
 const EncryptPage = lazy(() => import('./pages/EncryptPage'));
 const DecryptPage = lazy(() => import('./pages/DecryptPage'));
 const YubiKeySetupPage = lazy(() => import('./pages/YubiKeySetupPage'));
@@ -11,43 +13,45 @@ const YubiKeySetupPage = lazy(() => import('./pages/YubiKeySetupPage'));
 function App(): ReactElement {
   return (
     <Router>
-      <Suspense fallback={<LoadingSpinner centered showText text="Loading page..." />}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/setup" replace />} />
-          <Route
-            path="/setup"
-            element={
-              <MainLayout>
-                <SetupPage />
-              </MainLayout>
-            }
-          />
-          <Route
-            path="/encrypt"
-            element={
-              <MainLayout>
-                <EncryptPage />
-              </MainLayout>
-            }
-          />
-          <Route
-            path="/decrypt"
-            element={
-              <MainLayout>
-                <DecryptPage />
-              </MainLayout>
-            }
-          />
-          <Route
-            path="/yubikey-setup"
-            element={
-              <MainLayout>
-                <YubiKeySetupPage />
-              </MainLayout>
-            }
-          />
-        </Routes>
-      </Suspense>
+      <VaultProvider>
+        <Suspense fallback={<LoadingSpinner centered showText text="Loading page..." />}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/setup" replace />} />
+            <Route
+              path="/setup"
+              element={
+                <MainLayout>
+                  <SetupPage />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/encrypt"
+              element={
+                <MainLayout>
+                  <EncryptPage />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/decrypt"
+              element={
+                <MainLayout>
+                  <DecryptPage />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/yubikey-setup"
+              element={
+                <MainLayout>
+                  <YubiKeySetupPage />
+                </MainLayout>
+              }
+            />
+          </Routes>
+        </Suspense>
+      </VaultProvider>
     </Router>
   );
 }

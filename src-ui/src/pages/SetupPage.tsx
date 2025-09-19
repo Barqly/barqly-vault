@@ -1,144 +1,162 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSetupWorkflow } from '../hooks/useSetupWorkflow';
-import { ErrorMessage } from '../components/ui/error-message';
-import { Shield } from 'lucide-react';
-import SetupForm from '../components/setup/SetupForm';
-import SetupProgressPanel from '../components/setup/SetupProgressPanel';
-import SetupSuccessPanel from '../components/setup/SetupSuccessPanel';
-import CollapsibleHelp from '../components/ui/CollapsibleHelp';
+import { Shield, Plus, Key, Lock, Unlock } from 'lucide-react';
+import { VaultSelector } from '../components/vault/VaultSelector';
+import { CreateVaultDialog } from '../components/vault/CreateVaultDialog';
+import { KeyMenuGrid } from '../components/keys/KeyMenuGrid';
+import { useVault } from '../contexts/VaultContext';
 import UniversalHeader from '../components/common/UniversalHeader';
-import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
+import { LoadingSpinner } from '../components/ui/loading-spinner';
+import { ErrorMessage } from '../components/ui/error-message';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
-import { logger } from '../lib/logger';
-
-const SETUP_STEPS: ProgressStep[] = [
-  { id: 1, label: 'Create Key', description: 'Set up your vault key' },
-];
 
 /**
- * Main setup page component for key generation
- * Refactored from 313 lines to ~140 lines by extracting logic and sub-components
+ * Main setup page with vault-centric UI
+ * Users first select/create a vault, then manage keys within that vault
  */
 const SetupPage: React.FC = () => {
-  logger.logComponentLifecycle('SetupPage', 'Mount');
   const navigate = useNavigate();
+  const { vaults, currentVault, vaultKeys, isLoading, error, refreshVaults } = useVault();
+  const [showCreateVault, setShowCreateVault] = useState(false);
 
-  const {
-    // State
-    keyLabel,
-    passphrase,
-    confirmPassphrase,
-    isFormValid,
-    isLoading,
-    error,
-    success,
-    progress,
+  useEffect(() => {
+    refreshVaults();
+  }, []);
 
-    // Handlers
-    handleKeyLabelChange,
-    handlePassphraseChange,
-    setConfirmPassphrase,
-    handleKeyGeneration,
-    handleReset,
-    clearError,
-  } = useSetupWorkflow();
+  const handleVaultCreated = async () => {
+    setShowCreateVault(false);
+    await refreshVaults();
+  };
 
-  const handleEncryptVault = () => {
+  const handleNavigateToEncrypt = () => {
     navigate('/encrypt');
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Unified header component */}
-      <UniversalHeader title="Create Your Vault Key" icon={Shield} skipNavTarget="#main-content" />
+  const handleNavigateToDecrypt = () => {
+    navigate('/decrypt');
+  };
 
-      {/* Progress Bar */}
-      <ProgressBar
-        steps={SETUP_STEPS}
-        currentStep={1}
-        completedSteps={new Set()}
-        onStepClick={undefined}
-        isClickable={false}
-        variant="compact"
-      />
-
-      {/* Main content */}
-      <AppPrimaryContainer id="main-content">
-        <div className="mt-6 space-y-6">
-          {/* Error Display */}
-          {error && (
-            <ErrorMessage
-              error={error}
-              showRecoveryGuidance={true}
-              showCloseButton={true}
-              onClose={clearError}
-            />
-          )}
-
-          {/* Success Display - replaces form card when shown */}
-          {success ? (
-            <SetupSuccessPanel
-              success={success}
-              onClose={handleReset}
-              onEncryptVault={handleEncryptVault}
-            />
-          ) : (
-            <>
-              {/* Form card with consistent spacing */}
-              <section
-                className="relative rounded-2xl border border-slate-200 bg-white shadow-sm py-6 px-6 md:py-6 md:px-7"
-                style={
-                  {
-                    '--space-1': '4px',
-                    '--space-2': '8px',
-                    '--space-3': '12px',
-                    '--space-4': '16px',
-                    '--space-5': '20px',
-                    '--space-6': '24px',
-                  } as React.CSSProperties
-                }
-              >
-                {/* Progress Display - show immediately when loading starts */}
-                {isLoading && (
-                  <SetupProgressPanel
-                    progress={
-                      progress || {
-                        operation_id: 'key-generation-init',
-                        progress: 0,
-                        message: 'Initializing key generation...',
-                        timestamp: new Date().toISOString(),
-                      }
-                    }
-                  />
-                )}
-
-                {/* Key Generation Form */}
-                {!isLoading && (
-                  <SetupForm
-                    keyLabel={keyLabel}
-                    passphrase={passphrase}
-                    confirmPassphrase={confirmPassphrase}
-                    isFormValid={isFormValid}
-                    isLoading={isLoading}
-                    onKeyLabelChange={handleKeyLabelChange}
-                    onPassphraseChange={handlePassphraseChange}
-                    onConfirmPassphraseChange={setConfirmPassphrase}
-                    onSubmit={handleKeyGeneration}
-                    onReset={handleReset}
-                  />
-                )}
-              </section>
-
-              {/* "How Setup Works" expandable help section */}
-              <section>
-                <CollapsibleHelp triggerText="How Setup Works" context="setup" />
-              </section>
-            </>
-          )}
+  if (isLoading && !currentVault) {
+    return (
+      <AppPrimaryContainer>
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <LoadingSpinner size="lg" showText text="Loading vaults..." />
         </div>
       </AppPrimaryContainer>
-    </div>
+    );
+  }
+
+  return (
+    <AppPrimaryContainer>
+      <UniversalHeader title="Vault Setup" icon={Shield} />
+
+      {error && (
+        <div className="mb-6">
+          <ErrorMessage error={error} />
+        </div>
+      )}
+
+      <div className="space-y-8">
+        {/* Vault Selection Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Lock className="h-5 w-5 text-blue-600" />
+              Select Vault
+            </h2>
+            <button
+              onClick={() => setShowCreateVault(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              New Vault
+            </button>
+          </div>
+
+          {vaults.length === 0 ? (
+            <div className="text-center py-12">
+              <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Vaults Yet</h3>
+              <p className="text-gray-600 mb-4">
+                Create your first vault to start protecting your data
+              </p>
+              <button
+                onClick={() => setShowCreateVault(true)}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Create Your First Vault
+              </button>
+            </div>
+          ) : (
+            <VaultSelector onCreateVault={() => setShowCreateVault(true)} />
+          )}
+        </div>
+
+        {/* Key Management Section */}
+        {currentVault && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <Key className="h-5 w-5 text-green-600" />
+                  Vault Keys
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Manage encryption keys for <strong>{currentVault.name}</strong>
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                {vaultKeys.length > 0 ? (
+                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full">
+                    <Unlock className="h-3 w-3 inline mr-1" />
+                    {vaultKeys.length} key{vaultKeys.length !== 1 ? 's' : ''} configured
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                    No keys configured
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <KeyMenuGrid />
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        {currentVault && vaultKeys.length > 0 && (
+          <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-6 border border-blue-200">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Ready to Use Your Vault</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={handleNavigateToEncrypt}
+                className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-left"
+              >
+                <Lock className="h-8 w-8 text-blue-600 mb-2" />
+                <h4 className="font-medium text-gray-900">Encrypt Files</h4>
+                <p className="text-sm text-gray-600">Protect your sensitive data</p>
+              </button>
+
+              <button
+                onClick={handleNavigateToDecrypt}
+                className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-left"
+              >
+                <Unlock className="h-8 w-8 text-green-600 mb-2" />
+                <h4 className="font-medium text-gray-900">Decrypt Files</h4>
+                <p className="text-sm text-gray-600">Restore your protected data</p>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Create Vault Dialog */}
+      <CreateVaultDialog
+        isOpen={showCreateVault}
+        onClose={() => setShowCreateVault(false)}
+        onSuccess={handleVaultCreated}
+      />
+    </AppPrimaryContainer>
   );
 };
 
