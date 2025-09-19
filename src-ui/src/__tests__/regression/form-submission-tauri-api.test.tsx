@@ -62,7 +62,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
     return render(
       <BrowserRouter>
         <VaultProvider>{component}</VaultProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
     );
   };
 

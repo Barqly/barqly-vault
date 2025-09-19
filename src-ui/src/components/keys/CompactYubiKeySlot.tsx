@@ -1,5 +1,5 @@
 import React from 'react';
-import { Fingerprint, Plus, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { CheckCircle, AlertCircle, Info } from 'lucide-react';
 
 export type YubiKeySlotState = 'empty' | 'active' | 'registered' | 'orphaned';
 
@@ -39,34 +39,24 @@ export const CompactYubiKeySlot: React.FC<CompactYubiKeySlotProps> = ({
     }
   };
 
-  const getIcon = () => {
-    if (state === 'empty') {
-      return <Plus className="h-4 w-4 text-slate-400" />;
-    }
-    return <Fingerprint className={`h-4 w-4 ${getIconColor()}`} />;
-  };
-
-  const getIconColor = () => {
-    switch (state) {
-      case 'active':
-        return 'text-green-600';
-      case 'registered':
-        return 'text-blue-600';
-      case 'orphaned':
-        return 'text-yellow-600';
-      default:
-        return 'text-slate-400';
-    }
+  const getEmojiIcon = () => {
+    return state === 'empty' ? '🗝️' : '🔑';
   };
 
   const getStatusIcon = () => {
     switch (state) {
       case 'active':
-        return <CheckCircle className="h-2.5 w-2.5 text-green-600 absolute -top-1 -right-1 bg-white rounded-full" />;
+        return (
+          <CheckCircle className="h-2.5 w-2.5 text-green-600 absolute -top-1 -right-1 bg-white rounded-full" />
+        );
       case 'registered':
-        return <Info className="h-2.5 w-2.5 text-blue-600 absolute -top-1 -right-1 bg-white rounded-full" />;
+        return (
+          <Info className="h-2.5 w-2.5 text-blue-600 absolute -top-1 -right-1 bg-white rounded-full" />
+        );
       case 'orphaned':
-        return <AlertCircle className="h-2.5 w-2.5 text-yellow-600 absolute -top-1 -right-1 bg-white rounded-full" />;
+        return (
+          <AlertCircle className="h-2.5 w-2.5 text-yellow-600 absolute -top-1 -right-1 bg-white rounded-full" />
+        );
       default:
         return null;
     }
@@ -75,9 +65,8 @@ export const CompactYubiKeySlot: React.FC<CompactYubiKeySlotProps> = ({
   const getTooltipText = () => {
     if (state === 'empty') return `Click to add YubiKey ${index + 1}`;
 
-    const statusText = state === 'active' ? 'Active' :
-                      state === 'registered' ? 'Registered' :
-                      'Recovery needed';
+    const statusText =
+      state === 'active' ? 'Active' : state === 'registered' ? 'Registered' : 'Recovery needed';
 
     return `${label || `YubiKey ${index + 1}`} - ${statusText}${serial ? ` (SN: ${serial.substring(0, 6)}...)` : ''}`;
   };
@@ -97,18 +86,18 @@ export const CompactYubiKeySlot: React.FC<CompactYubiKeySlotProps> = ({
       aria-label={`YubiKey slot ${index + 1}: ${state}`}
       title={getTooltipText()}
     >
-      {/* Icon with status indicator */}
-      {state !== 'empty' ? (
-        <div className="relative">
-          {getIcon()}
-          {getStatusIcon()}
-        </div>
-      ) : (
-        getIcon()
-      )}
+      {/* Emoji icon with status indicator */}
+      <div className="relative">
+        <span className="text-base" role="img" aria-label={state === 'empty' ? 'Key' : 'YubiKey'}>
+          {getEmojiIcon()}
+        </span>
+        {state !== 'empty' && getStatusIcon()}
+      </div>
 
       {/* Label */}
-      <span className={`text-xs font-medium ${state !== 'empty' ? 'text-slate-700' : 'text-slate-500'}`}>
+      <span
+        className={`text-xs font-medium ${state !== 'empty' ? 'text-slate-700' : 'text-slate-500'}`}
+      >
         {displayLabel()}
       </span>
     </button>

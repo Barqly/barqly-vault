@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import SetupPage from '../../pages/SetupPage';
-import { VaultProvider } from '../../contexts/VaultContext';
 import { GenerateKeyResponse, CommandError, ErrorCode } from '../../lib/api-types';
 import { createTauriTestEnvironment, resetTauriMocks } from '../utils/tauri-mocks';
 

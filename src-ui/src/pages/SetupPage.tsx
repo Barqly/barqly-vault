@@ -113,8 +113,9 @@ const SetupPage: React.FC = () => {
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-slate-900 mb-1">Managing Keys</h3>
                 <p className="text-sm text-slate-600">
-                  Use the key menu in the header above to add or manage encryption keys for <strong>{currentVault.name}</strong>.
-                  You can configure one passphrase and up to three YubiKeys per vault.
+                  Use the key menu in the header above to add or manage encryption keys for{' '}
+                  <strong>{currentVault.name}</strong>. You can configure one passphrase and up to
+                  three YubiKeys per vault.
                 </p>
                 {vaultKeys.length === 0 && (
                   <p className="text-sm text-amber-700 mt-2">
