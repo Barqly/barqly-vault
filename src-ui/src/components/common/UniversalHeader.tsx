@@ -1,5 +1,6 @@
 import React from 'react';
-import { LucideIcon, Lock, Zap, Sparkles } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
+import { KeyMenuBar } from '../keys/KeyMenuBar';
 
 interface UniversalHeaderProps {
   /** The title to display (e.g., "Create Your Vault Key", "Encrypt Your Vault") */
@@ -10,17 +11,20 @@ interface UniversalHeaderProps {
   skipNavTarget?: string;
   /** Additional CSS classes for the container */
   className?: string;
+  /** Optional callback when a key is selected */
+  onKeySelect?: (keyType: 'passphrase' | 'yubikey', index?: number) => void;
 }
 
 /**
  * Unified header component used across all screens (Setup, Encrypt, Decrypt)
- * Based on the Setup page design with consistent trust badges
+ * Now with interactive key menu instead of static badges
  */
 const UniversalHeader: React.FC<UniversalHeaderProps> = ({
   title,
   icon: Icon,
   skipNavTarget = '#main-content',
   className = '',
+  onKeySelect,
 }) => {
   return (
     <header className={`bg-white border-b border-slate-200 ${className}`}>
@@ -39,20 +43,9 @@ const UniversalHeader: React.FC<UniversalHeaderProps> = ({
           {title}
         </h1>
 
-        {/* Right side: Trust badges (hidden on mobile, shown on md+ screens) */}
-        <div className="hidden md:flex gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 text-slate-700 px-3 h-8 text-sm">
-            <Sparkles className="h-4 w-4 text-slate-600" aria-hidden="true" />
-            Strong Encryption
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 text-slate-700 px-3 h-8 text-sm">
-            <Lock className="h-4 w-4 text-slate-600" aria-hidden="true" />
-            Local-Only Storage
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 text-slate-700 px-3 h-8 text-sm">
-            <Zap className="h-4 w-4 text-slate-600" aria-hidden="true" />
-            No Network Access
-          </span>
+        {/* Right side: Interactive Key Menu (hidden on mobile, shown on md+ screens) */}
+        <div className="hidden md:block">
+          <KeyMenuBar onKeySelect={onKeySelect} />
         </div>
       </div>
     </header>

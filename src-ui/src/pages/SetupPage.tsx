@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Plus, Key, Lock, Unlock } from 'lucide-react';
+import { Shield, Plus, Lock, Unlock, Info } from 'lucide-react';
 import { VaultSelector } from '../components/vault/VaultSelector';
 import { CreateVaultDialog } from '../components/vault/CreateVaultDialog';
-import { KeyMenuGrid } from '../components/keys/KeyMenuGrid';
+import { PassphraseKeyDialog } from '../components/keys/PassphraseKeyDialog';
+import { YubiKeySetupDialog } from '../components/keys/YubiKeySetupDialog';
 import { useVault } from '../contexts/VaultContext';
 import UniversalHeader from '../components/common/UniversalHeader';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
@@ -18,6 +19,9 @@ const SetupPage: React.FC = () => {
   const navigate = useNavigate();
   const { vaults, currentVault, vaultKeys, isLoading, error, refreshVaults } = useVault();
   const [showCreateVault, setShowCreateVault] = useState(false);
+  const [showPassphraseDialog, setShowPassphraseDialog] = useState(false);
+  const [showYubiKeyDialog, setShowYubiKeyDialog] = useState(false);
+  const [selectedYubiKeyIndex, setSelectedYubiKeyIndex] = useState<number>(0);
 
   useEffect(() => {
     refreshVaults();
@@ -36,6 +40,15 @@ const SetupPage: React.FC = () => {
     navigate('/decrypt');
   };
 
+  const handleKeySelect = (keyType: 'passphrase' | 'yubikey', index?: number) => {
+    if (keyType === 'passphrase') {
+      setShowPassphraseDialog(true);
+    } else if (keyType === 'yubikey' && index !== undefined) {
+      setSelectedYubiKeyIndex(index);
+      setShowYubiKeyDialog(true);
+    }
+  };
+
   if (isLoading && !currentVault) {
     return (
       <AppPrimaryContainer>
@@ -48,7 +61,7 @@ const SetupPage: React.FC = () => {
 
   return (
     <AppPrimaryContainer>
-      <UniversalHeader title="Vault Setup" icon={Shield} />
+      <UniversalHeader title="Vault Setup" icon={Shield} onKeySelect={handleKeySelect} />
 
       {error && (
         <div className="mb-6">
@@ -92,34 +105,24 @@ const SetupPage: React.FC = () => {
           )}
         </div>
 
-        {/* Key Management Section */}
+        {/* Key Instructions Section - Replaces large grid */}
         {currentVault && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                  <Key className="h-5 w-5 text-green-600" />
-                  Vault Keys
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Manage encryption keys for <strong>{currentVault.name}</strong>
+          <div className="bg-gradient-to-r from-blue-50 to-slate-50 rounded-lg p-6 border border-blue-200">
+            <div className="flex items-start gap-4">
+              <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-slate-900 mb-1">Managing Keys</h3>
+                <p className="text-sm text-slate-600">
+                  Use the key menu in the header above to add or manage encryption keys for <strong>{currentVault.name}</strong>.
+                  You can configure one passphrase and up to three YubiKeys per vault.
                 </p>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                {vaultKeys.length > 0 ? (
-                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full">
-                    <Unlock className="h-3 w-3 inline mr-1" />
-                    {vaultKeys.length} key{vaultKeys.length !== 1 ? 's' : ''} configured
-                  </span>
-                ) : (
-                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">
-                    No keys configured
-                  </span>
+                {vaultKeys.length === 0 && (
+                  <p className="text-sm text-amber-700 mt-2">
+                    ⚠️ Add at least one key before you can encrypt files.
+                  </p>
                 )}
               </div>
             </div>
-
-            <KeyMenuGrid />
           </div>
         )}
 
@@ -150,12 +153,35 @@ const SetupPage: React.FC = () => {
         )}
       </div>
 
-      {/* Create Vault Dialog */}
+      {/* Dialogs */}
       <CreateVaultDialog
         isOpen={showCreateVault}
         onClose={() => setShowCreateVault(false)}
         onSuccess={handleVaultCreated}
       />
+
+      {currentVault && (
+        <>
+          <PassphraseKeyDialog
+            isOpen={showPassphraseDialog}
+            onClose={() => setShowPassphraseDialog(false)}
+            onSuccess={() => {
+              setShowPassphraseDialog(false);
+              refreshVaults();
+            }}
+          />
+
+          <YubiKeySetupDialog
+            isOpen={showYubiKeyDialog}
+            onClose={() => setShowYubiKeyDialog(false)}
+            slotIndex={selectedYubiKeyIndex}
+            onSuccess={() => {
+              setShowYubiKeyDialog(false);
+              refreshVaults();
+            }}
+          />
+        </>
+      )}
     </AppPrimaryContainer>
   );
 };
