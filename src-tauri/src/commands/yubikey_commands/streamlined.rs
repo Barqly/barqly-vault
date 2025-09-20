@@ -6,7 +6,7 @@
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::crypto::yubikey::manifest::YubiKeyManifest;
 use crate::crypto::yubikey::pty::{
-    age_operations::{generate_age_identity_pty, get_identity_for_serial, list_yubikey_identities},
+    age_operations::{check_yubikey_has_identity, generate_age_identity_pty, get_identity_for_serial, list_yubikey_identities},
     ykman_operations::{initialize_yubikey_with_recovery, list_yubikeys as list_yk_devices},
 };
 use age::secrecy::{ExposeSecret, SecretString};
@@ -78,16 +78,8 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         return Ok(Vec::new());
     }
 
-    // Get existing age identities
-    // Check if there are any identities at all - simpler approach from POC
-    let identities = list_yubikey_identities().unwrap_or_else(|e| {
-        warn!("Failed to list YubiKey identities: {e}");
-        Vec::new()
-    });
-    info!("Found {} age identities total", identities.len());
-    for identity in &identities {
-        info!("Found identity: {}", identity);
-    }
+    // No longer using the imprecise list_yubikey_identities
+    // We'll check each YubiKey individually using --identity --serial
 
     let mut yubikeys = Vec::new();
 
@@ -104,11 +96,15 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         let in_manifest = manifest_entry.is_some();
         debug!("YubiKey {} in manifest: {}", serial, in_manifest);
 
-        // Check if there are any age identities
-        // Since we typically work with one YubiKey at a time,
-        // if there are ANY identities, assume this YubiKey has one
-        let has_identity = !identities.is_empty();
-        debug!("YubiKey {} has identity: {}", serial, has_identity);
+        // Check if THIS specific YubiKey has an age identity using --identity --serial
+        let identity_result = check_yubikey_has_identity(&serial).unwrap_or(None);
+        let has_identity = identity_result.is_some();
+
+        if let Some(ref recipient) = identity_result {
+            info!("YubiKey {} has identity: {}", serial, recipient);
+        } else {
+            info!("YubiKey {} has no identity", serial);
+        }
 
         // Determine state based on manifest and identity presence
         let state = match (in_manifest, has_identity) {
@@ -144,10 +140,11 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
             serial: serial.clone(),
             state,
             slot: manifest_entry.as_ref().map(|e| e.slot),
-            recipient: manifest_entry
-                .as_ref()
-                .map(|e| e.recipient.clone())
-                .or_else(|| identities.iter().find(|id| id.contains(&serial)).cloned()),
+            recipient: identity_result.clone().or_else(|| {
+                manifest_entry
+                    .as_ref()
+                    .map(|e| e.recipient.clone())
+            }),
             identity_tag: manifest_entry.as_ref().map(|e| e.identity_tag.clone()),
             label: manifest_entry
                 .as_ref()

@@ -1,7 +1,7 @@
 /// Age-specific PTY operations for YubiKey
 /// Handles identity generation and decryption with age-plugin-yubikey
-use super::core::{run_age_plugin_yubikey, PtyError, Result};
-use log::{debug, info, warn};
+use super::core::{get_age_plugin_path, run_age_plugin_yubikey, PtyError, Result};
+use log::{info, warn};
 use std::fs;
 use std::path::Path;
 
@@ -205,6 +205,49 @@ pub fn encrypt_for_yubikey(input_file: &Path, output_file: &Path, recipient: &st
 
     info!("Successfully encrypted file for YubiKey");
     Ok(())
+}
+
+/// Check if a specific YubiKey has an age identity by serial number
+pub fn check_yubikey_has_identity(serial: &str) -> Result<Option<String>> {
+    use std::process::Command;
+
+    info!("Checking if YubiKey {} has an identity", serial);
+
+    let age_path = get_age_plugin_path();
+
+    // Run age-plugin-yubikey --identity --serial <serial>
+    let output = Command::new(&age_path)
+        .arg("--identity")
+        .arg("--serial")
+        .arg(serial)
+        .output()
+        .map_err(|e| PtyError::Io(e))?;
+
+    if !output.status.success() {
+        // No identity for this serial
+        info!("YubiKey {} has no identity", serial);
+        return Ok(None);
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    // Look for the recipient line (starts with "Recipient: age1yubikey")
+    for line in stdout.lines() {
+        if line.starts_with("Recipient: age1yubikey") {
+            let recipient = line.trim_start_matches("Recipient: ").trim();
+            info!("YubiKey {} has identity: {}", serial, recipient);
+            return Ok(Some(recipient.to_string()));
+        }
+        // Also check for direct age1yubikey line (some versions may output differently)
+        if line.trim().starts_with("age1yubikey") && !line.starts_with("#") {
+            let recipient = line.trim();
+            info!("YubiKey {} has identity: {}", serial, recipient);
+            return Ok(Some(recipient.to_string()));
+        }
+    }
+
+    info!("YubiKey {} identity format not recognized", serial);
+    Ok(None)
 }
 
 /// Test YubiKey connection by listing identities
