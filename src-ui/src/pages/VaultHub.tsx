@@ -101,8 +101,8 @@ const VaultHub: React.FC = () => {
             // Since vault is selected, we can check the keys from vaultKeys context
             const keyCount = isSelected ? vaultKeys?.length || 0 : 0;
             const hasPassphrase =
-              isSelected && vaultKeys?.some((k) => k.key_type.type === 'passphrase');
-            const hasYubikey = isSelected && vaultKeys?.some((k) => k.key_type.type === 'yubikey');
+              isSelected && vaultKeys?.some((k) => k.key_type?.type === 'passphrase');
+            const hasYubikey = isSelected && vaultKeys?.some((k) => k.key_type?.type === 'yubikey');
 
             return (
               <div
