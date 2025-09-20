@@ -43,20 +43,6 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load vaults on mount
-  useEffect(() => {
-    refreshVaults();
-  }, []);
-
-  // Load keys when current vault changes
-  useEffect(() => {
-    if (currentVault) {
-      refreshKeys();
-    } else {
-      setVaultKeys([]);
-    }
-  }, [currentVault?.id, refreshKeys]);
-
   const refreshVaults = async () => {
     setIsLoading(true);
     setError(null);
@@ -176,6 +162,20 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       throw err;
     }
   };
+
+  // Load vaults on mount
+  useEffect(() => {
+    refreshVaults();
+  }, []);
+
+  // Load keys when current vault changes
+  useEffect(() => {
+    if (currentVault) {
+      refreshKeys();
+    } else {
+      setVaultKeys([]);
+    }
+  }, [currentVault?.id, refreshKeys]);
 
   return (
     <VaultContext.Provider
