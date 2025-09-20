@@ -202,9 +202,9 @@ pub async fn register_yubikey_for_vault(
             )
         })?;
 
-    // For reused YubiKeys, we need to verify PIN but not re-initialize
-    // The actual PIN verification would be done in the YubiKey module
-    // For now, we'll create the reference if the YubiKey has an identity
+    // For ORPHANED YubiKeys (already have age key), we don't need PIN verification
+    // PIN will be requested during actual encryption/decryption operations
+    // For NEW YubiKeys, they need to be initialized first
 
     if yubikey.state == YubiKeyState::New {
         return Err(Box::new(
@@ -215,6 +215,9 @@ pub async fn register_yubikey_for_vault(
             .with_recovery_guidance("Use init_yubikey_for_vault for new YubiKeys"),
         ));
     }
+
+    // For ORPHANED or REUSED keys, skip PIN verification
+    // The PIN will be validated during actual use (encryption/decryption)
 
     // Get the PIV slot from existing YubiKey info or use default
     let piv_slot = yubikey.slot.unwrap_or(1) + 81; // Convert retired slot to PIV

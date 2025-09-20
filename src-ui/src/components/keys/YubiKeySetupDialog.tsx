@@ -361,12 +361,12 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
               </div>
             )}
 
-            {/* Setup Step */}
-            {step === 'setup' && selectedKey && (
+            {/* Setup Step - Only for NEW YubiKeys */}
+            {step === 'setup' && selectedKey && selectedKey.state === 'NEW' && (
               <div className="space-y-4">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-sm text-blue-800">
-                    Setting up: <strong>YubiKey {selectedKey.serial.substring(0, 8)}</strong>
+                    Setting up new YubiKey: <strong>{selectedKey.serial.substring(0, 8)}</strong>
                   </p>
                 </div>
 
@@ -383,7 +383,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {selectedKey.state === 'NEW' ? 'Create PIN' : 'Enter PIN'}
+                    Create PIN
                     <span className="text-gray-500 ml-2">(6-8 digits)</span>
                   </label>
                   <input
@@ -410,16 +410,14 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                   />
                 </div>
 
-                {selectedKey.state === 'NEW' && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <div className="flex gap-2">
-                      <Info className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <p className="text-sm text-green-800">
-                        A recovery code will be generated for PIN recovery
-                      </p>
-                    </div>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <div className="flex gap-2">
+                    <Info className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <p className="text-sm text-green-800">
+                      A recovery code will be generated for PIN recovery
+                    </p>
                   </div>
-                )}
+                </div>
 
                 {error && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -444,6 +442,124 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                   </button>
                   <button
                     onClick={() => setStep('detect')}
+                    disabled={isSetupInProgress}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  >
+                    Back
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Setup Step - For ORPHANED/REUSED YubiKeys (already initialized) */}
+            {step === 'setup' && selectedKey && selectedKey.state !== 'NEW' && (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-blue-800 font-medium">YubiKey Ready</p>
+                      <p className="text-sm text-blue-700 mt-1">
+                        This YubiKey is already initialized. Just provide a label to attach it to this vault.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">Serial:</span> {selectedKey.serial}
+                  </p>
+                  {selectedKey.recipient && (
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Has encryption key:</span> Yes ✓
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Label for this Vault *</label>
+                  <input
+                    type="text"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Personal YubiKey"
+                  />
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="flex gap-2">
+                    <Info className="h-5 w-5 text-amber-600 flex-shrink-0" />
+                    <p className="text-sm text-amber-800">
+                      You'll be prompted for your YubiKey PIN when encrypting or decrypting files.
+                    </p>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">{error}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={async () => {
+                      if (!label.trim()) {
+                        setError('Label is required');
+                        return;
+                      }
+
+                      setIsSetupInProgress(true);
+                      setError(null);
+
+                      try {
+                        // For ORPHANED keys, we register without PIN verification
+                        // PIN will be requested during actual encryption/decryption
+                        const registerParams: RegisterYubiKeyForVaultParams = {
+                          serial: selectedKey.serial,
+                          pin: '000000', // Dummy PIN - backend should handle this for ORPHANED keys
+                          label: label.trim(),
+                          vault_id: currentVault!.id,
+                          slot_index: slotIndex,
+                        };
+
+                        await safeInvoke<{ success: boolean }>(
+                          'register_yubikey_for_vault',
+                          registerParams,
+                          'YubiKeySetupDialog.registerExistingYubiKey',
+                        );
+
+                        // Refresh keys to show the newly added YubiKey
+                        await refreshKeys();
+                        handleSuccess();
+                      } catch (err: any) {
+                        logger.error('YubiKeySetupDialog', 'Failed to register YubiKey', err);
+                        setError(err.message || 'Failed to register YubiKey');
+                      } finally {
+                        setIsSetupInProgress(false);
+                      }
+                    }}
+                    disabled={isSetupInProgress || !label.trim()}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isSetupInProgress ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Attaching...
+                      </>
+                    ) : (
+                      'Attach to Vault'
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setStep('detect');
+                      setPin('');
+                      setConfirmPin('');
+                      setError(null);
+                    }}
                     disabled={isSetupInProgress}
                     className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                   >
