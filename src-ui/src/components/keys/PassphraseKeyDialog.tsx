@@ -63,7 +63,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
     // Allow letters, numbers, dashes, and underscores only
     const validPattern = /^[a-zA-Z0-9_-]+$/;
     if (!validPattern.test(value)) {
-      const invalidChars = value.split('').filter(c => !/[a-zA-Z0-9_-]/.test(c));
+      const invalidChars = value.split('').filter((c) => !/[a-zA-Z0-9_-]/.test(c));
       return `Invalid characters: ${[...new Set(invalidChars)].join(', ')}`;
     }
     return null;
@@ -224,9 +224,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                 placeholder="e.g., bitcoin-wallet or bitcoin_wallet_2024"
                 autoFocus
               />
-              {labelError && (
-                <p className="text-xs text-red-600 mt-1">{labelError}</p>
-              )}
+              {labelError && <p className="text-xs text-red-600 mt-1">{labelError}</p>}
               {!labelError && label && (
                 <p className="text-xs text-gray-500 mt-1">
                   Allowed: letters, numbers, dashes (-), and underscores (_)
@@ -287,8 +285,12 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                 placeholder="Re-enter passphrase"
               />
               {confirmPassphrase && (
-                <p className={`text-xs mt-1 ${passphrase === confirmPassphrase ? 'text-green-600' : 'text-red-600'}`}>
-                  {passphrase === confirmPassphrase ? '✓ Passphrases match' : 'Passphrases do not match'}
+                <p
+                  className={`text-xs mt-1 ${passphrase === confirmPassphrase ? 'text-green-600' : 'text-red-600'}`}
+                >
+                  {passphrase === confirmPassphrase
+                    ? '✓ Passphrases match'
+                    : 'Passphrases do not match'}
                 </p>
               )}
             </div>

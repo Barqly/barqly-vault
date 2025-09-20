@@ -410,12 +410,12 @@ mod tests {
         };
         assert!(empty_pass.validate().is_err());
 
-        // Test invalid key label (contains underscore which is not allowed)
-        let invalid_underscore = VerifyKeyPassphraseInput {
+        // Test valid key label (underscore is now allowed)
+        let valid_underscore = VerifyKeyPassphraseInput {
             key_id: "test_key".to_string(),
             passphrase: "TestPassword123!".to_string(),
         };
-        assert!(invalid_underscore.validate().is_err());
+        assert!(valid_underscore.validate().is_ok());
 
         // Test invalid key label (contains path separator)
         let invalid_label = VerifyKeyPassphraseInput {

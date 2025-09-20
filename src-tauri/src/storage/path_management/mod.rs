@@ -73,7 +73,7 @@ mod tests {
         let path = path.unwrap();
         assert!(path
             .to_string_lossy()
-            .contains("barqly-test-key.agekey.enc"));
+            .contains("test-key.agekey.enc"));
     }
 
     #[test]
@@ -84,7 +84,7 @@ mod tests {
         let path = path.unwrap();
         assert!(path
             .to_string_lossy()
-            .contains("barqly-test-key.agekey.meta"));
+            .contains("test-key.agekey.meta"));
     }
 
     #[test]

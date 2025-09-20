@@ -12,10 +12,10 @@ import { ErrorMessage } from '../components/ui/error-message';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 
 /**
- * Main setup page with vault-centric UI
- * Users first select/create a vault, then manage keys within that vault
+ * Manage Keys Page - For managing encryption keys within the current vault
+ * Users can add passphrase keys or YubiKeys to the selected vault
  */
-const SetupPage: React.FC = () => {
+const ManageKeysPage: React.FC = () => {
   const navigate = useNavigate();
   const { vaults, currentVault, vaultKeys, isLoading, error, refreshVaults } = useVault();
   const [showCreateVault, setShowCreateVault] = useState(false);
@@ -187,4 +187,4 @@ const SetupPage: React.FC = () => {
   );
 };
 
-export default SetupPage;
+export default ManageKeysPage;

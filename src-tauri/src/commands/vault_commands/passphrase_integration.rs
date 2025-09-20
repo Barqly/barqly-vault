@@ -59,7 +59,7 @@ pub async fn add_passphrase_key_to_vault(
 
     // Generate the actual encryption key
     let key_input = GenerateKeyInput {
-        label: format!("{}_vault_{}", input.label, input.vault_id),
+        label: input.label.clone(),
         passphrase: input.passphrase,
     };
 

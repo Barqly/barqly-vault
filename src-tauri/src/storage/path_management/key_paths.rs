@@ -25,7 +25,7 @@ pub fn get_key_file_path(label: &str) -> Result<PathBuf, StorageError> {
     }
 
     let keys_dir = get_keys_dir()?;
-    let filename = format!("barqly-{label}.agekey.enc");
+    let filename = format!("{label}.agekey.enc");
     let key_path = keys_dir.join(filename);
 
     Ok(key_path)
@@ -48,7 +48,7 @@ pub fn get_key_metadata_path(label: &str) -> Result<PathBuf, StorageError> {
     }
 
     let keys_dir = get_keys_dir()?;
-    let filename = format!("barqly-{label}.agekey.meta");
+    let filename = format!("{label}.agekey.meta");
     let meta_path = keys_dir.join(filename);
 
     Ok(meta_path)

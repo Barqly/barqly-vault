@@ -89,8 +89,8 @@ impl TestCleanup {
     /// Register a key label for cleanup
     pub fn register_key(&mut self, key_label: &str) {
         if let Ok(keys_dir) = storage::get_keys_directory() {
-            let key_file = keys_dir.join(format!("barqly-{key_label}.agekey.enc"));
-            let meta_file = keys_dir.join(format!("barqly-{key_label}.agekey.meta"));
+            let key_file = keys_dir.join(format!("{key_label}.agekey.enc"));
+            let meta_file = keys_dir.join(format!("{key_label}.agekey.meta"));
 
             self.register_artifact(key_file.to_string_lossy().to_string());
             self.register_artifact(meta_file.to_string_lossy().to_string());

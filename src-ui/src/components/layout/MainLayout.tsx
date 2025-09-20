@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Key, Lock, Unlock } from 'lucide-react';
+import { Shield, Key, Lock, Unlock } from 'lucide-react';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -11,10 +11,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const navItems = [
     {
-      path: '/setup',
-      label: 'Setup',
+      path: '/vault-hub',
+      label: 'Vault Hub',
+      icon: Shield,
+      description: 'Manage vaults',
+    },
+    {
+      path: '/manage-keys',
+      label: 'Manage Keys',
       icon: Key,
-      description: 'Generate keys',
+      description: 'Add & manage keys',
     },
     {
       path: '/encrypt',

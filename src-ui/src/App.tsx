@@ -5,7 +5,8 @@ import { LoadingSpinner } from './components/ui/loading-spinner';
 import { VaultProvider } from './contexts/VaultContext';
 
 // Lazy load page components for better initial render performance
-const SetupPage = lazy(() => import('./pages/SetupPage'));
+const VaultHub = lazy(() => import('./pages/VaultHub'));
+const ManageKeysPage = lazy(() => import('./pages/ManageKeysPage'));
 const EncryptPage = lazy(() => import('./pages/EncryptPage'));
 const DecryptPage = lazy(() => import('./pages/DecryptPage'));
 const YubiKeySetupPage = lazy(() => import('./pages/YubiKeySetupPage'));
@@ -16,12 +17,20 @@ function App(): ReactElement {
       <VaultProvider>
         <Suspense fallback={<LoadingSpinner centered showText text="Loading page..." />}>
           <Routes>
-            <Route path="/" element={<Navigate to="/setup" replace />} />
+            <Route path="/" element={<Navigate to="/vault-hub" replace />} />
             <Route
-              path="/setup"
+              path="/vault-hub"
               element={
                 <MainLayout>
-                  <SetupPage />
+                  <VaultHub />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/manage-keys"
+              element={
+                <MainLayout>
+                  <ManageKeysPage />
                 </MainLayout>
               }
             />

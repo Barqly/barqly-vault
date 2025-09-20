@@ -13,7 +13,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import SetupPage from '../../pages/SetupPage';
+import ManageKeysPage from '../../pages/ManageKeysPage';
 import { VaultProvider } from '../../contexts/VaultContext';
 import { useKeyGeneration } from '../../hooks/useKeyGeneration';
 import { safeListen } from '../../lib/tauri-safe';
@@ -85,7 +85,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
           generateKey: mockGenerateKey,
         });
 
-        renderWithRouter(<SetupPage />);
+        renderWithRouter(<ManageKeysPage />);
 
         // Fill out form completely
         const keyLabelInput = screen.getByLabelText(/key label/i);
@@ -135,7 +135,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
           generateKey: mockGenerateKey,
         });
 
-        renderWithRouter(<SetupPage />);
+        renderWithRouter(<ManageKeysPage />);
 
         const keyLabelInput = screen.getByLabelText(/key label/i);
         const passphraseInput = screen.getByLabelText(/^passphrase/i);
@@ -181,7 +181,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
         error: environmentChangeError,
       });
 
-      renderWithRouter(<SetupPage />);
+      renderWithRouter(<ManageKeysPage />);
 
       // Form should render normally (check for key elements)
       expect(screen.getByLabelText(/key label/i)).toBeInTheDocument();
@@ -221,7 +221,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
         generateKey: mockGenerateKey,
       });
 
-      renderWithRouter(<SetupPage />);
+      renderWithRouter(<ManageKeysPage />);
 
       const keyLabelInput = screen.getByLabelText(/key label/i);
       const passphraseInput = screen.getByLabelText(/^passphrase/i);
@@ -254,7 +254,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
         generateKey: mockGenerateKey,
       });
 
-      renderWithRouter(<SetupPage />);
+      renderWithRouter(<ManageKeysPage />);
 
       const keyLabelInput = screen.getByLabelText(/key label/i);
       const passphraseInput = screen.getByLabelText(/^passphrase/i);
@@ -282,7 +282,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
       // Test that form renders even when Tauri is not available
       mockIsTauri.mockReturnValue(false);
 
-      renderWithRouter(<SetupPage />);
+      renderWithRouter(<ManageKeysPage />);
 
       // Form should still render (verify form elements are present)
       expect(screen.getByLabelText(/key label/i)).toBeInTheDocument();
@@ -308,7 +308,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
         error: webError,
       });
 
-      renderWithRouter(<SetupPage />);
+      renderWithRouter(<ManageKeysPage />);
 
       // Should show appropriate error message
       expect(screen.getByText('This feature requires the desktop application')).toBeInTheDocument();
@@ -338,7 +338,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
         generateKey: mockGenerateKey,
       });
 
-      renderWithRouter(<SetupPage />);
+      renderWithRouter(<ManageKeysPage />);
 
       const keyLabelInput = screen.getByLabelText(/key label/i);
       const passphraseInput = screen.getByLabelText(/^passphrase/i);
@@ -367,7 +367,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
         generateKey: mockGenerateKey,
       });
 
-      renderWithRouter(<SetupPage />);
+      renderWithRouter(<ManageKeysPage />);
 
       const keyLabelInput = screen.getByLabelText(/key label/i);
       const passphraseInput = screen.getByLabelText(/^passphrase/i);
@@ -415,7 +415,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
         reset: mockReset,
       });
 
-      const { rerender } = renderWithRouter(<SetupPage />);
+      const { rerender } = renderWithRouter(<ManageKeysPage />);
 
       // Simulate first attempt that fails
       const keyLabelInput = screen.getByLabelText(/key label/i);
@@ -446,7 +446,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
 
       rerender(
         <BrowserRouter>
-          <SetupPage />
+          <ManageKeysPage />
         </BrowserRouter>,
       );
 
@@ -468,7 +468,7 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
 
       rerender(
         <BrowserRouter>
-          <SetupPage />
+          <ManageKeysPage />
         </BrowserRouter>,
       );
 
