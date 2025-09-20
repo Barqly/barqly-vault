@@ -57,10 +57,16 @@ pub struct RemoveKeyFromVaultResponse {
 #[tauri::command]
 #[instrument(skip_all, fields(vault_id = %input.vault_id))]
 pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVaultKeysResponse> {
+    crate::logging::log_debug(&format!("get_vault_keys called for vault: {}", input.vault_id));
+
     // Load the vault
     let vault = match vault_store::load_vault(&input.vault_id).await {
-        Ok(v) => v,
-        Err(_) => {
+        Ok(v) => {
+            crate::logging::log_debug(&format!("Vault loaded, has {} keys", v.keys.len()));
+            v
+        }
+        Err(e) => {
+            crate::logging::log_error(&format!("Failed to load vault {}: {:?}", input.vault_id, e));
             return Err(Box::new(CommandError {
                 code: ErrorCode::KeyNotFound,
                 message: format!("Vault '{}' not found", input.vault_id),
@@ -79,11 +85,16 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
         match &key.key_type {
             KeyType::Passphrase { key_id } => {
                 // Check if key file exists
-                key.state = if key_store::key_exists(key_id).unwrap_or(false) {
+                let exists = key_store::key_exists(key_id).unwrap_or(false);
+                key.state = if exists {
                     KeyState::Active
                 } else {
                     KeyState::Orphaned
                 };
+                crate::logging::log_debug(&format!(
+                    "Passphrase key {} (id: {}) exists: {}, state: {:?}",
+                    key.label, key_id, exists, key.state
+                ));
             }
             KeyType::Yubikey { serial, .. } => {
                 // Check if YubiKey is inserted
@@ -93,9 +104,19 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
                 } else {
                     KeyState::Registered
                 };
+                crate::logging::log_debug(&format!(
+                    "YubiKey {} (serial: {}) state: {:?}",
+                    key.label, serial, key.state
+                ));
             }
         }
     }
+
+    crate::logging::log_info(&format!(
+        "Returning {} keys for vault {}",
+        updated_keys.len(),
+        input.vault_id
+    ));
 
     Ok(GetVaultKeysResponse {
         vault_id: input.vault_id,

@@ -42,8 +42,24 @@ const ManageKeysPage: React.FC = () => {
 
   const handleKeySelect = (keyType: 'passphrase' | 'yubikey', index?: number) => {
     if (keyType === 'passphrase') {
+      // Check if a passphrase key already exists
+      const hasPassphrase = vaultKeys.some((k: any) => k.type === 'passphrase');
+      if (hasPassphrase) {
+        // TODO: Show a message or dialog to view/remove existing passphrase
+        alert('This vault already has a passphrase key. Each vault can only have one passphrase.');
+        return;
+      }
       setShowPassphraseDialog(true);
     } else if (keyType === 'yubikey' && index !== undefined) {
+      // Check if this YubiKey slot is already filled
+      const hasYubiKeyInSlot = vaultKeys.some((k: any) =>
+        k.type === 'yubikey' && (k.slot_index === index || vaultKeys.filter((vk: any) => vk.type === 'yubikey').indexOf(k) === index)
+      );
+      if (hasYubiKeyInSlot) {
+        // TODO: Show a dialog to view/remove existing YubiKey
+        alert(`YubiKey slot ${index + 1} is already configured.`);
+        return;
+      }
       setSelectedYubiKeyIndex(index);
       setShowYubiKeyDialog(true);
     }

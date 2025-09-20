@@ -1,4 +1,3 @@
-use serde_json::json;
 use std::fs::{create_dir_all, OpenOptions};
 use std::io::Write;
 use std::sync::Mutex;
@@ -36,23 +35,40 @@ impl Logger {
             return;
         }
 
-        // Create structured log entry in JSON format
-        let log_data = json!({
-            "timestamp": entry.timestamp.to_rfc3339(),
-            "level": format!("{level:?}", level = entry.level),
-            "message": entry.message,
-            "trace_id": entry.trace_id,
-            "span_id": entry.span_id,
-            "attributes": entry.attributes,
-            "error": entry.error_details.map(|error| json!({
-                "type": error.error_type,
-                "code": error.error_code,
-                "stack_trace": error.stack_trace,
-                "context": error.context
-            }))
-        });
+        // Create human-readable log format with separators
+        let level_str = match entry.level {
+            LogLevel::Debug => "DEBUG",
+            LogLevel::Info => "INFO ",
+            LogLevel::Warn => "WARN ",
+            LogLevel::Error => "ERROR",
+        };
 
-        let log_line = format!("{log_data}\n");
+        // Format: TIMESTAMP | LEVEL | MESSAGE | ATTRIBUTES | ERROR
+        let mut log_parts = vec![
+            entry.timestamp.to_rfc3339(),
+            level_str.to_string(),
+            entry.message.clone(),
+        ];
+
+        // Add attributes if present
+        if !entry.attributes.is_empty() {
+            let attrs = serde_json::to_string(&entry.attributes).unwrap_or_default();
+            log_parts.push(attrs);
+        }
+
+        // Add error details if present
+        if let Some(error) = entry.error_details {
+            let error_info = format!(
+                "Error(type={}, code={:?}, context={})",
+                error.error_type,
+                error.error_code,
+                serde_json::to_string(&error.context).unwrap_or_default()
+            );
+            log_parts.push(error_info);
+        }
+
+        // Join with separator for easy parsing
+        let log_line = format!("{}\n", log_parts.join(" | "));
 
         if let Ok(mut file_opt) = self.log_file.lock() {
             if let Some(file) = file_opt.as_mut() {

@@ -56,14 +56,31 @@ use commands::{
     yubikey_validate_pin,
 };
 
-use logging::{init_logging, log_info, LogLevel};
+use logging::{init_logging, log_info, log_debug, LogLevel};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    if let Err(e) = init_logging(LogLevel::Info) {
+    // Determine if we're in debug or release mode
+    #[cfg(debug_assertions)]
+    let default_level = LogLevel::Debug;
+
+    #[cfg(not(debug_assertions))]
+    let default_level = LogLevel::Warn; // Minimal logging in production
+
+    // Check RUST_LOG environment variable for log level override
+    let log_level = match std::env::var("RUST_LOG").as_deref() {
+        Ok("debug") | Ok("DEBUG") => LogLevel::Debug,
+        Ok("info") | Ok("INFO") => LogLevel::Info,
+        Ok("warn") | Ok("WARN") => LogLevel::Warn,
+        Ok("error") | Ok("ERROR") => LogLevel::Error,
+        _ => default_level,
+    };
+
+    if let Err(e) = init_logging(log_level) {
         eprintln!("Failed to initialize logging: {e:?}");
     } else {
         log_info("Barqly Vault application started");
+        log_debug(&format!("Log level set to: {log_level:?} (default: {default_level:?}"));
     }
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())

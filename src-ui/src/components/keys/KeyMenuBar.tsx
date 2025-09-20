@@ -20,13 +20,16 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
   const { passphraseKey, yubiKeys } = useMemo(() => {
     console.log('KeyMenuBar: Processing vaultKeys', vaultKeys);
 
-    const passphrase = vaultKeys.find(
-      (k) => k.key_type && 'type' in k.key_type && k.key_type.type === 'passphrase',
-    );
+    // The backend uses #[serde(flatten)] so the type field is at the root level
+    const passphrase = vaultKeys.find((k) => {
+      // Check if it has a 'type' field at the root level
+      return (k as any).type === 'passphrase';
+    });
 
-    const yubis = vaultKeys.filter(
-      (k) => k.key_type && 'type' in k.key_type && k.key_type.type === 'yubikey',
-    );
+    const yubis = vaultKeys.filter((k) => {
+      // Check if it has a 'type' field at the root level
+      return (k as any).type === 'yubikey';
+    });
 
     console.log('KeyMenuBar: Found passphrase key?', !!passphrase, passphrase);
     console.log('KeyMenuBar: Found YubiKeys:', yubis.length);
