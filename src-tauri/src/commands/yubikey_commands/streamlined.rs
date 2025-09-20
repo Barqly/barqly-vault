@@ -79,7 +79,14 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
     }
 
     // Get existing age identities
-    let identities = list_yubikey_identities().unwrap_or_else(|_| Vec::new());
+    let identities = list_yubikey_identities().unwrap_or_else(|e| {
+        warn!("Failed to list YubiKey identities: {e}");
+        Vec::new()
+    });
+    info!("Found {} age identities", identities.len());
+    for identity in &identities {
+        debug!("Identity: {}", identity);
+    }
 
     let mut yubikeys = Vec::new();
 
@@ -89,25 +96,36 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         if serial.is_empty() {
             continue;
         }
+        debug!("Processing YubiKey with serial: {}", serial);
 
         // Check manifest for this YubiKey
         let manifest_entry = manifest.find_by_serial(&serial);
+        let in_manifest = manifest_entry.is_some();
+        debug!("YubiKey {} in manifest: {}", serial, in_manifest);
 
         // Check if this YubiKey has an age identity
         let has_identity = identities.iter().any(|id| id.contains(&serial));
+        debug!("YubiKey {} has identity: {}", serial, has_identity);
 
         // Determine state based on manifest and identity presence
-        let state = match (manifest_entry.is_some(), has_identity) {
-            (true, true) => YubiKeyState::Registered, // In manifest and has identity
-            (false, true) => YubiKeyState::Orphaned,  // Has identity but not in manifest
+        let state = match (in_manifest, has_identity) {
+            (true, true) => {
+                info!("YubiKey {} state: Registered (in manifest + has identity)", serial);
+                YubiKeyState::Registered
+            }
+            (false, true) => {
+                info!("YubiKey {} state: Orphaned (has identity but not in manifest)", serial);
+                YubiKeyState::Orphaned
+            }
             (true, false) => {
                 // In manifest but no identity found - might be disconnected/reset
-                warn!("YubiKey {serial} in manifest but no identity found");
+                warn!("YubiKey {} in manifest but no identity found - marking as Reused", serial);
                 YubiKeyState::Reused
             }
             (false, false) => {
                 // Check PIN status to determine if new or reused
                 // For now, assume new (in production, would check with ykman)
+                info!("YubiKey {} state: New (no manifest entry, no identity)", serial);
                 YubiKeyState::New
             }
         };
