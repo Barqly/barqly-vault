@@ -103,6 +103,11 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         { vault_id: currentVault.id },
         'VaultContext.refreshKeys',
       );
+      logger.info('VaultContext', 'Keys loaded for vault', {
+        vaultId: currentVault.id,
+        keyCount: keysResponse.keys.length,
+        keys: keysResponse.keys
+      });
       setVaultKeys(keysResponse.keys);
     } catch (err: any) {
       logger.error('VaultContext', 'Failed to refresh keys', err);
@@ -139,6 +144,8 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       if (response.vault) {
         setCurrentVaultState(response.vault);
+        // Immediately refresh keys when vault is selected
+        await refreshKeys();
       }
     } catch (err: any) {
       logger.error('VaultContext', 'Failed to set current vault', err);

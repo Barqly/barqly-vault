@@ -18,6 +18,8 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
 
   // Process keys from vault
   const { passphraseKey, yubiKeys } = useMemo(() => {
+    console.log('KeyMenuBar: Processing vaultKeys', vaultKeys);
+
     const passphrase = vaultKeys.find(
       (k) => k.key_type && 'type' in k.key_type && k.key_type.type === 'passphrase',
     );
@@ -25,6 +27,9 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
     const yubis = vaultKeys.filter(
       (k) => k.key_type && 'type' in k.key_type && k.key_type.type === 'yubikey',
     );
+
+    console.log('KeyMenuBar: Found passphrase key?', !!passphrase, passphrase);
+    console.log('KeyMenuBar: Found YubiKeys:', yubis.length);
 
     return { passphraseKey: passphrase, yubiKeys: yubis };
   }, [vaultKeys]);
