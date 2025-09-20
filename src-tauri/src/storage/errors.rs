@@ -45,6 +45,10 @@ pub enum StorageError {
     /// File corruption detected
     #[error("File corruption detected: {0}")]
     FileCorruption(String),
+
+    /// Invalid vault name provided
+    #[error("Invalid vault name: {0}")]
+    InvalidVaultName(String),
 }
 
 impl StorageError {

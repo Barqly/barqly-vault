@@ -8,6 +8,7 @@ import { useFileDecryption } from '../../hooks/useFileDecryption';
 import { useDecryptionWorkflow } from '../../hooks/useDecryptionWorkflow';
 import { ErrorCode } from '../../lib/api-types';
 import { createTauriTestEnvironment, MOCK_RESPONSES, resetTauriMocks } from '../utils/tauri-mocks';
+import { VaultProvider } from '../../contexts/VaultContext';
 
 // Mock the hooks
 vi.mock('../../hooks/useFileDecryption');
@@ -41,9 +42,13 @@ vi.mock('@tauri-apps/api/core', () => ({
 const mockUseFileDecryption = vi.mocked(useFileDecryption);
 const mockUseDecryptionWorkflow = vi.mocked(useDecryptionWorkflow);
 
-// Helper function to render with router
+// Helper function to render with router and VaultProvider
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(<BrowserRouter>{component}</BrowserRouter>);
+  return render(
+    <VaultProvider>
+      <BrowserRouter>{component}</BrowserRouter>
+    </VaultProvider>,
+  );
 };
 
 describe('DecryptPage', () => {

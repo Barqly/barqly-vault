@@ -31,7 +31,6 @@ pub fn migrate_from_protection_mode(
         created_at: metadata.created_at,
         updated_at: Utc::now(),
         keys: Vec::new(),
-        is_current: false,
     };
 
     // Convert recipients to key references
@@ -117,10 +116,6 @@ pub async fn migrate_json_vault(
         created_at,
         updated_at: Utc::now(),
         keys: Vec::new(),
-        is_current: value
-            .get("is_current")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false),
     };
 
     // Handle protection mode conversion

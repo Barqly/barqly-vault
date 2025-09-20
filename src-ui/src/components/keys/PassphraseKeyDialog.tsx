@@ -28,6 +28,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [validation, setValidation] = useState<PassphraseValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false); // Loading state for validation
+  const [labelError, setLabelError] = useState<string | null>(null);
 
   // Real-time passphrase validation
   useEffect(() => {
@@ -41,7 +42,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
       try {
         const result = await safeInvoke<PassphraseValidationResult>(
           'validate_passphrase_strength',
-          passphrase,
+          { passphrase }, // Wrap in object with passphrase key
           'PassphraseKeyDialog.validate',
         );
         setValidation(result);
@@ -55,9 +56,31 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
     return () => clearTimeout(timer);
   }, [passphrase]);
 
+  // Validate label for allowed characters
+  const validateLabel = (value: string): string | null => {
+    if (!value.trim()) return null; // Empty is handled elsewhere
+
+    // Allow letters, numbers, dashes, and underscores only
+    const validPattern = /^[a-zA-Z0-9_-]+$/;
+    if (!validPattern.test(value)) {
+      const invalidChars = value.split('').filter(c => !/[a-zA-Z0-9_-]/.test(c));
+      return `Invalid characters: ${[...new Set(invalidChars)].join(', ')}`;
+    }
+    return null;
+  };
+
+  const handleLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLabel(value);
+    setLabelError(validateLabel(value));
+  };
+
   const validateForm = (): string | null => {
     if (!label.trim()) {
       return 'Key label is required';
+    }
+    if (labelError) {
+      return labelError;
     }
     if (!validation?.is_valid) {
       return 'Passphrase does not meet security requirements';
@@ -149,6 +172,8 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
       setPassphrase('');
       setConfirmPassphrase('');
       setError(null);
+      setLabelError(null);
+      setValidation(null);
       onClose();
     }
   };
@@ -189,12 +214,24 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                 id="key-label"
                 type="text"
                 value={label}
-                onChange={(e) => setLabel(e.target.value)}
+                onChange={handleLabelChange}
                 disabled={isCreating}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
-                placeholder="e.g., Main Password"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
+                  labelError
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+                placeholder="e.g., bitcoin-wallet or bitcoin_wallet_2024"
                 autoFocus
               />
+              {labelError && (
+                <p className="text-xs text-red-600 mt-1">{labelError}</p>
+              )}
+              {!labelError && label && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Allowed: letters, numbers, dashes (-), and underscores (_)
+                </p>
+              )}
             </div>
 
             <div>
@@ -240,11 +277,19 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                 value={confirmPassphrase}
                 onChange={(e) => setConfirmPassphrase(e.target.value)}
                 disabled={isCreating}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
+                  confirmPassphrase
+                    ? passphrase === confirmPassphrase
+                      ? 'border-green-500 focus:ring-green-500'
+                      : 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="Re-enter passphrase"
               />
-              {confirmPassphrase && passphrase !== confirmPassphrase && (
-                <p className="text-xs text-red-600 mt-1">Passphrases do not match</p>
+              {confirmPassphrase && (
+                <p className={`text-xs mt-1 ${passphrase === confirmPassphrase ? 'text-green-600' : 'text-red-600'}`}>
+                  {passphrase === confirmPassphrase ? '✓ Passphrases match' : 'Passphrases do not match'}
+                </p>
               )}
             </div>
 
@@ -313,6 +358,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                 disabled={
                   isCreating ||
                   !label.trim() ||
+                  labelError !== null ||
                   !validation?.is_valid ||
                   passphrase !== confirmPassphrase
                 }

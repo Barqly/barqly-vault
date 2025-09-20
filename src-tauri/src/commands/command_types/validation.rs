@@ -140,11 +140,11 @@ impl ValidationHelper {
 
     /// Validate key label format
     pub fn validate_key_label(label: &str) -> Result<(), Box<CommandError>> {
-        // Key labels should only contain letters, numbers, and dashes
-        if !label.chars().all(|c| c.is_alphanumeric() || c == '-') {
+        // Key labels should only contain letters, numbers, dashes, and underscores
+        if !label.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
             let invalid_chars: Vec<char> = label
                 .chars()
-                .filter(|c| !c.is_alphanumeric() && *c != '-')
+                .filter(|c| !c.is_alphanumeric() && *c != '-' && *c != '_')
                 .collect();
             let invalid_chars_str = invalid_chars.iter().collect::<String>();
             return Err(Box::new(
@@ -152,7 +152,7 @@ impl ValidationHelper {
                     ErrorCode::InvalidKeyLabel,
                     format!("Key label contains invalid characters: {invalid_chars_str}"),
                 )
-                .with_recovery_guidance("Remove special characters and spaces. Valid: letters (a-z, A-Z), numbers (0-9), and dashes (-). Example: 'my-bitcoin-keys'"),
+                .with_recovery_guidance("Remove special characters and spaces. Valid: letters (a-z, A-Z), numbers (0-9), dashes (-), and underscores (_). Example: 'my-bitcoin-keys' or 'bitcoin_wallet_2024'"),
             ));
         }
         Ok(())

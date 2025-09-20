@@ -15,7 +15,6 @@ mod tests {
             created_at: Utc::now(),
             updated_at: Utc::now(),
             keys: vec![],
-            is_current: true,
         };
 
         save_vault(&vault).await.expect("Failed to save test vault");

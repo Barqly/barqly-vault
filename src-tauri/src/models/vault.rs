@@ -27,9 +27,6 @@ pub struct Vault {
 
     /// References to keys that can unlock this vault
     pub keys: Vec<KeyReference>,
-
-    /// Whether this is the currently active vault
-    pub is_current: bool,
 }
 
 /// Reference to a key that can unlock a vault
@@ -100,7 +97,6 @@ pub struct VaultSummary {
     pub description: Option<String>,
     pub created_at: DateTime<Utc>,
     pub key_count: usize,
-    pub is_current: bool,
 }
 
 impl Vault {
@@ -114,7 +110,6 @@ impl Vault {
             created_at: now,
             updated_at: now,
             keys: Vec::new(),
-            is_current: false,
         }
     }
 
@@ -174,7 +169,6 @@ impl Vault {
             description: self.description.clone(),
             created_at: self.created_at,
             key_count: self.keys.len(),
-            is_current: self.is_current,
         }
     }
 

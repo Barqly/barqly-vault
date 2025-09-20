@@ -78,13 +78,7 @@ pub async fn create_vault(input: CreateVaultRequest) -> CommandResponse<CreateVa
     }
 
     // Create new vault
-    let mut vault = Vault::new(input.name.trim().to_string(), input.description);
-
-    // If this is the first vault, make it current
-    let existing_vaults = vault_store::list_vaults().await.unwrap_or_default();
-    if existing_vaults.is_empty() {
-        vault.is_current = true;
-    }
+    let vault = Vault::new(input.name.trim().to_string(), input.description);
 
     // Save vault
     match vault_store::save_vault(&vault).await {
@@ -125,34 +119,24 @@ pub async fn list_vaults() -> CommandResponse<ListVaultsResponse> {
     }
 }
 
-/// Get the current active vault
+/// Get the current active vault (deprecated - UI should track this)
 #[tauri::command]
 #[instrument]
 pub async fn get_current_vault() -> CommandResponse<GetCurrentVaultResponse> {
-    match vault_store::get_current_vault().await {
-        Ok(vault) => Ok(GetCurrentVaultResponse {
-            vault: vault.map(|v| v.to_summary()),
-        }),
-        Err(e) => Err(Box::new(CommandError {
-            code: ErrorCode::StorageFailed,
-            message: "Failed to get current vault".to_string(),
-            details: Some(e.to_string()),
-            recovery_guidance: None,
-            user_actionable: false,
-            trace_id: None,
-            span_id: None,
-        })),
-    }
+    // This endpoint is deprecated - UI should track the current vault
+    // Return None for now to maintain API compatibility
+    Ok(GetCurrentVaultResponse { vault: None })
 }
 
-/// Set the current active vault
+/// Set the current active vault (deprecated - UI should track this)
 #[tauri::command]
 #[instrument(skip_all, fields(vault_id = %input.vault_id))]
 pub async fn set_current_vault(
     input: SetCurrentVaultRequest,
 ) -> CommandResponse<SetCurrentVaultResponse> {
-    // Load the vault
-    let mut vault = match vault_store::load_vault(&input.vault_id).await {
+    // This endpoint is deprecated - UI should track the current vault
+    // Just verify the vault exists and return success
+    let vault = match vault_store::load_vault(&input.vault_id).await {
         Ok(v) => v,
         Err(_) => {
             return Err(Box::new(CommandError {
@@ -167,33 +151,11 @@ pub async fn set_current_vault(
         }
     };
 
-    // Clear current flag on all vaults
-    if let Ok(vaults) = vault_store::list_vaults().await {
-        for mut v in vaults {
-            if v.is_current {
-                v.is_current = false;
-                let _ = vault_store::save_vault(&v).await;
-            }
-        }
-    }
-
-    // Set this vault as current
-    vault.is_current = true;
-    match vault_store::save_vault(&vault).await {
-        Ok(_) => Ok(SetCurrentVaultResponse {
-            success: true,
-            vault: vault.to_summary(),
-        }),
-        Err(e) => Err(Box::new(CommandError {
-            code: ErrorCode::StorageFailed,
-            message: "Failed to update vault".to_string(),
-            details: Some(e.to_string()),
-            recovery_guidance: None,
-            user_actionable: false,
-            trace_id: None,
-            span_id: None,
-        })),
-    }
+    // Just return success with the vault summary
+    Ok(SetCurrentVaultResponse {
+        success: true,
+        vault: vault.to_summary(),
+    })
 }
 
 /// Delete a vault

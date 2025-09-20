@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import EncryptPage from '../../pages/EncryptPage';
 import { ErrorCode } from '../../lib/api-types';
 import { createTauriTestEnvironment, MOCK_RESPONSES, resetTauriMocks } from '../utils/tauri-mocks';
+import { VaultProvider } from '../../contexts/VaultContext';
 
 // Mock the hooks
 vi.mock('../../hooks/useEncryptionWorkflow', () => ({
@@ -134,9 +135,11 @@ describe('EncryptPage', () => {
 
   const renderEncryptPage = () => {
     return render(
-      <BrowserRouter>
-        <EncryptPage />
-      </BrowserRouter>,
+      <VaultProvider>
+        <BrowserRouter>
+          <EncryptPage />
+        </BrowserRouter>
+      </VaultProvider>,
     );
   };
 
