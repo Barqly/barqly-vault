@@ -257,6 +257,7 @@ pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<Yu
 
     // Get all connected YubiKeys
     let mut all_yubikeys = list_yubikeys().await?;
+    crate::logging::log_debug(&format!("Found {} total YubiKeys connected", all_yubikeys.len()));
 
     // Get vault's existing YubiKeys
     let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
@@ -281,6 +282,13 @@ pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<Yu
             yubikey.state = YubiKeyState::Registered;
         }
     }
+
+    crate::logging::log_debug(&format!(
+        "Returning {} YubiKeys for vault {}: {:?}",
+        all_yubikeys.len(),
+        vault_id,
+        all_yubikeys.iter().map(|y| &y.serial).collect::<Vec<_>>()
+    ));
 
     Ok(all_yubikeys)
 }

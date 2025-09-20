@@ -459,9 +459,14 @@ export interface RegisterYubiKeyResult {
 
 export interface YubiKeyStateInfo {
   serial: string;
-  state: 'NEW' | 'INITIALIZED' | 'REUSED' | 'UNKNOWN';
+  state: 'NEW' | 'INITIALIZED' | 'REUSED' | 'ORPHANED' | 'REGISTERED' | 'UNKNOWN';
   vault_keys: string[];
   available_slots: number[];
+  slot?: number;
+  recipient?: string;
+  identity_tag?: string;
+  label?: string;
+  pin_status?: 'default' | 'set';
 }
 
 // YubiKey command types

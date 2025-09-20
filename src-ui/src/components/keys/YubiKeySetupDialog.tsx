@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import { useVault } from '../../contexts/VaultContext';
 import { logger } from '../../lib/logger';
 import { safeInvoke } from '../../lib/tauri-safe';
@@ -37,7 +37,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSetupInProgress, setIsSetupInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<'detect' | 'setup' | 'recovery'>('detect');
+  const [step, setStep] = useState<'detect' | 'setup' | 'confirm' | 'recovery'>('detect');
 
   useEffect(() => {
     if (isOpen) {
@@ -64,17 +64,38 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
         'YubiKeySetupDialog.detectYubiKeys',
       );
 
-      // Filter out already registered keys for this vault
+      logger.info('YubiKeySetupDialog', 'YubiKeys returned from backend', {
+        count: keys.length,
+        keys: keys,
+      });
+
+      // Filter to include all YubiKeys that can be added to this vault
+      // Include: NEW (brand new), REUSED (reset), ORPHANED (has key but not in vault), UNKNOWN
+      // Exclude: REGISTERED (already in this vault)
       const availableKeys = keys.filter(
-        (k) => k.state === 'NEW' || k.state === 'REUSED' || k.state === 'UNKNOWN',
+        (k) => k.state !== 'REGISTERED',
       );
+
+      logger.info('YubiKeySetupDialog', 'Available YubiKeys after filtering', {
+        count: availableKeys.length,
+        availableKeys: availableKeys,
+      });
 
       setYubikeys(availableKeys);
 
       // Auto-select if only one available
       if (availableKeys.length === 1) {
-        setSelectedKey(availableKeys[0]);
-        setLabel(`YubiKey-${availableKeys[0].serial.substring(0, 6)}`);
+        const key = availableKeys[0];
+        setSelectedKey(key);
+
+        // For ORPHANED YubiKeys (already have age key), use existing label or create one
+        if (key.state === 'ORPHANED') {
+          setLabel(key.label || `YubiKey-${key.serial.substring(0, 6)}`);
+          // Skip directly to confirmation for orphaned keys
+          setStep('confirm');
+        } else {
+          setLabel(`YubiKey-${key.serial.substring(0, 6)}`);
+        }
       }
     } catch (err: any) {
       logger.error('YubiKeySetupDialog', 'Failed to detect YubiKeys', err);
@@ -243,23 +264,33 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                   </div>
                 ) : yubikeys.length === 0 ? (
                   <>
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                       <div className="flex gap-3">
-                        <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm text-yellow-800">No YubiKey detected</p>
-                          <p className="text-sm text-yellow-700 mt-1">
-                            Please insert a YubiKey and click Refresh
+                          <p className="text-sm text-amber-800 font-medium">No initialized YubiKeys found</p>
+                          <p className="text-sm text-amber-700 mt-1">
+                            Insert your YubiKey to set it up for this vault. The green light should be blinking.
                           </p>
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={detectYubiKeys}
-                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      Refresh
-                    </button>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={detectYubiKeys}
+                        className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                      >
+                        <RefreshCw className="h-4 w-4 inline mr-2" />
+                        Refresh
+                      </button>
+                      <button
+                        onClick={() => setStep('setup')}
+                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        Continue Setup
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -272,8 +303,15 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                           key={yk.serial}
                           onClick={() => {
                             setSelectedKey(yk);
-                            setLabel(`YubiKey-${yk.serial.substring(0, 6)}`);
-                            setStep('setup');
+
+                            // For ORPHANED YubiKeys, use existing label or create default
+                            if (yk.state === 'ORPHANED') {
+                              setLabel(yk.label || `YubiKey-${yk.serial.substring(0, 6)}`);
+                              setStep('confirm');
+                            } else {
+                              setLabel(`YubiKey-${yk.serial.substring(0, 6)}`);
+                              setStep('setup');
+                            }
                           }}
                           className={`w-full p-3 border rounded-lg text-left transition-colors hover:bg-blue-50 hover:border-blue-300 ${
                             selectedKey?.serial === yk.serial
@@ -289,6 +327,10 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                               <p className="text-xs text-gray-500">
                                 {yk.state === 'NEW'
                                   ? 'New device - will be initialized'
+                                  : yk.state === 'ORPHANED'
+                                    ? 'Has existing key - ready to attach'
+                                  : yk.state === 'REUSED'
+                                    ? 'Reset device - ready to register'
                                   : yk.state === 'UNKNOWN'
                                     ? 'Needs recovery'
                                     : 'Ready to register'}
@@ -297,6 +339,11 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                             {yk.state === 'NEW' && (
                               <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
                                 New
+                              </span>
+                            )}
+                            {yk.state === 'ORPHANED' && (
+                              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                                Has Key
                               </span>
                             )}
                           </div>
@@ -397,6 +444,134 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                   </button>
                   <button
                     onClick={() => setStep('detect')}
+                    disabled={isSetupInProgress}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  >
+                    Back
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Confirm Registration Step for ORPHANED YubiKeys */}
+            {step === 'confirm' && selectedKey && selectedKey.state === 'ORPHANED' && (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-blue-800 font-medium">YubiKey Already Initialized</p>
+                      <p className="text-sm text-blue-700 mt-1">
+                        This YubiKey already has an age encryption key. You can attach it to this vault directly.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">YubiKey Details</label>
+                  <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Serial:</span> {selectedKey.serial}
+                    </p>
+                    {selectedKey.recipient && (
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">Recipient:</span>
+                        <span className="font-mono text-xs block mt-1">{selectedKey.recipient}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Label for this Vault</label>
+                  <input
+                    type="text"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Personal YubiKey"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Enter YubiKey PIN to Confirm
+                  </label>
+                  <input
+                    type="password"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    maxLength={8}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter your existing PIN"
+                  />
+                </div>
+
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">{error}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={async () => {
+                      if (!pin) {
+                        setError('PIN is required to register YubiKey');
+                        return;
+                      }
+                      if (!label.trim()) {
+                        setError('Label is required');
+                        return;
+                      }
+
+                      setIsSetupInProgress(true);
+                      setError(null);
+
+                      try {
+                        const registerParams: RegisterYubiKeyForVaultParams = {
+                          serial: selectedKey.serial,
+                          pin,
+                          label: label.trim(),
+                          vault_id: currentVault!.id,
+                          slot_index: slotIndex,
+                        };
+
+                        await safeInvoke<{ success: boolean }>(
+                          'register_yubikey_for_vault',
+                          registerParams,
+                          'YubiKeySetupDialog.registerOrphanedYubiKey',
+                        );
+
+                        // Refresh keys to show the newly added YubiKey
+                        await refreshKeys();
+                        handleSuccess();
+                      } catch (err: any) {
+                        logger.error('YubiKeySetupDialog', 'Failed to register YubiKey', err);
+                        setError(err.message || 'Failed to register YubiKey');
+                      } finally {
+                        setIsSetupInProgress(false);
+                      }
+                    }}
+                    disabled={isSetupInProgress || !label.trim() || !pin}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isSetupInProgress ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Registering...
+                      </>
+                    ) : (
+                      'Attach to Vault'
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setStep('detect');
+                      setPin('');
+                      setError(null);
+                    }}
                     disabled={isSetupInProgress}
                     className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                   >
