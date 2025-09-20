@@ -157,10 +157,19 @@ pub async fn delete_vault(vault_id: &str) -> Result<(), Box<dyn std::error::Erro
 /// List all vaults
 pub async fn list_vaults() -> Result<Vec<Vault>, Box<dyn std::error::Error + Send + Sync>> {
     let vaults_dir = get_vaults_dir()?;
+
+    // Log the directory we're trying to access
+    eprintln!("[DEBUG] Attempting to list vaults from: {:?}", vaults_dir);
+
     let mut vaults = Vec::new();
 
     if vaults_dir.exists() {
-        let mut entries = async_fs::read_dir(vaults_dir).await?;
+        eprintln!("[DEBUG] Vaults directory exists, reading entries...");
+        let mut entries = async_fs::read_dir(&vaults_dir).await
+            .map_err(|e| {
+                eprintln!("[ERROR] Failed to read vaults directory: {:?} - Error: {}", vaults_dir, e);
+                e
+            })?;
 
         while let Some(entry) = entries.next_entry().await? {
             let path = entry.path();

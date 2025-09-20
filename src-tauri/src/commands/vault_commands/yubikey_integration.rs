@@ -241,7 +241,7 @@ pub async fn register_yubikey_for_vault(
     }
 
     crate::logging::log_info(&format!(
-        "Registering {} YubiKey {} to vault (no PIN verification for existing keys)",
+        "Registering {:?} YubiKey {} to vault (no PIN verification for existing keys)",
         yubikey.state,
         params.serial
     ));

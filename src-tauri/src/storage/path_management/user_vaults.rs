@@ -33,9 +33,18 @@ pub fn get_vaults_directory() -> Result<PathBuf, StorageError> {
     let documents = get_documents_dir()?;
     let vaults_dir = documents.join("Barqly-Vaults");
 
+    eprintln!("[DEBUG] Vaults directory path: {:?}", vaults_dir);
+
     if !vaults_dir.exists() {
+        eprintln!("[DEBUG] Vaults directory doesn't exist, attempting to create it...");
         std::fs::create_dir_all(&vaults_dir)
-            .map_err(|_| StorageError::DirectoryCreationFailed(vaults_dir.clone()))?;
+            .map_err(|e| {
+                eprintln!("[ERROR] Failed to create vaults directory: {:?} - Error: {}", vaults_dir, e);
+                StorageError::DirectoryCreationFailed(vaults_dir.clone())
+            })?;
+        eprintln!("[DEBUG] Successfully created vaults directory");
+    } else {
+        eprintln!("[DEBUG] Vaults directory already exists");
     }
 
     Ok(vaults_dir)

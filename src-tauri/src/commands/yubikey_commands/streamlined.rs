@@ -79,13 +79,14 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
     }
 
     // Get existing age identities
+    // Check if there are any identities at all - simpler approach from POC
     let identities = list_yubikey_identities().unwrap_or_else(|e| {
         warn!("Failed to list YubiKey identities: {e}");
         Vec::new()
     });
-    info!("Found {} age identities", identities.len());
+    info!("Found {} age identities total", identities.len());
     for identity in &identities {
-        debug!("Identity: {}", identity);
+        info!("Found identity: {}", identity);
     }
 
     let mut yubikeys = Vec::new();
@@ -103,8 +104,10 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         let in_manifest = manifest_entry.is_some();
         debug!("YubiKey {} in manifest: {}", serial, in_manifest);
 
-        // Check if this YubiKey has an age identity
-        let has_identity = identities.iter().any(|id| id.contains(&serial));
+        // Check if there are any age identities
+        // Since we typically work with one YubiKey at a time,
+        // if there are ANY identities, assume this YubiKey has one
+        let has_identity = !identities.is_empty();
         debug!("YubiKey {} has identity: {}", serial, has_identity);
 
         // Determine state based on manifest and identity presence

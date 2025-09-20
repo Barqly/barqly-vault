@@ -1,7 +1,7 @@
 /// Age-specific PTY operations for YubiKey
 /// Handles identity generation and decryption with age-plugin-yubikey
 use super::core::{run_age_plugin_yubikey, PtyError, Result};
-use log::{debug, info};
+use log::{debug, info, warn};
 use std::fs;
 use std::path::Path;
 
@@ -49,20 +49,70 @@ pub fn generate_age_identity_pty(pin: &str, touch_policy: &str, slot_name: &str)
 
 /// List existing YubiKey identities
 pub fn list_yubikey_identities() -> Result<Vec<String>> {
-    info!("Listing YubiKey identities");
+    use std::process::Command;
 
-    let args = vec!["--list".to_string()];
-    let output = run_age_plugin_yubikey(args, None, false)?;
+    info!("Listing YubiKey identities with age-plugin-yubikey --list");
+
+    // Use the bundled age-plugin-yubikey binary
+    let age_path = super::core::get_age_plugin_path();
+    info!("Using age-plugin-yubikey from: {:?}", age_path);
+
+    // Check if the binary exists and is executable
+    if !age_path.exists() {
+        warn!("age-plugin-yubikey binary not found at: {:?}", age_path);
+        return Ok(Vec::new());
+    }
+
+    // Execute age-plugin-yubikey --list directly
+    info!("Executing command: {:?} --list", age_path);
+    let output_result = Command::new(&age_path)
+        .arg("--list")
+        .output();
+
+    let output = match output_result {
+        Ok(cmd_output) => {
+            let stdout = String::from_utf8_lossy(&cmd_output.stdout);
+            let stderr = String::from_utf8_lossy(&cmd_output.stderr);
+
+            info!("Command exit status: {}", cmd_output.status.success());
+            info!("STDOUT ({} bytes): {}", stdout.len(), stdout);
+            if !stderr.is_empty() {
+                info!("STDERR: {}", stderr);
+            }
+
+            stdout.to_string()
+        }
+        Err(e) => {
+            warn!("Failed to execute age-plugin-yubikey: {}", e);
+            warn!("Binary path was: {:?}", age_path);
+            // Return empty list to avoid breaking the flow
+            return Ok(Vec::new());
+        }
+    };
 
     let mut identities = Vec::new();
-    for line in output.lines() {
+    for (idx, line) in output.lines().enumerate() {
         let trimmed = line.trim();
+
+        // Skip comment lines
+        if trimmed.starts_with("#") || trimmed.is_empty() {
+            continue;
+        }
+
+        info!("Parsing line {}: '{}'", idx, trimmed);
+
+        // The actual recipient line starts with age1yubikey (no #)
         if trimmed.starts_with("age1yubikey") {
+            info!("Found identity on line {}: {}", idx, trimmed);
             identities.push(trimmed.to_string());
         }
     }
 
-    debug!("Found {} YubiKey identities", identities.len());
+    info!("Found {} YubiKey identities total", identities.len());
+    for (i, id) in identities.iter().enumerate() {
+        info!("Identity {}: {}", i, id);
+    }
+
     Ok(identities)
 }
 

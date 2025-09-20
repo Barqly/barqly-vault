@@ -135,7 +135,7 @@ export async function safeInvoke<T>(
       add_passphrase_key_to_vault: 'input', // Takes AddPassphraseKeyRequest
       validate_vault_passphrase_key: null, // Takes vault_id as string
       init_yubikey_for_vault: 'input', // Takes YubiKeyInitForVaultParams
-      register_yubikey_for_vault: 'input', // Takes RegisterYubiKeyForVaultParams
+      register_yubikey_for_vault: 'params', // Takes RegisterYubiKeyForVaultParams wrapped in 'params'
       list_available_yubikeys: null, // Takes vault_id as string directly
       check_yubikey_slot_availability: null, // Takes vault_id as string
     };

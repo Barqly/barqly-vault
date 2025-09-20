@@ -59,10 +59,12 @@ pub fn get_age_plugin_path() -> PathBuf {
             });
 
     if bundled.exists() {
+        info!("Using bundled age-plugin-yubikey at: {:?}", bundled);
         return bundled;
     }
 
     // Fall back to system binary
+    info!("Bundled age-plugin-yubikey not found at {:?}, using system binary", bundled);
     PathBuf::from("age-plugin-yubikey")
 }
 
@@ -94,7 +96,11 @@ pub fn run_age_plugin_yubikey(
     pin: Option<&str>,
     expect_touch: bool,
 ) -> Result<String> {
-    debug!("Running age-plugin-yubikey");
+    let age_path = get_age_plugin_path();
+    info!("Running age-plugin-yubikey from: {:?}", age_path);
+    info!("  Args: {:?}", args);
+    info!("  PIN provided: {}", pin.is_some());
+    info!("  Expect touch: {}", expect_touch);
 
     let pty_system = native_pty_system();
     let pair = pty_system
@@ -106,15 +112,24 @@ pub fn run_age_plugin_yubikey(
         })
         .map_err(|e| PtyError::PtyOperation(format!("Failed to open PTY: {e}")))?;
 
-    let mut cmd = CommandBuilder::new(get_age_plugin_path().to_str().unwrap());
-    for arg in args {
+    let age_plugin_path = age_path.to_str().unwrap();
+    info!("Building command: {}", age_plugin_path);
+
+    let mut cmd = CommandBuilder::new(age_plugin_path);
+    for arg in &args {
+        info!("  Adding arg: {}", arg);
         cmd.arg(arg);
     }
 
+    info!("Spawning PTY command...");
     let mut child = pair
         .slave
         .spawn_command(cmd)
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to spawn command: {e}")))?;
+        .map_err(|e| {
+            warn!("Failed to spawn age-plugin-yubikey: {}", e);
+            PtyError::PtyOperation(format!("Failed to spawn command: {e}"))
+        })?;
+    info!("PTY command spawned successfully");
 
     let (tx, rx) = mpsc::channel::<PtyState>();
 
@@ -133,10 +148,13 @@ pub fn run_age_plugin_yubikey(
         loop {
             buffer.clear();
             match buf_reader.read_line(&mut buffer) {
-                Ok(0) => break, // EOF
-                Ok(_) => {
+                Ok(0) => {
+                    debug!("PTY reader reached EOF");
+                    break;
+                }
+                Ok(n) => {
                     let line = buffer.trim();
-                    debug!("PTY output: {line}");
+                    info!("PTY output ({} bytes): {}", n, line);
                     output.push_str(&buffer);
 
                     if line.contains("PIN:") || line.contains("Enter PIN") {
@@ -216,6 +234,10 @@ pub fn run_age_plugin_yubikey(
     }
 
     let _ = child.wait();
+    info!("age-plugin-yubikey command completed, result length: {}", result.len());
+    if result.is_empty() {
+        warn!("age-plugin-yubikey returned empty result for args: {:?}", args);
+    }
     Ok(result)
 }
 

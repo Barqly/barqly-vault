@@ -310,23 +310,23 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                                 YubiKey {yk.serial.substring(0, 8)}
                               </p>
                               <p className="text-xs text-gray-500">
-                                {yk.state === 'NEW'
+                                {yk.state === 'NEW' || yk.state === 'new'
                                   ? 'New device - will be initialized'
-                                  : yk.state === 'ORPHANED'
+                                  : yk.state === 'ORPHANED' || yk.state === 'orphaned'
                                     ? 'Has existing key - ready to attach'
-                                  : yk.state === 'REUSED'
+                                  : yk.state === 'REUSED' || yk.state === 'reused'
                                     ? 'Reset device - ready to register'
-                                  : yk.state === 'UNKNOWN'
+                                  : yk.state === 'UNKNOWN' || yk.state === 'unknown'
                                     ? 'Needs recovery'
                                     : 'Ready to register'}
                               </p>
                             </div>
-                            {yk.state === 'NEW' && (
+                            {(yk.state === 'NEW' || yk.state === 'new') && (
                               <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
                                 New
                               </span>
                             )}
-                            {yk.state === 'ORPHANED' && (
+                            {(yk.state === 'ORPHANED' || yk.state === 'orphaned') && (
                               <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
                                 Has Key
                               </span>
@@ -347,7 +347,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
             )}
 
             {/* Setup Step - Only for NEW YubiKeys */}
-            {step === 'setup' && selectedKey && selectedKey.state === 'NEW' && (
+            {step === 'setup' && selectedKey && (selectedKey.state === 'NEW' || selectedKey.state === 'new') && (
               <div className="space-y-4">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-sm text-blue-800">
@@ -437,7 +437,10 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
             )}
 
             {/* Setup Step - For ORPHANED/REUSED YubiKeys (already initialized) */}
-            {step === 'setup' && selectedKey && selectedKey.state !== 'NEW' && (
+            {step === 'setup' && selectedKey &&
+             (selectedKey.state === 'ORPHANED' || selectedKey.state === 'orphaned' ||
+              selectedKey.state === 'REUSED' || selectedKey.state === 'reused' ||
+              selectedKey.state === 'REGISTERED' || selectedKey.state === 'registered') && (
               <div className="space-y-4">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex gap-3">
@@ -571,7 +574,6 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                 </div>
               </div>
             )}
-
 
             {/* Recovery Code Step */}
             {step === 'recovery' && recoveryCode && (
