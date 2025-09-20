@@ -166,9 +166,10 @@ const ManageKeysPage: React.FC = () => {
           <PassphraseKeyDialog
             isOpen={showPassphraseDialog}
             onClose={() => setShowPassphraseDialog(false)}
-            onSuccess={() => {
+            onSuccess={async () => {
               setShowPassphraseDialog(false);
-              refreshVaults();
+              await refreshKeys();
+              await refreshVaults();
             }}
           />
 
@@ -176,9 +177,10 @@ const ManageKeysPage: React.FC = () => {
             isOpen={showYubiKeyDialog}
             onClose={() => setShowYubiKeyDialog(false)}
             slotIndex={selectedYubiKeyIndex}
-            onSuccess={() => {
+            onSuccess={async () => {
               setShowYubiKeyDialog(false);
-              refreshVaults();
+              await refreshKeys();
+              await refreshVaults();
             }}
           />
         </>

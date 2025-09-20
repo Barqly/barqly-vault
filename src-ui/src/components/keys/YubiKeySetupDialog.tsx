@@ -51,9 +51,15 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
 
     try {
       // Get available YubiKeys for this vault
+      if (!currentVault?.id) {
+        setError('No vault selected');
+        setIsLoading(false);
+        return;
+      }
+
       const keys = await safeInvoke<YubiKeyStateInfo[]>(
         'list_available_yubikeys',
-        currentVault?.id,
+        { vault_id: currentVault.id },
         'YubiKeySetupDialog.detectYubiKeys',
       );
 
