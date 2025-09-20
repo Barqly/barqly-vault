@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { safeInvoke } from '../lib/tauri-safe';
 import { logger } from '../lib/logger';
 import {
@@ -55,7 +55,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } else {
       setVaultKeys([]);
     }
-  }, [currentVault?.id]);
+  }, [currentVault?.id, refreshKeys]);
 
   const refreshVaults = async () => {
     setIsLoading(true);
@@ -91,7 +91,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  const refreshKeys = async () => {
+  const refreshKeys = useCallback(async () => {
     if (!currentVault) return;
 
     setIsLoadingKeys(true);
@@ -115,7 +115,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } finally {
       setIsLoadingKeys(false);
     }
-  };
+  }, [currentVault]);
 
   const createVault = async (name: string, description?: string) => {
     setError(null);
