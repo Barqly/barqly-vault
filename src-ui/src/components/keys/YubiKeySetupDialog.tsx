@@ -57,9 +57,10 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
         return;
       }
 
+      // Tauri v2 expects camelCase from JS even though Rust uses snake_case
       const keys = await safeInvoke<YubiKeyStateInfo[]>(
         'list_available_yubikeys',
-        currentVault.id,
+        { vaultId: currentVault.id },
         'YubiKeySetupDialog.detectYubiKeys',
       );
 

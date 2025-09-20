@@ -253,6 +253,8 @@ pub async fn register_yubikey_for_vault(
 /// List available YubiKeys with vault context
 #[command]
 pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<YubiKeyStateInfo>> {
+    crate::logging::log_debug(&format!("list_available_yubikeys called for vault: {}", vault_id));
+
     // Get all connected YubiKeys
     let mut all_yubikeys = list_yubikeys().await?;
 

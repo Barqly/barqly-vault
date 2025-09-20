@@ -136,7 +136,7 @@ export async function safeInvoke<T>(
       validate_vault_passphrase_key: null, // Takes vault_id as string
       init_yubikey_for_vault: 'input', // Takes YubiKeyInitForVaultParams
       register_yubikey_for_vault: 'input', // Takes RegisterYubiKeyForVaultParams
-      list_available_yubikeys: 'vault_id', // Takes vault_id as string parameter (snake_case)
+      list_available_yubikeys: null, // Takes vault_id as string directly
       check_yubikey_slot_availability: null, // Takes vault_id as string
     };
 
@@ -146,6 +146,9 @@ export async function safeInvoke<T>(
     // Special handling for commands that take strings directly
     if (cmd === 'delete_key_command' && typeof args === 'object' && 'key_id' in args) {
       invokeArgs = args.key_id;
+    } else if (cmd === 'list_available_yubikeys' && typeof args === 'object' && 'vaultId' in args) {
+      // Tauri v2 expects camelCase for parameters
+      invokeArgs = args;
     } else if (paramName && args) {
       // If the command expects a specific parameter name and args don't already have it
       if (typeof args !== 'object' || !(paramName in args)) {
@@ -162,14 +165,15 @@ export async function safeInvoke<T>(
       wrapped: invokeArgs !== args,
     });
 
-    // Extra debug for generate_key_multi
-    if (cmd === 'generate_key_multi') {
-      console.log('🔍 TauriSafe: generate_key_multi debug:', {
+    // Extra debug for specific commands
+    if (cmd === 'generate_key_multi' || cmd === 'list_available_yubikeys') {
+      console.log(`🔍 TauriSafe: ${cmd} debug:`, {
         originalArgs: args,
         finalInvokeArgs: invokeArgs,
         paramName,
+        hasVaultId: invokeArgs && 'vault_id' in invokeArgs,
         hasInput: invokeArgs && 'input' in invokeArgs,
-        inputValue: invokeArgs?.input,
+        allKeys: invokeArgs ? Object.keys(invokeArgs) : [],
       });
     }
 
