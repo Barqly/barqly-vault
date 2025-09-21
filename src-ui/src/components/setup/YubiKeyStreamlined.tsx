@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Key, Shield, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { YubiKeyStateInfo, YubiKeyInitResult } from '../../lib/api-types';
+import { YubiKeyStateInfo, YubiKeyInitResult, YubiKeyState } from '../../lib/api-types';
 import { safeInvoke } from '../../lib/tauri-safe';
 import { logger } from '../../lib/logger';
 
@@ -24,6 +24,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
   const [pinConfirm, setPinConfirm] = useState('');
   const [label, setLabel] = useState('');
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
+  const [initResult, setInitResult] = useState<YubiKeyInitResult | null>(null);
   const [showRecoveryWarning, setShowRecoveryWarning] = useState(false);
 
   // Operation state
@@ -70,7 +71,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
     try {
       let result: YubiKeyInitResult;
 
-      if (selectedKey.state === 'new') {
+      if (selectedKey.state === YubiKeyState.NEW) {
         // Initialize new YubiKey
         result = await safeInvoke<YubiKeyInitResult>(
           'init_yubikey',
@@ -81,7 +82,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
           },
           'YubiKeyStreamlined.initYubiKey',
         );
-      } else if (selectedKey.state === 'reused') {
+      } else if (selectedKey.state === YubiKeyState.REUSED) {
         // Register reused YubiKey
         result = await safeInvoke<YubiKeyInitResult>(
           'register_yubikey',
@@ -96,7 +97,8 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
         throw new Error('YubiKey is already registered');
       }
 
-      // Store recovery code for display if present
+      // Store result and recovery code for display if present
+      setInitResult(result);
       if (result.recovery_code) {
         setRecoveryCode(result.recovery_code);
         setShowRecoveryWarning(true);
@@ -115,11 +117,11 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
 
   const getStateColor = (state: string) => {
     switch (state) {
-      case 'new':
+      case YubiKeyState.NEW:
         return 'text-green-600';
-      case 'reused':
+      case YubiKeyState.REUSED:
         return 'text-blue-600';
-      case 'initialized':
+      case YubiKeyState.REGISTERED:
         return 'text-gray-500';
       case 'UNKNOWN':
         return 'text-yellow-600';
@@ -130,11 +132,11 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
 
   const getStateLabel = (state: string) => {
     switch (state) {
-      case 'new':
+      case YubiKeyState.NEW:
         return 'New (Ready for setup)';
-      case 'reused':
+      case YubiKeyState.REUSED:
         return 'Reused (Needs registration)';
-      case 'initialized':
+      case YubiKeyState.REGISTERED:
         return 'Already registered';
       case 'UNKNOWN':
         return 'Needs recovery (manifest missing)';
@@ -186,15 +188,15 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                     <button
                       key={yk.serial}
                       onClick={() => {
-                        if (yk.state !== 'initialized') {
+                        if (yk.state !== YubiKeyState.REGISTERED) {
                           setSelectedKey(yk);
                           setLabel(`YubiKey-${yk.serial.substring(0, 6)}`);
                           setOperation('setup');
                         }
                       }}
-                      disabled={yk.state === 'initialized'}
+                      disabled={yk.state === YubiKeyState.REGISTERED}
                       className={`w-full p-4 border rounded-lg text-left transition-colors ${
-                        yk.state === 'initialized'
+                        yk.state === YubiKeyState.REGISTERED
                           ? 'bg-gray-50 border-gray-200 cursor-not-allowed'
                           : 'hover:bg-blue-50 hover:border-blue-300 cursor-pointer'
                       } ${selectedKey?.serial === yk.serial ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -211,7 +213,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                             </p>
                           </div>
                         </div>
-                        {yk.state === 'initialized' && (
+                        {yk.state === YubiKeyState.REGISTERED && (
                           <CheckCircle2 className="h-5 w-5 text-green-600" />
                         )}
                       </div>
@@ -252,7 +254,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                   </strong>
                 </p>
                 <p className="text-sm text-blue-700 mt-1">
-                  {selectedKey.state === 'new'
+                  {selectedKey.state === YubiKeyState.NEW
                     ? 'This is a new YubiKey. We will initialize it for you.'
                     : 'This YubiKey is already configured. Enter your existing PIN.'}
                 </p>
@@ -271,7 +273,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {selectedKey.state === 'new' ? 'Create PIN' : 'Enter PIN'}
+                  {selectedKey.state === YubiKeyState.NEW ? 'Create PIN' : 'Enter PIN'}
                   <span className="text-gray-500 ml-2">(6-8 digits)</span>
                 </label>
                 <input
@@ -385,16 +387,8 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
               <button
                 onClick={() => {
                   setOperation('complete');
-                  if (selectedKey) {
-                    const result = {
-                      success: true,
-                      key_reference: {
-                        id: selectedKey.serial,
-                        label: label,
-                      } as any,
-                      recovery_code: recoveryCode || undefined,
-                    } as YubiKeyInitResult;
-                    onComplete?.(result);
+                  if (initResult) {
+                    onComplete?.(initResult);
                   }
                 }}
                 disabled={!showRecoveryWarning}

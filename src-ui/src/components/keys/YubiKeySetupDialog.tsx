@@ -322,9 +322,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                                     ? 'Has existing key - ready to attach'
                                     : yk.state === 'reused'
                                       ? 'Reset device - ready to register'
-                                      : yk.state === 'unknown'
-                                        ? 'Needs recovery'
-                                        : 'Ready to register'}
+                                      : 'Ready to register'}
                               </p>
                             </div>
                             {(yk.state === 'new') && (

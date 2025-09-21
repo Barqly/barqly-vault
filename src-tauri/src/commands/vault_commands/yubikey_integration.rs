@@ -15,7 +15,7 @@ use std::collections::HashSet;
 use tauri::command;
 
 /// YubiKey initialization parameters for vault
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct YubiKeyInitForVaultParams {
     pub serial: String,
     pub pin: String,
@@ -25,7 +25,7 @@ pub struct YubiKeyInitForVaultParams {
 }
 
 /// YubiKey registration parameters for vault
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RegisterYubiKeyForVaultParams {
     pub serial: String,
     pub pin: String,
@@ -46,6 +46,11 @@ pub struct RegisterYubiKeyResult {
 pub async fn init_yubikey_for_vault(
     params: YubiKeyInitForVaultParams,
 ) -> CommandResponse<YubiKeyInitResult> {
+    crate::logging::log_info(&format!(
+        "init_yubikey_for_vault called with serial: {}, vault_id: {}, slot: {}",
+        params.serial, params.vault_id, params.slot_index
+    ));
+
     // Validate slot index
     if params.slot_index > 2 {
         return Err(Box::new(

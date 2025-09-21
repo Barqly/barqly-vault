@@ -25,6 +25,7 @@ export interface CommandError {
   user_actionable: boolean;
 }
 
+// Error codes enum
 export enum ErrorCode {
   // Validation errors
   INVALID_INPUT = 'INVALID_INPUT',
@@ -35,19 +36,19 @@ export enum ErrorCode {
   INVALID_FILE_FORMAT = 'INVALID_FILE_FORMAT',
   FILE_TOO_LARGE = 'FILE_TOO_LARGE',
   TOO_MANY_FILES = 'TOO_MANY_FILES',
-
+  
   // Permission errors
   PERMISSION_DENIED = 'PERMISSION_DENIED',
   PATH_NOT_ALLOWED = 'PATH_NOT_ALLOWED',
   INSUFFICIENT_PERMISSIONS = 'INSUFFICIENT_PERMISSIONS',
   READ_ONLY_FILE_SYSTEM = 'READ_ONLY_FILE_SYSTEM',
-
+  
   // Not found errors
   KEY_NOT_FOUND = 'KEY_NOT_FOUND',
   FILE_NOT_FOUND = 'FILE_NOT_FOUND',
   DIRECTORY_NOT_FOUND = 'DIRECTORY_NOT_FOUND',
   OPERATION_NOT_FOUND = 'OPERATION_NOT_FOUND',
-
+  
   // Operation errors
   ENCRYPTION_FAILED = 'ENCRYPTION_FAILED',
   DECRYPTION_FAILED = 'DECRYPTION_FAILED',
@@ -57,19 +58,19 @@ export enum ErrorCode {
   MANIFEST_INVALID = 'MANIFEST_INVALID',
   INTEGRITY_CHECK_FAILED = 'INTEGRITY_CHECK_FAILED',
   CONCURRENT_OPERATION = 'CONCURRENT_OPERATION',
-
+  
   // Resource errors
   DISK_SPACE_INSUFFICIENT = 'DISK_SPACE_INSUFFICIENT',
   MEMORY_INSUFFICIENT = 'MEMORY_INSUFFICIENT',
   FILE_SYSTEM_ERROR = 'FILE_SYSTEM_ERROR',
   NETWORK_ERROR = 'NETWORK_ERROR',
-
+  
   // Security errors
   INVALID_KEY = 'INVALID_KEY',
   WRONG_PASSPHRASE = 'WRONG_PASSPHRASE',
   TAMPERED_DATA = 'TAMPERED_DATA',
   UNAUTHORIZED_ACCESS = 'UNAUTHORIZED_ACCESS',
-
+  
   // YubiKey Hardware Errors
   YUBIKEY_NOT_FOUND = 'YUBIKEY_NOT_FOUND',
   YUBIKEY_PIN_REQUIRED = 'YUBIKEY_PIN_REQUIRED',
@@ -108,31 +109,12 @@ export interface ProgressUpdate {
   estimated_time_remaining?: number; // seconds
 }
 
-export type ProgressDetails =
-  | {
-      type: 'FileOperation';
-      current_file: string;
-      total_files: number;
-      current_file_progress: number;
-      current_file_size: number;
-      total_size: number;
-    }
+export type ProgressDetails = 
+  | { type: 'FileOperation'; current_file: string; total_files: number; current_file_progress: number; current_file_size: number; total_size: number }
   | { type: 'Encryption'; bytes_processed: number; total_bytes: number; encryption_rate?: number }
   | { type: 'Decryption'; bytes_processed: number; total_bytes: number; decryption_rate?: number }
-  | {
-      type: 'ArchiveOperation';
-      files_processed: number;
-      total_files: number;
-      bytes_processed: number;
-      total_bytes: number;
-      compression_ratio?: number;
-    }
-  | {
-      type: 'ManifestOperation';
-      files_verified: number;
-      total_files: number;
-      current_file: string;
-    };
+  | { type: 'ArchiveOperation'; files_processed: number; total_files: number; bytes_processed: number; total_bytes: number; compression_ratio?: number }
+  | { type: 'ManifestOperation'; files_verified: number; total_files: number; current_file: string };
 
 // Crypto command types
 export interface GenerateKeyInput {
@@ -438,12 +420,6 @@ export interface YubiKeyInitForVaultParams {
   slot_index: number;
 }
 
-export interface YubiKeyInitResult {
-  success: boolean;
-  key_reference: KeyReference;
-  recovery_code?: string;
-}
-
 export interface RegisterYubiKeyForVaultParams {
   serial: string;
   pin: string;
@@ -459,14 +435,9 @@ export interface RegisterYubiKeyResult {
 
 export interface YubiKeyStateInfo {
   serial: string;
-  state: 'new' | 'initialized' | 'reused' | 'orphaned' | 'registered' | 'unknown';
+  state: YubiKeyState;
   vault_keys: string[];
   available_slots: number[];
-  slot?: number;
-  recipient?: string;
-  identity_tag?: string;
-  label?: string;
-  pin_status?: 'default' | 'set';
 }
 
 // YubiKey command types
@@ -579,14 +550,36 @@ export enum PinStatus {
   SET = 'set',
 }
 
-// Command invocation helper
-export async function invokeCommand<T>(cmd: string, args?: any): Promise<T> {
-  const result = await invoke<CommandResult<T>>(cmd, args);
+export interface YubiKeyStateInfo {
+  serial: string;
+  state: YubiKeyState;
+  slot?: number;  // Retired slot number (1-20)
+  recipient?: string;
+  identity_tag?: string;
+  label?: string;
+  pin_status: PinStatus;
+}
 
+export interface YubiKeyInitResult {
+  serial: string;
+  slot: number;  // Retired slot number
+  recipient: string;
+  identity_tag: string;
+  label: string;
+  recovery_code: string;  // One-time display to user
+}
+
+// Command invocation helper
+export async function invokeCommand<T>(
+  cmd: string,
+  args?: any
+): Promise<T> {
+  const result = await invoke<CommandResult<T>>(cmd, args);
+  
   if (result.status === 'error') {
     throw new CommandErrorClass(result.data);
   }
-
+  
   return result.data;
 }
 
@@ -596,6 +589,8 @@ export class CommandErrorClass extends Error {
   public details?: string;
   public recovery_guidance?: string;
   public user_actionable: boolean;
+  public trace_id?: string;
+  public span_id?: string;
 
   constructor(error: CommandError) {
     super(error.message);
