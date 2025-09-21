@@ -72,14 +72,16 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
       // Filter to include all YubiKeys that can be added to this vault
       // Include: NEW (brand new), REUSED (reset), ORPHANED (has key but not in vault), UNKNOWN
       // Exclude: REGISTERED (already in this vault)
-      const availableKeys = keys.filter(
-        (k) => k.state !== 'REGISTERED',
+      // Also handle lowercase 'registered' due to backend inconsistency
+      const availableKeys = keys.filter((k) =>
+        k.state !== 'registered'
       );
 
       logger.info('YubiKeySetupDialog', 'Available YubiKeys after filtering', {
         count: availableKeys.length,
         availableKeys: availableKeys,
       });
+      console.log('[YubiKey] Detected keys:', availableKeys.map(k => ({ serial: k.serial, state: k.state })));
 
       setYubikeys(availableKeys);
 
@@ -129,7 +131,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
     setError(null);
 
     try {
-      if (selectedKey.state === 'NEW') {
+      if (selectedKey.state === 'new') {
         // Initialize new YubiKey
         logger.info('YubiKeySetupDialog', 'Initializing new YubiKey', {
           serial: selectedKey.serial,
@@ -260,9 +262,12 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                       <div className="flex gap-3">
                         <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm text-amber-800 font-medium">No initialized YubiKeys found</p>
+                          <p className="text-sm text-amber-800 font-medium">
+                            No initialized YubiKeys found
+                          </p>
                           <p className="text-sm text-amber-700 mt-1">
-                            Insert your YubiKey to set it up for this vault. The green light should be blinking.
+                            Insert your YubiKey to set it up for this vault. The green light should
+                            be blinking.
                           </p>
                         </div>
                       </div>
@@ -294,6 +299,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                         <button
                           key={yk.serial}
                           onClick={() => {
+                            console.log('[YubiKey] Selected:', yk.serial, 'State:', yk.state);
                             setSelectedKey(yk);
                             setLabel(yk.label || `YubiKey-${yk.serial.substring(0, 6)}`);
                             setStep('setup');
@@ -310,23 +316,23 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                                 YubiKey {yk.serial.substring(0, 8)}
                               </p>
                               <p className="text-xs text-gray-500">
-                                {yk.state === 'NEW' || yk.state === 'new'
+                                {yk.state === 'new'
                                   ? 'New device - will be initialized'
-                                  : yk.state === 'ORPHANED' || yk.state === 'orphaned'
+                                  : yk.state === 'orphaned'
                                     ? 'Has existing key - ready to attach'
-                                  : yk.state === 'REUSED' || yk.state === 'reused'
-                                    ? 'Reset device - ready to register'
-                                  : yk.state === 'UNKNOWN' || yk.state === 'unknown'
-                                    ? 'Needs recovery'
-                                    : 'Ready to register'}
+                                    : yk.state === 'reused'
+                                      ? 'Reset device - ready to register'
+                                      : yk.state === 'unknown'
+                                        ? 'Needs recovery'
+                                        : 'Ready to register'}
                               </p>
                             </div>
-                            {(yk.state === 'NEW' || yk.state === 'new') && (
+                            {(yk.state === 'new') && (
                               <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
                                 New
                               </span>
                             )}
-                            {(yk.state === 'ORPHANED' || yk.state === 'orphaned') && (
+                            {(yk.state === 'orphaned') && (
                               <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
                                 Has Key
                               </span>
@@ -347,233 +353,257 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
             )}
 
             {/* Setup Step - Only for NEW YubiKeys */}
-            {step === 'setup' && selectedKey && (selectedKey.state === 'NEW' || selectedKey.state === 'new') && (
-              <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm text-blue-800">
-                    Setting up new YubiKey: <strong>{selectedKey.serial.substring(0, 8)}</strong>
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Label *</label>
-                  <input
-                    type="text"
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Personal YubiKey"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Create PIN
-                    <span className="text-gray-500 ml-2">(6-8 digits)</span>
-                  </label>
-                  <input
-                    type="password"
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value)}
-                    maxLength={8}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="••••••"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirm PIN *
-                  </label>
-                  <input
-                    type="password"
-                    value={confirmPin}
-                    onChange={(e) => setConfirmPin(e.target.value)}
-                    maxLength={8}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="••••••"
-                  />
-                </div>
-
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                  <div className="flex gap-2">
-                    <Info className="h-5 w-5 text-green-600 flex-shrink-0" />
-                    <p className="text-sm text-green-800">
-                      A recovery code will be generated for PIN recovery
+            {step === 'setup' &&
+              selectedKey &&
+              (selectedKey.state === 'new') && (
+                <>{console.log('[YubiKey] Rendering NEW setup form')}
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-blue-800">
+                      Setting up new YubiKey: <strong>{selectedKey.serial.substring(0, 8)}</strong>
                     </p>
                   </div>
-                </div>
 
-                {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-800">{error}</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Label *</label>
+                    <input
+                      type="text"
+                      value={label}
+                      onChange={(e) => setLabel(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Personal YubiKey"
+                    />
                   </div>
-                )}
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleSetup}
-                    disabled={isSetupInProgress || !label.trim() || !pin || !confirmPin}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {isSetupInProgress ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Setting up...
-                      </>
-                    ) : (
-                      'Setup YubiKey'
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setStep('detect')}
-                    disabled={isSetupInProgress}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                  >
-                    Back
-                  </button>
-                </div>
-              </div>
-            )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Create PIN
+                      <span className="text-gray-500 ml-2">(6-8 digits)</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value)}
+                      maxLength={8}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="••••••"
+                    />
+                  </div>
 
-            {/* Setup Step - For ORPHANED/REUSED YubiKeys (already initialized) */}
-            {step === 'setup' && selectedKey &&
-             (selectedKey.state === 'ORPHANED' || selectedKey.state === 'orphaned' ||
-              selectedKey.state === 'REUSED' || selectedKey.state === 'reused' ||
-              selectedKey.state === 'REGISTERED' || selectedKey.state === 'registered') && (
-              <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm text-blue-800 font-medium">YubiKey Ready</p>
-                      <p className="text-sm text-blue-700 mt-1">
-                        This YubiKey is already initialized. Just provide a label to attach it to this vault.
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Confirm PIN *
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPin}
+                      onChange={(e) => setConfirmPin(e.target.value)}
+                      maxLength={8}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="••••••"
+                    />
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex gap-2">
+                      <Info className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <p className="text-sm text-green-800">
+                        A recovery code will be generated for PIN recovery
                       </p>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                  <p className="text-sm text-gray-700">
-                    <span className="font-medium">Serial:</span> {selectedKey.serial}
-                  </p>
-                  {selectedKey.recipient && (
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">Has encryption key:</span> Yes ✓
-                    </p>
+                  {error && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-800">{error}</p>
+                    </div>
                   )}
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Label for this Vault *</label>
-                  <input
-                    type="text"
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Personal YubiKey"
-                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSetup}
+                      disabled={isSetupInProgress || !label.trim() || !pin || !confirmPin}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isSetupInProgress ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Setting up...
+                        </>
+                      ) : (
+                        'Setup YubiKey'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setStep('detect')}
+                      disabled={isSetupInProgress}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    >
+                      Back
+                    </button>
+                  </div>
                 </div>
+                </>
+              )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Enter YubiKey PIN *
-                    <span className="text-gray-500 ml-2">(to verify ownership)</span>
-                  </label>
-                  <input
-                    type="password"
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value)}
-                    maxLength={8}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="••••••"
-                  />
-                </div>
+            {/* Setup Step - For ORPHANED/REUSED YubiKeys (already initialized) */}
+            {step === 'setup' &&
+              selectedKey &&
+              (selectedKey.state === 'orphaned' ||
+                selectedKey.state === 'reused') && (
+                <>
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-blue-800 font-medium">YubiKey Ready</p>
+                        <p className="text-sm text-blue-700 mt-1">
+                          This YubiKey is already initialized. Just provide a label to attach it to
+                          this vault.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <div className="flex gap-2">
-                    <Info className="h-5 w-5 text-amber-600 flex-shrink-0" />
-                    <p className="text-sm text-amber-800">
-                      You'll be prompted for your YubiKey PIN when encrypting or decrypting files.
+                  <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">Serial:</span> {selectedKey.serial}
                     </p>
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-800">{error}</p>
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={async () => {
-                      if (!label.trim()) {
-                        setError('Label is required');
-                        return;
-                      }
-                      if (!pin) {
-                        setError('PIN is required to verify YubiKey ownership');
-                        return;
-                      }
-
-                      setIsSetupInProgress(true);
-                      setError(null);
-
-                      try {
-                        // For ORPHANED keys, we pass the actual PIN to verify ownership
-                        const registerParams: RegisterYubiKeyForVaultParams = {
-                          serial: selectedKey.serial,
-                          pin: pin, // Real PIN for verification
-                          label: label.trim(),
-                          vault_id: currentVault!.id,
-                          slot_index: slotIndex,
-                        };
-
-                        await safeInvoke<{ success: boolean }>(
-                          'register_yubikey_for_vault',
-                          registerParams,
-                          'YubiKeySetupDialog.registerExistingYubiKey',
-                        );
-
-                        // Refresh keys to show the newly added YubiKey
-                        await refreshKeys();
-                        handleSuccess();
-                      } catch (err: any) {
-                        logger.error('YubiKeySetupDialog', 'Failed to register YubiKey', err);
-                        setError(err.message || 'Failed to register YubiKey');
-                      } finally {
-                        setIsSetupInProgress(false);
-                      }
-                    }}
-                    disabled={isSetupInProgress || !label.trim() || !pin}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {isSetupInProgress ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Attaching...
-                      </>
-                    ) : (
-                      'Attach to Vault'
+                    {selectedKey.recipient && (
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">Has encryption key:</span> Yes ✓
+                      </p>
                     )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setStep('detect');
-                      setPin('');
-                      setConfirmPin('');
-                      setError(null);
-                    }}
-                    disabled={isSetupInProgress}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                  >
-                    Back
-                  </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Label for this Vault *
+                    </label>
+                    <input
+                      type="text"
+                      value={label}
+                      onChange={(e) => setLabel(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Personal YubiKey"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Enter YubiKey PIN *
+                      <span className="text-gray-500 ml-2">(to verify ownership)</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value)}
+                      maxLength={8}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="••••••"
+                    />
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div className="flex gap-2">
+                      <Info className="h-5 w-5 text-amber-600 flex-shrink-0" />
+                      <p className="text-sm text-amber-800">
+                        You'll be prompted for your YubiKey PIN when encrypting or decrypting files.
+                      </p>
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={async () => {
+                        if (!label.trim()) {
+                          setError('Label is required');
+                          return;
+                        }
+                        if (!pin) {
+                          setError('PIN is required to verify YubiKey ownership');
+                          return;
+                        }
+
+                        setIsSetupInProgress(true);
+                        setError(null);
+
+                        try {
+                          // For ORPHANED keys, we pass the actual PIN to verify ownership
+                          const registerParams: RegisterYubiKeyForVaultParams = {
+                            serial: selectedKey.serial,
+                            pin: pin, // Real PIN for verification
+                            label: label.trim(),
+                            vault_id: currentVault!.id,
+                            slot_index: slotIndex,
+                          };
+
+                          await safeInvoke<{ success: boolean }>(
+                            'register_yubikey_for_vault',
+                            registerParams,
+                            'YubiKeySetupDialog.registerExistingYubiKey',
+                          );
+
+                          // Refresh keys to show the newly added YubiKey
+                          await refreshKeys();
+                          handleSuccess();
+                        } catch (err: any) {
+                          logger.error('YubiKeySetupDialog', 'Failed to register YubiKey', err);
+                          setError(err.message || 'Failed to register YubiKey');
+                        } finally {
+                          setIsSetupInProgress(false);
+                        }
+                      }}
+                      disabled={isSetupInProgress || !label.trim() || !pin}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isSetupInProgress ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Attaching...
+                        </>
+                      ) : (
+                        'Attach to Vault'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setStep('detect');
+                        setPin('');
+                        setConfirmPin('');
+                        setError(null);
+                      }}
+                      disabled={isSetupInProgress}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    >
+                      Back
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+                </>
+              )}
+
+            {/* Debug: Show when no form matches */}
+            {step === 'setup' && selectedKey &&
+              selectedKey.state !== 'new' &&
+              selectedKey.state !== 'orphaned' &&
+              selectedKey.state !== 'reused' && (
+                <div className="space-y-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-800">
+                    Debug: No UI form matches for state: <strong>{selectedKey.state}</strong>
+                  </p>
+                  <p className="text-sm text-red-600">
+                    Serial: {selectedKey.serial}
+                  </p>
+                </div>
+              )}
 
             {/* Recovery Code Step */}
             {step === 'recovery' && recoveryCode && (

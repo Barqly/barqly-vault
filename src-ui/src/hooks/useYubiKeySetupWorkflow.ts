@@ -87,9 +87,9 @@ export const useYubiKeySetupWorkflow = () => {
       }
 
       // Check YubiKey states and provide appropriate messaging
-      const registeredKeys = yubikeys.filter((yk) => yk.state === 'INITIALIZED');
-      const newKeys = yubikeys.filter((yk) => yk.state === 'NEW');
-      const reusedKeys = yubikeys.filter((yk) => yk.state === 'REUSED');
+      const registeredKeys = yubikeys.filter((yk) => yk.state === 'initialized');
+      const newKeys = yubikeys.filter((yk) => yk.state === 'new');
+      const reusedKeys = yubikeys.filter((yk) => yk.state === 'reused');
 
       if (registeredKeys.length > 0) {
         console.log('✅ Found registered YubiKey(s):', registeredKeys);

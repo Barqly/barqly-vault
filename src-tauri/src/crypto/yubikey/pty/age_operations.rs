@@ -1,13 +1,13 @@
 /// Age-specific PTY operations for YubiKey
 /// Handles identity generation and decryption with age-plugin-yubikey
 use super::core::{get_age_plugin_path, run_age_plugin_yubikey, PtyError, Result};
-use log::{info, warn};
+use crate::logging::{log_debug, log_info, log_warn};
 use std::fs;
 use std::path::Path;
 
 /// Generate age identity via PTY with YubiKey
 pub fn generate_age_identity_pty(pin: &str, touch_policy: &str, slot_name: &str) -> Result<String> {
-    info!("Generating age identity with touch_policy={touch_policy}, slot_name={slot_name}");
+    log_info(&format!("Generating age identity with touch_policy={touch_policy}, slot_name={slot_name}"));
 
     // Let age-plugin-yubikey choose the first available retired slot
     // Don't specify --slot to use default behavior
@@ -26,7 +26,7 @@ pub fn generate_age_identity_pty(pin: &str, touch_policy: &str, slot_name: &str)
     for line in output.lines() {
         let trimmed = line.trim();
         if trimmed.starts_with("age1yubikey") {
-            info!("Generated age recipient: {trimmed}");
+            log_info(&format!("Generated age recipient: {trimmed}"));
             return Ok(trimmed.to_string());
         }
     }
@@ -36,7 +36,7 @@ pub fn generate_age_identity_pty(pin: &str, touch_policy: &str, slot_name: &str)
         if line.contains("Recipient:") && line.contains("age1yubikey") {
             if let Some(recipient) = line.split("Recipient:").nth(1) {
                 let recipient = recipient.trim();
-                info!("Generated age recipient: {recipient}");
+                log_info(&format!("Generated age recipient: {recipient}"));
                 return Ok(recipient.to_string());
             }
         }
@@ -51,20 +51,20 @@ pub fn generate_age_identity_pty(pin: &str, touch_policy: &str, slot_name: &str)
 pub fn list_yubikey_identities() -> Result<Vec<String>> {
     use std::process::Command;
 
-    info!("Listing YubiKey identities with age-plugin-yubikey --list");
+    log_info(&format!("Listing YubiKey identities with age-plugin-yubikey --list"));
 
     // Use the bundled age-plugin-yubikey binary
     let age_path = super::core::get_age_plugin_path();
-    info!("Using age-plugin-yubikey from: {:?}", age_path);
+    log_info(&format!("Using age-plugin-yubikey from: {:?}", age_path));
 
     // Check if the binary exists and is executable
     if !age_path.exists() {
-        warn!("age-plugin-yubikey binary not found at: {:?}", age_path);
+        log_warn(&format!("age-plugin-yubikey binary not found at: {:?}", age_path));
         return Ok(Vec::new());
     }
 
     // Execute age-plugin-yubikey --list directly
-    info!("Executing command: {:?} --list", age_path);
+    log_info(&format!("Executing command: {:?} --list", age_path));
     let output_result = Command::new(&age_path)
         .arg("--list")
         .output();
@@ -74,17 +74,17 @@ pub fn list_yubikey_identities() -> Result<Vec<String>> {
             let stdout = String::from_utf8_lossy(&cmd_output.stdout);
             let stderr = String::from_utf8_lossy(&cmd_output.stderr);
 
-            info!("Command exit status: {}", cmd_output.status.success());
-            info!("STDOUT ({} bytes): {}", stdout.len(), stdout);
+            log_info(&format!("Command exit status: {}", cmd_output.status.success()));
+            log_info(&format!("STDOUT ({} bytes): {}", stdout.len(), stdout));
             if !stderr.is_empty() {
-                info!("STDERR: {}", stderr);
+                log_info(&format!("STDERR: {}", stderr));
             }
 
             stdout.to_string()
         }
         Err(e) => {
-            warn!("Failed to execute age-plugin-yubikey: {}", e);
-            warn!("Binary path was: {:?}", age_path);
+            log_warn(&format!("Failed to execute age-plugin-yubikey: {}", e));
+            log_warn(&format!("Binary path was: {:?}", age_path));
             // Return empty list to avoid breaking the flow
             return Ok(Vec::new());
         }
@@ -99,18 +99,18 @@ pub fn list_yubikey_identities() -> Result<Vec<String>> {
             continue;
         }
 
-        info!("Parsing line {}: '{}'", idx, trimmed);
+        log_info(&format!("Parsing line {}: '{}'", idx, trimmed));
 
         // The actual recipient line starts with age1yubikey (no #)
         if trimmed.starts_with("age1yubikey") {
-            info!("Found identity on line {}: {}", idx, trimmed);
+            log_info(&format!("Found identity on line {}: {}", idx, trimmed));
             identities.push(trimmed.to_string());
         }
     }
 
-    info!("Found {} YubiKey identities total", identities.len());
+    log_info(&format!("Found {} YubiKey identities total", identities.len()));
     for (i, id) in identities.iter().enumerate() {
-        info!("Identity {}: {}", i, id);
+        log_info(&format!("Identity {}: {}", i, id));
     }
 
     Ok(identities)
@@ -118,7 +118,7 @@ pub fn list_yubikey_identities() -> Result<Vec<String>> {
 
 /// Get identity for specific YubiKey serial
 pub fn get_identity_for_serial(serial: &str) -> Result<String> {
-    info!("Getting identity for YubiKey serial: {serial}");
+    log_info(&format!("Getting identity for YubiKey serial: {serial}"));
 
     let args = vec![
         "--identity".to_string(),
@@ -145,7 +145,7 @@ pub fn decrypt_with_age_pty(
     identity: &str,
     pin: &str,
 ) -> Result<()> {
-    info!("Decrypting file with YubiKey: {encrypted_file:?} -> {output_file:?}");
+    log_info(&format!("Decrypting file with YubiKey: {encrypted_file:?} -> {output_file:?}"));
 
     // First, write the identity to a temporary file
     let temp_identity =
@@ -177,13 +177,13 @@ pub fn decrypt_with_age_pty(
         ));
     }
 
-    info!("Successfully decrypted file");
+    log_info(&format!("Successfully decrypted file"));
     Ok(())
 }
 
 /// Encrypt data for YubiKey recipient
 pub fn encrypt_for_yubikey(input_file: &Path, output_file: &Path, recipient: &str) -> Result<()> {
-    info!("Encrypting file for YubiKey recipient: {input_file:?} -> {output_file:?}");
+    log_info(&format!("Encrypting file for YubiKey recipient: {input_file:?} -> {output_file:?}"));
 
     // age encryption doesn't require PIN or touch, only the recipient
     let args = vec![
@@ -203,7 +203,7 @@ pub fn encrypt_for_yubikey(input_file: &Path, output_file: &Path, recipient: &st
         ));
     }
 
-    info!("Successfully encrypted file for YubiKey");
+    log_info(&format!("Successfully encrypted file for YubiKey"));
     Ok(())
 }
 
@@ -211,7 +211,7 @@ pub fn encrypt_for_yubikey(input_file: &Path, output_file: &Path, recipient: &st
 pub fn check_yubikey_has_identity(serial: &str) -> Result<Option<String>> {
     use std::process::Command;
 
-    info!("Checking if YubiKey {} has an identity", serial);
+    log_info(&format!("Checking if YubiKey {} has an identity", serial));
 
     let age_path = get_age_plugin_path();
 
@@ -225,28 +225,33 @@ pub fn check_yubikey_has_identity(serial: &str) -> Result<Option<String>> {
 
     if !output.status.success() {
         // No identity for this serial
-        info!("YubiKey {} has no identity", serial);
+        log_info(&format!("YubiKey {} has no identity", serial));
         return Ok(None);
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
+    log_info(&format!("age-plugin-yubikey output for serial {}: {:?}", serial, stdout.to_string()));
 
-    // Look for the recipient line (starts with "Recipient: age1yubikey")
+    // Look for the recipient line (may have comment prefix and spaces)
     for line in stdout.lines() {
-        if line.starts_with("Recipient: age1yubikey") {
-            let recipient = line.trim_start_matches("Recipient: ").trim();
-            info!("YubiKey {} has identity: {}", serial, recipient);
-            return Ok(Some(recipient.to_string()));
+        // Handle format: "#    Recipient: age1yubikey..."
+        if line.contains("Recipient:") && line.contains("age1yubikey") {
+            // Extract the age1yubikey recipient from the line
+            if let Some(recipient_part) = line.split("age1yubikey").nth(1) {
+                let recipient = format!("age1yubikey{}", recipient_part.trim());
+                log_info(&format!("Found recipient for YubiKey {}: {}", serial, recipient));
+                return Ok(Some(recipient));
+            }
         }
-        // Also check for direct age1yubikey line (some versions may output differently)
-        if line.trim().starts_with("age1yubikey") && !line.starts_with("#") {
-            let recipient = line.trim();
-            info!("YubiKey {} has identity: {}", serial, recipient);
-            return Ok(Some(recipient.to_string()));
+        // Also check for direct age1yubikey line (without comment prefix)
+        let trimmed = line.trim();
+        if trimmed.starts_with("age1yubikey") && !line.trim_start().starts_with("#") {
+            log_info(&format!("Found identity for YubiKey {} (direct format): {}", serial, trimmed));
+            return Ok(Some(trimmed.to_string()));
         }
     }
 
-    info!("YubiKey {} identity format not recognized", serial);
+    log_info(&format!("YubiKey {} identity format not recognized from output", serial));
     Ok(None)
 }
 

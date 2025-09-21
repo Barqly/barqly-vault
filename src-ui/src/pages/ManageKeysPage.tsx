@@ -17,7 +17,7 @@ import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
  */
 const ManageKeysPage: React.FC = () => {
   const navigate = useNavigate();
-  const { vaults, currentVault, vaultKeys, isLoading, error, refreshVaults } = useVault();
+  const { vaults, currentVault, vaultKeys, isLoading, error, refreshVaults, refreshKeys } = useVault();
   const [showCreateVault, setShowCreateVault] = useState(false);
   const [showPassphraseDialog, setShowPassphraseDialog] = useState(false);
   const [showYubiKeyDialog, setShowYubiKeyDialog] = useState(false);
@@ -52,8 +52,11 @@ const ManageKeysPage: React.FC = () => {
       setShowPassphraseDialog(true);
     } else if (keyType === 'yubikey' && index !== undefined) {
       // Check if this YubiKey slot is already filled
-      const hasYubiKeyInSlot = vaultKeys.some((k: any) =>
-        k.type === 'yubikey' && (k.slot_index === index || vaultKeys.filter((vk: any) => vk.type === 'yubikey').indexOf(k) === index)
+      const hasYubiKeyInSlot = vaultKeys.some(
+        (k: any) =>
+          k.type === 'yubikey' &&
+          (k.slot_index === index ||
+            vaultKeys.filter((vk: any) => vk.type === 'yubikey').indexOf(k) === index),
       );
       if (hasYubiKeyInSlot) {
         // TODO: Show a dialog to view/remove existing YubiKey

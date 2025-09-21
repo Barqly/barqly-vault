@@ -459,7 +459,7 @@ export interface RegisterYubiKeyResult {
 
 export interface YubiKeyStateInfo {
   serial: string;
-  state: 'NEW' | 'INITIALIZED' | 'REUSED' | 'ORPHANED' | 'REGISTERED' | 'UNKNOWN';
+  state: 'new' | 'initialized' | 'reused' | 'orphaned' | 'registered' | 'unknown';
   vault_keys: string[];
   available_slots: number[];
   slot?: number;

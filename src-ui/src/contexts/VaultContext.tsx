@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { safeInvoke } from '../lib/tauri-safe';
 import { logger } from '../lib/logger';
 import {
@@ -92,7 +99,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       logger.info('VaultContext', 'Keys loaded for vault', {
         vaultId: currentVault.id,
         keyCount: keysResponse.keys.length,
-        keys: keysResponse.keys
+        keys: keysResponse.keys,
       });
       setVaultKeys(keysResponse.keys);
     } catch (err: any) {

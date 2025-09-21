@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Shield, CheckCircle, AlertTriangle } from 'lucide-react';
 import { YubiKeyStateInfo } from '../../lib/api-types';
 
-type YubiKeyStateType = 'NEW' | 'INITIALIZED' | 'REUSED' | 'UNKNOWN';
+type YubiKeyStateType = 'new' | 'initialized' | 'reused' | 'orphaned' | 'registered' | 'unknown';
 
 interface StreamlinedYubiKeySetupProps {
   yubikeys: YubiKeyStateInfo[];
@@ -81,11 +81,11 @@ export const StreamlinedYubiKeySetup: React.FC<StreamlinedYubiKeySetupProps> = (
 
 const StateIndicator: React.FC<{ state: YubiKeyStateType }> = ({ state }) => {
   switch (state) {
-    case 'INITIALIZED':
+    case 'initialized':
       return <CheckCircle className="h-5 w-5 text-green-500" />;
-    case 'REUSED':
+    case 'reused':
       return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-    case 'NEW':
+    case 'new':
       return <Shield className="h-5 w-5 text-blue-500" />;
     default:
       return <div className="h-5 w-5" />;
@@ -115,7 +115,7 @@ const StateSpecificSetup: React.FC<{
   onRegisterComplete?: (serial: string) => void;
 }> = ({ yubikey, onInitComplete, onRegisterComplete }) => {
   switch (yubikey.state) {
-    case 'INITIALIZED':
+    case 'initialized':
       return (
         <div className="text-center py-4">
           <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
@@ -126,10 +126,10 @@ const StateSpecificSetup: React.FC<{
         </div>
       );
 
-    case 'NEW':
+    case 'new':
       return <NewYubiKeySetup yubikey={yubikey} onComplete={onInitComplete} />;
 
-    case 'REUSED':
+    case 'reused':
       return <ReusedYubiKeySetup yubikey={yubikey} onComplete={onRegisterComplete} />;
 
     default:

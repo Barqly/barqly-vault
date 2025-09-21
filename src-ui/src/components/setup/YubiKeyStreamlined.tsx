@@ -70,7 +70,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
     try {
       let result: YubiKeyInitResult;
 
-      if (selectedKey.state === 'NEW') {
+      if (selectedKey.state === 'new') {
         // Initialize new YubiKey
         result = await safeInvoke<YubiKeyInitResult>(
           'init_yubikey',
@@ -81,7 +81,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
           },
           'YubiKeyStreamlined.initYubiKey',
         );
-      } else if (selectedKey.state === 'REUSED') {
+      } else if (selectedKey.state === 'reused') {
         // Register reused YubiKey
         result = await safeInvoke<YubiKeyInitResult>(
           'register_yubikey',
@@ -115,11 +115,11 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
 
   const getStateColor = (state: string) => {
     switch (state) {
-      case 'NEW':
+      case 'new':
         return 'text-green-600';
-      case 'REUSED':
+      case 'reused':
         return 'text-blue-600';
-      case 'INITIALIZED':
+      case 'initialized':
         return 'text-gray-500';
       case 'UNKNOWN':
         return 'text-yellow-600';
@@ -130,11 +130,11 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
 
   const getStateLabel = (state: string) => {
     switch (state) {
-      case 'NEW':
+      case 'new':
         return 'New (Ready for setup)';
-      case 'REUSED':
+      case 'reused':
         return 'Reused (Needs registration)';
-      case 'INITIALIZED':
+      case 'initialized':
         return 'Already registered';
       case 'UNKNOWN':
         return 'Needs recovery (manifest missing)';
@@ -186,15 +186,15 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                     <button
                       key={yk.serial}
                       onClick={() => {
-                        if (yk.state !== 'INITIALIZED') {
+                        if (yk.state !== 'initialized') {
                           setSelectedKey(yk);
                           setLabel(`YubiKey-${yk.serial.substring(0, 6)}`);
                           setOperation('setup');
                         }
                       }}
-                      disabled={yk.state === 'INITIALIZED'}
+                      disabled={yk.state === 'initialized'}
                       className={`w-full p-4 border rounded-lg text-left transition-colors ${
-                        yk.state === 'INITIALIZED'
+                        yk.state === 'initialized'
                           ? 'bg-gray-50 border-gray-200 cursor-not-allowed'
                           : 'hover:bg-blue-50 hover:border-blue-300 cursor-pointer'
                       } ${selectedKey?.serial === yk.serial ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -211,7 +211,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                             </p>
                           </div>
                         </div>
-                        {yk.state === 'INITIALIZED' && (
+                        {yk.state === 'initialized' && (
                           <CheckCircle2 className="h-5 w-5 text-green-600" />
                         )}
                       </div>
@@ -252,7 +252,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                   </strong>
                 </p>
                 <p className="text-sm text-blue-700 mt-1">
-                  {selectedKey.state === 'NEW'
+                  {selectedKey.state === 'new'
                     ? 'This is a new YubiKey. We will initialize it for you.'
                     : 'This YubiKey is already configured. Enter your existing PIN.'}
                 </p>
@@ -271,7 +271,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {selectedKey.state === 'NEW' ? 'Create PIN' : 'Enter PIN'}
+                  {selectedKey.state === 'new' ? 'Create PIN' : 'Enter PIN'}
                   <span className="text-gray-500 ml-2">(6-8 digits)</span>
                 </label>
                 <input
