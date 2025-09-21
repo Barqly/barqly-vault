@@ -303,7 +303,7 @@ pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<Yu
     crate::logging::log_debug(&format!("list_available_yubikeys called for vault: {}", vault_id));
 
     // Get all connected YubiKeys
-    let mut all_yubikeys = list_yubikeys().await?;
+    let all_yubikeys = list_yubikeys().await?;
     crate::logging::log_debug(&format!("Found {} total YubiKeys connected", all_yubikeys.len()));
 
     // Get vault's existing YubiKeys
@@ -323,21 +323,27 @@ pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<Yu
         })
         .collect();
 
-    // Mark which are already in use by this vault
-    for yubikey in &mut all_yubikeys {
-        if vault_serials.contains(&yubikey.serial) {
-            yubikey.state = YubiKeyState::Registered;
-        }
-    }
+    // Filter out YubiKeys that are already registered to this vault
+    // Only return YubiKeys that are available for registration
+    let available_yubikeys: Vec<YubiKeyStateInfo> = all_yubikeys
+        .into_iter()
+        .filter(|yk| !vault_serials.contains(&yk.serial))
+        .collect();
 
     crate::logging::log_debug(&format!(
-        "Returning {} YubiKeys for vault {}: {:?}",
-        all_yubikeys.len(),
-        vault_id,
-        all_yubikeys.iter().map(|y| &y.serial).collect::<Vec<_>>()
+        "Vault has {} YubiKeys registered: {:?}",
+        vault_serials.len(),
+        vault_serials
     ));
 
-    Ok(all_yubikeys)
+    crate::logging::log_debug(&format!(
+        "Returning {} available YubiKeys for vault {}: {:?}",
+        available_yubikeys.len(),
+        vault_id,
+        available_yubikeys.iter().map(|y| &y.serial).collect::<Vec<_>>()
+    ));
+
+    Ok(available_yubikeys)
 }
 
 /// Check which YubiKey slots are available in a vault
