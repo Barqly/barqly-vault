@@ -202,8 +202,9 @@ pub async fn init_yubikey(
     })?;
 
     // Generate age identity (uses first available retired slot)
+    // CRITICAL: Pass serial to ensure operation happens on correct YubiKey
     let recipient =
-        generate_age_identity_pty(pin.expose_secret(), "cached", &label).map_err(|e| {
+        generate_age_identity_pty(&serial, pin.expose_secret(), "cached", &label).map_err(|e| {
             CommandError::operation(
                 ErrorCode::YubiKeyInitializationFailed,
                 format!("Failed to generate age identity: {e}"),
@@ -268,7 +269,8 @@ pub async fn register_yubikey(
     }
 
     // Generate age identity (no init needed, YubiKey already configured)
-    let recipient = generate_age_identity_pty(pin_str, "cached", &label).map_err(|e| {
+    // CRITICAL: Pass serial to ensure operation happens on correct YubiKey
+    let recipient = generate_age_identity_pty(&serial, pin_str, "cached", &label).map_err(|e| {
         CommandError::operation(
             ErrorCode::YubiKeyInitializationFailed,
             format!("Failed to generate age identity: {e}"),

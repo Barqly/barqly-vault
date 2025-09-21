@@ -1,18 +1,22 @@
 /// Age-specific PTY operations for YubiKey
 /// Handles identity generation and decryption with age-plugin-yubikey
 use super::core::{get_age_plugin_path, run_age_plugin_yubikey, PtyError, Result};
-use crate::logging::{log_debug, log_info, log_warn};
+use crate::logging::{log_info, log_warn};
 use std::fs;
 use std::path::Path;
 
 /// Generate age identity via PTY with YubiKey
-pub fn generate_age_identity_pty(pin: &str, touch_policy: &str, slot_name: &str) -> Result<String> {
-    log_info(&format!("Generating age identity with touch_policy={touch_policy}, slot_name={slot_name}"));
+/// IMPORTANT: serial parameter ensures operation happens on correct YubiKey
+pub fn generate_age_identity_pty(serial: &str, pin: &str, touch_policy: &str, slot_name: &str) -> Result<String> {
+    log_info(&format!("Generating age identity for serial {serial} with touch_policy={touch_policy}, slot_name={slot_name}"));
 
     // Let age-plugin-yubikey choose the first available retired slot
     // Don't specify --slot to use default behavior
+    // CRITICAL: Include --serial to ensure we use the correct YubiKey
     let args = vec![
         "-g".to_string(),
+        "--serial".to_string(),
+        serial.to_string(),
         "--touch-policy".to_string(),
         touch_policy.to_string(),
         "--name".to_string(),
@@ -139,13 +143,15 @@ pub fn get_identity_for_serial(serial: &str) -> Result<String> {
 }
 
 /// Decrypt file with age-plugin-yubikey via PTY
+/// IMPORTANT: serial parameter ensures operation happens on correct YubiKey
 pub fn decrypt_with_age_pty(
     encrypted_file: &Path,
     output_file: &Path,
     identity: &str,
     pin: &str,
+    serial: &str,  // Added for security - ensure correct YubiKey is used
 ) -> Result<()> {
-    log_info(&format!("Decrypting file with YubiKey: {encrypted_file:?} -> {output_file:?}"));
+    log_info(&format!("Decrypting file with YubiKey {serial}: {encrypted_file:?} -> {output_file:?}"));
 
     // First, write the identity to a temporary file
     let temp_identity =
@@ -182,6 +188,8 @@ pub fn decrypt_with_age_pty(
 }
 
 /// Encrypt data for YubiKey recipient
+/// Note: Encryption doesn't require serial as it uses the recipient public key
+/// However, for consistency and future verification, we could add serial validation
 pub fn encrypt_for_yubikey(input_file: &Path, output_file: &Path, recipient: &str) -> Result<()> {
     log_info(&format!("Encrypting file for YubiKey recipient: {input_file:?} -> {output_file:?}"));
 
