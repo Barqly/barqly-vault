@@ -20,7 +20,7 @@ use tauri::Window;
 use tracing::{info, instrument};
 
 /// Input for encryption command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct EncryptDataInput {
     pub key_id: String,
     pub file_paths: Vec<String>,
@@ -63,6 +63,7 @@ impl ValidateInput for EncryptDataInput {
 
 /// Encrypt files with progress streaming
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(input, _window), fields(key_id = %input.key_id, file_count = input.file_paths.len()))]
 pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandResponse<String> {
     // Create span context for operation tracing

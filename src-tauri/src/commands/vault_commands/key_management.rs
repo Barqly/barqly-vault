@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 /// Input for updating key label
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct UpdateKeyLabelRequest {
     pub vault_id: String,
     pub key_id: String,
@@ -18,19 +18,19 @@ pub struct UpdateKeyLabelRequest {
 }
 
 /// Response from updating key label
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct UpdateKeyLabelResponse {
     pub success: bool,
 }
 
 /// Input for checking YubiKey availability
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct CheckYubiKeyAvailabilityRequest {
     pub serial: String,
 }
 
 /// Response from YubiKey availability check
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct CheckYubiKeyAvailabilityResponse {
     pub is_inserted: bool,
     pub is_configured: bool,
@@ -39,6 +39,7 @@ pub struct CheckYubiKeyAvailabilityResponse {
 
 /// Update a key's label
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip_all, fields(vault_id = %input.vault_id, key_id = %input.key_id))]
 pub async fn update_key_label(
     input: UpdateKeyLabelRequest,
@@ -112,6 +113,7 @@ pub async fn update_key_label(
 
 /// Check YubiKey availability
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip_all, fields(serial = %input.serial))]
 pub async fn check_yubikey_availability(
     input: CheckYubiKeyAvailabilityRequest,

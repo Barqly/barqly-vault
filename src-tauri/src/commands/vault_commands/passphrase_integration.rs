@@ -9,10 +9,9 @@ use crate::models::vault::{KeyReference, KeyState, KeyType};
 use crate::storage::vault_store;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use tauri::command;
 
 /// Enhanced add key to vault request with passphrase support
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct AddPassphraseKeyRequest {
     pub vault_id: String,
     pub label: String,
@@ -20,14 +19,15 @@ pub struct AddPassphraseKeyRequest {
 }
 
 /// Response after adding a passphrase key
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct AddPassphraseKeyResponse {
     pub key_reference: KeyReference,
     pub public_key: String,
 }
 
 /// Add a passphrase key to a vault with actual key generation
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn add_passphrase_key_to_vault(
     input: AddPassphraseKeyRequest,
 ) -> CommandResponse<AddPassphraseKeyResponse> {
@@ -95,7 +95,8 @@ pub async fn add_passphrase_key_to_vault(
 }
 
 /// Check if a passphrase key exists and is valid
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn validate_vault_passphrase_key(vault_id: String) -> CommandResponse<bool> {
     let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
         Box::new(

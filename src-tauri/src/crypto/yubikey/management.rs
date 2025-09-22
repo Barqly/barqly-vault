@@ -28,7 +28,7 @@ pub mod policy_config {
 }
 
 /// PIN policy for PIV operations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub enum PinPolicy {
     Never,
     Once,
@@ -46,7 +46,7 @@ impl fmt::Display for PinPolicy {
 }
 
 /// Touch policy for PIV operations
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
 pub enum TouchPolicy {
     Never,
     Always,
@@ -64,7 +64,7 @@ impl fmt::Display for TouchPolicy {
 }
 
 /// YubiKey information after initialization
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct YubiKeyInfo {
     pub serial: String,
     pub slot: u8,

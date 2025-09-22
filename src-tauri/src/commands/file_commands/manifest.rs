@@ -12,6 +12,7 @@ use tracing::{info, instrument};
 
 /// Create manifest for file set
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(file_paths))]
 pub async fn create_manifest(file_paths: Vec<String>) -> CommandResponse<Manifest> {
     // Create span context for operation tracing

@@ -3,7 +3,8 @@ import { PassphraseSlot } from './PassphraseSlot';
 import { YubiKeySlot, YubiKeySlotState } from './YubiKeySlot';
 import { useVault } from '../../contexts/VaultContext';
 import { Loader2 } from 'lucide-react';
-import { KeyReference, KeyState } from '../../lib/api-types';
+import { KeyState } from '../../bindings';
+import { isPassphraseKey, isYubiKey, YubiKeyReference } from '../../lib/key-types';
 
 interface KeyMenuGridProps {
   onKeySelect?: (keyType: 'passphrase' | 'yubikey', index?: number) => void;
@@ -21,26 +22,21 @@ export const KeyMenuGrid: React.FC<KeyMenuGridProps> = ({ onKeySelect, className
   // Map KeyState enum to YubiKeySlotState
   const mapKeyState = (state: KeyState): YubiKeySlotState => {
     switch (state) {
-      case KeyState.Active:
+      case 'active':
         return 'active';
-      case KeyState.Registered:
+      case 'registered':
         return 'registered';
-      case KeyState.Orphaned:
+      case 'orphaned':
         return 'orphaned';
       default:
         return 'empty';
     }
   };
 
-  // Process keys from vault
+  // Process keys from vault using type guards
   const { passphraseKey, yubiKeys } = useMemo(() => {
-    const passphrase = vaultKeys.find(
-      (k) => k.key_type && 'type' in k.key_type && k.key_type.type === 'passphrase',
-    );
-
-    const yubis = vaultKeys.filter(
-      (k) => k.key_type && 'type' in k.key_type && k.key_type.type === 'yubikey',
-    );
+    const passphrase = vaultKeys.find(isPassphraseKey);
+    const yubis = vaultKeys.filter(isYubiKey);
 
     return { passphraseKey: passphrase, yubiKeys: yubis };
   }, [vaultKeys]);
@@ -54,12 +50,9 @@ export const KeyMenuGrid: React.FC<KeyMenuGridProps> = ({ onKeySelect, className
   };
 
   // Helper to get YubiKey data for a specific slot
-  const getYubiKeyForSlot = (slotIndex: number): KeyReference | undefined => {
+  const getYubiKeyForSlot = (slotIndex: number): YubiKeyReference | undefined => {
     return (
-      yubiKeys.find((k) => {
-        const keyType = k.key_type as any;
-        return keyType?.slot_index === slotIndex;
-      }) || yubiKeys[slotIndex]
+      yubiKeys.find((k) => k.slot_index === slotIndex) || yubiKeys[slotIndex]
     ); // Fallback to array index if slot_index not set
   };
 
@@ -100,7 +93,7 @@ export const KeyMenuGrid: React.FC<KeyMenuGridProps> = ({ onKeySelect, className
               vaultId={currentVault.id}
               onClick={() => handleYubiKeyClick(0)}
               state={yubiKey ? mapKeyState(yubiKey.state) : 'empty'}
-              serial={(yubiKey?.key_type as any)?.serial}
+              serial={yubiKey?.serial}
               label={yubiKey?.label}
             />
           );
@@ -115,7 +108,7 @@ export const KeyMenuGrid: React.FC<KeyMenuGridProps> = ({ onKeySelect, className
               vaultId={currentVault.id}
               onClick={() => handleYubiKeyClick(1)}
               state={yubiKey ? mapKeyState(yubiKey.state) : 'empty'}
-              serial={(yubiKey?.key_type as any)?.serial}
+              serial={yubiKey?.serial}
               label={yubiKey?.label}
             />
           );
@@ -130,7 +123,7 @@ export const KeyMenuGrid: React.FC<KeyMenuGridProps> = ({ onKeySelect, className
               vaultId={currentVault.id}
               onClick={() => handleYubiKeyClick(2)}
               state={yubiKey ? mapKeyState(yubiKey.state) : 'empty'}
-              serial={(yubiKey?.key_type as any)?.serial}
+              serial={yubiKey?.serial}
               label={yubiKey?.label}
             />
           );

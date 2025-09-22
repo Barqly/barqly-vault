@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use tauri::command;
 
 /// Passphrase strength levels
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
 #[serde(rename_all = "lowercase")]
 pub enum PassphraseStrength {
     Weak,
@@ -18,7 +18,7 @@ pub enum PassphraseStrength {
 }
 
 /// Passphrase validation result
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct PassphraseValidationResult {
     pub is_valid: bool,
     pub strength: PassphraseStrength,
@@ -28,6 +28,7 @@ pub struct PassphraseValidationResult {
 
 /// Validate passphrase strength with detailed feedback
 #[command]
+#[specta::specta]
 pub async fn validate_passphrase_strength(
     passphrase: String,
 ) -> CommandResponse<PassphraseValidationResult> {

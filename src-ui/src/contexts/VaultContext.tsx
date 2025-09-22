@@ -6,18 +6,16 @@ import React, {
   useCallback,
   ReactNode,
 } from 'react';
-import { safeInvoke } from '../lib/tauri-safe';
-import { logger } from '../lib/logger';
 import {
+  commands,
   VaultSummary,
   KeyReference,
   CreateVaultRequest,
-  ListVaultsResponse,
-  GetCurrentVaultResponse,
-  GetVaultKeysResponse,
   SetCurrentVaultRequest,
   RemoveKeyFromVaultRequest,
-} from '../lib/api-types';
+  GetVaultKeysRequest,
+} from '../bindings';
+import { logger } from '../lib/logger';
 
 interface VaultContextType {
   // Current vault state
@@ -33,7 +31,7 @@ interface VaultContextType {
   error: string | null;
 
   // Actions
-  createVault: (name: string, description?: string) => Promise<void>;
+  createVault: (name: string, description?: string | null) => Promise<void>;
   setCurrentVault: (vaultId: string) => Promise<void>;
   refreshVaults: () => Promise<void>;
   refreshKeys: () => Promise<void>;
@@ -56,19 +54,19 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     try {
       // Get all vaults
-      const vaultsResponse = await safeInvoke<ListVaultsResponse>(
-        'list_vaults',
-        undefined,
-        'VaultContext.refreshVaults',
-      );
+      const vaultsResult = await commands.listVaults();
+      if (vaultsResult.status === 'error') {
+        throw new Error(vaultsResult.error.message || 'Failed to list vaults');
+      }
+      const vaultsResponse = vaultsResult.data;
       setVaults(vaultsResponse.vaults);
 
       // Get current vault
-      const currentResponse = await safeInvoke<GetCurrentVaultResponse>(
-        'get_current_vault',
-        undefined,
-        'VaultContext.getCurrentVault',
-      );
+      const currentResult = await commands.getCurrentVault();
+      if (currentResult.status === 'error') {
+        throw new Error(currentResult.error.message || 'Failed to get current vault');
+      }
+      const currentResponse = currentResult.data;
 
       if (currentResponse.vault) {
         setCurrentVaultState(currentResponse.vault);
@@ -91,11 +89,12 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setError(null);
 
     try {
-      const keysResponse = await safeInvoke<GetVaultKeysResponse>(
-        'get_vault_keys',
-        { vault_id: currentVault.id },
-        'VaultContext.refreshKeys',
-      );
+      const keysRequest: GetVaultKeysRequest = { vault_id: currentVault.id };
+      const keysResult = await commands.getVaultKeys(keysRequest);
+      if (keysResult.status === 'error') {
+        throw new Error(keysResult.error.message || 'Failed to get vault keys');
+      }
+      const keysResponse = keysResult.data;
       logger.info('VaultContext', 'Keys loaded for vault', {
         vaultId: currentVault.id,
         keyCount: keysResponse.keys.length,
@@ -110,12 +109,15 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, [currentVault]);
 
-  const createVault = async (name: string, description?: string) => {
+  const createVault = async (name: string, description?: string | null) => {
     setError(null);
 
     try {
-      const request: CreateVaultRequest = { name, description };
-      await safeInvoke('create_vault', request, 'VaultContext.createVault');
+      const request: CreateVaultRequest = { name, description: description ?? null };
+      const result = await commands.createVault(request);
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Failed to create vault');
+      }
       await refreshVaults();
     } catch (err: any) {
       logger.error('VaultContext', 'Failed to create vault', err);
@@ -129,11 +131,11 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     try {
       const request: SetCurrentVaultRequest = { vault_id: vaultId };
-      const response = await safeInvoke<any>(
-        'set_current_vault',
-        request,
-        'VaultContext.setCurrentVault',
-      );
+      const result = await commands.setCurrentVault(request);
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Failed to set current vault');
+      }
+      const response = result.data;
 
       if (response.vault) {
         setCurrentVaultState(response.vault);
@@ -161,7 +163,10 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         key_id: keyId,
       };
 
-      await safeInvoke('remove_key_from_vault', request, 'VaultContext.removeKeyFromVault');
+      const result = await commands.removeKeyFromVault(request);
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Failed to remove key from vault');
+      }
       await refreshKeys();
     } catch (err: any) {
       logger.error('VaultContext', 'Failed to remove key from vault', err);

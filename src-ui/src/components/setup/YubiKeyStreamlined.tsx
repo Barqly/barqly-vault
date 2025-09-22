@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Key, Shield, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { YubiKeyStateInfo, YubiKeyInitResult, YubiKeyState } from '../../lib/api-types';
-import { safeInvoke } from '../../lib/tauri-safe';
+import { commands, YubiKeyStateInfo, YubiKeyInitResult, YubiKeyState, StreamlinedYubiKeyInitResult } from '../../bindings';
 import { logger } from '../../lib/logger';
 
 interface YubiKeyStreamlinedProps {
@@ -41,11 +40,11 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
     setError(null);
 
     try {
-      const keys = await safeInvoke<YubiKeyStateInfo[]>(
-        'list_yubikeys',
-        undefined,
-        'YubiKeyStreamlined.detectYubiKeys',
-      );
+      const result = await commands.listYubikeys();
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Failed to list YubiKeys');
+      }
+      const keys = result.data;
 
       setYubikeys(keys);
 
@@ -69,30 +68,30 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
     setError(null);
 
     try {
-      let result: YubiKeyInitResult;
+      let result: YubiKeyInitResult | StreamlinedYubiKeyInitResult;
 
-      if (selectedKey.state === YubiKeyState.NEW) {
+      if (selectedKey.state === 'new') {
         // Initialize new YubiKey
-        result = await safeInvoke<YubiKeyInitResult>(
-          'init_yubikey',
-          {
-            serial: selectedKey.serial,
-            new_pin: pin,
-            label: label || `YubiKey-${selectedKey.serial.substring(0, 6)}`,
-          },
-          'YubiKeyStreamlined.initYubiKey',
+        const initResult = await commands.initYubikey(
+          selectedKey.serial,
+          pin,
+          label || `YubiKey-${selectedKey.serial.substring(0, 6)}`,
         );
-      } else if (selectedKey.state === YubiKeyState.REUSED) {
+        if (initResult.status === 'error') {
+          throw new Error(initResult.error.message || 'Failed to initialize YubiKey');
+        }
+        result = initResult.data;
+      } else if (selectedKey.state === 'reused') {
         // Register reused YubiKey
-        result = await safeInvoke<YubiKeyInitResult>(
-          'register_yubikey',
-          {
-            serial: selectedKey.serial,
-            label: label || `YubiKey-${selectedKey.serial.substring(0, 6)}`,
-            pin: pin,
-          },
-          'YubiKeyStreamlined.registerYubiKey',
+        const registerResult = await commands.registerYubikey(
+          selectedKey.serial,
+          label || `YubiKey-${selectedKey.serial.substring(0, 6)}`,
+          pin,
         );
+        if (registerResult.status === 'error') {
+          throw new Error(registerResult.error.message || 'Failed to register YubiKey');
+        }
+        result = registerResult.data;
       } else {
         throw new Error('YubiKey is already registered');
       }

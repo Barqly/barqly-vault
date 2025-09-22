@@ -9,52 +9,52 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 /// Input for creating a new vault
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct CreateVaultRequest {
     pub name: String,
     pub description: Option<String>,
 }
 
 /// Response from vault creation
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct CreateVaultResponse {
     pub vault: VaultSummary,
 }
 
 /// Response containing list of vaults
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct ListVaultsResponse {
     pub vaults: Vec<VaultSummary>,
 }
 
 /// Response containing current vault
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct GetCurrentVaultResponse {
     pub vault: Option<VaultSummary>,
 }
 
 /// Input for setting current vault
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct SetCurrentVaultRequest {
     pub vault_id: String,
 }
 
 /// Response from setting current vault
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct SetCurrentVaultResponse {
     pub success: bool,
     pub vault: VaultSummary,
 }
 
 /// Input for deleting a vault
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct DeleteVaultRequest {
     pub vault_id: String,
     pub force: bool, // If true, delete even if vault has keys
 }
 
 /// Response from vault deletion
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct DeleteVaultResponse {
     pub success: bool,
     pub message: String,
@@ -62,6 +62,7 @@ pub struct DeleteVaultResponse {
 
 /// Create a new vault
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip_all, fields(name = %input.name))]
 pub async fn create_vault(input: CreateVaultRequest) -> CommandResponse<CreateVaultResponse> {
     // Validate input
@@ -99,6 +100,7 @@ pub async fn create_vault(input: CreateVaultRequest) -> CommandResponse<CreateVa
 
 /// List all vaults
 #[tauri::command]
+#[specta::specta]
 #[instrument]
 pub async fn list_vaults() -> CommandResponse<ListVaultsResponse> {
     match vault_store::list_vaults().await {
@@ -121,6 +123,7 @@ pub async fn list_vaults() -> CommandResponse<ListVaultsResponse> {
 
 /// Get the current active vault (deprecated - UI should track this)
 #[tauri::command]
+#[specta::specta]
 #[instrument]
 pub async fn get_current_vault() -> CommandResponse<GetCurrentVaultResponse> {
     // This endpoint is deprecated - UI should track the current vault
@@ -130,6 +133,7 @@ pub async fn get_current_vault() -> CommandResponse<GetCurrentVaultResponse> {
 
 /// Set the current active vault (deprecated - UI should track this)
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip_all, fields(vault_id = %input.vault_id))]
 pub async fn set_current_vault(
     input: SetCurrentVaultRequest,
@@ -160,6 +164,7 @@ pub async fn set_current_vault(
 
 /// Delete a vault
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip_all, fields(vault_id = %input.vault_id, force = %input.force))]
 pub async fn delete_vault(input: DeleteVaultRequest) -> CommandResponse<DeleteVaultResponse> {
     // Load the vault to check if it exists and has keys

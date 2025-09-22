@@ -37,7 +37,7 @@ pub use progress::{create_yubikey_progress_manager, YubiKeyProgressManager};
 use serde::{Deserialize, Serialize};
 
 /// YubiKey initialization result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct YubiKeyInitResult {
     pub public_key: String,
     pub slot: u8,
@@ -46,7 +46,7 @@ pub struct YubiKeyInitResult {
 }
 
 /// YubiKey information for encryption operations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct YubiKeyEncryptionInfo {
     pub serial: String,
     pub public_key: String,
@@ -55,14 +55,14 @@ pub struct YubiKeyEncryptionInfo {
 }
 
 /// Passphrase information for multi-recipient encryption
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct PassphraseInfo {
     pub key_label: String,
     pub public_key: String,
 }
 
 /// Protection modes for vault security
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub enum ProtectionMode {
     PassphraseOnly,
     YubiKeyOnly { serial: String },
@@ -70,14 +70,14 @@ pub enum ProtectionMode {
 }
 
 /// Unlock methods available for decryption
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, specta::Type)]
 pub enum UnlockMethod {
     Passphrase,
     YubiKey,
 }
 
 /// Credentials for unlocking vaults
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub enum UnlockCredentials {
     Passphrase {
         key_label: String,

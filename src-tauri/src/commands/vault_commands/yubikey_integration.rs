@@ -5,8 +5,9 @@
 
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
 use crate::commands::yubikey_commands::{
-    init_yubikey, list_yubikeys, YubiKeyInitResult, YubiKeyState, YubiKeyStateInfo,
+    init_yubikey, list_yubikeys, YubiKeyState, YubiKeyStateInfo,
 };
+use crate::crypto::yubikey::YubiKeyInitResult;
 use crate::models::vault::{KeyReference, KeyState, KeyType};
 use crate::storage::vault_store;
 use chrono::Utc;
@@ -15,7 +16,7 @@ use std::collections::HashSet;
 use tauri::command;
 
 /// YubiKey initialization parameters for vault
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub struct YubiKeyInitForVaultParams {
     pub serial: String,
     pub pin: String,
@@ -25,7 +26,7 @@ pub struct YubiKeyInitForVaultParams {
 }
 
 /// YubiKey registration parameters for vault
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub struct RegisterYubiKeyForVaultParams {
     pub serial: String,
     pub pin: String,
@@ -35,7 +36,7 @@ pub struct RegisterYubiKeyForVaultParams {
 }
 
 /// Result from YubiKey registration
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct RegisterYubiKeyResult {
     pub success: bool,
     pub key_reference: KeyReference,
@@ -43,6 +44,7 @@ pub struct RegisterYubiKeyResult {
 
 /// Initialize a new YubiKey and add it to a vault
 #[command]
+#[specta::specta]
 pub async fn init_yubikey_for_vault(
     input: YubiKeyInitForVaultParams,
 ) -> CommandResponse<YubiKeyInitResult> {
@@ -104,7 +106,7 @@ pub async fn init_yubikey_for_vault(
     }
 
     // Initialize the YubiKey
-    let yubikey_result = init_yubikey(input.serial.clone(), input.pin, input.label.clone())
+    let streamlined_result = init_yubikey(input.serial.clone(), input.pin.clone(), input.label.clone())
         .await
         .map_err(|e| {
             Box::new(
@@ -117,10 +119,18 @@ pub async fn init_yubikey_for_vault(
         })?;
 
     // Map retired slot (1-20) to PIV slot (82-95)
-    let piv_slot = if yubikey_result.slot >= 1 && yubikey_result.slot <= 20 {
-        81 + yubikey_result.slot // Maps 1->82, 20->101 (but we'll cap at 95)
+    let piv_slot = if streamlined_result.slot >= 1 && streamlined_result.slot <= 20 {
+        81 + streamlined_result.slot // Maps 1->82, 20->101 (but we'll cap at 95)
     } else {
         82 // Default to first retired slot
+    };
+
+    // Convert StreamlinedYubiKeyInitResult to YubiKeyInitResult
+    let yubikey_result = YubiKeyInitResult {
+        public_key: streamlined_result.recipient, // Use recipient as public key
+        slot: streamlined_result.slot,
+        touch_required: true, // Default to true for security
+        pin_policy: crate::crypto::yubikey::management::PinPolicy::Once,
     };
 
     // Create key reference
@@ -153,6 +163,7 @@ pub async fn init_yubikey_for_vault(
 
 /// Register an existing YubiKey with a vault
 #[command]
+#[specta::specta]
 pub async fn register_yubikey_for_vault(
     input: RegisterYubiKeyForVaultParams,
 ) -> CommandResponse<RegisterYubiKeyResult> {
@@ -303,7 +314,8 @@ pub async fn register_yubikey_for_vault(
 }
 
 /// List available YubiKeys with vault context
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<YubiKeyStateInfo>> {
     crate::logging::log_debug(&format!("list_available_yubikeys called for vault: {}", vault_id));
 
@@ -352,7 +364,8 @@ pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<Yu
 }
 
 /// Check which YubiKey slots are available in a vault
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn check_yubikey_slot_availability(vault_id: String) -> CommandResponse<Vec<bool>> {
     let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
         Box::new(

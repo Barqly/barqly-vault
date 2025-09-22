@@ -2,17 +2,18 @@
  * Core decryption workflow logic
  */
 
-import { safeInvoke, safeListen } from '../tauri-safe';
-import { DecryptionResult, ProgressUpdate, CommandError, ErrorCode } from '../api-types';
+import { safeListen } from '../tauri-safe';
+import { commands, DecryptDataInput, DecryptionResult } from '../../bindings';
+import { ProgressUpdate, CommandError, ErrorCode } from '../api-types';
+import { logger } from '../logger';
 import { toCommandError } from '../errors/command-error';
 import { UnlistenFn } from '@tauri-apps/api/event';
 
-export interface DecryptionWorkflowInput {
-  encrypted_file: string;
-  key_id: string;
-  passphrase: string;
-  output_dir: string;
-}
+/**
+ * Input for decryption operation
+ * Now uses the generated DecryptDataInput type
+ */
+export type DecryptionWorkflowInput = DecryptDataInput;
 
 export interface DecryptionWorkflowResult {
   success: DecryptionResult | null;
@@ -39,15 +40,23 @@ export const executeDecryption = async (
   input: DecryptionWorkflowInput,
 ): Promise<DecryptionResult> => {
   try {
-    // Call the backend command
-    const result = await safeInvoke<DecryptionResult>(
-      'decrypt_data',
-      { ...input },
-      'useFileDecryption',
-    );
+    logger.debug('decryption-workflow', 'Starting decryption', { input });
 
-    return result;
+    // Call the backend command using generated function
+    const result = await commands.decryptData(input);
+
+    if (result.status === 'error') {
+      throw toCommandError(
+        new Error(result.error.message || 'Decryption failed'),
+        ErrorCode.DECRYPTION_FAILED,
+        'File decryption failed',
+        'Please check your key, passphrase, and file. If the problem persists, restart the application.',
+      );
+    }
+
+    return result.data;
   } catch (error) {
+    logger.error('decryption-workflow', 'Decryption failed', error as Error);
     // Transform and re-throw the error with appropriate context
     throw toCommandError(
       error,

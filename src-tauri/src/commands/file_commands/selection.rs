@@ -10,14 +10,14 @@ use tauri::Window;
 use tracing::{info, instrument};
 
 /// File selection type
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub enum SelectionType {
     Files,
     Folder,
 }
 
 /// File selection result
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct FileSelection {
     pub paths: Vec<String>,
     pub total_size: u64,
@@ -26,7 +26,7 @@ pub struct FileSelection {
 }
 
 /// File information
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct FileInfo {
     pub path: String,
     pub name: String,
@@ -38,6 +38,7 @@ pub struct FileInfo {
 
 /// Select files or folder for encryption
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(_window), fields(selection_type = ?selection_type))]
 pub async fn select_files(
     selection_type: SelectionType,
@@ -113,6 +114,7 @@ pub async fn select_files(
 
 /// Select a directory for output
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(_window))]
 pub async fn select_directory(_title: Option<String>, _window: Window) -> CommandResponse<String> {
     // TODO: Implement proper dialog integration with tauri-plugin-dialog
@@ -127,6 +129,7 @@ pub async fn select_directory(_title: Option<String>, _window: Window) -> Comman
 
 /// Get file/folder information
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(paths))]
 pub async fn get_file_info(paths: Vec<String>) -> CommandResponse<Vec<FileInfo>> {
     info!("Getting file info for {} paths", paths.len());

@@ -16,7 +16,6 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [features]
 default = []
-generate-types = []
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -27,6 +26,10 @@ log = "0.4"
 directories = "5.0"
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
+# Modern type-safe TypeScript generation
+specta = { version = "2.0.0-rc.20", features = ["chrono"] }
+specta-typescript = "0.0.7"
+tauri-specta = { version = "2.0.0-rc.20", features = ["typescript"] }
 # Fix PATH inheritance for GUI apps (needed for age-plugin-yubikey)
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 serde = { version = "1", features = ["derive"] }

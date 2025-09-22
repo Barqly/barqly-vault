@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 ///   // ... etc
 /// }
 /// ```
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ErrorCode {
     // Validation errors

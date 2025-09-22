@@ -50,7 +50,7 @@ pub struct ProgressUpdate {
 ///   | { type: 'ArchiveOperation'; files_processed: number; total_files: number; bytes_processed: number; total_bytes: number; compression_ratio?: number }
 ///   | { type: 'ManifestOperation'; files_verified: number; total_files: number; current_file: string };
 /// ```
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, specta::Type)]
 #[serde(tag = "type")]
 pub enum ProgressDetails {
     /// File operation progress (copying, moving, etc.)
@@ -120,7 +120,7 @@ pub enum ProgressDetails {
 }
 
 /// Types of YubiKey operations
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, specta::Type)]
 pub enum YubiKeyOperationType {
     Detection,
     Initialization,
@@ -132,7 +132,7 @@ pub enum YubiKeyOperationType {
 }
 
 /// Phases of YubiKey operations
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, specta::Type)]
 pub enum YubiKeyPhase {
     Starting,
     InProgress { percentage: Option<u8> },

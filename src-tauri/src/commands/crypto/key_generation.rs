@@ -15,14 +15,14 @@ use std::collections::HashMap;
 use tracing::instrument;
 
 /// Input for key generation command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct GenerateKeyInput {
     pub label: String,
     pub passphrase: String,
 }
 
 /// Response from key generation
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct GenerateKeyResponse {
     pub public_key: String,
     pub key_id: String,
@@ -46,6 +46,7 @@ impl ValidateInput for GenerateKeyInput {
 
 /// Generate a new encryption keypair
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(input), fields(label = %input.label))]
 pub async fn generate_key(input: GenerateKeyInput) -> CommandResponse<GenerateKeyResponse> {
     // Create span context for operation tracing

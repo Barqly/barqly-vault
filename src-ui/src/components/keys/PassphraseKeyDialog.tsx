@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Key, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useVault } from '../../contexts/VaultContext';
 import { logger } from '../../lib/logger';
-import { safeInvoke } from '../../lib/tauri-safe';
-import { PassphraseValidationResult, AddPassphraseKeyRequest } from '../../lib/api-types';
+import { commands, PassphraseValidationResult, AddPassphraseKeyRequest, AddPassphraseKeyResponse } from '../../bindings';
 
 interface PassphraseKeyDialogProps {
   isOpen: boolean;
@@ -40,12 +39,11 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
     const timer = setTimeout(async () => {
       setIsValidating(true);
       try {
-        const result = await safeInvoke<PassphraseValidationResult>(
-          'validate_passphrase_strength',
-          { passphrase }, // Wrap in object with passphrase key
-          'PassphraseKeyDialog.validate',
-        );
-        setValidation(result);
+        const result = await commands.validatePassphraseStrength(passphrase);
+        if (result.status === 'error') {
+          throw new Error(result.error.message || 'Validation failed');
+        }
+        setValidation(result.data);
       } catch (err) {
         logger.error('PassphraseKeyDialog', 'Failed to validate passphrase', err as Error);
       } finally {
@@ -140,11 +138,10 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
         passphrase,
       };
 
-      const result = await safeInvoke<{ key_reference: any; public_key: string }>(
-        'add_passphrase_key_to_vault',
-        request,
-        'PassphraseKeyDialog.create',
-      );
+      const result = await commands.addPassphraseKeyToVault(request);
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Failed to create passphrase key');
+      }
 
       logger.info('PassphraseKeyDialog', 'Passphrase key created successfully', result);
 

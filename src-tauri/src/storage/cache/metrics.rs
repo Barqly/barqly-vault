@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Cache performance metrics
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, specta::Type)]
 pub struct CacheMetrics {
     pub key_list_hits: u64,
     pub key_list_misses: u64,

@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { CompactPassphraseSlot } from './CompactPassphraseSlot';
 import { CompactYubiKeySlot } from './CompactYubiKeySlot';
 import { useVault } from '../../contexts/VaultContext';
-import { KeyState } from '../../lib/api-types';
+import { KeyState } from '../../bindings';
+import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
 
 interface KeyMenuBarProps {
   onKeySelect?: (keyType: 'passphrase' | 'yubikey', index?: number) => void;
@@ -16,20 +17,12 @@ interface KeyMenuBarProps {
 export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className = '' }) => {
   const { currentVault, vaultKeys, isLoadingKeys } = useVault();
 
-  // Process keys from vault
+  // Process keys from vault using type guards
   const { passphraseKey, yubiKeys } = useMemo(() => {
     console.log('KeyMenuBar: Processing vaultKeys', vaultKeys);
 
-    // The backend uses #[serde(flatten)] so the type field is at the root level
-    const passphrase = vaultKeys.find((k) => {
-      // Check if it has a 'type' field at the root level
-      return (k as any).type === 'passphrase';
-    });
-
-    const yubis = vaultKeys.filter((k) => {
-      // Check if it has a 'type' field at the root level
-      return (k as any).type === 'yubikey';
-    });
+    const passphrase = vaultKeys.find(isPassphraseKey);
+    const yubis = vaultKeys.filter(isYubiKey);
 
     console.log('KeyMenuBar: Found passphrase key?', !!passphrase, passphrase);
     console.log('KeyMenuBar: Found YubiKeys:', yubis.length);
@@ -48,21 +41,18 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
   // Helper to get YubiKey data for a specific slot
   const getYubiKeyForSlot = (slotIndex: number) => {
     return (
-      yubiKeys.find((k) => {
-        const keyType = k.key_type as any;
-        return keyType?.slot_index === slotIndex;
-      }) || yubiKeys[slotIndex]
+      yubiKeys.find((k) => k.slot_index === slotIndex) || yubiKeys[slotIndex]
     );
   };
 
   // Map KeyState enum to slot state
   const mapKeyState = (state: KeyState): 'active' | 'registered' | 'orphaned' | 'empty' => {
     switch (state) {
-      case KeyState.Active:
+      case 'active':
         return 'active';
-      case KeyState.Registered:
+      case 'registered':
         return 'registered';
-      case KeyState.Orphaned:
+      case 'orphaned':
         return 'orphaned';
       default:
         return 'empty';
@@ -105,7 +95,7 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
             vaultId={currentVault.id}
             onClick={() => handleYubiKeyClick(0)}
             state={yubiKey ? mapKeyState(yubiKey.state) : 'empty'}
-            serial={(yubiKey?.key_type as any)?.serial}
+            serial={yubiKey?.serial}
             label={yubiKey?.label}
           />
         );
@@ -122,7 +112,7 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
             vaultId={currentVault.id}
             onClick={() => handleYubiKeyClick(1)}
             state={yubiKey ? mapKeyState(yubiKey.state) : 'empty'}
-            serial={(yubiKey?.key_type as any)?.serial}
+            serial={yubiKey?.serial}
             label={yubiKey?.label}
           />
         );
@@ -139,7 +129,7 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
             vaultId={currentVault.id}
             onClick={() => handleYubiKeyClick(2)}
             state={yubiKey ? mapKeyState(yubiKey.state) : 'empty'}
-            serial={(yubiKey?.key_type as any)?.serial}
+            serial={yubiKey?.serial}
             label={yubiKey?.label}
           />
         );

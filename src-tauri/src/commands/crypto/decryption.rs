@@ -20,7 +20,7 @@ use tauri::Window;
 use tracing::instrument;
 
 /// Input for decryption command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct DecryptDataInput {
     pub encrypted_file: String,
     pub key_id: String,
@@ -29,7 +29,7 @@ pub struct DecryptDataInput {
 }
 
 /// Result of decryption operation
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct DecryptionResult {
     pub extracted_files: Vec<String>,
     pub output_dir: String,
@@ -58,6 +58,7 @@ impl ValidateInput for DecryptDataInput {
 
 /// Decrypt files with progress streaming
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(input, _window), fields(key_id = %input.key_id))]
 pub async fn decrypt_data(
     input: DecryptDataInput,

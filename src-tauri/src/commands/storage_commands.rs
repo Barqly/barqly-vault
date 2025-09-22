@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use tracing::instrument;
 
 /// Key metadata for frontend display
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct KeyMetadata {
     pub label: String,
     pub created_at: String,
@@ -19,7 +19,7 @@ pub struct KeyMetadata {
 }
 
 /// Application configuration
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub struct AppConfig {
     pub version: String,
     pub default_key_label: Option<String>,
@@ -28,7 +28,7 @@ pub struct AppConfig {
 }
 
 /// Configuration update
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct AppConfigUpdate {
     pub default_key_label: Option<String>,
     pub remember_last_folder: Option<bool>,
@@ -37,6 +37,7 @@ pub struct AppConfigUpdate {
 
 /// List all available keys
 #[tauri::command]
+#[specta::specta]
 #[instrument]
 pub async fn list_keys_command() -> CommandResponse<Vec<KeyMetadata>> {
     // Create span context for operation tracing
@@ -80,6 +81,7 @@ pub async fn list_keys_command() -> CommandResponse<Vec<KeyMetadata>> {
 
 /// Delete a key by ID
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(key_id), fields(key_id = %key_id))]
 pub async fn delete_key_command(key_id: String) -> CommandResponse<()> {
     // Create span context for operation tracing
@@ -129,6 +131,7 @@ pub async fn delete_key_command(key_id: String) -> CommandResponse<()> {
 
 /// Get application configuration
 #[tauri::command]
+#[specta::specta]
 #[instrument]
 pub async fn get_config() -> CommandResponse<AppConfig> {
     // Create span context for operation tracing
@@ -174,6 +177,7 @@ pub async fn get_config() -> CommandResponse<AppConfig> {
 
 /// Update application configuration
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(config))]
 pub async fn update_config(config: AppConfigUpdate) -> CommandResponse<()> {
     // Create span context for operation tracing
@@ -219,6 +223,7 @@ pub async fn update_config(config: AppConfigUpdate) -> CommandResponse<()> {
 
 /// Get cache performance metrics
 #[tauri::command]
+#[specta::specta]
 #[instrument]
 pub async fn get_cache_metrics() -> CommandResponse<CacheMetrics> {
     // Create span context for operation tracing

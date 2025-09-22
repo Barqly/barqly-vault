@@ -24,7 +24,7 @@ pub use selection::{FileInfo, FileSelection, SelectionType};
 use serde::Serialize;
 
 /// Manifest for encrypted archives
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct Manifest {
     pub version: String,
     pub created_at: String,

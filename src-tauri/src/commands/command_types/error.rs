@@ -27,7 +27,7 @@ use std::fmt;
 ///   span_id?: string;
 /// }
 /// ```
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub struct CommandError {
     /// Error code for client-side handling
     pub code: ErrorCode,

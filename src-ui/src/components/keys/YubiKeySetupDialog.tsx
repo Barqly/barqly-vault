@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import { useVault } from '../../contexts/VaultContext';
 import { logger } from '../../lib/logger';
-import { safeInvoke } from '../../lib/tauri-safe';
 import {
+  commands,
   YubiKeyStateInfo,
   YubiKeyInitForVaultParams,
   RegisterYubiKeyForVaultParams,
   YubiKeyInitResult,
-} from '../../lib/api-types';
+} from '../../bindings';
 
 interface YubiKeySetupDialogProps {
   isOpen: boolean;
@@ -57,12 +57,12 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
         return;
       }
 
-      // Tauri v2 expects camelCase from JS even though Rust uses snake_case
-      const keys = await safeInvoke<YubiKeyStateInfo[]>(
-        'list_available_yubikeys',
-        { vaultId: currentVault.id },
-        'YubiKeySetupDialog.detectYubiKeys',
-      );
+      // Get available YubiKeys for this vault
+      const result = await commands.listAvailableYubikeys(currentVault.id);
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Failed to list available YubiKeys');
+      }
+      const keys = result.data;
 
       logger.info('YubiKeySetupDialog', 'YubiKeys returned from backend', {
         count: keys.length,
@@ -145,11 +145,11 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
           slot_index: slotIndex,
         };
 
-        const result = await safeInvoke<YubiKeyInitResult>(
-          'init_yubikey_for_vault',
-          initParams,
-          'YubiKeySetupDialog.initYubiKey',
-        );
+        const initResult = await commands.initYubikeyForVault(initParams);
+        if (initResult.status === 'error') {
+          throw new Error(initResult.error.message || 'Failed to initialize YubiKey');
+        }
+        const result = initResult.data;
 
         if (result.recovery_code) {
           setRecoveryCode(result.recovery_code);
@@ -174,11 +174,10 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
           slot_index: slotIndex,
         };
 
-        await safeInvoke<{ success: boolean }>(
-          'register_yubikey_for_vault',
-          registerParams,
-          'YubiKeySetupDialog.registerYubiKey',
-        );
+        const registerResult = await commands.registerYubikeyForVault(registerParams);
+        if (registerResult.status === 'error') {
+          throw new Error(registerResult.error.message || 'Failed to register YubiKey');
+        }
       }
 
       // Refresh keys to show the newly added YubiKey

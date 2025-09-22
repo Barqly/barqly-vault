@@ -1,17 +1,7 @@
-import { safeInvoke } from '../tauri-safe';
-import { FileSelection } from '../api-types';
+import { commands, FileInfo, FileSelection } from '../../bindings';
+import { logger } from '../logger';
 
-/**
- * File information returned by the backend
- */
-interface FileInfo {
-  path: string;
-  name: string;
-  size: number;
-  is_file: boolean;
-  is_directory: boolean;
-  file_count: number | null; // For directories, the number of files inside
-}
+// FileInfo type is now imported from bindings
 
 /**
  * Processes file information and calculates totals for encryption
@@ -75,33 +65,40 @@ export const getFileInfoForEncryption = async (
   console.log('[getFileInfo] Calling backend get_file_info with paths:', paths);
   const startTime = Date.now();
 
-  const fileInfos = await safeInvoke<FileInfo[]>(
-    'get_file_info',
-    paths,
-    'useFileEncryption.selectFiles',
-  );
+  try {
+    // Call the backend command using generated function
+    const result = await commands.getFileInfo(paths);
 
-  const backendTime = Date.now() - startTime;
-  console.log('[getFileInfo] Backend get_file_info response:', {
-    fileInfos,
-    responseTime: `${backendTime}ms`,
-    fileCount: fileInfos.length,
-    timestamp: Date.now(),
-  });
+    if (result.status === 'error') {
+      throw new Error(result.error.message || 'Failed to get file info');
+    }
 
-  const { totalSize, fileCount } = processFileInfoForEncryption(fileInfos);
+    const fileInfos = result.data;
+    const backendTime = Date.now() - startTime;
+    console.log('[getFileInfo] Backend get_file_info response:', {
+      fileInfos,
+      responseTime: `${backendTime}ms`,
+      fileCount: fileInfos.length,
+      timestamp: Date.now(),
+    });
 
-  const result: FileSelection = {
-    paths,
-    total_size: totalSize,
-    file_count: fileCount,
-    selection_type: selectionType,
-  };
+    const { totalSize, fileCount } = processFileInfoForEncryption(fileInfos);
 
-  console.log('[getFileInfo] File selection result prepared:', {
-    result,
-    timestamp: Date.now(),
-  });
+    const fileSelection: FileSelection = {
+      paths,
+      total_size: totalSize,
+      file_count: fileCount,
+      selection_type: selectionType,
+    };
 
-  return result;
+    console.log('[getFileInfo] File selection result prepared:', {
+      result: fileSelection,
+      timestamp: Date.now(),
+    });
+
+    return fileSelection;
+  } catch (error) {
+    logger.error('file-operations', 'Failed to get file info', error as Error);
+    throw error;
+  }
 };

@@ -3,11 +3,11 @@
 use crate::commands::command_types::CommandError;
 use crate::crypto::yubikey::YubiIdentityProviderFactory;
 use serde::{Deserialize, Serialize};
-use tauri::command;
+use tauri;
 
 /// Frontend-compatible YubiKey device information
 /// This structure matches the TypeScript interface expected by the frontend
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct YubiKeyDevice {
     pub device_id: String,
     pub name: String,
@@ -28,7 +28,8 @@ pub struct YubiKeyDevice {
 ///
 /// # Returns
 /// Vector of YubiKeyDevice containing device information (empty if no devices found)
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_list_devices() -> Result<Vec<YubiKeyDevice>, CommandError> {
     // Try to create the provider, but handle failures gracefully
     let provider = match YubiIdentityProviderFactory::create_default() {
@@ -96,7 +97,8 @@ pub async fn yubikey_list_devices() -> Result<Vec<YubiKeyDevice>, CommandError> 
 ///
 /// # Returns
 /// Boolean indicating if YubiKey devices are available
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_devices_available() -> Result<bool, CommandError> {
     let provider = match YubiIdentityProviderFactory::create_default() {
         Ok(provider) => provider,
@@ -126,7 +128,8 @@ pub async fn yubikey_devices_available() -> Result<bool, CommandError> {
 /// # Errors
 /// - `YubiKeyNotFound` if the specified device is not found
 /// - `YubiKeyCommunicationError` if unable to communicate with the device
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_get_device_info(serial: String) -> Result<YubiKeyDevice, CommandError> {
     // Try to find the device using the provider first
     let provider = YubiIdentityProviderFactory::create_default().map_err(CommandError::from)?;
@@ -199,7 +202,8 @@ pub async fn yubikey_get_device_info(serial: String) -> Result<YubiKeyDevice, Co
 /// - `YubiKeyNotFound` if the specified device is not found
 /// - `PluginExecutionFailed` if age-plugin-yubikey fails
 /// - `YubiKeyCommunicationError` if unable to communicate with the device
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_test_connection(
     serial: String,
     pin: String,
@@ -271,7 +275,7 @@ pub async fn yubikey_test_connection(
 }
 
 /// Result of YubiKey connection test
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub struct YubiKeyConnectionTest {
     pub serial: String,
     pub status: YubiKeyConnectionStatus,
@@ -279,7 +283,7 @@ pub struct YubiKeyConnectionTest {
 }
 
 /// Status of YubiKey connection test
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub enum YubiKeyConnectionStatus {
     Success,
     Failed { reason: String },

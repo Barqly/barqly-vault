@@ -2,8 +2,8 @@
  * File operation utilities for decryption workflow
  */
 
-import { safeInvoke } from '../tauri-safe';
-import { FileSelection } from '../api-types';
+import { commands, FileSelection } from '../../bindings';
+import { logger } from '../logger';
 import { createFileSelectionError, createFileFormatError } from '../errors/command-error';
 
 /**
@@ -45,11 +45,22 @@ export const validateDecryptionFileSelection = (paths: string[]): string => {
  * Handles file dialog and validation
  */
 export const selectEncryptedFileForDecryption = async (): Promise<string> => {
-  // Call the backend command to select encrypted file
-  const result = await safeInvoke<FileSelection>('select_files', 'Files', 'useFileDecryption');
+  try {
+    logger.debug('file-operations', 'Opening file selection dialog');
 
-  // Validate and return the selected file
-  return validateDecryptionFileSelection(result.paths);
+    // Call the backend command using generated function
+    const result = await commands.selectFiles('Files');
+
+    if (result.status === 'error') {
+      throw new Error(result.error.message || 'File selection failed');
+    }
+
+    // Validate and return the selected file
+    return validateDecryptionFileSelection(result.data.paths);
+  } catch (error) {
+    logger.error('file-operations', 'File selection failed', error as Error);
+    throw error;
+  }
 };
 
 /**

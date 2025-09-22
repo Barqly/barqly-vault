@@ -15,14 +15,14 @@ use std::collections::HashMap;
 use tracing::instrument;
 
 /// Input for manifest verification command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct VerifyManifestInput {
     pub manifest_path: String,
     pub extracted_files_dir: String,
 }
 
 /// Response from manifest verification command
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct VerifyManifestResponse {
     pub is_valid: bool,
     pub message: String,
@@ -58,6 +58,7 @@ impl ValidateInput for VerifyManifestInput {
 
 /// Verify a manifest file against extracted files
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(input), fields(manifest_path = %input.manifest_path))]
 pub async fn verify_manifest(
     input: VerifyManifestInput,

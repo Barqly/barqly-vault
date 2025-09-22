@@ -11,20 +11,20 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 /// Input for getting vault keys
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct GetVaultKeysRequest {
     pub vault_id: String,
 }
 
 /// Response containing vault keys
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct GetVaultKeysResponse {
     pub vault_id: String,
     pub keys: Vec<KeyReference>,
 }
 
 /// Input for adding a key to vault
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct AddKeyToVaultRequest {
     pub vault_id: String,
     pub key_type: String,               // "passphrase" or "yubikey"
@@ -34,27 +34,28 @@ pub struct AddKeyToVaultRequest {
 }
 
 /// Response from adding key
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct AddKeyToVaultResponse {
     pub success: bool,
     pub key_reference: KeyReference,
 }
 
 /// Input for removing key from vault
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct RemoveKeyFromVaultRequest {
     pub vault_id: String,
     pub key_id: String,
 }
 
 /// Response from removing key
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct RemoveKeyFromVaultResponse {
     pub success: bool,
 }
 
 /// Get all keys for a vault
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip_all, fields(vault_id = %input.vault_id))]
 pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVaultKeysResponse> {
     crate::logging::log_debug(&format!("get_vault_keys called for vault: {}", input.vault_id));
@@ -126,6 +127,7 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
 
 /// Add a key to a vault
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip_all, fields(vault_id = %input.vault_id, key_type = %input.key_type))]
 pub async fn add_key_to_vault(
     input: AddKeyToVaultRequest,
@@ -271,6 +273,7 @@ pub async fn add_key_to_vault(
 
 /// Remove a key from a vault
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip_all, fields(vault_id = %input.vault_id, key_id = %input.key_id))]
 pub async fn remove_key_from_vault(
     input: RemoveKeyFromVaultRequest,

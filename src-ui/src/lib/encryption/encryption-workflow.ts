@@ -1,15 +1,13 @@
-import { safeInvoke, safeListen } from '../tauri-safe';
+import { safeListen } from '../tauri-safe';
+import { commands, EncryptDataInput } from '../../bindings';
 import { ProgressUpdate } from '../api-types';
+import { logger } from '../logger';
 
 /**
  * Input for the encryption operation
+ * Now uses the generated EncryptDataInput type
  */
-export interface EncryptionInput {
-  key_id: string;
-  file_paths: string[];
-  output_name?: string;
-  output_path?: string;
-}
+export type EncryptionInput = EncryptDataInput;
 
 /**
  * Executes file encryption with progress tracking
@@ -28,16 +26,23 @@ export const executeEncryptionWithProgress = async (
   });
 
   try {
-    // Call the backend command - the safeInvoke will wrap it in 'input' parameter
-    const result = await safeInvoke<string>('encrypt_files', input, 'useFileEncryption');
+    logger.debug('encryption-workflow', 'Starting encryption', { input });
+
+    // Call the backend command using generated function
+    const result = await commands.encryptFiles(input);
+
+    if (result.status === 'error') {
+      throw new Error(result.error.message || 'Encryption failed');
+    }
 
     // Clean up progress listener on success
     unlisten();
 
-    return result;
+    return result.data;
   } catch (error) {
     // Clean up progress listener on error
     unlisten();
+    logger.error('encryption-workflow', 'Encryption failed', error as Error);
     throw error;
   }
 };

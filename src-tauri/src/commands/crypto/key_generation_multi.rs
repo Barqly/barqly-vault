@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use tracing::instrument;
 
 /// Input for multi-recipient key generation command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct GenerateKeyMultiInput {
     pub label: String,
     pub passphrase: Option<String>, // Optional for YubiKey-only mode
@@ -29,7 +29,7 @@ pub struct GenerateKeyMultiInput {
 }
 
 /// Response from key generation
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct GenerateKeyMultiResponse {
     pub public_key: String,
     pub key_id: String,
@@ -101,6 +101,7 @@ impl ValidateInput for GenerateKeyMultiInput {
 
 /// Generate a new encryption keypair with multi-recipient support
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(input), fields(label = %input.label))]
 pub async fn generate_key_multi(
     input: GenerateKeyMultiInput,

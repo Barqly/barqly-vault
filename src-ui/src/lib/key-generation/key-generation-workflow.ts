@@ -1,10 +1,13 @@
-import { safeInvoke, safeListen } from '../tauri-safe';
+import { safeListen } from '../tauri-safe';
 import {
+  commands,
   GenerateKeyInput,
   GenerateKeyResponse,
-  ProgressUpdate,
   ValidatePassphraseInput,
-  ValidatePassphraseResponse,
+  ValidatePassphraseResponse
+} from '../../bindings';
+import {
+  ProgressUpdate,
   CommandError,
   ErrorCode,
 } from '../api-types';
@@ -27,18 +30,18 @@ export const validatePassphraseStrength = async (
     passphraseLength: passphrase.length,
   });
 
-  const result = await safeInvoke<ValidatePassphraseResponse>(
-    'validate_passphrase',
-    validationInput,
-    'key-generation-workflow',
-  );
+  const result = await commands.validatePassphrase(validationInput);
+
+  if (result.status === 'error') {
+    throw new Error(result.error.message || 'Passphrase validation failed');
+  }
 
   logger.info('key-generation-workflow', 'Passphrase validation complete', {
-    isValid: result.is_valid,
-    message: result.message,
+    isValid: result.data.is_valid,
+    message: result.data.message,
   });
 
-  return result;
+  return result.data;
 };
 
 /**
@@ -97,22 +100,22 @@ export const executeKeyGenerationWithProgress = async (
       label: keyInput.label,
     });
 
-    const result = await safeInvoke<GenerateKeyResponse>(
-      'generate_key',
-      keyInput,
-      'key-generation-workflow',
-    );
+    const result = await commands.generateKey(keyInput);
+
+    if (result.status === 'error') {
+      throw result.error;
+    }
 
     logger.info('key-generation-workflow', 'Key generation successful', {
-      publicKey: result.public_key.substring(0, 20) + '...',
-      keyId: result.key_id,
-      savedPath: result.saved_path,
+      publicKey: result.data.public_key.substring(0, 20) + '...',
+      keyId: result.data.key_id,
+      savedPath: result.data.saved_path,
     });
 
     // Clean up progress listener
     unlisten();
 
-    return result;
+    return result.data;
   } catch (error) {
     // Clean up progress listener on error
     unlisten();

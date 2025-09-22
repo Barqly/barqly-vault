@@ -12,10 +12,10 @@ use crate::crypto::yubikey::pty::{
 use age::secrecy::{ExposeSecret, SecretString};
 use crate::logging::{log_debug, log_info, log_warn};
 use serde::{Deserialize, Serialize};
-use tauri::command;
+use tauri;
 
 /// YubiKey state classification
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
 #[serde(rename_all = "lowercase")]
 pub enum YubiKeyState {
     New,        // Default PIN, no age recipient
@@ -25,7 +25,7 @@ pub enum YubiKeyState {
 }
 
 /// PIN status
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
 #[serde(rename_all = "lowercase")]
 pub enum PinStatus {
     Default, // Still using 123456
@@ -33,7 +33,7 @@ pub enum PinStatus {
 }
 
 /// YubiKey state information
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct YubiKeyStateInfo {
     pub serial: String,
     pub state: YubiKeyState,
@@ -44,9 +44,9 @@ pub struct YubiKeyStateInfo {
     pub pin_status: PinStatus,
 }
 
-/// YubiKey initialization result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct YubiKeyInitResult {
+/// YubiKey initialization result for streamlined API
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+pub struct StreamlinedYubiKeyInitResult {
     pub serial: String,
     pub slot: u8, // Retired slot number
     pub recipient: String,
@@ -56,7 +56,8 @@ pub struct YubiKeyInitResult {
 }
 
 /// List YubiKeys with intelligent state detection
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
     log_info("Listing YubiKeys with state detection");
 
@@ -172,12 +173,13 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
 }
 
 /// Initialize a brand new YubiKey
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn init_yubikey(
     serial: String,
     new_pin: String,
     label: String,
-) -> Result<YubiKeyInitResult, CommandError> {
+) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
     log_debug(&format!("Initializing YubiKey with label {label}"));
 
     // Wrap PIN in SecretString for security
@@ -236,7 +238,7 @@ pub async fn init_yubikey(
 
     log_debug("Successfully initialized YubiKey");
 
-    Ok(YubiKeyInitResult {
+    Ok(StreamlinedYubiKeyInitResult {
         serial,
         slot: 1, // Will be updated with actual slot from age-plugin-yubikey output
         recipient,
@@ -247,12 +249,13 @@ pub async fn init_yubikey(
 }
 
 /// Register a reused YubiKey
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn register_yubikey(
     serial: String,
     label: String,
     pin: String,
-) -> Result<YubiKeyInitResult, CommandError> {
+) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
     log_debug(&format!("Registering reused YubiKey with label {label}"));
 
     // Wrap PIN in SecretString for security
@@ -305,7 +308,7 @@ pub async fn register_yubikey(
 
     log_debug("Successfully registered YubiKey");
 
-    Ok(YubiKeyInitResult {
+    Ok(StreamlinedYubiKeyInitResult {
         serial,
         slot: 1,
         recipient,
@@ -316,7 +319,8 @@ pub async fn register_yubikey(
 }
 
 /// Get identities for a specific YubiKey
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError> {
     log_info(&format!("Getting identities for YubiKey {serial}"));
 

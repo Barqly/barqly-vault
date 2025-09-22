@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
 /// A vault that contains encrypted data and references to its keys
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct Vault {
     /// Unique identifier for the vault
     pub id: String,
@@ -30,7 +30,7 @@ pub struct Vault {
 }
 
 /// Reference to a key that can unlock a vault
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
 pub struct KeyReference {
     /// Type of key
     #[serde(flatten)]
@@ -53,7 +53,7 @@ pub struct KeyReference {
 }
 
 /// Type of key with type-specific data
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum KeyType {
     /// Passphrase-based key
@@ -76,7 +76,7 @@ pub enum KeyType {
 }
 
 /// State of a key in relation to the vault
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, specta::Type)]
 #[serde(rename_all = "snake_case")]
 pub enum KeyState {
     /// Key is available and can be used
@@ -90,7 +90,7 @@ pub enum KeyState {
 }
 
 /// Summary information about a vault (for listing)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct VaultSummary {
     pub id: String,
     pub name: String,

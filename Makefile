@@ -383,3 +383,12 @@ publish-prod:
 	@chmod +x scripts/cicd/publish-production.sh
 	@chmod +x scripts/cicd/update-downloads.sh
 	@./scripts/cicd/publish-production.sh "$(VERSION)"
+
+# ============================================================================
+# API SYNCHRONIZATION TARGETS
+# ============================================================================
+
+# TypeScript bindings are now automatically generated with tauri-specta
+# When you build the Rust code, TypeScript bindings are generated at:
+# src-ui/src/bindings.ts
+# No manual commands needed anymore!

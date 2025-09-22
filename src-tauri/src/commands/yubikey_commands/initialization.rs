@@ -3,7 +3,7 @@
 use crate::commands::command_types::CommandError;
 use crate::crypto::yubikey::{YubiIdentityProviderFactory, YubiKeyInitResult, YubiKeyManager};
 use serde::{Deserialize, Serialize};
-use tauri::command;
+use tauri;
 
 /// Initialize a YubiKey for use with Barqly Vault using age-plugin-yubikey
 ///
@@ -24,7 +24,8 @@ use tauri::command;
 /// - `YubiKeyPinRequired` if PIN authentication fails
 /// - `PluginExecutionFailed` if age-plugin-yubikey operation fails
 /// - `YubiKeyInitializationFailed` if key generation fails
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_initialize(
     serial: String,
     pin: String,
@@ -84,7 +85,8 @@ pub async fn yubikey_initialize(
 ///
 /// # Returns
 /// YubiKeySetupRecommendations with suggested configuration
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_get_setup_recommendations(
     serial: String,
 ) -> Result<YubiKeySetupRecommendations, CommandError> {
@@ -117,7 +119,8 @@ pub async fn yubikey_get_setup_recommendations(
 ///
 /// # Returns
 /// PinValidationResult with validation status and guidance
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_validate_pin(pin: String) -> Result<PinValidationResult, CommandError> {
     let manager = YubiKeyManager::new();
 
@@ -147,7 +150,8 @@ pub async fn yubikey_validate_pin(pin: String) -> Result<PinValidationResult, Co
 ///
 /// # Returns
 /// YubiKeySetupStatus indicating current setup state
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_check_setup_status(
     serial: String,
 ) -> Result<YubiKeySetupStatus, CommandError> {
@@ -179,7 +183,7 @@ pub async fn yubikey_check_setup_status(
 // Supporting data structures
 
 /// YubiKey setup recommendations
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub struct YubiKeySetupRecommendations {
     pub serial: String,
     pub model: String,
@@ -190,7 +194,7 @@ pub struct YubiKeySetupRecommendations {
 }
 
 /// PIN validation result
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub struct PinValidationResult {
     pub valid: bool,
     pub message: String,
@@ -198,7 +202,7 @@ pub struct PinValidationResult {
 }
 
 /// YubiKey setup status
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub enum YubiKeySetupStatus {
     NeedsInitialization { available_slots: usize },
     AlreadySetup { note: String },

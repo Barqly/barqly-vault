@@ -7,7 +7,6 @@
  * Key features:
  * - Environment detection (desktop vs web)
  * - Safe dynamic imports with fallbacks
- * - Command parameter mapping
  * - Comprehensive error handling and logging
  * - Mock responses for web preview mode
  */
@@ -18,7 +17,8 @@ import { logger } from './logger';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 
 /**
- * Safe invoke wrapper that handles both Tauri desktop and web preview modes
+ * DEPRECATED: Safe invoke wrapper that handles both Tauri desktop and web preview modes
+ * This function is being phased out - use generated commands from bindings.ts instead
  */
 export async function safeInvoke<T>(
   cmd: string,
@@ -79,105 +79,17 @@ export async function safeInvoke<T>(
       throw error;
     }
 
-    // Map commands to their expected parameter names
-    // Most crypto commands expect 'input', while others have specific parameter names
-    const commandParameterMap: Record<string, string | null> = {
-      // Crypto commands with 'input' parameter
-      generate_key: 'input',
-      generate_key_multi: 'input',
-      validate_passphrase: 'input',
-      verify_key_passphrase: 'input',
-      encrypt_files: 'input', // Takes EncryptDataInput wrapped in 'input'
-      decrypt_data: 'input',
-      get_encryption_status: 'input',
-      verify_manifest: 'input',
-      get_progress: 'input',
-
-      // Storage commands
-      update_config: 'config',
-      delete_key_command: null, // Takes key_id as a direct string parameter
-      list_keys_command: null, // No parameters
-      get_config: null, // No parameters
-      get_cache_metrics: null, // No parameters
-
-      // File commands
-      select_files: 'selectionType', // Takes SelectionType wrapped in 'selectionType' parameter
-      get_file_info: 'paths',
-      create_manifest: 'file_paths',
-
-      // YubiKey commands (legacy)
-      yubikey_list_devices: null, // No parameters
-      yubikey_devices_available: null, // No parameters
-      yubikey_get_device_info: null, // Takes device_id directly
-      yubikey_test_connection: null, // Takes device_id and pin
-      yubikey_initialize: null, // Takes device_id, pin, slot
-
-      // Streamlined YubiKey commands
-      list_yubikeys: null, // No parameters - returns intelligent state info
-      init_yubikey: null, // Takes serial, new_pin, label
-      register_yubikey: null, // Takes serial, label
-      get_identities: null, // Takes serial
-
-      // Vault commands
-      create_vault: 'input', // Takes CreateVaultRequest
-      list_vaults: null, // No parameters
-      get_current_vault: null, // No parameters
-      set_current_vault: 'input', // Takes SetCurrentVaultRequest
-      delete_vault: 'input', // Takes DeleteVaultRequest
-      get_vault_keys: 'input', // Takes GetVaultKeysRequest
-      add_key_to_vault: 'input', // Takes AddKeyToVaultRequest
-      remove_key_from_vault: 'input', // Takes RemoveKeyFromVaultRequest
-      update_key_label: 'input', // Takes UpdateKeyLabelRequest
-      check_yubikey_availability: 'input', // Takes CheckYubiKeyAvailabilityRequest
-
-      // New passphrase/YubiKey vault integration commands
-      validate_passphrase_strength: null, // Takes passphrase as string directly
-      add_passphrase_key_to_vault: 'input', // Takes AddPassphraseKeyRequest
-      validate_vault_passphrase_key: null, // Takes vault_id as string
-      init_yubikey_for_vault: 'input', // Takes YubiKeyInitForVaultParams wrapped in 'input'
-      register_yubikey_for_vault: 'input', // Takes RegisterYubiKeyForVaultParams wrapped in 'input'
-      list_available_yubikeys: null, // Takes vault_id as string directly
-      check_yubikey_slot_availability: null, // Takes vault_id as string
-    };
-
-    let invokeArgs = args;
-    const paramName = commandParameterMap[cmd];
-
-    // Special handling for commands that take strings directly
-    if (cmd === 'delete_key_command' && typeof args === 'object' && 'key_id' in args) {
-      invokeArgs = args.key_id;
-    } else if (cmd === 'list_available_yubikeys' && typeof args === 'object' && 'vaultId' in args) {
-      // Tauri v2 expects camelCase for parameters
-      invokeArgs = args;
-    } else if (paramName && args) {
-      // If the command expects a specific parameter name and args don't already have it
-      if (typeof args !== 'object' || !(paramName in args)) {
-        invokeArgs = { [paramName]: args };
-      }
-    } else if (paramName === null && !args) {
-      // Commands with no parameters
-      invokeArgs = undefined;
-    }
+    // DEPRECATED: This function no longer performs parameter wrapping
+    // Most APIs have been migrated to use commands.xxx() from bindings.ts
+    // Callers still using this function must provide the correct parameter structure
+    const invokeArgs = args;
 
     logger.debug('TauriSafe', `Invoking Tauri command: ${cmd}`, {
       argsStringified: JSON.stringify(invokeArgs),
       argTypes: invokeArgs ? Object.entries(invokeArgs).map(([k, v]) => [k, typeof v]) : null,
-      wrapped: invokeArgs !== args,
     });
 
-    // Extra debug for specific commands
-    if (cmd === 'generate_key_multi' || cmd === 'list_available_yubikeys') {
-      console.log(`🔍 TauriSafe: ${cmd} debug:`, {
-        originalArgs: args,
-        finalInvokeArgs: invokeArgs,
-        paramName,
-        hasVaultId: invokeArgs && 'vault_id' in invokeArgs,
-        hasInput: invokeArgs && 'input' in invokeArgs,
-        allKeys: invokeArgs ? Object.keys(invokeArgs) : [],
-      });
-    }
-
-    const result = await invoke<T>(cmd, invokeArgs);
+    const result = await invoke<T>(cmd, invokeArgs || {});
     const duration = performance.now() - startTime;
 
     logger.info('TauriSafe', `Command successful: ${cmd}`, {

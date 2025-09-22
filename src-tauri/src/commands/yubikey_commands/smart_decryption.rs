@@ -5,10 +5,10 @@ use crate::crypto::multi_recipient::{MultiRecipientCrypto, MultiRecipientDecrypt
 use crate::crypto::yubikey::{UnlockCredentials, UnlockMethod};
 use crate::storage::VaultMetadataV2;
 use serde::{Deserialize, Serialize};
-use tauri::command;
+use tauri;
 
 /// Method confidence level matching frontend expectations
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub enum ConfidenceLevel {
     High,
     Medium,
@@ -16,7 +16,7 @@ pub enum ConfidenceLevel {
 }
 
 /// Available unlock method matching frontend structure
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub struct AvailableMethod {
     pub method_type: UnlockMethod,
     pub display_name: String,
@@ -39,7 +39,8 @@ pub struct AvailableMethod {
 ///
 /// # Returns
 /// DecryptionResult with information about the decryption process
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_decrypt_file(
     encrypted_file: String,
     unlock_method: Option<UnlockMethod>,
@@ -104,7 +105,8 @@ pub async fn yubikey_decrypt_file(
 ///
 /// # Returns
 /// AvailableUnlockMethods with information about available methods
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_get_available_unlock_methods(
     file_path: String,
 ) -> Result<Vec<AvailableMethod>, CommandError> {
@@ -158,7 +160,8 @@ pub async fn yubikey_get_available_unlock_methods(
 ///
 /// # Returns
 /// CredentialsTestResult with validation status
-#[command]
+#[tauri::command]
+#[specta::specta]
 pub async fn yubikey_test_unlock_credentials(
     encrypted_file: String,
     credentials: UnlockCredentials,
@@ -234,7 +237,7 @@ pub async fn yubikey_test_unlock_credentials(
 // Supporting data structures
 
 /// Result of vault decryption operation
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub struct VaultDecryptionResult {
     pub method_used: UnlockMethod,
     pub recipient_used: String,
@@ -246,7 +249,7 @@ pub struct VaultDecryptionResult {
 // Removed legacy types - now using AvailableMethod directly
 
 /// Result of credentials testing
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, specta::Type)]
 pub struct CredentialsTestResult {
     pub valid: bool,
     pub method: UnlockMethod,

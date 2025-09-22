@@ -13,19 +13,19 @@ use std::collections::HashMap;
 use tracing::instrument;
 
 /// Input for encryption status command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct GetEncryptionStatusInput {
     pub operation_id: String,
 }
 
 /// Input for progress status command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct GetProgressInput {
     pub operation_id: String,
 }
 
 /// Response from progress status command
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct GetProgressResponse {
     pub operation_id: String,
     pub progress: f32,
@@ -37,7 +37,7 @@ pub struct GetProgressResponse {
 }
 
 /// Response from encryption status command
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct EncryptionStatusResponse {
     pub operation_id: String,
     pub status: EncryptionStatus,
@@ -52,7 +52,7 @@ pub struct EncryptionStatusResponse {
 }
 
 /// Encryption operation status
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub enum EncryptionStatus {
     Pending,
     InProgress,
@@ -89,6 +89,7 @@ impl ValidateInput for GetProgressInput {
 
 /// Get encryption operation status
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(input), fields(operation_id = %input.operation_id))]
 pub async fn get_encryption_status(
     input: GetEncryptionStatusInput,
@@ -148,6 +149,7 @@ pub async fn get_encryption_status(
 
 /// Get progress for a long-running operation
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(input), fields(operation_id = %input.operation_id))]
 pub async fn get_progress(input: GetProgressInput) -> CommandResponse<GetProgressResponse> {
     // Create span context for operation tracing

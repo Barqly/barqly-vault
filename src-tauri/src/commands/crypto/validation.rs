@@ -16,13 +16,13 @@ use std::collections::HashMap;
 use tracing::instrument;
 
 /// Input for passphrase validation command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct ValidatePassphraseInput {
     pub passphrase: String,
 }
 
 /// Response from passphrase validation
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct ValidatePassphraseResponse {
     pub is_valid: bool,
     pub message: String,
@@ -37,6 +37,7 @@ impl ValidateInput for ValidatePassphraseInput {
 
 /// Validate passphrase strength
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(input), fields(passphrase_length = input.passphrase.len()))]
 pub async fn validate_passphrase(
     input: ValidatePassphraseInput,
@@ -202,14 +203,14 @@ pub(crate) fn contains_sequential_pattern(passphrase: &str) -> bool {
 }
 
 /// Input for key-passphrase verification command
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 pub struct VerifyKeyPassphraseInput {
     pub key_id: String,
     pub passphrase: String,
 }
 
 /// Response from key-passphrase verification
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct VerifyKeyPassphraseResponse {
     pub is_valid: bool,
     pub message: String,
@@ -240,6 +241,7 @@ impl ValidateInput for VerifyKeyPassphraseInput {
 /// - Only loads and decrypts the private key
 /// - Minimal memory footprint
 #[tauri::command]
+#[specta::specta]
 #[instrument(skip(input), fields(key_id = %input.key_id))]
 pub async fn verify_key_passphrase(
     input: VerifyKeyPassphraseInput,
