@@ -37,7 +37,7 @@ const COMMAND_TIMEOUT: Duration = Duration::from_secs(60);
 #[derive(Debug, Clone)]
 pub enum PtyState {
     WaitingForPin,
-    GeneratingKey,
+    GeneratingKey,  // Add this state for age-plugin-yubikey
     WaitingForTouch,
     TouchDetected,
     Complete(String),
@@ -156,8 +156,10 @@ pub fn run_age_plugin_yubikey(
                     let line = buffer.trim();
                     output.push_str(&buffer);
 
-                    // Check for PIN prompt - age-plugin-yubikey uses "Enter PIN for YubiKey"
-                    if line.contains("Enter PIN") || line.contains("PIN:") || line.contains("PIN for") {
+                    // Critical: age-plugin-yubikey shows "Generating key" before expecting PIN
+                    if line.contains("Generating key") {
+                        let _ = tx_reader.send(PtyState::GeneratingKey);
+                    } else if line.contains("Enter PIN") || line.contains("PIN:") || line.contains("PIN for") {
                         let _ = tx_reader.send(PtyState::WaitingForPin);
                     } else if line.contains("Touch your YubiKey") || line.contains("touch") {
                         let _ = tx_reader.send(PtyState::WaitingForTouch);
@@ -194,6 +196,16 @@ pub fn run_age_plugin_yubikey(
 
         match rx.recv_timeout(Duration::from_millis(100)) {
             Ok(state) => match state {
+                PtyState::GeneratingKey if pin.is_some() && !pin_sent => {
+                    log_info(&format!("'Generating key' detected, proactively injecting PIN: {} (length: {})",
+                        if pin.unwrap() == "123456" { "DEFAULT" } else { "CUSTOM" },
+                        pin.unwrap().len()));
+                    thread::sleep(PIN_INJECT_DELAY);
+                    writeln!(writer, "{}", pin.unwrap())?;
+                    writer.flush()?;
+                    pin_sent = true;
+                    log_info("PIN successfully sent after 'Generating key' message");
+                }
                 PtyState::WaitingForPin if pin.is_some() && !pin_sent => {
                     log_info(&format!("PIN prompt detected, injecting PIN: {} (length: {})",
                         if pin.unwrap() == "123456" { "DEFAULT" } else { "CUSTOM" },
