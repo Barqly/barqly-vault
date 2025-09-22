@@ -154,15 +154,12 @@ pub fn run_age_plugin_yubikey(
                 }
                 Ok(_n) => {
                     let line = buffer.trim();
-                    // Log PTY output to help debug
-                    if !line.is_empty() {
-                        println!("[PTY] {}", line);
-                    }
                     output.push_str(&buffer);
 
-                    if line.contains("PIN:") || line.contains("Enter PIN") {
+                    // Check for PIN prompt - age-plugin-yubikey uses "Enter PIN for YubiKey"
+                    if line.contains("Enter PIN") || line.contains("PIN:") || line.contains("PIN for") {
                         let _ = tx_reader.send(PtyState::WaitingForPin);
-                    } else if line.contains("Touch your YubiKey") {
+                    } else if line.contains("Touch your YubiKey") || line.contains("touch") {
                         let _ = tx_reader.send(PtyState::WaitingForTouch);
                     } else if line.contains("age1yubikey") {
                         let _ = tx_reader.send(PtyState::Complete(line.to_string()));
@@ -170,9 +167,8 @@ pub fn run_age_plugin_yubikey(
                         let _ = tx_reader.send(PtyState::Failed(line.to_string()));
                     }
                 }
-                Err(e) => {
-                    // Error reading PTY
-                    eprintln!("[PTY ERROR] {}", e);
+                Err(_e) => {
+                    // Error reading PTY - silent break
                     break;
                 }
             }
@@ -199,11 +195,14 @@ pub fn run_age_plugin_yubikey(
         match rx.recv_timeout(Duration::from_millis(100)) {
             Ok(state) => match state {
                 PtyState::WaitingForPin if pin.is_some() && !pin_sent => {
+                    log_info(&format!("PIN prompt detected, injecting PIN: {} (length: {})",
+                        if pin.unwrap() == "123456" { "DEFAULT" } else { "CUSTOM" },
+                        pin.unwrap().len()));
                     thread::sleep(PIN_INJECT_DELAY);
                     writeln!(writer, "{}", pin.unwrap())?;
                     writer.flush()?;
                     pin_sent = true;
-                    log_info("PIN sent to age-plugin-yubikey");
+                    log_info("PIN successfully sent to age-plugin-yubikey");
                 }
                 PtyState::WaitingForTouch => {
                     log_info("Touch your YubiKey now...");
