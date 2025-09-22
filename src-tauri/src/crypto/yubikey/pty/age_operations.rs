@@ -4,45 +4,61 @@ use super::core::{get_age_plugin_path, run_age_plugin_yubikey, PtyError, Result}
 use crate::logging::{log_info, log_warn};
 use std::fs;
 use std::path::Path;
+use std::process::{Command, Stdio};
+use std::io::Write;
 
-/// Generate age identity via PTY with YubiKey
-/// IMPORTANT: serial parameter ensures operation happens on correct YubiKey
+/// Generate age identity using direct stdin piping (cleaner approach)
+/// This avoids PTY complexity by directly piping the PIN to stdin
 pub fn generate_age_identity_pty(serial: &str, pin: &str, touch_policy: &str, slot_name: &str) -> Result<String> {
     log_info(&format!("Generating age identity for serial {serial} with touch_policy={touch_policy}, slot_name={slot_name}"));
-
-    // Let age-plugin-yubikey choose the first available retired slot
-    // Don't specify --slot to use default behavior
-    // CRITICAL: Include --serial to ensure we use the correct YubiKey
-    let args = vec![
-        "-g".to_string(),
-        "--serial".to_string(),
-        serial.to_string(),
-        "--touch-policy".to_string(),
-        touch_policy.to_string(),
-        "--name".to_string(),
-        slot_name.to_string(),
-    ];
-
-    let cmd = format!("age-plugin-yubikey {}", args.join(" "));
-    log_info(&format!("Executing command: {}", cmd));
-    log_info(&format!("PIN will be provided: {} (length: {})",
+    log_info(&format!("Using PIN: {} (length: {})",
         if pin == "123456" { "DEFAULT" } else { "CUSTOM" }, pin.len()));
-    log_info("Expecting YubiKey touch after PIN entry...");
 
-    let output = match run_age_plugin_yubikey(args, Some(pin), true) {
-        Ok(output) => {
-            log_info(&format!("age-plugin-yubikey command succeeded, output length: {} bytes", output.len()));
-            output
-        }
-        Err(e) => {
-            log_warn(&format!("age-plugin-yubikey command failed: {:?}", e));
-            return Err(e);
-        }
-    };
+    let age_path = get_age_plugin_path();
+    log_info(&format!("Using age-plugin-yubikey from: {:?}", age_path));
+
+    // Spawn the command with piped stdin/stdout
+    let mut child = Command::new(&age_path)
+        .args([
+            "-g",
+            "--serial", serial,
+            "--touch-policy", touch_policy,
+            "--name", slot_name,
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to spawn age-plugin-yubikey: {}", e)))?;
+
+    // Write the PIN to stdin immediately
+    if let Some(mut stdin) = child.stdin.take() {
+        log_info("Writing PIN to age-plugin-yubikey stdin...");
+        writeln!(stdin, "{}", pin)
+            .map_err(|e| PtyError::PtyOperation(format!("Failed to write PIN: {}", e)))?;
+        // Drop stdin to close the pipe
+        drop(stdin);
+        log_info("PIN written successfully, waiting for YubiKey touch...");
+    } else {
+        return Err(PtyError::PtyOperation("Failed to get stdin handle".to_string()));
+    }
+
+    // Wait for the command to complete
+    let output = child.wait_with_output()
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to wait for command: {}", e)))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        log_warn(&format!("age-plugin-yubikey failed: {}", stderr));
+        return Err(PtyError::PtyOperation(format!("age-plugin-yubikey failed: {}", stderr)));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    log_info(&format!("age-plugin-yubikey succeeded, output: {} bytes", stdout.len()));
 
     // Extract the age recipient from output
     // Looking for line that starts with "age1yubikey"
-    for line in output.lines() {
+    for line in stdout.lines() {
         let trimmed = line.trim();
         if trimmed.starts_with("age1yubikey") {
             log_info(&format!("Generated age recipient: {trimmed}"));
@@ -51,7 +67,7 @@ pub fn generate_age_identity_pty(serial: &str, pin: &str, touch_policy: &str, sl
     }
 
     // If no recipient found in direct output, check for "Recipient:" prefix
-    for line in output.lines() {
+    for line in stdout.lines() {
         if line.contains("Recipient:") && line.contains("age1yubikey") {
             if let Some(recipient) = line.split("Recipient:").nth(1) {
                 let recipient = recipient.trim();
