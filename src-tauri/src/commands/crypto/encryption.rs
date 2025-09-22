@@ -10,14 +10,11 @@ use crate::commands::types::{
 };
 use crate::constants::*;
 use crate::file_ops;
-use crate::logging::{log_operation, SpanContext};
+use crate::prelude::*;
 use crate::storage;
-use serde::Deserialize;
-use std::collections::HashMap;
 use std::path::Path;
 use std::sync::atomic::Ordering;
 use tauri::Window;
-use tracing::{info, instrument};
 
 /// Input for encryption command
 #[derive(Debug, Deserialize, specta::Type)]
@@ -66,13 +63,8 @@ impl ValidateInput for EncryptDataInput {
 #[specta::specta]
 #[instrument(skip(input, _window), fields(key_id = %input.key_id, file_count = input.file_paths.len()))]
 pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandResponse<String> {
-    // Create span context for operation tracing
-    let span_context = SpanContext::new("encrypt_files")
-        .with_attribute("key_id", &input.key_id)
-        .with_attribute("file_count", input.file_paths.len().to_string());
-
-    // Create error handler with span context
-    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+    // Create error handler
+    let error_handler = ErrorHandler::new();
 
     // Validate input with structured error handling
     input
@@ -101,15 +93,11 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     );
     let mut progress_manager = ProgressManager::new(operation_id.clone(), PROGRESS_TOTAL_WORK);
 
-    // Log operation start with structured context
-    let mut attributes = HashMap::new();
-    attributes.insert("file_count".to_string(), input.file_paths.len().to_string());
-    attributes.insert("key_id".to_string(), input.key_id.clone());
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Starting encryption operation",
-        &span_context,
-        attributes,
+    // Log operation start with structured fields
+    info!(
+        file_count = input.file_paths.len(),
+        key_id = %input.key_id,
+        "Starting encryption operation"
     );
 
     info!("Starting encryption for {} files", input.file_paths.len());
@@ -263,7 +251,7 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
         Some(&external_manifest_path),
     ) {
         // Log warning but don't fail the entire operation for external manifest
-        tracing::warn!("Failed to create external manifest: {}", manifest_err);
+        warn!("Failed to create external manifest: {}", manifest_err);
     }
 
     // Clean up temporary archive file with proper error handling
@@ -276,20 +264,10 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
     // Log operation completion
-    let mut completion_attributes = HashMap::new();
-    completion_attributes.insert(
-        "file_count".to_string(),
-        archive_operation.file_count.to_string(),
-    );
-    completion_attributes.insert(
-        "output_path".to_string(),
-        encrypted_path.to_string_lossy().to_string(),
-    );
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Encryption completed successfully",
-        &span_context,
-        completion_attributes,
+    info!(
+        file_count = archive_operation.file_count,
+        output_path = %encrypted_path.display(),
+        "Encryption completed successfully"
     );
 
     info!(

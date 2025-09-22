@@ -3,25 +3,24 @@
 //! This module provides the ErrorHandler for consistent error handling and logging.
 
 use super::{CommandError, ErrorCode};
-use crate::logging::{log_error_with_context, SpanContext};
-use std::collections::HashMap;
+use crate::prelude::*;
 
-/// Standardized error handling with OpenTelemetry logging
-pub struct ErrorHandler {
-    span_context: Option<SpanContext>,
-}
+/// Standardized error handling with structured tracing
+pub struct ErrorHandler {}
 
 impl ErrorHandler {
     pub fn new() -> Self {
-        Self { span_context: None }
+        Self {}
     }
 
-    pub fn with_span(mut self, span_context: SpanContext) -> Self {
-        self.span_context = Some(span_context);
+    /// Deprecated: Span context is now handled by tracing infrastructure
+    /// This method is kept for backward compatibility but does nothing
+    pub fn with_span<T>(self, _span_context: T) -> Self {
         self
     }
 
     /// Handle operation errors with structured logging
+    #[instrument(skip(self, result), fields(context = %context, error_code = ?error_code))]
     pub fn handle_operation_error<T, E>(
         &self,
         result: Result<T, E>,
@@ -34,60 +33,34 @@ impl ErrorHandler {
         result.map_err(|e| {
             let error_message = format!("{context} failed: {e}");
 
-            // Create structured error context
-            let mut error_context = HashMap::new();
-            error_context.insert("operation".to_string(), context.to_string());
-            error_context.insert(
-                "error_type".to_string(),
-                std::any::type_name::<E>().to_string(),
+            // Log error with structured fields
+            error!(
+                operation = %context,
+                error_type = %std::any::type_name::<E>(),
+                error = %e,
+                "Operation failed"
             );
 
-            if let Some(span) = &self.span_context {
-                error_context.insert("trace_id".to_string(), span.trace_id.clone());
-                error_context.insert("span_id".to_string(), span.span_id.clone());
-            }
-
-            // Log error with structured context
-            log_error_with_context(&error_message, "operation_failed", error_context);
-
-            // Create command error
-            let mut command_error = CommandError::operation(error_code, error_message);
-
-            // Add span context if available
-            if let Some(span) = &self.span_context {
-                command_error.trace_id = Some(span.trace_id.clone());
-                command_error.span_id = Some(span.span_id.clone());
-            }
-
+            // Create command error with tracing context automatically captured
+            let command_error = CommandError::operation(error_code, error_message);
             Box::new(command_error)
         })
     }
 
     /// Handle validation errors with structured logging
+    #[instrument(skip(self), fields(field = %field, reason = %reason))]
     pub fn handle_validation_error(&self, field: &str, reason: &str) -> Box<CommandError> {
         let error_message = format!("Validation failed for {field}: {reason}");
 
-        // Create structured error context
-        let mut error_context = HashMap::new();
-        error_context.insert("field".to_string(), field.to_string());
-        error_context.insert("reason".to_string(), reason.to_string());
+        // Log validation error with structured fields
+        error!(
+            field = %field,
+            reason = %reason,
+            "Validation failed"
+        );
 
-        if let Some(span) = &self.span_context {
-            error_context.insert("trace_id".to_string(), span.trace_id.clone());
-            error_context.insert("span_id".to_string(), span.span_id.clone());
-        }
-
-        // Log validation error
-        log_error_with_context(&error_message, "validation_failed", error_context);
-
-        // Create command error
-        let mut command_error = CommandError::validation(error_message);
-
-        if let Some(span) = &self.span_context {
-            command_error.trace_id = Some(span.trace_id.clone());
-            command_error.span_id = Some(span.span_id.clone());
-        }
-
+        // Create command error with tracing context automatically captured
+        let command_error = CommandError::validation(error_message);
         Box::new(command_error)
     }
 }

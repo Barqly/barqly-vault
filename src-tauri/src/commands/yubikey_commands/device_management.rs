@@ -2,6 +2,7 @@
 
 use crate::commands::command_types::CommandError;
 use crate::crypto::yubikey::YubiIdentityProviderFactory;
+use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 use tauri;
 
@@ -30,17 +31,14 @@ pub struct YubiKeyDevice {
 /// Vector of YubiKeyDevice containing device information (empty if no devices found)
 #[tauri::command]
 #[specta::specta]
-pub async fn yubikey_list_devices() -> Result<Vec<YubiKeyDevice>, CommandError> {
+#[instrument]
+pub async fn yubikey_list_devices() -> std::result::Result<Vec<YubiKeyDevice>, CommandError> {
     // Try to create the provider, but handle failures gracefully
     let provider = match YubiIdentityProviderFactory::create_default() {
         Ok(provider) => provider,
         Err(e) => {
-            crate::logging::log_warn(&format!(
-                "Failed to create YubiKey provider: {e}. Returning empty device list."
-            ));
-            crate::logging::log_info(
-                "This is expected if age-plugin-yubikey is not installed or configured",
-            );
+            warn!(error = %e, "Failed to create YubiKey provider. Returning empty device list.");
+            info!("This is expected if age-plugin-yubikey is not installed or configured");
             return Ok(Vec::new());
         }
     };
@@ -65,26 +63,22 @@ pub async fn yubikey_list_devices() -> Result<Vec<YubiKeyDevice>, CommandError> 
                 .collect();
 
             // Log device discovery for debugging
-            crate::logging::log_info(&format!(
-                "Found {} YubiKey recipient(s) via age-plugin-yubikey",
-                devices.len()
-            ));
+            info!(device_count = devices.len(), "Found YubiKey recipient(s) via age-plugin-yubikey");
 
             for device in &devices {
-                crate::logging::log_debug(&format!(
-                    "YubiKey recipient: {} - {}",
-                    device.device_id, device.name
-                ));
+                debug!(
+                    device_id = %redact_serial(&device.device_id),
+                    name = device.name,
+                    "YubiKey recipient"
+                );
             }
 
             Ok(devices)
         }
         Err(e) => {
-            crate::logging::log_warn(&format!("Failed to list YubiKey recipients: {e}"));
+            warn!(error = %e, "Failed to list YubiKey recipients");
             // Fall back to empty list for transition period
-            crate::logging::log_warn(
-                "No YubiKey recipients found via age-plugin-yubikey, returning empty list",
-            );
+            warn!("No YubiKey recipients found via age-plugin-yubikey, returning empty list");
             Ok(Vec::new())
         }
     }
@@ -99,7 +93,7 @@ pub async fn yubikey_list_devices() -> Result<Vec<YubiKeyDevice>, CommandError> 
 /// Boolean indicating if YubiKey devices are available
 #[tauri::command]
 #[specta::specta]
-pub async fn yubikey_devices_available() -> Result<bool, CommandError> {
+pub async fn yubikey_devices_available() -> std::result::Result<bool, CommandError> {
     let provider = match YubiIdentityProviderFactory::create_default() {
         Ok(provider) => provider,
         Err(_) => return Ok(false), // Return false if provider creation fails
@@ -130,7 +124,8 @@ pub async fn yubikey_devices_available() -> Result<bool, CommandError> {
 /// - `YubiKeyCommunicationError` if unable to communicate with the device
 #[tauri::command]
 #[specta::specta]
-pub async fn yubikey_get_device_info(serial: String) -> Result<YubiKeyDevice, CommandError> {
+#[instrument]
+pub async fn yubikey_get_device_info(serial: String) -> std::result::Result<YubiKeyDevice, CommandError> {
     // Try to find the device using the provider first
     let provider = YubiIdentityProviderFactory::create_default().map_err(CommandError::from)?;
 
@@ -151,10 +146,11 @@ pub async fn yubikey_get_device_info(serial: String) -> Result<YubiKeyDevice, Co
                     has_fido: true,
                 };
 
-                crate::logging::log_debug(&format!(
-                    "Retrieved info for YubiKey: {} - {}",
-                    device.device_id, device.name
-                ));
+                debug!(
+                    device_id = %redact_serial(&device.device_id),
+                    name = device.name,
+                    "Retrieved info for YubiKey"
+                );
 
                 Ok(device)
             } else {
@@ -179,10 +175,11 @@ pub async fn yubikey_get_device_info(serial: String) -> Result<YubiKeyDevice, Co
                 has_fido: true, // Assume FIDO capability
             };
 
-            crate::logging::log_debug(&format!(
-                "Retrieved info for YubiKey (legacy): {} - {}",
-                device.device_id, device.name
-            ));
+            debug!(
+                device_id = %redact_serial(&device.device_id),
+                name = device.name,
+                "Retrieved info for YubiKey (legacy)"
+            );
 
             Ok(device)
         }
@@ -204,10 +201,11 @@ pub async fn yubikey_get_device_info(serial: String) -> Result<YubiKeyDevice, Co
 /// - `YubiKeyCommunicationError` if unable to communicate with the device
 #[tauri::command]
 #[specta::specta]
+#[instrument(skip(pin))]
 pub async fn yubikey_test_connection(
     serial: String,
     pin: String,
-) -> Result<YubiKeyConnectionTest, CommandError> {
+) -> std::result::Result<YubiKeyConnectionTest, CommandError> {
     // Validate PIN format first
     let manager = crate::crypto::yubikey::YubiKeyManager::new();
     if let Err(e) = manager.validate_pin(&pin) {
@@ -233,14 +231,16 @@ pub async fn yubikey_test_connection(
                         .any(|r| r.serial == serial || serial.is_empty());
 
                     if has_matching_recipient {
-                        crate::logging::log_info(&format!(
-                            "YubiKey {serial} age-plugin-yubikey connection test successful"
-                        ));
+                        info!(
+                            serial = %redact_serial(&serial),
+                            "YubiKey age-plugin-yubikey connection test successful"
+                        );
                         YubiKeyConnectionStatus::Success
                     } else {
-                        crate::logging::log_warn(&format!(
-                            "YubiKey {serial} not found in age-plugin-yubikey recipients"
-                        ));
+                        warn!(
+                            serial = %redact_serial(&serial),
+                            "YubiKey not found in age-plugin-yubikey recipients"
+                        );
                         YubiKeyConnectionStatus::Failed {
                             reason: "YubiKey not found in age-plugin-yubikey recipients"
                                 .to_string(),
@@ -248,9 +248,11 @@ pub async fn yubikey_test_connection(
                     }
                 }
                 Err(e) => {
-                    crate::logging::log_warn(&format!(
-                        "YubiKey {serial} recipient listing failed: {e}"
-                    ));
+                    warn!(
+                        serial = %redact_serial(&serial),
+                        error = %e,
+                        "YubiKey recipient listing failed"
+                    );
                     YubiKeyConnectionStatus::Failed {
                         reason: format!("Failed to list recipients: {e}"),
                     }
@@ -258,9 +260,11 @@ pub async fn yubikey_test_connection(
             }
         }
         Err(e) => {
-            crate::logging::log_warn(&format!(
-                "YubiKey {serial} age-plugin-yubikey connectivity test failed: {e}"
-            ));
+            warn!(
+                serial = %redact_serial(&serial),
+                error = %e,
+                "YubiKey age-plugin-yubikey connectivity test failed"
+            );
             YubiKeyConnectionStatus::Failed {
                 reason: format!("age-plugin-yubikey connectivity failed: {e}"),
             }

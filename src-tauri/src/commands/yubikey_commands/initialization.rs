@@ -2,6 +2,7 @@
 
 use crate::commands::command_types::CommandError;
 use crate::crypto::yubikey::{YubiIdentityProviderFactory, YubiKeyInitResult, YubiKeyManager};
+use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 use tauri;
 
@@ -26,15 +27,18 @@ use tauri;
 /// - `YubiKeyInitializationFailed` if key generation fails
 #[tauri::command]
 #[specta::specta]
+#[instrument(skip(pin))]
 pub async fn yubikey_initialize(
     serial: String,
     pin: String,
     _slot: Option<u8>, // Ignored in new implementation
     label: String,
-) -> Result<YubiKeyInitResult, CommandError> {
-    crate::logging::log_info(&format!(
-        "Initializing YubiKey {serial} with label '{label}' using age-plugin-yubikey"
-    ));
+) -> std::result::Result<YubiKeyInitResult, CommandError> {
+    info!(
+        serial = %redact_serial(&serial),
+        label = label,
+        "Initializing YubiKey using age-plugin-yubikey"
+    );
 
     // Validate inputs
     if label.trim().is_empty() {
@@ -67,10 +71,12 @@ pub async fn yubikey_initialize(
         pin_policy: crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY,
     };
 
-    crate::logging::log_info(&format!(
-        "YubiKey {} successfully initialized with label '{}' (recipient: {})",
-        recipient.serial, label, recipient.recipient
-    ));
+    info!(
+        serial = %redact_serial(&recipient.serial),
+        label = label,
+        recipient = %redact_key(&recipient.recipient),
+        "YubiKey successfully initialized"
+    );
 
     Ok(init_result)
 }
@@ -89,7 +95,7 @@ pub async fn yubikey_initialize(
 #[specta::specta]
 pub async fn yubikey_get_setup_recommendations(
     serial: String,
-) -> Result<YubiKeySetupRecommendations, CommandError> {
+) -> std::result::Result<YubiKeySetupRecommendations, CommandError> {
     // Test provider connectivity
     let provider = YubiIdentityProviderFactory::create_default().map_err(CommandError::from)?;
 
@@ -121,7 +127,8 @@ pub async fn yubikey_get_setup_recommendations(
 /// PinValidationResult with validation status and guidance
 #[tauri::command]
 #[specta::specta]
-pub async fn yubikey_validate_pin(pin: String) -> Result<PinValidationResult, CommandError> {
+#[instrument(skip(pin))]
+pub async fn yubikey_validate_pin(pin: String) -> std::result::Result<PinValidationResult, CommandError> {
     let manager = YubiKeyManager::new();
 
     let validation_result = match manager.validate_pin(&pin) {
@@ -154,7 +161,7 @@ pub async fn yubikey_validate_pin(pin: String) -> Result<PinValidationResult, Co
 #[specta::specta]
 pub async fn yubikey_check_setup_status(
     serial: String,
-) -> Result<YubiKeySetupStatus, CommandError> {
+) -> std::result::Result<YubiKeySetupStatus, CommandError> {
     let provider = YubiIdentityProviderFactory::create_default().map_err(CommandError::from)?;
 
     match provider.list_recipients().await {

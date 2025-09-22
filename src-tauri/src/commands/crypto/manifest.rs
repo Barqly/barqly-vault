@@ -9,10 +9,7 @@ use crate::commands::types::{
 };
 use crate::constants::*;
 use crate::file_ops;
-use crate::logging::{log_operation, SpanContext};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use tracing::instrument;
+use crate::prelude::*;
 
 /// Input for manifest verification command
 #[derive(Debug, Deserialize, specta::Type)]
@@ -63,10 +60,6 @@ impl ValidateInput for VerifyManifestInput {
 pub async fn verify_manifest(
     input: VerifyManifestInput,
 ) -> CommandResponse<VerifyManifestResponse> {
-    // Create span context for operation tracing
-    let span_context =
-        SpanContext::new("verify_manifest").with_attribute("manifest_path", &input.manifest_path);
-
     // Initialize progress manager for operation tracking
     let operation_id = format!(
         "verify_{timestamp}",
@@ -74,26 +67,19 @@ pub async fn verify_manifest(
     );
     let mut progress_manager = ProgressManager::new(operation_id.clone(), PROGRESS_TOTAL_WORK);
 
-    // Create error handler with span context
-    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+    // Create error handler
+    let error_handler = ErrorHandler::new();
 
     // Validate input
     input
         .validate()
         .map_err(|e| error_handler.handle_validation_error("input", &e.message))?;
 
-    // Log operation start with structured context
-    let mut attributes = HashMap::new();
-    attributes.insert("manifest_path".to_string(), input.manifest_path.clone());
-    attributes.insert(
-        "extracted_files_dir".to_string(),
-        input.extracted_files_dir.clone(),
-    );
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Starting manifest verification",
-        &span_context,
-        attributes,
+    // Log operation start with structured fields
+    info!(
+        manifest_path = %input.manifest_path,
+        extracted_files_dir = %input.extracted_files_dir,
+        "Starting manifest verification"
     );
 
     // Report initial progress
@@ -135,18 +121,10 @@ pub async fn verify_manifest(
             progress_manager.complete("Manifest verification completed successfully");
 
             // Log successful verification
-            let mut completion_attributes = HashMap::new();
-            completion_attributes
-                .insert("file_count".to_string(), manifest.files.len().to_string());
-            completion_attributes.insert(
-                "total_size".to_string(),
-                manifest.archive.total_uncompressed_size.to_string(),
-            );
-            log_operation(
-                crate::logging::LogLevel::Info,
-                "Manifest verification completed successfully",
-                &span_context,
-                completion_attributes,
+            info!(
+                file_count = manifest.files.len(),
+                total_size = manifest.archive.total_uncompressed_size,
+                "Manifest verification completed successfully"
             );
 
             Ok(VerifyManifestResponse {
@@ -161,13 +139,9 @@ pub async fn verify_manifest(
             progress_manager.complete("Manifest verification failed");
 
             // Log verification failure
-            let mut failure_attributes = HashMap::new();
-            failure_attributes.insert("error".to_string(), e.to_string());
-            log_operation(
-                crate::logging::LogLevel::Warn,
-                "Manifest verification failed",
-                &span_context,
-                failure_attributes,
+            warn!(
+                error = %e,
+                "Manifest verification failed"
             );
 
             Ok(VerifyManifestResponse {

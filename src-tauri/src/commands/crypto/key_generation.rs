@@ -7,12 +7,9 @@ use crate::commands::types::{
     CommandError, CommandResponse, ErrorCode, ErrorHandler, ValidateInput, ValidationHelper,
 };
 use crate::crypto::{encrypt_private_key, generate_keypair};
-use crate::logging::{log_operation, SpanContext};
+use crate::prelude::*;
 use crate::storage;
 use age::secrecy::SecretString;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use tracing::instrument;
 
 /// Input for key generation command
 #[derive(Debug, Deserialize, specta::Type)]
@@ -49,25 +46,18 @@ impl ValidateInput for GenerateKeyInput {
 #[specta::specta]
 #[instrument(skip(input), fields(label = %input.label))]
 pub async fn generate_key(input: GenerateKeyInput) -> CommandResponse<GenerateKeyResponse> {
-    // Create span context for operation tracing
-    let span_context = SpanContext::new("generate_key").with_attribute("label", &input.label);
-
-    // Create error handler with span context
-    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+    // Create error handler
+    let error_handler = ErrorHandler::new();
 
     // Validate input
     input
         .validate()
         .map_err(|e| error_handler.handle_validation_error("input", &e.message))?;
 
-    // Log operation start with structured context
-    let mut attributes = HashMap::new();
-    attributes.insert("label".to_string(), input.label.clone());
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Starting key generation",
-        &span_context,
-        attributes,
+    // Log operation start with structured fields
+    info!(
+        label = %input.label,
+        "Starting key generation"
     );
 
     // Check if label already exists
@@ -110,17 +100,10 @@ pub async fn generate_key(input: GenerateKeyInput) -> CommandResponse<GenerateKe
     )?;
 
     // Log operation completion
-    let mut completion_attributes = HashMap::new();
-    completion_attributes.insert("label".to_string(), input.label.clone());
-    completion_attributes.insert(
-        "saved_path".to_string(),
-        saved_path.to_string_lossy().to_string(),
-    );
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Keypair generated and saved successfully",
-        &span_context,
-        completion_attributes,
+    info!(
+        label = %input.label,
+        saved_path = %saved_path.display(),
+        "Keypair generated and saved successfully"
     );
 
     Ok(GenerateKeyResponse {

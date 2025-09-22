@@ -15,9 +15,9 @@ pub use crate::log_sensitive;
 // Re-export common error types
 pub use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
 
-// Re-export common result type
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
-
 // Common traits that are used frequently
 pub use async_trait::async_trait;
 pub use serde::{Deserialize, Serialize};
+
+// Note: We don't re-export Result<T> to avoid conflicts with existing Result types
+// Files should use their specific Result types or std::result::Result directly

@@ -9,6 +9,9 @@ use tracing_subscriber::fmt::format::{FormatEvent, FormatFields};
 use tracing_subscriber::fmt::{FmtContext, FormattedFields};
 use tracing_subscriber::registry::LookupSpan;
 
+/// Maximum width for the module:file:line column for consistent alignment
+const MODULE_COLUMN_WIDTH: usize = 60;
+
 /// Custom formatter that creates pipe-separated log entries
 #[derive(Clone, Debug)]
 pub struct BarqlyFormatter {
@@ -61,6 +64,36 @@ impl Visit for FieldCollector {
     }
 }
 
+/// Format module location with fixed width for consistent log alignment
+///
+/// This function creates a fixed-width string for the module:file:line column
+/// to ensure consistent alignment in log output.
+fn format_module_location(
+    target: &str,
+    file: Option<&str>,
+    line: Option<u32>
+) -> String {
+    // Build the full location string
+    let location = match (file, line) {
+        (Some(f), Some(l)) => {
+            // Extract just the filename from the full path
+            let filename = f.rsplit('/').next().unwrap_or(f);
+            format!("{}:{}:{}", target, filename, l)
+        }
+        _ => target.to_string(),
+    };
+
+    // Handle width formatting
+    if location.len() <= MODULE_COLUMN_WIDTH {
+        // Pad with spaces to reach fixed width (left-aligned)
+        format!("{:<width$}", location, width = MODULE_COLUMN_WIDTH)
+    } else {
+        // Truncate from the left, keeping the most important part (filename:line)
+        let truncated = &location[location.len() - (MODULE_COLUMN_WIDTH - 3)..];
+        format!("...{}", truncated)
+    }
+}
+
 impl<S, N> FormatEvent<S, N> for BarqlyFormatter
 where
     S: Subscriber + for<'a> LookupSpan<'a>,
@@ -105,18 +138,16 @@ where
             write!(writer, "{}", level_str)?;
         }
 
-        // 3. Separator and Module path with file:line
+        // 3. Separator and Module path with file:line (fixed width for alignment)
         write!(writer, " | ")?;
 
-        // Module path (target)
-        write!(writer, "{}", metadata.target())?;
-
-        // Add file and line if available
-        if let (Some(file), Some(line)) = (metadata.file(), metadata.line()) {
-            // Extract just the filename from the full path
-            let filename = file.rsplit('/').next().unwrap_or(file);
-            write!(writer, ":{}:{}", filename, line)?;
-        }
+        // Use fixed-width formatting for consistent column alignment
+        let formatted_location = format_module_location(
+            metadata.target(),
+            metadata.file(),
+            metadata.line()
+        );
+        write!(writer, "{}", formatted_location)?;
 
         // 4. Separator and Message/Fields
         write!(writer, " | ")?;

@@ -10,8 +10,7 @@ use crate::crypto::yubikey::pty::{
     ykman_operations::{initialize_yubikey_with_recovery, list_yubikeys as list_yk_devices},
 };
 use age::secrecy::{ExposeSecret, SecretString};
-use crate::logging::{log_debug, log_info, log_warn};
-use serde::{Deserialize, Serialize};
+use crate::prelude::*;
 use tauri;
 
 /// YubiKey state classification
@@ -59,11 +58,11 @@ pub struct StreamlinedYubiKeyInitResult {
 #[tauri::command]
 #[specta::specta]
 pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
-    log_info("Listing YubiKeys with state detection");
+    info!("Listing YubiKeys with state detection");
 
     // Load manifest first
     let manifest = YubiKeyManifest::load().unwrap_or_else(|e| {
-        log_warn(&format!("Failed to load YubiKey manifest: {e}"));
+        warn!("Failed to load YubiKey manifest: {}", e);
         YubiKeyManifest::new()
     });
 
@@ -90,26 +89,26 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         if serial.is_empty() {
             continue;
         }
-        log_debug(&format!("Processing YubiKey with serial: {}", serial));
+        debug!("Processing YubiKey with serial: {}", serial);
 
         // Check manifest for this YubiKey
         let manifest_entry = manifest.find_by_serial(&serial);
         let in_manifest = manifest_entry.is_some();
-        log_debug(&format!("YubiKey {} in manifest: {}", serial, in_manifest));
+        debug!("YubiKey {} in manifest: {}", serial, in_manifest);
 
         // Check if THIS specific YubiKey has an age identity using --identity --serial
-        log_info(&format!("Checking identity for YubiKey serial: {}", serial));
+        info!("Checking identity for YubiKey serial: {}", serial);
         let identity_result = match check_yubikey_has_identity(&serial) {
             Ok(result) => {
                 if let Some(ref recipient) = result {
-                    log_info(&format!("YubiKey {} HAS identity: {}", serial, recipient));
+                    info!("YubiKey {} HAS identity: {}", serial, recipient);
                 } else {
-                    log_info(&format!("YubiKey {} has NO identity (check returned None)", serial));
+                    info!("YubiKey {} has NO identity (check returned None)", serial);
                 }
                 result
             }
             Err(e) => {
-                log_warn(&format!("Failed to check identity for YubiKey {}: {}", serial, e));
+                warn!("Failed to check identity for YubiKey {}: {}", serial, e);
                 None
             }
         };
@@ -118,22 +117,22 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         // Determine state based on manifest and identity presence
         let state = match (in_manifest, has_identity) {
             (true, true) => {
-                log_info(&format!("YubiKey {} state: Registered (in manifest + has identity)", serial));
+                info!("YubiKey {} state: Registered (in manifest + has identity)", serial);
                 YubiKeyState::Registered
             }
             (false, true) => {
-                log_info(&format!("YubiKey {} state: Orphaned (has identity but not in manifest)", serial));
+                info!("YubiKey {} state: Orphaned (has identity but not in manifest)", serial);
                 YubiKeyState::Orphaned
             }
             (true, false) => {
                 // In manifest but no identity found - might be disconnected/reset
-                log_warn(&format!("YubiKey {} in manifest but no identity found - marking as Reused", serial));
+                warn!("YubiKey {} in manifest but no identity found - marking as Reused", serial);
                 YubiKeyState::Reused
             }
             (false, false) => {
                 // Check PIN status to determine if new or reused
                 // For now, assume new (in production, would check with ykman)
-                log_info(&format!("YubiKey {} state: New (no manifest entry, no identity)", serial));
+                info!("YubiKey {} state: New (no manifest entry, no identity)", serial);
                 YubiKeyState::New
             }
         };
@@ -180,7 +179,7 @@ pub async fn init_yubikey(
     new_pin: String,
     label: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
-    log_debug(&format!("Initializing YubiKey with label {label}"));
+    debug!("Initializing YubiKey with label {}", label);
 
     // Wrap PIN in SecretString for security
     let pin = SecretString::from(new_pin);
@@ -236,7 +235,7 @@ pub async fn init_yubikey(
             )
         })?;
 
-    log_debug("Successfully initialized YubiKey");
+    debug!("Successfully initialized YubiKey");
 
     Ok(StreamlinedYubiKeyInitResult {
         serial,
@@ -256,7 +255,7 @@ pub async fn register_yubikey(
     label: String,
     pin: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
-    log_debug(&format!("Registering reused YubiKey with label {label}"));
+    debug!("Registering reused YubiKey with label {}", label);
 
     // Wrap PIN in SecretString for security
     let pin_secret = SecretString::from(pin);
@@ -306,7 +305,7 @@ pub async fn register_yubikey(
             )
         })?;
 
-    log_debug("Successfully registered YubiKey");
+    debug!("Successfully registered YubiKey");
 
     Ok(StreamlinedYubiKeyInitResult {
         serial,
@@ -322,7 +321,7 @@ pub async fn register_yubikey(
 #[tauri::command]
 #[specta::specta]
 pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError> {
-    log_info(&format!("Getting identities for YubiKey {serial}"));
+    info!("Getting identities for YubiKey {}", serial);
 
     let identities = list_yubikey_identities().map_err(|e| {
         CommandError::operation(

@@ -2,7 +2,7 @@
 //!
 //! Handles saving and loading vaults from the file system.
 
-use crate::logging::log_debug;
+use crate::prelude::*;
 use crate::models::Vault;
 use crate::storage::path_management::{
     get_vault_manifest_path, get_vaults_directory, validate_vault_name,
@@ -165,7 +165,7 @@ pub async fn list_vaults() -> Result<Vec<Vault>, Box<dyn std::error::Error + Sen
 
     // Only log initial vault listing once per app session
     LIST_VAULTS_LOGGED.call_once(|| {
-        log_debug(&format!("Initial vault listing from: {:?}", vaults_dir));
+        debug!(path = %vaults_dir.display(), "Initial vault listing");
     });
 
     let mut vaults = Vec::new();
@@ -173,7 +173,7 @@ pub async fn list_vaults() -> Result<Vec<Vault>, Box<dyn std::error::Error + Sen
     if vaults_dir.exists() {
         let mut entries = async_fs::read_dir(&vaults_dir).await
             .map_err(|e| {
-                log_debug(&format!("Failed to read vaults directory: {}", e));
+                error!(error = %e, "Failed to read vaults directory");
                 e
             })?;
 

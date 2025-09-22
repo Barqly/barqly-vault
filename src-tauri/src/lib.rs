@@ -7,7 +7,7 @@ pub mod commands; // Keep public - this is the UI interface
 pub mod constants; // Centralized constants for the application
 pub mod crypto; // Public for tests, but should be treated as private for external use
 pub mod file_ops; // Public for tests, but should be treated as private for external use
-pub mod logging; // Public for tests, but should be treated as private for external use
+// pub mod logging; // REMOVED - migrated to tracing_setup
 pub mod models; // Vault and key management models
 pub mod storage; // Public for tests, but should be treated as private for external use
 pub mod tracing_setup; // New centralized tracing configuration
@@ -63,7 +63,7 @@ use commands::{
     yubikey_validate_pin,
 };
 
-use logging::{init_logging, LogLevel};
+// use logging::{init_logging, LogLevel}; // REMOVED - migrated to tracing_setup
 use crate::prelude::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -76,29 +76,8 @@ pub fn run() {
         eprintln!("Failed to initialize tracing: {e:?}");
     }
 
-    // Keep using old logging for now during migration
-    // This will be removed once migration is complete
-    #[cfg(debug_assertions)]
-    let default_level = LogLevel::Debug;
-
-    #[cfg(not(debug_assertions))]
-    let default_level = LogLevel::Warn; // Minimal logging in production
-
-    // Check RUST_LOG environment variable for log level override
-    let log_level = match std::env::var("RUST_LOG").as_deref() {
-        Ok("debug") | Ok("DEBUG") => LogLevel::Debug,
-        Ok("info") | Ok("INFO") => LogLevel::Info,
-        Ok("warn") | Ok("WARN") => LogLevel::Warn,
-        Ok("error") | Ok("ERROR") => LogLevel::Error,
-        _ => default_level,
-    };
-
-    // Initialize old logging system (will be removed after migration)
-    let _ = init_logging(log_level);
-
-    // Use new tracing for startup message
+    // Use tracing for application started message
     info!("Barqly Vault application started");
-    debug!(log_level = ?log_level, default_level = ?default_level, "Log level configured");
 
     // Configure tauri-specta for automatic TypeScript generation (only in build mode, not runtime)
     #[cfg(debug_assertions)]

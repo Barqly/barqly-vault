@@ -7,10 +7,7 @@ use crate::commands::types::{
     CommandError, CommandResponse, ErrorHandler, ProgressDetails, ValidateInput, ValidationHelper,
 };
 use crate::constants::*;
-use crate::logging::{log_operation, SpanContext};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use tracing::instrument;
+use crate::prelude::*;
 
 /// Input for encryption status command
 #[derive(Debug, Deserialize, specta::Type)]
@@ -94,26 +91,18 @@ impl ValidateInput for GetProgressInput {
 pub async fn get_encryption_status(
     input: GetEncryptionStatusInput,
 ) -> CommandResponse<EncryptionStatusResponse> {
-    // Create span context for operation tracing
-    let span_context = SpanContext::new("get_encryption_status")
-        .with_attribute("operation_id", &input.operation_id);
-
-    // Create error handler with span context
-    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+    // Create error handler
+    let error_handler = ErrorHandler::new();
 
     // Validate input
     input
         .validate()
         .map_err(|e| error_handler.handle_validation_error("input", &e.message))?;
 
-    // Log operation start with structured context
-    let mut attributes = HashMap::new();
-    attributes.insert("operation_id".to_string(), input.operation_id.clone());
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Getting encryption status",
-        &span_context,
-        attributes,
+    // Log operation start with structured fields
+    info!(
+        operation_id = %input.operation_id,
+        "Getting encryption status"
     );
 
     // TODO: Implement actual status tracking
@@ -134,14 +123,10 @@ pub async fn get_encryption_status(
     };
 
     // Log operation completion
-    let mut completion_attributes = HashMap::new();
-    completion_attributes.insert("status".to_string(), "Completed".to_string());
-    completion_attributes.insert("progress_percentage".to_string(), "100".to_string());
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Encryption status retrieved successfully",
-        &span_context,
-        completion_attributes,
+    info!(
+        status = "Completed",
+        progress_percentage = 100,
+        "Encryption status retrieved successfully"
     );
 
     Ok(response)
@@ -152,12 +137,8 @@ pub async fn get_encryption_status(
 #[specta::specta]
 #[instrument(skip(input), fields(operation_id = %input.operation_id))]
 pub async fn get_progress(input: GetProgressInput) -> CommandResponse<GetProgressResponse> {
-    // Create span context for operation tracing
-    let span_context =
-        SpanContext::new("get_progress").with_attribute("operation_id", &input.operation_id);
-
-    // Create error handler with span context
-    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+    // Create error handler
+    let error_handler = ErrorHandler::new();
 
     // Validate input
     input

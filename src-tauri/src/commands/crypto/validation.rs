@@ -8,12 +8,9 @@ use crate::commands::types::{
 };
 use crate::constants::*;
 use crate::crypto::key_mgmt::decrypt_private_key;
-use crate::logging::{log_operation, SpanContext};
+use crate::prelude::*;
 use crate::storage::key_store::load_encrypted_key;
 use age::secrecy::SecretString;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use tracing::instrument;
 
 /// Input for passphrase validation command
 #[derive(Debug, Deserialize, specta::Type)]
@@ -42,47 +39,29 @@ impl ValidateInput for ValidatePassphraseInput {
 pub async fn validate_passphrase(
     input: ValidatePassphraseInput,
 ) -> CommandResponse<ValidatePassphraseResponse> {
-    // Create span context for operation tracing
-    let span_context = SpanContext::new("validate_passphrase")
-        .with_attribute("passphrase_length", input.passphrase.len().to_string());
-
-    // Create error handler with span context
-    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+    // Create error handler
+    let error_handler = ErrorHandler::new();
 
     // Validate input
     input
         .validate()
         .map_err(|e| error_handler.handle_validation_error("input", &e.message))?;
 
-    // Log operation start with structured context
-    let mut attributes = HashMap::new();
-    attributes.insert(
-        "passphrase_length".to_string(),
-        input.passphrase.len().to_string(),
-    );
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Starting passphrase validation",
-        &span_context,
-        attributes,
+    // Log operation start with structured fields
+    info!(
+        passphrase_length = input.passphrase.len(),
+        "Starting passphrase validation"
     );
 
     let passphrase = &input.passphrase;
 
     // Check minimum length as per security principles
     if passphrase.len() < MIN_PASSPHRASE_LENGTH {
-        let mut failure_attributes = HashMap::new();
-        failure_attributes.insert("reason".to_string(), "insufficient_length".to_string());
-        failure_attributes.insert(
-            "required_length".to_string(),
-            MIN_PASSPHRASE_LENGTH.to_string(),
-        );
-        failure_attributes.insert("actual_length".to_string(), passphrase.len().to_string());
-        log_operation(
-            crate::logging::LogLevel::Warn,
-            "Passphrase validation failed: insufficient length",
-            &span_context,
-            failure_attributes,
+        warn!(
+            reason = "insufficient_length",
+            required_length = MIN_PASSPHRASE_LENGTH,
+            actual_length = passphrase.len(),
+            "Passphrase validation failed: insufficient length"
         );
         return Ok(ValidatePassphraseResponse {
             is_valid: false,
@@ -102,15 +81,11 @@ pub async fn validate_passphrase(
         .count();
 
     if complexity_score < 3 {
-        let mut failure_attributes = HashMap::new();
-        failure_attributes.insert("reason".to_string(), "insufficient_complexity".to_string());
-        failure_attributes.insert("complexity_score".to_string(), complexity_score.to_string());
-        failure_attributes.insert("required_score".to_string(), "3".to_string());
-        log_operation(
-            crate::logging::LogLevel::Warn,
-            "Passphrase validation failed: insufficient complexity",
-            &span_context,
-            failure_attributes,
+        warn!(
+            reason = "insufficient_complexity",
+            complexity_score = complexity_score,
+            required_score = 3,
+            "Passphrase validation failed: insufficient complexity"
         );
         return Ok(ValidatePassphraseResponse {
             is_valid: false,
@@ -128,14 +103,10 @@ pub async fn validate_passphrase(
     let passphrase_lower = passphrase.to_lowercase();
     for pattern in &common_patterns {
         if passphrase_lower.contains(pattern) {
-            let mut failure_attributes = HashMap::new();
-            failure_attributes.insert("reason".to_string(), "weak_pattern".to_string());
-            failure_attributes.insert("pattern".to_string(), pattern.to_string());
-            log_operation(
-                crate::logging::LogLevel::Warn,
-                "Passphrase validation failed: contains weak pattern",
-                &span_context,
-                failure_attributes,
+            warn!(
+                reason = "weak_pattern",
+                pattern = %pattern,
+                "Passphrase validation failed: contains weak pattern"
             );
             return Ok(ValidatePassphraseResponse {
                 is_valid: false,
@@ -146,13 +117,9 @@ pub async fn validate_passphrase(
 
     // Check for sequential patterns
     if contains_sequential_pattern(passphrase) {
-        let mut failure_attributes = HashMap::new();
-        failure_attributes.insert("reason".to_string(), "sequential_pattern".to_string());
-        log_operation(
-            crate::logging::LogLevel::Warn,
-            "Passphrase validation failed: contains sequential pattern",
-            &span_context,
-            failure_attributes,
+        warn!(
+            reason = "sequential_pattern",
+            "Passphrase validation failed: contains sequential pattern"
         );
         return Ok(ValidatePassphraseResponse {
             is_valid: false,
@@ -161,13 +128,9 @@ pub async fn validate_passphrase(
     }
 
     // Log successful validation
-    let mut success_attributes = HashMap::new();
-    success_attributes.insert("complexity_score".to_string(), complexity_score.to_string());
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Passphrase validation successful",
-        &span_context,
-        success_attributes,
+    info!(
+        complexity_score = complexity_score,
+        "Passphrase validation successful"
     );
     Ok(ValidatePassphraseResponse {
         is_valid: true,
@@ -246,12 +209,8 @@ impl ValidateInput for VerifyKeyPassphraseInput {
 pub async fn verify_key_passphrase(
     input: VerifyKeyPassphraseInput,
 ) -> CommandResponse<VerifyKeyPassphraseResponse> {
-    // Create span context for operation tracing
-    let span_context =
-        SpanContext::new("verify_key_passphrase").with_attribute("key_id", input.key_id.clone());
-
-    // Create error handler with span context
-    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+    // Create error handler
+    let error_handler = ErrorHandler::new();
 
     // Validate input
     input
@@ -259,27 +218,19 @@ pub async fn verify_key_passphrase(
         .map_err(|e| error_handler.handle_validation_error("input", &e.message))?;
 
     // Log operation start
-    let mut attributes = HashMap::new();
-    attributes.insert("key_id".to_string(), input.key_id.clone());
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Starting key-passphrase verification",
-        &span_context,
-        attributes.clone(),
+    info!(
+        key_id = %input.key_id,
+        "Starting key-passphrase verification"
     );
 
     // Try to load the encrypted key
     let encrypted_key = match load_encrypted_key(&input.key_id) {
         Ok(key) => key,
         Err(e) => {
-            let mut error_attributes = HashMap::new();
-            error_attributes.insert("key_id".to_string(), input.key_id.clone());
-            error_attributes.insert("error".to_string(), e.to_string());
-            log_operation(
-                crate::logging::LogLevel::Error,
-                "Failed to load key for verification",
-                &span_context,
-                error_attributes,
+            error!(
+                key_id = %input.key_id,
+                error = %e,
+                "Failed to load key for verification"
             );
 
             // Map storage errors to appropriate command errors
@@ -303,13 +254,9 @@ pub async fn verify_key_passphrase(
     match decrypt_private_key(&encrypted_key, passphrase) {
         Ok(_) => {
             // Passphrase is correct - key was successfully decrypted
-            let mut success_attributes = HashMap::new();
-            success_attributes.insert("key_id".to_string(), input.key_id.clone());
-            log_operation(
-                crate::logging::LogLevel::Info,
-                "Key-passphrase verification successful",
-                &span_context,
-                success_attributes,
+            info!(
+                key_id = %input.key_id,
+                "Key-passphrase verification successful"
             );
 
             Ok(VerifyKeyPassphraseResponse {
@@ -321,14 +268,10 @@ pub async fn verify_key_passphrase(
             // Check if it's specifically a wrong passphrase error
             match e {
                 crate::crypto::CryptoError::WrongPassphrase => {
-                    let mut failure_attributes = HashMap::new();
-                    failure_attributes.insert("key_id".to_string(), input.key_id.clone());
-                    failure_attributes.insert("reason".to_string(), "wrong_passphrase".to_string());
-                    log_operation(
-                        crate::logging::LogLevel::Warn,
-                        "Key-passphrase verification failed: incorrect passphrase",
-                        &span_context,
-                        failure_attributes,
+                    warn!(
+                        key_id = %input.key_id,
+                        reason = "wrong_passphrase",
+                        "Key-passphrase verification failed: incorrect passphrase"
                     );
 
                     Ok(VerifyKeyPassphraseResponse {
@@ -338,14 +281,10 @@ pub async fn verify_key_passphrase(
                 }
                 _ => {
                     // Other crypto errors (corrupted key, invalid format, etc.)
-                    let mut error_attributes = HashMap::new();
-                    error_attributes.insert("key_id".to_string(), input.key_id.clone());
-                    error_attributes.insert("error".to_string(), e.to_string());
-                    log_operation(
-                        crate::logging::LogLevel::Error,
-                        "Key-passphrase verification failed with crypto error",
-                        &span_context,
-                        error_attributes,
+                    error!(
+                        key_id = %input.key_id,
+                        error = %e,
+                        "Key-passphrase verification failed with crypto error"
                     );
 
                     Err(Box::new(CommandError::operation(

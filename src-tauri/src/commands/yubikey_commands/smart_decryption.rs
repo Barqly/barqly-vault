@@ -3,6 +3,7 @@
 use crate::commands::command_types::CommandError;
 use crate::crypto::multi_recipient::{MultiRecipientCrypto, MultiRecipientDecryptParams};
 use crate::crypto::yubikey::{UnlockCredentials, UnlockMethod};
+use crate::prelude::*;
 use crate::storage::VaultMetadataV2;
 use serde::{Deserialize, Serialize};
 use tauri;
@@ -41,15 +42,19 @@ pub struct AvailableMethod {
 /// DecryptionResult with information about the decryption process
 #[tauri::command]
 #[specta::specta]
+#[instrument(skip(credentials))]
 pub async fn yubikey_decrypt_file(
     encrypted_file: String,
     unlock_method: Option<UnlockMethod>,
     credentials: UnlockCredentials,
     output_path: String,
-) -> Result<VaultDecryptionResult, CommandError> {
-    crate::logging::log_info(&format!(
-        "Starting smart decryption for vault: {encrypted_file}"
-    ));
+) -> std::result::Result<VaultDecryptionResult, CommandError> {
+    info!(
+        encrypted_file = encrypted_file,
+        unlock_method = ?unlock_method,
+        output_path = output_path,
+        "Starting smart decryption for vault"
+    );
 
     // Load vault metadata
     let metadata_path = format!("{encrypted_file}.metadata.json");
@@ -87,10 +92,11 @@ pub async fn yubikey_decrypt_file(
         decryption_time: chrono::Utc::now(),
     };
 
-    crate::logging::log_info(&format!(
-        "Successfully decrypted vault using {:?} method",
-        vault_result.method_used
-    ));
+    info!(
+        method_used = ?vault_result.method_used,
+        files_extracted = vault_result.files_extracted.len(),
+        "Successfully decrypted vault"
+    );
 
     Ok(vault_result)
 }
@@ -109,7 +115,7 @@ pub async fn yubikey_decrypt_file(
 #[specta::specta]
 pub async fn yubikey_get_available_unlock_methods(
     file_path: String,
-) -> Result<Vec<AvailableMethod>, CommandError> {
+) -> std::result::Result<Vec<AvailableMethod>, CommandError> {
     let encrypted_file = file_path;
     // Load vault metadata
     let metadata_path = format!("{encrypted_file}.metadata.json");
@@ -162,11 +168,12 @@ pub async fn yubikey_get_available_unlock_methods(
 /// CredentialsTestResult with validation status
 #[tauri::command]
 #[specta::specta]
+#[instrument(skip(credentials))]
 pub async fn yubikey_test_unlock_credentials(
     encrypted_file: String,
     credentials: UnlockCredentials,
-) -> Result<CredentialsTestResult, CommandError> {
-    crate::logging::log_debug("Testing unlock credentials");
+) -> std::result::Result<CredentialsTestResult, CommandError> {
+    debug!("Testing unlock credentials");
 
     // Load vault metadata
     let metadata_path = format!("{encrypted_file}.metadata.json");
@@ -260,7 +267,7 @@ pub struct CredentialsTestResult {
 
 /// Load vault metadata from file
 #[allow(clippy::result_large_err)]
-fn load_vault_metadata(metadata_path: &str) -> Result<VaultMetadataV2, CommandError> {
+fn load_vault_metadata(metadata_path: &str) -> std::result::Result<VaultMetadataV2, CommandError> {
     let metadata_path_buf = std::path::PathBuf::from(metadata_path);
 
     crate::storage::MetadataV2Storage::load_metadata(&metadata_path_buf).map_err(|e| {
@@ -276,7 +283,7 @@ fn load_vault_metadata(metadata_path: &str) -> Result<VaultMetadataV2, CommandEr
 fn extract_decrypted_data(
     decrypted_data: &[u8],
     output_path: &str,
-) -> Result<Vec<String>, CommandError> {
+) -> std::result::Result<Vec<String>, CommandError> {
     use std::io::Cursor;
 
     // Create output directory if it doesn't exist
@@ -336,11 +343,11 @@ fn extract_decrypted_data(
         extracted_files.push(output_file_path.to_string_lossy().to_string());
     }
 
-    crate::logging::log_info(&format!(
-        "Extracted {} files to {}",
-        extracted_files.len(),
-        output_path
-    ));
+    info!(
+        file_count = extracted_files.len(),
+        output_path = output_path,
+        "Extracted files"
+    );
 
     Ok(extracted_files)
 }

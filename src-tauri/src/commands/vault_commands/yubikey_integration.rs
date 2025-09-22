@@ -9,6 +9,7 @@ use crate::commands::yubikey_commands::{
 };
 use crate::crypto::yubikey::YubiKeyInitResult;
 use crate::models::vault::{KeyReference, KeyState, KeyType};
+use crate::prelude::*;
 use crate::storage::vault_store;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -45,13 +46,16 @@ pub struct RegisterYubiKeyResult {
 /// Initialize a new YubiKey and add it to a vault
 #[command]
 #[specta::specta]
+#[instrument(skip(input))]
 pub async fn init_yubikey_for_vault(
     input: YubiKeyInitForVaultParams,
 ) -> CommandResponse<YubiKeyInitResult> {
-    crate::logging::log_info(&format!(
-        "init_yubikey_for_vault called with serial: {}, vault_id: {}, slot: {}",
-        input.serial, input.vault_id, input.slot_index
-    ));
+    info!(
+        serial = %redact_serial(&input.serial),
+        vault_id = input.vault_id,
+        slot_index = input.slot_index,
+        "init_yubikey_for_vault called"
+    );
 
     // Validate slot index
     if input.slot_index > 2 {
@@ -164,20 +168,20 @@ pub async fn init_yubikey_for_vault(
 /// Register an existing YubiKey with a vault
 #[command]
 #[specta::specta]
+#[instrument(skip(input))]
 pub async fn register_yubikey_for_vault(
     input: RegisterYubiKeyForVaultParams,
 ) -> CommandResponse<RegisterYubiKeyResult> {
-    crate::logging::log_debug(&format!(
-        "register_yubikey_for_vault called with serial: {}, vault_id: {}, slot_index: {}",
-        input.serial, input.vault_id, input.slot_index
-    ));
+    debug!(
+        serial = %redact_serial(&input.serial),
+        vault_id = input.vault_id,
+        slot_index = input.slot_index,
+        "register_yubikey_for_vault called"
+    );
 
     // Validate slot index
     if input.slot_index > 2 {
-        crate::logging::log_error(&format!(
-            "Invalid slot index: {}",
-            input.slot_index
-        ));
+        error!(slot_index = input.slot_index, "Invalid slot index");
         return Err(Box::new(
             CommandError::validation("Slot index must be 0-2 for UI positioning")
                 .with_recovery_guidance("Use slot index 0, 1, or 2"),
@@ -185,17 +189,17 @@ pub async fn register_yubikey_for_vault(
     }
 
     // Get the vault
-    crate::logging::log_debug(&format!("Fetching vault: {}", input.vault_id));
+    debug!(vault_id = input.vault_id, "Fetching vault");
     let mut vault = vault_store::get_vault(&input.vault_id)
         .await
         .map_err(|e| {
-            crate::logging::log_error(&format!("Failed to fetch vault: {}", e));
+            error!(error = %e, "Failed to fetch vault");
             Box::new(
                 CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
                     .with_recovery_guidance("Ensure the vault exists"),
             )
         })?;
-    crate::logging::log_debug(&format!("Vault loaded successfully"));
+    debug!("Vault loaded successfully");
 
     // Check if slot is already taken
     let slot_taken = vault.keys.iter().any(|k| match &k.key_type {
@@ -216,15 +220,15 @@ pub async fn register_yubikey_for_vault(
     }
 
     // Verify YubiKey exists and has an identity
-    crate::logging::log_debug(&format!("Listing YubiKeys to find serial: {}", input.serial));
+    debug!(serial = %redact_serial(&input.serial), "Listing YubiKeys to find serial");
     let yubikeys = list_yubikeys().await?;
-    crate::logging::log_debug(&format!("Found {} YubiKeys", yubikeys.len()));
+    debug!(yubikey_count = yubikeys.len(), "Found YubiKeys");
 
     let yubikey = yubikeys
         .iter()
         .find(|yk| yk.serial == input.serial)
         .ok_or_else(|| {
-            crate::logging::log_error(&format!("YubiKey with serial {} not found", input.serial));
+            error!(serial = %redact_serial(&input.serial), "YubiKey not found");
             Box::new(
                 CommandError::operation(
                     ErrorCode::YubiKeyNotFound,
@@ -234,19 +238,19 @@ pub async fn register_yubikey_for_vault(
             )
         })?;
 
-    crate::logging::log_debug(&format!(
-        "Found YubiKey - State: {:?}, Slot: {:?}, Has recipient: {}",
-        yubikey.state,
-        yubikey.slot,
-        yubikey.recipient.is_some()
-    ));
+    debug!(
+        state = ?yubikey.state,
+        slot = ?yubikey.slot,
+        has_recipient = yubikey.recipient.is_some(),
+        "Found YubiKey"
+    );
 
     // For ORPHANED YubiKeys (already have age key), we don't need PIN verification
     // PIN will be requested during actual encryption/decryption operations
     // For NEW YubiKeys, they need to be initialized first
 
     if yubikey.state == YubiKeyState::New {
-        crate::logging::log_error(&format!("YubiKey is in NEW state, needs initialization"));
+        error!("YubiKey is in NEW state, needs initialization");
         return Err(Box::new(
             CommandError::operation(
                 ErrorCode::InvalidInput,
@@ -256,18 +260,18 @@ pub async fn register_yubikey_for_vault(
         ));
     }
 
-    crate::logging::log_info(&format!(
-        "Registering {:?} YubiKey {} to vault (no PIN verification for existing keys)",
-        yubikey.state,
-        input.serial
-    ));
+    info!(
+        state = ?yubikey.state,
+        serial = %redact_serial(&input.serial),
+        "Registering YubiKey to vault (no PIN verification for existing keys)"
+    );
 
     // For ORPHANED or REUSED keys, skip PIN verification
     // The PIN will be validated during actual use (encryption/decryption)
 
     // Get the PIV slot from existing YubiKey info or use default
     let piv_slot = yubikey.slot.unwrap_or(1) + 81; // Convert retired slot to PIV
-    crate::logging::log_debug(&format!("Using PIV slot: {}", piv_slot));
+    debug!(piv_slot = piv_slot, "Using PIV slot");
 
     // Create key reference
     let key_ref = KeyReference {
@@ -283,29 +287,32 @@ pub async fn register_yubikey_for_vault(
         last_used: None,
     };
 
-    crate::logging::log_debug(&format!(
-        "Created key reference: id={}, label={}, slot_index={}",
-        key_ref.id, key_ref.label, input.slot_index
-    ));
+    debug!(
+        key_ref_id = key_ref.id,
+        label = key_ref.label,
+        slot_index = input.slot_index,
+        "Created key reference"
+    );
 
     // Add to vault
     vault.keys.push(key_ref.clone());
-    crate::logging::log_debug(&format!("Added key to vault, total keys: {}", vault.keys.len()));
+    debug!(total_keys = vault.keys.len(), "Added key to vault");
 
     // Save vault
-    crate::logging::log_debug(&format!("Saving vault with new key"));
+    debug!("Saving vault with new key");
     vault_store::save_vault(&vault).await.map_err(|e| {
-        crate::logging::log_error(&format!("Failed to save vault: {}", e));
+        error!(error = %e, "Failed to save vault");
         Box::new(
             CommandError::operation(ErrorCode::StorageFailed, e.to_string())
                 .with_recovery_guidance("Failed to save vault"),
         )
     })?;
 
-    crate::logging::log_info(&format!(
-        "Successfully registered YubiKey {} to vault {}",
-        input.serial, input.vault_id
-    ));
+    info!(
+        serial = %redact_serial(&input.serial),
+        vault_id = input.vault_id,
+        "Successfully registered YubiKey to vault"
+    );
 
     Ok(RegisterYubiKeyResult {
         success: true,
@@ -316,12 +323,13 @@ pub async fn register_yubikey_for_vault(
 /// List available YubiKeys with vault context
 #[tauri::command]
 #[specta::specta]
+#[instrument]
 pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<YubiKeyStateInfo>> {
-    crate::logging::log_debug(&format!("list_available_yubikeys called for vault: {}", vault_id));
+    debug!(vault_id = vault_id, "list_available_yubikeys called");
 
     // Get all connected YubiKeys
     let all_yubikeys = list_yubikeys().await?;
-    crate::logging::log_debug(&format!("Found {} total YubiKeys connected", all_yubikeys.len()));
+    debug!(yubikey_count = all_yubikeys.len(), "Found total YubiKeys connected");
 
     // Get vault's existing YubiKeys
     let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
@@ -347,18 +355,25 @@ pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<Yu
         .filter(|yk| !vault_serials.contains(&yk.serial))
         .collect();
 
-    crate::logging::log_debug(&format!(
-        "Vault has {} YubiKeys registered: {:?}",
-        vault_serials.len(),
-        vault_serials
-    ));
+    log_sensitive!(dev_only: {
+        debug!(
+            registered_count = vault_serials.len(),
+            serials = ?vault_serials.iter().map(|s| redact_serial(s)).collect::<Vec<_>>(),
+            "Vault has YubiKeys registered"
+        );
+    });
 
-    crate::logging::log_debug(&format!(
-        "Returning {} available YubiKeys for vault {}: {:?}",
-        available_yubikeys.len(),
-        vault_id,
-        available_yubikeys.iter().map(|y| &y.serial).collect::<Vec<_>>()
-    ));
+    debug!(
+        available_count = available_yubikeys.len(),
+        vault_id = vault_id,
+        "Returning available YubiKeys for vault"
+    );
+    log_sensitive!(dev_only: {
+        debug!(
+            serials = ?available_yubikeys.iter().map(|y| redact_serial(&y.serial)).collect::<Vec<_>>(),
+            "Available YubiKey serials"
+        );
+    });
 
     Ok(available_yubikeys)
 }
@@ -366,6 +381,7 @@ pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<Yu
 /// Check which YubiKey slots are available in a vault
 #[tauri::command]
 #[specta::specta]
+#[instrument]
 pub async fn check_yubikey_slot_availability(vault_id: String) -> CommandResponse<Vec<bool>> {
     let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
         Box::new(

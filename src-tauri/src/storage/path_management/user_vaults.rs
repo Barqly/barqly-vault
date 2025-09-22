@@ -4,7 +4,7 @@
 //! - `~/Documents/Barqly-Vaults/` - Encrypted vaults and manifests
 //! - `~/Documents/Barqly-Recovery/` - Decrypted/recovered files
 
-use crate::logging::log_debug;
+use crate::prelude::*;
 use crate::storage::errors::StorageError;
 use directories::UserDirs;
 use std::path::PathBuf;
@@ -40,17 +40,17 @@ pub fn get_vaults_directory() -> Result<PathBuf, StorageError> {
 
     // Only log directory info once per app session
     VAULTS_DIR_LOGGED.call_once(|| {
-        log_debug(&format!("Vaults directory path: {:?}", vaults_dir));
+        debug!(path = %vaults_dir.display(), "Vaults directory path");
     });
 
     if !vaults_dir.exists() {
-        log_debug("Creating vaults directory...");
+        debug!("Creating vaults directory");
         std::fs::create_dir_all(&vaults_dir)
             .map_err(|e| {
-                log_debug(&format!("Failed to create vaults directory: {}", e));
+                error!(error = %e, "Failed to create vaults directory");
                 StorageError::DirectoryCreationFailed(vaults_dir.clone())
             })?;
-        log_debug("Successfully created vaults directory");
+        debug!("Successfully created vaults directory");
     }
 
     Ok(vaults_dir)

@@ -10,14 +10,11 @@ use crate::commands::types::{
 };
 use crate::constants::*;
 use crate::file_ops;
-use crate::logging::{log_operation, SpanContext};
+use crate::prelude::*;
 use crate::storage;
 use age::secrecy::SecretString;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::Path;
 use tauri::Window;
-use tracing::instrument;
 
 /// Input for decryption command
 #[derive(Debug, Deserialize, specta::Type)]
@@ -64,13 +61,8 @@ pub async fn decrypt_data(
     input: DecryptDataInput,
     _window: Window,
 ) -> CommandResponse<DecryptionResult> {
-    // Create span context for operation tracing
-    let span_context = SpanContext::new("decrypt_data")
-        .with_attribute("key_id", &input.key_id)
-        .with_attribute("encrypted_file", &input.encrypted_file);
-
-    // Create error handler with span context
-    let error_handler = ErrorHandler::new().with_span(span_context.clone());
+    // Create error handler
+    let error_handler = ErrorHandler::new();
 
     // Initialize progress manager for operation tracking
     let operation_id = format!(
@@ -84,16 +76,12 @@ pub async fn decrypt_data(
         .validate()
         .map_err(|e| error_handler.handle_validation_error("input", &e.message))?;
 
-    // Log operation start with structured context
-    let mut attributes = HashMap::new();
-    attributes.insert("encrypted_file".to_string(), input.encrypted_file.clone());
-    attributes.insert("key_id".to_string(), input.key_id.clone());
-    attributes.insert("output_dir".to_string(), input.output_dir.clone());
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Starting decryption operation",
-        &span_context,
-        attributes,
+    // Log operation start with structured fields
+    info!(
+        encrypted_file = %input.encrypted_file,
+        key_id = %input.key_id,
+        output_dir = %input.output_dir,
+        "Starting decryption operation"
     );
 
     // Report initial progress
@@ -198,20 +186,10 @@ pub async fn decrypt_data(
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
     // Log operation completion
-    let mut completion_attributes = HashMap::new();
-    completion_attributes.insert(
-        "extracted_files_count".to_string(),
-        extracted_files.len().to_string(),
-    );
-    completion_attributes.insert(
-        "manifest_verified".to_string(),
-        manifest_verified.to_string(),
-    );
-    log_operation(
-        crate::logging::LogLevel::Info,
-        "Decryption operation completed successfully",
-        &span_context,
-        completion_attributes,
+    info!(
+        extracted_files_count = extracted_files.len(),
+        manifest_verified = manifest_verified,
+        "Decryption operation completed successfully"
     );
 
     // Convert extracted files to string paths
@@ -253,43 +231,23 @@ fn verify_manifest_if_exists(
                     &file_ops::FileOpsConfig::default(),
                 ) {
                     Ok(()) => {
-                        log_operation(
-                            crate::logging::LogLevel::Info,
-                            "Manifest verification successful",
-                            &SpanContext::new("verify_manifest"),
-                            HashMap::new(),
-                        );
+                        info!("Manifest verification successful");
                         true
                     }
                     Err(e) => {
-                        log_operation(
-                            crate::logging::LogLevel::Warn,
-                            &format!("Manifest verification failed: {e}"),
-                            &SpanContext::new("verify_manifest"),
-                            HashMap::new(),
-                        );
+                        warn!(error = %e, "Manifest verification failed");
                         false
                     }
                 }
             }
             Err(e) => {
-                log_operation(
-                    crate::logging::LogLevel::Warn,
-                    &format!("Failed to load manifest: {e}"),
-                    &SpanContext::new("verify_manifest"),
-                    HashMap::new(),
-                );
+                warn!(error = %e, "Failed to load manifest");
                 false
             }
         }
     } else {
         // No manifest found, consider it verified (optional manifest)
-        log_operation(
-            crate::logging::LogLevel::Info,
-            "No manifest found, skipping verification",
-            &SpanContext::new("verify_manifest"),
-            HashMap::new(),
-        );
+        info!("No manifest found, skipping verification");
         true
     }
 }
@@ -305,12 +263,7 @@ fn restore_external_manifest_if_exists(
 
     // Check if external manifest exists
     if !external_manifest_path.exists() {
-        log_operation(
-            crate::logging::LogLevel::Info,
-            "No external manifest found, skipping restoration",
-            &SpanContext::new("restore_external_manifest"),
-            HashMap::new(),
-        );
+        info!("No external manifest found, skipping restoration");
         return None;
     }
 
@@ -323,25 +276,15 @@ fn restore_external_manifest_if_exists(
 
     match std::fs::copy(&external_manifest_path, &output_manifest_path) {
         Ok(_) => {
-            log_operation(
-                crate::logging::LogLevel::Info,
-                &format!(
-                    "External manifest restored successfully: {} -> {}",
-                    external_manifest_path.display(),
-                    output_manifest_path.display()
-                ),
-                &SpanContext::new("restore_external_manifest"),
-                HashMap::new(),
+            info!(
+                from = %external_manifest_path.display(),
+                to = %output_manifest_path.display(),
+                "External manifest restored successfully"
             );
             Some(true)
         }
         Err(e) => {
-            log_operation(
-                crate::logging::LogLevel::Warn,
-                &format!("Failed to restore external manifest: {e}"),
-                &SpanContext::new("restore_external_manifest"),
-                HashMap::new(),
-            );
+            warn!(error = %e, "Failed to restore external manifest");
             Some(false)
         }
     }
