@@ -1,6 +1,6 @@
-use log::{debug, info, warn};
 /// Core PTY functionality for YubiKey operations
 /// Provides low-level PTY command execution
+use crate::logging::{log_debug, log_info, log_warn};
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
@@ -59,12 +59,12 @@ pub fn get_age_plugin_path() -> PathBuf {
             });
 
     if bundled.exists() {
-        info!("Using bundled age-plugin-yubikey at: {:?}", bundled);
+        log_info(&format!("Using bundled age-plugin-yubikey at: {:?}", bundled));
         return bundled;
     }
 
     // Fall back to system binary
-    info!("Bundled age-plugin-yubikey not found at {:?}, using system binary", bundled);
+    log_info(&format!("Bundled age-plugin-yubikey not found at {:?}, using system binary", bundled));
     PathBuf::from("age-plugin-yubikey")
 }
 
@@ -97,10 +97,10 @@ pub fn run_age_plugin_yubikey(
     expect_touch: bool,
 ) -> Result<String> {
     let age_path = get_age_plugin_path();
-    info!("Running age-plugin-yubikey from: {:?}", age_path);
-    info!("  Args: {:?}", args);
-    info!("  PIN provided: {}", pin.is_some());
-    info!("  Expect touch: {}", expect_touch);
+    log_info(&format!("Running age-plugin-yubikey from: {:?}", age_path));
+    log_info(&format!("Command: age-plugin-yubikey {}", args.join(" ")));
+    log_info(&format!("PIN provided: {}, Expect touch: {}", pin.is_some(), expect_touch));
+    // Already logged above, remove duplicate
 
     let pty_system = native_pty_system();
     let pair = pty_system
@@ -113,23 +113,23 @@ pub fn run_age_plugin_yubikey(
         .map_err(|e| PtyError::PtyOperation(format!("Failed to open PTY: {e}")))?;
 
     let age_plugin_path = age_path.to_str().unwrap();
-    info!("Building command: {}", age_plugin_path);
+    log_debug(&format!("Building command: {}", age_plugin_path));
 
     let mut cmd = CommandBuilder::new(age_plugin_path);
     for arg in &args {
-        info!("  Adding arg: {}", arg);
+        log_debug(&format!("  Adding arg: {}", arg));
         cmd.arg(arg);
     }
 
-    info!("Spawning PTY command...");
+    log_info("Spawning PTY command...");
     let mut child = pair
         .slave
         .spawn_command(cmd)
         .map_err(|e| {
-            warn!("Failed to spawn age-plugin-yubikey: {}", e);
+            log_warn(&format!("Failed to spawn age-plugin-yubikey: {}", e));
             PtyError::PtyOperation(format!("Failed to spawn command: {e}"))
         })?;
-    info!("PTY command spawned successfully");
+    log_info("PTY command spawned successfully");
 
     let (tx, rx) = mpsc::channel::<PtyState>();
 
@@ -149,12 +149,15 @@ pub fn run_age_plugin_yubikey(
             buffer.clear();
             match buf_reader.read_line(&mut buffer) {
                 Ok(0) => {
-                    debug!("PTY reader reached EOF");
+                    // PTY reader reached EOF
                     break;
                 }
-                Ok(n) => {
+                Ok(_n) => {
                     let line = buffer.trim();
-                    info!("PTY output ({} bytes): {}", n, line);
+                    // Log PTY output to help debug
+                    if !line.is_empty() {
+                        println!("[PTY] {}", line);
+                    }
                     output.push_str(&buffer);
 
                     if line.contains("PIN:") || line.contains("Enter PIN") {
@@ -168,7 +171,8 @@ pub fn run_age_plugin_yubikey(
                     }
                 }
                 Err(e) => {
-                    warn!("Error reading PTY: {e}");
+                    // Error reading PTY
+                    eprintln!("[PTY ERROR] {}", e);
                     break;
                 }
             }
@@ -199,10 +203,10 @@ pub fn run_age_plugin_yubikey(
                     writeln!(writer, "{}", pin.unwrap())?;
                     writer.flush()?;
                     pin_sent = true;
-                    debug!("PIN sent to age-plugin-yubikey");
+                    log_info("PIN sent to age-plugin-yubikey");
                 }
                 PtyState::WaitingForTouch => {
-                    info!("Touch your YubiKey now...");
+                    log_info("Touch your YubiKey now...");
                     if expect_touch && start.elapsed() > TOUCH_TIMEOUT {
                         let _ = child.kill();
                         return Err(PtyError::TouchTimeout);
@@ -234,16 +238,17 @@ pub fn run_age_plugin_yubikey(
     }
 
     let _ = child.wait();
-    info!("age-plugin-yubikey command completed, result length: {}", result.len());
+    log_info(&format!("age-plugin-yubikey command completed, result length: {}", result.len()));
     if result.is_empty() {
-        warn!("age-plugin-yubikey returned empty result for args: {:?}", args);
+        log_warn(&format!("age-plugin-yubikey returned empty result for args: {:?}", args));
     }
     Ok(result)
 }
 
 /// Run ykman command through PTY
 pub fn run_ykman_command(args: Vec<String>, pin: Option<&str>) -> Result<String> {
-    debug!("Running ykman command");
+    log_info(&format!("Running ykman command: ykman {}", args.join(" ")));
+    log_debug(&format!("PIN provided: {}", pin.is_some()));
 
     let output = if pin.is_some() {
         // Use PTY for interactive commands
@@ -301,21 +306,25 @@ fn run_ykman_pty(args: Vec<String>, pin: Option<&str>) -> Result<String> {
 
     for line in reader.lines() {
         let line = line?;
-        debug!("ykman output: {line}");
+        log_debug(&format!("ykman output: {}", line));
         output.push_str(&line);
         output.push('\n');
 
         if pin.is_some() && (line.contains("PIN:") || line.contains("Enter PIN")) {
+            log_info(&format!("PIN prompt detected, injecting PIN"));
             thread::sleep(PIN_INJECT_DELAY);
             writeln!(writer, "{}", pin.unwrap())?;
             writer.flush()?;
+            log_info("PIN injected successfully");
         }
     }
 
     let status = child.wait()?;
     if !status.success() {
+        log_warn(&format!("ykman command failed with output: {}", output));
         return Err(PtyError::PtyOperation(format!("ykman failed: {output}")));
     }
 
+    log_info(&format!("ykman command succeeded, output length: {} bytes", output.len()));
     Ok(output)
 }

@@ -23,7 +23,22 @@ pub fn generate_age_identity_pty(serial: &str, pin: &str, touch_policy: &str, sl
         slot_name.to_string(),
     ];
 
-    let output = run_age_plugin_yubikey(args, Some(pin), true)?;
+    let cmd = format!("age-plugin-yubikey {}", args.join(" "));
+    log_info(&format!("Executing command: {}", cmd));
+    log_info(&format!("PIN will be provided: {} (length: {})",
+        if pin == "123456" { "DEFAULT" } else { "CUSTOM" }, pin.len()));
+    log_info("Expecting YubiKey touch after PIN entry...");
+
+    let output = match run_age_plugin_yubikey(args, Some(pin), true) {
+        Ok(output) => {
+            log_info(&format!("age-plugin-yubikey command succeeded, output length: {} bytes", output.len()));
+            output
+        }
+        Err(e) => {
+            log_warn(&format!("age-plugin-yubikey command failed: {:?}", e));
+            return Err(e);
+        }
+    };
 
     // Extract the age recipient from output
     // Looking for line that starts with "age1yubikey"
