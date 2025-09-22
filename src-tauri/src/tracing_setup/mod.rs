@@ -51,7 +51,12 @@ fn get_log_dir() -> Result<PathBuf, io::Error> {
 /// Initialize the tracing subscriber with our custom configuration
 ///
 /// This should be called once at application startup, typically in main()
+/// Skips initialization during tests to avoid conflicts with tracing-test
 pub fn init() -> Result<(), Box<dyn std::error::Error>> {
+    // Skip initialization in test mode to avoid conflicts with tracing-test
+    if cfg!(test) {
+        return Ok(());
+    }
     INIT.get_or_try_init(|| -> Result<(), Box<dyn std::error::Error>> {
         let log_dir = get_log_dir()?;
         let log_file_path = log_dir.join("barqly-vault.log");
