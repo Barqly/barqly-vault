@@ -3,6 +3,9 @@
 //! This utility clears all development data including keys, logs, config,
 //! and caches to provide a clean development environment.
 
+// Example/utility files are allowed to use println! for user interaction
+#![allow(clippy::disallowed_macros)]
+
 use barqly_vault_lib::storage::path_management::{
     get_app_dir, get_config_dir, get_keys_dir, get_logs_dir,
 };

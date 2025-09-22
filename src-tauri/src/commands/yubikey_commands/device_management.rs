@@ -63,7 +63,10 @@ pub async fn yubikey_list_devices() -> std::result::Result<Vec<YubiKeyDevice>, C
                 .collect();
 
             // Log device discovery for debugging
-            info!(device_count = devices.len(), "Found YubiKey recipient(s) via age-plugin-yubikey");
+            info!(
+                device_count = devices.len(),
+                "Found YubiKey recipient(s) via age-plugin-yubikey"
+            );
 
             for device in &devices {
                 debug!(
@@ -125,7 +128,9 @@ pub async fn yubikey_devices_available() -> std::result::Result<bool, CommandErr
 #[tauri::command]
 #[specta::specta]
 #[instrument]
-pub async fn yubikey_get_device_info(serial: String) -> std::result::Result<YubiKeyDevice, CommandError> {
+pub async fn yubikey_get_device_info(
+    serial: String,
+) -> std::result::Result<YubiKeyDevice, CommandError> {
     // Try to find the device using the provider first
     let provider = YubiIdentityProviderFactory::create_default().map_err(CommandError::from)?;
 
@@ -321,9 +326,13 @@ mod tests {
         );
 
         // Log the result for debugging
-        println!("yubikey_list_devices returned {} devices", devices.len());
+        log_sensitive!(dev_only: {
+            debug!("yubikey_list_devices returned {} devices", devices.len());
+        });
         for device in &devices {
-            println!("  Device: {} - {}", device.device_id, device.name);
+            log_sensitive!(dev_only: {
+                debug!("  Device: {} - {}", device.device_id, device.name);
+            });
         }
     }
 
@@ -360,7 +369,9 @@ mod tests {
 
         // Simply verify we got a boolean value (no assertion needed as it's always valid)
 
-        println!("yubikey_devices_available returned: {available}");
+        log_sensitive!(dev_only: {
+            debug!("yubikey_devices_available returned: {available}");
+        });
     }
 
     /// Test the YubiKeyDevice structure serialization
@@ -389,7 +400,9 @@ mod tests {
         assert_eq!(device.has_oath, deserialized.has_oath);
         assert_eq!(device.has_fido, deserialized.has_fido);
 
-        println!("YubiKeyDevice JSON: {json}");
+        log_sensitive!(dev_only: {
+            debug!("YubiKeyDevice JSON: {json}");
+        });
     }
 
     /// Test that empty device arrays serialize properly to JSON
@@ -415,14 +428,18 @@ mod tests {
             "Deserialized array length should be 0"
         );
 
-        println!("Empty devices JSON: {json}");
+        log_sensitive!(dev_only: {
+            debug!("Empty devices JSON: {json}");
+        });
     }
 
     /// Integration test for the complete workflow
     #[tokio::test]
     async fn test_complete_yubikey_detection_workflow() {
         // Test the complete workflow that the frontend uses
-        println!("Testing complete YubiKey detection workflow...");
+        log_sensitive!(dev_only: {
+            debug!("Testing complete YubiKey detection workflow...");
+        });
 
         // Step 1: Check availability
         let availability_result = yubikey_devices_available().await;
@@ -431,26 +448,36 @@ mod tests {
             "Availability check should never fail"
         );
         let available = availability_result.unwrap();
-        println!("YubiKey devices available: {available}");
+        log_sensitive!(dev_only: {
+            debug!("YubiKey devices available: {available}");
+        });
 
         // Step 2: List devices
         let devices_result = yubikey_list_devices().await;
         assert!(devices_result.is_ok(), "Device listing should never fail");
         let devices = devices_result.unwrap();
-        println!("Found {} YubiKey devices", devices.len());
+        log_sensitive!(dev_only: {
+            debug!("Found {} YubiKey devices", devices.len());
+        });
 
         // Step 3: Verify consistency
         if available {
             // If available, we should have at least one device (or this could be a timing issue)
-            println!("Devices available but found {} devices", devices.len());
+            log_sensitive!(dev_only: {
+                debug!("Devices available but found {} devices", devices.len());
+            });
         } else {
             // If not available, we should have no devices
-            println!("No devices available, found {} devices", devices.len());
+            log_sensitive!(dev_only: {
+                debug!("No devices available, found {} devices", devices.len());
+            });
         }
 
         // Step 4: Test JSON serialization (this is what gets sent to frontend)
         let json = serde_json::to_string(&devices).expect("Should serialize to JSON");
-        println!("Devices JSON: {json}");
+        log_sensitive!(dev_only: {
+            debug!("Devices JSON: {json}");
+        });
 
         // Verify JSON is never "undefined" or null
         assert!(

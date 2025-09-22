@@ -7,11 +7,15 @@
 
 use crate::commands::crypto::key_generation_multi::{generate_key_multi, GenerateKeyMultiInput};
 use crate::crypto::yubikey::ProtectionMode;
+use crate::log_sensitive;
+use crate::tracing_setup::debug;
 
 #[tokio::test]
 #[ignore] // Integration test
 async fn test_generate_key_multi_yubikey_only() {
-    println!("🧪 Testing generate_key_multi with YubiKey-only parameters...");
+    log_sensitive!(dev_only: {
+        debug!("🧪 Testing generate_key_multi with YubiKey-only parameters...");
+    });
 
     // Create the exact parameters that the frontend sends
     let test_params = GenerateKeyMultiInput {
@@ -25,30 +29,46 @@ async fn test_generate_key_multi_yubikey_only() {
         yubikey_pin: Some("123456".to_string()),            // Default PIN for testing
     };
 
-    println!("📤 Test parameters: {test_params:#?}");
+    log_sensitive!(dev_only: {
+        debug!("📤 Test parameters: {test_params:#?}");
+    });
 
     // Call the command
     let result = generate_key_multi(test_params).await;
 
     match result {
         Ok(response) => {
-            println!("✅ SUCCESS: generate_key_multi worked!");
-            println!("📊 Response: {response:#?}");
+            log_sensitive!(dev_only: {
+                debug!("✅ SUCCESS: generate_key_multi worked!");
+            });
+            log_sensitive!(dev_only: {
+                debug!("📊 Response: {response:#?}");
+            });
         }
         Err(e) => {
-            println!("❌ ERROR: {}", e.message);
-            println!("🔍 Error code: {:?}", e.code);
-            println!("🛠️ Recovery guidance: {:?}", e.recovery_guidance);
+            log_sensitive!(dev_only: {
+                debug!("❌ ERROR: {}", e.message);
+            });
+            log_sensitive!(dev_only: {
+                debug!("🔍 Error code: {:?}", e.code);
+            });
+            log_sensitive!(dev_only: {
+                debug!("🛠️ Recovery guidance: {:?}", e.recovery_guidance);
+            });
         }
     }
 
-    println!("✅ Test completed");
+    log_sensitive!(dev_only: {
+        debug!("✅ Test completed");
+    });
 }
 
 #[tokio::test]
 #[ignore] // Integration test
 async fn test_generate_key_multi_passphrase_only() {
-    println!("🧪 Testing generate_key_multi with PassphraseOnly parameters...");
+    log_sensitive!(dev_only: {
+        debug!("🧪 Testing generate_key_multi with PassphraseOnly parameters...");
+    });
 
     let test_params = GenerateKeyMultiInput {
         label: "test-passphrase-vault".to_string(),
@@ -59,20 +79,32 @@ async fn test_generate_key_multi_passphrase_only() {
         yubikey_pin: None, // No PIN needed for passphrase-only mode
     };
 
-    println!("📤 Test parameters: {test_params:#?}");
+    log_sensitive!(dev_only: {
+        debug!("📤 Test parameters: {test_params:#?}");
+    });
 
     let result = generate_key_multi(test_params).await;
 
     match result {
         Ok(response) => {
-            println!("✅ SUCCESS: Passphrase-only mode worked!");
-            println!("📊 Response: {response:#?}");
+            log_sensitive!(dev_only: {
+                debug!("✅ SUCCESS: Passphrase-only mode worked!");
+            });
+            log_sensitive!(dev_only: {
+                debug!("📊 Response: {response:#?}");
+            });
         }
         Err(e) => {
-            println!("❌ ERROR: {}", e.message);
-            println!("🔍 Error code: {:?}", e.code);
+            log_sensitive!(dev_only: {
+                debug!("❌ ERROR: {}", e.message);
+            });
+            log_sensitive!(dev_only: {
+                debug!("🔍 Error code: {:?}", e.code);
+            });
         }
     }
 
-    println!("✅ Test completed");
+    log_sensitive!(dev_only: {
+        debug!("✅ Test completed");
+    });
 }

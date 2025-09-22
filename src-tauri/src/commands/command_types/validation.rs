@@ -141,7 +141,10 @@ impl ValidationHelper {
     /// Validate key label format
     pub fn validate_key_label(label: &str) -> Result<(), Box<CommandError>> {
         // Key labels should only contain letters, numbers, dashes, and underscores
-        if !label.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+        if !label
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+        {
             let invalid_chars: Vec<char> = label
                 .chars()
                 .filter(|c| !c.is_alphanumeric() && *c != '-' && *c != '_')

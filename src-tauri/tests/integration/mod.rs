@@ -6,6 +6,9 @@
 //! - End-to-end workflow testing
 //! - Test result aggregation
 
+// Test runner files are allowed to use println! for test reporting
+#![allow(clippy::disallowed_macros)]
+
 pub mod crypto_integration_tests;
 pub mod decrypt_directory_tests;
 pub mod decryption_integration_tests;

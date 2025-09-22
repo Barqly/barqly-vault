@@ -45,11 +45,10 @@ pub fn get_vaults_directory() -> Result<PathBuf, StorageError> {
 
     if !vaults_dir.exists() {
         debug!("Creating vaults directory");
-        std::fs::create_dir_all(&vaults_dir)
-            .map_err(|e| {
-                error!(error = %e, "Failed to create vaults directory");
-                StorageError::DirectoryCreationFailed(vaults_dir.clone())
-            })?;
+        std::fs::create_dir_all(&vaults_dir).map_err(|e| {
+            error!(error = %e, "Failed to create vaults directory");
+            StorageError::DirectoryCreationFailed(vaults_dir.clone())
+        })?;
         debug!("Successfully created vaults directory");
     }
 

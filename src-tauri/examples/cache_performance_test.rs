@@ -3,6 +3,9 @@
 //! This benchmark verifies that our caching implementation provides
 //! the expected 10-20% performance improvement for repeated key listing operations.
 
+// CLI utility examples are allowed to use println! for user interaction
+#![allow(clippy::disallowed_macros)]
+
 use barqly_vault_lib::storage::{get_cache, list_keys, save_encrypted_key};
 use std::time::{Duration, Instant};
 

@@ -2,8 +2,8 @@
 //!
 //! Handles saving and loading vaults from the file system.
 
-use crate::prelude::*;
 use crate::models::Vault;
+use crate::prelude::*;
 use crate::storage::path_management::{
     get_vault_manifest_path, get_vaults_directory, validate_vault_name,
 };
@@ -171,11 +171,10 @@ pub async fn list_vaults() -> Result<Vec<Vault>, Box<dyn std::error::Error + Sen
     let mut vaults = Vec::new();
 
     if vaults_dir.exists() {
-        let mut entries = async_fs::read_dir(&vaults_dir).await
-            .map_err(|e| {
-                error!(error = %e, "Failed to read vaults directory");
-                e
-            })?;
+        let mut entries = async_fs::read_dir(&vaults_dir).await.map_err(|e| {
+            error!(error = %e, "Failed to read vaults directory");
+            e
+        })?;
 
         while let Some(entry) = entries.next_entry().await? {
             let path = entry.path();

@@ -17,10 +17,7 @@ pub async fn create_manifest(file_paths: Vec<String>) -> CommandResponse<Manifes
     let error_handler = ErrorHandler::new();
 
     // Log operation start
-    info!(
-        file_count = file_paths.len(),
-        "Creating manifest"
-    );
+    info!(file_count = file_paths.len(), "Creating manifest");
 
     info!("Creating manifest for {} files", file_paths.len());
 

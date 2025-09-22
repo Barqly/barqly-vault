@@ -3,6 +3,9 @@
 //! This module contains legacy YubiKey detection code using direct hardware integration.
 //! It is deprecated in favor of the age-plugin-yubikey provider abstraction.
 
+// Allow println in this deprecated test module
+#![allow(clippy::disallowed_macros)]
+
 use super::errors::{YubiKeyError, YubiKeyResult};
 use serde::{Deserialize, Serialize};
 

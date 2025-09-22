@@ -14,14 +14,11 @@ const MODULE_COLUMN_WIDTH: usize = 60;
 
 /// Custom formatter that creates pipe-separated log entries
 #[derive(Clone, Debug)]
-pub struct BarqlyFormatter {
-    /// Whether to include ANSI color codes
-    use_ansi: bool,
-}
+pub struct BarqlyFormatter {}
 
 impl BarqlyFormatter {
     pub fn new() -> Self {
-        Self { use_ansi: false }
+        Self {}
     }
 }
 
@@ -49,9 +46,10 @@ impl FieldCollector {
 impl Visit for FieldCollector {
     fn record_debug(&mut self, field: &Field, value: &dyn fmt::Debug) {
         if field.name() == "message" {
-            self.message = Some(format!("{:?}", value));
+            self.message = Some(format!("{value:?}"));
         } else {
-            self.fields.push((field.name().to_string(), format!("{:?}", value)));
+            self.fields
+                .push((field.name().to_string(), format!("{value:?}")));
         }
     }
 
@@ -59,7 +57,8 @@ impl Visit for FieldCollector {
         if field.name() == "message" {
             self.message = Some(value.to_string());
         } else {
-            self.fields.push((field.name().to_string(), value.to_string()));
+            self.fields
+                .push((field.name().to_string(), value.to_string()));
         }
     }
 }
@@ -68,17 +67,13 @@ impl Visit for FieldCollector {
 ///
 /// This function creates a fixed-width string for the module:file:line column
 /// to ensure consistent alignment in log output.
-fn format_module_location(
-    target: &str,
-    file: Option<&str>,
-    line: Option<u32>
-) -> String {
+fn format_module_location(target: &str, file: Option<&str>, line: Option<u32>) -> String {
     // Build the full location string
     let location = match (file, line) {
         (Some(f), Some(l)) => {
             // Extract just the filename from the full path
             let filename = f.rsplit('/').next().unwrap_or(f);
-            format!("{}:{}:{}", target, filename, l)
+            format!("{target}:{filename}:{l}")
         }
         _ => target.to_string(),
     };
@@ -86,11 +81,11 @@ fn format_module_location(
     // Handle width formatting
     if location.len() <= MODULE_COLUMN_WIDTH {
         // Pad with spaces to reach fixed width (left-aligned)
-        format!("{:<width$}", location, width = MODULE_COLUMN_WIDTH)
+        format!("{location:<MODULE_COLUMN_WIDTH$}")
     } else {
         // Truncate from the left, keeping the most important part (filename:line)
         let truncated = &location[location.len() - (MODULE_COLUMN_WIDTH - 3)..];
-        format!("...{}", truncated)
+        format!("...{truncated}")
     }
 }
 
@@ -127,27 +122,24 @@ where
         // Apply color if ANSI is enabled
         if writer.has_ansi_escapes() {
             let colored = match *level {
-                Level::ERROR => format!("\x1b[31m{}\x1b[0m", level_str), // Red
-                Level::WARN => format!("\x1b[33m{}\x1b[0m", level_str),  // Yellow
-                Level::INFO => format!("\x1b[32m{}\x1b[0m", level_str),  // Green
-                Level::DEBUG => format!("\x1b[36m{}\x1b[0m", level_str), // Cyan
-                Level::TRACE => format!("\x1b[90m{}\x1b[0m", level_str), // Gray
+                Level::ERROR => format!("\x1b[31m{level_str}\x1b[0m"), // Red
+                Level::WARN => format!("\x1b[33m{level_str}\x1b[0m"),  // Yellow
+                Level::INFO => format!("\x1b[32m{level_str}\x1b[0m"),  // Green
+                Level::DEBUG => format!("\x1b[36m{level_str}\x1b[0m"), // Cyan
+                Level::TRACE => format!("\x1b[90m{level_str}\x1b[0m"), // Gray
             };
-            write!(writer, "{}", colored)?;
+            write!(writer, "{colored}")?;
         } else {
-            write!(writer, "{}", level_str)?;
+            write!(writer, "{level_str}")?;
         }
 
         // 3. Separator and Module path with file:line (fixed width for alignment)
         write!(writer, " | ")?;
 
         // Use fixed-width formatting for consistent column alignment
-        let formatted_location = format_module_location(
-            metadata.target(),
-            metadata.file(),
-            metadata.line()
-        );
-        write!(writer, "{}", formatted_location)?;
+        let formatted_location =
+            format_module_location(metadata.target(), metadata.file(), metadata.line());
+        write!(writer, "{formatted_location}")?;
 
         // 4. Separator and Message/Fields
         write!(writer, " | ")?;
@@ -158,7 +150,7 @@ where
 
         // Write the message if present
         if let Some(message) = collector.message {
-            write!(writer, "{}", message)?;
+            write!(writer, "{message}")?;
         }
 
         // 5. Write span context if present
@@ -182,9 +174,10 @@ where
         // 6. Write additional fields if present
         if !collector.fields.is_empty() {
             write!(writer, " | ")?;
-            let field_strs: Vec<String> = collector.fields
+            let field_strs: Vec<String> = collector
+                .fields
                 .iter()
-                .map(|(k, v)| format!("{}={}", k, v))
+                .map(|(k, v)| format!("{k}={v}"))
                 .collect();
             write!(writer, "{{{}}}", field_strs.join(", "))?;
         }

@@ -6,11 +6,14 @@
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::crypto::yubikey::manifest::YubiKeyManifest;
 use crate::crypto::yubikey::pty::{
-    age_operations::{check_yubikey_has_identity, generate_age_identity_pty, get_identity_for_serial, list_yubikey_identities},
+    age_operations::{
+        check_yubikey_has_identity, generate_age_identity_pty, get_identity_for_serial,
+        list_yubikey_identities,
+    },
     ykman_operations::{initialize_yubikey_with_recovery, list_yubikeys as list_yk_devices},
 };
-use age::secrecy::{ExposeSecret, SecretString};
 use crate::prelude::*;
+use age::secrecy::{ExposeSecret, SecretString};
 use tauri;
 
 /// YubiKey state classification
@@ -117,22 +120,34 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         // Determine state based on manifest and identity presence
         let state = match (in_manifest, has_identity) {
             (true, true) => {
-                info!("YubiKey {} state: Registered (in manifest + has identity)", serial);
+                info!(
+                    "YubiKey {} state: Registered (in manifest + has identity)",
+                    serial
+                );
                 YubiKeyState::Registered
             }
             (false, true) => {
-                info!("YubiKey {} state: Orphaned (has identity but not in manifest)", serial);
+                info!(
+                    "YubiKey {} state: Orphaned (has identity but not in manifest)",
+                    serial
+                );
                 YubiKeyState::Orphaned
             }
             (true, false) => {
                 // In manifest but no identity found - might be disconnected/reset
-                warn!("YubiKey {} in manifest but no identity found - marking as Reused", serial);
+                warn!(
+                    "YubiKey {} in manifest but no identity found - marking as Reused",
+                    serial
+                );
                 YubiKeyState::Reused
             }
             (false, false) => {
                 // Check PIN status to determine if new or reused
                 // For now, assume new (in production, would check with ykman)
-                info!("YubiKey {} state: New (no manifest entry, no identity)", serial);
+                info!(
+                    "YubiKey {} state: New (no manifest entry, no identity)",
+                    serial
+                );
                 YubiKeyState::New
             }
         };
@@ -148,11 +163,9 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
             serial: serial.clone(),
             state,
             slot: manifest_entry.as_ref().map(|e| e.slot),
-            recipient: identity_result.clone().or_else(|| {
-                manifest_entry
-                    .as_ref()
-                    .map(|e| e.recipient.clone())
-            }),
+            recipient: identity_result
+                .clone()
+                .or_else(|| manifest_entry.as_ref().map(|e| e.recipient.clone())),
             identity_tag: manifest_entry.as_ref().map(|e| e.identity_tag.clone()),
             label: manifest_entry
                 .as_ref()
@@ -204,8 +217,8 @@ pub async fn init_yubikey(
 
     // Generate age identity (uses first available retired slot)
     // CRITICAL: Pass serial to ensure operation happens on correct YubiKey
-    let recipient =
-        generate_age_identity_pty(&serial, pin.expose_secret(), "cached", &label).map_err(|e| {
+    let recipient = generate_age_identity_pty(&serial, pin.expose_secret(), "cached", &label)
+        .map_err(|e| {
             CommandError::operation(
                 ErrorCode::YubiKeyInitializationFailed,
                 format!("Failed to generate age identity: {e}"),

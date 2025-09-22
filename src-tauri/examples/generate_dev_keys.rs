@@ -2,6 +2,9 @@
 //!
 //! Generates a set of sample encryption keys for development and testing purposes.
 
+// CLI utility examples are allowed to use println! for user interaction
+#![allow(clippy::disallowed_macros)]
+
 use barqly_vault_lib::crypto::key_mgmt::{encrypt_private_key, generate_keypair};
 use barqly_vault_lib::storage::key_store::{key_exists, save_encrypted_key};
 use secrecy::SecretString;

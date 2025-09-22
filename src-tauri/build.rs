@@ -10,7 +10,7 @@ fn main() {
 
     // Get git commit hash (short version)
     let git_hash = Command::new("git")
-        .args(&["rev-parse", "--short=8", "HEAD"])
+        .args(["rev-parse", "--short=8", "HEAD"])
         .output()
         .ok()
         .and_then(|output| {
@@ -26,7 +26,7 @@ fn main() {
 
     // Check if working directory is dirty
     let git_dirty = Command::new("git")
-        .args(&["status", "--porcelain"])
+        .args(["status", "--porcelain"])
         .output()
         .ok()
         .map(|output| !output.stdout.is_empty())
@@ -36,7 +36,7 @@ fn main() {
 
     // Get current branch name
     let git_branch = Command::new("git")
-        .args(&["rev-parse", "--abbrev-ref", "HEAD"])
+        .args(["rev-parse", "--abbrev-ref", "HEAD"])
         .output()
         .ok()
         .and_then(|output| {
@@ -55,7 +55,7 @@ fn main() {
 
     // Get rustc version
     let rustc_version = Command::new("rustc")
-        .args(&["--version"])
+        .args(["--version"])
         .output()
         .ok()
         .and_then(|output| {
@@ -70,10 +70,10 @@ fn main() {
         .to_string();
 
     // Set environment variables for use in the code
-    println!("cargo:rustc-env=BUILD_GIT_HASH={}{}", git_hash, git_suffix);
-    println!("cargo:rustc-env=BUILD_GIT_BRANCH={}", git_branch);
-    println!("cargo:rustc-env=BUILD_TIMESTAMP={}", build_timestamp);
-    println!("cargo:rustc-env=BUILD_RUSTC_VERSION={}", rustc_version);
+    println!("cargo:rustc-env=BUILD_GIT_HASH={git_hash}{git_suffix}");
+    println!("cargo:rustc-env=BUILD_GIT_BRANCH={git_branch}");
+    println!("cargo:rustc-env=BUILD_TIMESTAMP={build_timestamp}");
+    println!("cargo:rustc-env=BUILD_RUSTC_VERSION={rustc_version}");
 
     // Build Tauri application
     tauri_build::build()

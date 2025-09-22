@@ -3,6 +3,9 @@
 //! This module provides:
 //! - Hierarchical organization of unit tests by module
 //! - Test suite setup and teardown
+
+// Unit test runner files are allowed to use println! for test reporting
+#![allow(clippy::disallowed_macros)]
 //! - Parallel execution configuration
 //! - Test result aggregation
 

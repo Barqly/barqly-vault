@@ -2,6 +2,9 @@
 //!
 //! This module provides cleanup functionality to ensure test artifacts
 //! are properly removed after test execution, similar to JUnit's @AfterClass.
+
+// Test utility files are allowed to use println! for cleanup reporting
+#![allow(clippy::disallowed_macros)]
 //!
 //! # Usage
 //! ```rust

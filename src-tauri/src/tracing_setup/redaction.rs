@@ -94,7 +94,7 @@ pub fn redact_key(key: &str) -> String {
     #[cfg(debug_assertions)]
     {
         if key.len() > 8 {
-            format!("{}...{}", &key[..4], &key[key.len()-4..])
+            format!("{}...{}", &key[..4], &key[key.len() - 4..])
         } else {
             "[KEY]".to_string()
         }
@@ -110,7 +110,7 @@ pub fn redact_serial(serial: &str) -> String {
     #[cfg(debug_assertions)]
     {
         if serial.len() > 4 {
-            format!("***{}", &serial[serial.len()-4..])
+            format!("***{}", &serial[serial.len() - 4..])
         } else {
             "***".to_string()
         }
@@ -128,14 +128,14 @@ mod tests {
     #[test]
     fn test_sensitive_debug() {
         let sensitive = Sensitive::new("secret_password");
-        let debug_str = format!("{:?}", sensitive);
+        let debug_str = format!("{sensitive:?}");
         assert!(debug_str.contains("SENSITIVE") || debug_str.contains("REDACTED"));
     }
 
     #[test]
     fn test_sensitive_display() {
         let sensitive = Sensitive::new("secret_password");
-        let display_str = format!("{}", sensitive);
+        let display_str = format!("{sensitive}");
         assert_eq!(display_str, "[REDACTED]");
     }
 

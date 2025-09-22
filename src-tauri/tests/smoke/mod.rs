@@ -3,6 +3,9 @@
 //! This module provides:
 //! - Health check validation for post-production deployment
 //! - Quick validation of critical application flows
+
+// Smoke test files are allowed to use println! for health reporting
+#![allow(clippy::disallowed_macros)]
 //! - Configuration verification
 //! - Performance baseline checks
 

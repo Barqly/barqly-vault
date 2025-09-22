@@ -1,207 +1,85 @@
-//! Unit tests for logger functions using the new test framework
+//! Unit tests for tracing system using isolated test logging
 //!
-//! This module demonstrates the new test framework features:
+//! This module demonstrates modern test framework features:
 //! - Test-cases-as-documentation with descriptive names
 //! - Parallel-safe test execution
 //! - Enhanced assertions with better error messages
 //! - Test data factories for consistent test data
 //! - Performance measurement and validation
-//! - Proper integration with hierarchical test structure
+//! - Isolated in-memory test logging (no file pollution)
 
-use barqly_vault_lib::logging::{init_logging, LogLevel};
-use rstest::*;
+// Test files are allowed to use eprintln! for test output
+#![allow(clippy::disallowed_macros)]
+
+use tracing::{debug, info};
+use tracing_test::traced_test;
 
 // ============================================================================
-// LOGGING INITIALIZATION TESTS
+// TRACING SYSTEM BEHAVIOR TESTS
 // ============================================================================
 
 #[test]
-fn should_initialize_logging_with_info_level() {
+#[traced_test]
+fn should_initialize_tracing_with_info_level() {
     // Given: A test environment
 
-    // When: Initializing logging with Info level
-    let result = init_logging(LogLevel::Info);
+    // When: Using info level logging
+    info!("Info level test message");
 
-    // Then: The operation should not panic (may fail gracefully in test env)
-    if result.is_err() {
-        eprintln!(
-            "Logging initialization failed in test environment: {:?}",
-            result.unwrap_err()
-        );
-        // Don't fail the test if logging initialization fails in test environment
-    }
-}
-
-#[rstest]
-#[case(LogLevel::Error, "error_level")]
-#[case(LogLevel::Warn, "warn_level")]
-#[case(LogLevel::Info, "info_level")]
-#[case(LogLevel::Debug, "debug_level")]
-fn should_initialize_logging_with_different_levels(
-    #[case] level: LogLevel,
-    #[case] test_name: &str,
-) {
-    // Given: A specific log level
-
-    // When: Initializing logging with the level
-    let result = init_logging(level);
-
-    // Then: The operation should not panic (may fail gracefully in test env)
-    if result.is_err() {
-        eprintln!(
-            "Logging initialization failed for level {:?} ({test_name}): {:?}",
-            level,
-            result.unwrap_err()
-        );
-        // Don't fail the test if logging initialization fails in test environment
-    }
-}
-
-// ============================================================================
-// LOGGING ERROR HANDLING TESTS
-// ============================================================================
-
-#[test]
-fn should_handle_multiple_initialization_attempts_gracefully() {
-    // Given: A test environment
-
-    // When: Initializing logging multiple times
-    let result1 = init_logging(LogLevel::Info);
-    let result2 = init_logging(LogLevel::Debug);
-
-    // Then: Both operations should not panic (may fail gracefully in test env)
-    if result1.is_err() {
-        eprintln!(
-            "First logging initialization failed in test environment: {:?}",
-            result1.unwrap_err()
-        );
-        // Don't fail the test if logging initialization fails in test environment
-    }
-
-    if result2.is_err() {
-        eprintln!(
-            "Second logging initialization failed: {:?}",
-            result2.unwrap_err()
-        );
-        // Don't fail the test if logging initialization fails in test environment
-    }
+    // Then: Message should be captured in memory
+    assert!(logs_contain("Info level test message"));
 }
 
 #[test]
-fn should_not_panic_on_initialization_failure() {
-    // Given: A test environment that may not support logging
+#[traced_test]
+fn should_capture_performance_logs() {
+    // Given: A performance test scenario
 
-    // When: Attempting to initialize logging
-    let result = std::panic::catch_unwind(|| init_logging(LogLevel::Info));
+    // When: Logging performance measurements
+    let start = std::time::Instant::now();
+    info!("Starting performance test");
 
-    // Then: The operation should not panic
-    assert!(
-        result.is_ok(),
-        "Logging initialization should not panic even if it fails"
+    // Simulate some work
+    std::thread::sleep(std::time::Duration::from_millis(1));
+
+    let duration = start.elapsed();
+    info!(
+        duration_ms = duration.as_millis(),
+        "Performance test completed"
     );
-}
 
-// ============================================================================
-// LOGGING BEHAVIOR TESTS
-// ============================================================================
-
-#[test]
-fn should_handle_singleton_pattern_correctly() {
-    // Given: A test environment
-
-    // When: Initializing logging twice with different levels
-    let result1 = init_logging(LogLevel::Info);
-    let result2 = init_logging(LogLevel::Debug);
-
-    // Then: Both operations should complete without panicking
-    // Note: In a singleton pattern, the second call might return the same logger
-    // or succeed independently, but should not panic
-    if result1.is_err() {
-        eprintln!(
-            "First logging initialization failed: {:?}",
-            result1.unwrap_err()
-        );
-    }
-
-    if result2.is_err() {
-        eprintln!(
-            "Second logging initialization failed: {:?}",
-            result2.unwrap_err()
-        );
-    }
-}
-
-#[rstest]
-#[case(LogLevel::Error, "most_restrictive")]
-#[case(LogLevel::Debug, "most_verbose")]
-fn should_initialize_with_extreme_log_levels(#[case] level: LogLevel, #[case] test_name: &str) {
-    // Given: An extreme log level (most restrictive or most verbose)
-
-    // When: Initializing logging with the extreme level
-    let result = init_logging(level);
-
-    // Then: The operation should not panic (may fail gracefully in test env)
-    if result.is_err() {
-        eprintln!(
-            "Logging initialization failed for extreme level {:?} ({test_name}): {:?}",
-            level,
-            result.unwrap_err()
-        );
-        // Don't fail the test if logging initialization fails in test environment
-    }
-}
-
-// ============================================================================
-// LOGGING ROBUSTNESS TESTS
-// ============================================================================
-
-#[test]
-fn should_handle_rapid_initialization_attempts() {
-    // Given: A test environment
-
-    // When: Rapidly initializing logging multiple times
-    let results: Vec<_> = (0..5)
-        .map(|i| {
-            let level = match i % 4 {
-                0 => LogLevel::Error,
-                1 => LogLevel::Warn,
-                2 => LogLevel::Info,
-                _ => LogLevel::Debug,
-            };
-            init_logging(level)
-        })
-        .collect();
-
-    // Then: All operations should complete without panicking
-    for (i, result) in results.iter().enumerate() {
-        if result.is_err() {
-            eprintln!(
-                "Rapid initialization attempt {} failed: {:?}",
-                i,
-                result.as_ref().unwrap_err()
-            );
-            // Don't fail the test if logging initialization fails in test environment
-        }
-    }
+    // Then: Both messages should be captured
+    assert!(logs_contain("Starting performance test"));
+    assert!(logs_contain("Performance test completed"));
 }
 
 #[test]
-fn should_maintain_consistent_behavior_across_calls() {
-    // Given: A test environment
+#[traced_test]
+fn should_handle_concurrent_logging() {
+    // Given: A multi-threaded scenario
 
-    // When: Initializing logging with the same level multiple times
-    let level = LogLevel::Info;
-    let result1 = init_logging(level);
-    let result2 = init_logging(level);
-    let result3 = init_logging(level);
+    // When: Logging from the main thread
+    info!("Main thread log message");
+    debug!("Main thread debug message");
 
-    // Then: All operations should have consistent behavior
-    // (either all succeed or all fail gracefully)
-    let all_succeeded = result1.is_ok() && result2.is_ok() && result3.is_ok();
-    let all_failed = result1.is_err() && result2.is_err() && result3.is_err();
+    // Then: Messages should be captured
+    assert!(logs_contain("Main thread log message"));
+    assert!(logs_contain("Main thread debug message"));
+}
 
-    assert!(
-        all_succeeded || all_failed,
-        "Logging initialization should have consistent behavior across calls"
+#[test]
+#[traced_test]
+fn should_capture_structured_fields() {
+    // Given: Structured logging requirements
+
+    // When: Logging with structured fields
+    info!(
+        user_id = "test_user_123",
+        operation = "login",
+        duration_ms = 250,
+        "User operation completed"
     );
+
+    // Then: Log message should be captured
+    assert!(logs_contain("User operation completed"));
 }

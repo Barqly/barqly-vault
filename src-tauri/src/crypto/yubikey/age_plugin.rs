@@ -7,6 +7,8 @@ use super::errors::{YubiKeyError, YubiKeyResult};
 use super::provider::{
     AgeHeader, DataEncryptionKey, ProviderInfo, YubiIdentityProvider, YubiRecipient,
 };
+use crate::log_sensitive;
+use crate::tracing_setup::debug;
 // serde_json::Value removed - not needed
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -442,11 +444,13 @@ impl AgePluginPtyProvider {
         pin: Option<&str>,
     ) -> YubiKeyResult<(String, String)> {
         #[cfg(debug_assertions)]
-        eprintln!(
-            "Executing with PTY: {} {}",
-            self.plugin_path.display(),
-            args.join(" ")
-        );
+        log_sensitive!(dev_only: {
+            debug!(
+                    "Executing with PTY: {} {}",
+                    self.plugin_path.display(),
+                    args.join(" ")
+                );
+        });
 
         // Create PTY system and open a new PTY
         let pty_system = native_pty_system();
@@ -476,7 +480,11 @@ impl AgePluginPtyProvider {
         cmd.env("RUST_LOG", "debug"); // Enable debug logging in age-plugin-yubikey
 
         // Ensure stdin/stdout/stderr are properly connected
-        println!("🔧 TRACER: Setting up PTY environment for age-plugin-yubikey");
+        log_sensitive!(dev_only: {
+
+            debug!("🔧 TRACER: Setting up PTY environment for age-plugin-yubikey");
+
+        });
 
         // Spawn command in PTY
         let mut child = pty_pair.slave.spawn_command(cmd).map_err(|e| {
@@ -499,15 +507,23 @@ impl AgePluginPtyProvider {
         let mut pin_sent = false;
 
         // Add comprehensive debug logging for touch detection
-        println!(
+        log_sensitive!(dev_only: {
+
+            debug!(
             "🎯 TRACER: PTY interaction starting - timeout: {:?}",
             self.timeout
         );
-        println!(
+
+        });
+        log_sensitive!(dev_only: {
+
+            debug!(
             "🎯 TRACER: Running command: {} {}",
             self.plugin_path.display(),
             args.join(" ")
         );
+
+        });
 
         // Clone output for timeout error handling before it's moved
         let output_for_timeout = output.clone();
@@ -518,28 +534,60 @@ impl AgePluginPtyProvider {
         let result = timeout(self.timeout, async move {
             // Move writer into the async block to ensure it stays alive
             let mut writer = writer;
-            println!("🔧 TRACER: PTY loop starting - writer handle secured");
+            log_sensitive!(dev_only: {
+
+                debug!("🔧 TRACER: PTY loop starting - writer handle secured");
+
+            });
             let mut loop_iteration = 0;
             loop {
                 loop_iteration += 1;
                 line.clear();
-                println!("🔄 DETECTIVE: Read loop iteration #{loop_iteration} - about to read from PTY");
+                log_sensitive!(dev_only: {
+
+                    debug!("🔄 DETECTIVE: Read loop iteration #{loop_iteration} - about to read from PTY");
+
+                });
                 match buf_reader.read_line(&mut line) {
                     Ok(0) => {
-                        println!("📄 TRACER: EOF detected - checking if process finished");
-                        println!("🔍 DETECTIVE: EOF encountered, output so far: '{}' ({} bytes)",
+                        log_sensitive!(dev_only: {
+
+                            debug!("📄 TRACER: EOF detected - checking if process finished");
+
+                        });
+                        log_sensitive!(dev_only: {
+
+                            debug!("🔍 DETECTIVE: EOF encountered, output so far: '{}' ({} bytes)",
                                 output.chars().rev().take(200).collect::<String>().chars().rev().collect::<String>(),
                                 output.len());
-                        println!("🔍 DETECTIVE: Process handle available - checking wait status");
+
+                        });
+                        log_sensitive!(dev_only: {
+
+                            debug!("🔍 DETECTIVE: Process handle available - checking wait status");
+
+                        });
                         // EOF - check if process finished
                         match child.try_wait() {
                             Ok(Some(status)) => {
-                                println!("✅ TRACER: Process finished with status: {status:?}");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("✅ TRACER: Process finished with status: {status:?}");
+
+                                });
                                 return Ok((status, output.clone()));
                             },
                             Ok(None) => {
-                                println!("⏳ TRACER: Process still running after EOF - implementing active polling...");
-                                println!("⏳ TRACER: This is likely YubiKey waiting for touch - process alive but quiet");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("⏳ TRACER: Process still running after EOF - implementing active polling...");
+
+                                });
+                                log_sensitive!(dev_only: {
+
+                                    debug!("⏳ TRACER: This is likely YubiKey waiting for touch - process alive but quiet");
+
+                                });
 
                                 // Active polling with proper retry loop structure
                                 let max_retries = 60; // 30 seconds total with 500ms intervals
@@ -547,43 +595,91 @@ impl AgePluginPtyProvider {
 
                                 // Proper polling loop - retry counter increments per polling attempt
                                 for retry_count in 1..=max_retries {
-                                    println!("🔍 TRACER: PTY EOF active polling: attempt {retry_count}/{max_retries}, checking process state...");
-                                    println!("🕵️ DETECTIVE: About to poll process - attempt: {}, elapsed time: {}ms",
+                                    log_sensitive!(dev_only: {
+
+                                        debug!("🔍 TRACER: PTY EOF active polling: attempt {retry_count}/{max_retries}, checking process state...");
+
+                                    });
+                                    log_sensitive!(dev_only: {
+
+                                        debug!("🕵️ DETECTIVE: About to poll process - attempt: {}, elapsed time: {}ms",
                                             retry_count, retry_count * 500);
+
+                                    });
 
                                     // Check if process completed
                                     match child.try_wait() {
                                         Ok(Some(status)) => {
-                                            println!("✅ TRACER: Process completed during active polling with status: {status:?}");
+                                            log_sensitive!(dev_only: {
+
+                                                debug!("✅ TRACER: Process completed during active polling with status: {status:?}");
+
+                                            });
                                             return Ok((status, output.clone()));
                                         },
                                         Ok(None) => {
                                             // Process still alive - continue polling with backoff
-                                            println!("🔄 TRACER: Process still alive, continuing to poll...");
+                                            log_sensitive!(dev_only: {
+
+                                                debug!("🔄 TRACER: Process still alive, continuing to poll...");
+
+                                            });
 
                                             // Send periodic CRLF nudge to help with line discipline
                                             // This mimics what a real terminal would do
                                             if retry_count % 4 == 0 { // Every 2 seconds (4 * 500ms)
                                                 nudge_count += 1;
-                                                println!("📤 TRACER: Sending CRLF nudge #{nudge_count} to assist line discipline");
-                                                println!("🕵️ DETECTIVE: Writer available before nudge: true, nudge #{nudge_count}");
+                                                log_sensitive!(dev_only: {
+
+                                                    debug!("📤 TRACER: Sending CRLF nudge #{nudge_count} to assist line discipline");
+
+                                                });
+                                                log_sensitive!(dev_only: {
+
+                                                    debug!("🕵️ DETECTIVE: Writer available before nudge: true, nudge #{nudge_count}");
+
+                                                });
 
                                                 match writer.write_all(b"\r\n") {
                                                     Ok(_) => {
                                                         match writer.flush() {
                                                             Ok(_) => {
-                                                                println!("📤 TRACER: CRLF nudge sent and flushed successfully");
-                                                                println!("🕵️ DETECTIVE: CRLF bytes [\\r\\n] written to PTY master");
+                                                                log_sensitive!(dev_only: {
+
+                                                                    debug!("📤 TRACER: CRLF nudge sent and flushed successfully");
+
+                                                                });
+                                                                log_sensitive!(dev_only: {
+
+                                                                    debug!("🕵️ DETECTIVE: CRLF bytes [\\r\\n] written to PTY master");
+
+                                                                });
                                                             }
                                                             Err(e) => {
-                                                                println!("⚠️ TRACER: CRLF nudge flush failed: {e}");
-                                                                println!("🚨 DETECTIVE: FLUSH ERROR - PTY may be broken: {e}");
+                                                                log_sensitive!(dev_only: {
+
+                                                                    debug!("⚠️ TRACER: CRLF nudge flush failed: {e}");
+
+                                                                });
+                                                                log_sensitive!(dev_only: {
+
+                                                                    debug!("🚨 DETECTIVE: FLUSH ERROR - PTY may be broken: {e}");
+
+                                                                });
                                                             }
                                                         }
                                                     }
                                                     Err(e) => {
-                                                        println!("⚠️ TRACER: CRLF nudge write failed: {e}");
-                                                        println!("🚨 DETECTIVE: WRITE ERROR - PTY connection may be lost: {e}");
+                                                        log_sensitive!(dev_only: {
+
+                                                            debug!("⚠️ TRACER: CRLF nudge write failed: {e}");
+
+                                                        });
+                                                        log_sensitive!(dev_only: {
+
+                                                            debug!("🚨 DETECTIVE: WRITE ERROR - PTY connection may be lost: {e}");
+
+                                                        });
                                                     }
                                                 }
                                             }
@@ -593,22 +689,42 @@ impl AgePluginPtyProvider {
                                             tokio::time::sleep(Duration::from_millis(sleep_ms)).await;
                                         }
                                         Err(e) => {
-                                            println!("❌ TRACER: Process wait error during active polling: {e}");
+                                            log_sensitive!(dev_only: {
+
+                                                debug!("❌ TRACER: Process wait error during active polling: {e}");
+
+                                            });
                                             return Err(YubiKeyError::PluginError(format!("Process error: {e}")));
                                         }
                                     }
                                 }
 
                                 // If we get here, we've exhausted all polling attempts
-                                println!("⏰ TRACER: Touch timeout - process still running after {}s, continuing to outer timeout handler", max_retries / 2);
-                                println!("🕵️ DETECTIVE: Polling exhausted - returning to outer read loop to check for delayed output");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("⏰ TRACER: Touch timeout - process still running after {}s, continuing to outer timeout handler", max_retries / 2);
+
+                                });
+                                log_sensitive!(dev_only: {
+
+                                    debug!("🕵️ DETECTIVE: Polling exhausted - returning to outer read loop to check for delayed output");
+
+                                });
 
                                 // Try reading again - maybe output appeared during final polling attempts
-                                println!("🔄 DETECTIVE: About to continue outer read loop - looking for post-touch output");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("🔄 DETECTIVE: About to continue outer read loop - looking for post-touch output");
+
+                                });
                                 continue; // Continue outer read loop
                             }
                             Err(e) => {
-                                println!("❌ TRACER: Process wait error: {e}");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("❌ TRACER: Process wait error: {e}");
+
+                                });
                                 return Err(YubiKeyError::PluginError(format!(
                                     "Process wait error: {e}"
                                 )))
@@ -619,7 +735,11 @@ impl AgePluginPtyProvider {
                         output.push_str(&line);
 
                         // Enhanced logging for all PTY output
-                        println!("📡 TRACER: PTY output: {}", line.trim());
+                        log_sensitive!(dev_only: {
+
+                            debug!("📡 TRACER: PTY output: {}", line.trim());
+
+                        });
 
                         // Handle PIN prompt - allow multiple PIN prompts during generation
                         if line.contains("PIN:")
@@ -628,9 +748,17 @@ impl AgePluginPtyProvider {
                         {
                             if let Some(p) = pin {
                                 if !pin_sent {
-                                    println!("🔑 TRACER: First PIN prompt detected - sending PIN to PTY");
+                                    log_sensitive!(dev_only: {
+
+                                        debug!("🔑 TRACER: First PIN prompt detected - sending PIN to PTY");
+
+                                    });
                                 } else {
-                                    println!("🔑 TRACER: Additional PIN prompt detected - sending PIN again");
+                                    log_sensitive!(dev_only: {
+
+                                        debug!("🔑 TRACER: Additional PIN prompt detected - sending PIN again");
+
+                                    });
                                 }
 
                                 writeln!(writer, "{p}").map_err(|e| {
@@ -642,9 +770,17 @@ impl AgePluginPtyProvider {
                                 })?;
                                 // CRITICAL: Do NOT drop writer after sending PIN
                                 pin_sent = true;
-                                println!("✅ TRACER: PIN sent and flushed successfully - KEEPING writer alive");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("✅ TRACER: PIN sent and flushed successfully - KEEPING writer alive");
+
+                                });
                             } else {
-                                println!("❌ TRACER: PIN prompt detected but no PIN provided");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("❌ TRACER: PIN prompt detected but no PIN provided");
+
+                                });
                             }
                         }
 
@@ -654,15 +790,31 @@ impl AgePluginPtyProvider {
                         // IMPORTANT: Exclude our own debug messages (those with emojis)
                         // IMPORTANT: Skip touch detection if policy is Never
                         let touch_policy = crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY;
-                        println!("🔧 POLICY CHECK: Current touch policy = {touch_policy:?}");
+                        log_sensitive!(dev_only: {
+
+                            debug!("🔧 POLICY CHECK: Current touch policy = {touch_policy:?}");
+
+                        });
 
                         if (line.contains("Generating key") || line.contains("generating key"))
                             && !line.contains("🔍") && !line.contains("TRACER:") && !line.contains("DETECTIVE:") {
-                            println!("🔧 POLICY CHECK: Found 'Generating key' line, checking if should trigger touch detection...");
+                            log_sensitive!(dev_only: {
+
+                                debug!("🔧 POLICY CHECK: Found 'Generating key' line, checking if should trigger touch detection...");
+
+                            });
                             if touch_policy != crate::crypto::yubikey::management::TouchPolicy::Never {
-                                println!("🔧 POLICY CHECK: Touch policy is NOT Never, triggering touch detection");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("🔧 POLICY CHECK: Touch policy is NOT Never, triggering touch detection");
+
+                                });
                             } else {
-                                println!("🔧 POLICY CHECK: Touch policy is Never, SKIPPING touch detection");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("🔧 POLICY CHECK: Touch policy is Never, SKIPPING touch detection");
+
+                                });
                                 continue; // Skip touch detection entirely
                             }
                         }
@@ -670,10 +822,26 @@ impl AgePluginPtyProvider {
                         if (line.contains("Generating key") || line.contains("generating key"))
                             && !line.contains("🔍") && !line.contains("TRACER:") && !line.contains("DETECTIVE:")
                             && touch_policy != crate::crypto::yubikey::management::TouchPolicy::Never {
-                            println!("👆 TRACER: KEY GENERATION STARTED - Touch will be required!");
-                            println!("👆 TRACER: Full line: '{}'", line.trim());
-                            println!("👆 TRACER: age-plugin-yubikey will now wait silently for touch...");
-                            println!("👆 TRACER: ** SWITCHING TO TOUCH-WAIT MODE **");
+                            log_sensitive!(dev_only: {
+
+                                debug!("👆 TRACER: KEY GENERATION STARTED - Touch will be required!");
+
+                            });
+                            log_sensitive!(dev_only: {
+
+                                debug!("👆 TRACER: Full line: '{}'", line.trim());
+
+                            });
+                            log_sensitive!(dev_only: {
+
+                                debug!("👆 TRACER: age-plugin-yubikey will now wait silently for touch...");
+
+                            });
+                            log_sensitive!(dev_only: {
+
+                                debug!("👆 TRACER: ** SWITCHING TO TOUCH-WAIT MODE **");
+
+                            });
                             // TODO: Emit Tauri event here
 
                             // Start timeout-based touch detection since no more output will come
@@ -681,7 +849,11 @@ impl AgePluginPtyProvider {
                             let mut touch_timeout_count = 0;
 
                             // Continue reading but with timeout expectations
-                            println!("⏰ TRACER: Entering touch-wait polling mode - process is silent during touch");
+                            log_sensitive!(dev_only: {
+
+                                debug!("⏰ TRACER: Entering touch-wait polling mode - process is silent during touch");
+
+                            });
                             loop {
                                 line.clear();
                                 let read_result = timeout(Duration::from_millis(1000), async {
@@ -692,8 +864,12 @@ impl AgePluginPtyProvider {
                                     Ok(Ok(0)) => {
                                         // EOF during touch wait - this is expected behavior
                                         touch_timeout_count += 1;
-                                        println!("⏳ TRACER: Touch wait timeout #{} - still waiting for touch completion (elapsed: {:?})",
+                                        log_sensitive!(dev_only: {
+
+                                            debug!("⏳ TRACER: Touch wait timeout #{} - still waiting for touch completion (elapsed: {:?})",
                                                 touch_timeout_count, touch_start.elapsed());
+
+                                        });
 
                                         // Send periodic CRLF nudges to help the process along
                                         if touch_timeout_count % 3 == 0 {
@@ -703,19 +879,31 @@ impl AgePluginPtyProvider {
                                             writer.flush().map_err(|e| {
                                                 YubiKeyError::PluginError(format!("Failed to flush CRLF nudge: {e}"))
                                             })?;
-                                            println!("📡 TRACER: Sent CRLF nudge #{}", touch_timeout_count / 3);
+                                            log_sensitive!(dev_only: {
+
+                                                debug!("📡 TRACER: Sent CRLF nudge #{}", touch_timeout_count / 3);
+
+                                            });
                                         }
 
                                         // Check if process completed
                                         match child.try_wait() {
                                             Ok(Some(status)) => {
-                                                println!("✅ TRACER: Process completed after touch! Status: {status:?}");
+                                                log_sensitive!(dev_only: {
+
+                                                    debug!("✅ TRACER: Process completed after touch! Status: {status:?}");
+
+                                                });
                                                 return Ok((status, output.clone()));
                                             }
                                             Ok(None) => {
                                                 // Process still running, continue waiting
                                                 if touch_start.elapsed() > Duration::from_secs(30) {
-                                                    println!("⚠️  TRACER: Touch timeout after 30s - user may need to touch YubiKey");
+                                                    log_sensitive!(dev_only: {
+
+                                                        debug!("⚠️  TRACER: Touch timeout after 30s - user may need to touch YubiKey");
+
+                                                    });
                                                 }
                                                 continue;
                                             }
@@ -726,7 +914,11 @@ impl AgePluginPtyProvider {
                                     }
                                     Ok(Ok(bytes_read)) => {
                                         // Got output during touch wait - this means touch completed!
-                                        println!("🎉 TRACER: TOUCH COMPLETED! Got output: '{}' ({} bytes)", line.trim(), bytes_read);
+                                        log_sensitive!(dev_only: {
+
+                                            debug!("🎉 TRACER: TOUCH COMPLETED! Got output: '{}' ({} bytes)", line.trim(), bytes_read);
+
+                                        });
                                         output.push_str(&line);
                                         break; // Exit touch-wait mode, return to normal processing
                                     }
@@ -742,7 +934,11 @@ impl AgePluginPtyProvider {
                             }
 
                             // Continue with normal processing after touch completion
-                            println!("🔄 TRACER: Resuming normal PTY processing after successful touch");
+                            log_sensitive!(dev_only: {
+
+                                debug!("🔄 TRACER: Resuming normal PTY processing after successful touch");
+
+                            });
                             continue;
                         }
 
@@ -752,31 +948,59 @@ impl AgePluginPtyProvider {
 
                         // Log potential completion indicators
                         if line.contains("age1yubikey") || line.contains("Generated") || line.contains("Success") {
-                            println!("🎉 TRACER: Potential completion detected: '{}'", line.trim());
+                            log_sensitive!(dev_only: {
+
+                                debug!("🎉 TRACER: Potential completion detected: '{}'", line.trim());
+
+                            });
                         }
 
                         // Log error indicators
                         if line.to_lowercase().contains("error") || line.to_lowercase().contains("failed") {
-                            println!("❌ TRACER: Error detected: '{}'", line.trim());
+                            log_sensitive!(dev_only: {
+
+                                debug!("❌ TRACER: Error detected: '{}'", line.trim());
+
+                            });
                         }
                     }
                     Err(e) => {
-                        println!("⚠️ TRACER: PTY read error: {e} - checking process status");
+                        log_sensitive!(dev_only: {
+
+                            debug!("⚠️ TRACER: PTY read error: {e} - checking process status");
+
+                        });
                         // IMPORTANT: Only return on read error if process is actually finished
                         // Don't close the connection prematurely due to temporary read issues
                         match child.try_wait() {
                             Ok(Some(status)) => {
-                                println!("✅ TRACER: Process finished after read error - status: {status:?}");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("✅ TRACER: Process finished after read error - status: {status:?}");
+
+                                });
                                 return Ok((status, output.clone()));
                             },
                             Ok(None) => {
-                                println!("⚠️ TRACER: Read error but process still running - this might be the issue!");
-                                println!("⚠️ TRACER: Treating as temporary error - waiting and continuing...");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("⚠️ TRACER: Read error but process still running - this might be the issue!");
+
+                                });
+                                log_sensitive!(dev_only: {
+
+                                    debug!("⚠️ TRACER: Treating as temporary error - waiting and continuing...");
+
+                                });
                                 tokio::time::sleep(Duration::from_millis(200)).await;
                                 continue;  // Don't abort on read errors if process is still running
                             }
                             Err(wait_err) => {
-                                println!("❌ TRACER: Process error during read error handling: {wait_err}");
+                                log_sensitive!(dev_only: {
+
+                                    debug!("❌ TRACER: Process error during read error handling: {wait_err}");
+
+                                });
                                 return Err(YubiKeyError::PluginError(format!(
                                     "Process error: {wait_err}"
                                 )))
@@ -790,11 +1014,17 @@ impl AgePluginPtyProvider {
 
         // Handle timeout and get final result
         let (status, full_output) = result.map_err(|_| {
-            println!(
+            log_sensitive!(dev_only: {
+
+                debug!(
                 "⏰ TRACER: PTY operation TIMED OUT after {:?}",
                 self.timeout
             );
-            println!(
+
+            });
+            log_sensitive!(dev_only: {
+
+                debug!(
                 "⏰ TRACER: Last output received: '{}'",
                 output_for_timeout
                     .chars()
@@ -805,15 +1035,25 @@ impl AgePluginPtyProvider {
                     .rev()
                     .collect::<String>()
             );
+
+            });
             YubiKeyError::PluginError("PTY operation timed out".to_string())
         })??;
 
-        println!(
+        log_sensitive!(dev_only: {
+
+
+            debug!(
             "🏁 TRACER: PTY finished - Status: {:?}, output length: {}",
             status,
             full_output.len()
         );
-        println!(
+
+
+        });
+        log_sensitive!(dev_only: {
+
+            debug!(
             "🏁 TRACER: Final output: '{}'",
             full_output
                 .chars()
@@ -824,6 +1064,8 @@ impl AgePluginPtyProvider {
                 .rev()
                 .collect::<String>()
         );
+
+        });
 
         if !status.success() {
             return Err(YubiKeyError::PluginError(format!(

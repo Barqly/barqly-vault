@@ -1,7 +1,7 @@
 # Clippy configuration for Barqly Vault
 # Enforces use of tracing for all logging
 
-# Disallow print/debug macros in production code
+# Disallow print/debug macros in production code, but allow framework macros
 disallowed-macros = [
     { path = "std::println", reason = "use info! or debug! from tracing instead" },
     { path = "std::eprintln", reason = "use error! or warn! from tracing instead" },
@@ -9,6 +9,9 @@ disallowed-macros = [
     { path = "std::print", reason = "use tracing macros instead" },
     { path = "std::eprint", reason = "use tracing macros instead" },
 ]
+
+# Note: We don't disallow tauri::generate_context! as it's a framework macro that may
+# legitimately use eprintln! internally for error reporting
 
 # Allow print macros in tests for debugging
 allow-print-in-tests = true

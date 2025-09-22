@@ -2,9 +2,9 @@
 //!
 //! Commands for getting, adding, and removing keys from vaults.
 
-use crate::prelude::*;
 use crate::crypto::yubikey::list_yubikey_devices;
 use crate::models::{KeyReference, KeyState, KeyType};
+use crate::prelude::*;
 use crate::storage::{key_store, vault_store};
 use chrono::Utc;
 

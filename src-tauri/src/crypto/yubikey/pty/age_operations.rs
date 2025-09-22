@@ -8,7 +8,12 @@ use std::path::Path;
 /// Generate age identity via PTY with YubiKey
 /// IMPORTANT: serial parameter ensures operation happens on correct YubiKey
 #[instrument(skip(pin))]
-pub fn generate_age_identity_pty(serial: &str, pin: &str, touch_policy: &str, slot_name: &str) -> Result<String> {
+pub fn generate_age_identity_pty(
+    serial: &str,
+    pin: &str,
+    touch_policy: &str,
+    slot_name: &str,
+) -> Result<String> {
     info!(
         serial = %redact_serial(serial),
         touch_policy = touch_policy,
@@ -40,7 +45,10 @@ pub fn generate_age_identity_pty(serial: &str, pin: &str, touch_policy: &str, sl
 
     let output = match run_age_plugin_yubikey(args, Some(pin), true) {
         Ok(output) => {
-            info!(output_length = output.len(), "age-plugin-yubikey command succeeded");
+            info!(
+                output_length = output.len(),
+                "age-plugin-yubikey command succeeded"
+            );
             output
         }
         Err(e) => {
@@ -94,16 +102,17 @@ pub fn list_yubikey_identities() -> Result<Vec<String>> {
 
     // Execute age-plugin-yubikey --list directly
     debug!(command = ?age_path, args = "--list", "Executing command");
-    let output_result = Command::new(&age_path)
-        .arg("--list")
-        .output();
+    let output_result = Command::new(&age_path).arg("--list").output();
 
     let output = match output_result {
         Ok(cmd_output) => {
             let stdout = String::from_utf8_lossy(&cmd_output.stdout);
             let stderr = String::from_utf8_lossy(&cmd_output.stderr);
 
-            debug!(exit_status = cmd_output.status.success(), "Command exit status");
+            debug!(
+                exit_status = cmd_output.status.success(),
+                "Command exit status"
+            );
             debug!(stdout_length = stdout.len(), "Command output");
             if !stderr.is_empty() {
                 debug!(stderr = %stderr, "Command stderr");
@@ -136,7 +145,10 @@ pub fn list_yubikey_identities() -> Result<Vec<String>> {
         }
     }
 
-    info!(identity_count = identities.len(), "Found YubiKey identities");
+    info!(
+        identity_count = identities.len(),
+        "Found YubiKey identities"
+    );
     log_sensitive!(dev_only: {
         for (i, id) in identities.iter().enumerate() {
             debug!(index = i, identity = %redact_key(id), "Identity");
@@ -177,7 +189,7 @@ pub fn decrypt_with_age_pty(
     output_file: &Path,
     identity: &str,
     pin: &str,
-    serial: &str,  // Added for security - ensure correct YubiKey is used
+    serial: &str, // Added for security - ensure correct YubiKey is used
 ) -> Result<()> {
     info!(
         serial = %redact_serial(serial),
@@ -269,7 +281,7 @@ pub fn check_yubikey_has_identity(serial: &str) -> Result<Option<String>> {
         .arg("--serial")
         .arg(serial)
         .output()
-        .map_err(|e| PtyError::Io(e))?;
+        .map_err(PtyError::Io)?;
 
     if !output.status.success() {
         // No identity for this serial

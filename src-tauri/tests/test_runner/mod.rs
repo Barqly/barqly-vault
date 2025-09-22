@@ -6,6 +6,9 @@
 //! - Test suite orchestration
 //! - Performance monitoring
 
+// Test runner files are allowed to use println! for test reporting
+#![allow(clippy::disallowed_macros)]
+
 use std::collections::HashMap;
 use std::time::Duration;
 

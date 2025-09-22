@@ -13,10 +13,10 @@ use std::io;
 use std::path::PathBuf;
 use tracing::Level;
 use tracing_subscriber::filter::EnvFilter;
+use tracing_subscriber::fmt;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::fmt;
 
 use crate::tracing_setup::formatter::BarqlyFormatter;
 
@@ -31,8 +31,12 @@ pub const RUSTC_VERSION: &str = env!("BUILD_RUSTC_VERSION");
 
 /// Get the platform-specific log directory
 fn get_log_dir() -> Result<PathBuf, io::Error> {
-    let proj_dirs = ProjectDirs::from("com", "Barqly", "Vault")
-        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Could not determine project directories"))?;
+    let proj_dirs = ProjectDirs::from("com", "Barqly", "Vault").ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::NotFound,
+            "Could not determine project directories",
+        )
+    })?;
 
     let log_dir = proj_dirs.data_dir().join("logs");
 
@@ -75,11 +79,10 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
 
         // Set up the subscriber with both layers
         tracing_subscriber::registry()
-            .with(EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| {
-                    // Default filter: info for our crate, warn for dependencies
-                    EnvFilter::new("barqly_vault=info,warn")
-                }))
+            .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                // Default filter: info for our crate, warn for dependencies
+                EnvFilter::new("barqly_vault=info,warn")
+            }))
             .with(file_layer)
             .with(stderr_layer)
             .try_init()?;
@@ -89,11 +92,11 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
 
         // Determine version string based on build type
         let version_info = if GIT_HASH.contains("dirty") || GIT_HASH == "unknown" {
-            format!("v{} (dev: {})", VERSION, GIT_HASH)
+            format!("v{VERSION} (dev: {GIT_HASH})")
         } else if cfg!(debug_assertions) {
             format!("v{}-dev ({})", VERSION, &GIT_HASH[..8.min(GIT_HASH.len())])
         } else {
-            format!("v{}", VERSION) // Clean production version
+            format!("v{VERSION}") // Clean production version
         };
 
         // Get OS and architecture
@@ -111,16 +114,19 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
 
         // Print formatted header to stderr only (not in log file)
         // These are allowed here as they're for startup display only
-        #[allow(clippy::print_stderr)]
+        #[allow(clippy::disallowed_macros, clippy::print_stderr)]
         {
-            eprintln!("\n{}", separator);
-            eprintln!("Barqly Vault {}", version_info);
-            eprintln!("Built: {}", BUILD_TIMESTAMP);
-            eprintln!("Branch: {}", GIT_BRANCH);
-            eprintln!("Rust: {}", RUSTC_VERSION.split(' ').nth(1).unwrap_or(RUSTC_VERSION));
-            eprintln!("OS: {}", os_info);
+            eprintln!("\n{separator}");
+            eprintln!("Barqly Vault {version_info}");
+            eprintln!("Built: {BUILD_TIMESTAMP}");
+            eprintln!("Branch: {GIT_BRANCH}");
+            eprintln!(
+                "Rust: {}",
+                RUSTC_VERSION.split(' ').nth(1).unwrap_or(RUSTC_VERSION)
+            );
+            eprintln!("OS: {os_info}");
             eprintln!("Log: {}", log_file_path.display());
-            eprintln!("{}\n", separator);
+            eprintln!("{separator}\n");
         }
 
         Ok(())
@@ -140,4 +146,4 @@ pub fn init_test() {
 
 // Re-export commonly used tracing macros for convenience
 pub use tracing::{debug, error, info, instrument, span, trace, warn};
-pub use tracing::{event, info_span, debug_span, error_span, warn_span, trace_span};
+pub use tracing::{debug_span, error_span, event, info_span, trace_span, warn_span};

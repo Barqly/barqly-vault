@@ -71,9 +71,7 @@ mod tests {
         assert!(path.is_ok());
 
         let path = path.unwrap();
-        assert!(path
-            .to_string_lossy()
-            .contains("test-key.agekey.enc"));
+        assert!(path.to_string_lossy().contains("test-key.agekey.enc"));
     }
 
     #[test]
@@ -82,9 +80,7 @@ mod tests {
         assert!(path.is_ok());
 
         let path = path.unwrap();
-        assert!(path
-            .to_string_lossy()
-            .contains("test-key.agekey.meta"));
+        assert!(path.to_string_lossy().contains("test-key.agekey.meta"));
     }
 
     #[test]

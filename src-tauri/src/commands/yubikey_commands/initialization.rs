@@ -128,7 +128,9 @@ pub async fn yubikey_get_setup_recommendations(
 #[tauri::command]
 #[specta::specta]
 #[instrument(skip(pin))]
-pub async fn yubikey_validate_pin(pin: String) -> std::result::Result<PinValidationResult, CommandError> {
+pub async fn yubikey_validate_pin(
+    pin: String,
+) -> std::result::Result<PinValidationResult, CommandError> {
     let manager = YubiKeyManager::new();
 
     let validation_result = match manager.validate_pin(&pin) {

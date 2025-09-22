@@ -31,8 +31,16 @@ pub fn has_default_pin() -> Result<bool> {
 #[instrument(skip(old_pin, new_pin))]
 pub fn change_pin_pty(old_pin: &str, new_pin: &str) -> Result<()> {
     info!(
-        old_pin_type = if old_pin == DEFAULT_PIN { "DEFAULT" } else { "CUSTOM" },
-        new_pin_type = if new_pin == DEFAULT_PIN { "DEFAULT" } else { "CUSTOM" },
+        old_pin_type = if old_pin == DEFAULT_PIN {
+            "DEFAULT"
+        } else {
+            "CUSTOM"
+        },
+        new_pin_type = if new_pin == DEFAULT_PIN {
+            "DEFAULT"
+        } else {
+            "CUSTOM"
+        },
         "Changing YubiKey PIN"
     );
 
@@ -70,8 +78,16 @@ pub fn change_pin_pty(old_pin: &str, new_pin: &str) -> Result<()> {
 #[instrument(skip(old_puk, new_puk))]
 pub fn change_puk_pty(old_puk: &str, new_puk: &str) -> Result<()> {
     info!(
-        old_puk_type = if old_puk == DEFAULT_PUK { "DEFAULT" } else { "CUSTOM" },
-        new_puk_type = if new_puk == DEFAULT_PUK { "DEFAULT" } else { "CUSTOM" },
+        old_puk_type = if old_puk == DEFAULT_PUK {
+            "DEFAULT"
+        } else {
+            "CUSTOM"
+        },
+        new_puk_type = if new_puk == DEFAULT_PUK {
+            "DEFAULT"
+        } else {
+            "CUSTOM"
+        },
         "Changing YubiKey PUK"
     );
 
@@ -125,7 +141,10 @@ pub fn change_management_key_pty(pin: &str) -> Result<()> {
 
     match run_ykman_command(args, Some(pin)) {
         Ok(output) => {
-            info!(output_length = output.len(), "Management key change succeeded");
+            info!(
+                output_length = output.len(),
+                "Management key change succeeded"
+            );
             Ok(())
         }
         Err(e) => {

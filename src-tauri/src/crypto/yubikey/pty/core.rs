@@ -37,7 +37,7 @@ const COMMAND_TIMEOUT: Duration = Duration::from_secs(60);
 #[derive(Debug, Clone)]
 pub enum PtyState {
     WaitingForPin,
-    GeneratingKey,  // Add this state for age-plugin-yubikey
+    GeneratingKey, // Add this state for age-plugin-yubikey
     WaitingForTouch,
     TouchDetected,
     Complete(String),
@@ -126,13 +126,10 @@ pub fn run_age_plugin_yubikey(
     }
 
     debug!("Spawning PTY command");
-    let mut child = pair
-        .slave
-        .spawn_command(cmd)
-        .map_err(|e| {
-            error!(error = %e, "Failed to spawn age-plugin-yubikey");
-            PtyError::PtyOperation(format!("Failed to spawn command: {e}"))
-        })?;
+    let mut child = pair.slave.spawn_command(cmd).map_err(|e| {
+        error!(error = %e, "Failed to spawn age-plugin-yubikey");
+        PtyError::PtyOperation(format!("Failed to spawn command: {e}"))
+    })?;
     debug!("PTY command spawned successfully");
 
     let (tx, rx) = mpsc::channel::<PtyState>();
@@ -163,7 +160,10 @@ pub fn run_age_plugin_yubikey(
                     // Critical: age-plugin-yubikey shows "Generating key" before expecting PIN
                     if line.contains("Generating key") {
                         let _ = tx_reader.send(PtyState::GeneratingKey);
-                    } else if line.contains("Enter PIN") || line.contains("PIN:") || line.contains("PIN for") {
+                    } else if line.contains("Enter PIN")
+                        || line.contains("PIN:")
+                        || line.contains("PIN for")
+                    {
                         let _ = tx_reader.send(PtyState::WaitingForPin);
                     } else if line.contains("Touch your YubiKey") || line.contains("touch") {
                         let _ = tx_reader.send(PtyState::WaitingForTouch);
@@ -257,7 +257,10 @@ pub fn run_age_plugin_yubikey(
     }
 
     let _ = child.wait();
-    info!(result_length = result.len(), "age-plugin-yubikey command completed");
+    info!(
+        result_length = result.len(),
+        "age-plugin-yubikey command completed"
+    );
     if result.is_empty() {
         warn!(args = ?args, "age-plugin-yubikey returned empty result");
     }

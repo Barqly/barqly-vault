@@ -5,12 +5,19 @@
 //! cargo test test_list_yubikeys_with_reset_device --ignored -- --nocapture
 //! ```
 
+// Test files are allowed to use println! for debug output
+#![allow(clippy::disallowed_macros)]
+
 use super::streamlined::list_yubikeys;
+use crate::log_sensitive;
+use crate::tracing_setup::debug;
 
 #[tokio::test]
 #[ignore] // Integration test requiring actual YubiKey
 async fn test_list_yubikeys_with_reset_device() {
-    println!("🧪 Testing list_yubikeys with reset YubiKey...");
+    log_sensitive!(dev_only: {
+        debug!("🧪 Testing list_yubikeys with reset YubiKey...");
+    });
 
     let result = list_yubikeys().await;
 
@@ -21,15 +28,25 @@ async fn test_list_yubikeys_with_reset_device() {
                 devices.len()
             );
             for device in devices {
-                println!("📱 Device: {device:#?}");
+                log_sensitive!(dev_only: {
+                    debug!("📱 Device: {device:#?}");
+                });
             }
         }
         Err(e) => {
-            println!("❌ ERROR: {}", e.message);
-            println!("🔍 Error code: {:?}", e.code);
-            println!("🛠️ Recovery guidance: {:?}", e.recovery_guidance);
+            log_sensitive!(dev_only: {
+                debug!("❌ ERROR: {}", e.message);
+            });
+            log_sensitive!(dev_only: {
+                debug!("🔍 Error code: {:?}", e.code);
+            });
+            log_sensitive!(dev_only: {
+                debug!("🛠️ Recovery guidance: {:?}", e.recovery_guidance);
+            });
         }
     }
 
-    println!("✅ Test completed");
+    log_sensitive!(dev_only: {
+        debug!("✅ Test completed");
+    });
 }

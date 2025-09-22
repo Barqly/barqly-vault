@@ -81,4 +81,6 @@ mockall = "0.12"
 assert2 = "0.3"
 ctrlc = "3.4"
 tokio-test = "0.4"
+# Isolated test logging (prevents test logs from polluting application logs)
+tracing-test = "0.2"
 

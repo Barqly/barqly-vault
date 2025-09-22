@@ -66,14 +66,12 @@ pub async fn init_yubikey_for_vault(
     }
 
     // Get the vault
-    let mut vault = vault_store::get_vault(&input.vault_id)
-        .await
-        .map_err(|e| {
-            Box::new(
-                CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
-                    .with_recovery_guidance("Ensure the vault exists"),
-            )
-        })?;
+    let mut vault = vault_store::get_vault(&input.vault_id).await.map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
+                .with_recovery_guidance("Ensure the vault exists"),
+        )
+    })?;
 
     // Check if slot is already taken
     let slot_taken = vault.keys.iter().any(|k| match &k.key_type {
@@ -110,17 +108,18 @@ pub async fn init_yubikey_for_vault(
     }
 
     // Initialize the YubiKey
-    let streamlined_result = init_yubikey(input.serial.clone(), input.pin.clone(), input.label.clone())
-        .await
-        .map_err(|e| {
-            Box::new(
-                CommandError::operation(
-                    ErrorCode::YubiKeyInitializationFailed,
-                    format!("Failed to initialize YubiKey: {e}"),
+    let streamlined_result =
+        init_yubikey(input.serial.clone(), input.pin.clone(), input.label.clone())
+            .await
+            .map_err(|e| {
+                Box::new(
+                    CommandError::operation(
+                        ErrorCode::YubiKeyInitializationFailed,
+                        format!("Failed to initialize YubiKey: {e}"),
+                    )
+                    .with_recovery_guidance("Ensure YubiKey is connected and PIN is correct"),
                 )
-                .with_recovery_guidance("Ensure YubiKey is connected and PIN is correct"),
-            )
-        })?;
+            })?;
 
     // Map retired slot (1-20) to PIV slot (82-95)
     let piv_slot = if streamlined_result.slot >= 1 && streamlined_result.slot <= 20 {
@@ -190,15 +189,13 @@ pub async fn register_yubikey_for_vault(
 
     // Get the vault
     debug!(vault_id = input.vault_id, "Fetching vault");
-    let mut vault = vault_store::get_vault(&input.vault_id)
-        .await
-        .map_err(|e| {
-            error!(error = %e, "Failed to fetch vault");
-            Box::new(
-                CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
-                    .with_recovery_guidance("Ensure the vault exists"),
-            )
-        })?;
+    let mut vault = vault_store::get_vault(&input.vault_id).await.map_err(|e| {
+        error!(error = %e, "Failed to fetch vault");
+        Box::new(
+            CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
+                .with_recovery_guidance("Ensure the vault exists"),
+        )
+    })?;
     debug!("Vault loaded successfully");
 
     // Check if slot is already taken
@@ -329,7 +326,10 @@ pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<Yu
 
     // Get all connected YubiKeys
     let all_yubikeys = list_yubikeys().await?;
-    debug!(yubikey_count = all_yubikeys.len(), "Found total YubiKeys connected");
+    debug!(
+        yubikey_count = all_yubikeys.len(),
+        "Found total YubiKeys connected"
+    );
 
     // Get vault's existing YubiKeys
     let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
