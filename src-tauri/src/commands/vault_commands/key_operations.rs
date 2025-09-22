@@ -2,13 +2,11 @@
 //!
 //! Commands for getting, adding, and removing keys from vaults.
 
-use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
+use crate::prelude::*;
 use crate::crypto::yubikey::list_yubikey_devices;
 use crate::models::{KeyReference, KeyState, KeyType};
 use crate::storage::{key_store, vault_store};
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
-use tracing::instrument;
 
 /// Input for getting vault keys
 #[derive(Debug, Deserialize, specta::Type)]
@@ -58,16 +56,16 @@ pub struct RemoveKeyFromVaultResponse {
 #[specta::specta]
 #[instrument(skip_all, fields(vault_id = %input.vault_id))]
 pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVaultKeysResponse> {
-    crate::logging::log_debug(&format!("get_vault_keys called for vault: {}", input.vault_id));
+    debug!(vault_id = %input.vault_id, "get_vault_keys called");
 
     // Load the vault
     let vault = match vault_store::load_vault(&input.vault_id).await {
         Ok(v) => {
-            crate::logging::log_debug(&format!("Vault loaded, has {} keys", v.keys.len()));
+            debug!(keys_count = v.keys.len(), "Vault loaded successfully");
             v
         }
         Err(e) => {
-            crate::logging::log_error(&format!("Failed to load vault {}: {:?}", input.vault_id, e));
+            error!(vault_id = %input.vault_id, error = ?e, "Failed to load vault");
             return Err(Box::new(CommandError {
                 code: ErrorCode::KeyNotFound,
                 message: format!("Vault '{}' not found", input.vault_id),
@@ -92,10 +90,13 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
                 } else {
                     KeyState::Orphaned
                 };
-                crate::logging::log_debug(&format!(
-                    "Passphrase key {} (id: {}) exists: {}, state: {:?}",
-                    key.label, key_id, exists, key.state
-                ));
+                debug!(
+                    key_label = %key.label,
+                    key_id = %key_id,
+                    exists = exists,
+                    key_state = ?key.state,
+                    "Passphrase key status checked"
+                );
             }
             KeyType::Yubikey { serial, .. } => {
                 // Check if YubiKey is inserted
@@ -105,19 +106,21 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
                 } else {
                     KeyState::Registered
                 };
-                crate::logging::log_debug(&format!(
-                    "YubiKey {} (serial: {}) state: {:?}",
-                    key.label, serial, key.state
-                ));
+                debug!(
+                    key_label = %key.label,
+                    serial = %serial,
+                    key_state = ?key.state,
+                    "YubiKey status checked"
+                );
             }
         }
     }
 
-    crate::logging::log_info(&format!(
-        "Returning {} keys for vault {}",
-        updated_keys.len(),
-        input.vault_id
-    ));
+    info!(
+        vault_id = %input.vault_id,
+        keys_count = updated_keys.len(),
+        "Returning vault keys"
+    );
 
     Ok(GetVaultKeysResponse {
         vault_id: input.vault_id,

@@ -22,7 +22,10 @@ tauri-build = { version = "2", features = [] }
 chrono = { version = "0.4", features = ["serde"] }
 
 [dependencies]
+# Logging and tracing
 log = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "chrono"] }
 directories = "5.0"
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
@@ -65,7 +68,6 @@ walkdir = "2.4"
 sha2 = "0.10"
 hex = "0.4"
 tempfile = "3.8"
-tracing = "0.1"
 tauri-plugin-dialog = "2.3.1"
 # Caching dependency
 lru = "0.12"
@@ -77,7 +79,6 @@ rand = "0.8"
 rstest = "0.18"
 mockall = "0.12"
 assert2 = "0.3"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ctrlc = "3.4"
 tokio-test = "0.4"
 

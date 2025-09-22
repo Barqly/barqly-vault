@@ -2,11 +2,13 @@
 //!
 //! Handles saving and loading vaults from the file system.
 
+use crate::logging::log_debug;
 use crate::models::Vault;
 use crate::storage::path_management::{
     get_vault_manifest_path, get_vaults_directory, validate_vault_name,
 };
 use std::path::PathBuf;
+use std::sync::Once;
 use tokio::fs as async_fs;
 
 /// Get the vaults directory path (now uses user-visible Barqly-Vaults directory)
@@ -154,20 +156,24 @@ pub async fn delete_vault(vault_id: &str) -> Result<(), Box<dyn std::error::Erro
     Err(format!("Vault with ID {vault_id} not found").into())
 }
 
+// Log list vaults operation only once per app session for initial load
+static LIST_VAULTS_LOGGED: Once = Once::new();
+
 /// List all vaults
 pub async fn list_vaults() -> Result<Vec<Vault>, Box<dyn std::error::Error + Send + Sync>> {
     let vaults_dir = get_vaults_dir()?;
 
-    // Log the directory we're trying to access
-    eprintln!("[DEBUG] Attempting to list vaults from: {:?}", vaults_dir);
+    // Only log initial vault listing once per app session
+    LIST_VAULTS_LOGGED.call_once(|| {
+        log_debug(&format!("Initial vault listing from: {:?}", vaults_dir));
+    });
 
     let mut vaults = Vec::new();
 
     if vaults_dir.exists() {
-        eprintln!("[DEBUG] Vaults directory exists, reading entries...");
         let mut entries = async_fs::read_dir(&vaults_dir).await
             .map_err(|e| {
-                eprintln!("[ERROR] Failed to read vaults directory: {:?} - Error: {}", vaults_dir, e);
+                log_debug(&format!("Failed to read vaults directory: {}", e));
                 e
             })?;
 

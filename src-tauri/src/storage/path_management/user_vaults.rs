@@ -4,9 +4,11 @@
 //! - `~/Documents/Barqly-Vaults/` - Encrypted vaults and manifests
 //! - `~/Documents/Barqly-Recovery/` - Decrypted/recovered files
 
+use crate::logging::log_debug;
 use crate::storage::errors::StorageError;
 use directories::UserDirs;
 use std::path::PathBuf;
+use std::sync::Once;
 
 /// Get the user's Documents directory
 fn get_documents_dir() -> Result<PathBuf, StorageError> {
@@ -18,6 +20,9 @@ fn get_documents_dir() -> Result<PathBuf, StorageError> {
         .map(|p| p.to_path_buf())
         .ok_or_else(|| StorageError::DirectoryCreationFailed(PathBuf::from("Documents")))
 }
+
+// Log vault directory creation only once per app session
+static VAULTS_DIR_LOGGED: Once = Once::new();
 
 /// Get the Barqly-Vaults directory for encrypted vaults
 ///
@@ -33,18 +38,19 @@ pub fn get_vaults_directory() -> Result<PathBuf, StorageError> {
     let documents = get_documents_dir()?;
     let vaults_dir = documents.join("Barqly-Vaults");
 
-    eprintln!("[DEBUG] Vaults directory path: {:?}", vaults_dir);
+    // Only log directory info once per app session
+    VAULTS_DIR_LOGGED.call_once(|| {
+        log_debug(&format!("Vaults directory path: {:?}", vaults_dir));
+    });
 
     if !vaults_dir.exists() {
-        eprintln!("[DEBUG] Vaults directory doesn't exist, attempting to create it...");
+        log_debug("Creating vaults directory...");
         std::fs::create_dir_all(&vaults_dir)
             .map_err(|e| {
-                eprintln!("[ERROR] Failed to create vaults directory: {:?} - Error: {}", vaults_dir, e);
+                log_debug(&format!("Failed to create vaults directory: {}", e));
                 StorageError::DirectoryCreationFailed(vaults_dir.clone())
             })?;
-        eprintln!("[DEBUG] Successfully created vaults directory");
-    } else {
-        eprintln!("[DEBUG] Vaults directory already exists");
+        log_debug("Successfully created vaults directory");
     }
 
     Ok(vaults_dir)

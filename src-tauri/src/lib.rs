@@ -1,3 +1,8 @@
+// Deny debug and print macros in production code
+#![deny(clippy::print_stdout)]
+#![deny(clippy::print_stderr)]
+#![deny(clippy::dbg_macro)]
+
 pub mod commands; // Keep public - this is the UI interface
 pub mod constants; // Centralized constants for the application
 pub mod crypto; // Public for tests, but should be treated as private for external use
@@ -5,6 +10,8 @@ pub mod file_ops; // Public for tests, but should be treated as private for exte
 pub mod logging; // Public for tests, but should be treated as private for external use
 pub mod models; // Vault and key management models
 pub mod storage; // Public for tests, but should be treated as private for external use
+pub mod tracing_setup; // New centralized tracing configuration
+pub mod prelude; // Project-wide common imports
 
 use commands::{
     create_manifest,
@@ -56,11 +63,21 @@ use commands::{
     yubikey_validate_pin,
 };
 
-use logging::{init_logging, log_info, log_debug, LogLevel};
+use logging::{init_logging, LogLevel};
+use crate::prelude::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Determine if we're in debug or release mode
+    // Initialize new tracing system
+    if let Err(e) = tracing_setup::init() {
+        // Use eprintln only for initialization errors
+        // This is before logging is set up, so it's acceptable
+        #[allow(clippy::print_stderr)]
+        eprintln!("Failed to initialize tracing: {e:?}");
+    }
+
+    // Keep using old logging for now during migration
+    // This will be removed once migration is complete
     #[cfg(debug_assertions)]
     let default_level = LogLevel::Debug;
 
@@ -76,12 +93,12 @@ pub fn run() {
         _ => default_level,
     };
 
-    if let Err(e) = init_logging(log_level) {
-        eprintln!("Failed to initialize logging: {e:?}");
-    } else {
-        log_info("Barqly Vault application started");
-        log_debug(&format!("Log level set to: {log_level:?} (default: {default_level:?}"));
-    }
+    // Initialize old logging system (will be removed after migration)
+    let _ = init_logging(log_level);
+
+    // Use new tracing for startup message
+    info!("Barqly Vault application started");
+    debug!(log_level = ?log_level, default_level = ?default_level, "Log level configured");
 
     // Configure tauri-specta for automatic TypeScript generation (only in build mode, not runtime)
     #[cfg(debug_assertions)]
