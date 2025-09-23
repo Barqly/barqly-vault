@@ -80,15 +80,30 @@ pub fn encrypt_private_key(private_key: &PrivateKey, passphrase: SecretString) -
 /// - Validates passphrase before returning key
 /// - Returns error on wrong passphrase
 pub fn decrypt_private_key(encrypted_key: &[u8], passphrase: SecretString) -> Result<PrivateKey> {
+    use crate::prelude::*;
+
     debug_assert!(!encrypted_key.is_empty(), "Encrypted key cannot be empty");
     debug_assert!(
         !passphrase.expose_secret().is_empty(),
         "Passphrase cannot be empty"
     );
 
+    trace!(
+        encrypted_key_size = encrypted_key.len(),
+        "Starting private key decryption with provided passphrase"
+    );
+
     // Create decryptor
-    let decryptor = age::Decryptor::new(encrypted_key)
-        .map_err(|e| CryptoError::DecryptionFailed(e.to_string()))?;
+    let decryptor = age::Decryptor::new(encrypted_key).map_err(|e| {
+        error!(
+            error = %e,
+            encrypted_key_size = encrypted_key.len(),
+            "Failed to create age decryptor - invalid encrypted key format"
+        );
+        CryptoError::DecryptionFailed(e.to_string())
+    })?;
+
+    debug!("Successfully created age decryptor, attempting passphrase validation");
 
     let mut decrypted = Vec::new();
 
@@ -96,25 +111,59 @@ pub fn decrypt_private_key(encrypted_key: &[u8], passphrase: SecretString) -> Re
     let identity = age::scrypt::Identity::new(passphrase.clone());
     let mut reader = decryptor
         .decrypt(std::iter::once(&identity as &dyn age::Identity))
-        .map_err(|_| CryptoError::WrongPassphrase)?;
+        .map_err(|e| {
+            debug!("Passphrase validation failed during age decryption: {}", e);
+            CryptoError::WrongPassphrase
+        })?;
+
+    debug!("Passphrase validation successful, reading decrypted private key data");
 
     // Read decrypted data
-    std::io::copy(&mut reader, &mut decrypted).map_err(CryptoError::IoError)?;
+    std::io::copy(&mut reader, &mut decrypted).map_err(|e| {
+        error!(
+            error = %e,
+            "IO error while reading decrypted private key data"
+        );
+        CryptoError::IoError(e)
+    })?;
+
+    debug!(
+        decrypted_size = decrypted.len(),
+        "Successfully read decrypted private key data"
+    );
 
     // Convert to string and validate it's a valid age key
-    let private_key_str =
-        String::from_utf8(decrypted).map_err(|e| CryptoError::InvalidKeyFormat(e.to_string()))?;
+    let private_key_str = String::from_utf8(decrypted).map_err(|e| {
+        error!(
+            error = %e,
+            "Decrypted private key data is not valid UTF-8"
+        );
+        CryptoError::InvalidKeyFormat(e.to_string())
+    })?;
 
     // Validate the key format
     if !private_key_str.starts_with("AGE-SECRET-KEY-") {
+        error!(
+            key_prefix = &private_key_str[..std::cmp::min(20, private_key_str.len())],
+            "Decrypted data is not a valid age private key - invalid prefix"
+        );
         return Err(CryptoError::InvalidKeyFormat(
             "Decrypted data is not a valid age private key".to_string(),
         ));
     }
 
+    debug!("Private key has valid AGE-SECRET-KEY prefix, validating key structure");
+
     // Parse to validate it's a proper age key
-    Identity::from_str(&private_key_str)
-        .map_err(|e| CryptoError::InvalidKeyFormat(e.to_string()))?;
+    Identity::from_str(&private_key_str).map_err(|e| {
+        error!(
+            error = %e,
+            "Decrypted private key failed age Identity validation"
+        );
+        CryptoError::InvalidKeyFormat(e.to_string())
+    })?;
+
+    debug!("Private key successfully validated and ready for use");
 
     Ok(PrivateKey::from(SecretString::from(private_key_str)))
 }

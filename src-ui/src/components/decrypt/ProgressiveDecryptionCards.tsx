@@ -68,22 +68,24 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
         setIsValidatingPassphrase(true);
 
         try {
-          // Import the safe invoke function
-          const { safeInvoke } = await import('../../lib/tauri-safe');
+          // Import the generated commands
+          const { commands } = await import('../../bindings');
 
           // Use dedicated validation command for efficient passphrase verification
-          const result = (await safeInvoke(
-            'verify_key_passphrase',
-            {
-              key_id: selectedKeyId,
-              passphrase: passphrase,
-            },
-            'passphrase_validation',
-          )) as { is_valid: boolean; message: string };
+          const result = await commands.verifyKeyPassphrase({
+            key_id: selectedKeyId,
+            passphrase: passphrase,
+          });
+
+          if (result.status === 'error') {
+            throw new Error(result.error.message || 'Passphrase verification failed');
+          }
+
+          const validationData = result.data;
 
           // Check if validation was successful
-          if (!result.is_valid) {
-            throw new Error(result.message);
+          if (!validationData.is_valid) {
+            throw new Error(validationData.message);
           }
 
           // Clear any previous errors since validation succeeded

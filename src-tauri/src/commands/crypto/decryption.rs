@@ -95,25 +95,50 @@ pub async fn decrypt_data(
     progress_manager.set_progress(PROGRESS_DECRYPT_KEY_LOAD, "Loading encryption key...");
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
+    debug!(
+        key_id = %input.key_id,
+        "Loading encrypted private key from storage"
+    );
+
     let encrypted_key = error_handler.handle_operation_error(
         storage::load_encrypted_key(&input.key_id),
         "load_encrypted_key",
         ErrorCode::KeyNotFound,
     )?;
 
+    debug!(
+        key_id = %input.key_id,
+        encrypted_key_size = encrypted_key.len(),
+        "Successfully loaded encrypted private key"
+    );
+
     // Decrypt the private key with the passphrase
     progress_manager.set_progress(PROGRESS_DECRYPT_KEY_DECRYPT, "Decrypting private key...");
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
-    let private_key = error_handler.handle_operation_error(
+    debug!(
+        key_id = %input.key_id,
+        "Attempting to decrypt private key with provided passphrase"
+    );
+
+    let private_key = error_handler.handle_crypto_operation_error(
         crate::crypto::decrypt_private_key(&encrypted_key, SecretString::from(input.passphrase)),
         "decrypt_private_key",
-        ErrorCode::DecryptionFailed,
     )?;
+
+    debug!(
+        key_id = %input.key_id,
+        "Successfully decrypted private key"
+    );
 
     // Read the encrypted file
     progress_manager.set_progress(PROGRESS_DECRYPT_READ_FILE, "Reading encrypted file...");
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
+
+    debug!(
+        encrypted_file = %input.encrypted_file,
+        "Reading encrypted vault file"
+    );
 
     let encrypted_data = error_handler.handle_operation_error(
         std::fs::read(&input.encrypted_file),
@@ -121,15 +146,30 @@ pub async fn decrypt_data(
         ErrorCode::FileNotFound,
     )?;
 
+    debug!(
+        encrypted_file = %input.encrypted_file,
+        encrypted_data_size = encrypted_data.len(),
+        "Successfully read encrypted vault file"
+    );
+
     // Decrypt the data
     progress_manager.set_progress(PROGRESS_DECRYPT_DECRYPTING, "Decrypting data...");
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
-    let decrypted_data = error_handler.handle_operation_error(
+    debug!(
+        encrypted_data_size = encrypted_data.len(),
+        "Starting vault data decryption"
+    );
+
+    let decrypted_data = error_handler.handle_crypto_operation_error(
         crate::crypto::decrypt_data(&encrypted_data, &private_key),
         "decrypt_data",
-        ErrorCode::DecryptionFailed,
     )?;
+
+    debug!(
+        decrypted_data_size = decrypted_data.len(),
+        "Successfully decrypted vault data"
+    );
 
     // Validate and create output directory if it doesn't exist
     let output_path = Path::new(&input.output_dir);

@@ -47,6 +47,77 @@ impl ErrorHandler {
         })
     }
 
+    /// Handle crypto operation errors with specific error type handling
+    #[instrument(skip(self, result), fields(context = %context))]
+    pub fn handle_crypto_operation_error<T>(
+        &self,
+        result: Result<T, crate::crypto::CryptoError>,
+        context: &str,
+    ) -> Result<T, Box<CommandError>> {
+        result.map_err(|e| {
+            let (error_code, error_message) = match &e {
+                crate::crypto::CryptoError::WrongPassphrase => {
+                    debug!(
+                        operation = %context,
+                        error_type = "WrongPassphrase",
+                        "Passphrase validation failed"
+                    );
+                    (
+                        ErrorCode::WrongPassphrase,
+                        "Incorrect passphrase for the selected key".to_string(),
+                    )
+                }
+                crate::crypto::CryptoError::InvalidKeyFormat(msg) => {
+                    error!(
+                        operation = %context,
+                        error_type = "InvalidKeyFormat",
+                        error = %e,
+                        "Invalid key format"
+                    );
+                    (ErrorCode::InvalidKey, format!("Invalid key format: {msg}"))
+                }
+                crate::crypto::CryptoError::DecryptionFailed(msg) => {
+                    error!(
+                        operation = %context,
+                        error_type = "DecryptionFailed",
+                        error = %e,
+                        "Decryption operation failed"
+                    );
+                    (
+                        ErrorCode::DecryptionFailed,
+                        format!("Decryption failed: {msg}"),
+                    )
+                }
+                crate::crypto::CryptoError::EncryptionFailed(msg) => {
+                    error!(
+                        operation = %context,
+                        error_type = "EncryptionFailed",
+                        error = %e,
+                        "Encryption operation failed"
+                    );
+                    (
+                        ErrorCode::EncryptionFailed,
+                        format!("Encryption failed: {msg}"),
+                    )
+                }
+                _ => {
+                    error!(
+                        operation = %context,
+                        error_type = %std::any::type_name::<crate::crypto::CryptoError>(),
+                        error = %e,
+                        "Crypto operation failed"
+                    );
+                    (ErrorCode::InternalError, format!("{context} failed: {e}"))
+                }
+            };
+
+            // Create command error with appropriate error code and message
+            let command_error = CommandError::operation(error_code, error_message)
+                .with_details(format!("Crypto error in {context}: {e}"));
+            Box::new(command_error)
+        })
+    }
+
     /// Handle validation errors with structured logging
     #[instrument(skip(self), fields(field = %field, reason = %reason))]
     pub fn handle_validation_error(&self, field: &str, reason: &str) -> Box<CommandError> {
