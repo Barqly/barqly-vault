@@ -1,7 +1,7 @@
 /// Core PTY functionality for YubiKey operations
 /// Provides low-level PTY command execution
 use crate::prelude::*;
-use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::process::Command;

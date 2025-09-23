@@ -204,7 +204,7 @@ pub async fn add_key_to_vault(
                         user_actionable: true,
                         trace_id: None,
                         span_id: None,
-                    }))
+                    }));
                 }
             };
 

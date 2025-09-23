@@ -1,6 +1,6 @@
 /// Age-specific PTY operations for YubiKey
 /// Handles identity generation and decryption with age-plugin-yubikey
-use super::core::{get_age_plugin_path, run_age_plugin_yubikey, PtyError, Result};
+use super::core::{PtyError, Result, get_age_plugin_path, run_age_plugin_yubikey};
 use crate::prelude::*;
 use std::fs;
 use std::path::Path;
@@ -69,12 +69,13 @@ pub fn generate_age_identity_pty(
 
     // If no recipient found in direct output, check for "Recipient:" prefix
     for line in output.lines() {
-        if line.contains("Recipient:") && line.contains("age1yubikey") {
-            if let Some(recipient) = line.split("Recipient:").nth(1) {
-                let recipient = recipient.trim();
-                info!(recipient = %redact_key(recipient), "Generated age recipient");
-                return Ok(recipient.to_string());
-            }
+        if line.contains("Recipient:")
+            && line.contains("age1yubikey")
+            && let Some(recipient) = line.split("Recipient:").nth(1)
+        {
+            let recipient = recipient.trim();
+            info!(recipient = %redact_key(recipient), "Generated age recipient");
+            return Ok(recipient.to_string());
         }
     }
 

@@ -329,12 +329,11 @@ impl MetadataV2Storage {
 
     /// Check if a metadata file is v2.0 format
     pub fn is_v2_metadata(path: &PathBuf) -> bool {
-        if let Ok(content) = std::fs::read_to_string(path) {
-            if let Ok(value) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let Some(version) = value.get("version").and_then(|v| v.as_str()) {
-                    return version == "2.0";
-                }
-            }
+        if let Ok(content) = std::fs::read_to_string(path)
+            && let Ok(value) = serde_json::from_str::<serde_json::Value>(&content)
+            && let Some(version) = value.get("version").and_then(|v| v.as_str())
+        {
+            return version == "2.0";
         }
         false
     }

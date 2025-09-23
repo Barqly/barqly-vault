@@ -3,7 +3,7 @@
 //! This module contains the main operations for saving, loading, and deleting
 //! encrypted keys with proper security measures.
 
-use super::{update_key_metadata_access_time, validate_key_file, KeyInfo};
+use super::{KeyInfo, update_key_metadata_access_time, validate_key_file};
 use crate::storage::cache::get_cache;
 use crate::storage::errors::StorageError;
 use crate::storage::path_management::{get_key_file_path, get_key_metadata_path};
@@ -156,7 +156,7 @@ pub fn delete_key(label: &str) -> Result<(), StorageError> {
     if let Ok(metadata) = fs::metadata(&key_path) {
         let file_size = metadata.len() as usize;
         let mut rng = rand::thread_rng();
-        let random_data: Vec<u8> = (0..file_size).map(|_| rng.gen()).collect();
+        let random_data: Vec<u8> = (0..file_size).map(|_| rng.r#gen()).collect();
 
         // Try to overwrite (ignore errors as this is best effort)
         let _ = fs::write(&key_path, &random_data);

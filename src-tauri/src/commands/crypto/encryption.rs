@@ -126,9 +126,8 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
         .iter()
         .find(|k| k.label == input.key_id)
         .ok_or_else(|| {
-            let error = error_handler
-                .handle_validation_error("key_id", &format!("Key '{}' not found", input.key_id));
-            error
+            error_handler
+                .handle_validation_error("key_id", &format!("Key '{}' not found", input.key_id))
         })?;
 
     // Get the public key string, handling the case where it might be None

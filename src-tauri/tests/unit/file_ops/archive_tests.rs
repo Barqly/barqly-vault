@@ -4,8 +4,8 @@ use barqly_vault_lib::file_ops::archive_operations::{
     create_archive, create_archive_with_progress, extract_archive,
 };
 use barqly_vault_lib::file_ops::{FileOpsConfig, FileOpsError, FileSelection};
-use flate2::write::GzEncoder;
 use flate2::Compression;
+use flate2::write::GzEncoder;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -408,8 +408,7 @@ fn test_extract_archive_validates_symlink_targets() {
     );
 
     // Verify the files were extracted correctly
-    if result.is_ok() {
-        let extracted = result.unwrap();
+    if let Ok(extracted) = result {
         assert_eq!(extracted.len(), 2, "Should extract two files");
         assert!(
             extract_dir.join("normal.txt").exists(),

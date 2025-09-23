@@ -85,7 +85,7 @@ pub fn run() {
     #[cfg(debug_assertions)]
     {
         use specta_typescript::Typescript;
-        use tauri_specta::{collect_commands, Builder};
+        use tauri_specta::{Builder, collect_commands};
 
         let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
             // Crypto commands

@@ -36,20 +36,20 @@ impl YubiKeyProgressManager {
     ) {
         self.current_phase = phase.clone();
 
-        if let Some(ref manager) = self.progress_manager {
-            if let Ok(mut pm) = manager.lock() {
-                let details = ProgressDetails::YubiKeyOperation {
-                    operation: self.operation_type.clone(),
-                    phase,
-                    requires_interaction,
-                    context,
-                };
+        if let Some(ref manager) = self.progress_manager
+            && let Ok(mut pm) = manager.lock()
+        {
+            let details = ProgressDetails::YubiKeyOperation {
+                operation: self.operation_type.clone(),
+                phase,
+                requires_interaction,
+                context,
+            };
 
-                // Convert phase to progress percentage
-                let progress = self.phase_to_progress(&self.current_phase);
-                pm.set_progress(progress, message);
-                pm.update_with_details((progress * 100.0) as u64, "", details);
-            }
+            // Convert phase to progress percentage
+            let progress = self.phase_to_progress(&self.current_phase);
+            pm.set_progress(progress, message);
+            pm.update_with_details((progress * 100.0) as u64, "", details);
         }
     }
 
@@ -72,10 +72,10 @@ impl YubiKeyProgressManager {
     pub fn report_completed(&mut self, message: String) {
         self.report_progress(YubiKeyPhase::Completed, message, false, None);
 
-        if let Some(ref manager) = self.progress_manager {
-            if let Ok(mut pm) = manager.lock() {
-                pm.complete("YubiKey operation completed");
-            }
+        if let Some(ref manager) = self.progress_manager
+            && let Ok(mut pm) = manager.lock()
+        {
+            pm.complete("YubiKey operation completed");
         }
     }
 

@@ -14,29 +14,29 @@ pub mod progress;
 pub mod validation;
 
 // Re-export all commands and types to maintain existing interface
-pub use decryption::{decrypt_data, DecryptDataInput, DecryptionResult};
-pub use encryption::{encrypt_files, EncryptDataInput};
-pub use key_generation::{generate_key, GenerateKeyInput, GenerateKeyResponse};
+pub use decryption::{DecryptDataInput, DecryptionResult, decrypt_data};
+pub use encryption::{EncryptDataInput, encrypt_files};
+pub use key_generation::{GenerateKeyInput, GenerateKeyResponse, generate_key};
 pub use key_generation_multi::{
-    generate_key_multi, GenerateKeyMultiInput, GenerateKeyMultiResponse,
+    GenerateKeyMultiInput, GenerateKeyMultiResponse, generate_key_multi,
 };
-pub use manifest::{verify_manifest, VerifyManifestInput, VerifyManifestResponse};
+pub use manifest::{VerifyManifestInput, VerifyManifestResponse, verify_manifest};
 pub use passphrase_validation::{
-    validate_passphrase_strength, PassphraseStrength, PassphraseValidationResult,
+    PassphraseStrength, PassphraseValidationResult, validate_passphrase_strength,
 };
 pub use progress::{
-    get_encryption_status, get_progress, EncryptionStatus, EncryptionStatusResponse,
-    GetEncryptionStatusInput, GetProgressInput, GetProgressResponse,
+    EncryptionStatus, EncryptionStatusResponse, GetEncryptionStatusInput, GetProgressInput,
+    GetProgressResponse, get_encryption_status, get_progress,
 };
 pub use validation::{
-    validate_passphrase, verify_key_passphrase, ValidatePassphraseInput,
-    ValidatePassphraseResponse, VerifyKeyPassphraseInput, VerifyKeyPassphraseResponse,
+    ValidatePassphraseInput, ValidatePassphraseResponse, VerifyKeyPassphraseInput,
+    VerifyKeyPassphraseResponse, validate_passphrase, verify_key_passphrase,
 };
 
 // Shared state management
 use std::collections::HashMap;
-use std::sync::atomic::AtomicBool;
 use std::sync::Mutex;
+use std::sync::atomic::AtomicBool;
 
 /// Global operation state to prevent race conditions
 pub(crate) static ENCRYPTION_IN_PROGRESS: AtomicBool = AtomicBool::new(false);

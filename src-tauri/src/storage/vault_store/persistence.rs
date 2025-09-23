@@ -75,11 +75,11 @@ pub async fn load_vault_by_name(
     let mut vault: Vault = serde_json::from_str(&content)?;
 
     // Check for migration needs
-    if let Ok(migrated) = super::migration::migrate_vault_if_needed(&mut vault).await {
-        if migrated {
-            // Save migrated vault
-            save_vault(&vault).await?;
-        }
+    if let Ok(migrated) = super::migration::migrate_vault_if_needed(&mut vault).await
+        && migrated
+    {
+        // Save migrated vault
+        save_vault(&vault).await?;
     }
 
     Ok(vault)
@@ -192,16 +192,16 @@ pub async fn list_vaults() -> Result<Vec<Vault>, Box<dyn std::error::Error + Sen
                 }
             }
             // Also check for legacy .json files during transition period
-            else if path.extension().and_then(|s| s.to_str()) == Some("json") {
-                if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                    // Skip temp files
-                    if !stem.ends_with(".tmp") {
-                        // Try to load as legacy vault
-                        if let Ok(content) = async_fs::read_to_string(&path).await {
-                            if let Ok(vault) = serde_json::from_str::<Vault>(&content) {
-                                vaults.push(vault);
-                            }
-                        }
+            else if path.extension().and_then(|s| s.to_str()) == Some("json")
+                && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
+            {
+                // Skip temp files
+                if !stem.ends_with(".tmp") {
+                    // Try to load as legacy vault
+                    if let Ok(content) = async_fs::read_to_string(&path).await
+                        && let Ok(vault) = serde_json::from_str::<Vault>(&content)
+                    {
+                        vaults.push(vault);
                     }
                 }
             }

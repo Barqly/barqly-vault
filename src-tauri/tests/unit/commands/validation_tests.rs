@@ -102,8 +102,11 @@ mod crypto_validation_tests {
 
             if let Err(error) = result {
                 assert!(
-                    error.message.contains("characters") || error.message.contains("letters and numbers") || error.message.contains("missing:"),
-                    "Error message should mention length or requirements for passphrase '{weak_passphrase}'. Got: {}", error.message
+                    error.message.contains("characters")
+                        || error.message.contains("letters and numbers")
+                        || error.message.contains("missing:"),
+                    "Error message should mention length or requirements for passphrase '{weak_passphrase}'. Got: {}",
+                    error.message
                 );
             }
         }

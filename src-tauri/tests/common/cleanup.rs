@@ -53,29 +53,29 @@ impl TestCleanup {
         let mut cleanup = Self::new();
 
         // Pre-register any keys that match common test patterns
-        if let Ok(keys_dir) = storage::get_keys_directory() {
-            if keys_dir.exists() {
-                // Register any existing test keys for cleanup
-                if let Ok(entries) = std::fs::read_dir(&keys_dir) {
-                    for entry in entries.flatten() {
-                        let file_name = entry.file_name();
-                        let file_name = file_name.to_string_lossy();
+        if let Ok(keys_dir) = storage::get_keys_directory()
+            && keys_dir.exists()
+        {
+            // Register any existing test keys for cleanup
+            if let Ok(entries) = std::fs::read_dir(&keys_dir) {
+                for entry in entries.flatten() {
+                    let file_name = entry.file_name();
+                    let file_name = file_name.to_string_lossy();
 
-                        // Only register keys created in this session (recent test keys)
-                        if file_name.contains("test_key_")
-                            && file_name.contains(&format!(
-                                "{}",
-                                std::time::SystemTime::now()
-                                    .duration_since(std::time::UNIX_EPOCH)
-                                    .unwrap()
-                                    .as_secs()
-                                    / 3600 // Within the current hour
-                            ))
-                        {
-                            cleanup
-                                .artifacts
-                                .push(entry.path().to_string_lossy().to_string());
-                        }
+                    // Only register keys created in this session (recent test keys)
+                    if file_name.contains("test_key_")
+                        && file_name.contains(&format!(
+                            "{}",
+                            std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap()
+                                .as_secs()
+                                / 3600 // Within the current hour
+                        ))
+                    {
+                        cleanup
+                            .artifacts
+                            .push(entry.path().to_string_lossy().to_string());
                     }
                 }
             }
@@ -139,25 +139,25 @@ impl TestSuiteCleanup {
         println!("🧹 Cleaning up test suite artifacts...");
 
         // Clean up all test keys
-        if let Ok(keys_dir) = storage::get_keys_directory() {
-            if let Ok(entries) = std::fs::read_dir(keys_dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if let Some(file_name) = path.file_name() {
-                        let file_name = file_name.to_string_lossy();
+        if let Ok(keys_dir) = storage::get_keys_directory()
+            && let Ok(entries) = std::fs::read_dir(keys_dir)
+        {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if let Some(file_name) = path.file_name() {
+                    let file_name = file_name.to_string_lossy();
 
-                        // Remove test keys (those with test-related names)
-                        if file_name.contains("test")
-                            || file_name.contains("key1")
-                            || file_name.contains("key2")
-                            || file_name.contains("key3")
-                            || file_name.contains("concurrent")
-                        {
-                            if let Err(e) = std::fs::remove_file(&path) {
-                                eprintln!("Warning: Failed to clean up test key {file_name}: {e}");
-                            } else {
-                                println!("  Cleaned up: {file_name}");
-                            }
+                    // Remove test keys (those with test-related names)
+                    if file_name.contains("test")
+                        || file_name.contains("key1")
+                        || file_name.contains("key2")
+                        || file_name.contains("key3")
+                        || file_name.contains("concurrent")
+                    {
+                        if let Err(e) = std::fs::remove_file(&path) {
+                            eprintln!("Warning: Failed to clean up test key {file_name}: {e}");
+                        } else {
+                            println!("  Cleaned up: {file_name}");
                         }
                     }
                 }
@@ -184,13 +184,12 @@ impl TestSuiteCleanup {
                     let file_name = file_name.to_string_lossy();
 
                     // Remove temporary files
-                    if file_name.ends_with(".tmp")
+                    if (file_name.ends_with(".tmp")
                         || file_name.ends_with(".temp")
-                        || file_name.contains("test_")
+                        || file_name.contains("test_"))
+                        && let Err(e) = std::fs::remove_file(path)
                     {
-                        if let Err(e) = std::fs::remove_file(path) {
-                            eprintln!("Warning: Failed to clean up temp file {file_name}: {e}");
-                        }
+                        eprintln!("Warning: Failed to clean up temp file {file_name}: {e}");
                     }
                 }
             }

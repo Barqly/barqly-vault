@@ -82,13 +82,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("📍 Application directory: {}", app_dir.display());
 
         // If app directory is now empty, remove it too
-        if app_dir.exists() {
-            if let Ok(entries) = fs::read_dir(&app_dir) {
-                if entries.count() == 0 {
-                    println!("🗑️  Removing empty app directory");
-                    fs::remove_dir(&app_dir)?;
-                }
-            }
+        if app_dir.exists()
+            && let Ok(entries) = fs::read_dir(&app_dir)
+            && entries.count() == 0
+        {
+            println!("🗑️  Removing empty app directory");
+            fs::remove_dir(&app_dir)?;
         }
     }
 

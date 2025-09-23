@@ -10,7 +10,7 @@
 
 use crate::common::fixtures::CryptoFixtures;
 use crate::common::helpers::{PerformanceHelper, TestAssertions};
-use barqly_vault_lib::crypto::{decrypt_data, encrypt_data, CryptoError};
+use barqly_vault_lib::crypto::{CryptoError, decrypt_data, encrypt_data};
 use rstest::*;
 
 // ============================================================================

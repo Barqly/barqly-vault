@@ -237,10 +237,10 @@ impl StagingArea {
 
 impl Drop for StagingArea {
     fn drop(&mut self) {
-        if !self.cleaned {
-            if let Err(e) = self.cleanup() {
-                error!("Failed to cleanup staging area: {}", e);
-            }
+        if !self.cleaned
+            && let Err(e) = self.cleanup()
+        {
+            error!("Failed to cleanup staging area: {}", e);
         }
     }
 }

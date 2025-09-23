@@ -5,7 +5,7 @@
 
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
 use crate::commands::yubikey_commands::{
-    init_yubikey, list_yubikeys, YubiKeyState, YubiKeyStateInfo,
+    YubiKeyState, YubiKeyStateInfo, init_yubikey, list_yubikeys,
 };
 use crate::crypto::yubikey::YubiKeyInitResult;
 use crate::models::vault::{KeyReference, KeyState, KeyType};
@@ -397,10 +397,9 @@ pub async fn check_yubikey_slot_availability(vault_id: String) -> CommandRespons
         if let KeyType::Yubikey {
             slot_index: idx, ..
         } = &key.key_type
+            && *idx < 3
         {
-            if *idx < 3 {
-                available[*idx as usize] = false;
-            }
+            available[*idx as usize] = false;
         }
     }
 
@@ -411,7 +410,7 @@ pub async fn check_yubikey_slot_availability(vault_id: String) -> CommandRespons
 fn generate_key_reference_id() -> String {
     use rand::Rng;
     let mut rng = rand::thread_rng();
-    let random_bytes: Vec<u8> = (0..8).map(|_| rng.gen()).collect();
+    let random_bytes: Vec<u8> = (0..8).map(|_| rng.r#gen()).collect();
     format!("keyref_{}", bs58::encode(random_bytes).into_string())
 }
 

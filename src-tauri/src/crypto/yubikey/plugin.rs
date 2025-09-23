@@ -188,24 +188,20 @@ impl PluginManager {
 
         // Check against expected checksums
         let checksums_path = self.bundle_dir.join("checksums.json");
-        if checksums_path.exists() {
-            if let Ok(checksums_content) = fs::read_to_string(&checksums_path).await {
-                if let Ok(checksums) = serde_json::from_str::<serde_json::Value>(&checksums_content)
-                {
-                    let plugin_name = self.platform.plugin_binary_name();
-                    if let Some(expected_hash) =
-                        checksums.get(&plugin_name).and_then(|v| v.as_str())
-                    {
-                        let expected_bytes = hex::decode(expected_hash).map_err(|e| {
-                            YubiKeyError::PluginError(format!("Invalid checksum format: {e}"))
-                        })?;
+        if checksums_path.exists()
+            && let Ok(checksums_content) = fs::read_to_string(&checksums_path).await
+            && let Ok(checksums) = serde_json::from_str::<serde_json::Value>(&checksums_content)
+        {
+            let plugin_name = self.platform.plugin_binary_name();
+            if let Some(expected_hash) = checksums.get(&plugin_name).and_then(|v| v.as_str()) {
+                let expected_bytes = hex::decode(expected_hash).map_err(|e| {
+                    YubiKeyError::PluginError(format!("Invalid checksum format: {e}"))
+                })?;
 
-                        if calculated_hash.as_slice() != expected_bytes.as_slice() {
-                            return Err(YubiKeyError::PluginError(
-                                "Plugin integrity verification failed".to_string(),
-                            ));
-                        }
-                    }
+                if calculated_hash.as_slice() != expected_bytes.as_slice() {
+                    return Err(YubiKeyError::PluginError(
+                        "Plugin integrity verification failed".to_string(),
+                    ));
                 }
             }
         }

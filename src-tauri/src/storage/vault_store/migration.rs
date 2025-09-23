@@ -138,23 +138,23 @@ pub async fn migrate_json_vault(
             }
             Some("YubiKeyOnly") | Some("yubikey_only") => {
                 // Add YubiKey reference
-                if let Some(yubikey_info) = value.get("yubikey_info") {
-                    if let Some(serial) = yubikey_info.get("serial").and_then(|v| v.as_str()) {
-                        vault
-                            .add_key(KeyReference {
-                                id: format!("{vault_id}_yubikey"),
-                                key_type: KeyType::Yubikey {
-                                    serial: serial.to_string(),
-                                    slot_index: 0,
-                                    piv_slot: 82, // Default to first retired slot
-                                },
-                                label: "Primary YubiKey".to_string(),
-                                state: KeyState::Registered,
-                                created_at,
-                                last_used: None,
-                            })
-                            .ok();
-                    }
+                if let Some(yubikey_info) = value.get("yubikey_info")
+                    && let Some(serial) = yubikey_info.get("serial").and_then(|v| v.as_str())
+                {
+                    vault
+                        .add_key(KeyReference {
+                            id: format!("{vault_id}_yubikey"),
+                            key_type: KeyType::Yubikey {
+                                serial: serial.to_string(),
+                                slot_index: 0,
+                                piv_slot: 82, // Default to first retired slot
+                            },
+                            label: "Primary YubiKey".to_string(),
+                            state: KeyState::Registered,
+                            created_at,
+                            last_used: None,
+                        })
+                        .ok();
                 }
             }
             Some("Hybrid") | Some("hybrid") => {
@@ -172,23 +172,23 @@ pub async fn migrate_json_vault(
                     })
                     .ok();
 
-                if let Some(yubikey_info) = value.get("yubikey_info") {
-                    if let Some(serial) = yubikey_info.get("serial").and_then(|v| v.as_str()) {
-                        vault
-                            .add_key(KeyReference {
-                                id: format!("{vault_id}_yubikey"),
-                                key_type: KeyType::Yubikey {
-                                    serial: serial.to_string(),
-                                    slot_index: 0,
-                                    piv_slot: 82,
-                                },
-                                label: "YubiKey".to_string(),
-                                state: KeyState::Registered,
-                                created_at,
-                                last_used: None,
-                            })
-                            .ok();
-                    }
+                if let Some(yubikey_info) = value.get("yubikey_info")
+                    && let Some(serial) = yubikey_info.get("serial").and_then(|v| v.as_str())
+                {
+                    vault
+                        .add_key(KeyReference {
+                            id: format!("{vault_id}_yubikey"),
+                            key_type: KeyType::Yubikey {
+                                serial: serial.to_string(),
+                                slot_index: 0,
+                                piv_slot: 82,
+                            },
+                            label: "YubiKey".to_string(),
+                            state: KeyState::Registered,
+                            created_at,
+                            last_used: None,
+                        })
+                        .ok();
                 }
             }
             _ => {

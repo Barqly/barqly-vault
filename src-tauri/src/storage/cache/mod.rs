@@ -24,7 +24,7 @@ mod ttl_lru;
 
 // Re-export public types to maintain backward compatibility
 pub use metrics::CacheMetrics;
-pub use storage_cache::{get_cache, StorageCache};
+pub use storage_cache::{StorageCache, get_cache};
 pub use ttl_lru::TtlLruCache;
 
 #[cfg(test)]

@@ -5,7 +5,7 @@
 //! cargo test test_generate_key_multi_yubikey_only --ignored -- --nocapture
 //! ```
 
-use crate::commands::crypto::key_generation_multi::{generate_key_multi, GenerateKeyMultiInput};
+use crate::commands::crypto::key_generation_multi::{GenerateKeyMultiInput, generate_key_multi};
 use crate::crypto::yubikey::ProtectionMode;
 use crate::log_sensitive;
 use crate::tracing_setup::debug;

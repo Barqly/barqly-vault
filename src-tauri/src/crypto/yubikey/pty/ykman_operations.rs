@@ -1,6 +1,6 @@
 /// Ykman-specific PTY operations for YubiKey management
 /// Handles PIN changes, PUK changes, and management key operations
-use super::core::{run_ykman_command, PtyError, Result};
+use super::core::{PtyError, Result, run_ykman_command};
 use crate::prelude::*;
 
 const DEFAULT_PIN: &str = "123456";
@@ -223,12 +223,12 @@ pub fn get_yubikey_serial() -> Result<String> {
     // Parse serial from output
     // Looking for line like "Serial: 12345678"
     for line in output.lines() {
-        if line.contains("Serial:") {
-            if let Some(serial) = line.split("Serial:").nth(1) {
-                let serial = serial.trim();
-                debug!(serial = %redact_serial(serial), "Found YubiKey serial");
-                return Ok(serial.to_string());
-            }
+        if line.contains("Serial:")
+            && let Some(serial) = line.split("Serial:").nth(1)
+        {
+            let serial = serial.trim();
+            debug!(serial = %redact_serial(serial), "Found YubiKey serial");
+            return Ok(serial.to_string());
         }
     }
 

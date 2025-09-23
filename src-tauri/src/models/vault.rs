@@ -193,6 +193,6 @@ impl Vault {
 fn generate_vault_id() -> String {
     use rand::Rng;
     let mut rng = rand::thread_rng();
-    let bytes: [u8; 16] = rng.gen();
+    let bytes: [u8; 16] = rng.r#gen();
     bs58::encode(bytes).into_string()
 }

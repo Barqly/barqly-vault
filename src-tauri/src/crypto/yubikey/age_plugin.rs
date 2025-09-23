@@ -18,7 +18,7 @@ use tokio::fs;
 use tokio::process::Command;
 use tokio::time::timeout;
 // PTY support
-use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 use std::io::{BufRead, BufReader, Write};
 
 /// Default timeout for age-plugin-yubikey operations
@@ -165,8 +165,8 @@ impl AgePluginProvider {
     async fn execute_plugin_interactive(&self, args: &[&str]) -> YubiKeyResult<(String, String)> {
         // Temporarily increase timeout for interactive operations
         let provider = self.clone_with_timeout(INTERACTIVE_TIMEOUT);
-        let result = provider.execute_plugin(args).await;
-        result
+
+        provider.execute_plugin(args).await
     }
 
     /// Clone provider with different timeout
@@ -251,12 +251,11 @@ impl AgePluginProvider {
         let mut slot = 0x9a;
 
         // Look for label in brackets [label]
-        if let Some(start) = metadata.find('[') {
-            if let Some(end) = metadata.find(']') {
-                if end > start {
-                    label = metadata[start + 1..end].trim().to_string();
-                }
-            }
+        if let Some(start) = metadata.find('[')
+            && let Some(end) = metadata.find(']')
+            && end > start
+        {
+            label = metadata[start + 1..end].trim().to_string();
         }
 
         // Look for serial in parentheses
@@ -272,10 +271,10 @@ impl AgePluginProvider {
         // Look for slot in parentheses
         if let Some(start) = metadata.find("Slot:") {
             let slot_part = &metadata[start + 5..];
-            if let Some(end) = slot_part.find(')') {
-                if let Ok(parsed_slot) = u8::from_str_radix(slot_part[..end].trim(), 16) {
-                    slot = parsed_slot;
-                }
+            if let Some(end) = slot_part.find(')')
+                && let Ok(parsed_slot) = u8::from_str_radix(slot_part[..end].trim(), 16)
+            {
+                slot = parsed_slot;
             }
         }
 

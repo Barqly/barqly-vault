@@ -42,7 +42,7 @@ impl Task3IntegrationTestEnv {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_millis();
-        let random_id = rand::thread_rng().gen::<u32>();
+        let random_id = rand::thread_rng().r#gen::<u32>();
         let key_label = format!("test-key-{timestamp}-{random_id}");
 
         let mut cleanup = TestCleanup::new();

@@ -10,7 +10,7 @@ pub use crate::tracing_setup::{event, instrument, span};
 
 // Re-export redaction utilities for sensitive data
 pub use crate::log_sensitive;
-pub use crate::tracing_setup::redaction::{redact_key, redact_pin, redact_serial, Sensitive};
+pub use crate::tracing_setup::redaction::{Sensitive, redact_key, redact_pin, redact_serial};
 
 // Re-export common error types
 pub use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};

@@ -9,7 +9,7 @@
 //! - Proper integration with hierarchical test structure
 
 use crate::common::helpers::TestAssertions;
-use barqly_vault_lib::file_ops::{create_staging_area, FileSelection, StagingArea};
+use barqly_vault_lib::file_ops::{FileSelection, StagingArea, create_staging_area};
 use rstest::*;
 use std::fs;
 use std::io::Write;

@@ -112,9 +112,9 @@ impl YubiKeyManager {
     ) -> YubiKeyResult<YubiKeyInfo> {
         // Return a stub implementation to maintain API compatibility
         // Real functionality has moved to the provider abstraction
-        Err(YubiKeyError::InitializationFailed(
-            format!("Direct YubiKey initialization is deprecated. Use YubiIdentityProvider::register() instead. Serial: {serial}, Label: {label}")
-        ))
+        Err(YubiKeyError::InitializationFailed(format!(
+            "Direct YubiKey initialization is deprecated. Use YubiIdentityProvider::register() instead. Serial: {serial}, Label: {label}"
+        )))
     }
 
     /// Connect to a YubiKey by serial number (DEPRECATED)

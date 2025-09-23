@@ -9,12 +9,12 @@
 //! - Proper integration with hierarchical test structure
 
 use crate::common::helpers::TestAssertions;
-use barqly_vault_lib::file_ops::{validate_file_size, validate_paths, FileOpsError};
+use barqly_vault_lib::file_ops::{FileOpsError, validate_file_size, validate_paths};
 use rstest::*;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
-use tempfile::{tempdir, NamedTempFile};
+use tempfile::{NamedTempFile, tempdir};
 
 // ============================================================================
 // PATH VALIDATION TESTS

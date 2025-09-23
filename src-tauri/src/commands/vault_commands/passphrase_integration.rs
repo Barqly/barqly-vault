@@ -3,7 +3,7 @@
 //! This module handles the integration between passphrase key generation
 //! and the vault system, ensuring proper key creation and storage.
 
-use crate::commands::crypto::{generate_key, GenerateKeyInput};
+use crate::commands::crypto::{GenerateKeyInput, generate_key};
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::models::vault::{KeyReference, KeyState, KeyType};
 use crate::storage::vault_store;
@@ -123,17 +123,17 @@ pub async fn enhanced_add_key_to_vault(
 ) -> CommandResponse<KeyReference> {
     // If it's a passphrase type with passphrase in metadata, use the integrated function
     if key_type == "passphrase" {
-        if let Some(meta) = metadata {
-            if let Some(passphrase) = meta.get("passphrase").and_then(|p| p.as_str()) {
-                let request = AddPassphraseKeyRequest {
-                    vault_id,
-                    label,
-                    passphrase: passphrase.to_string(),
-                };
+        if let Some(meta) = metadata
+            && let Some(passphrase) = meta.get("passphrase").and_then(|p| p.as_str())
+        {
+            let request = AddPassphraseKeyRequest {
+                vault_id,
+                label,
+                passphrase: passphrase.to_string(),
+            };
 
-                let result = add_passphrase_key_to_vault(request).await?;
-                return Ok(result.key_reference);
-            }
+            let result = add_passphrase_key_to_vault(request).await?;
+            return Ok(result.key_reference);
         }
 
         return Err(Box::new(
@@ -188,7 +188,7 @@ pub async fn enhanced_add_key_to_vault(
 fn generate_key_reference_id() -> String {
     use rand::Rng;
     let mut rng = rand::thread_rng();
-    let random_bytes: Vec<u8> = (0..8).map(|_| rng.gen()).collect();
+    let random_bytes: Vec<u8> = (0..8).map(|_| rng.r#gen()).collect();
     format!("keyref_{}", bs58::encode(random_bytes).into_string())
 }
 

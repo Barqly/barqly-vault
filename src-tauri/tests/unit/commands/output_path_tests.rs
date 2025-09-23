@@ -62,7 +62,10 @@ mod output_path_validation_tests {
 
         // Input validation should pass - directory will be created during execution
         let result = input.validate();
-        assert!(result.is_ok(), "Valid input should pass validation even with non-existent output directory (will be created)");
+        assert!(
+            result.is_ok(),
+            "Valid input should pass validation even with non-existent output directory (will be created)"
+        );
     }
 
     #[test]

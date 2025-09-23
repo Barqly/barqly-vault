@@ -5,7 +5,7 @@
 
 use super::types::{CommandResponse, ErrorCode, ErrorHandler};
 use crate::prelude::*;
-use crate::storage::{delete_key, get_cache, list_keys, CacheMetrics};
+use crate::storage::{CacheMetrics, delete_key, get_cache, list_keys};
 
 /// Key metadata for frontend display
 #[derive(Debug, Serialize, specta::Type)]

@@ -41,16 +41,14 @@ pub fn list_keys() -> Result<Vec<KeyInfo>, StorageError> {
         let path = entry.path();
 
         // Only process metadata files
-        if let Some(extension) = path.extension() {
-            if extension == "meta" {
-                if let Ok(metadata_content) = fs::read_to_string(&path) {
-                    if let Ok(key_info) = serde_json::from_str::<KeyInfo>(&metadata_content) {
-                        // Verify the key file still exists
-                        if key_info.file_path.exists() {
-                            keys.push(key_info);
-                        }
-                    }
-                }
+        if let Some(extension) = path.extension()
+            && extension == "meta"
+            && let Ok(metadata_content) = fs::read_to_string(&path)
+            && let Ok(key_info) = serde_json::from_str::<KeyInfo>(&metadata_content)
+        {
+            // Verify the key file still exists
+            if key_info.file_path.exists() {
+                keys.push(key_info);
             }
         }
     }

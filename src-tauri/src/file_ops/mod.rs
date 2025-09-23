@@ -33,11 +33,11 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-pub use archive_manifest::{verify_manifest, Manifest};
+pub use archive_manifest::{Manifest, verify_manifest};
 pub use archive_operations::{create_archive, create_archive_with_file_info, extract_archive};
 pub use errors::FileOpsError;
 pub use external_manifest::{
-    create_external_manifest_for_archive, generate_external_manifest_path, ExternalManifest,
+    ExternalManifest, create_external_manifest_for_archive, generate_external_manifest_path,
 };
 pub use selection::{FileSelection, SelectionType};
 pub use staging::StagingArea;

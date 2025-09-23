@@ -117,10 +117,10 @@ impl YubiKeyStateCache {
     }
 
     pub fn add_generated_key(&self, serial: &str, key_label: String) {
-        if let Ok(mut cache) = self.cache.write() {
-            if let Some(state) = cache.get_mut(serial) {
-                state.add_generated_key(key_label);
-            }
+        if let Ok(mut cache) = self.cache.write()
+            && let Some(state) = cache.get_mut(serial)
+        {
+            state.add_generated_key(key_label);
         }
     }
 

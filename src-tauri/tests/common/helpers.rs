@@ -307,7 +307,7 @@ impl DataHelpers {
     pub fn generate_random_data(size: usize) -> Vec<u8> {
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        (0..size).map(|_| rng.gen()).collect()
+        (0..size).map(|_| rng.r#gen()).collect()
     }
 
     /// Generate deterministic test data for reproducible tests
@@ -316,7 +316,7 @@ impl DataHelpers {
         use rand::{Rng, SeedableRng};
 
         let mut rng = StdRng::seed_from_u64(seed);
-        (0..size).map(|_| rng.gen()).collect()
+        (0..size).map(|_| rng.r#gen()).collect()
     }
 
     /// Create a test file with specific content

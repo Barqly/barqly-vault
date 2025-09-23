@@ -9,8 +9,8 @@ use crate::file_ops::{
     ArchiveInfo, ArchiveOperation, FileOpsConfig, FileOpsError, FileSelection, ProgressCallback,
     Result,
 };
-use flate2::write::GzEncoder;
 use flate2::Compression;
+use flate2::write::GzEncoder;
 use std::fs::File;
 use std::path::Path;
 use tar::Builder;

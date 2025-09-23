@@ -34,11 +34,15 @@ impl ValidationHelper {
     pub fn validate_not_empty(value: &str, field_name: &str) -> Result<(), Box<CommandError>> {
         if value.trim().is_empty() {
             let recovery_guidance = match field_name {
-                "key label" => "Enter a descriptive name for your encryption key (e.g., 'personal-backup', 'family-keys')",
-                "passphrase" => "Create a strong passphrase to protect your private key - this cannot be recovered if lost",
+                "key label" => {
+                    "Enter a descriptive name for your encryption key (e.g., 'personal-backup', 'family-keys')"
+                }
+                "passphrase" => {
+                    "Create a strong passphrase to protect your private key - this cannot be recovered if lost"
+                }
                 "file path" => "Browse to select a file or folder you want to encrypt",
                 "output path" => "Choose where to save the encrypted file",
-                _ => &format!("Please provide a {field_name}")
+                _ => &format!("Please provide a {field_name}"),
             };
             return Err(Box::new(
                 CommandError::validation(format!("{field_name} cannot be empty"))

@@ -2,7 +2,7 @@
 
 use barqly_vault_lib::file_ops::archive_manifest::*;
 use barqly_vault_lib::file_ops::{
-    create_archive, ArchiveOperation, FileInfo, FileOpsConfig, FileSelection,
+    ArchiveOperation, FileInfo, FileOpsConfig, FileSelection, create_archive,
 };
 use chrono::Utc;
 use std::fs;

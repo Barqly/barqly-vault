@@ -12,7 +12,7 @@ pub mod helpers;
 
 use std::path::PathBuf;
 use std::sync::Once;
-use tempfile::{tempdir, TempDir};
+use tempfile::{TempDir, tempdir};
 
 // Type aliases to reduce complexity
 type SetupFn = Box<dyn Fn() -> Result<(), Box<dyn std::error::Error>>>;

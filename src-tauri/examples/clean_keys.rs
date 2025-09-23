@@ -56,11 +56,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for entry in &key_files {
         let file_name = entry.file_name();
         let file_name = file_name.to_string_lossy();
-        if file_name.starts_with("barqly-") {
-            if let Some(label_end) = file_name.find(".agekey.") {
-                let label = &file_name[7..label_end]; // Skip "barqly-"
-                key_labels.insert(label.to_string());
-            }
+        if file_name.starts_with("barqly-")
+            && let Some(label_end) = file_name.find(".agekey.")
+        {
+            let label = &file_name[7..label_end]; // Skip "barqly-"
+            key_labels.insert(label.to_string());
         }
     }
 

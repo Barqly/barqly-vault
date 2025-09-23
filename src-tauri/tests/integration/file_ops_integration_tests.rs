@@ -10,8 +10,8 @@
 
 use crate::common::helpers::TestAssertions;
 use barqly_vault_lib::file_ops::{
-    create_archive, create_manifest_for_archive, create_staging_area, extract_archive,
-    validate_selection, verify_manifest, FileOpsConfig, FileSelection,
+    FileOpsConfig, FileSelection, create_archive, create_manifest_for_archive, create_staging_area,
+    extract_archive, validate_selection, verify_manifest,
 };
 use rstest::*;
 use std::fs;

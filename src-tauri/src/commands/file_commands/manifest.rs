@@ -3,7 +3,7 @@
 //! This module provides the command for creating manifests from file sets,
 //! which are used to track encrypted archive contents.
 
-use super::{cleanup_temp_files, create_file_selection_atomic, FileInfo, Manifest};
+use super::{FileInfo, Manifest, cleanup_temp_files, create_file_selection_atomic};
 use crate::commands::types::{CommandResponse, ErrorCode, ErrorHandler};
 use crate::file_ops;
 use crate::prelude::*;

@@ -28,11 +28,11 @@ pub use provider::{
 };
 
 // Legacy exports for backward compatibility (deprecated)
-pub use detection::{list_yubikey_devices, DeviceStatus, YubiKeyDevice};
+pub use detection::{DeviceStatus, YubiKeyDevice, list_yubikey_devices};
 pub use errors::{YubiKeyError, YubiKeyResult};
 pub use management::{YubiKeyInfo, YubiKeyManager};
-pub use plugin::{ensure_plugin_available, PluginError, PluginManager};
-pub use progress::{create_yubikey_progress_manager, YubiKeyProgressManager};
+pub use plugin::{PluginError, PluginManager, ensure_plugin_available};
+pub use progress::{YubiKeyProgressManager, create_yubikey_progress_manager};
 
 use serde::{Deserialize, Serialize};
 
