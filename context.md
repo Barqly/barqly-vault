@@ -33,7 +33,7 @@ _Your 2-minute orientation to the secure data vault system_
 
 ```yaml
 frontend: "React 19.1 + TypeScript + Tailwind CSS + Shadcn/ui"
-backend: "Rust + Tauri v2 + age-encryption"
+backend: "Rust Edition 2024 + Tauri v2 + age-encryption"
 testing: "Vitest (frontend) + Rust tests (backend)"
 platform: "Desktop (macOS, Windows, Linux)"
 security: "Age encryption, local-only, zero network"
@@ -94,13 +94,16 @@ make app            # Start Tauri desktop app
 
 ## Active Development
 
-- **Current Phase**: Alpha release with core functionality and UI consistency complete
-- **Recent Achievement**: Comprehensive UI consistency optimization across all three screens
-- **Next Milestone**: Testing & QA (4.2.5) - Unit, integration, E2E, accessibility
-- **Project Tracking**: `/docs/project-plan.md`
+- **Current Phase**: Post-alpha with hardware security integration in progress
+- **Recent Achievement**: Rust Edition 2024 migration completed (January 2025)
+  - ✅ Modern async patterns and let-chains implemented
+  - ✅ All 462 backend tests passing with zero warnings
+  - ✅ Future-ready for async generators and closures
+- **Active Work**: YubiKey hardware integration (80-85% complete)
+  - ✅ Backend implementation complete with multi-key registration
+  - 🚧 UI refactoring and functional bug fixes remaining (~15%)
+- **Next Milestone**: Complete YubiKey integration and release
 
 ---
 
 _This context system eliminates the 25-35 minute "context reconstruction tax". Operational in under 5 minutes._
-
-**Last Updated**: January 2025 | **Version**: Post-core-architecture phase

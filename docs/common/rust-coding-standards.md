@@ -140,6 +140,30 @@ if let Err(e) = validate_input(&input) {
 }
 ```
 
+#### Use Let-chains for Multiple Conditions (Edition 2024)
+
+```rust
+//  Good: Edition 2024 let-chains
+if let Some(meta) = metadata
+    && let Some(passphrase) = meta.get("passphrase") {
+    process_passphrase(passphrase)?;
+}
+
+// Complex conditional logic
+if let Ok(config) = load_config()
+    && config.encryption_enabled
+    && let Some(key_path) = config.key_path {
+    setup_encryption(&key_path)?;
+}
+
+// L Bad: Nested if let (pre-2024 style)
+if let Some(meta) = metadata {
+    if let Some(passphrase) = meta.get("passphrase") {
+        process_passphrase(passphrase)?;
+    }
+}
+```
+
 ### 1.4 Zero-Copy Operations
 
 #### Use Borrowed Types in APIs
@@ -801,6 +825,82 @@ pub async fn process_archive(path: &Path) -> Result<()> {
     archive.finish().await?;
     Ok(())
 }
+```
+
+## 7. Edition 2024 Specific Guidelines
+
+### 7.1 Reserved Keywords
+
+Edition 2024 reserves the `gen` keyword for future async generators. Existing code using `gen` as method names must be escaped:
+
+```rust
+//  Good: Escape reserved keyword
+let random_bytes: Vec<u8> = (0..8).map(|_| rng.r#gen()).collect();
+
+// L Bad: Using reserved keyword (compilation error in Edition 2024)
+let random_bytes: Vec<u8> = (0..8).map(|_| rng.gen()).collect();
+
+// Also applies to type names and other identifiers
+struct MyStruct {
+    r#gen: u32,  // Escaped field name
+}
+```
+
+### 7.2 Improved Async Lifetime Inference
+
+Edition 2024 simplifies async function signatures by improving lifetime inference:
+
+```rust
+//  Good: Edition 2024 - implicit lifetime
+async fn process_data(&self) -> impl Iterator<Item = Data> {
+    // No explicit '+ '_ lifetime needed
+}
+
+// L Bad: Edition 2021 style (still works but unnecessary)
+async fn process_data(&self) -> impl Iterator<Item = Data> + '_ {
+    // Explicit lifetime not needed in Edition 2024
+}
+```
+
+### 7.3 Advanced Let-chains
+
+Use let-chains for cleaner error handling and validation:
+
+```rust
+//  Good: Clean validation with let-chains
+pub fn validate_and_process(input: &str) -> Result<ProcessedData> {
+    if let Ok(parsed) = parse_input(input)
+        && let Some(validated) = validate_data(&parsed)
+        && validated.size > 0 {
+        Ok(process_validated(validated))
+    } else {
+        Err(ValidationError::Invalid)
+    }
+}
+
+//  Good: File operations with let-chains
+if let Ok(metadata) = fs::metadata(&path)
+    && metadata.is_file()
+    && metadata.len() < MAX_FILE_SIZE {
+    process_file(&path)?;
+}
+```
+
+### 7.4 Migration Notes
+
+When upgrading existing code to Edition 2024:
+
+1. **Run `cargo fix --edition`** to automatically fix most issues
+2. **Escape `gen` method calls** with `r#gen`
+3. **Simplify async lifetimes** by removing explicit `+ '_` annotations
+4. **Refactor nested if-let** to use let-chains for better readability
+5. **Update clippy configuration** for Edition 2024 lints
+
+```bash
+# Migration workflow
+cargo fix --edition --all-targets --allow-dirty
+cargo fmt
+cargo clippy --fix --all-targets --allow-dirty
 ```
 
 ## Enforcement and Tooling

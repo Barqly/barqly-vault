@@ -8,8 +8,8 @@
 
 ```toml
 # Rust toolchain
-edition = "2021"
-rust-version = "1.70"  # Minimum supported
+edition = "2024"
+rust-version = "1.85"  # Minimum supported (Edition 2024 requirement)
 
 # Core dependencies
 tauri = "2.0"          # Desktop framework
@@ -226,13 +226,13 @@ npm audit                # Security check
 
 ### Minimum Supported Versions
 
-| Component  | Minimum | Recommended   | Notes                    |
-| ---------- | ------- | ------------- | ------------------------ |
-| Rust       | 1.70    | Latest stable | Memory safety features   |
-| Node.js    | 22.17.0 | 22.17.0 LTS   | Required for Tailwind v4 |
-| Tauri      | 2.0     | 2.x latest    | Desktop framework        |
-| React      | 18.0    | 18.3.1        | Concurrent features      |
-| TypeScript | 5.0     | 5.5.3         | Strict mode required     |
+| Component  | Minimum | Recommended   | Notes                        |
+| ---------- | ------- | ------------- | ---------------------------- |
+| Rust       | 1.85    | Latest stable | Edition 2024 requirement    |
+| Node.js    | 22.17.0 | 22.17.0 LTS   | Required for Tailwind v4    |
+| Tauri      | 2.0     | 2.x latest    | Desktop framework           |
+| React      | 18.0    | 18.3.1        | Concurrent features         |
+| TypeScript | 5.0     | 5.5.3         | Strict mode required        |
 
 ## Configuration Files
 

@@ -125,6 +125,25 @@ pub fn create_staging_area() -> Result<StagingArea>
 3. **Factory Pattern** - Staging area creation
 4. **Observer Pattern** - Progress tracking
 
+### Modern Rust Patterns (Edition 2024)
+
+1. **Let-chains** - Cleaner nested conditional logic
+   ```rust
+   if let Some(meta) = metadata
+       && let Some(passphrase) = meta.get("passphrase") {
+       // Simplified nested conditions
+   }
+   ```
+
+2. **Improved Async Lifetimes** - Simplified async function signatures
+   ```rust
+   async fn process(&self) -> impl Future<Output=Result<T>> {
+       // No explicit '+ lifetime annotations needed
+   }
+   ```
+
+3. **Future-Ready** - Prepared for async generators and closures
+
 ### Error Handling Strategy
 
 ```typescript
@@ -169,7 +188,7 @@ interface CommandError {
 ### Backend Stack
 
 - **Runtime**: Tauri v2 (latest stable)
-- **Language**: Rust (memory safety, performance)
+- **Language**: Rust Edition 2024 (memory safety, performance)
 - **Encryption**: age-encryption crate
 - **Archiving**: tar + flate2 (TAR.GZ)
 - **Serialization**: serde + serde_json
