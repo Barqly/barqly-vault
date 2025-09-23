@@ -1,7 +1,11 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useKeyGeneration } from '../../../hooks/useKeyGeneration';
 import { CommandError, ErrorCode } from '../../../lib/api-types';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -9,7 +13,6 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeListen: vi.fn(),
 }));
 
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
 const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useKeyGeneration - Key Generation Failure', () => {
@@ -33,7 +36,7 @@ describe('useKeyGeneration - Key Generation Failure', () => {
     });
 
     // Mock passphrase validation and key generation
-    mockSafeInvoke
+    mockInvoke
       .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
       .mockRejectedValueOnce(generationError); // generate_key fails
 
@@ -59,7 +62,7 @@ describe('useKeyGeneration - Key Generation Failure', () => {
     };
 
     // Mock passphrase validation and key generation
-    mockSafeInvoke
+    mockInvoke
       .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
       .mockRejectedValueOnce(generationError); // generate_key fails
 

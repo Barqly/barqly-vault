@@ -1,6 +1,10 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -8,7 +12,6 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeListen: vi.fn(),
 }));
 
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
 const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useFileEncryption - State Management', () => {
@@ -36,7 +39,7 @@ describe('useFileEncryption - State Management', () => {
     const testPaths = ['/mock/path/file1.txt', '/mock/path/file2.txt'];
 
     // Mock get_file_info response
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: testPaths[0],
         name: 'file1.txt',
@@ -75,7 +78,7 @@ describe('useFileEncryption - State Management', () => {
     const { result } = renderHook(() => useFileEncryption());
 
     // Mock get_file_info for file selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/test.txt',
         name: 'test.txt',
@@ -93,7 +96,7 @@ describe('useFileEncryption - State Management', () => {
 
     // Mock an error for encryption
     const mockError = new Error('Encryption failed');
-    mockSafeInvoke.mockRejectedValueOnce(mockError);
+    mockInvoke.mockRejectedValueOnce(mockError);
 
     // Try to encrypt (will fail)
     await act(async () => {
@@ -126,7 +129,7 @@ describe('useFileEncryption - State Management', () => {
     expect(result.current.isLoading).toBe(false);
 
     // Mock get_file_info for file selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/file1.txt',
         name: 'file1.txt',
@@ -166,7 +169,7 @@ describe('useFileEncryption - State Management', () => {
     expect(result.current.selectedFiles).toBe(null);
 
     // Mock get_file_info for second selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/file3.txt',
         name: 'file3.txt',

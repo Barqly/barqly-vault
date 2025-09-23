@@ -1,6 +1,10 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
+import { mockInvoke } from '../../../test-setup';
 // Types are imported but not used in this file since we're mocking everything
 
 // Mock the tauri-safe module
@@ -8,8 +12,6 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeInvoke: vi.fn(),
   safeListen: vi.fn(),
 }));
-
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
 
 describe('useFileEncryption - File Selection', () => {
   beforeEach(() => {
@@ -20,8 +22,8 @@ describe('useFileEncryption - File Selection', () => {
     const { result } = renderHook(() => useFileEncryption());
     const testPaths = ['/mock/path/file1.txt', '/mock/path/file2.txt'];
 
-    // Mock the get_file_info response
-    mockSafeInvoke.mockResolvedValueOnce([
+    // Mock the get_file_info command response
+    mockInvoke.mockResolvedValueOnce([
       {
         path: testPaths[0],
         name: 'file1.txt',
@@ -59,7 +61,7 @@ describe('useFileEncryption - File Selection', () => {
     const { result } = renderHook(() => useFileEncryption());
 
     // Mock empty response for empty paths
-    mockSafeInvoke.mockResolvedValueOnce([]);
+    mockInvoke.mockResolvedValueOnce([]);
 
     await act(async () => {
       await result.current.selectFiles([], 'Files');
@@ -81,7 +83,7 @@ describe('useFileEncryption - File Selection', () => {
     const folderPath = ['/mock/path/folder'];
 
     // Mock folder info with file_count
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: folderPath[0],
         name: 'folder',
@@ -117,7 +119,7 @@ describe('useFileEncryption - File Selection', () => {
     ];
 
     // Mock file info for all 5 files
-    mockSafeInvoke.mockResolvedValueOnce(
+    mockInvoke.mockResolvedValueOnce(
       testPaths.map((path, index) => ({
         path,
         name: `file${index + 1}.txt`,
@@ -146,7 +148,7 @@ describe('useFileEncryption - File Selection', () => {
     const { result } = renderHook(() => useFileEncryption());
 
     // Mock file info for initial selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/path/to/file.txt',
         name: 'file.txt',
@@ -186,7 +188,7 @@ describe('useFileEncryption - File Selection', () => {
     const secondPaths = ['/second/file1.txt'];
 
     // Mock first selection
-    mockSafeInvoke.mockResolvedValueOnce(
+    mockInvoke.mockResolvedValueOnce(
       firstPaths.map((path, index) => ({
         path,
         name: `file${index + 1}.txt`,
@@ -206,7 +208,7 @@ describe('useFileEncryption - File Selection', () => {
     expect(result.current.selectedFiles?.file_count).toBe(2);
 
     // Mock second selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: secondPaths[0],
         name: 'file1.txt',
@@ -232,7 +234,7 @@ describe('useFileEncryption - File Selection', () => {
     const folderPath = ['/my/folder'];
 
     // Mock files info
-    mockSafeInvoke.mockResolvedValueOnce(
+    mockInvoke.mockResolvedValueOnce(
       filePaths.map((path, index) => ({
         path,
         name: `file${index + 1}.txt`,
@@ -252,7 +254,7 @@ describe('useFileEncryption - File Selection', () => {
     expect(result.current.selectedFiles?.file_count).toBe(2);
 
     // Mock folder info
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: folderPath[0],
         name: 'folder',

@@ -64,7 +64,7 @@ export const prepareEncryptionInput = (
   return {
     key_id: keyId,
     file_paths: selectedFiles.paths,
-    output_name: outputName,
-    output_path: outputPath,
+    output_name: outputName ?? null,
+    output_path: outputPath ?? null,
   };
 };

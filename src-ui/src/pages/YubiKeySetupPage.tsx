@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { YubiKeyStreamlined } from '../components/setup/YubiKeyStreamlined';
-import { YubiKeyInitResult } from '../lib/api-types';
+import { StreamlinedYubiKeyInitResult } from '../bindings';
 import { logger } from '../lib/logger';
 
 /**
@@ -11,7 +11,7 @@ import { logger } from '../lib/logger';
 const YubiKeySetupPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleComplete = (result: YubiKeyInitResult) => {
+  const handleComplete = (result: StreamlinedYubiKeyInitResult) => {
     logger.info('YubiKeySetupPage', 'YubiKey setup completed', result);
 
     // Store result in session storage for next step

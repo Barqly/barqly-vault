@@ -1,6 +1,10 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useKeyGeneration } from '../../../hooks/useKeyGeneration';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -8,7 +12,6 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeListen: vi.fn(),
 }));
 
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
 const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useKeyGeneration - State Management', () => {
@@ -35,11 +38,11 @@ describe('useKeyGeneration - State Management', () => {
   it('should set loading state during operations', async () => {
     const { result } = renderHook(() => useKeyGeneration());
 
-    mockSafeInvoke
+    mockInvoke
       .mockImplementationOnce(
         () =>
           new Promise((resolve) =>
-            setTimeout(() => resolve({ is_valid: true, strength: 'Strong' }), 100),
+            setTimeout(() => resolve({ is_valid: true, strength: 'strong' }), 100),
           ),
       )
       .mockResolvedValueOnce({

@@ -9,7 +9,7 @@ import globals from 'globals';
 export default [
   {
     // Global ignores
-    ignores: ['dist', 'node_modules', '.vite-temp'],
+    ignores: ['dist', 'node_modules', '.vite-temp', 'src/bindings.ts'],
   },
   // Config for Node.js files (e.g., vite.config.ts)
   {

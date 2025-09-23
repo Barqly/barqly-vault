@@ -17,7 +17,8 @@ import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
  */
 const ManageKeysPage: React.FC = () => {
   const navigate = useNavigate();
-  const { vaults, currentVault, vaultKeys, isLoading, error, refreshVaults, refreshKeys } = useVault();
+  const { vaults, currentVault, vaultKeys, isLoading, error, refreshVaults, refreshKeys } =
+    useVault();
   const [showCreateVault, setShowCreateVault] = useState(false);
   const [showPassphraseDialog, setShowPassphraseDialog] = useState(false);
   const [showYubiKeyDialog, setShowYubiKeyDialog] = useState(false);

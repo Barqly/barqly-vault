@@ -2,4 +2,5 @@ coverage
 dist
 build
 node_modules
-.DS_Store 
+.DS_Store
+src/bindings.ts 

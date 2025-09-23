@@ -1,7 +1,11 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useKeyGeneration } from '../../../hooks/useKeyGeneration';
 import { GenerateKeyResponse } from '../../../lib/api-types';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -18,14 +22,13 @@ vi.mock('../../../lib/environment/platform', () => ({
 }));
 
 // Import after mocking
-import { safeInvoke, safeListen } from '../../../lib/tauri-safe';
+import { safeListen } from '../../../lib/tauri-safe';
 
-const mockSafeInvoke = vi.mocked(safeInvoke);
 const mockSafeListen = vi.mocked(safeListen);
 
 // Convenience references for consistency with new pattern
 const mocks = {
-  safeInvoke: mockSafeInvoke,
+  safeInvoke: mockInvoke,
   safeListen: mockSafeListen,
 };
 
@@ -65,18 +68,18 @@ describe('useKeyGeneration - Key Generation Success', () => {
     expect(result.current.error).toBe(null);
   });
 
-  it('should call generate_key command with correct parameters', async () => {
+  it('should provide generated key data after successful generation', async () => {
     const { result } = renderHook(() => useKeyGeneration());
     const mockKeyResult: GenerateKeyResponse = {
       key_id: 'test-key-id',
-      public_key: 'age1...',
+      public_key: 'age1abc123def456...',
       saved_path: '~/.config/barqly-vault/keys/test-key-id.age',
     };
 
-    // Mock passphrase validation and key generation
-    mocks.safeInvoke
-      .mockResolvedValueOnce({ is_valid: true, strength: 'Strong' }) // validate_passphrase
-      .mockResolvedValueOnce(mockKeyResult); // generate_key
+    // Mock successful API responses
+    mockInvoke
+      .mockResolvedValueOnce({ is_valid: true, strength: 'strong' }) // passphrase validation
+      .mockResolvedValueOnce(mockKeyResult); // key generation
 
     act(() => {
       result.current.setLabel('test-key');
@@ -87,14 +90,14 @@ describe('useKeyGeneration - Key Generation Success', () => {
       await result.current.generateKey();
     });
 
-    expect(mockSafeInvoke).toHaveBeenCalledWith(
-      'generate_key',
-      {
-        label: 'test-key',
-        passphrase: 'StrongP@ssw0rd123!',
-      },
-      'key-generation-workflow',
-    );
+    // Test behavior: Does the hook provide the expected generated key data?
+    expect(result.current.success).toEqual({
+      key_id: 'test-key-id',
+      public_key: 'age1abc123def456...',
+      saved_path: '~/.config/barqly-vault/keys/test-key-id.age',
+    });
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
   });
 
   it('should set up progress listener for key generation', async () => {

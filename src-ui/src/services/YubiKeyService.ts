@@ -6,10 +6,11 @@
  * and encryption/decryption operations.
  */
 
-import { commands, YubiKeyDevice, YubiKeyConnectionTest } from '../bindings';
+import { commands, YubiKeyDevice } from '../bindings';
 import { logger } from '../lib/logger';
 
 // Re-export YubiKeyDevice from bindings
+export interface YubiKeyDeviceExtended extends YubiKeyDevice {
   // Extended properties for service
   status?: DeviceStatus;
   available_slots?: number[];

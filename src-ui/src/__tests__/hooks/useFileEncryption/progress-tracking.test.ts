@@ -1,6 +1,10 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -8,7 +12,6 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeListen: vi.fn(),
 }));
 
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
 const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useFileEncryption - Progress Tracking', () => {
@@ -34,7 +37,7 @@ describe('useFileEncryption - Progress Tracking', () => {
     });
 
     // Mock get_file_info for file selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/mock/path/file1.txt',
         name: 'file1.txt',
@@ -58,7 +61,7 @@ describe('useFileEncryption - Progress Tracking', () => {
     });
 
     // Mock the encryption result
-    mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+    mockInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
     await act(async () => {
       result.current.encryptFiles('test-key', '/output');

@@ -1,7 +1,11 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
 import { CommandError, ErrorCode } from '../../../lib/api-types';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -9,7 +13,6 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeListen: vi.fn(),
 }));
 
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
 const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useFileEncryption - Encryption Failure', () => {
@@ -28,7 +31,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     };
 
     // Mock get_file_info for file selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/path/to/file.txt',
         name: 'file.txt',
@@ -45,7 +48,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     });
 
     // Mock the encryption to fail
-    mockSafeInvoke.mockRejectedValueOnce(encryptionError);
+    mockInvoke.mockRejectedValueOnce(encryptionError);
 
     // Try to encrypt
     await act(async () => {
@@ -71,7 +74,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     };
 
     // Mock get_file_info for file selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/path/to/file.txt',
         name: 'file.txt',
@@ -88,7 +91,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     });
 
     // Mock the encryption to fail
-    mockSafeInvoke.mockRejectedValueOnce(encryptionError);
+    mockInvoke.mockRejectedValueOnce(encryptionError);
 
     // Verify the error is thrown
     await expect(
@@ -103,7 +106,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     const genericError = new Error('Something went wrong');
 
     // Mock get_file_info for file selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/path/to/file.txt',
         name: 'file.txt',
@@ -120,7 +123,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     });
 
     // Mock encryption to fail with generic error
-    mockSafeInvoke.mockRejectedValueOnce(genericError);
+    mockInvoke.mockRejectedValueOnce(genericError);
 
     await act(async () => {
       try {
@@ -163,7 +166,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     const { result } = renderHook(() => useFileEncryption());
 
     // Mock get_file_info for file selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/path/to/file.txt',
         name: 'file.txt',
@@ -205,7 +208,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     mockSafeListen.mockResolvedValueOnce(mockUnlisten);
 
     // Mock get_file_info for file selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/file.txt',
         name: 'file.txt',
@@ -222,7 +225,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     });
 
     // Mock encryption to fail
-    mockSafeInvoke.mockRejectedValueOnce(encryptionError);
+    mockInvoke.mockRejectedValueOnce(encryptionError);
 
     await act(async () => {
       try {
@@ -241,7 +244,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     const { result } = renderHook(() => useFileEncryption());
 
     // Mock get_file_info for empty selection
-    mockSafeInvoke.mockResolvedValueOnce([]);
+    mockInvoke.mockResolvedValueOnce([]);
 
     // Test 1: Error when files are empty array
     await act(async () => {
@@ -264,7 +267,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     });
 
     // Mock get_file_info for second selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/valid/file.txt',
         name: 'file.txt',
@@ -287,7 +290,7 @@ describe('useFileEncryption - Encryption Failure', () => {
       user_actionable: true,
     };
 
-    mockSafeInvoke.mockRejectedValueOnce(networkError);
+    mockInvoke.mockRejectedValueOnce(networkError);
 
     await act(async () => {
       try {

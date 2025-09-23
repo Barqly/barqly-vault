@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Key, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useVault } from '../../contexts/VaultContext';
 import { logger } from '../../lib/logger';
-import { commands, PassphraseValidationResult, AddPassphraseKeyRequest, AddPassphraseKeyResponse } from '../../bindings';
+import { commands, PassphraseValidationResult, AddPassphraseKeyRequest } from '../../bindings';
 
 interface PassphraseKeyDialogProps {
   isOpen: boolean;

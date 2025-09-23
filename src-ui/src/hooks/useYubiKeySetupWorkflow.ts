@@ -6,9 +6,8 @@ import {
   YubiKeyDevice,
   YubiKeyInfo,
   // CommandErrorClass, // Commented out - not currently used
-  YubiKeyStateInfo,
-  YubiKeyState,
 } from '../lib/api-types';
+import { YubiKeyStateInfo } from '../bindings';
 import { safeInvoke } from '../lib/tauri-safe';
 import { logger } from '../lib/logger';
 
@@ -88,9 +87,9 @@ export const useYubiKeySetupWorkflow = () => {
       }
 
       // Check YubiKey states and provide appropriate messaging
-      const registeredKeys = yubikeys.filter((yk) => yk.state === YubiKeyState.REGISTERED);
-      const newKeys = yubikeys.filter((yk) => yk.state === YubiKeyState.NEW);
-      const reusedKeys = yubikeys.filter((yk) => yk.state === YubiKeyState.REUSED);
+      const registeredKeys = yubikeys.filter((yk) => yk.state === 'registered');
+      const newKeys = yubikeys.filter((yk) => yk.state === 'new');
+      const reusedKeys = yubikeys.filter((yk) => yk.state === 'reused');
 
       if (registeredKeys.length > 0) {
         console.log('✅ Found registered YubiKey(s):', registeredKeys);

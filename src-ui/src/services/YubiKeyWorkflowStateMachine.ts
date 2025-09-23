@@ -7,7 +7,7 @@
  */
 
 import { ProtectionMode } from '../lib/api-types';
-import { YubiKeyDevice } from './YubiKeyService';
+import { YubiKeyDevice } from '../bindings';
 
 // Workflow States
 export type YubiKeyWorkflowState =

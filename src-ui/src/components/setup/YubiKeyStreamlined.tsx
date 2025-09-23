@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Key, Shield, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { commands, YubiKeyStateInfo, YubiKeyInitResult, YubiKeyState, StreamlinedYubiKeyInitResult } from '../../bindings';
+import { commands, YubiKeyStateInfo, StreamlinedYubiKeyInitResult } from '../../bindings';
 import { logger } from '../../lib/logger';
 
 interface YubiKeyStreamlinedProps {
-  onComplete?: (result: YubiKeyInitResult) => void;
+  onComplete?: (result: StreamlinedYubiKeyInitResult) => void;
   onCancel?: () => void;
 }
 
@@ -23,7 +23,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
   const [pinConfirm, setPinConfirm] = useState('');
   const [label, setLabel] = useState('');
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
-  const [initResult, setInitResult] = useState<YubiKeyInitResult | null>(null);
+  const [initResult, setInitResult] = useState<StreamlinedYubiKeyInitResult | null>(null);
   const [showRecoveryWarning, setShowRecoveryWarning] = useState(false);
 
   // Operation state
@@ -68,7 +68,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
     setError(null);
 
     try {
-      let result: YubiKeyInitResult | StreamlinedYubiKeyInitResult;
+      let result: StreamlinedYubiKeyInitResult;
 
       if (selectedKey.state === 'new') {
         // Initialize new YubiKey
@@ -116,11 +116,11 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
 
   const getStateColor = (state: string) => {
     switch (state) {
-      case YubiKeyState.NEW:
+      case 'new':
         return 'text-green-600';
-      case YubiKeyState.REUSED:
+      case 'reused':
         return 'text-blue-600';
-      case YubiKeyState.REGISTERED:
+      case 'registered':
         return 'text-gray-500';
       case 'UNKNOWN':
         return 'text-yellow-600';
@@ -131,11 +131,11 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
 
   const getStateLabel = (state: string) => {
     switch (state) {
-      case YubiKeyState.NEW:
+      case 'new':
         return 'New (Ready for setup)';
-      case YubiKeyState.REUSED:
+      case 'reused':
         return 'Reused (Needs registration)';
-      case YubiKeyState.REGISTERED:
+      case 'registered':
         return 'Already registered';
       case 'UNKNOWN':
         return 'Needs recovery (manifest missing)';
@@ -187,15 +187,15 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                     <button
                       key={yk.serial}
                       onClick={() => {
-                        if (yk.state !== YubiKeyState.REGISTERED) {
+                        if (yk.state !== 'registered') {
                           setSelectedKey(yk);
                           setLabel(`YubiKey-${yk.serial.substring(0, 6)}`);
                           setOperation('setup');
                         }
                       }}
-                      disabled={yk.state === YubiKeyState.REGISTERED}
+                      disabled={yk.state === 'registered'}
                       className={`w-full p-4 border rounded-lg text-left transition-colors ${
-                        yk.state === YubiKeyState.REGISTERED
+                        yk.state === 'registered'
                           ? 'bg-gray-50 border-gray-200 cursor-not-allowed'
                           : 'hover:bg-blue-50 hover:border-blue-300 cursor-pointer'
                       } ${selectedKey?.serial === yk.serial ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -212,7 +212,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                             </p>
                           </div>
                         </div>
-                        {yk.state === YubiKeyState.REGISTERED && (
+                        {yk.state === 'registered' && (
                           <CheckCircle2 className="h-5 w-5 text-green-600" />
                         )}
                       </div>
@@ -253,7 +253,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                   </strong>
                 </p>
                 <p className="text-sm text-blue-700 mt-1">
-                  {selectedKey.state === YubiKeyState.NEW
+                  {selectedKey.state === 'new'
                     ? 'This is a new YubiKey. We will initialize it for you.'
                     : 'This YubiKey is already configured. Enter your existing PIN.'}
                 </p>
@@ -272,7 +272,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {selectedKey.state === YubiKeyState.NEW ? 'Create PIN' : 'Enter PIN'}
+                  {selectedKey.state === 'new' ? 'Create PIN' : 'Enter PIN'}
                   <span className="text-gray-500 ml-2">(6-8 digits)</span>
                 </label>
                 <input

@@ -51,9 +51,7 @@ export const KeyMenuGrid: React.FC<KeyMenuGridProps> = ({ onKeySelect, className
 
   // Helper to get YubiKey data for a specific slot
   const getYubiKeyForSlot = (slotIndex: number): YubiKeyReference | undefined => {
-    return (
-      yubiKeys.find((k) => k.slot_index === slotIndex) || yubiKeys[slotIndex]
-    ); // Fallback to array index if slot_index not set
+    return yubiKeys.find((k) => k.slot_index === slotIndex) || yubiKeys[slotIndex]; // Fallback to array index if slot_index not set
   };
 
   if (isLoadingKeys) {

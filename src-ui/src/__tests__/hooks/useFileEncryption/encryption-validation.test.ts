@@ -1,7 +1,11 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
 import { ErrorCode } from '../../../lib/api-types';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -9,7 +13,6 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeListen: vi.fn(),
 }));
 
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
 const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useFileEncryption - Encryption Validation', () => {
@@ -41,7 +44,7 @@ describe('useFileEncryption - Encryption Validation', () => {
     const { result } = renderHook(() => useFileEncryption());
 
     // Mock get_file_info response for file selection
-    mockSafeInvoke.mockResolvedValueOnce([
+    mockInvoke.mockResolvedValueOnce([
       {
         path: '/mock/path/file1.txt',
         name: 'file1.txt',
@@ -100,7 +103,7 @@ describe('useFileEncryption - Encryption Validation', () => {
     });
 
     // Ensure backend encrypt command was never called
-    expect(mockSafeInvoke).not.toHaveBeenCalledWith('encrypt_files', expect.anything());
+    expect(mockInvoke).not.toHaveBeenCalledWith('encrypt_files', expect.anything());
   });
 
   it('should handle multiple validation errors appropriately', async () => {
@@ -124,7 +127,7 @@ describe('useFileEncryption - Encryption Validation', () => {
     });
 
     // Ensure no backend calls were made due to validation failure
-    expect(mockSafeInvoke).not.toHaveBeenCalledWith('encrypt_files', expect.anything());
+    expect(mockInvoke).not.toHaveBeenCalledWith('encrypt_files', expect.anything());
   });
 
   it('should handle validation errors without calling backend', async () => {
@@ -139,7 +142,7 @@ describe('useFileEncryption - Encryption Validation', () => {
     });
 
     // safeInvoke is called once for file selection
-    expect(mockSafeInvoke).not.toHaveBeenCalledWith('encrypt_files', expect.anything());
+    expect(mockInvoke).not.toHaveBeenCalledWith('encrypt_files', expect.anything());
     expect(result.current.error).not.toBe(null);
   });
 });

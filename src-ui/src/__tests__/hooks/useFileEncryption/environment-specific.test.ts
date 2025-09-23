@@ -1,7 +1,11 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
 import { ErrorCode } from '../../../lib/api-types';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the environment detection
 vi.mock('../../../lib/environment/platform', () => ({
@@ -15,7 +19,6 @@ vi.mock('../../../lib/tauri-safe', () => ({
 }));
 
 const mockIsTauri = vi.mocked(await import('../../../lib/environment/platform')).isTauri;
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
 const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useFileEncryption - Environment Specific Tests', () => {
@@ -32,7 +35,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       mockIsTauri.mockReturnValue(false);
 
       // When not in Tauri, safeInvoke should throw an error
-      mockSafeInvoke.mockRejectedValue({
+      mockInvoke.mockRejectedValue({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'This feature requires the desktop application',
         recovery_guidance: 'Please use the desktop version of Barqly Vault to access this feature',
@@ -68,7 +71,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       const { result } = renderHook(() => useFileEncryption());
 
       // First select files (which will fail but set the state)
-      mockSafeInvoke.mockResolvedValueOnce([
+      mockInvoke.mockResolvedValueOnce([
         {
           path: '/test/file.txt',
           name: 'file.txt',
@@ -87,7 +90,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
 
       // Now back to web environment
       mockIsTauri.mockReturnValue(false);
-      mockSafeInvoke.mockRejectedValue({
+      mockInvoke.mockRejectedValue({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'This feature requires the desktop application',
         recovery_guidance: 'Please use the desktop version of Barqly Vault to access this feature',
@@ -143,7 +146,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       const { result } = renderHook(() => useFileEncryption());
 
       // Mock successful file info response
-      mockSafeInvoke.mockResolvedValueOnce([
+      mockInvoke.mockResolvedValueOnce([
         {
           path: '/test/file.txt',
           name: 'file.txt',
@@ -172,7 +175,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       const { result } = renderHook(() => useFileEncryption());
 
       // Mock a Tauri API failure (not an environment issue)
-      mockSafeInvoke.mockRejectedValueOnce({
+      mockInvoke.mockRejectedValueOnce({
         code: ErrorCode.FILE_NOT_FOUND,
         message: 'File not found',
         recovery_guidance: 'Please check the file path',
@@ -201,7 +204,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       const mockEncryptionResult = '/output/encrypted.age';
 
       // Mock file selection
-      mockSafeInvoke.mockResolvedValueOnce([
+      mockInvoke.mockResolvedValueOnce([
         {
           path: '/test/file.txt',
           name: 'file.txt',
@@ -217,7 +220,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       });
 
       // Mock encryption success
-      mockSafeInvoke.mockResolvedValueOnce(mockEncryptionResult);
+      mockInvoke.mockResolvedValueOnce(mockEncryptionResult);
 
       await act(async () => {
         await result.current.encryptFiles('test-key');
@@ -233,7 +236,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
     it('should handle undefined environment gracefully', async () => {
       mockIsTauri.mockReturnValue(false);
 
-      mockSafeInvoke.mockRejectedValue({
+      mockInvoke.mockRejectedValue({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'This feature requires the desktop application',
         recovery_guidance: 'Please use the desktop version of Barqly Vault to access this feature',
@@ -266,7 +269,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       mockIsTauri.mockReturnValue(true);
 
       // Mock successful file selection
-      mockSafeInvoke.mockResolvedValueOnce([
+      mockInvoke.mockResolvedValueOnce([
         {
           path: '/test/file.txt',
           name: 'file.txt',
@@ -292,7 +295,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       // Now simulate environment becoming unavailable
       mockIsTauri.mockReturnValue(false);
 
-      mockSafeInvoke.mockRejectedValue({
+      mockInvoke.mockRejectedValue({
         code: ErrorCode.INTERNAL_ERROR,
         message: 'This feature requires the desktop application',
         recovery_guidance: 'Please use the desktop version of Barqly Vault to access this feature',

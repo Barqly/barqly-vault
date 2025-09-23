@@ -4,13 +4,9 @@ import {
   GenerateKeyInput,
   GenerateKeyResponse,
   ValidatePassphraseInput,
-  ValidatePassphraseResponse
+  ValidatePassphraseResponse,
 } from '../../bindings';
-import {
-  ProgressUpdate,
-  CommandError,
-  ErrorCode,
-} from '../api-types';
+import { ProgressUpdate, CommandError, ErrorCode } from '../api-types';
 import { logger } from '../logger';
 
 /**

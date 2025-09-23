@@ -2,7 +2,7 @@
  * File operation utilities for decryption workflow
  */
 
-import { commands, FileSelection } from '../../bindings';
+import { commands } from '../../bindings';
 import { logger } from '../logger';
 import { createFileSelectionError, createFileFormatError } from '../errors/command-error';
 
