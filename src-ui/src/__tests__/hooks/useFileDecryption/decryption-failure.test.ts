@@ -5,6 +5,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useFileDecryption } from '../../../hooks/useFileDecryption';
 import { CommandError, ErrorCode, FileSelection } from '../../../lib/api-types';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -19,14 +20,13 @@ vi.mock('../../../lib/environment/platform', () => ({
 }));
 
 // Import after mocking
-import { safeInvoke, safeListen } from '../../../lib/tauri-safe';
+import { safeListen } from '../../../lib/tauri-safe';
 
-const mockSafeInvoke = vi.mocked(safeInvoke);
 const mockSafeListen = vi.mocked(safeListen);
 
 // Convenience references for consistency with new pattern
 const mocks = {
-  safeInvoke: mockSafeInvoke,
+  safeInvoke: mockInvoke,
   safeListen: mockSafeListen,
 };
 
@@ -45,7 +45,8 @@ describe('useFileDecryption - Decryption Failure', () => {
     const decryptionError: CommandError = {
       code: ErrorCode.DECRYPTION_FAILED,
       message: 'Failed to decrypt file',
-      recovery_guidance: 'Please check your key and passphrase',
+      recovery_guidance:
+        'Please check your key, passphrase, and file. If the problem persists, restart the application.',
       user_actionable: true,
     };
 
@@ -88,7 +89,8 @@ describe('useFileDecryption - Decryption Failure', () => {
     const decryptionError: CommandError = {
       code: ErrorCode.DECRYPTION_FAILED,
       message: 'Failed to decrypt file',
-      recovery_guidance: 'Please check your key and passphrase',
+      recovery_guidance:
+        'Please check your key, passphrase, and file. If the problem persists, restart the application.',
       user_actionable: true,
     };
 

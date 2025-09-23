@@ -5,6 +5,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useKeyGeneration } from '../../../hooks/useKeyGeneration';
 import { ErrorCode } from '../../../lib/api-types';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -12,7 +13,6 @@ vi.mock('../../../lib/tauri-safe', () => ({
   safeListen: vi.fn(),
 }));
 
-const mockSafeInvoke = vi.mocked(await import('../../../lib/tauri-safe')).safeInvoke;
 const mockSafeListen = vi.mocked(await import('../../../lib/tauri-safe')).safeListen;
 
 describe('useKeyGeneration - Passphrase Validation', () => {
@@ -72,7 +72,12 @@ describe('useKeyGeneration - Passphrase Validation', () => {
     });
 
     // Mock passphrase validation
-    mockSafeInvoke.mockResolvedValueOnce({ is_strong: false, score: 1, feedback: 'Too weak' });
+    mockInvoke.mockResolvedValueOnce({
+      is_valid: false,
+      strength: 'weak',
+      feedback: ['Too weak'],
+      score: 1,
+    });
 
     await act(async () => {
       try {
@@ -99,7 +104,12 @@ describe('useKeyGeneration - Passphrase Validation', () => {
     });
 
     // Mock passphrase validation to return weak passphrase
-    mockSafeInvoke.mockResolvedValueOnce({ is_valid: false, strength: 'Weak' });
+    mockInvoke.mockResolvedValueOnce({
+      is_valid: false,
+      strength: 'weak',
+      feedback: ['Too weak'],
+      score: 1,
+    });
 
     await act(async () => {
       try {
@@ -129,7 +139,7 @@ describe('useKeyGeneration - Passphrase Validation', () => {
       }
     });
 
-    expect(mockSafeInvoke).not.toHaveBeenCalled();
+    expect(mockInvoke).not.toHaveBeenCalled();
     expect(result.current.error).not.toBe(null);
   });
 });

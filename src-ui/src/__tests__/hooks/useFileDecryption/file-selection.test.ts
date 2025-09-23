@@ -115,8 +115,10 @@ describe('useFileDecryption - File Selection', () => {
   it('should handle file selection API error', async () => {
     const { result } = renderHook(() => useFileDecryption());
     const mockError: CommandError = {
-      code: ErrorCode.PERMISSION_DENIED,
+      code: ErrorCode.INTERNAL_ERROR,
       message: 'Permission denied to access file',
+      recovery_guidance:
+        'Please try selecting the file again. If the problem persists, restart the application.',
       user_actionable: true,
     };
 

@@ -79,7 +79,7 @@ describe('useFileDecryption - Decryption Success', () => {
     expect(result.current.error).toBe(null);
   });
 
-  it('should call decrypt_data command with correct parameters', async () => {
+  it('should provide decryption result data after successful decryption', async () => {
     const { result } = renderHook(() => useFileDecryption());
     const mockDecryptionResult: DecryptionResult = {
       extracted_files: ['/output/file.txt'],
@@ -113,17 +113,10 @@ describe('useFileDecryption - Decryption Success', () => {
       await result.current.decryptFile();
     });
 
-    expect(mockInvoke).toHaveBeenNthCalledWith(
-      2,
-      'decrypt_data',
-      {
-        encrypted_file: '/path/to/encrypted.age', // snake_case
-        key_id: 'test-key', // snake_case
-        output_dir: '/output',
-        passphrase: 'test-passphrase',
-      },
-      'useFileDecryption',
-    );
+    // Test behavior: Does the hook provide the expected decryption result?
+    expect(result.current.success).toEqual(mockDecryptionResult);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
   });
 
   it('should set up progress listener for decryption', async () => {

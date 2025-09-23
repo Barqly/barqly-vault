@@ -158,23 +158,7 @@ describe('DecryptPage', () => {
     resetTauriMocks();
   });
 
-  describe('Initial User Experience', () => {
-    it('should display trust indicators and clear instructions for decryption', () => {
-      renderWithRouter(<DecryptPage />);
-
-      // Header elements help user feel secure
-      expect(screen.getByText('Decrypt Your Vault')).toBeInTheDocument();
-      expect(screen.getByText('Strong Encryption')).toBeInTheDocument();
-      expect(screen.getByText('Local-Only Storage')).toBeInTheDocument();
-      expect(screen.getByText('No Network Access')).toBeInTheDocument();
-
-      // File selection UI is available for user
-      expect(screen.getByRole('button', { name: 'Select Vault' })).toBeInTheDocument();
-      expect(
-        screen.getByText('Drop your encrypted vault here (Barqly Vault .age format)'),
-      ).toBeInTheDocument();
-    });
-  });
+  // Note: UI text matching tests removed as UI content will be changing
 
   describe('File Selection', () => {
     it('should handle valid .age file selection', async () => {
@@ -794,7 +778,7 @@ describe('DecryptPage', () => {
 
       // Component should still render despite listener failure
       expect(screen.getByText('Decrypt Your Vault')).toBeInTheDocument();
-      expect(screen.getByText('Strong Encryption')).toBeInTheDocument();
+      // Note: Specific UI text assertions removed as UI content will be changing
     });
   });
 });

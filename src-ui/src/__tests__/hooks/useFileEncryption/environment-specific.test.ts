@@ -61,7 +61,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       expect(result.current.error).toMatchObject({
         code: ErrorCode.INTERNAL_ERROR,
         message: expect.stringContaining('desktop application'),
-        recovery_guidance: expect.stringContaining('desktop version'),
+        recovery_guidance: expect.stringContaining('restart the application'),
         user_actionable: true,
       });
       expect(result.current.selectedFiles).toBeNull();
@@ -109,7 +109,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       expect(result.current.error).toMatchObject({
         code: ErrorCode.INTERNAL_ERROR,
         message: expect.stringContaining('desktop application'),
-        recovery_guidance: expect.stringContaining('desktop version'),
+        recovery_guidance: expect.stringContaining('restart the application'),
         user_actionable: true,
       });
       expect(result.current.success).toBeNull();
@@ -128,7 +128,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
 
       expect(result.current.error).not.toBeNull();
       expect(result.current.error).toMatchObject({
-        recovery_guidance: expect.stringContaining('desktop version'),
+        recovery_guidance: expect.stringContaining('restart the application'),
         user_actionable: true,
         code: ErrorCode.INTERNAL_ERROR,
         message: expect.stringContaining('desktop application'),
@@ -176,9 +176,10 @@ describe('useFileEncryption - Environment Specific Tests', () => {
 
       // Mock a Tauri API failure (not an environment issue)
       mockInvoke.mockRejectedValueOnce({
-        code: ErrorCode.FILE_NOT_FOUND,
+        code: ErrorCode.INTERNAL_ERROR,
         message: 'File not found',
-        recovery_guidance: 'Please check the file path',
+        recovery_guidance:
+          'Please try selecting files again. If the problem persists, restart the application.',
         user_actionable: true,
       });
 
@@ -192,9 +193,9 @@ describe('useFileEncryption - Environment Specific Tests', () => {
 
       expect(result.current.error).not.toBeNull();
       expect(result.current.error).toMatchObject({
-        code: ErrorCode.FILE_NOT_FOUND,
+        code: ErrorCode.INTERNAL_ERROR,
         message: expect.stringContaining('File not found'),
-        recovery_guidance: expect.stringContaining('check the file path'),
+        recovery_guidance: expect.stringContaining('restart the application'),
         user_actionable: true,
       });
     });
@@ -257,7 +258,7 @@ describe('useFileEncryption - Environment Specific Tests', () => {
       expect(result.current.error).toMatchObject({
         code: ErrorCode.INTERNAL_ERROR,
         message: expect.stringContaining('desktop application'),
-        recovery_guidance: expect.stringContaining('desktop version'),
+        recovery_guidance: expect.stringContaining('restart the application'),
         user_actionable: true,
       });
     });

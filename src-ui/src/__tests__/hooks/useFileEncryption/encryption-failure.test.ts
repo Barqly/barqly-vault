@@ -24,9 +24,9 @@ describe('useFileEncryption - Encryption Failure', () => {
   it('should handle encryption errors', async () => {
     const { result } = renderHook(() => useFileEncryption());
     const encryptionError: CommandError = {
-      code: ErrorCode.ENCRYPTION_FAILED,
+      code: ErrorCode.INTERNAL_ERROR,
       message: 'Failed to encrypt files',
-      recovery_guidance: 'Please check your files and try again',
+      recovery_guidance: 'Please try again. If the problem persists, check your system.',
       user_actionable: true,
     };
 
@@ -67,9 +67,9 @@ describe('useFileEncryption - Encryption Failure', () => {
   it('should re-throw errors for component handling', async () => {
     const { result } = renderHook(() => useFileEncryption());
     const encryptionError: CommandError = {
-      code: ErrorCode.ENCRYPTION_FAILED,
+      code: ErrorCode.INTERNAL_ERROR,
       message: 'Failed to encrypt files',
-      recovery_guidance: 'Please check your files and try again',
+      recovery_guidance: 'Please try again. If the problem persists, check your system.',
       user_actionable: true,
     };
 
@@ -286,7 +286,7 @@ describe('useFileEncryption - Encryption Failure', () => {
     const networkError: CommandError = {
       code: ErrorCode.INTERNAL_ERROR,
       message: 'Network error',
-      recovery_guidance: 'Check your connection',
+      recovery_guidance: 'Please try again. If the problem persists, check your system.',
       user_actionable: true,
     };
 

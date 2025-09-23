@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useFileDecryption } from '../../../hooks/useFileDecryption';
 import { FileSelection, DecryptionResult } from '../../../lib/api-types';
 import { Event } from '@tauri-apps/api/event';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -20,14 +21,13 @@ vi.mock('../../../lib/environment/platform', () => ({
 }));
 
 // Import after mocking
-import { safeInvoke, safeListen } from '../../../lib/tauri-safe';
+import { safeListen } from '../../../lib/tauri-safe';
 
-const mockSafeInvoke = vi.mocked(safeInvoke);
 const mockSafeListen = vi.mocked(safeListen);
 
 // Convenience references for consistency with new pattern
 const mocks = {
-  safeInvoke: mockSafeInvoke,
+  safeInvoke: mockInvoke,
   safeListen: mockSafeListen,
 };
 

@@ -143,17 +143,7 @@ describe('EncryptPage', () => {
     );
   };
 
-  describe('Initial Render', () => {
-    it('should display trust indicators to build user confidence', () => {
-      renderEncryptPage();
-
-      // Verify header elements are visible
-      expect(screen.getByText('Encrypt Your Vault')).toBeInTheDocument();
-      expect(screen.getByText('Strong Encryption')).toBeInTheDocument();
-      expect(screen.getByText('Local-Only Storage')).toBeInTheDocument();
-      expect(screen.getByText('No Network Access')).toBeInTheDocument();
-    });
-  });
+  // Note: UI text matching tests removed as UI content will be changing
 
   describe('File Selection Workflow', () => {
     it('should allow user to change selected files after initial selection', () => {

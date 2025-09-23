@@ -5,6 +5,7 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useFileDecryption } from '../../../hooks/useFileDecryption';
 import { ErrorCode, FileSelection } from '../../../lib/api-types';
+import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
 vi.mock('../../../lib/tauri-safe', () => ({
@@ -19,14 +20,13 @@ vi.mock('../../../lib/environment/platform', () => ({
 }));
 
 // Import after mocking
-import { safeInvoke, safeListen } from '../../../lib/tauri-safe';
+import { safeListen } from '../../../lib/tauri-safe';
 
-const mockSafeInvoke = vi.mocked(safeInvoke);
 const mockSafeListen = vi.mocked(safeListen);
 
 // Convenience references for consistency with new pattern
 const mocks = {
-  safeInvoke: mockSafeInvoke,
+  safeInvoke: mockInvoke,
   safeListen: mockSafeListen,
 };
 
@@ -180,7 +180,7 @@ describe('useFileDecryption - Decryption Validation', () => {
       }
     });
 
-    expect(mockSafeInvoke).not.toHaveBeenCalled();
+    expect(mockInvoke).not.toHaveBeenCalled();
     expect(result.current.error).not.toBe(null);
   });
 });
