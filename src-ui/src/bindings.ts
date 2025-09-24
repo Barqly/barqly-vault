@@ -650,7 +650,7 @@ async yubikeyTestUnlockCredentials(encryptedFile: string, credentials: UnlockCre
 }
 },
 /**
- * List YubiKeys with intelligent state detection
+ * List YubiKeys with intelligent state detection (Refactored with YubiKeyManager)
  */
 async listYubikeys() : Promise<Result<YubiKeyStateInfo[], CommandError>> {
     try {
@@ -661,7 +661,7 @@ async listYubikeys() : Promise<Result<YubiKeyStateInfo[], CommandError>> {
 }
 },
 /**
- * Initialize a brand new YubiKey
+ * Initialize a brand new YubiKey (Refactored with YubiKeyManager)
  */
 async initYubikey(serial: string, newPin: string, label: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
     try {
@@ -672,7 +672,7 @@ async initYubikey(serial: string, newPin: string, label: string) : Promise<Resul
 }
 },
 /**
- * Register a reused YubiKey
+ * Register a reused YubiKey (Refactored with YubiKeyManager)
  */
 async registerYubikey(serial: string, label: string, pin: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
     try {

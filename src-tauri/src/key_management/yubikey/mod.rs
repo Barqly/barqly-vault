@@ -72,7 +72,7 @@ pub use models::{
 // Re-export service traits
 pub use services::{
     DeviceService, IdentityService, RegistryService, FileService,
-    YkmanDeviceService, AgePluginIdentityService, VaultRegistryService, TempFileService,
+    YkmanDeviceService, AgePluginIdentityService, DefaultRegistryService, DefaultFileService,
 };
 
 // Re-export state management

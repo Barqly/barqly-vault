@@ -17,7 +17,7 @@ interface CompactYubiKeySlotProps {
  * Compact YubiKey slot for horizontal key menu bar
  * Small icon-based design for header placement
  */
-export const CompactYubiKeySlot: React.FC<CompactYubiKeySlotProps> = ({
+export const CompactYubiKeyCard: React.FC<CompactYubiKeySlotProps> = ({
   index,
   vaultId: _vaultId,
   state = 'empty',

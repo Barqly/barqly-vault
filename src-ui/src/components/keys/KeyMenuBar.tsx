@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { CompactPassphraseSlot } from './CompactPassphraseSlot';
-import { CompactYubiKeySlot } from './CompactYubiKeySlot';
+import { CompactPassphraseCard } from './CompactPassphraseCard';
+import { CompactYubiKeyCard } from './CompactYubiKeyCard';
 import { useVault } from '../../contexts/VaultContext';
 import { KeyState } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
@@ -38,9 +38,9 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
     onKeySelect?.('yubikey', index);
   };
 
-  // Helper to get YubiKey data for a specific slot
-  const getYubiKeyForSlot = (slotIndex: number) => {
-    return yubiKeys.find((k) => k.slot_index === slotIndex);
+  // Helper to get YubiKey data for a specific display position
+  const getYubiKeyForPosition = (displayIndex: number) => {
+    return yubiKeys[displayIndex]; // Use array index instead of slot_index
   };
 
   // Map KeyState enum to slot state
@@ -75,7 +75,7 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
   return (
     <div className={`flex items-center gap-1 ${className}`}>
       {/* Passphrase Slot */}
-      <CompactPassphraseSlot
+      <CompactPassphraseCard
         vaultId={currentVault.id}
         onClick={handlePassphraseClick}
         isConfigured={passphraseKey !== undefined}
@@ -86,9 +86,9 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
 
       {/* YubiKey Slot 1 */}
       {(() => {
-        const yubiKey = getYubiKeyForSlot(0);
+        const yubiKey = getYubiKeyForPosition(0);
         return (
-          <CompactYubiKeySlot
+          <CompactYubiKeyCard
             index={0}
             vaultId={currentVault.id}
             onClick={() => handleYubiKeyClick(0)}
@@ -103,9 +103,9 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
 
       {/* YubiKey Slot 2 */}
       {(() => {
-        const yubiKey = getYubiKeyForSlot(1);
+        const yubiKey = getYubiKeyForPosition(1);
         return (
-          <CompactYubiKeySlot
+          <CompactYubiKeyCard
             index={1}
             vaultId={currentVault.id}
             onClick={() => handleYubiKeyClick(1)}
@@ -120,9 +120,9 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
 
       {/* YubiKey Slot 3 */}
       {(() => {
-        const yubiKey = getYubiKeyForSlot(2);
+        const yubiKey = getYubiKeyForPosition(2);
         return (
-          <CompactYubiKeySlot
+          <CompactYubiKeyCard
             index={2}
             vaultId={currentVault.id}
             onClick={() => handleYubiKeyClick(2)}

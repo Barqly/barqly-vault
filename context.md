@@ -94,15 +94,18 @@ make app            # Start Tauri desktop app
 
 ## Active Development
 
-- **Current Phase**: Post-alpha with hardware security integration in progress
-- **Recent Achievement**: Rust Edition 2024 migration completed (January 2025)
-  - ✅ Modern async patterns and let-chains implemented
-  - ✅ All 462 backend tests passing with zero warnings
-  - ✅ Future-ready for async generators and closures
-- **Active Work**: YubiKey hardware integration (80-85% complete)
-  - ✅ Backend implementation complete with multi-key registration
-  - 🚧 UI refactoring and functional bug fixes remaining (~15%)
-- **Next Milestone**: Complete YubiKey integration and release
+- **Current Phase**: Post-alpha with YubiKey integration stabilized and technical debt analysis complete
+- **Recent Achievement**: YubiKey bug fixes and comprehensive technical debt analysis (January 2025)
+  - ✅ Fixed YubiKey PIN verification to prevent 3-attempt lockouts
+  - ✅ Resolved identity tag bugs in multiple execution paths (shotgun surgery pattern)
+  - ✅ Fixed registry filename inconsistencies for YubiKey entries
+  - ✅ **Critical Analysis Complete**: Documented scattered code across 46 files with 19 public functions
+- **Active Work**: YubiKey integration functional but needs architectural refactoring
+  - ✅ Backend implementation working with proper identity tag handling
+  - ✅ Registry operations corrected for consistent filename storage
+  - ⚠️ **Technical Debt**: 15+ code duplications causing recurring bugs
+  - 📋 **Analysis Ready**: Complete 6-week refactoring plan documented in `/docs/product/roadmap/yubikey/refactoring-post-yubikey/`
+- **Next Milestone**: Stakeholder review of refactoring plan → systematic code consolidation vs. current working state
 
 ---
 

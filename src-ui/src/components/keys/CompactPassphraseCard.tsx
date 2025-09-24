@@ -13,7 +13,7 @@ interface CompactPassphraseSlotProps {
  * Compact passphrase slot for horizontal key menu bar
  * Small icon-based design for header placement
  */
-export const CompactPassphraseSlot: React.FC<CompactPassphraseSlotProps> = ({
+export const CompactPassphraseCard: React.FC<CompactPassphraseSlotProps> = ({
   vaultId: _vaultId,
   isConfigured = false,
   label,
