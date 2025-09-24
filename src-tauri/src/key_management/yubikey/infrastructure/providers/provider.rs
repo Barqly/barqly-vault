@@ -3,7 +3,7 @@
 //! This module defines the core abstraction for YubiKey identity providers,
 //! allowing multiple implementation strategies (age-plugin-yubikey, direct hardware, etc.)
 
-use super::errors::{YubiKeyError, YubiKeyResult};
+use crate::key_management::yubikey::domain::errors::{YubiKeyError, YubiKeyResult};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use zeroize::ZeroizeOnDrop;
@@ -113,21 +113,21 @@ impl YubiIdentityProviderFactory {
 
     /// Create an age-plugin-yubikey based provider
     pub fn create_age_plugin_provider() -> YubiKeyResult<Box<dyn YubiIdentityProvider>> {
-        use super::age_plugin::AgePluginProvider;
+        use super::super::age_plugin::AgePluginProvider;
         Ok(Box::new(AgePluginProvider::new()?))
     }
 
     /// Create a PTY-based age-plugin-yubikey provider (recommended for interactive operations)
     pub fn create_pty_provider() -> YubiKeyResult<Box<dyn YubiIdentityProvider>> {
-        use super::age_plugin::AgePluginPtyProvider;
+        use super::super::age_plugin::AgePluginPtyProvider;
         Ok(Box::new(AgePluginPtyProvider::new()?))
     }
 
     /// Create a direct hardware provider (future implementation)
     #[allow(dead_code)]
     pub fn create_direct_provider() -> YubiKeyResult<Box<dyn YubiIdentityProvider>> {
-        Err(YubiKeyError::PluginError(
-            "Direct hardware provider not yet implemented".to_string(),
+        Err(YubiKeyError::age_plugin(
+            "Direct hardware provider not yet implemented"
         ))
     }
 }
@@ -139,8 +139,8 @@ pub mod utils {
     /// Extract YubiKey serial number from an age recipient string
     pub fn extract_serial_from_recipient(recipient: &str) -> YubiKeyResult<String> {
         if !recipient.starts_with("age1yubikey1") {
-            return Err(YubiKeyError::PluginError(
-                "Invalid YubiKey recipient format".to_string(),
+            return Err(YubiKeyError::age_plugin(
+                "Invalid YubiKey recipient format"
             ));
         }
 
@@ -150,13 +150,13 @@ pub mod utils {
             if remainder.len() >= 8 {
                 Ok(remainder[..8].to_string())
             } else {
-                Err(YubiKeyError::PluginError(
-                    "Could not extract serial from recipient".to_string(),
+                Err(YubiKeyError::age_plugin(
+                    "Could not extract serial from recipient",
                 ))
             }
         } else {
-            Err(YubiKeyError::PluginError(
-                "Invalid YubiKey recipient format".to_string(),
+            Err(YubiKeyError::age_plugin(
+                "Invalid YubiKey recipient format",
             ))
         }
     }
@@ -164,14 +164,14 @@ pub mod utils {
     /// Validate that a recipient string is a valid YubiKey recipient
     pub fn validate_yubikey_recipient(recipient: &str) -> YubiKeyResult<()> {
         if !recipient.starts_with("age1yubikey1") {
-            return Err(YubiKeyError::PluginError(
-                "Invalid YubiKey recipient prefix".to_string(),
+            return Err(YubiKeyError::age_plugin(
+                "Invalid YubiKey recipient prefix",
             ));
         }
 
         if recipient.len() < 24 {
-            return Err(YubiKeyError::PluginError(
-                "YubiKey recipient too short".to_string(),
+            return Err(YubiKeyError::age_plugin(
+                "YubiKey recipient too short",
             ));
         }
 

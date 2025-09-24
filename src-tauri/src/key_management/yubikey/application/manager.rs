@@ -13,9 +13,9 @@
 //! - **Event Publishing**: Publishes events for UI updates and logging
 
 use crate::key_management::yubikey::{
-    errors::{YubiKeyError, YubiKeyResult},
-    models::{Serial, Pin, YubiKeyDevice, YubiKeyIdentity, YubiKeyState},
-    services::{ServiceFactory, DeviceService, IdentityService, RegistryService, FileService},
+    domain::errors::{YubiKeyError, YubiKeyResult},
+    domain::models::{Serial, Pin, YubiKeyDevice, YubiKeyIdentity, YubiKeyState},
+    application::services::{ServiceFactory, DeviceService, IdentityService, RegistryService, FileService},
 };
 use crate::prelude::*;
 use std::sync::Arc;
@@ -240,6 +240,27 @@ impl YubiKeyManager {
     // High-Level Workflow Operations
     // =============================================================================
 
+    /// Initialize YubiKey hardware with recovery code generation
+    /// This handles the low-level hardware initialization with ykman
+    pub async fn initialize_device_hardware(&self, pin: &Pin) -> YubiKeyResult<String> {
+        info!("Initializing YubiKey hardware with auto-generated recovery code");
+
+        // Import the PTY function for hardware initialization
+        use crate::key_management::yubikey::infrastructure::pty::ykman_operations::initialize_yubikey_with_recovery;
+
+        // Generate recovery code and initialize hardware
+        let recovery_code = tokio::task::spawn_blocking({
+            let pin_value = pin.value().to_string();
+            move || initialize_yubikey_with_recovery(&pin_value)
+        })
+        .await
+        .map_err(|e| YubiKeyError::device(format!("Task join error: {}", e)))?
+        .map_err(|e| YubiKeyError::device(format!("Hardware initialization failed: {}", e)))?;
+
+        info!("YubiKey hardware initialized successfully");
+        Ok(recovery_code)
+    }
+
     /// Initialize YubiKey for first-time use
     /// This is a high-level operation that orchestrates multiple services
     pub async fn initialize_device(
@@ -309,12 +330,12 @@ impl YubiKeyManager {
     // =============================================================================
 
     /// Get health status of all services
-    pub async fn get_service_health(&self) -> YubiKeyResult<std::collections::HashMap<String, crate::key_management::yubikey::services::ServiceHealth>> {
+    pub async fn get_service_health(&self) -> YubiKeyResult<std::collections::HashMap<String, crate::key_management::yubikey::application::services::ServiceHealth>> {
         self.services.health_check_all_services().await
     }
 
     /// Get service metrics
-    pub async fn get_service_metrics(&self) -> YubiKeyResult<std::collections::HashMap<String, crate::key_management::yubikey::services::ServiceMetrics>> {
+    pub async fn get_service_metrics(&self) -> YubiKeyResult<std::collections::HashMap<String, crate::key_management::yubikey::application::services::ServiceMetrics>> {
         self.services.get_all_service_metrics().await
     }
 
@@ -346,7 +367,7 @@ unsafe impl Sync for YubiKeyManager {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_management::yubikey::models::Serial;
+    use crate::key_management::yubikey::domain::models::Serial;
 
     #[tokio::test]
     async fn test_manager_creation() {

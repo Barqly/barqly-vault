@@ -30,8 +30,8 @@ pub use identity_service::{IdentityService, AgePluginIdentityService};
 pub use registry_service::{RegistryService, DefaultRegistryService};
 pub use file_service::{FileService, DefaultFileService, TempFile, TempDirectory};
 
-use crate::key_management::yubikey::models::Serial;
-use crate::key_management::yubikey::errors::YubiKeyResult;
+use crate::key_management::yubikey::domain::models::Serial;
+use crate::key_management::yubikey::domain::errors::YubiKeyResult;
 use crate::prelude::*;
 use async_trait::async_trait;
 use std::sync::Arc;
@@ -251,7 +251,7 @@ pub trait SerialScoped {
     /// Validate that serial parameter is provided (enforces architectural requirement)
     fn validate_serial(&self, serial: &Serial) -> YubiKeyResult<()> {
         if serial.value().is_empty() {
-            return Err(crate::key_management::yubikey::errors::YubiKeyError::serial_required(
+            return Err(crate::key_management::yubikey::domain::errors::YubiKeyError::serial_required(
                 "operation",
             ));
         }
@@ -354,11 +354,11 @@ mod tests {
 
     #[async_trait]
     impl DeviceService for MockDeviceService {
-        async fn list_connected_devices(&self) -> YubiKeyResult<Vec<crate::key_management::yubikey::models::YubiKeyDevice>> {
+        async fn list_connected_devices(&self) -> YubiKeyResult<Vec<crate::key_management::yubikey::domain::models::YubiKeyDevice>> {
             Ok(vec![])
         }
 
-        async fn detect_device(&self, _serial: &Serial) -> YubiKeyResult<Option<crate::key_management::yubikey::models::YubiKeyDevice>> {
+        async fn detect_device(&self, _serial: &Serial) -> YubiKeyResult<Option<crate::key_management::yubikey::domain::models::YubiKeyDevice>> {
             Ok(None)
         }
 
@@ -366,7 +366,7 @@ mod tests {
             Ok(false)
         }
 
-        async fn validate_pin(&self, _serial: &Serial, _pin: &crate::key_management::yubikey::models::Pin) -> YubiKeyResult<bool> {
+        async fn validate_pin(&self, _serial: &Serial, _pin: &crate::key_management::yubikey::domain::models::Pin) -> YubiKeyResult<bool> {
             Ok(true)
         }
 
@@ -388,9 +388,9 @@ mod tests {
 
     #[async_trait]
     impl IdentityService for MockIdentityService {
-        async fn generate_identity(&self, _serial: &Serial, _pin: &crate::key_management::yubikey::models::Pin, _slot: u8) -> YubiKeyResult<crate::key_management::yubikey::models::YubiKeyIdentity> {
+        async fn generate_identity(&self, _serial: &Serial, _pin: &crate::key_management::yubikey::domain::models::Pin, _slot: u8) -> YubiKeyResult<crate::key_management::yubikey::domain::models::YubiKeyIdentity> {
             let serial = Serial::new("12345678".to_string()).unwrap();
-            Ok(crate::key_management::yubikey::models::YubiKeyIdentity::new(
+            Ok(crate::key_management::yubikey::domain::models::YubiKeyIdentity::new(
                 "age1yubikey1test123".to_string(),
                 serial,
             ))
@@ -404,7 +404,7 @@ mod tests {
             Ok(b"encrypted_data".to_vec())
         }
 
-        async fn decrypt_with_identity(&self, _serial: &Serial, _pin: &crate::key_management::yubikey::models::Pin, _slot: u8, _encrypted_data: &[u8]) -> YubiKeyResult<Vec<u8>> {
+        async fn decrypt_with_identity(&self, _serial: &Serial, _pin: &crate::key_management::yubikey::domain::models::Pin, _slot: u8, _encrypted_data: &[u8]) -> YubiKeyResult<Vec<u8>> {
             Ok(b"decrypted_data".to_vec())
         }
 
@@ -418,15 +418,15 @@ mod tests {
 
     #[async_trait]
     impl RegistryService for MockRegistryService {
-        async fn add_yubikey_entry(&self, _device: &crate::key_management::yubikey::models::YubiKeyDevice, _identity: &crate::key_management::yubikey::models::YubiKeyIdentity, _slot: u8, _recovery_code_hash: String, _label: Option<String>) -> YubiKeyResult<String> {
+        async fn add_yubikey_entry(&self, _device: &crate::key_management::yubikey::domain::models::YubiKeyDevice, _identity: &crate::key_management::yubikey::domain::models::YubiKeyIdentity, _slot: u8, _recovery_code_hash: String, _label: Option<String>) -> YubiKeyResult<String> {
             Ok("entry_id_123".to_string())
         }
 
-        async fn find_by_serial(&self, _serial: &Serial) -> YubiKeyResult<Option<(String, crate::key_management::yubikey::models::YubiKeyDevice)>> {
+        async fn find_by_serial(&self, _serial: &Serial) -> YubiKeyResult<Option<(String, crate::key_management::yubikey::domain::models::YubiKeyDevice)>> {
             Ok(None)
         }
 
-        async fn update_yubikey_entry(&self, _entry_id: &str, _device: &crate::key_management::yubikey::models::YubiKeyDevice, _identity: &crate::key_management::yubikey::models::YubiKeyIdentity) -> YubiKeyResult<()> {
+        async fn update_yubikey_entry(&self, _entry_id: &str, _device: &crate::key_management::yubikey::domain::models::YubiKeyDevice, _identity: &crate::key_management::yubikey::domain::models::YubiKeyIdentity) -> YubiKeyResult<()> {
             Ok(())
         }
 
@@ -434,11 +434,11 @@ mod tests {
             Ok(())
         }
 
-        async fn list_all_entries(&self) -> YubiKeyResult<Vec<(String, crate::key_management::yubikey::models::YubiKeyDevice)>> {
+        async fn list_all_entries(&self) -> YubiKeyResult<Vec<(String, crate::key_management::yubikey::domain::models::YubiKeyDevice)>> {
             Ok(vec![])
         }
 
-        async fn find_by_slot(&self, _slot: u8) -> YubiKeyResult<Option<(String, crate::key_management::yubikey::models::YubiKeyDevice)>> {
+        async fn find_by_slot(&self, _slot: u8) -> YubiKeyResult<Option<(String, crate::key_management::yubikey::domain::models::YubiKeyDevice)>> {
             Ok(None)
         }
 
@@ -446,7 +446,7 @@ mod tests {
             Ok(false)
         }
 
-        async fn get_entry_details(&self, _entry_id: &str) -> YubiKeyResult<Option<(crate::key_management::yubikey::models::YubiKeyDevice, crate::key_management::yubikey::models::YubiKeyIdentity, u8)>> {
+        async fn get_entry_details(&self, _entry_id: &str) -> YubiKeyResult<Option<(crate::key_management::yubikey::domain::models::YubiKeyDevice, crate::key_management::yubikey::domain::models::YubiKeyIdentity, u8)>> {
             Ok(None)
         }
 

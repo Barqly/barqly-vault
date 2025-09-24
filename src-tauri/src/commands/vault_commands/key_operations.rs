@@ -2,7 +2,7 @@
 //!
 //! Commands for getting, adding, and removing keys from vaults.
 
-use crate::crypto::yubikey::pty::ykman_operations::list_yubikeys;
+use crate::key_management::yubikey::infrastructure::pty::ykman_operations::list_yubikeys;
 use crate::models::{KeyReference, KeyState, KeyType};
 use crate::prelude::*;
 use crate::storage::{KeyRegistry, key_store, vault_store};

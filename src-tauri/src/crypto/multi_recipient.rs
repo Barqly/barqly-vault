@@ -5,7 +5,7 @@
 
 use crate::crypto::yubikey::{ProtectionMode, UnlockCredentials, UnlockMethod};
 use crate::crypto::{CryptoError, Result};
-use crate::crypto::yubikey::pty::core::get_age_path;
+use crate::key_management::yubikey::infrastructure::pty::core::get_age_path;
 use crate::storage::{RecipientInfo, RecipientType, VaultMetadataV2};
 use age::Recipient;
 use std::io::Write;

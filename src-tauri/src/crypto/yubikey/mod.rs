@@ -3,12 +3,9 @@
 //! This module provides YubiKey authentication support using the mature
 //! age-plugin-yubikey ecosystem for reliable hardware security operations.
 
-pub mod age_plugin;
 pub mod errors;
 // pub mod manifest; // YubiKey manifest management - replaced by unified key registry
 pub mod progress;
-pub mod provider;
-pub mod pty;
 pub mod state_cache; // PTY automation for YubiKey operations
 
 // Legacy modules (deprecated - will be removed)
@@ -20,12 +17,8 @@ pub mod plugin;
 // #[cfg(test)]
 // pub mod tests;
 
-// New primary exports using provider abstraction
-pub use age_plugin::{AgePluginProvider, AgePluginPtyProvider};
-pub use provider::{
-    AgeHeader, DataEncryptionKey, ProviderInfo, YubiIdentityProvider, YubiIdentityProviderFactory,
-    YubiRecipient,
-};
+// New primary exports using provider abstraction - moved to key_management module
+// Use crate::key_management::yubikey::infrastructure::{providers, age_plugin} for new code
 
 // Legacy exports for backward compatibility (deprecated)
 pub use detection::{DeviceStatus, YubiKeyDevice};
@@ -33,6 +26,9 @@ pub use errors::{YubiKeyError, YubiKeyResult};
 pub use management::{YubiKeyInfo, YubiKeyManager};
 pub use plugin::{PluginError, PluginManager, ensure_plugin_available};
 pub use progress::{YubiKeyProgressManager, create_yubikey_progress_manager};
+
+// Re-export YubiIdentityProviderFactory from new location for backward compatibility
+pub use crate::key_management::yubikey::infrastructure::providers::YubiIdentityProviderFactory;
 
 use serde::{Deserialize, Serialize};
 

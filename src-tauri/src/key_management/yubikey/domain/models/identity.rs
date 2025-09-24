@@ -3,7 +3,7 @@
 //! Represents a YubiKey identity (public key recipient) with proper validation.
 //! This fixes the critical identity tag bug by centralizing identity operations.
 
-use crate::key_management::yubikey::models::serial::Serial;
+use crate::key_management::yubikey::domain::models::serial::Serial;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -259,7 +259,7 @@ pub enum IdentityValidationError {
     #[error("Serial number validation failed: {source}")]
     SerialValidation {
         #[from]
-        source: crate::key_management::yubikey::models::serial::SerialValidationError,
+        source: crate::key_management::yubikey::domain::models::serial::SerialValidationError,
     },
 }
 
@@ -301,7 +301,7 @@ pub mod identity_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_management::yubikey::models::serial::Serial;
+    use crate::key_management::yubikey::domain::models::serial::Serial;
 
     fn create_test_serial() -> Serial {
         Serial::new("12345678".to_string()).unwrap()

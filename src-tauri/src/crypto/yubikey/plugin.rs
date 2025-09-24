@@ -1,7 +1,7 @@
 //! age-plugin-yubikey integration and management
 
 use super::errors::{YubiKeyError, YubiKeyResult};
-use super::pty::core::get_age_path;
+use crate::key_management::yubikey::infrastructure::pty::core::get_age_path;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use tokio::fs;

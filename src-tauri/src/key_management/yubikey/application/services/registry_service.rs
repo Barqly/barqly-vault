@@ -6,8 +6,8 @@
 //! TODO: Integration with vault management to be handled by higher-level services
 
 use crate::key_management::yubikey::{
-    errors::{YubiKeyError, YubiKeyResult},
-    models::{Serial, YubiKeyDevice, YubiKeyIdentity},
+    domain::errors::{YubiKeyError, YubiKeyResult},
+    domain::models::{Serial, YubiKeyDevice, YubiKeyIdentity},
 };
 use crate::prelude::*;
 use crate::storage::key_registry::KeyRegistry;
@@ -422,16 +422,16 @@ impl YubiKeyDevice {
         // Determine form factor and interfaces from label/name patterns
         // TODO: This is a temporary solution - should store actual values in registry
         let form_factor = if label.contains("Nano") {
-            crate::key_management::yubikey::models::FormFactor::Nano
+            crate::key_management::yubikey::domain::models::FormFactor::Nano
         } else if label.contains("5C") {
-            crate::key_management::yubikey::models::FormFactor::USB_C
+            crate::key_management::yubikey::domain::models::FormFactor::USB_C
         } else if label.contains("NFC") {
-            crate::key_management::yubikey::models::FormFactor::NFC
+            crate::key_management::yubikey::domain::models::FormFactor::NFC
         } else {
-            crate::key_management::yubikey::models::FormFactor::USB_A
+            crate::key_management::yubikey::domain::models::FormFactor::USB_A
         };
 
-        let interfaces = vec![crate::key_management::yubikey::models::Interface::USB];
+        let interfaces = vec![crate::key_management::yubikey::domain::models::Interface::USB];
 
         Self::from_detected_device(
             serial,
@@ -446,7 +446,7 @@ impl YubiKeyDevice {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_management::yubikey::models::{FormFactor, Interface, YubiKeyIdentity};
+    use crate::key_management::yubikey::domain::models::{FormFactor, Interface, YubiKeyIdentity};
 
     fn create_test_device() -> YubiKeyDevice {
         let serial = Serial::new("12345678".to_string()).unwrap();

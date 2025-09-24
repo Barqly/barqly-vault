@@ -314,7 +314,7 @@ pub async fn verify_key_passphrase(
             );
 
             // Use the dedicated PIN verification function with serial binding
-            match crate::crypto::yubikey::pty::verify_yubikey_pin(serial, &input.passphrase) {
+            match crate::key_management::yubikey::infrastructure::pty::verify_yubikey_pin(serial, &input.passphrase) {
                 Ok(true) => {
                     info!(
                         key_id = %input.key_id,

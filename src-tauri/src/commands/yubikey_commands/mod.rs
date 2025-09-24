@@ -2,10 +2,8 @@
 //!
 //! This module provides all YubiKey-related commands for the frontend interface.
 
-pub mod device_management;
-pub mod initialization;
 pub mod smart_decryption;
-pub mod streamlined; // PTY-based implementation from POC
+pub mod streamlined; // Primary YubiKey API
 
 #[cfg(test)]
 pub mod hardware_test;
@@ -16,13 +14,12 @@ pub mod test_generate_key_multi;
 #[cfg(test)]
 pub mod test_streamlined_api;
 
-pub use device_management::*;
-pub use initialization::*;
 pub use smart_decryption::*;
 pub use streamlined::*;
 
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::crypto::yubikey::YubiKeyError;
+use crate::key_management::yubikey::domain::errors::YubiKeyError as NewYubiKeyError;
 
 /// Convert YubiKey errors to command errors with appropriate recovery guidance
 impl From<YubiKeyError> for CommandError {
@@ -88,6 +85,61 @@ impl From<YubiKeyError> for CommandError {
             .with_recovery_guidance(
                 "Install PC/SC drivers and ensure the smart card service is running",
             ),
+            _ => CommandError::operation(
+                ErrorCode::UnexpectedError,
+                format!("YubiKey operation failed: {err}"),
+            )
+            .with_recovery_guidance(
+                "Try reconnecting your YubiKey and attempting the operation again",
+            ),
+        }
+    }
+}
+
+/// Convert new YubiKey management errors to command errors
+impl From<NewYubiKeyError> for CommandError {
+    fn from(err: NewYubiKeyError) -> Self {
+        match err {
+            NewYubiKeyError::DeviceNotFound { serial } => CommandError::operation(
+                ErrorCode::YubiKeyNotFound,
+                format!("YubiKey with serial {serial} not found"),
+            )
+            .with_recovery_guidance("Please insert the correct YubiKey device"),
+            NewYubiKeyError::MultipleDevicesFound { serials } => CommandError::operation(
+                ErrorCode::UnexpectedError,
+                format!("Multiple YubiKey devices found: {serials:?}"),
+            )
+            .with_recovery_guidance("Disconnect extra YubiKey devices or specify serial number"),
+            NewYubiKeyError::Device { message } => CommandError::operation(
+                ErrorCode::YubiKeyCommunicationError,
+                format!("YubiKey device error: {message}"),
+            )
+            .with_recovery_guidance("Check YubiKey connection and try again"),
+            NewYubiKeyError::Identity { message } => CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                format!("YubiKey identity error: {message}"),
+            )
+            .with_recovery_guidance("Try re-initializing the YubiKey or use a different device"),
+            NewYubiKeyError::IdentityNotFound { serial } => CommandError::operation(
+                ErrorCode::YubiKeyNotFound,
+                format!("No identity found for YubiKey: {serial}"),
+            )
+            .with_recovery_guidance("Initialize the YubiKey first or check the serial number"),
+            NewYubiKeyError::Registry { message } => CommandError::operation(
+                ErrorCode::UnexpectedError,
+                format!("YubiKey registry error: {message}"),
+            )
+            .with_recovery_guidance("Check application data integrity"),
+            NewYubiKeyError::Pin { message } => CommandError::operation(
+                ErrorCode::YubiKeyPinRequired,
+                format!("YubiKey PIN error: {message}"),
+            )
+            .with_recovery_guidance("Enter your 6-8 digit YubiKey PIN"),
+            NewYubiKeyError::AgePlugin { message } => CommandError::operation(
+                ErrorCode::PluginExecutionFailed,
+                format!("age-plugin-yubikey error: {message}"),
+            )
+            .with_recovery_guidance("Check that age-plugin-yubikey is properly installed"),
             _ => CommandError::operation(
                 ErrorCode::UnexpectedError,
                 format!("YubiKey operation failed: {err}"),

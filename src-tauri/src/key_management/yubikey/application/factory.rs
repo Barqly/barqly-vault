@@ -2,7 +2,7 @@
 //!
 //! Placeholder implementation - will be fully implemented in Week 2-3
 
-use crate::key_management::yubikey::errors::{YubiKeyError, YubiKeyResult};
+use crate::key_management::yubikey::domain::errors::{YubiKeyError, YubiKeyResult};
 use std::fmt;
 
 /// YubiKey Factory - Creates and configures YubiKey objects

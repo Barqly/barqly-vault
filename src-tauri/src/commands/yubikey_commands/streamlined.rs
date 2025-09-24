@@ -4,10 +4,6 @@
 //! YubiKeyManager for all operations, replacing scattered PTY calls with unified service orchestration.
 
 use crate::commands::command_types::{CommandError, ErrorCode};
-use crate::crypto::yubikey::pty::{
-    age_operations::list_yubikey_identities,
-    ykman_operations::initialize_yubikey_with_recovery,
-};
 use crate::key_management::yubikey::YubiKeyManager;
 use crate::prelude::*;
 // KeyRegistry operations now handled by YubiKeyManager
@@ -217,7 +213,7 @@ pub async fn init_yubikey(
     info!("Initializing YubiKey with label {} using YubiKeyManager", label);
 
     // Create domain objects for type safety
-    use crate::key_management::yubikey::models::{Serial, Pin};
+    use crate::key_management::yubikey::domain::models::{Serial, Pin};
     let serial_obj = Serial::new(serial.clone()).map_err(|e| {
         CommandError::validation(format!("Invalid serial format: {e}"))
     })?;
@@ -234,8 +230,8 @@ pub async fn init_yubikey(
         )
     })?;
 
-    // Generate recovery code for initialization (TODO: Move to manager)
-    let recovery_code = initialize_yubikey_with_recovery(pin_obj.value()).map_err(|e| {
+    // Generate recovery code using centralized hardware initialization
+    let recovery_code = manager.initialize_device_hardware(&pin_obj).await.map_err(|e| {
         CommandError::operation(
             ErrorCode::YubiKeyInitializationFailed,
             format!("Failed to initialize YubiKey hardware: {e}"),
@@ -291,7 +287,7 @@ pub async fn register_yubikey(
     info!("Registering reused YubiKey with label {} using YubiKeyManager", label);
 
     // Create domain objects for type safety
-    use crate::key_management::yubikey::models::{Serial, Pin};
+    use crate::key_management::yubikey::domain::models::{Serial, Pin};
     let serial_obj = Serial::new(serial.clone()).map_err(|e| {
         CommandError::validation(format!("Invalid serial format: {e}"))
     })?;
@@ -347,33 +343,59 @@ pub async fn register_yubikey(
     })
 }
 
-/// Get identities for a specific YubiKey
+/// Get identities for a specific YubiKey (Refactored with YubiKeyManager)
 #[tauri::command]
 #[specta::specta]
 pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError> {
-    info!("Getting identities for YubiKey {}", serial);
+    info!("Getting identities for YubiKey {} using YubiKeyManager", serial);
 
-    let identities = list_yubikey_identities().map_err(|e| {
+    // Create domain object for type safety
+    use crate::key_management::yubikey::domain::models::Serial;
+    let serial_obj = Serial::new(serial.clone()).map_err(|e| {
+        CommandError::validation(format!("Invalid serial format: {e}"))
+    })?;
+
+    // Initialize YubiKey manager
+    let manager = YubiKeyManager::new().await.map_err(|e| {
         CommandError::operation(
             ErrorCode::YubiKeyCommunicationError,
-            format!("Failed to list identities: {e}"),
+            format!("Failed to initialize YubiKey manager: {e}"),
         )
     })?;
 
-    // Filter identities for this serial
-    let filtered: Vec<String> = identities
-        .into_iter()
-        .filter(|id| id.contains(&serial))
-        .collect();
+    // Check common slots (1, 2, 3) for identities using centralized service
+    let mut identities = Vec::new();
+    for slot in [1u8, 2u8, 3u8] {
+        match manager.get_existing_identity(&serial_obj, slot).await {
+            Ok(Some(identity)) => {
+                // Convert YubiKeyIdentity to string format for backward compatibility
+                let identity_string = format!("{}:{}", serial_obj.value(), identity.identity_tag());
+                identities.push(identity_string);
+                debug!("Found identity in slot {}: {}", slot, identity.identity_tag());
+            }
+            Ok(None) => {
+                debug!("No identity found in slot {}", slot);
+            }
+            Err(e) => {
+                debug!("Error checking slot {} for YubiKey {}: {}", slot, serial_obj.redacted(), e);
+            }
+        }
+    }
 
-    if filtered.is_empty() {
+    // Shutdown manager gracefully
+    if let Err(e) = manager.shutdown().await {
+        warn!("Failed to shutdown YubiKey manager: {}", e);
+    }
+
+    if identities.is_empty() {
         return Err(CommandError::operation(
             ErrorCode::YubiKeyNotFound,
-            format!("No identities found for YubiKey {serial}"),
+            format!("No identities found for YubiKey {}", serial_obj.redacted()),
         ));
     }
 
-    Ok(filtered)
+    info!("Found {} identities for YubiKey {}", identities.len(), serial_obj.redacted());
+    Ok(identities)
 }
 
 // Helper function to extract serial from ykman output

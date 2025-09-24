@@ -3,7 +3,7 @@
 //! Represents a physical YubiKey device with its capabilities and state.
 //! Replaces primitive obsession with proper domain modeling.
 
-use crate::key_management::yubikey::models::serial::Serial;
+use crate::key_management::yubikey::domain::models::serial::Serial;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
@@ -373,7 +373,7 @@ pub struct DeviceSummary {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_management::yubikey::models::serial::Serial;
+    use crate::key_management::yubikey::domain::models::serial::Serial;
 
     fn create_test_serial() -> Serial {
         Serial::new("12345678".to_string()).unwrap()

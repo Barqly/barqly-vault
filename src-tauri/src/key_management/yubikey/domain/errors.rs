@@ -3,7 +3,7 @@
 //! Provides unified error handling for all YubiKey operations, replacing
 //! the scattered error handling patterns found throughout the codebase.
 
-use crate::key_management::yubikey::models::{Serial, IdentityValidationError, PinValidationError, SerialValidationError, StateTransitionError};
+use crate::key_management::yubikey::domain::models::{Serial, IdentityValidationError, PinValidationError, SerialValidationError, StateTransitionError};
 use std::fmt;
 
 /// Main result type for all YubiKey operations
@@ -446,7 +446,7 @@ impl fmt::Display for ErrorCategory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_management::yubikey::models::Serial;
+    use crate::key_management::yubikey::domain::models::Serial;
 
     #[test]
     fn test_error_creation() {

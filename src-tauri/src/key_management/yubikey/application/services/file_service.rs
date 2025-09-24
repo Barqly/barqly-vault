@@ -4,8 +4,8 @@
 //! and decryption workflows, including age-plugin-yubikey file operations.
 
 use crate::key_management::yubikey::{
-    errors::{YubiKeyError, YubiKeyResult},
-    models::Serial,
+    domain::errors::{YubiKeyError, YubiKeyResult},
+    domain::models::Serial,
 };
 use crate::prelude::*;
 use async_trait::async_trait;

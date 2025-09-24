@@ -4,8 +4,8 @@
 //! identity tag bug by centralizing identity management and validation.
 
 use crate::key_management::yubikey::{
-    errors::{YubiKeyError, YubiKeyResult},
-    models::{Serial, Pin, YubiKeyIdentity},
+    domain::errors::{YubiKeyError, YubiKeyResult},
+    domain::models::{Serial, Pin, YubiKeyIdentity},
 };
 use crate::prelude::*;
 use secrecy::ExposeSecret;
@@ -478,7 +478,7 @@ impl AgePluginIdentityService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_management::yubikey::models::{Serial, Pin};
+    use crate::key_management::yubikey::domain::models::{Serial, Pin};
     use secrecy::SecretString;
 
     #[tokio::test]

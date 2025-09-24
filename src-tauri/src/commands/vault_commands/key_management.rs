@@ -3,7 +3,7 @@
 //! Commands for updating key labels and checking YubiKey availability.
 
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
-use crate::crypto::yubikey::pty::ykman_operations::list_yubikeys;
+use crate::key_management::yubikey::infrastructure::pty::ykman_operations::list_yubikeys;
 use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};

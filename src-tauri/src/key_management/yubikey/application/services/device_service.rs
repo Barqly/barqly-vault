@@ -5,8 +5,8 @@
 //! over the physical device interactions.
 
 use crate::key_management::yubikey::{
-    errors::{YubiKeyError, YubiKeyResult},
-    models::{Serial, Pin, YubiKeyDevice, FormFactor, Interface},
+    domain::errors::{YubiKeyError, YubiKeyResult},
+    domain::models::{Serial, Pin, YubiKeyDevice, FormFactor, Interface},
 };
 use crate::prelude::*;
 use async_trait::async_trait;
@@ -348,7 +348,7 @@ impl DeviceService for YkmanDeviceService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_management::yubikey::models::Pin;
+    use crate::key_management::yubikey::domain::models::Pin;
     use secrecy::SecretString;
 
     #[tokio::test]
