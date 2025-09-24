@@ -158,10 +158,7 @@ pub async fn init_yubikey_for_vault(
         1, // Default slot
         piv_slot.min(95) as u8,
         streamlined_result.recipient,
-        format!(
-            "AGE-PLUGIN-YUBIKEY-{}",
-            &input.serial[..6.min(input.serial.len())]
-        ),
+        streamlined_result.identity_tag,
         None,                                                     // firmware_version
         format!("{:x}", Sha256::digest(b"recovery-placeholder")), // Placeholder recovery hash
     );
@@ -316,10 +313,14 @@ pub async fn register_yubikey_for_vault(
             .as_ref()
             .cloned()
             .unwrap_or_else(|| format!("age1yubikey1{}", &input.serial[..8])),
-        format!(
-            "AGE-PLUGIN-YUBIKEY-{}",
-            &input.serial[..6.min(input.serial.len())]
-        ),
+        yubikey
+            .identity_tag
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| {
+                error!("YubiKey has no identity tag, this should not happen");
+                format!("AGE-PLUGIN-YUBIKEY-MISSING")
+            }),
         None,                                               // firmware_version
         format!("{:x}", Sha256::digest(b"registered-key")), // Placeholder recovery hash for registered keys
     );

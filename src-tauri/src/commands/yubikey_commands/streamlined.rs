@@ -190,13 +190,29 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
                     }
                 })
             }),
-            identity_tag: registry_entry.as_ref().and_then(|(_, entry)| {
-                if let crate::storage::KeyEntry::Yubikey { identity_tag, .. } = entry {
-                    Some(identity_tag.clone())
-                } else {
-                    None
-                }
-            }),
+            identity_tag: registry_entry
+                .as_ref()
+                .and_then(|(_, entry)| {
+                    if let crate::storage::KeyEntry::Yubikey { identity_tag, .. } = entry {
+                        Some(identity_tag.clone())
+                    } else {
+                        None
+                    }
+                })
+                .or_else(|| {
+                    // If not in registry but has identity, get it from age-plugin-yubikey
+                    if has_identity && !in_registry {
+                        match get_identity_for_serial(&serial) {
+                            Ok(tag) => Some(tag),
+                            Err(e) => {
+                                warn!("Failed to get identity tag for YubiKey {}: {}", serial, e);
+                                None
+                            }
+                        }
+                    } else {
+                        None
+                    }
+                }),
             label: registry_entry
                 .as_ref()
                 .and_then(|(_, entry)| {

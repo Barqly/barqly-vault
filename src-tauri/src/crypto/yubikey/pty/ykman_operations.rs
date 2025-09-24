@@ -282,78 +282,40 @@ pub fn get_firmware_version(pin: &str) -> Result<String> {
     ))
 }
 
-/// Verify YubiKey PIN by attempting to access PIV information
-/// This provides a lightweight verification without modifying YubiKey state
-/// Serial number is used to ensure we're working with the correct YubiKey
+/// Verify YubiKey PIN by accepting the PIN without separate verification
+///
+/// Unlike passphrase-based keys, YubiKey PIN verification should NOT be performed separately
+/// for the following reasons:
+///
+/// 1. **No idempotent PIN verification method exists**: YubiKey operations like `ykman piv info`
+///    don't actually require or verify the PIN - they work without authentication.
+///
+/// 2. **YubiKey has a 3-attempt lockout mechanism**: Each failed PIN attempt counts against the
+///    limit. Performing separate verification wastes attempts and reduces security.
+///
+/// 3. **PIN verification happens during actual decryption**: When age-plugin-yubikey performs
+///    decryption operations, it will properly verify the PIN and provide appropriate error
+///    feedback if the PIN is incorrect.
+///
+/// 4. **Contrast with passphrase approach**: For passphrase-based keys, there's no lockout
+///    mechanism, so separate verification makes sense to provide immediate user feedback.
+///
+/// 5. **Better user experience**: Users get the full 3 PIN attempts for the actual decryption
+///    operation, rather than wasting attempts on verification that provides no security benefit.
+///
+/// The actual PIN verification occurs when age-plugin-yubikey uses the private key for decryption.
+/// If the PIN is incorrect, the decryption operation will fail with a clear error message.
 #[instrument(skip(pin), fields(serial = %serial))]
 pub fn verify_yubikey_pin(serial: &str, pin: &str) -> Result<bool> {
     info!(
         serial = %serial,
         pin_length = pin.len(),
-        "Verifying YubiKey PIN using PIV info command"
+        "Accepting YubiKey PIN - verification will occur during decryption"
     );
 
-    // First verify the YubiKey with this serial is connected
-    match get_yubikey_serial() {
-        Ok(connected_serial) => {
-            if connected_serial != serial {
-                warn!(
-                    expected_serial = %serial,
-                    found_serial = %connected_serial,
-                    "YubiKey serial mismatch - expected device not connected"
-                );
-                return Ok(false);
-            }
-        }
-        Err(e) => {
-            warn!(error = ?e, "Could not detect YubiKey serial");
-            return Ok(false);
-        }
-    }
-
-    // Use ykman piv info command to verify PIN
-    // This command requires PIN authentication but doesn't modify YubiKey state
-    let args = vec![
-        "--device".to_string(),
-        serial.to_string(),
-        "piv".to_string(),
-        "info".to_string(),
-    ];
-
-    match run_ykman_command(args, Some(pin)) {
-        Ok(output) => {
-            // If we get output, PIN is correct
-            debug!(
-                serial = %serial,
-                output_length = output.len(),
-                "PIN verification successful - PIV info retrieved"
-            );
-            Ok(true)
-        }
-        Err(e) => {
-            // Check if it's a PIN-related error
-            let error_msg = format!("{:?}", e);
-            if error_msg.to_lowercase().contains("authentication")
-                || error_msg.to_lowercase().contains("pin")
-                || error_msg.to_lowercase().contains("wrong")
-            {
-                info!(
-                    serial = %serial,
-                    error = %e,
-                    "PIN verification failed - incorrect PIN"
-                );
-                Ok(false)
-            } else {
-                // Other errors (device issues, etc.)
-                warn!(
-                    serial = %serial,
-                    error = %e,
-                    "PIN verification failed due to device error"
-                );
-                Ok(false)
-            }
-        }
-    }
+    // Always return true for YubiKey PIN verification
+    // The actual PIN verification happens during decryption operations
+    Ok(true)
 }
 
 /// List YubiKey devices

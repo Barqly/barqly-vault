@@ -78,7 +78,7 @@ pub async fn add_passphrase_key_to_vault(
         created_at: Utc::now(),
         last_used: None,
         public_key: key_result.public_key.clone(),
-        key_filename: format!("{}.agekey.enc", key_registry_id), // Based on key registry ID
+        key_filename: input.label.clone(), // Store label only (path functions add .agekey.enc)
     };
 
     registry
