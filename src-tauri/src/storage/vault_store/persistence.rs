@@ -242,7 +242,7 @@ mod tests {
             last_used: None,
         };
 
-        vault.add_key(passphrase_key).unwrap();
+        vault.add_key_id(passphrase_key.id.clone()).unwrap();
 
         // Save the vault
         save_vault(&vault).await.unwrap();
@@ -254,7 +254,7 @@ mod tests {
         assert_eq!(loaded.id, vault.id);
         assert_eq!(loaded.name, vault.name);
         assert_eq!(loaded.keys.len(), 1);
-        assert_eq!(loaded.keys[0].label, "Main Password");
+        assert_eq!(loaded.keys[0], "key_1");
 
         // Clean up
         delete_vault_by_name(&vault.name).await.unwrap();

@@ -13,6 +13,7 @@ pub mod models; // Vault and key management models
 pub mod prelude;
 pub mod storage; // Public for tests, but should be treated as private for external use
 pub mod tracing_setup; // New centralized tracing configuration // Project-wide common imports
+pub mod key_management; // Centralized key management architecture (YubiKey, passphrase, etc.)
 
 use commands::{
     create_manifest,

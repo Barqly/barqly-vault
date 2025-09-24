@@ -1,0 +1,1 @@
+//! Passphrase state - placeholder for future refactoring

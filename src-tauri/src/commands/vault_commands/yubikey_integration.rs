@@ -78,8 +78,9 @@ pub async fn init_yubikey_for_vault(
     let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
     let slot_taken = vault.keys.iter().any(|key_id| {
         if let Some(entry) = registry.get_key(key_id) {
-            if let crate::storage::KeyEntry::Yubikey { slot, .. } = entry {
-                *slot == input.slot_index
+            if let crate::storage::KeyEntry::Yubikey { slot, serial, .. } = entry {
+                // Only consider slot occupied if it's the same YubiKey (same serial)
+                *slot == input.slot_index && serial == &input.serial
             } else {
                 false
             }
@@ -227,8 +228,9 @@ pub async fn register_yubikey_for_vault(
     let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
     let slot_taken = vault.keys.iter().any(|key_id| {
         if let Some(entry) = registry.get_key(key_id) {
-            if let crate::storage::KeyEntry::Yubikey { slot, .. } = entry {
-                *slot == input.slot_index
+            if let crate::storage::KeyEntry::Yubikey { slot, serial, .. } = entry {
+                // Only consider slot occupied if it's the same YubiKey (same serial)
+                *slot == input.slot_index && serial == &input.serial
             } else {
                 false
             }

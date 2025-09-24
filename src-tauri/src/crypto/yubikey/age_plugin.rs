@@ -28,16 +28,6 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 /// Extended timeout for operations requiring user interaction
 const INTERACTIVE_TIMEOUT: Duration = Duration::from_secs(120);
 
-/// YubiKey state classification for smart UI workflows
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub enum YubiKeyState {
-    /// Brand new YubiKey with default PIN (123456)
-    New,
-    /// YubiKey with custom PIN but no age identity registered
-    Reused,
-    /// YubiKey with age identity already registered and ready to use
-    Registered,
-}
 
 /// age-plugin-yubikey provider implementation
 #[derive(Debug)]
