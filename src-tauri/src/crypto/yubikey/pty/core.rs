@@ -30,9 +30,9 @@ pub enum PtyError {
 
 pub type Result<T> = std::result::Result<T, PtyError>;
 
-const TOUCH_TIMEOUT: Duration = Duration::from_secs(30);
-const PIN_INJECT_DELAY: Duration = Duration::from_millis(300);
-const COMMAND_TIMEOUT: Duration = Duration::from_secs(60);
+pub const TOUCH_TIMEOUT: Duration = Duration::from_secs(30);
+pub const PIN_INJECT_DELAY: Duration = Duration::from_millis(300);
+pub const COMMAND_TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Debug, Clone)]
 pub enum PtyState {
@@ -88,6 +88,30 @@ pub fn get_ykman_path() -> PathBuf {
 
     // Fall back to system binary
     PathBuf::from("ykman")
+}
+
+/// Get path to age binary
+pub fn get_age_path() -> PathBuf {
+    // First try bundled binary
+    let bundled =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("bin")
+            .join(if cfg!(target_os = "macos") {
+                "darwin/age"
+            } else if cfg!(target_os = "linux") {
+                "linux/age"
+            } else {
+                "windows/age.exe"
+            });
+
+    if bundled.exists() {
+        info!(path = %bundled.display(), "Using bundled age CLI");
+        return bundled;
+    }
+
+    // Fall back to system binary
+    debug!(bundled_path = %bundled.display(), "Bundled age not found, using system binary");
+    PathBuf::from("age")
 }
 
 /// Run age-plugin-yubikey command with optional PIN injection

@@ -87,6 +87,17 @@ async encryptFiles(input: EncryptDataInput) : Promise<Result<string, CommandErro
 }
 },
 /**
+ * Encrypt files to all vault keys with progress streaming
+ */
+async encryptFilesMulti(input: EncryptFilesMultiInput) : Promise<Result<EncryptFilesMultiResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("encrypt_files_multi", { input }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Get encryption operation status
  */
 async getEncryptionStatus(input: GetEncryptionStatusInput) : Promise<Result<EncryptionStatusResponse, CommandError>> {
@@ -823,6 +834,14 @@ export type DeleteVaultResponse = { success: boolean; message: string }
  */
 export type EncryptDataInput = { key_id: string; file_paths: string[]; output_name: string | null; output_path: string | null }
 /**
+ * Input for multi-key encryption command
+ */
+export type EncryptFilesMultiInput = { vault_id: string; in_file_paths: string[]; out_encrypted_file_name: string | null; out_encrypted_file_path: string | null }
+/**
+ * Response for multi-key encryption
+ */
+export type EncryptFilesMultiResponse = { encrypted_file_path: string; manifest_file_path: string; file_exists_warning: boolean; keys_used: string[] }
+/**
  * Encryption operation status
  */
 export type EncryptionStatus = "Pending" | "InProgress" | "Completed" | "Failed" | "Cancelled"
@@ -893,7 +912,11 @@ export type GetProgressResponse = { operation_id: string; progress: number; mess
 /**
  * Input for getting vault keys
  */
-export type GetVaultKeysRequest = { vault_id: string }
+export type GetVaultKeysRequest = { vault_id: string; 
+/**
+ * Include all keys regardless of availability (for decrypt operations)
+ */
+include_all: boolean | null }
 /**
  * Response containing vault keys
  */
@@ -903,7 +926,7 @@ export type GetVaultKeysResponse = { vault_id: string; keys: KeyReference[] }
  */
 export type KeyMetadata = { label: string; created_at: string; public_key: string | null }
 /**
- * Reference to a key that can unlock a vault
+ * Reference to a key that can unlock a vault (for frontend communication)
  */
 export type KeyReference = 
 /**
@@ -917,7 +940,7 @@ export type KeyReference =
 /**
  * YubiKey hardware token
  */
-{ type: "yubikey"; serial: string; slot_index: number; piv_slot: number }) & { 
+{ type: "yubikey"; serial: string; slot_index: number; piv_slot: number; firmware_version?: string | null }) & { 
 /**
  * Unique identifier for this key reference
  */

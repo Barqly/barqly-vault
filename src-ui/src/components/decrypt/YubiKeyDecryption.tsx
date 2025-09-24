@@ -9,8 +9,8 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import { YubiKeyDevice, YubiKeyDecryptParams, ConnectionStatus } from '../../lib/api-types';
-import { safeInvoke } from '../../lib/tauri-safe';
+import { YubiKeyDecryptParams, ConnectionStatus } from '../../lib/api-types';
+import { commands, YubiKeyDevice } from '../../bindings';
 import { LoadingSpinner } from '../ui/loading-spinner';
 import { ErrorMessage } from '../ui/error-message';
 import EnhancedInput from '../forms/EnhancedInput';
@@ -60,16 +60,17 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
   const loadAvailableDevices = async () => {
     setIsLoadingDevices(true);
     try {
-      const devices = await safeInvoke<YubiKeyDevice[]>(
-        'yubikey_list_devices',
-        undefined,
-        'YubiKeyDecryption.loadDevices',
-      );
-      setAvailableDevices(devices);
+      const result = await commands.yubikeyListDevices();
+
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Failed to load YubiKey devices');
+      }
+
+      setAvailableDevices(result.data);
 
       // Auto-select first device if none selected
-      if (devices.length > 0 && !selectedDevice && onDeviceSelect) {
-        onDeviceSelect(devices[0]);
+      if (result.data.length > 0 && !selectedDevice && onDeviceSelect) {
+        onDeviceSelect(result.data[0]);
       }
     } catch (error: any) {
       setError(error.message);
@@ -83,14 +84,31 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
     setConnectionStatus(null);
 
     try {
-      const status = await safeInvoke<ConnectionStatus>(
-        'yubikey_test_connection',
-        {
-          device_id: device.device_id,
-        },
-        'YubiKeyDecryption.testConnection',
-      );
-      setConnectionStatus(status);
+      // For connection testing, we need the PIN. If not provided, show error.
+      if (!pin) {
+        setConnectionStatus({
+          is_connected: false,
+          error_message: 'PIN required for connection test',
+        });
+        return;
+      }
+
+      const result = await commands.yubikeyTestConnection(device.serial_number || '', pin);
+
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Connection test failed');
+      }
+
+      // Convert from YubiKeyConnectionTest to ConnectionStatus format
+      const connectionStatus: ConnectionStatus = {
+        is_connected: result.data.status === 'Success',
+        error_message:
+          result.data.status !== 'Success' && 'Failed' in result.data.status
+            ? result.data.status.Failed.reason
+            : undefined,
+      };
+
+      setConnectionStatus(connectionStatus);
     } catch (error: any) {
       setConnectionStatus({
         is_connected: false,

@@ -1,24 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
 import React from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { KeyMetadata, CommandError } from '../lib/api-types';
+import { commands, KeyReference } from '../bindings';
+import { useVault } from '../contexts/VaultContext';
 
 export interface UseKeySelectionOptions {
-  onKeysLoaded?: (keys: KeyMetadata[]) => void;
+  onKeysLoaded?: (keys: KeyReference[]) => void;
   onLoadingChange?: (loading: boolean) => void;
+  includeAllKeys?: boolean; // If true, include all keys (passphrase + YubiKey), otherwise only passphrase
 }
 
 export interface UseKeySelectionResult {
-  keys: KeyMetadata[];
+  keys: KeyReference[];
   loading: boolean;
   error: string;
   isOpen: boolean;
-  selectedKey: KeyMetadata | undefined;
+  selectedKey: KeyReference | undefined;
   showPublicKeyPreview: boolean;
   setIsOpen: (open: boolean) => void;
   setShowPublicKeyPreview: (show: boolean) => void;
   handleToggle: () => void;
-  handleKeySelect: (keyLabel: string) => void;
+  handleKeySelect: (keyId: string) => void;
   handleKeyDown: (event: React.KeyboardEvent) => void;
   formatDate: (dateString: string) => string;
   truncatePublicKey: (publicKey: string) => string;
@@ -26,33 +27,48 @@ export interface UseKeySelectionResult {
 
 export function useKeySelection(
   value?: string,
-  onChange?: (keyLabel: string) => void,
+  onChange?: (keyId: string) => void,
   disabled = false,
   showPublicKey = true,
   options: UseKeySelectionOptions = {},
 ): UseKeySelectionResult {
-  const { onKeysLoaded, onLoadingChange } = options;
+  const { onKeysLoaded, onLoadingChange, includeAllKeys = false } = options;
+  const { currentVault } = useVault();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [keys, setKeys] = useState<KeyMetadata[]>([]);
+  const [keys, setKeys] = useState<KeyReference[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showPublicKeyPreview, setShowPublicKeyPreview] = useState(showPublicKey);
 
-  // Load available keys
+  // Load available keys from current vault
   useEffect(() => {
     const loadKeys = async () => {
+      if (!currentVault) {
+        setKeys([]);
+        setError('No vault selected');
+        return;
+      }
+
       setLoading(true);
       onLoadingChange?.(true);
       setError('');
 
       try {
-        const result = await invoke<KeyMetadata[]>('list_keys_command');
-        setKeys(result);
-        onKeysLoaded?.(result);
-      } catch (err) {
-        const commandError = err as CommandError;
-        setError(commandError.message || 'Failed to load keys');
+        const result = await commands.getVaultKeys({
+          vault_id: currentVault.id,
+          include_all: includeAllKeys || null,
+        });
+
+        if (result.status === 'error') {
+          throw new Error(result.error.message || 'Failed to load vault keys');
+        }
+
+        const vaultKeys = result.data.keys;
+        setKeys(vaultKeys);
+        onKeysLoaded?.(vaultKeys);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load keys');
       } finally {
         setLoading(false);
         onLoadingChange?.(false);
@@ -60,10 +76,10 @@ export function useKeySelection(
     };
 
     loadKeys();
-  }, [onKeysLoaded, onLoadingChange]);
+  }, [currentVault, includeAllKeys, onKeysLoaded, onLoadingChange]);
 
   // Get selected key data
-  const selectedKey = keys.find((key) => key.label === value);
+  const selectedKey = keys.find((key) => key.id === value);
 
   // Format creation date
   const formatDate = useCallback((dateString: string) => {
@@ -88,8 +104,8 @@ export function useKeySelection(
   }, []);
 
   const handleKeySelect = useCallback(
-    (keyLabel: string) => {
-      onChange?.(keyLabel);
+    (keyId: string) => {
+      onChange?.(keyId);
       setIsOpen(false);
     },
     [onChange],

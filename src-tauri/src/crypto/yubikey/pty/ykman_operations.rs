@@ -5,7 +5,6 @@ use crate::prelude::*;
 
 const DEFAULT_PIN: &str = "123456";
 const DEFAULT_PUK: &str = "12345678";
-#[allow(dead_code)]
 const DEFAULT_MGMT_KEY: &str = "010203040506070801020304050607080102030405060708";
 
 /// Check if YubiKey has default PIN
@@ -54,9 +53,9 @@ pub fn change_pin_pty(old_pin: &str, new_pin: &str) -> Result<()> {
         "piv".to_string(),
         "access".to_string(),
         "change-pin".to_string(),
-        "--pin".to_string(),
+        "-P".to_string(),
         old_pin.to_string(),
-        "--new-pin".to_string(),
+        "-n".to_string(),
         new_pin.to_string(),
     ];
 
@@ -101,9 +100,9 @@ pub fn change_puk_pty(old_puk: &str, new_puk: &str) -> Result<()> {
         "piv".to_string(),
         "access".to_string(),
         "change-puk".to_string(),
-        "--puk".to_string(),
+        "-p".to_string(),
         old_puk.to_string(),
-        "--new-puk".to_string(),
+        "-n".to_string(),
         new_puk.to_string(),
     ];
 
@@ -130,14 +129,17 @@ pub fn change_management_key_pty(pin: &str) -> Result<()> {
         "piv".to_string(),
         "access".to_string(),
         "change-management-key".to_string(),
-        "--algorithm".to_string(),
-        "TDES".to_string(),
-        "--protect".to_string(),
-        "--pin".to_string(),
+        "-a".to_string(),
+        "tdes".to_string(),
+        "-p".to_string(),
+        "-g".to_string(),
+        "-m".to_string(),
+        DEFAULT_MGMT_KEY.to_string(), // Use default management key for authentication
+        "-P".to_string(),
         pin.to_string(),
     ];
 
-    debug!(command = %args.join(" "), "Executing ykman command");
+    debug!(command = %format!("piv access change-management-key -a tdes -p -g -m [REDACTED] -P [REDACTED]"), "Executing ykman command");
 
     match run_ykman_command(args, Some(pin)) {
         Ok(output) => {
@@ -164,8 +166,8 @@ pub fn initialize_yubikey(new_pin: &str, new_puk: &str) -> Result<()> {
         "Credential lengths"
     );
 
-    // No management key change needed for retired slots!
-    // Just change PIN and PUK from defaults
+    // Proceed with initialization (YubiKey should be in factory default state)
+    info!("Starting YubiKey initialization from default state");
 
     // Step 1: Change PIN from default
     info!("Step 1: Changing PIN from default...");
@@ -177,6 +179,13 @@ pub fn initialize_yubikey(new_pin: &str, new_puk: &str) -> Result<()> {
     change_puk_pty(DEFAULT_PUK, new_puk)?;
     info!("Step 2 complete: PUK changed successfully");
 
+    // Step 3: Change management key to TDES with protected mode
+    // NOTE: This is required even for retired slots because age-plugin-yubikey
+    // checks the management key state and requires TDES+protected mode
+    info!("Step 3: Changing management key to TDES with protected mode...");
+    change_management_key_pty(new_pin)?;
+    info!("Step 3 complete: Management key changed successfully");
+
     info!("YubiKey initialization complete");
     Ok(())
 }
@@ -184,7 +193,7 @@ pub fn initialize_yubikey(new_pin: &str, new_puk: &str) -> Result<()> {
 /// Initialize YubiKey with auto-generated recovery code
 #[instrument(skip(new_pin))]
 pub fn initialize_yubikey_with_recovery(new_pin: &str) -> Result<String> {
-    use crate::crypto::yubikey::manifest::generate_recovery_code;
+    use crate::storage::key_registry::generate_recovery_code;
 
     info!("Initializing YubiKey with auto-generated recovery code");
 
@@ -248,6 +257,105 @@ pub fn get_piv_info(pin: &str) -> Result<String> {
     Ok(output)
 }
 
+/// Extract firmware version from PIV info output
+#[instrument]
+pub fn get_firmware_version(pin: &str) -> Result<String> {
+    info!("Getting YubiKey firmware version");
+
+    let piv_info = get_piv_info(pin)?;
+
+    // Parse firmware version from PIV info output
+    // Looking for line like "PIV version:              5.7.1"
+    for line in piv_info.lines() {
+        if line.contains("PIV version:")
+            && let Some(version) = line.split("PIV version:").nth(1)
+        {
+            let version = version.trim();
+            debug!(firmware_version = %version, "Found YubiKey firmware version");
+            return Ok(version.to_string());
+        }
+    }
+
+    warn!("Could not find firmware version in PIV info output");
+    Err(PtyError::PtyOperation(
+        "Could not find firmware version in ykman piv info output".to_string(),
+    ))
+}
+
+/// Verify YubiKey PIN by attempting to access PIV information
+/// This provides a lightweight verification without modifying YubiKey state
+/// Serial number is used to ensure we're working with the correct YubiKey
+#[instrument(skip(pin), fields(serial = %serial))]
+pub fn verify_yubikey_pin(serial: &str, pin: &str) -> Result<bool> {
+    info!(
+        serial = %serial,
+        pin_length = pin.len(),
+        "Verifying YubiKey PIN using PIV info command"
+    );
+
+    // First verify the YubiKey with this serial is connected
+    match get_yubikey_serial() {
+        Ok(connected_serial) => {
+            if connected_serial != serial {
+                warn!(
+                    expected_serial = %serial,
+                    found_serial = %connected_serial,
+                    "YubiKey serial mismatch - expected device not connected"
+                );
+                return Ok(false);
+            }
+        }
+        Err(e) => {
+            warn!(error = ?e, "Could not detect YubiKey serial");
+            return Ok(false);
+        }
+    }
+
+    // Use ykman piv info command to verify PIN
+    // This command requires PIN authentication but doesn't modify YubiKey state
+    let args = vec![
+        "--device".to_string(),
+        serial.to_string(),
+        "piv".to_string(),
+        "info".to_string(),
+    ];
+
+    match run_ykman_command(args, Some(pin)) {
+        Ok(output) => {
+            // If we get output, PIN is correct
+            debug!(
+                serial = %serial,
+                output_length = output.len(),
+                "PIN verification successful - PIV info retrieved"
+            );
+            Ok(true)
+        }
+        Err(e) => {
+            // Check if it's a PIN-related error
+            let error_msg = format!("{:?}", e);
+            if error_msg.to_lowercase().contains("authentication")
+                || error_msg.to_lowercase().contains("pin")
+                || error_msg.to_lowercase().contains("wrong")
+            {
+                info!(
+                    serial = %serial,
+                    error = %e,
+                    "PIN verification failed - incorrect PIN"
+                );
+                Ok(false)
+            } else {
+                // Other errors (device issues, etc.)
+                warn!(
+                    serial = %serial,
+                    error = %e,
+                    "PIN verification failed due to device error"
+                );
+                Ok(false)
+            }
+        }
+    }
+}
+
 /// List YubiKey devices
 #[instrument]
 pub fn list_yubikeys() -> Result<Vec<String>> {
@@ -268,8 +376,8 @@ pub fn list_yubikeys() -> Result<Vec<String>> {
     Ok(devices)
 }
 
-/// Reset YubiKey PIV (for testing)
-#[cfg(test)]
+/// Reset YubiKey PIV (for testing and recovery)
+/// WARNING: This erases ALL PIV data including keys and certificates
 #[instrument]
 pub fn reset_piv() -> Result<()> {
     warn!("Resetting YubiKey PIV - this will erase all PIV data!");

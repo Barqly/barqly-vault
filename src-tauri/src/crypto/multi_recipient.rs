@@ -5,6 +5,7 @@
 
 use crate::crypto::yubikey::{ProtectionMode, UnlockCredentials, UnlockMethod};
 use crate::crypto::{CryptoError, Result};
+use crate::crypto::yubikey::pty::core::get_age_path;
 use crate::storage::{RecipientInfo, RecipientType, VaultMetadataV2};
 use age::Recipient;
 use std::io::Write;
@@ -345,7 +346,8 @@ impl MultiRecipientCrypto {
         use tokio::io::AsyncWriteExt;
         use tokio::process::Command as TokioCommand;
 
-        let mut cmd = TokioCommand::new("age");
+        let age_path = get_age_path();
+        let mut cmd = TokioCommand::new(&age_path);
         cmd.arg("-d")
             .env("PATH", env_path)
             .stdin(std::process::Stdio::piped())

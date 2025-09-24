@@ -3,12 +3,10 @@ import { useSetupWorkflow } from './useSetupWorkflow';
 // import { useKeyGeneration } from './useKeyGeneration'; // Commented out - not currently used
 import {
   ProtectionMode,
-  YubiKeyDevice,
   YubiKeyInfo,
   // CommandErrorClass, // Commented out - not currently used
 } from '../lib/api-types';
-import { YubiKeyStateInfo } from '../bindings';
-import { safeInvoke } from '../lib/tauri-safe';
+import { YubiKeyStateInfo, commands, YubiKeyDevice } from '../bindings';
 import { logger } from '../lib/logger';
 
 /**
@@ -51,11 +49,13 @@ export const useYubiKeySetupWorkflow = () => {
 
     try {
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Checking for YubiKey devices');
-      const yubikeys = await safeInvoke<YubiKeyStateInfo[]>(
-        'list_yubikeys',
-        undefined,
-        'useYubiKeySetupWorkflow.checkForYubiKeys',
-      );
+      const result = await commands.listYubikeys();
+
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Failed to list YubiKey devices');
+      }
+
+      const yubikeys = result.data;
 
       console.log('🎯 Streamlined YubiKey detection DEBUG:', {
         yubikeys,
@@ -67,11 +67,11 @@ export const useYubiKeySetupWorkflow = () => {
       setYubiKeyStates(yubikeys);
 
       // Convert YubiKeyStateInfo to YubiKeyDevice format for backward compatibility
-      const devices: YubiKeyDevice[] = yubikeys.map((yk) => ({
+      const devices: YubiKeyDevice[] = yubikeys.map((yk: YubiKeyStateInfo) => ({
         device_id: yk.serial, // Use serial as device_id
-        name: (yk as any).label || `YubiKey (${yk.serial})`,
+        name: yk.label || `YubiKey (${yk.serial})`,
         serial_number: yk.serial,
-        firmware_version: undefined,
+        firmware_version: null,
         has_piv: true,
         has_oath: false,
         has_fido: false,
@@ -87,9 +87,9 @@ export const useYubiKeySetupWorkflow = () => {
       }
 
       // Check YubiKey states and provide appropriate messaging
-      const registeredKeys = yubikeys.filter((yk) => yk.state === 'registered');
-      const newKeys = yubikeys.filter((yk) => yk.state === 'new');
-      const reusedKeys = yubikeys.filter((yk) => yk.state === 'reused');
+      const registeredKeys = yubikeys.filter((yk: YubiKeyStateInfo) => yk.state === 'registered');
+      const newKeys = yubikeys.filter((yk: YubiKeyStateInfo) => yk.state === 'new');
+      const reusedKeys = yubikeys.filter((yk: YubiKeyStateInfo) => yk.state === 'reused');
 
       if (registeredKeys.length > 0) {
         console.log('✅ Found registered YubiKey(s):', registeredKeys);
@@ -368,21 +368,21 @@ export const useYubiKeySetupWorkflow = () => {
       });
 
       // Use new multi-recipient key generation command
-      console.log('📡 TRACER: About to call safeInvoke - generate_key_multi');
-      const result = await safeInvoke(
-        'generate_key_multi',
-        generateKeyParams,
-        'useYubiKeySetupWorkflow.generateKey',
-      );
+      console.log('📡 TRACER: About to call commands.generateKeyMulti');
+      const result = await commands.generateKeyMulti(generateKeyParams);
 
-      console.log('✅ TRACER: generate_key_multi successful:', result);
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Key generation failed');
+      }
+
+      console.log('✅ TRACER: generateKeyMulti successful:', result.data);
 
       // Set enhanced success state
       setIsEnhancedLoading(false);
-      setEnhancedSuccess(result);
+      setEnhancedSuccess(result.data);
       console.log('🎉 TRACER: Enhanced loading complete - success state set');
 
-      return result;
+      return result.data;
     } catch (error: any) {
       console.log('❌ TRACER: Enhanced key generation failed:', error);
       logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Enhanced key generation failed', {

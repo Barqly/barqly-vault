@@ -3,7 +3,7 @@
 //! This module contains the main operations for saving, loading, and deleting
 //! encrypted keys with proper security measures.
 
-use super::{KeyInfo, update_key_metadata_access_time, validate_key_file};
+use super::{update_key_metadata_access_time, validate_key_file};
 use crate::storage::cache::get_cache;
 use crate::storage::errors::StorageError;
 use crate::storage::path_management::{get_key_file_path, get_key_metadata_path};
@@ -57,29 +57,9 @@ pub fn save_encrypted_key(
         fs::set_permissions(&key_path, perms).map_err(StorageError::IoError)?;
     }
 
-    // Create metadata file
-    let metadata = KeyInfo::new(
-        label.to_string(),
-        key_path.clone(),
-        public_key.map(|s| s.to_string()),
-    );
-
-    let meta_path = get_key_metadata_path(label)?;
-    let metadata_json =
-        serde_json::to_string_pretty(&metadata).map_err(StorageError::SerializationError)?;
-
-    fs::write(&meta_path, metadata_json).map_err(StorageError::IoError)?;
-
-    // Set restrictive permissions on metadata file too
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let mut perms = fs::metadata(&meta_path)
-            .map_err(StorageError::IoError)?
-            .permissions();
-        perms.set_mode(0o600);
-        fs::set_permissions(&meta_path, perms).map_err(StorageError::IoError)?;
-    }
+    // Note: Metadata file creation disabled since we now use unified key registry
+    // The registry (barqly-vault-key-registry.json) handles all key metadata centrally
+    // Legacy .agekey.meta files are no longer needed
 
     // Invalidate key list cache since we added a new key
     let cache = get_cache();
@@ -272,18 +252,9 @@ pub fn save_yubikey_metadata(
         fs::set_permissions(&key_path, perms).map_err(StorageError::IoError)?;
     }
 
-    // Create basic metadata for key listing
-    let key_info = KeyInfo::new(
-        label.to_string(),
-        key_path.clone(),
-        public_key.map(|s| s.to_string()),
-    );
-
-    let meta_path = get_key_metadata_path(label)?;
-    let metadata_json =
-        serde_json::to_string_pretty(&key_info).map_err(StorageError::SerializationError)?;
-
-    fs::write(&meta_path, metadata_json).map_err(StorageError::IoError)?;
+    // Note: Metadata file creation disabled since we now use unified key registry
+    // The registry (barqly-vault-key-registry.json) handles all key metadata centrally
+    // Legacy .agekey.meta files are no longer needed
 
     // Save the v2 metadata
     let metadata_path = get_key_metadata_path(label)?.with_file_name(format!("{label}.v2.json"));

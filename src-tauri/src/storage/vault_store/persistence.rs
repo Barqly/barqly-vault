@@ -72,15 +72,7 @@ pub async fn load_vault_by_name(
     }
 
     let content = async_fs::read_to_string(path).await?;
-    let mut vault: Vault = serde_json::from_str(&content)?;
-
-    // Check for migration needs
-    if let Ok(migrated) = super::migration::migrate_vault_if_needed(&mut vault).await
-        && migrated
-    {
-        // Save migrated vault
-        save_vault(&vault).await?;
-    }
+    let vault: Vault = serde_json::from_str(&content)?;
 
     Ok(vault)
 }

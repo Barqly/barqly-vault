@@ -10,6 +10,7 @@ use crate::constants::*;
 use crate::crypto::key_mgmt::decrypt_private_key;
 use crate::prelude::*;
 use crate::storage::key_store::load_encrypted_key;
+use crate::storage::KeyRegistry;
 use age::secrecy::SecretString;
 
 /// Input for passphrase validation command
@@ -223,74 +224,130 @@ pub async fn verify_key_passphrase(
         "Starting key-passphrase verification"
     );
 
-    // Try to load the encrypted key
-    let encrypted_key = match load_encrypted_key(&input.key_id) {
-        Ok(key) => key,
+    // Load the key registry to check key type
+    let registry = match KeyRegistry::load() {
+        Ok(r) => r,
         Err(e) => {
             error!(
                 key_id = %input.key_id,
                 error = %e,
-                "Failed to load key for verification"
+                "Failed to load key registry"
             );
-
-            // Map storage errors to appropriate command errors
-            return Err(match e {
-                crate::storage::errors::StorageError::KeyNotFound(_) => {
-                    Box::new(CommandError::operation(
-                        ErrorCode::KeyNotFound,
-                        format!("Key '{}' not found", input.key_id),
-                    ))
-                }
-                _ => Box::new(CommandError::operation(
-                    ErrorCode::StorageFailed,
-                    format!("Failed to load key: {e}"),
-                )),
-            });
+            return Err(Box::new(CommandError::operation(
+                ErrorCode::StorageFailed,
+                format!("Failed to load key registry: {e}"),
+            )));
         }
     };
 
-    // Attempt to decrypt the private key with the provided passphrase
-    let passphrase = SecretString::from(input.passphrase);
-    match decrypt_private_key(&encrypted_key, passphrase) {
-        Ok(_) => {
-            // Passphrase is correct - key was successfully decrypted
-            info!(
+    // Get the key entry from registry
+    let key_entry = match registry.get_key(&input.key_id) {
+        Some(entry) => entry,
+        None => {
+            error!(
                 key_id = %input.key_id,
-                "Key-passphrase verification successful"
+                "Key not found in registry"
             );
-
-            Ok(VerifyKeyPassphraseResponse {
-                is_valid: true,
-                message: "Passphrase is correct".to_string(),
-            })
+            return Err(Box::new(CommandError::operation(
+                ErrorCode::KeyNotFound,
+                format!("Key '{}' not found", input.key_id),
+            )));
         }
-        Err(e) => {
-            // Check if it's specifically a wrong passphrase error
-            match e {
-                crate::crypto::CryptoError::WrongPassphrase => {
-                    warn!(
+    };
+
+    // Handle verification based on key type
+    match key_entry {
+        crate::storage::KeyEntry::Passphrase { key_filename, .. } => {
+            // For passphrase keys, load the encrypted key file and try to decrypt it
+            let encrypted_key = match load_encrypted_key(key_filename) {
+                Ok(key) => key,
+                Err(e) => {
+                    error!(
                         key_id = %input.key_id,
-                        reason = "wrong_passphrase",
-                        "Key-passphrase verification failed: incorrect passphrase"
+                        key_filename = %key_filename,
+                        error = %e,
+                        "Failed to load encrypted key file"
+                    );
+                    return Err(Box::new(CommandError::operation(
+                        ErrorCode::KeyNotFound,
+                        format!("Key file '{}' not found", key_filename),
+                    )));
+                }
+            };
+
+            // Attempt to decrypt the private key with the provided passphrase
+            let passphrase = SecretString::from(input.passphrase);
+            match decrypt_private_key(&encrypted_key, passphrase) {
+                Ok(_) => {
+                    // Passphrase is correct - key was successfully decrypted
+                    info!(
+                        key_id = %input.key_id,
+                        "Passphrase verification successful"
+                    );
+
+                    Ok(VerifyKeyPassphraseResponse {
+                        is_valid: true,
+                        message: "Passphrase is correct".to_string(),
+                    })
+                }
+                Err(e) => {
+                    // Passphrase is incorrect or key is corrupted
+                    info!(
+                        key_id = %input.key_id,
+                        error = %e,
+                        "Passphrase verification failed"
                     );
 
                     Ok(VerifyKeyPassphraseResponse {
                         is_valid: false,
-                        message: "Incorrect passphrase for the selected key".to_string(),
+                        message: "Incorrect passphrase".to_string(),
                     })
                 }
-                _ => {
-                    // Other crypto errors (corrupted key, invalid format, etc.)
+            }
+        }
+        crate::storage::KeyEntry::Yubikey { serial, .. } => {
+            // For YubiKey keys, verify the PIN using PIV operations
+            info!(
+                key_id = %input.key_id,
+                serial = %serial,
+                "Starting YubiKey PIN verification"
+            );
+
+            // Use the dedicated PIN verification function with serial binding
+            match crate::crypto::yubikey::pty::verify_yubikey_pin(serial, &input.passphrase) {
+                Ok(true) => {
+                    info!(
+                        key_id = %input.key_id,
+                        serial = %serial,
+                        "YubiKey PIN verification successful"
+                    );
+                    Ok(VerifyKeyPassphraseResponse {
+                        is_valid: true,
+                        message: "PIN is correct".to_string(),
+                    })
+                }
+                Ok(false) => {
+                    info!(
+                        key_id = %input.key_id,
+                        serial = %serial,
+                        "YubiKey PIN verification failed - incorrect PIN"
+                    );
+                    Ok(VerifyKeyPassphraseResponse {
+                        is_valid: false,
+                        message: "Incorrect PIN".to_string(),
+                    })
+                }
+                Err(e) => {
                     error!(
                         key_id = %input.key_id,
+                        serial = %serial,
                         error = %e,
-                        "Key-passphrase verification failed with crypto error"
+                        "YubiKey PIN verification failed due to error"
                     );
-
-                    Err(Box::new(CommandError::operation(
-                        ErrorCode::DecryptionFailed,
-                        format!("Failed to verify key: {e}"),
-                    )))
+                    Ok(VerifyKeyPassphraseResponse {
+                        is_valid: false,
+                        message: "YubiKey PIN verification failed. Please ensure your YubiKey is connected and try again.".to_string(),
+                    })
                 }
             }
         }

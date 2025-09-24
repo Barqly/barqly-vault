@@ -5,7 +5,7 @@
 
 pub mod age_plugin;
 pub mod errors;
-pub mod manifest; // YubiKey manifest management
+// pub mod manifest; // YubiKey manifest management - replaced by unified key registry
 pub mod progress;
 pub mod provider;
 pub mod pty;
@@ -28,7 +28,7 @@ pub use provider::{
 };
 
 // Legacy exports for backward compatibility (deprecated)
-pub use detection::{DeviceStatus, YubiKeyDevice, list_yubikey_devices};
+pub use detection::{DeviceStatus, YubiKeyDevice};
 pub use errors::{YubiKeyError, YubiKeyResult};
 pub use management::{YubiKeyInfo, YubiKeyManager};
 pub use plugin::{PluginError, PluginManager, ensure_plugin_available};
@@ -87,4 +87,26 @@ pub enum UnlockCredentials {
         serial: String,
         pin: Option<String>,
     },
+}
+
+/// Get public key from YubiKey device by serial number
+///
+/// This is a simplified implementation for multi-recipient encryption.
+/// In a production system, public keys would be stored during key registration.
+pub async fn get_public_key_from_device(serial: &str) -> YubiKeyResult<String> {
+    // For now, return a placeholder since public keys should be stored
+    // during key registration rather than retrieved from device each time
+    // This is a design issue that should be addressed in key registration flow
+
+    use crate::prelude::*;
+
+    warn!(
+        serial = %serial,
+        "Using placeholder public key retrieval - public keys should be stored during registration"
+    );
+
+    // Return an error for now - public keys should be stored when keys are registered
+    Err(YubiKeyError::InitializationFailed(
+        "Public key retrieval from device not implemented - keys should be stored during registration".to_string()
+    ))
 }

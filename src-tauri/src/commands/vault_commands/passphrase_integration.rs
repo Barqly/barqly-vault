@@ -5,8 +5,8 @@
 
 use crate::commands::crypto::{GenerateKeyInput, generate_key};
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
-use crate::models::vault::{KeyReference, KeyState, KeyType};
-use crate::storage::vault_store;
+use crate::models::{KeyReference, KeyState, KeyType};
+use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
@@ -39,11 +39,15 @@ pub async fn add_passphrase_key_to_vault(
         )
     })?;
 
-    // Check if vault already has a passphrase key
-    let has_passphrase = vault
-        .keys
-        .iter()
-        .any(|k| matches!(k.key_type, KeyType::Passphrase { .. }));
+    // Load key registry to check if vault already has a passphrase key
+    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+    let has_passphrase = vault.keys.iter().any(|key_id| {
+        if let Some(entry) = registry.get_key(key_id) {
+            matches!(entry, crate::storage::KeyEntry::Passphrase { .. })
+        } else {
+            false
+        }
+    });
 
     if has_passphrase {
         return Err(Box::new(
@@ -65,9 +69,37 @@ pub async fn add_passphrase_key_to_vault(
 
     let key_result = generate_key(key_input).await?;
 
-    // Create key reference with the actual key ID
+    // Add key to registry first
+    let mut registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+    let key_registry_id = generate_key_reference_id();
+
+    let registry_entry = crate::storage::KeyEntry::Passphrase {
+        label: input.label.clone(),
+        created_at: Utc::now(),
+        last_used: None,
+        public_key: key_result.public_key.clone(),
+        key_filename: format!("{}.agekey.enc", key_registry_id), // Based on key registry ID
+    };
+
+    registry
+        .register_key(key_registry_id.clone(), registry_entry)
+        .map_err(|e| {
+            Box::new(
+                CommandError::operation(ErrorCode::StorageFailed, e)
+                    .with_recovery_guidance("Failed to add key to registry"),
+            )
+        })?;
+
+    registry.save().map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::StorageFailed, e.to_string())
+                .with_recovery_guidance("Failed to save key registry"),
+        )
+    })?;
+
+    // Create key reference for response
     let key_reference = KeyReference {
-        id: generate_key_reference_id(),
+        id: key_registry_id.clone(),
         key_type: KeyType::Passphrase {
             key_id: key_result.key_id.clone(),
         },
@@ -77,8 +109,13 @@ pub async fn add_passphrase_key_to_vault(
         last_used: None,
     };
 
-    // Add to vault
-    vault.keys.push(key_reference.clone());
+    // Add key ID to vault
+    vault.add_key_id(key_registry_id).map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::InvalidInput, e)
+                .with_recovery_guidance("Failed to add key to vault"),
+        )
+    })?;
 
     // Save updated vault
     vault_store::save_vault(&vault).await.map_err(|e| {
@@ -105,11 +142,17 @@ pub async fn validate_vault_passphrase_key(vault_id: String) -> CommandResponse<
         )
     })?;
 
-    // Check if vault has an active passphrase key
-    let has_active_passphrase = vault
-        .keys
-        .iter()
-        .any(|k| matches!(k.key_type, KeyType::Passphrase { .. }) && k.state == KeyState::Active);
+    // Load key registry to check for active passphrase keys
+    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+    let has_active_passphrase = vault.keys.iter().any(|key_id| {
+        if let Some(entry) = registry.get_key(key_id) {
+            matches!(entry, crate::storage::KeyEntry::Passphrase { .. })
+            // Note: All keys in registry are considered active by default
+            // State tracking could be added later if needed
+        } else {
+            false
+        }
+    });
 
     Ok(has_active_passphrase)
 }
@@ -165,7 +208,8 @@ pub async fn enhanced_add_key_to_vault(
                 .and_then(|s| s.as_u64())
                 .map(|n| n as u8)
                 .unwrap_or(0),
-            piv_slot: 82, // Default to first retired slot
+            piv_slot: 82,           // Default to first retired slot
+            firmware_version: None, // TODO: Get firmware version from device
         },
         label,
         state: KeyState::Registered,
@@ -173,7 +217,12 @@ pub async fn enhanced_add_key_to_vault(
         last_used: None,
     };
 
-    vault.keys.push(key_ref.clone());
+    vault.add_key_id(key_ref.id.clone()).map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::InvalidInput, e)
+                .with_recovery_guidance("Failed to add key to vault"),
+        )
+    })?;
     vault_store::save_vault(&vault).await.map_err(|e| {
         Box::new(
             CommandError::operation(ErrorCode::StorageFailed, e.to_string())

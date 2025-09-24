@@ -98,8 +98,17 @@ pub use key_mgmt::generate_keypair;
 /// Encrypt data with a public key
 pub use age_ops::encrypt_data;
 
+/// Encrypt data with multiple public keys (multi-recipient)
+pub use age_ops::encrypt_data_multi_recipient;
+
 /// Decrypt data with a private key
 pub use age_ops::decrypt_data;
+
+/// Decrypt data using CLI approach (for YubiKey support)
+pub use age_ops::decrypt_data_cli;
+
+/// Decrypt data using YubiKey CLI approach with identity file
+pub use age_ops::decrypt_data_yubikey_cli;
 
 /// Encrypt a private key with a passphrase for secure storage
 pub use key_mgmt::encrypt_private_key;

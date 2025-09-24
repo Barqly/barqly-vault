@@ -1,11 +1,11 @@
 import React from 'react';
-import { Key, Calendar } from 'lucide-react';
-import { KeyMetadata } from '../../lib/api-types';
+import { Key, Calendar, Usb } from 'lucide-react';
+import { KeyReference } from '../../bindings';
 
 export interface KeyOptionProps {
-  keyData: KeyMetadata;
+  keyData: KeyReference;
   isSelected: boolean;
-  onSelect: (keyLabel: string) => void;
+  onSelect: (keyId: string) => void;
   formatDate: (dateString: string) => string;
 }
 
@@ -18,7 +18,7 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onSelect(keyData.label);
+      onSelect(keyData.id);
     }
   };
 
@@ -31,16 +31,26 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
         px-3 py-2 cursor-pointer hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:border-l-2 focus:border-blue-400
         ${isSelected ? 'bg-blue-100 text-blue-900' : 'text-slate-800'}
       `}
-      onClick={() => onSelect(keyData.label)}
+      onClick={() => onSelect(keyData.id)}
       onKeyDown={handleKeyDown}
     >
       <div className="flex items-center gap-2">
-        <Key className="h-4 w-4 text-blue-600 flex-shrink-0" />
+        {keyData.type === 'yubikey' ? (
+          <Usb className="h-4 w-4 text-green-600 flex-shrink-0" />
+        ) : (
+          <Key className="h-4 w-4 text-blue-600 flex-shrink-0" />
+        )}
         <div className="min-w-0 flex-1">
           <div className="font-medium truncate">{keyData.label}</div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Calendar className="h-3 w-3" />
             <span>{formatDate(keyData.created_at)}</span>
+            {keyData.type === 'yubikey' && (
+              <span className="text-green-600 font-medium">• YubiKey</span>
+            )}
+            {keyData.state === 'registered' && (
+              <span className="text-orange-600 font-medium">• Not Available</span>
+            )}
           </div>
         </div>
       </div>

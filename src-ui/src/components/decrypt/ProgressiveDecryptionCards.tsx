@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
 import PassphraseInput from '../forms/PassphraseInput';
+import { KeyReference } from '../../bindings';
 
 interface ProgressiveDecryptionCardsProps {
   currentStep: number;
@@ -42,6 +43,18 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   const canGoToPreviousStep = currentStep > 1;
   const continueButtonRef = useRef<HTMLButtonElement>(null);
   const [isValidatingPassphrase, setIsValidatingPassphrase] = useState(false);
+  const [availableKeys, setAvailableKeys] = useState<KeyReference[]>([]);
+  const [selectedKey, setSelectedKey] = useState<KeyReference | null>(null);
+
+  // Update selected key when selectedKeyId changes
+  useEffect(() => {
+    if (selectedKeyId && availableKeys.length > 0) {
+      const foundKey = availableKeys.find(key => key.id === selectedKeyId);
+      setSelectedKey(foundKey || null);
+    } else {
+      setSelectedKey(null);
+    }
+  }, [selectedKeyId, availableKeys]);
 
   // Define continue conditions for each step
   const canContinue = (() => {
@@ -173,6 +186,8 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                 placeholder="Choose the key used for encryption"
                 autoFocus={currentStep === 2}
                 onKeySelected={handleKeySelected}
+                onKeysLoaded={setAvailableKeys}
+                includeAllKeys={true}
               />
             </div>
 
@@ -182,7 +197,12 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                   <PassphraseInput
                     value={passphrase}
                     onChange={onPassphraseChange}
-                    placeholder="Enter your key passphrase"
+                    label={selectedKey?.type === 'yubikey' ? 'PIN' : 'Passphrase'}
+                    placeholder={
+                      selectedKey?.type === 'yubikey'
+                        ? 'Enter your YubiKey PIN'
+                        : 'Enter your key passphrase'
+                    }
                     showStrength={false}
                     autoFocus={false}
                     onKeyDown={(e) => {

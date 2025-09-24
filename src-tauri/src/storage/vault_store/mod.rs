@@ -2,7 +2,6 @@
 //!
 //! Provides persistence for vaults using JSON file storage.
 
-pub mod migration;
 pub mod persistence;
 
 // Re-export main functions

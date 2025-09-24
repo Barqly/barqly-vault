@@ -5,11 +5,16 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 
 /// A vault that contains encrypted data and references to its keys
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct Vault {
+    /// Schema version for backward compatibility
+    pub manifest_version: String,
+
+    /// App version that created/last updated this vault
+    pub app_version: String,
+
     /// Unique identifier for the vault
     pub id: String,
 
@@ -25,68 +30,44 @@ pub struct Vault {
     /// Last time the vault was modified
     pub updated_at: DateTime<Utc>,
 
-    /// References to keys that can unlock this vault
-    pub keys: Vec<KeyReference>,
+    /// IDs of keys that can unlock this vault (stored in key registry)
+    pub keys: Vec<String>,
+
+    /// Encrypted archives created from this vault
+    #[serde(default)]
+    pub encrypted_archives: Vec<EncryptedArchive>,
 }
 
-/// Reference to a key that can unlock a vault
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
-pub struct KeyReference {
-    /// Type of key
-    #[serde(flatten)]
-    pub key_type: KeyType,
+/// Information about an encrypted archive created from this vault
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+pub struct EncryptedArchive {
+    /// Name of the encrypted file
+    pub filename: String,
 
-    /// Unique identifier for this key reference
-    pub id: String,
+    /// When the encryption was performed
+    pub encrypted_at: DateTime<Utc>,
 
-    /// User-friendly label
-    pub label: String,
+    /// Total number of files in the archive
+    pub total_files: u64,
 
-    /// Current state of the key
-    pub state: KeyState,
+    /// Human-readable total size
+    pub total_size: String,
 
-    /// When this key was added to the vault
-    pub created_at: DateTime<Utc>,
-
-    /// Last time this key was used
-    pub last_used: Option<DateTime<Utc>>,
+    /// List of files/directories in the archive
+    pub contents: Vec<ArchiveContent>,
 }
 
-/// Type of key with type-specific data
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum KeyType {
-    /// Passphrase-based key
-    Passphrase {
-        /// Reference to the stored key file
-        key_id: String,
-    },
+/// Information about a file/directory in an encrypted archive
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+pub struct ArchiveContent {
+    /// File or directory name
+    pub file: String,
 
-    /// YubiKey hardware token
-    Yubikey {
-        /// Serial number of the YubiKey
-        serial: String,
+    /// Human-readable size
+    pub size: String,
 
-        /// Slot index (0-2) for UI display
-        slot_index: u8,
-
-        /// Actual PIV retired slot number (82-95)
-        piv_slot: u8,
-    },
-}
-
-/// State of a key in relation to the vault
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, specta::Type)]
-#[serde(rename_all = "snake_case")]
-pub enum KeyState {
-    /// Key is available and can be used
-    Active,
-
-    /// Key is registered but not currently available (e.g., YubiKey not inserted)
-    Registered,
-
-    /// Key exists but is not associated with any vault
-    Orphaned,
+    /// SHA-256 hash of the file content
+    pub hash: String,
 }
 
 /// Summary information about a vault (for listing)
@@ -104,61 +85,53 @@ impl Vault {
     pub fn new(name: String, description: Option<String>) -> Self {
         let now = Utc::now();
         Self {
+            manifest_version: "0.1.0".to_string(),
+            app_version: env!("CARGO_PKG_VERSION").to_string(),
             id: generate_vault_id(),
             name,
             description,
             created_at: now,
             updated_at: now,
             keys: Vec::new(),
+            encrypted_archives: Vec::new(),
         }
     }
 
-    /// Add a key reference to this vault
-    pub fn add_key(&mut self, key: KeyReference) -> Result<(), String> {
+    /// Add a key ID to this vault (key must exist in registry)
+    pub fn add_key_id(&mut self, key_id: String) -> Result<(), String> {
         // Check for duplicates
-        if self.keys.iter().any(|k| k.id == key.id) {
+        if self.keys.contains(&key_id) {
             return Err("Key already exists in vault".to_string());
         }
 
-        // Validate constraints
-        let passphrase_count = self
-            .keys
-            .iter()
-            .filter(|k| matches!(k.key_type, KeyType::Passphrase { .. }))
-            .count();
+        // Note: Validation of key type constraints (1 passphrase, max 3 YubiKeys)
+        // will be done at the command level where we have access to the key registry
 
-        let yubikey_count = self
-            .keys
-            .iter()
-            .filter(|k| matches!(k.key_type, KeyType::Yubikey { .. }))
-            .count();
-
-        match &key.key_type {
-            KeyType::Passphrase { .. } if passphrase_count >= 1 => {
-                return Err("Vault already has a passphrase key".to_string());
-            }
-            KeyType::Yubikey { .. } if yubikey_count >= 3 => {
-                return Err("Vault already has maximum number of YubiKeys (3)".to_string());
-            }
-            _ => {}
-        }
-
-        self.keys.push(key);
+        self.keys.push(key_id);
         self.updated_at = Utc::now();
+        self.app_version = env!("CARGO_PKG_VERSION").to_string();
         Ok(())
     }
 
-    /// Remove a key reference from this vault
+    /// Remove a key ID from this vault
     pub fn remove_key(&mut self, key_id: &str) -> Result<(), String> {
         let initial_len = self.keys.len();
-        self.keys.retain(|k| k.id != key_id);
+        self.keys.retain(|k| k != key_id);
 
         if self.keys.len() == initial_len {
             return Err("Key not found in vault".to_string());
         }
 
         self.updated_at = Utc::now();
+        self.app_version = env!("CARGO_PKG_VERSION").to_string();
         Ok(())
+    }
+
+    /// Add an encrypted archive to this vault
+    pub fn add_encrypted_archive(&mut self, archive: EncryptedArchive) {
+        self.encrypted_archives.push(archive);
+        self.updated_at = Utc::now();
+        self.app_version = env!("CARGO_PKG_VERSION").to_string();
     }
 
     /// Get a summary of this vault
@@ -172,20 +145,19 @@ impl Vault {
         }
     }
 
-    /// Check if vault has any active keys
-    pub fn has_active_keys(&self) -> bool {
-        self.keys.iter().any(|k| k.state == KeyState::Active)
+    /// Get the key IDs for this vault
+    pub fn get_key_ids(&self) -> &[String] {
+        &self.keys
     }
 
-    /// Get all YubiKey serials referenced by this vault
-    pub fn get_yubikey_serials(&self) -> HashSet<String> {
-        self.keys
-            .iter()
-            .filter_map(|k| match &k.key_type {
-                KeyType::Yubikey { serial, .. } => Some(serial.clone()),
-                _ => None,
-            })
-            .collect()
+    /// Check if vault has any keys
+    pub fn has_keys(&self) -> bool {
+        !self.keys.is_empty()
+    }
+
+    /// Get the number of keys in this vault
+    pub fn key_count(&self) -> usize {
+        self.keys.len()
     }
 }
 

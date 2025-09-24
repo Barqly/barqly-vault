@@ -4,15 +4,17 @@
 //! using the proven PTY automation from the POC.
 
 use crate::commands::command_types::{CommandError, ErrorCode};
-use crate::crypto::yubikey::manifest::YubiKeyManifest;
 use crate::crypto::yubikey::pty::{
     age_operations::{
         check_yubikey_has_identity, generate_age_identity_pty, get_identity_for_serial,
         list_yubikey_identities,
     },
-    ykman_operations::{initialize_yubikey_with_recovery, list_yubikeys as list_yk_devices},
+    ykman_operations::{
+        get_firmware_version, initialize_yubikey_with_recovery, list_yubikeys as list_yk_devices,
+    },
 };
 use crate::prelude::*;
+use crate::storage::KeyRegistry;
 use age::secrecy::{ExposeSecret, SecretString};
 use tauri;
 
@@ -63,10 +65,10 @@ pub struct StreamlinedYubiKeyInitResult {
 pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
     info!("Listing YubiKeys with state detection");
 
-    // Load manifest first
-    let manifest = YubiKeyManifest::load().unwrap_or_else(|e| {
-        warn!("Failed to load YubiKey manifest: {}", e);
-        YubiKeyManifest::new()
+    // Load key registry first
+    let registry = KeyRegistry::load().unwrap_or_else(|e| {
+        warn!("Failed to load key registry: {}", e);
+        KeyRegistry::new()
     });
 
     // Get list of connected YubiKeys
@@ -94,10 +96,20 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         }
         debug!("Processing YubiKey with serial: {}", serial);
 
-        // Check manifest for this YubiKey
-        let manifest_entry = manifest.find_by_serial(&serial);
-        let in_manifest = manifest_entry.is_some();
-        debug!("YubiKey {} in manifest: {}", serial, in_manifest);
+        // Check key registry for this YubiKey
+        let registry_entry = registry.keys.iter().find(|(_, entry)| {
+            if let crate::storage::KeyEntry::Yubikey {
+                serial: entry_serial,
+                ..
+            } = entry
+            {
+                entry_serial == &serial
+            } else {
+                false
+            }
+        });
+        let in_registry = registry_entry.is_some();
+        debug!("YubiKey {} in registry: {}", serial, in_registry);
 
         // Check if THIS specific YubiKey has an age identity using --identity --serial
         info!("Checking identity for YubiKey serial: {}", serial);
@@ -117,26 +129,26 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         };
         let has_identity = identity_result.is_some();
 
-        // Determine state based on manifest and identity presence
-        let state = match (in_manifest, has_identity) {
+        // Determine state based on registry and identity presence
+        let state = match (in_registry, has_identity) {
             (true, true) => {
                 info!(
-                    "YubiKey {} state: Registered (in manifest + has identity)",
+                    "YubiKey {} state: Registered (in registry + has identity)",
                     serial
                 );
                 YubiKeyState::Registered
             }
             (false, true) => {
                 info!(
-                    "YubiKey {} state: Orphaned (has identity but not in manifest)",
+                    "YubiKey {} state: Orphaned (has identity but not in registry)",
                     serial
                 );
                 YubiKeyState::Orphaned
             }
             (true, false) => {
-                // In manifest but no identity found - might be disconnected/reset
+                // In registry but no identity found - might be disconnected/reset
                 warn!(
-                    "YubiKey {} in manifest but no identity found - marking as Reused",
+                    "YubiKey {} in registry but no identity found - marking as Reused",
                     serial
                 );
                 YubiKeyState::Reused
@@ -145,7 +157,7 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
                 // Check PIN status to determine if new or reused
                 // For now, assume new (in production, would check with ykman)
                 info!(
-                    "YubiKey {} state: New (no manifest entry, no identity)",
+                    "YubiKey {} state: New (no registry entry, no identity)",
                     serial
                 );
                 YubiKeyState::New
@@ -153,7 +165,7 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         };
 
         // Simplified PIN status detection
-        let pin_status = if has_identity || manifest_entry.is_some() {
+        let pin_status = if has_identity || registry_entry.is_some() {
             PinStatus::Set
         } else {
             PinStatus::Default
@@ -162,14 +174,38 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         yubikeys.push(YubiKeyStateInfo {
             serial: serial.clone(),
             state,
-            slot: manifest_entry.as_ref().map(|e| e.slot),
-            recipient: identity_result
-                .clone()
-                .or_else(|| manifest_entry.as_ref().map(|e| e.recipient.clone())),
-            identity_tag: manifest_entry.as_ref().map(|e| e.identity_tag.clone()),
-            label: manifest_entry
+            slot: registry_entry.as_ref().and_then(|(_, entry)| {
+                if let crate::storage::KeyEntry::Yubikey { slot, .. } = entry {
+                    Some(*slot)
+                } else {
+                    None
+                }
+            }),
+            recipient: identity_result.clone().or_else(|| {
+                registry_entry.as_ref().and_then(|(_, entry)| {
+                    if let crate::storage::KeyEntry::Yubikey { recipient, .. } = entry {
+                        Some(recipient.clone())
+                    } else {
+                        None
+                    }
+                })
+            }),
+            identity_tag: registry_entry.as_ref().and_then(|(_, entry)| {
+                if let crate::storage::KeyEntry::Yubikey { identity_tag, .. } = entry {
+                    Some(identity_tag.clone())
+                } else {
+                    None
+                }
+            }),
+            label: registry_entry
                 .as_ref()
-                .map(|e| e.label.clone())
+                .and_then(|(_, entry)| {
+                    if let crate::storage::KeyEntry::Yubikey { label, .. } = entry {
+                        Some(label.clone())
+                    } else {
+                        None
+                    }
+                })
                 .or_else(|| {
                     if has_identity {
                         Some(format!("YubiKey-{}", &serial[..4.min(serial.len())]))
@@ -227,26 +263,53 @@ pub async fn init_yubikey(
 
     // Get the identity tag for manifest
     let identity_tag = get_identity_for_serial(&serial)
-        .unwrap_or_else(|_| format!("AGE-PLUGIN-YUBIKEY-{}", &serial[..6.min(serial.len())]));
-
-    // Save to manifest
-    let mut manifest = YubiKeyManifest::load().unwrap_or_else(|_| YubiKeyManifest::new());
-
-    manifest
-        .register_yubikey(
-            serial.clone(),
-            1, // Default to slot 1 (will be actual slot from age-plugin)
-            recipient.clone(),
-            identity_tag.clone(),
-            label.clone(),
-            &recovery_code,
-        )
         .map_err(|e| {
-            CommandError::operation(
-                ErrorCode::YubiKeyInitializationFailed,
-                format!("Failed to save YubiKey manifest: {e}"),
-            )
+            error!(
+                serial = %serial,
+                error = %e,
+                "Failed to get actual identity for YubiKey during registration"
+            );
+            Box::new(CommandError::operation(
+                ErrorCode::InternalError,
+                format!("Failed to get YubiKey identity: {e}"),
+            ))
         })?;
+
+    // Get firmware version from YubiKey
+    let firmware_version = get_firmware_version(pin.expose_secret())
+        .map_err(|e| {
+            warn!("Failed to get firmware version: {}", e);
+            e
+        })
+        .ok();
+
+    debug!(firmware_version = ?firmware_version, "Retrieved YubiKey firmware version");
+
+    // Save to key registry
+    let mut registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(recovery_code.as_bytes());
+    let recovery_code_hash = format!("{:x}", hasher.finalize());
+
+    let key_id = registry.add_yubikey_entry(
+        label.clone(),
+        serial.clone(),
+        1,  // Default to slot 1 (will be actual slot from age-plugin)
+        82, // Default PIV slot
+        recipient.clone(),
+        identity_tag.clone(),
+        firmware_version,
+        recovery_code_hash,
+    );
+
+    registry.save().map_err(|e| {
+        CommandError::operation(
+            ErrorCode::YubiKeyInitializationFailed,
+            format!("Failed to save key registry: {e}"),
+        )
+    })?;
 
     debug!("Successfully initialized YubiKey");
 
@@ -294,29 +357,56 @@ pub async fn register_yubikey(
 
     // Get the identity tag for manifest
     let identity_tag = get_identity_for_serial(&serial)
-        .unwrap_or_else(|_| format!("AGE-PLUGIN-YUBIKEY-{}", &serial[..6.min(serial.len())]));
+        .map_err(|e| {
+            error!(
+                serial = %serial,
+                error = %e,
+                "Failed to get actual identity for YubiKey during registration"
+            );
+            Box::new(CommandError::operation(
+                ErrorCode::InternalError,
+                format!("Failed to get YubiKey identity: {e}"),
+            ))
+        })?;
+
+    // Get firmware version from YubiKey
+    let firmware_version = get_firmware_version(pin_str)
+        .map_err(|e| {
+            warn!("Failed to get firmware version: {}", e);
+            e
+        })
+        .ok();
+
+    debug!(firmware_version = ?firmware_version, "Retrieved YubiKey firmware version for reused key");
 
     // For reused YubiKey, generate recovery code placeholder
     let recovery_code = "<existing>".to_string();
 
-    // Save to manifest
-    let mut manifest = YubiKeyManifest::load().unwrap_or_else(|_| YubiKeyManifest::new());
+    // Save to key registry
+    let mut registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
 
-    manifest
-        .register_yubikey(
-            serial.clone(),
-            1, // Default to slot 1
-            recipient.clone(),
-            identity_tag.clone(),
-            label.clone(),
-            &recovery_code,
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(recovery_code.as_bytes());
+    let recovery_code_hash = format!("{:x}", hasher.finalize());
+
+    let key_id = registry.add_yubikey_entry(
+        label.clone(),
+        serial.clone(),
+        1,  // Default to slot 1
+        82, // Default PIV slot
+        recipient.clone(),
+        identity_tag.clone(),
+        firmware_version,
+        recovery_code_hash,
+    );
+
+    registry.save().map_err(|e| {
+        CommandError::operation(
+            ErrorCode::YubiKeyInitializationFailed,
+            format!("Failed to save key registry: {e}"),
         )
-        .map_err(|e| {
-            CommandError::operation(
-                ErrorCode::YubiKeyInitializationFailed,
-                format!("Failed to save YubiKey manifest: {e}"),
-            )
-        })?;
+    })?;
 
     debug!("Successfully registered YubiKey");
 

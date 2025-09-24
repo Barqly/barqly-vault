@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
-import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
 
 interface ProgressiveEncryptionCardsProps {
   currentStep: number;
@@ -23,12 +22,12 @@ interface ProgressiveEncryptionCardsProps {
 const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   currentStep,
   selectedFiles,
-  selectedKeyId,
+  selectedKeyId: _selectedKeyId,
   isLoading,
   onFilesSelected,
   onClearFiles,
   onFileError,
-  onKeyChange,
+  onKeyChange: _onKeyChange,
   onStepChange,
 }) => {
   const continueButtonRef = useRef<HTMLButtonElement>(null);
@@ -38,9 +37,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   const canContinue = (() => {
     switch (currentStep) {
       case 1:
-        return !!selectedFiles; // Can continue from step 1 if files are selected
-      case 2:
-        return !!selectedKeyId; // Can continue from step 2 if key is selected
+        return !!selectedFiles; // Can continue from step 1 if files are selected (no key selection needed)
       default:
         return false;
     }
@@ -58,12 +55,8 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
     }
   };
 
-  const handleKeySelected = () => {
-    // Focus the Continue button after key selection
-    setTimeout(() => {
-      continueButtonRef.current?.focus();
-    }, 100);
-  };
+  // Key selection is not used in multi-key encryption mode
+  // Keeping interface for compatibility but not implementing
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -79,27 +72,12 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
               mode="multiple"
               acceptedFormats={[]}
               dropText="Drop your files and folders here (saved as a Barqly Vault .age file)"
-              subtitle="All selected files will be encrypted together into a single vault."
+              subtitle="Files will be encrypted to all keys in your current vault."
               browseButtonText="Select Files"
               browseFolderButtonText="Select Folder"
               icon="upload"
               autoFocus={currentStep === 1}
             />
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="space-y-4">
-            <div>
-              <KeySelectionDropdown
-                value={selectedKeyId || ''}
-                onChange={onKeyChange}
-                placeholder="Choose the key for encryption"
-                autoFocus={currentStep === 2}
-                onKeySelected={handleKeySelected}
-              />
-            </div>
           </div>
         );
 

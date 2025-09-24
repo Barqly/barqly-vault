@@ -13,11 +13,11 @@ import EncryptionProgress from '../components/encrypt/EncryptionProgress';
 import EncryptionSuccess from '../components/encrypt/EncryptionSuccess';
 import AnimatedTransition from '../components/ui/AnimatedTransition';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
+import OverwriteConfirmationDialog from '../components/ui/OverwriteConfirmationDialog';
 
 const ENCRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Files', description: 'Choose what to encrypt' },
-  { id: 2, label: 'Choose Key', description: 'Select encryption key' },
-  { id: 3, label: 'Encrypt Vault', description: 'Set output and start' },
+  { id: 2, label: 'Encrypt Vault', description: 'Set output and start' },
 ];
 
 /**
@@ -29,12 +29,13 @@ const EncryptPage: React.FC = () => {
   const {
     // State
     selectedFiles,
-    selectedKeyId,
     outputPath,
     archiveName,
     showAdvancedOptions,
     setShowAdvancedOptions,
     isEncrypting,
+    showOverwriteDialog,
+    pendingOverwriteFile,
 
     // From useFileEncryption
     isLoading,
@@ -60,6 +61,10 @@ const EncryptPage: React.FC = () => {
     // Navigation handlers
     handleStepNavigation,
     encryptionResult,
+
+    // Overwrite confirmation handlers
+    handleOverwriteConfirm,
+    handleOverwriteCancel,
   } = useEncryptionWorkflow();
 
   // Navigation handler for decrypt flow
@@ -127,11 +132,11 @@ const EncryptPage: React.FC = () => {
           <AnimatedTransition show={!success && !isEncrypting} duration={300}>
             {!success && !isEncrypting && (
               <>
-                {/* Progressive Card System - Steps 1 & 2 */}
+                {/* Progressive Card System - Step 1 */}
                 <ProgressiveEncryptionCards
                   currentStep={currentStep}
                   selectedFiles={selectedFiles}
-                  selectedKeyId={selectedKeyId}
+                  selectedKeyId={null}
                   isLoading={isLoading}
                   onFilesSelected={handleFilesSelected}
                   onClearFiles={clearSelection}
@@ -148,8 +153,8 @@ const EncryptPage: React.FC = () => {
                   onStepChange={handleStepNavigation}
                 />
 
-                {/* Ready to encrypt panel - Step 3 */}
-                {currentStep === 3 && selectedFiles && selectedKeyId && (
+                {/* Ready to encrypt panel - Step 2 */}
+                {currentStep === 2 && selectedFiles && (
                   <EncryptionReadyPanel
                     outputPath={outputPath}
                     archiveName={archiveName}
@@ -159,8 +164,8 @@ const EncryptPage: React.FC = () => {
                     onArchiveNameChange={setArchiveName}
                     onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
                     onEncrypt={handleEncryption}
-                    onPrevious={() => handleStepNavigation(2)}
-                    autoFocus={currentStep === 3}
+                    onPrevious={() => handleStepNavigation(1)}
+                    autoFocus={currentStep === 2}
                   />
                 )}
 
@@ -171,6 +176,14 @@ const EncryptPage: React.FC = () => {
           </AnimatedTransition>
         </div>
       </AppPrimaryContainer>
+
+      {/* Overwrite Confirmation Dialog */}
+      <OverwriteConfirmationDialog
+        isOpen={showOverwriteDialog}
+        fileName={pendingOverwriteFile}
+        onConfirm={handleOverwriteConfirm}
+        onCancel={handleOverwriteCancel}
+      />
     </div>
   );
 };

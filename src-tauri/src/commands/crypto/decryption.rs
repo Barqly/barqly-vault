@@ -11,7 +11,7 @@ use crate::commands::types::{
 use crate::constants::*;
 use crate::file_ops;
 use crate::prelude::*;
-use crate::storage;
+use crate::storage::{self, KeyRegistry};
 use age::secrecy::SecretString;
 use std::path::Path;
 use tauri::Window;
@@ -91,47 +91,39 @@ pub async fn decrypt_data(
     );
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
-    // Load the encrypted private key
+    // Load the key registry to check key type
     progress_manager.set_progress(PROGRESS_DECRYPT_KEY_LOAD, "Loading encryption key...");
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
-    debug!(
-        key_id = %input.key_id,
-        "Loading encrypted private key from storage"
-    );
+    let registry = match KeyRegistry::load() {
+        Ok(r) => r,
+        Err(e) => {
+            error!(
+                error = %e,
+                "Failed to load key registry"
+            );
+            return Err(Box::new(CommandError::operation(
+                ErrorCode::StorageFailed,
+                format!("Failed to load key registry: {e}"),
+            )));
+        }
+    };
 
-    let encrypted_key = error_handler.handle_operation_error(
-        storage::load_encrypted_key(&input.key_id),
-        "load_encrypted_key",
-        ErrorCode::KeyNotFound,
-    )?;
-
-    debug!(
-        key_id = %input.key_id,
-        encrypted_key_size = encrypted_key.len(),
-        "Successfully loaded encrypted private key"
-    );
-
-    // Decrypt the private key with the passphrase
-    progress_manager.set_progress(PROGRESS_DECRYPT_KEY_DECRYPT, "Decrypting private key...");
-    super::update_global_progress(&operation_id, progress_manager.get_current_update());
-
-    debug!(
-        key_id = %input.key_id,
-        "Attempting to decrypt private key with provided passphrase"
-    );
-
-    let private_key = error_handler.handle_crypto_operation_error(
-        crate::crypto::decrypt_private_key(&encrypted_key, SecretString::from(input.passphrase)),
-        "decrypt_private_key",
-    )?;
+    // Get the key entry from registry
+    let key_entry = registry.get_key(&input.key_id).ok_or_else(|| {
+        Box::new(CommandError::operation(
+            ErrorCode::KeyNotFound,
+            format!("Key '{}' not found", input.key_id),
+        ))
+    })?;
 
     debug!(
         key_id = %input.key_id,
-        "Successfully decrypted private key"
+        key_type = ?key_entry,
+        "Found key entry in registry"
     );
 
-    // Read the encrypted file
+    // Read the encrypted file first (needed for both key types)
     progress_manager.set_progress(PROGRESS_DECRYPT_READ_FILE, "Reading encrypted file...");
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
@@ -152,19 +144,65 @@ pub async fn decrypt_data(
         "Successfully read encrypted vault file"
     );
 
-    // Decrypt the data
+    // Decrypt the data based on key type
     progress_manager.set_progress(PROGRESS_DECRYPT_DECRYPTING, "Decrypting data...");
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
-    debug!(
-        encrypted_data_size = encrypted_data.len(),
-        "Starting vault data decryption"
-    );
+    let decrypted_data = match key_entry {
+        crate::storage::KeyEntry::Passphrase { key_filename, .. } => {
+            // For passphrase keys, load the encrypted key file and decrypt with passphrase
+            debug!(
+                key_id = %input.key_id,
+                key_filename = %key_filename,
+                "Using passphrase-based decryption"
+            );
 
-    let decrypted_data = error_handler.handle_crypto_operation_error(
-        crate::crypto::decrypt_data(&encrypted_data, &private_key),
-        "decrypt_data",
-    )?;
+            let encrypted_key = error_handler.handle_operation_error(
+                storage::load_encrypted_key(key_filename),
+                "load_encrypted_key",
+                ErrorCode::KeyNotFound,
+            )?;
+
+            debug!(
+                key_id = %input.key_id,
+                encrypted_key_size = encrypted_key.len(),
+                "Successfully loaded encrypted private key"
+            );
+
+            // Decrypt the private key with the passphrase
+            progress_manager.set_progress(PROGRESS_DECRYPT_KEY_DECRYPT, "Decrypting private key...");
+            super::update_global_progress(&operation_id, progress_manager.get_current_update());
+
+            let private_key = error_handler.handle_crypto_operation_error(
+                crate::crypto::decrypt_private_key(&encrypted_key, SecretString::from(input.passphrase)),
+                "decrypt_private_key",
+            )?;
+
+            debug!(
+                key_id = %input.key_id,
+                "Successfully decrypted private key"
+            );
+
+            // Decrypt the vault data using the decrypted private key
+            error_handler.handle_crypto_operation_error(
+                crate::crypto::decrypt_data(&encrypted_data, &private_key),
+                "decrypt_data",
+            )?
+        }
+        crate::storage::KeyEntry::Yubikey { .. } => {
+            // For YubiKey keys, use age CLI with plugin for decryption
+            debug!(
+                key_id = %input.key_id,
+                "Using YubiKey-based decryption via age CLI with identity file"
+            );
+
+            // Use YubiKey-specific CLI function that creates identity file
+            error_handler.handle_crypto_operation_error(
+                crate::crypto::decrypt_data_yubikey_cli(&encrypted_data, key_entry, &input.passphrase),
+                "decrypt_data_yubikey_cli",
+            )?
+        }
+    };
 
     debug!(
         decrypted_data_size = decrypted_data.len(),

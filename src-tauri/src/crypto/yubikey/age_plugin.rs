@@ -7,6 +7,7 @@ use super::errors::{YubiKeyError, YubiKeyResult};
 use super::provider::{
     AgeHeader, DataEncryptionKey, ProviderInfo, YubiIdentityProvider, YubiRecipient,
 };
+use super::pty::core::get_age_path;
 use crate::log_sensitive;
 use crate::tracing_setup::debug;
 // serde_json::Value removed - not needed
@@ -369,8 +370,9 @@ impl YubiIdentityProvider for AgePluginProvider {
         // a YubiKey recipient in the encrypted file
 
         // Use age command for decryption (it will call age-plugin-yubikey internally)
+        let age_path = get_age_path();
         let output = timeout(INTERACTIVE_TIMEOUT, async {
-            Command::new("age")
+            Command::new(&age_path)
                 .args(["--decrypt", &temp_path.to_string_lossy()])
                 .env("AGE_PLUGIN_YUBIKEY_SKIP_PROMPT", "1") // Skip prompts if possible
                 .stdout(Stdio::piped())
@@ -1178,8 +1180,9 @@ impl YubiIdentityProvider for AgePluginPtyProvider {
         // a YubiKey recipient in the encrypted file
 
         // TODO: Consider PTY for age decryption as well if it needs PIN input
+        let age_path = get_age_path();
         let output = timeout(INTERACTIVE_TIMEOUT, async {
-            Command::new("age")
+            Command::new(&age_path)
                 .args(["--decrypt", &temp_path.to_string_lossy()])
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())

@@ -15,7 +15,10 @@ pub mod validation;
 
 // Re-export all commands and types to maintain existing interface
 pub use decryption::{DecryptDataInput, DecryptionResult, decrypt_data};
-pub use encryption::{EncryptDataInput, encrypt_files};
+pub use encryption::{
+    EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse, encrypt_files,
+    encrypt_files_multi,
+};
 pub use key_generation::{GenerateKeyInput, GenerateKeyResponse, generate_key};
 pub use key_generation_multi::{
     GenerateKeyMultiInput, GenerateKeyMultiResponse, generate_key_multi,

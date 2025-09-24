@@ -3,8 +3,8 @@
 //! Commands for updating key labels and checking YubiKey availability.
 
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
-use crate::crypto::yubikey::list_yubikey_devices;
-use crate::storage::vault_store;
+use crate::crypto::yubikey::pty::ykman_operations::list_yubikeys;
+use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -72,22 +72,63 @@ pub async fn update_key_label(
         }
     };
 
-    // Find and update the key
-    let key_found = vault
-        .keys
-        .iter_mut()
-        .find(|k| k.id == input.key_id)
-        .map(|k| {
-            k.label = input.new_label.trim().to_string();
-            true
-        })
-        .unwrap_or(false);
-
-    if !key_found {
+    // Check if key exists in vault
+    if !vault.keys.contains(&input.key_id) {
         return Err(Box::new(CommandError {
             code: ErrorCode::KeyNotFound,
             message: "Key not found in vault".to_string(),
             details: None,
+            recovery_guidance: None,
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        }));
+    }
+
+    // Load key registry and update the key label
+    let mut registry = match KeyRegistry::load() {
+        Ok(r) => r,
+        Err(e) => {
+            return Err(Box::new(CommandError {
+                code: ErrorCode::StorageFailed,
+                message: "Failed to load key registry".to_string(),
+                details: Some(e.to_string()),
+                recovery_guidance: None,
+                user_actionable: false,
+                trace_id: None,
+                span_id: None,
+            }));
+        }
+    };
+
+    // Update the key label in the registry
+    if let Some(entry) = registry.get_key_mut(&input.key_id) {
+        match entry {
+            crate::storage::KeyEntry::Passphrase { label, .. } => {
+                *label = input.new_label.trim().to_string();
+            }
+            crate::storage::KeyEntry::Yubikey { label, .. } => {
+                *label = input.new_label.trim().to_string();
+            }
+        }
+    } else {
+        return Err(Box::new(CommandError {
+            code: ErrorCode::KeyNotFound,
+            message: "Key not found in registry".to_string(),
+            details: None,
+            recovery_guidance: None,
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        }));
+    }
+
+    // Save updated registry
+    if let Err(e) = registry.save() {
+        return Err(Box::new(CommandError {
+            code: ErrorCode::StorageFailed,
+            message: "Failed to save key registry".to_string(),
+            details: Some(e.to_string()),
             recovery_guidance: None,
             user_actionable: false,
             trace_id: None,
@@ -118,8 +159,11 @@ pub async fn update_key_label(
 pub async fn check_yubikey_availability(
     input: CheckYubiKeyAvailabilityRequest,
 ) -> CommandResponse<CheckYubiKeyAvailabilityResponse> {
-    let devices = list_yubikey_devices().unwrap_or_default();
-    let is_inserted = devices.iter().any(|d| d.serial == input.serial);
+    let devices = list_yubikeys().unwrap_or_default();
+    let is_inserted = devices.iter().any(|device_info| {
+        // Extract serial from device string (format: "YubiKey 5 NFC (5.4.3) Serial: 12345678")
+        device_info.contains("Serial:") && device_info.contains(&input.serial)
+    });
 
     // TODO: Check actual configuration state from YubiKey
     let is_configured = is_inserted; // Simplified for now

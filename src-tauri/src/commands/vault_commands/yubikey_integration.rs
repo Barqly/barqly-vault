@@ -8,11 +8,12 @@ use crate::commands::yubikey_commands::{
     YubiKeyState, YubiKeyStateInfo, init_yubikey, list_yubikeys,
 };
 use crate::crypto::yubikey::YubiKeyInitResult;
-use crate::models::vault::{KeyReference, KeyState, KeyType};
+use crate::models::{KeyReference, KeyState, KeyType};
 use crate::prelude::*;
-use crate::storage::vault_store;
+use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 use tauri::command;
 
@@ -73,12 +74,18 @@ pub async fn init_yubikey_for_vault(
         )
     })?;
 
-    // Check if slot is already taken
-    let slot_taken = vault.keys.iter().any(|k| match &k.key_type {
-        KeyType::Yubikey {
-            slot_index: idx, ..
-        } => *idx == input.slot_index,
-        _ => false,
+    // Load registry to check if slot is already taken
+    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+    let slot_taken = vault.keys.iter().any(|key_id| {
+        if let Some(entry) = registry.get_key(key_id) {
+            if let crate::storage::KeyEntry::Yubikey { slot, .. } = entry {
+                *slot == input.slot_index
+            } else {
+                false
+            }
+        } else {
+            false
+        }
     });
 
     if slot_taken {
@@ -91,10 +98,17 @@ pub async fn init_yubikey_for_vault(
         ));
     }
 
-    // Check if YubiKey is already in this vault
-    let already_registered = vault.keys.iter().any(|k| match &k.key_type {
-        KeyType::Yubikey { serial, .. } => serial == &input.serial,
-        _ => false,
+    // Check if YubiKey is already in this vault (registry was loaded above)
+    let already_registered = vault.keys.iter().any(|key_id| {
+        if let Some(entry) = registry.get_key(key_id) {
+            if let crate::storage::KeyEntry::Yubikey { serial, .. } = entry {
+                serial == &input.serial
+            } else {
+                false
+            }
+        } else {
+            false
+        }
     });
 
     if already_registered {
@@ -130,28 +144,42 @@ pub async fn init_yubikey_for_vault(
 
     // Convert StreamlinedYubiKeyInitResult to YubiKeyInitResult
     let yubikey_result = YubiKeyInitResult {
-        public_key: streamlined_result.recipient, // Use recipient as public key
+        public_key: streamlined_result.recipient.clone(), // Clone to avoid move
         slot: streamlined_result.slot,
         touch_required: true, // Default to true for security
         pin_policy: crate::crypto::yubikey::management::PinPolicy::Once,
     };
 
-    // Create key reference
-    let key_ref = KeyReference {
-        id: generate_key_reference_id(),
-        key_type: KeyType::Yubikey {
-            serial: input.serial.clone(),
-            slot_index: input.slot_index,
-            piv_slot: piv_slot.min(95), // Cap at slot 95
-        },
-        label: input.label,
-        state: KeyState::Active,
-        created_at: Utc::now(),
-        last_used: None,
-    };
+    // Add YubiKey to registry first
+    let mut registry = registry; // We already loaded it above
+    let key_registry_id = registry.add_yubikey_entry(
+        input.label.clone(),
+        input.serial.clone(),
+        1, // Default slot
+        piv_slot.min(95) as u8,
+        streamlined_result.recipient,
+        format!(
+            "AGE-PLUGIN-YUBIKEY-{}",
+            &input.serial[..6.min(input.serial.len())]
+        ),
+        None,                                                     // firmware_version
+        format!("{:x}", Sha256::digest(b"recovery-placeholder")), // Placeholder recovery hash
+    );
 
-    // Add to vault
-    vault.keys.push(key_ref);
+    registry.save().map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::StorageFailed, e.to_string())
+                .with_recovery_guidance("Failed to save key registry"),
+        )
+    })?;
+
+    // Add key ID to vault
+    vault.add_key_id(key_registry_id.clone()).map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::InvalidInput, e)
+                .with_recovery_guidance("Failed to add key to vault"),
+        )
+    })?;
 
     // Save vault
     vault_store::save_vault(&vault).await.map_err(|e| {
@@ -198,12 +226,18 @@ pub async fn register_yubikey_for_vault(
     })?;
     debug!("Vault loaded successfully");
 
-    // Check if slot is already taken
-    let slot_taken = vault.keys.iter().any(|k| match &k.key_type {
-        KeyType::Yubikey {
-            slot_index: idx, ..
-        } => *idx == input.slot_index,
-        _ => false,
+    // Load registry to check if slot is already taken
+    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+    let slot_taken = vault.keys.iter().any(|key_id| {
+        if let Some(entry) = registry.get_key(key_id) {
+            if let crate::storage::KeyEntry::Yubikey { slot, .. } = entry {
+                *slot == input.slot_index
+            } else {
+                false
+            }
+        } else {
+            false
+        }
     });
 
     if slot_taken {
@@ -270,30 +304,49 @@ pub async fn register_yubikey_for_vault(
     let piv_slot = yubikey.slot.unwrap_or(1) + 81; // Convert retired slot to PIV
     debug!(piv_slot = piv_slot, "Using PIV slot");
 
-    // Create key reference
-    let key_ref = KeyReference {
-        id: generate_key_reference_id(),
-        key_type: KeyType::Yubikey {
-            serial: input.serial.clone(),
-            slot_index: input.slot_index,
-            piv_slot: piv_slot.min(95),
-        },
-        label: input.label.clone(),
-        state: KeyState::Registered,
-        created_at: Utc::now(),
-        last_used: None,
-    };
-
-    debug!(
-        key_ref_id = key_ref.id,
-        label = key_ref.label,
-        slot_index = input.slot_index,
-        "Created key reference"
+    // Add YubiKey to registry first
+    let mut registry = registry; // We already loaded it above
+    let key_registry_id = registry.add_yubikey_entry(
+        input.label.clone(),
+        input.serial.clone(),
+        yubikey.slot.unwrap_or(1),
+        piv_slot.min(95) as u8,
+        yubikey
+            .recipient
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| format!("age1yubikey1{}", &input.serial[..8])),
+        format!(
+            "AGE-PLUGIN-YUBIKEY-{}",
+            &input.serial[..6.min(input.serial.len())]
+        ),
+        None,                                               // firmware_version
+        format!("{:x}", Sha256::digest(b"registered-key")), // Placeholder recovery hash for registered keys
     );
 
-    // Add to vault
-    vault.keys.push(key_ref.clone());
-    debug!(total_keys = vault.keys.len(), "Added key to vault");
+    registry.save().map_err(|e| {
+        error!(error = %e, "Failed to save key registry");
+        Box::new(
+            CommandError::operation(ErrorCode::StorageFailed, e.to_string())
+                .with_recovery_guidance("Failed to save key registry"),
+        )
+    })?;
+
+    debug!(
+        key_registry_id = key_registry_id,
+        label = input.label,
+        slot_index = input.slot_index,
+        "Created key in registry"
+    );
+
+    // Add key ID to vault
+    vault.add_key_id(key_registry_id.clone()).map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::InvalidInput, e)
+                .with_recovery_guidance("Failed to add key to vault"),
+        )
+    })?;
+    debug!(total_keys = vault.keys.len(), "Added key ID to vault");
 
     // Save vault
     debug!("Saving vault with new key");
@@ -311,9 +364,24 @@ pub async fn register_yubikey_for_vault(
         "Successfully registered YubiKey to vault"
     );
 
+    // Create KeyReference for response
+    let key_reference = KeyReference {
+        id: key_registry_id,
+        key_type: KeyType::Yubikey {
+            serial: input.serial.clone(),
+            slot_index: input.slot_index,
+            piv_slot: piv_slot.min(95) as u8,
+            firmware_version: None,
+        },
+        label: input.label,
+        state: KeyState::Registered,
+        created_at: Utc::now(),
+        last_used: None,
+    };
+
     Ok(RegisterYubiKeyResult {
         success: true,
-        key_reference: key_ref,
+        key_reference,
     })
 }
 
@@ -339,12 +407,21 @@ pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<Yu
         )
     })?;
 
+    // Load registry to get YubiKey serials from vault
+    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
     let vault_serials: HashSet<String> = vault
         .keys
         .iter()
-        .filter_map(|k| match &k.key_type {
-            KeyType::Yubikey { serial, .. } => Some(serial.clone()),
-            _ => None,
+        .filter_map(|key_id| {
+            if let Some(entry) = registry.get_key(key_id) {
+                if let crate::storage::KeyEntry::Yubikey { serial, .. } = entry {
+                    Some(serial.clone())
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
         })
         .collect();
 
@@ -390,16 +467,19 @@ pub async fn check_yubikey_slot_availability(vault_id: String) -> CommandRespons
         )
     })?;
 
+    // Load registry to check slot availability
+    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+
     // Check slots 0, 1, 2
     let mut available = vec![true, true, true];
 
-    for key in &vault.keys {
-        if let KeyType::Yubikey {
-            slot_index: idx, ..
-        } = &key.key_type
-            && *idx < 3
-        {
-            available[*idx as usize] = false;
+    for key_id in &vault.keys {
+        if let Some(entry) = registry.get_key(key_id) {
+            if let crate::storage::KeyEntry::Yubikey { slot, .. } = entry {
+                if *slot < 3 {
+                    available[*slot as usize] = false;
+                }
+            }
         }
     }
 

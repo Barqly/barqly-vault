@@ -3,6 +3,8 @@ import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileEncryption } from './useFileEncryption';
 import { ErrorCode, CommandError } from '../lib/api-types';
 import { createCommandError } from '../lib/errors/command-error';
+import { useVault } from '../contexts/VaultContext';
+import { commands, EncryptFilesMultiInput } from '../bindings';
 
 interface EncryptionResult {
   outputPath: string;
@@ -19,10 +21,10 @@ interface EncryptionResult {
  * Mirrors useDecryptionWorkflow architecture exactly for consistency
  */
 export const useEncryptionWorkflow = () => {
+  const { currentVault } = useVault();
   const fileEncryptionHook = useFileEncryption();
   const {
     selectFiles,
-    encryptFiles,
     isLoading,
     error,
     success,
@@ -33,8 +35,7 @@ export const useEncryptionWorkflow = () => {
     clearSelection,
   } = fileEncryptionHook;
 
-  // Workflow state - mirrors useDecryptionWorkflow
-  const [selectedKeyId, setSelectedKeyId] = useState<string>('');
+  // Workflow state - simplified for multi-key encryption
   const [outputPath, setOutputPath] = useState<string>('');
   const [archiveName, setArchiveName] = useState<string>('');
   const [isEncrypting, setIsEncrypting] = useState(false);
@@ -43,6 +44,8 @@ export const useEncryptionWorkflow = () => {
   const [fileValidationError, setFileValidationError] = useState<CommandError | null>(null);
   const [encryptionResult, setEncryptionResult] = useState<EncryptionResult | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
+  const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
+  const [pendingOverwriteFile, setPendingOverwriteFile] = useState<string>('');
 
   // Track previous selectedFiles to distinguish between initial selection and navigation
   const [prevSelectedFiles, setPrevSelectedFiles] = useState<{
@@ -66,14 +69,12 @@ export const useEncryptionWorkflow = () => {
         case 1:
           return true; // Can always go back to step 1
         case 2:
-          return !!selectedFiles; // Can go to step 2 if files are selected
-        case 3:
-          return !!(selectedFiles && selectedKeyId); // Can go to step 3 if files and key are selected
+          return !!selectedFiles; // Can go to step 2 if files are selected (no key needed for multi-key encryption)
         default:
           return false;
       }
     },
-    [selectedFiles, selectedKeyId],
+    [selectedFiles],
   );
 
   // Handle step navigation - only way to change steps
@@ -115,23 +116,23 @@ export const useEncryptionWorkflow = () => {
     [selectFiles, clearFileError],
   );
 
-  // Handle encryption
+  // Handle encryption using new multi-key command
   const handleEncryption = useCallback(async () => {
-    if (!selectedKeyId) {
-      const error = createCommandError(
-        ErrorCode.MISSING_PARAMETER,
-        'Missing encryption key',
-        'Please select an encryption key before proceeding',
-      );
-      setFileValidationError(error);
-      return;
-    }
-
     if (!selectedFiles) {
       const error = createCommandError(
         ErrorCode.MISSING_PARAMETER,
         'Missing files',
         'Please select files to encrypt before proceeding',
+      );
+      setFileValidationError(error);
+      return;
+    }
+
+    if (!currentVault) {
+      const error = createCommandError(
+        ErrorCode.MISSING_PARAMETER,
+        'No vault selected',
+        'Please select a vault before encrypting files',
       );
       setFileValidationError(error);
       return;
@@ -144,33 +145,61 @@ export const useEncryptionWorkflow = () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     try {
-      console.log('[DEBUG] Starting encryption, isEncrypting=true');
+      console.log('[DEBUG] Starting multi-key encryption, isEncrypting=true');
       setStartTime(Date.now());
-      await encryptFiles(selectedKeyId, archiveName || undefined, outputPath || undefined);
-      console.log('[DEBUG] Encryption completed, setting result');
+
+      const input: EncryptFilesMultiInput = {
+        vault_id: currentVault.id,
+        in_file_paths: selectedFiles.paths,
+        out_encrypted_file_name: archiveName || null,
+        out_encrypted_file_path: outputPath || null,
+      };
+
+      const result = await commands.encryptFilesMulti(input);
+      if (result.status === 'error') {
+        throw result.error;
+      }
+
+      console.log('[DEBUG] Multi-key encryption completed, setting result');
+      const response = result.data;
 
       const duration = Math.round((Date.now() - startTime) / 1000);
       setEncryptionResult({
-        outputPath: outputPath || 'Default location',
-        fileName: archiveName
-          ? `${archiveName}.age`
-          : `barqly-vault-${new Date().toISOString().split('T')[0]}.age`,
+        outputPath: response.encrypted_file_path,
+        fileName: response.encrypted_file_path.split('/').pop() || 'encrypted-file.age',
         fileCount: selectedFiles.file_count,
         originalSize: selectedFiles.total_size,
         encryptedSize: Math.round(selectedFiles.total_size * 0.75),
         duration,
-        keyUsed: selectedKeyId,
+        keyUsed: response.keys_used.join(', '),
       });
+
+      // Check if there's an overwrite warning
+      if (response.file_exists_warning) {
+        // Show overwrite confirmation dialog
+        const fileName = response.encrypted_file_path.split('/').pop() || 'encrypted-file.age';
+        setPendingOverwriteFile(fileName);
+        setShowOverwriteDialog(true);
+        return; // Don't set success yet, wait for user confirmation
+      }
 
       // Success panel provides comprehensive feedback
     } catch (err) {
-      console.error('[EncryptionWorkflow] Encryption error:', err);
-      // Error is handled by useFileEncryption hook
+      console.error('[EncryptionWorkflow] Multi-key encryption error:', err);
+      const commandError =
+        err instanceof Object && 'code' in err
+          ? (err as CommandError)
+          : createCommandError(
+              ErrorCode.INTERNAL_ERROR,
+              'Encryption failed',
+              err instanceof Error ? err.message : 'Please try again',
+            );
+      setFileValidationError(commandError);
     } finally {
       console.log('[DEBUG] Finally block: setting isEncrypting=false');
       setIsEncrypting(false);
     }
-  }, [selectedKeyId, selectedFiles, archiveName, outputPath, encryptFiles, startTime]);
+  }, [selectedFiles, archiveName, outputPath, currentVault, startTime]);
 
   // Generate default output path
   const getDefaultOutputPath = useCallback(async () => {
@@ -191,10 +220,32 @@ export const useEncryptionWorkflow = () => {
     }
   }, [selectedFiles, outputPath, getDefaultOutputPath]);
 
+  // Set default archive name based on vault label
+  useEffect(() => {
+    if (currentVault && !archiveName) {
+      setArchiveName(currentVault.label);
+    }
+  }, [currentVault, archiveName]);
+
+  // Handle overwrite confirmation
+  const handleOverwriteConfirm = useCallback(() => {
+    setShowOverwriteDialog(false);
+    setPendingOverwriteFile('');
+    // For now, just proceed with success since the file was already created
+    // In a full implementation, we'd call the backend again with overwrite=true
+    console.log('[DEBUG] User confirmed overwrite, proceeding with success');
+  }, []);
+
+  const handleOverwriteCancel = useCallback(() => {
+    setShowOverwriteDialog(false);
+    setPendingOverwriteFile('');
+    setIsEncrypting(false);
+    console.log('[DEBUG] User cancelled overwrite, resetting encryption state');
+  }, []);
+
   // Handle reset
   const handleReset = useCallback(() => {
     reset();
-    setSelectedKeyId('');
     setOutputPath('');
     setArchiveName('');
     setIsEncrypting(false);
@@ -203,6 +254,8 @@ export const useEncryptionWorkflow = () => {
     setPrevSelectedFiles(null);
     setFileValidationError(null);
     setEncryptionResult(null);
+    setShowOverwriteDialog(false);
+    setPendingOverwriteFile('');
   }, [reset]);
 
   // Handle encrypt another
@@ -211,9 +264,10 @@ export const useEncryptionWorkflow = () => {
     // UI reset to step 1 provides clear visual feedback
   }, [handleReset]);
 
-  // Handle key selection
+  // Handle key selection (no-op for multi-key encryption)
   const handleKeyChange = useCallback((keyId: string) => {
-    setSelectedKeyId(keyId);
+    // No longer needed since we encrypt to all vault keys
+    console.log('[EncryptionWorkflow] Key selection ignored in multi-key mode:', keyId);
   }, []);
 
   // Handle file validation errors from FileDropZone
@@ -222,15 +276,17 @@ export const useEncryptionWorkflow = () => {
   }, []);
 
   return {
-    // State - mirrors useDecryptionWorkflow
+    // State - simplified for multi-key encryption
     selectedFiles,
-    selectedKeyId,
+    selectedKeyId: null, // Always null in multi-key mode
     outputPath,
     archiveName,
     isEncrypting,
     showAdvancedOptions,
     setShowAdvancedOptions,
     encryptionResult,
+    showOverwriteDialog,
+    pendingOverwriteFile,
 
     // From useFileEncryption
     isLoading,
@@ -259,5 +315,9 @@ export const useEncryptionWorkflow = () => {
     // Navigation handlers
     handleStepNavigation,
     canNavigateToStep,
+
+    // Overwrite confirmation handlers
+    handleOverwriteConfirm,
+    handleOverwriteCancel,
   };
 };

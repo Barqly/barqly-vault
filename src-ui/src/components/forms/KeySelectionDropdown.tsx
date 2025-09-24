@@ -1,16 +1,15 @@
 import React, { useRef, useEffect } from 'react';
-import { KeyMetadata } from '../../lib/api-types';
+import { KeyReference } from '../../bindings';
 import { useKeySelection } from '../../hooks/useKeySelection';
 import { KeyOption } from './KeyOption';
-import { PublicKeyPreview } from './PublicKeyPreview';
 import { DropdownButton } from './DropdownButton';
 import { ErrorMessage } from './ErrorMessage';
 
 export interface KeySelectionDropdownProps {
-  /** Currently selected key label */
+  /** Currently selected key ID */
   value?: string;
   /** Callback when a key is selected */
-  onChange?: (keyLabel: string) => void;
+  onChange?: (keyId: string) => void;
   /** Whether the dropdown is disabled */
   disabled?: boolean;
   /** Whether to show the public key preview */
@@ -26,13 +25,15 @@ export interface KeySelectionDropdownProps {
   /** Additional CSS classes */
   className?: string;
   /** Callback when keys are loaded */
-  onKeysLoaded?: (keys: KeyMetadata[]) => void;
+  onKeysLoaded?: (keys: KeyReference[]) => void;
   /** Callback when loading state changes */
   onLoadingChange?: (loading: boolean) => void;
   /** Whether to auto-focus the dropdown button */
   autoFocus?: boolean;
   /** Callback called when a key is selected (for focus management) */
   onKeySelected?: () => void;
+  /** Include all key types (passphrase + YubiKey) for decrypt operations */
+  includeAllKeys?: boolean;
 }
 
 export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
@@ -49,6 +50,7 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
   onLoadingChange,
   autoFocus = false,
   onKeySelected,
+  includeAllKeys = false,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const {
@@ -57,16 +59,17 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
     error: loadError,
     isOpen,
     selectedKey,
-    showPublicKeyPreview,
-    setShowPublicKeyPreview,
+    showPublicKeyPreview: _showPublicKeyPreview,
+    setShowPublicKeyPreview: _setShowPublicKeyPreview,
     handleToggle,
     handleKeySelect,
     handleKeyDown,
     formatDate,
-    truncatePublicKey,
+    truncatePublicKey: _truncatePublicKey,
   } = useKeySelection(value, onChange, disabled, showPublicKey, {
     onKeysLoaded,
     onLoadingChange,
+    includeAllKeys,
   });
 
   const errorMessage = error || loadError;
@@ -172,9 +175,9 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
               <ul role="listbox" className="py-1">
                 {keys.map((key) => (
                   <KeyOption
-                    key={key.label}
+                    key={key.id}
                     keyData={key}
-                    isSelected={key.label === value}
+                    isSelected={key.id === value}
                     onSelect={handleKeySelectWithFocus}
                     formatDate={formatDate}
                   />
@@ -185,15 +188,8 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
         )}
       </div>
 
-      {/* Public Key Preview */}
-      {selectedKey && selectedKey.public_key && showPublicKey && (
-        <PublicKeyPreview
-          publicKey={selectedKey.public_key}
-          showPreview={showPublicKeyPreview}
-          onTogglePreview={() => setShowPublicKeyPreview(!showPublicKeyPreview)}
-          truncateKey={truncatePublicKey}
-        />
-      )}
+      {/* Public Key Preview - Not available for vault keys */}
+      {/* KeyReference doesn't include public_key data */}
 
       {/* Error Messages */}
       {errorMessage && <ErrorMessage message={errorMessage} />}

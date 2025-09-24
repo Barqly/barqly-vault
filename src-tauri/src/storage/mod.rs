@@ -38,6 +38,7 @@
 
 pub mod cache;
 pub mod errors;
+pub mod key_registry;
 pub mod key_store;
 pub mod metadata_v2;
 pub mod path_management;
@@ -47,6 +48,7 @@ use std::path::PathBuf;
 
 pub use cache::{CacheMetrics, StorageCache, get_cache};
 pub use errors::StorageError;
+pub use key_registry::{KeyEntry, KeyRegistry, generate_key_id};
 pub use key_store::{
     KeyInfo, delete_key, get_key_info, key_exists, list_keys, load_encrypted_key,
     save_encrypted_key, save_encrypted_key_with_metadata, save_yubikey_metadata,

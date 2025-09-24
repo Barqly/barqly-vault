@@ -3,6 +3,7 @@
 use crate::commands::command_types::CommandError;
 use crate::crypto::yubikey::YubiIdentityProviderFactory;
 use crate::prelude::*;
+use crate::storage::KeyRegistry;
 use serde::{Deserialize, Serialize};
 use tauri;
 
@@ -45,8 +46,27 @@ pub async fn yubikey_list_devices() -> std::result::Result<Vec<YubiKeyDevice>, C
 
     match provider.list_recipients().await {
         Ok(recipients) => {
+            // Load registry to avoid duplicating YubiKeys that are already registered
+            let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+            let registered_serials: std::collections::HashSet<String> = registry
+                .keys
+                .values()
+                .filter_map(|entry| {
+                    if let crate::storage::KeyEntry::Yubikey { serial, .. } = entry {
+                        Some(serial.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
             let devices: Vec<YubiKeyDevice> = recipients
                 .into_iter()
+                .filter(|recipient| {
+                    // Only include YubiKeys that are not already in the registry
+                    // This prevents duplicate display in UIs that call both listing functions
+                    !registered_serials.contains(&recipient.serial)
+                })
                 .map(|recipient| YubiKeyDevice {
                     device_id: recipient.serial.clone(),
                     name: if recipient.label.is_empty() {
@@ -65,7 +85,8 @@ pub async fn yubikey_list_devices() -> std::result::Result<Vec<YubiKeyDevice>, C
             // Log device discovery for debugging
             info!(
                 device_count = devices.len(),
-                "Found YubiKey recipient(s) via age-plugin-yubikey"
+                registered_count = registered_serials.len(),
+                "Found YubiKey recipient(s) via age-plugin-yubikey (excluding already registered)"
             );
 
             for device in &devices {

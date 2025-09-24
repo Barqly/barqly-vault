@@ -19,6 +19,7 @@ use commands::{
     decrypt_data,
     delete_key_command,
     encrypt_files,
+    encrypt_files_multi,
     // Crypto commands
     generate_key,
     generate_key_multi,
@@ -95,6 +96,7 @@ pub fn run() {
             verify_key_passphrase,
             validate_passphrase_strength,
             encrypt_files,
+            encrypt_files_multi,
             get_encryption_status,
             decrypt_data,
             verify_manifest,
@@ -169,6 +171,7 @@ pub fn run() {
             verify_key_passphrase,
             validate_passphrase_strength,
             encrypt_files,
+            encrypt_files_multi,
             get_encryption_status,
             decrypt_data,
             verify_manifest,

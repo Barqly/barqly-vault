@@ -1,6 +1,7 @@
 //! age-plugin-yubikey integration and management
 
 use super::errors::{YubiKeyError, YubiKeyResult};
+use super::pty::core::get_age_path;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use tokio::fs;
@@ -314,7 +315,8 @@ pub async fn execute_age_with_yubikey(
     }
 
     // Create age command with YubiKey recipients
-    let mut cmd = TokioCommand::new("age");
+    let age_path = get_age_path();
+    let mut cmd = TokioCommand::new(&age_path);
 
     for recipient in recipients {
         cmd.arg("-r").arg(recipient);
