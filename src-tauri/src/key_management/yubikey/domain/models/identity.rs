@@ -344,7 +344,12 @@ mod tests {
         let serial = create_test_serial();
         let tag = create_test_identity_tag();
 
-        let identity = YubiKeyIdentity::new(tag.clone(), serial.clone()).unwrap();
+        let identity = YubiKeyIdentity::new(
+            tag.clone(),
+            serial.clone(),
+            "age1yubikey1test123".to_string(),
+        )
+        .unwrap();
 
         assert_eq!(identity.identity_tag(), &tag);
         assert_eq!(identity.serial(), &serial);
@@ -358,25 +363,37 @@ mod tests {
 
         // Empty tag
         assert!(matches!(
-            YubiKeyIdentity::new("".to_string(), serial.clone()),
+            YubiKeyIdentity::new(
+                "".to_string(),
+                serial.clone(),
+                "age1yubikey1test123".to_string()
+            ),
             Err(IdentityValidationError::EmptyTag)
         ));
 
         // Wrong prefix
         assert!(matches!(
-            YubiKeyIdentity::new("invalid_prefix123".to_string(), serial.clone()),
+            YubiKeyIdentity::new(
+                "invalid_prefix123".to_string(),
+                serial.clone(),
+                "age1yubikey1test123".to_string()
+            ),
             Err(IdentityValidationError::InvalidTagFormat { .. })
         ));
 
         // Too short
         assert!(matches!(
-            YubiKeyIdentity::new("AGE-PLUGIN-YUBIKEY-".to_string(), serial.clone()),
+            YubiKeyIdentity::new(
+                "AGE-PLUGIN-YUBIKEY-".to_string(),
+                serial.clone(),
+                "age1yubikey1test123".to_string()
+            ),
             Err(IdentityValidationError::TagTooShort { .. })
         ));
 
         // Valid
         let tag = create_test_identity_tag();
-        assert!(YubiKeyIdentity::new(tag, serial).is_ok());
+        assert!(YubiKeyIdentity::new(tag, serial, "age1yubikey1test123".to_string()).is_ok());
     }
 
     #[test]
@@ -387,6 +404,7 @@ mod tests {
         let identity = YubiKeyIdentity::from_age_plugin_output(
             tag.clone(),
             serial.clone(),
+            "age1yubikey1test123".to_string(),
             Some("9a".to_string()),
         )
         .unwrap();
@@ -401,6 +419,7 @@ mod tests {
         let tag = create_test_identity_tag();
 
         let identity = YubiKeyIdentity::builder(tag.clone(), serial.clone())
+            .recipient("age1yubikey1test123".to_string())
             .public_key("public_key_data".to_string())
             .slot("9a".to_string())
             .algorithm("ECCP256".to_string())
@@ -419,7 +438,8 @@ mod tests {
         let serial2 = Serial::new("87654321".to_string()).unwrap();
         let tag = create_test_identity_tag();
 
-        let identity = YubiKeyIdentity::new(tag, serial1.clone()).unwrap();
+        let identity =
+            YubiKeyIdentity::new(tag, serial1.clone(), "age1yubikey1test123".to_string()).unwrap();
 
         assert!(identity.matches_serial(&serial1));
         assert!(!identity.matches_serial(&serial2));
@@ -434,10 +454,11 @@ mod tests {
         let serial = create_test_serial();
         let tag = create_test_identity_tag();
 
-        let identity = YubiKeyIdentity::new(tag.clone(), serial).unwrap();
+        let identity =
+            YubiKeyIdentity::new(tag.clone(), serial, "age1yubikey1test123".to_string()).unwrap();
 
-        // For now, to_recipient returns the identity tag (will be fixed later)
-        assert_eq!(identity.to_recipient(), tag);
+        // to_recipient returns the recipient field (the age1yubikey... string)
+        assert_eq!(identity.to_recipient(), "age1yubikey1test123");
     }
 
     #[test]
@@ -445,7 +466,8 @@ mod tests {
         let serial = create_test_serial();
         let tag = create_test_identity_tag();
 
-        let identity = YubiKeyIdentity::new(tag.clone(), serial).unwrap();
+        let identity =
+            YubiKeyIdentity::new(tag.clone(), serial, "age1yubikey1test456".to_string()).unwrap();
         let redacted = identity.redacted();
 
         assert_eq!(redacted.identity_tag_prefix, "AGE-PLUGIN-YUBI");
@@ -459,8 +481,10 @@ mod tests {
         let tag1 = "AGE-PLUGIN-YUBIKEY-1UW4LYQYZ4MY7A9QE49USK1".to_string();
         let tag2 = "AGE-PLUGIN-YUBIKEY-1UW4LYQYZ4MY7A9QE49USK2".to_string();
 
-        let identity1 = YubiKeyIdentity::new(tag1, serial.clone()).unwrap();
-        let identity2 = YubiKeyIdentity::new(tag2, serial.clone()).unwrap();
+        let identity1 =
+            YubiKeyIdentity::new(tag1, serial.clone(), "age1yubikey1test123".to_string()).unwrap();
+        let identity2 =
+            YubiKeyIdentity::new(tag2, serial.clone(), "age1yubikey1test456".to_string()).unwrap();
 
         // Different tags with same serial should have same unique_id prefix
         let id1 = identity1.unique_id();
@@ -476,7 +500,8 @@ mod tests {
         let serial = create_test_serial();
         let tag = create_test_identity_tag();
 
-        let identity = YubiKeyIdentity::new(tag, serial).unwrap();
+        let identity =
+            YubiKeyIdentity::new(tag, serial, "age1yubikey1test789".to_string()).unwrap();
         let display_str = format!("{}", identity);
 
         assert!(display_str.contains("YubiKey Identity"));
@@ -491,8 +516,10 @@ mod tests {
         let tag1 = create_test_identity_tag();
         let tag2 = "AGE-PLUGIN-YUBIKEY-DIFFERENT_TAG_HERE_ABC".to_string();
 
-        let identity1 = YubiKeyIdentity::new(tag1, serial1.clone()).unwrap();
-        let identity2 = YubiKeyIdentity::new(tag2, serial2.clone()).unwrap();
+        let identity1 =
+            YubiKeyIdentity::new(tag1, serial1.clone(), "age1yubikey1test123".to_string()).unwrap();
+        let identity2 =
+            YubiKeyIdentity::new(tag2, serial2.clone(), "age1yubikey1test456".to_string()).unwrap();
 
         let identities = vec![identity1.clone(), identity2.clone()];
 
@@ -515,6 +542,7 @@ mod tests {
         let tag = create_test_identity_tag();
 
         let identity = YubiKeyIdentity::builder(tag, serial)
+            .recipient("age1yubikey1test123".to_string())
             .public_key("test_key".to_string())
             .slot("9a".to_string())
             .build()

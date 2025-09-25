@@ -1,4 +1,4 @@
-import { CommandError, ProgressUpdate, FileSelection } from '../api-types';
+import { CommandError, ProgressUpdate, FileSelection } from '../../bindings';
 
 /**
  * State management for file encryption operations

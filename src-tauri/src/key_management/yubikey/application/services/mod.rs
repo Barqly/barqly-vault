@@ -421,6 +421,7 @@ mod tests {
                 crate::key_management::yubikey::domain::models::YubiKeyIdentity::new(
                     "age1yubikey1test123".to_string(),
                     serial.clone(),
+                    "age1yubikey1test123".to_string(),
                 )
                 .expect("Valid test identity"),
             )
@@ -451,6 +452,7 @@ mod tests {
                 crate::key_management::yubikey::domain::models::YubiKeyIdentity::new(
                     "age1yubikey1existing123".to_string(),
                     _serial.clone(),
+                    "age1yubikey1existing123".to_string(),
                 )
                 .expect("Valid test identity"),
             ))
@@ -465,6 +467,7 @@ mod tests {
                 crate::key_management::yubikey::domain::models::YubiKeyIdentity::new(
                     "age1yubikey1test123".to_string(),
                     _serial.clone(),
+                    "age1yubikey1test123".to_string(),
                 )
                 .expect("Valid test identity"),
             ])

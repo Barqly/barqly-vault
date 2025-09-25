@@ -1,4 +1,4 @@
-import { CommandError, GenerateKeyResponse, ProgressUpdate } from '../api-types';
+import { CommandError, GenerateKeyResponse, ProgressUpdate } from '../../bindings';
 
 /**
  * State management for key generation operations

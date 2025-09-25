@@ -234,12 +234,12 @@ impl YkmanDeviceService {
         }
 
         // Fallback: Look for "Version:" format (for other ykman commands)
-        if let Some(version_pos) = parts.iter().position(|&x| x == "Version:") {
-            if version_pos + 1 < parts.len() {
-                let version = parts[version_pos + 1].to_string();
-                debug!(firmware_version = %version, "Found firmware version in ykman output (Version: format)");
-                return Some(version);
-            }
+        if let Some(version_pos) = parts.iter().position(|&x| x == "Version:")
+            && version_pos + 1 < parts.len()
+        {
+            let version = parts[version_pos + 1].to_string();
+            debug!(firmware_version = %version, "Found firmware version in ykman output (Version: format)");
+            return Some(version);
         }
 
         debug!("No firmware version found in ykman output");

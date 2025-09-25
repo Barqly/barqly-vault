@@ -5,8 +5,8 @@ import {
   ProtectionMode,
   YubiKeyInfo,
   // CommandErrorClass, // Commented out - not currently used
-} from '../lib/api-types';
-import { YubiKeyStateInfo, commands, YubiKeyDevice } from '../bindings';
+} from '../bindings';
+import { YubiKeyStateInfo, commands } from '../bindings';
 import { logger } from '../lib/logger';
 
 /**

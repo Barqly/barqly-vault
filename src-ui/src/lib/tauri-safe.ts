@@ -138,7 +138,7 @@ export async function safeListen<T>(
 }
 
 /**
- * Safe invoke command wrapper that uses the CommandResult pattern
+ * Safe invoke command wrapper that uses the Result pattern
  */
 export async function safeInvokeCommand<T>(cmd: string, args?: any): Promise<T> {
   if (!isTauri()) {
@@ -153,12 +153,12 @@ export async function safeInvokeCommand<T>(cmd: string, args?: any): Promise<T> 
 
   try {
     const { invoke } = await import('@tauri-apps/api/core');
-    console.log(`[DEBUG] Invoking command (CommandResult): ${cmd}`, args);
-    const result = await invoke<CommandResult<T>>(cmd, args);
+    console.log(`[DEBUG] Invoking command (Result): ${cmd}`, args);
+    const result = await invoke<Result<T, CommandError>>(cmd, args);
     console.log(`[DEBUG] Command ${cmd} result:`, result);
 
     if (result.status === 'error') {
-      throw new CommandErrorClass(result.data);
+      throw result.error;
     }
 
     console.log(`[DEBUG] Command ${cmd} succeeded:`, result.data);

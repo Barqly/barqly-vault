@@ -1,6 +1,6 @@
 import { safeListen } from '../tauri-safe';
 import { commands, EncryptDataInput } from '../../bindings';
-import { ProgressUpdate } from '../api-types';
+import { ProgressUpdate } from '../../bindings';
 import { logger } from '../logger';
 
 /**

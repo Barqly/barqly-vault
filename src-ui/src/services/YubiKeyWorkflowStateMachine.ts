@@ -6,8 +6,7 @@
  * predictable state machine.
  */
 
-import { ProtectionMode } from '../lib/api-types';
-import { YubiKeyDevice } from '../bindings';
+import { ProtectionMode, YubiKeyStateInfo } from '../bindings';
 
 // Workflow States
 export type YubiKeyWorkflowState =
@@ -29,9 +28,9 @@ export type YubiKeyWorkflowEvent =
   | { type: 'SHOW_REQUIREMENTS' }
   | { type: 'COMMIT_TO_YUBIKEY' }
   | { type: 'DETECTION_STARTED' }
-  | { type: 'DETECTION_SUCCESS'; devices: YubiKeyDevice[] }
+  | { type: 'DETECTION_SUCCESS'; devices: YubiKeyStateInfo[] }
   | { type: 'DETECTION_FAILED'; error: string }
-  | { type: 'SELECT_DEVICE'; device: YubiKeyDevice }
+  | { type: 'SELECT_DEVICE'; device: YubiKeyStateInfo }
   | { type: 'START_INITIALIZATION'; pin: string; slot: number }
   | { type: 'INITIALIZATION_SUCCESS' }
   | { type: 'INITIALIZATION_FAILED'; error: string }
@@ -43,8 +42,8 @@ export type YubiKeyWorkflowEvent =
 // Workflow Context
 export interface YubiKeyWorkflowContext {
   selectedMode: ProtectionMode | null;
-  availableDevices: YubiKeyDevice[];
-  selectedDevice: YubiKeyDevice | null;
+  availableDevices: YubiKeyStateInfo[];
+  selectedDevice: YubiKeyStateInfo | null;
   error: string | null;
   isLoading: boolean;
 

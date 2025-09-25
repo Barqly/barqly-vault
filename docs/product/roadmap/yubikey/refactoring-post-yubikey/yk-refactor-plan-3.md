@@ -16,34 +16,40 @@ All required functionality already exists in bindings.ts with proper high-level 
 
 **Result**: Removed 4 components + 4 test files that required missing backend commands
 
-## Phase 2: Type Migration (Immediate Next Step)
-Now focus on migrating the remaining live components from api-types.ts to bindings.ts imports.
+## Phase 2: Core Component Migration ✅ COMPLETED
+- [x] Error handling foundation:
+  - `lib/errors/error-formatting.ts` - CommandError, ErrorCode from bindings ✅
+  - `lib/errors/command-error.ts` - CommandError, ErrorCode from bindings ✅
+  - `components/ui/error-message.tsx` - CommandError type ✅
+- [x] Core utilities:
+  - `hooks/useProgressTracking.ts` - ProgressUpdate type ✅
+  - `components/ui/progress-bar.tsx` - ProgressUpdate type ✅
+- [x] Key hooks:
+  - `hooks/useKeyGeneration.ts` - CommandError, ErrorCode types ✅
+  - `hooks/useKeyGenerationForm.ts` - GenerateKey types ✅
+  - `hooks/useYubiKeyWorkflow.ts` - ProtectionMode type ✅
+- [x] UI Components (11 files total):
+  - Progress components: `EncryptionProgress.tsx`, `DecryptProgress.tsx`, `DecryptSuccess.tsx` ✅
+  - Form components: `DropdownButton.tsx`, `KeyGenerationForm.tsx`, `FormMessages.tsx` ✅
+  - YubiKey components: `YubiKeyDecryption.tsx` ✅
+  - Setup components: `ProtectionModeSelector*.tsx` (3 files) ✅
+- [x] Validation layer:
+  - `lib/key-generation/validation.ts` - CommandError, ErrorCode ✅
+- [x] Fixed ErrorCode usage from enum-style to string literals
 
-## Phase 3: Systematic Type Migration (One File at a Time)
-- [ ] Error handling foundation:
-  - `lib/errors/error-formatting.ts` - CommandError, ErrorCode from bindings
-  - `lib/errors/command-error.ts` - CommandError, ErrorCode from bindings
-  - `lib/tauri-safe.ts` - Update imports to bindings
-- [ ] Core utilities:
-  - `hooks/useProgressTracking.ts` - ProgressUpdate type
-  - `components/ui/progress-bar.tsx` - ProgressUpdate type
-  - `components/ui/error-message.tsx` - CommandError type
-- [ ] Validation layer:
-  - `lib/validation/encryption-validation.ts` - Multiple types
-  - `lib/validation/decryption-validation.ts` - CommandError type
-  - `lib/key-generation/validation.ts` - CommandError, ErrorCode
-- [ ] State management:
-  - `lib/encryption/state-management.ts` - Multiple types
-  - `lib/decryption/state-management.ts` - Multiple types
-  - `lib/key-generation/state-management.ts` - Multiple types
-- [ ] Workflow systems:
-  - All workflow files - ProgressUpdate, CommandError, ErrorCode
-  - All hook files - Various types
-- [ ] UI Components:
-  - Protection mode components - ProtectionMode type
-  - Page components - ErrorCode type
-  - Progress components - ProgressUpdate type
-  - Form components - Various response types
+**Core migration completed**: 19 key files migrated from api-types to bindings
+
+## Phase 3: Remaining File Migration (~40 files)
+- [ ] Fix type compatibility issues:
+  - CommandError interface differences (trace_id, span_id fields)
+  - Missing YubiKeyDevice export in bindings.ts
+  - CommandErrorClass reference in tauri-safe.ts
+- [ ] Remaining hooks and services:
+  - Workflow hooks, encryption/decryption hooks
+  - State management files
+  - Remaining validation files
+- [ ] Pages and remaining components
+- [ ] Test files (can be deferred)
 
 ## Phase 4: Final Cleanup & Validation
 - [ ] Delete `src-ui/src/lib/api-types.ts` (671 lines removed)

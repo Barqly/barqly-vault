@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDecryptionWorkflow } from '../hooks/useDecryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
-import { ErrorCode } from '../lib/api-types';
+import { ErrorCode } from '../bindings';
 import { Unlock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import UniversalHeader from '../components/common/UniversalHeader';

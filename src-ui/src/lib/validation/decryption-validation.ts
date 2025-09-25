@@ -3,7 +3,7 @@
  */
 
 import { createValidationError } from '../errors/command-error';
-import { CommandError } from '../api-types';
+import { CommandError } from '../../bindings';
 
 export interface DecryptionInputs {
   selectedFile: string | null;

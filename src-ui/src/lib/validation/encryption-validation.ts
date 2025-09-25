@@ -1,4 +1,4 @@
-import { CommandError, ErrorCode, FileSelection } from '../api-types';
+import { CommandError, ErrorCode, FileSelection } from '../../bindings';
 import { EncryptionInput } from '../encryption/encryption-workflow';
 
 /**
@@ -28,7 +28,7 @@ export const validateEncryptionInputs = (
     return {
       isValid: false,
       error: {
-        code: ErrorCode.INVALID_INPUT,
+        code: 'INVALID_INPUT',
         message: 'No files selected for encryption',
         recovery_guidance: 'Please select files or folders to encrypt',
         user_actionable: true,
@@ -41,7 +41,7 @@ export const validateEncryptionInputs = (
     return {
       isValid: false,
       error: {
-        code: ErrorCode.INVALID_INPUT,
+        code: 'INVALID_INPUT',
         message: 'Encryption key is required',
         recovery_guidance: 'Please select an encryption key',
         user_actionable: true,

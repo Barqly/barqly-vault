@@ -2,7 +2,7 @@
  * State management utilities for file decryption
  */
 
-import { CommandError, DecryptionResult, ProgressUpdate } from '../api-types';
+import { CommandError, DecryptionResult, ProgressUpdate } from '../../bindings';
 
 export interface FileDecryptionState {
   isLoading: boolean;

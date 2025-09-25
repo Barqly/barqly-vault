@@ -6,7 +6,7 @@ import {
   ValidatePassphraseInput,
   ValidatePassphraseResponse,
 } from '../../bindings';
-import { ProgressUpdate, CommandError, ErrorCode } from '../api-types';
+import { ProgressUpdate, CommandError, ErrorCode } from '../../bindings';
 import { logger } from '../logger';
 
 /**

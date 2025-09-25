@@ -77,7 +77,12 @@ mod integration_tests {
 
         // Create an identity
         let identity_tag = "AGE-PLUGIN-YUBIKEY-TEST123INTEGRATION".to_string();
-        let identity = YubiKeyIdentity::new(identity_tag, serial.clone()).unwrap();
+        let identity = YubiKeyIdentity::new(
+            identity_tag,
+            serial.clone(),
+            "age1yubikey1test123".to_string(),
+        )
+        .unwrap();
 
         // Create state machine
         let mut state_machine = YubiKeyStateMachine::new(YubiKeyState::New);
@@ -107,7 +112,12 @@ mod integration_tests {
         let serial = Serial::new("12345678".to_string()).unwrap();
         let pin = Pin::new("194763".to_string()).unwrap();
         let identity_tag = "AGE-PLUGIN-YUBIKEY-REDACTION123TEST".to_string();
-        let identity = YubiKeyIdentity::new(identity_tag, serial.clone()).unwrap();
+        let identity = YubiKeyIdentity::new(
+            identity_tag,
+            serial.clone(),
+            "age1yubikey1test456".to_string(),
+        )
+        .unwrap();
 
         // All domain objects should provide redacted versions for logging
         let serial_redacted = serial.redacted();
@@ -143,9 +153,30 @@ mod integration_tests {
 
         // Identity validation
         let serial = Serial::new("12345678".to_string()).unwrap();
-        assert!(YubiKeyIdentity::new("".to_string(), serial.clone()).is_err());
-        assert!(YubiKeyIdentity::new("invalid".to_string(), serial.clone()).is_err());
-        assert!(YubiKeyIdentity::new("AGE-PLUGIN-YUBIKEY-".to_string(), serial).is_err());
+        assert!(
+            YubiKeyIdentity::new(
+                "".to_string(),
+                serial.clone(),
+                "age1yubikey1test123".to_string()
+            )
+            .is_err()
+        );
+        assert!(
+            YubiKeyIdentity::new(
+                "invalid".to_string(),
+                serial.clone(),
+                "age1yubikey1test123".to_string()
+            )
+            .is_err()
+        );
+        assert!(
+            YubiKeyIdentity::new(
+                "AGE-PLUGIN-YUBIKEY-".to_string(),
+                serial,
+                "age1yubikey1test123".to_string()
+            )
+            .is_err()
+        );
     }
 
     #[test]
