@@ -268,7 +268,7 @@ pub mod identity_utils {
     use super::*;
 
     /// Extract serial from age identity tag if possible
-    pub fn extract_serial_from_tag(tag: &str) -> Option<String> {
+    pub fn extract_serial_from_tag(_tag: &str) -> Option<String> {
         // This is a placeholder - actual implementation would need to
         // understand the age1yubikey format to extract embedded serial
         // For now, this would require external tooling

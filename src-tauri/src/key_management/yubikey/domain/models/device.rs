@@ -153,8 +153,8 @@ impl YubiKeyDevice {
 /// Device form factor
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FormFactor {
-    USB_A,
-    USB_C,
+    UsbA,
+    UsbC,
     Lightning,
     NFC,
     Keychain,
@@ -299,11 +299,11 @@ impl fmt::Display for DeviceHealth {
 /// Slot type for different cryptographic operations
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SlotType {
-    PIV_Authentication,
-    PIV_Digital_Signature,
-    PIV_Key_Management,
-    PIV_Card_Authentication,
-    Age_Plugin,
+    PivAuthentication,
+    PivDigitalSignature,
+    PivKeyManagement,
+    PivCardAuthentication,
+    AgePlugin,
     Custom(String),
 }
 

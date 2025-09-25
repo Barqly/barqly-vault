@@ -223,6 +223,7 @@ pub trait DeviceRegistry: Debug + Send + Sync {
     fn get_factory(&self, device_type: &str) -> Option<&dyn DeviceFactory>;
 
     /// Discover all devices across all registered types
+    #[allow(async_fn_in_trait)]
     async fn discover_all_devices(&self) -> DeviceResult<Vec<DeviceInfo>>;
 }
 

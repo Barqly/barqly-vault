@@ -47,7 +47,7 @@ impl DeviceRegistry {
                 }
                 Err(e) => {
                     // Log error but continue with other device types
-                    eprintln!(
+                    tracing::error!(
                         "Failed to discover {} devices: {}",
                         factory.device_type(),
                         e

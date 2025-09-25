@@ -183,12 +183,18 @@ pub enum ProtectionMode {
 impl ProtectionMode {
     /// Check if this protection mode requires a YubiKey
     pub fn requires_yubikey(&self) -> bool {
-        matches!(self, ProtectionMode::YubiKeyOnly { .. } | ProtectionMode::Hybrid { .. })
+        matches!(
+            self,
+            ProtectionMode::YubiKeyOnly { .. } | ProtectionMode::Hybrid { .. }
+        )
     }
 
     /// Check if this protection mode requires a passphrase
     pub fn requires_passphrase(&self) -> bool {
-        matches!(self, ProtectionMode::PassphraseOnly | ProtectionMode::Hybrid { .. })
+        matches!(
+            self,
+            ProtectionMode::PassphraseOnly | ProtectionMode::Hybrid { .. }
+        )
     }
 
     /// Get the YubiKey serial if applicable

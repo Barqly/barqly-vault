@@ -8,7 +8,7 @@
 // Test files are allowed to use println! for debug output
 #![allow(clippy::disallowed_macros)]
 
-use super::device_management::yubikey_list_devices;
+use super::streamlined::list_yubikeys;
 use crate::log_sensitive;
 use crate::tracing_setup::debug;
 
@@ -23,7 +23,7 @@ async fn test_yubikey_hardware_detection() {
     });
 
     // Call the actual command that the frontend uses
-    let result = yubikey_list_devices().await;
+    let result = list_yubikeys().await;
 
     match result {
         Ok(devices) => {
@@ -56,25 +56,22 @@ async fn test_yubikey_hardware_detection() {
                 });
                 for (i, device) in devices.iter().enumerate() {
                     log_sensitive!(dev_only: {
-                        debug!("   Device {}: {}", i + 1, device.name);
+                        debug!("   Device {}: {}", i + 1, device.serial);
                     });
                     log_sensitive!(dev_only: {
-                        debug!("     ID: {}", device.device_id);
+                        debug!("     State: {:?}", device.state);
                     });
-                    if let Some(serial) = &device.serial_number {
+                    if let Some(label) = &device.label {
                         log_sensitive!(dev_only: {
-                            debug!("     Serial: {serial}");
+                            debug!("     Label: {label}");
                         });
                     }
-                    if let Some(version) = &device.firmware_version {
+                    if let Some(recipient) = &device.recipient {
                         log_sensitive!(dev_only: {
-                            debug!("     Version: {version}");
+                            debug!("     Recipient: {recipient}");
                         });
                     }
-                    println!(
-                        "     PIV: {}, OATH: {}, FIDO: {}",
-                        device.has_piv, device.has_oath, device.has_fido
-                    );
+                    println!("     PIN Status: {:?}", device.pin_status);
                 }
             }
         }
@@ -120,7 +117,7 @@ async fn test_yubikey_hot_plugging() {
     log_sensitive!(dev_only: {
         debug!("\n🔌 Phase 1: Checking with YubiKey plugged in...");
     });
-    let result1 = yubikey_list_devices().await;
+    let result1 = list_yubikeys().await;
     match result1 {
         Ok(devices) => println!("✅ Found {} device(s)", devices.len()),
         Err(e) => println!("❌ Error: {e}"),
@@ -136,7 +133,7 @@ async fn test_yubikey_hot_plugging() {
     log_sensitive!(dev_only: {
         debug!("🔌 Phase 2: Checking with YubiKey unplugged...");
     });
-    let result2 = yubikey_list_devices().await;
+    let result2 = list_yubikeys().await;
     match result2 {
         Ok(devices) => {
             log_sensitive!(dev_only: {
@@ -166,7 +163,7 @@ async fn test_yubikey_hot_plugging() {
     log_sensitive!(dev_only: {
         debug!("🔌 Phase 3: Checking with YubiKey plugged back in...");
     });
-    let result3 = yubikey_list_devices().await;
+    let result3 = list_yubikeys().await;
     match result3 {
         Ok(devices) => {
             log_sensitive!(dev_only: {

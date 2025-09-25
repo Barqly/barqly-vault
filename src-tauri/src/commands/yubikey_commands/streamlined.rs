@@ -105,33 +105,30 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         let mut identity_result = None;
         let mut identity_tag = None;
 
-        // Check common slots (1, 2, 3) for existing identities
-        for slot in [1u8, 2u8, 3u8] {
-            match manager.has_identity(serial, slot).await {
-                Ok(true) => {
-                    has_identity = true;
-                    // Try to get existing identity
-                    if let Ok(Some(identity)) = manager.get_existing_identity(serial, slot).await {
-                        identity_result = Some(identity.to_recipient());
-                        identity_tag = Some(identity.identity_tag().to_string());
-                        info!(
-                            "YubiKey {} HAS identity in slot {}: {}",
-                            serial.redacted(),
-                            slot,
-                            identity.to_recipient()
-                        );
-                        break;
-                    }
-                }
-                Ok(false) => continue,
-                Err(e) => {
-                    debug!(
-                        "Error checking slot {} for YubiKey {}: {}",
-                        slot,
+        // Check for any existing identity on the YubiKey (single call, any slot)
+        match manager.has_identity(serial).await {
+            Ok(true) => {
+                has_identity = true;
+                // Get the existing identity
+                if let Ok(Some(identity)) = manager.get_existing_identity(serial).await {
+                    identity_result = Some(identity.to_recipient());
+                    identity_tag = Some(identity.identity_tag().to_string());
+                    info!(
+                        "YubiKey {} HAS identity: {}",
                         serial.redacted(),
-                        e
+                        identity.to_recipient()
                     );
                 }
+            }
+            Ok(false) => {
+                debug!("YubiKey {} has no identity", serial.redacted());
+            }
+            Err(e) => {
+                debug!(
+                    "Error checking identity for YubiKey {}: {}",
+                    serial.redacted(),
+                    e
+                );
             }
         }
 
@@ -420,31 +417,24 @@ pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError>
         )
     })?;
 
-    // Check common slots (1, 2, 3) for identities using centralized service
+    // Check for any identities on the YubiKey (single call, any slot)
     let mut identities = Vec::new();
-    for slot in [1u8, 2u8, 3u8] {
-        match manager.get_existing_identity(&serial_obj, slot).await {
-            Ok(Some(identity)) => {
-                // Convert YubiKeyIdentity to string format for backward compatibility
-                let identity_string = format!("{}:{}", serial_obj.value(), identity.identity_tag());
-                identities.push(identity_string);
-                debug!(
-                    "Found identity in slot {}: {}",
-                    slot,
-                    identity.identity_tag()
-                );
-            }
-            Ok(None) => {
-                debug!("No identity found in slot {}", slot);
-            }
-            Err(e) => {
-                debug!(
-                    "Error checking slot {} for YubiKey {}: {}",
-                    slot,
-                    serial_obj.redacted(),
-                    e
-                );
-            }
+    match manager.get_existing_identity(&serial_obj).await {
+        Ok(Some(identity)) => {
+            // Convert YubiKeyIdentity to string format for backward compatibility
+            let identity_string = format!("{}:{}", serial_obj.value(), identity.identity_tag());
+            identities.push(identity_string);
+            debug!("Found identity: {}", identity.identity_tag());
+        }
+        Ok(None) => {
+            debug!("No identity found on YubiKey {}", serial_obj.redacted());
+        }
+        Err(e) => {
+            debug!(
+                "Error checking identities for YubiKey {}: {}",
+                serial_obj.redacted(),
+                e
+            );
         }
     }
 

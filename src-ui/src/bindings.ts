@@ -639,7 +639,7 @@ export type GenerateKeyInput = { label: string; passphrase: string }
 /**
  * Input for multi-recipient key generation command
  */
-export type GenerateKeyMultiInput = { label: string; passphrase: string | null; protection_mode: ProtectionMode | null; yubikey_device_id: string | null; yubikey_info: YubiKeyInfo | null; yubikey_pin: string | null }
+export type GenerateKeyMultiInput = { label: string; passphrase: string | null; protection_mode: ProtectionMode | null; yubikey_device_id: string | null; yubikey_info: InitializationResult | null; yubikey_pin: string | null }
 /**
  * Response from key generation
  */
@@ -770,10 +770,6 @@ export type PassphraseStrength = "weak" | "fair" | "good" | "strong"
  */
 export type PassphraseValidationResult = { is_valid: boolean; strength: PassphraseStrength; feedback: string[]; score: number }
 /**
- * PIN policy for PIV operations
- */
-export type PinPolicy = "Never" | "Once" | "Always"
-/**
  * PIN policy for YubiKey operations (from crypto/yubikey management)
  */
 export type PinPolicy = "Never" | "Once" | "Always"
@@ -859,10 +855,6 @@ export type SetCurrentVaultResponse = { success: boolean; vault: VaultSummary }
  */
 export type StreamlinedYubiKeyInitResult = { serial: string; slot: number; recipient: string; identity_tag: string; label: string; recovery_code: string }
 /**
- * Touch policy for PIV operations
- */
-export type TouchPolicy = "Never" | "Always" | "Cached"
-/**
  * Input for updating key label
  */
 export type UpdateKeyLabelRequest = { vault_id: string; key_id: string; new_label: string }
@@ -898,10 +890,6 @@ export type VerifyManifestInput = { manifest_path: string; extracted_files_dir: 
  * Response from manifest verification command
  */
 export type VerifyManifestResponse = { is_valid: boolean; message: string; file_count: number; total_size: number }
-/**
- * YubiKey information after initialization
- */
-export type YubiKeyInfo = { serial: string; slot: number; public_key: string; pin_policy: PinPolicy; touch_policy: TouchPolicy; label: string }
 /**
  * YubiKey initialization parameters for vault
  */

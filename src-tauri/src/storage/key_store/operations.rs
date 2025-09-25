@@ -33,7 +33,7 @@ use std::path::PathBuf;
 pub fn save_encrypted_key(
     label: &str,
     encrypted_key: &[u8],
-    public_key: Option<&str>,
+    _public_key: Option<&str>,
 ) -> Result<PathBuf, StorageError> {
     // Get the key file path
     let key_path = get_key_file_path(label)?;
@@ -193,11 +193,11 @@ pub fn key_exists(label: &str) -> Result<bool, StorageError> {
 pub fn save_encrypted_key_with_metadata(
     label: &str,
     encrypted_key: &[u8],
-    public_key: Option<&str>,
+    _public_key: Option<&str>,
     metadata: &crate::storage::metadata_v2::VaultMetadataV2,
 ) -> Result<PathBuf, StorageError> {
     // First save the encrypted key using the existing function
-    let key_path = save_encrypted_key(label, encrypted_key, public_key)?;
+    let key_path = save_encrypted_key(label, encrypted_key, _public_key)?;
 
     // Then save the v2 metadata
     let metadata_path = get_key_metadata_path(label)?.with_file_name(format!("{label}.v2.json"));
@@ -226,7 +226,7 @@ pub fn save_encrypted_key_with_metadata(
 pub fn save_yubikey_metadata(
     label: &str,
     metadata: &crate::storage::metadata_v2::VaultMetadataV2,
-    public_key: Option<&str>,
+    _public_key: Option<&str>,
 ) -> Result<PathBuf, StorageError> {
     // Get the key file path (even though we won't store an encrypted key)
     let key_path = get_key_file_path(label)?;

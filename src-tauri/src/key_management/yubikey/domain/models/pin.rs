@@ -46,6 +46,7 @@ impl Pin {
     }
 
     /// Create from &str for convenience
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(value: &str) -> Result<Self, PinValidationError> {
         Self::new(value.to_string())
     }
@@ -187,7 +188,7 @@ mod pin_serde {
 
     use serde::{Deserializer, Serializer};
 
-    pub fn serialize<S>(pin: &String, serializer: S) -> Result<S::Ok, S::Error>
+    pub fn serialize<S>(pin: &str, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
@@ -319,7 +320,7 @@ mod tests {
 
     #[test]
     fn test_default_pin_detection() {
-        let default_pin = Pin::new("123456".to_string()).unwrap_or_else(|_| {
+        let _default_pin = Pin::new("123456".to_string()).unwrap_or_else(|_| {
             // This should fail due to weak PIN validation, but test the logic
             Pin {
                 value: "123456".to_string(),

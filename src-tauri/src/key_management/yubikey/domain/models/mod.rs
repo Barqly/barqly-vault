@@ -33,7 +33,10 @@ pub use device::{
 pub use identity::{
     IdentityBuilder, IdentityValidationError, RedactedIdentity, YubiKeyIdentity, identity_utils,
 };
-pub use initialization::{InitializationResult, PinPolicy, ProtectionMode, TouchPolicy, UnlockCredentials, UnlockMethod, policy_config};
+pub use initialization::{
+    InitializationResult, PinPolicy, ProtectionMode, TouchPolicy, UnlockCredentials, UnlockMethod,
+    policy_config,
+};
 pub use pin::{Pin, PinValidationError};
 pub use serial::{Serial, SerialValidationError};
 pub use state::{
@@ -61,7 +64,7 @@ mod integration_tests {
         let serial = Serial::new("12345678".to_string()).unwrap();
 
         // Create a PIN
-        let pin = Pin::new("987654".to_string()).unwrap();
+        let _pin = Pin::new("987654".to_string()).unwrap();
 
         // Create a device
         let device = YubiKeyDevice::from_detected_device(

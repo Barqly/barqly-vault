@@ -364,8 +364,6 @@ impl DeviceService for YkmanDeviceService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_management::yubikey::domain::models::Pin;
-    use secrecy::SecretString;
 
     #[tokio::test]
     async fn test_device_service_creation() {

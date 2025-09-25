@@ -199,6 +199,7 @@ impl KeyRegistry {
     }
 
     /// Add a new YubiKey entry to the registry
+    #[allow(clippy::too_many_arguments)]
     pub fn add_yubikey_entry(
         &mut self,
         label: String,
@@ -354,7 +355,6 @@ pub fn generate_recovery_code() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
 
     fn create_test_registry() -> KeyRegistry {
         let mut registry = KeyRegistry::new();

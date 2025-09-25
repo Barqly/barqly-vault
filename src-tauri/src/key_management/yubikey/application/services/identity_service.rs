@@ -31,11 +31,10 @@ pub trait IdentityService: Send + Sync + std::fmt::Debug {
     async fn get_existing_identity(
         &self,
         serial: &Serial,
-        slot: u8,
     ) -> YubiKeyResult<Option<YubiKeyIdentity>>;
 
-    /// Check if device has identity in specified slot
-    async fn has_identity(&self, serial: &Serial, slot: u8) -> YubiKeyResult<bool>;
+    /// Check if device has any identity
+    async fn has_identity(&self, serial: &Serial) -> YubiKeyResult<bool>;
 
     /// Encrypt data with recipient
     async fn encrypt_with_recipient(&self, recipient: &str, data: &[u8]) -> YubiKeyResult<Vec<u8>>;
@@ -169,12 +168,7 @@ impl AgePluginIdentityService {
     }
 
     /// Parse identity information from age-plugin-yubikey output
-    fn parse_identity(
-        &self,
-        output: &[u8],
-        serial: &Serial,
-        slot: u8,
-    ) -> YubiKeyResult<YubiKeyIdentity> {
+    fn parse_identity(&self, output: &[u8], serial: &Serial) -> YubiKeyResult<YubiKeyIdentity> {
         let output_str = String::from_utf8_lossy(output);
 
         // Parse recipient (public key) - format: age1yubikey...
@@ -193,7 +187,16 @@ impl AgePluginIdentityService {
     fn extract_recipient(&self, output: &str) -> YubiKeyResult<String> {
         for line in output.lines() {
             let line = line.trim();
-            if line.starts_with("age1yubikey") {
+
+            // Handle both formats:
+            // 1. "Recipient: age1yubikey..." (identity output)
+            // 2. "age1yubikey..." (direct recipient line)
+            if line.starts_with("Recipient: ") {
+                let recipient = line.strip_prefix("Recipient: ").unwrap_or("");
+                if recipient.starts_with("age1yubikey") {
+                    return Ok(recipient.to_string());
+                }
+            } else if line.starts_with("age1yubikey") {
                 return Ok(line.to_string());
             }
         }
@@ -207,7 +210,8 @@ impl AgePluginIdentityService {
     fn extract_identity_tag(&self, output: &str) -> YubiKeyResult<String> {
         for line in output.lines() {
             let line = line.trim();
-            if line.starts_with("AGE-PLUGIN-YUBIKEY-") {
+            // Look for standalone AGE-PLUGIN-YUBIKEY line (not comment line with #)
+            if line.starts_with("AGE-PLUGIN-YUBIKEY-") && !line.starts_with("#") {
                 return Ok(line.to_string());
             }
         }
@@ -298,7 +302,7 @@ impl IdentityService for AgePluginIdentityService {
         ];
 
         let output = self.run_plugin_command(args, None).await?;
-        let identity = self.parse_identity(&output, serial, slot)?;
+        let identity = self.parse_identity(&output, serial)?;
 
         info!(
             serial = %serial.redacted(),
@@ -313,28 +317,24 @@ impl IdentityService for AgePluginIdentityService {
     async fn get_existing_identity(
         &self,
         serial: &Serial,
-        slot: u8,
     ) -> YubiKeyResult<Option<YubiKeyIdentity>> {
         debug!(
             serial = %serial.redacted(),
-            slot = %slot,
-            "Getting existing YubiKey identity"
+            "Getting existing YubiKey identity from any slot"
         );
 
         let args = vec![
-            "--list".to_string(),
+            "--identity".to_string(),
             "--serial".to_string(),
             serial.value().to_string(),
-            "--slot".to_string(),
-            slot.to_string(),
         ];
 
         match self.run_plugin_command(args, None).await {
-            Ok(output) => match self.parse_identity(&output, serial, slot) {
+            Ok(output) => match self.parse_identity(&output, serial) {
                 Ok(identity) => {
                     debug!(
                         serial = %serial.redacted(),
-                        slot = %slot,
+                        identity_tag = %identity.identity_tag(),
                         "Found existing YubiKey identity"
                     );
                     Ok(Some(identity))
@@ -342,8 +342,7 @@ impl IdentityService for AgePluginIdentityService {
                 Err(_) => {
                     debug!(
                         serial = %serial.redacted(),
-                        slot = %slot,
-                        "No valid identity found in slot"
+                        "No valid identity found on YubiKey"
                     );
                     Ok(None)
                 }
@@ -351,7 +350,6 @@ impl IdentityService for AgePluginIdentityService {
             Err(_) => {
                 debug!(
                     serial = %serial.redacted(),
-                    slot = %slot,
                     "No identity found (command failed)"
                 );
                 Ok(None)
@@ -359,8 +357,8 @@ impl IdentityService for AgePluginIdentityService {
         }
     }
 
-    async fn has_identity(&self, serial: &Serial, slot: u8) -> YubiKeyResult<bool> {
-        let identity = self.get_existing_identity(serial, slot).await?;
+    async fn has_identity(&self, serial: &Serial) -> YubiKeyResult<bool> {
+        let identity = self.get_existing_identity(serial).await?;
         Ok(identity.is_some())
     }
 
@@ -486,11 +484,11 @@ impl AgePluginIdentityService {
         // In a real implementation, you'd parse the actual age-plugin-yubikey list format
 
         // Extract slot number (this would need actual format parsing)
-        let slot = 1; // Placeholder
+        let _slot = 1; // Placeholder
 
         // Extract recipient and identity tag from line
         // This would need proper parsing based on actual output format
-        if let (Some(recipient), Some(identity_tag)) = (
+        if let (Some(_recipient), Some(identity_tag)) = (
             self.extract_recipient(line).ok(),
             self.extract_identity_tag(line).ok(),
         ) {
@@ -504,8 +502,6 @@ impl AgePluginIdentityService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_management::yubikey::domain::models::{Pin, Serial};
-    use secrecy::SecretString;
 
     #[tokio::test]
     async fn test_identity_service_creation() {

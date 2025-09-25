@@ -8,9 +8,9 @@
 use crate::commands::types::{
     CommandError, CommandResponse, ErrorCode, ErrorHandler, ValidateInput, ValidationHelper,
 };
-use crate::key_management::yubikey::domain::models::{ProtectionMode, InitializationResult};
-use crate::key_management::yubikey::{YubiIdentityProviderFactory};
 use crate::crypto::{encrypt_private_key, generate_keypair};
+use crate::key_management::yubikey::YubiIdentityProviderFactory;
+use crate::key_management::yubikey::domain::models::{InitializationResult, ProtectionMode};
 use crate::prelude::*;
 use crate::storage::{self, RecipientInfo, RecipientType, VaultMetadataV2};
 use age::secrecy::SecretString;

@@ -419,13 +419,10 @@ mod tests {
             Ok(
                 crate::key_management::yubikey::domain::models::YubiKeyIdentity::new(
                     "age1yubikey1test123".to_string(),
-                    serial,
-                ),
+                    serial.clone(),
+                )
+                .expect("Valid test identity"),
             )
-        }
-
-        async fn get_recipient(&self, _serial: &Serial, _slot: u8) -> YubiKeyResult<String> {
-            Ok("age1yubikey1recipient123".to_string())
         }
 
         async fn encrypt_with_recipient(
@@ -439,19 +436,37 @@ mod tests {
         async fn decrypt_with_identity(
             &self,
             _serial: &Serial,
-            _pin: &crate::key_management::yubikey::domain::models::Pin,
-            _slot: u8,
+            _identity_tag: &str,
             _encrypted_data: &[u8],
         ) -> YubiKeyResult<Vec<u8>> {
             Ok(b"decrypted_data".to_vec())
         }
 
-        async fn validate_identity(
+        async fn get_existing_identity(
             &self,
             _serial: &Serial,
-            _identity_tag: &str,
-        ) -> YubiKeyResult<bool> {
+        ) -> YubiKeyResult<Option<YubiKeyIdentity>> {
+            Ok(Some(
+                crate::key_management::yubikey::domain::models::YubiKeyIdentity::new(
+                    "age1yubikey1existing123".to_string(),
+                    _serial.clone(),
+                )
+                .expect("Valid test identity"),
+            ))
+        }
+
+        async fn has_identity(&self, _serial: &Serial) -> YubiKeyResult<bool> {
             Ok(true)
+        }
+
+        async fn list_identities(&self, _serial: &Serial) -> YubiKeyResult<Vec<YubiKeyIdentity>> {
+            Ok(vec![
+                crate::key_management::yubikey::domain::models::YubiKeyIdentity::new(
+                    "age1yubikey1test123".to_string(),
+                    _serial.clone(),
+                )
+                .expect("Valid test identity"),
+            ])
         }
     }
 
@@ -483,20 +498,7 @@ mod tests {
             Ok(None)
         }
 
-        async fn update_yubikey_entry(
-            &self,
-            _entry_id: &str,
-            _device: &crate::key_management::yubikey::domain::models::YubiKeyDevice,
-            _identity: &crate::key_management::yubikey::domain::models::YubiKeyIdentity,
-        ) -> YubiKeyResult<()> {
-            Ok(())
-        }
-
-        async fn remove_yubikey_entry(&self, _entry_id: &str) -> YubiKeyResult<()> {
-            Ok(())
-        }
-
-        async fn list_all_entries(
+        async fn get_all_yubikeys(
             &self,
         ) -> YubiKeyResult<
             Vec<(
@@ -507,40 +509,42 @@ mod tests {
             Ok(vec![])
         }
 
-        async fn find_by_slot(
-            &self,
-            _slot: u8,
-        ) -> YubiKeyResult<
-            Option<(
-                String,
-                crate::key_management::yubikey::domain::models::YubiKeyDevice,
-            )>,
-        > {
-            Ok(None)
-        }
-
         async fn is_slot_occupied(&self, _slot: u8) -> YubiKeyResult<bool> {
             Ok(false)
         }
 
-        async fn get_entry_details(
-            &self,
-            _entry_id: &str,
-        ) -> YubiKeyResult<
-            Option<(
-                crate::key_management::yubikey::domain::models::YubiKeyDevice,
-                crate::key_management::yubikey::domain::models::YubiKeyIdentity,
-                u8,
-            )>,
-        > {
-            Ok(None)
+        async fn is_registered(&self, _serial: &Serial) -> YubiKeyResult<bool> {
+            Ok(false)
         }
 
-        async fn update_last_used(&self, _entry_id: &str) -> YubiKeyResult<()> {
+        async fn update_label(&self, _key_id: &str, _new_label: String) -> YubiKeyResult<()> {
             Ok(())
         }
 
-        async fn set_label(&self, _entry_id: &str, _label: Option<String>) -> YubiKeyResult<()> {
+        async fn mark_used(&self, _key_id: &str) -> YubiKeyResult<()> {
+            Ok(())
+        }
+
+        async fn remove_yubikey(&self, _key_id: &str) -> YubiKeyResult<()> {
+            Ok(())
+        }
+
+        async fn is_slot_occupied_by_device(
+            &self,
+            _slot: u8,
+            _serial: &Serial,
+        ) -> YubiKeyResult<bool> {
+            Ok(false)
+        }
+
+        async fn get_by_id(
+            &self,
+            _key_id: &str,
+        ) -> YubiKeyResult<Option<(YubiKeyDevice, YubiKeyIdentity, u8)>> {
+            Ok(None)
+        }
+
+        async fn validate_consistency(&self) -> YubiKeyResult<()> {
             Ok(())
         }
     }

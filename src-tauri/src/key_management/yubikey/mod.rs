@@ -114,10 +114,10 @@ mod integration_tests {
     #[tokio::test]
     async fn test_manager_facade_integration() {
         // Test that all layers are properly integrated
-        let config = YubiKeyConfig::default();
+        let _config = YubiKeyConfig::default();
 
         // Test domain types
-        let serial = Serial::new("12345678".to_string()).unwrap();
+        let _serial = Serial::new("12345678".to_string()).unwrap();
         let _pin = Pin::new("123456".to_string()).unwrap();
 
         println!("✅ Domain layer types accessible");

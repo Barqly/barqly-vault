@@ -13,7 +13,7 @@
 //! - **Event Publishing**: Publishes events for UI updates and logging
 
 use crate::key_management::yubikey::{
-    application::services::{DeviceService, IdentityService, RegistryService, ServiceFactory},
+    application::services::ServiceFactory,
     domain::errors::{YubiKeyError, YubiKeyResult},
     domain::models::{Pin, Serial, YubiKeyDevice, YubiKeyIdentity},
 };
@@ -177,26 +177,21 @@ impl YubiKeyManager {
     pub async fn get_existing_identity(
         &self,
         serial: &Serial,
-        slot: u8,
     ) -> YubiKeyResult<Option<YubiKeyIdentity>> {
         debug!(
-            "Getting existing identity for YubiKey: {} slot: {}",
-            serial.redacted(),
-            slot
+            "Getting existing identity for YubiKey: {}",
+            serial.redacted()
         );
 
         self.services
             .identity_service()
-            .get_existing_identity(serial, slot)
+            .get_existing_identity(serial)
             .await
     }
 
-    /// Check if YubiKey has identity in specified slot
-    pub async fn has_identity(&self, serial: &Serial, slot: u8) -> YubiKeyResult<bool> {
-        self.services
-            .identity_service()
-            .has_identity(serial, slot)
-            .await
+    /// Check if YubiKey has any identity
+    pub async fn has_identity(&self, serial: &Serial) -> YubiKeyResult<bool> {
+        self.services.identity_service().has_identity(serial).await
     }
 
     /// Encrypt data with YubiKey recipient

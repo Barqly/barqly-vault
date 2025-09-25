@@ -34,6 +34,7 @@ impl Serial {
     }
 
     /// Create from &str for convenience
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(value: &str) -> Result<Self, SerialValidationError> {
         Self::new(value.to_string())
     }
@@ -155,7 +156,7 @@ mod tests {
         assert_eq!(serial.redacted(), "***7890");
 
         // Very short (all stars)
-        let serial = Serial::new("1234".to_string());
+        let _serial = Serial::new("1234".to_string());
         // This would fail validation, but if it existed:
         // assert_eq!(serial.redacted(), "****");
     }
