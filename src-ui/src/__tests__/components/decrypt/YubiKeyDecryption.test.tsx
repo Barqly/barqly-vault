@@ -2,7 +2,7 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import YubiKeyDecryption from '../../../components/decrypt/YubiKeyDecryption';
-import { YubiKeyDevice } from '../../../lib/api-types';
+import type { YubiKeyStateInfo } from '../bindings';
 import * as tauriSafe from '../../../lib/tauri-safe';
 
 // Mock the tauri-safe module
@@ -12,10 +12,10 @@ vi.mock('../../../lib/tauri-safe', () => ({
 
 const mockSafeInvoke = vi.mocked(tauriSafe.safeInvoke);
 
-const mockYubiKeyDevices: YubiKeyDevice[] = [
+const mockYubiKeyDevices: YubiKeyStateInfo[] = [
   {
-    device_id: 'yubikey-1',
-    name: 'YubiKey 5 NFC',
+    serial: 'yubikey-1',
+    label: 'YubiKey 5 NFC',
     serial_number: '12345678',
     firmware_version: '5.4.3',
     has_piv: true,
@@ -39,7 +39,7 @@ describe('YubiKeyDecryption - User Experience', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSafeInvoke.mockImplementation((cmd) => {
-      if (cmd === 'yubikey_list_devices') {
+      if (cmd === 'listYubikeys') {
         return Promise.resolve(mockYubiKeyDevices);
       }
       return Promise.resolve(null);

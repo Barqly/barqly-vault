@@ -2,24 +2,13 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import ProtectionModeSelector from '../../../components/setup/ProtectionModeSelector';
-import { ProtectionMode, YubiKeyDevice } from '../../../lib/api-types';
-import * as apiTypes from '../../../lib/api-types';
+import type { ProtectionMode, YubiKeyStateInfo } from '../bindings';
+import { mockInvoke } from '../../../test-setup';
 
-// Mock the API types module
-vi.mock('../../../lib/api-types', async () => {
-  const actual = await vi.importActual('../../../lib/api-types');
-  return {
-    ...actual,
-    invokeCommand: vi.fn(),
-  };
-});
-
-const mockInvokeCommand = vi.mocked(apiTypes.invokeCommand);
-
-const mockYubiKeyDevices: YubiKeyDevice[] = [
+const mockYubiKeyDevices: YubiKeyStateInfo[] = [
   {
-    device_id: 'yubikey-1',
-    name: 'YubiKey 5 NFC',
+    serial: 'yubikey-1',
+    label: 'YubiKey 5 NFC',
     serial_number: '12345678',
     firmware_version: '5.4.3',
     has_piv: true,
@@ -35,7 +24,7 @@ describe('ProtectionModeSelector - User Experience', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockInvokeCommand.mockResolvedValue(mockYubiKeyDevices);
+    mockInvoke.mockResolvedValue(mockYubiKeyDevices);
   });
 
   afterEach(() => {

@@ -1,24 +1,13 @@
 import { renderHook, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { useYubiKeySetupWorkflow } from '../../hooks/useYubiKeySetupWorkflow';
-import { ProtectionMode, YubiKeyDevice } from '../../lib/api-types';
-import * as apiTypes from '../../lib/api-types';
+import type { ProtectionMode, YubiKeyStateInfo } from '../bindings';
+import { mockInvoke } from '../../test-setup';
 
-// Mock the API types module
-vi.mock('../../lib/api-types', async () => {
-  const actual = await vi.importActual('../../lib/api-types');
-  return {
-    ...actual,
-    invokeCommand: vi.fn(),
-  };
-});
-
-const mockInvokeCommand = vi.mocked(apiTypes.invokeCommand);
-
-const mockYubiKeyDevices: YubiKeyDevice[] = [
+const mockYubiKeyDevices: YubiKeyStateInfo[] = [
   {
-    device_id: 'yubikey-1',
-    name: 'YubiKey 5 NFC',
+    serial: 'yubikey-1',
+    label: 'YubiKey 5 NFC',
     serial_number: '12345678',
     firmware_version: '5.4.3',
     has_piv: true,
@@ -30,7 +19,7 @@ const mockYubiKeyDevices: YubiKeyDevice[] = [
 describe('useYubiKeySetupWorkflow - User Workflow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockInvokeCommand.mockResolvedValue(mockYubiKeyDevices);
+    mockInvoke.mockResolvedValue(mockYubiKeyDevices);
   });
 
   describe('Initial user workflow state', () => {
@@ -46,7 +35,7 @@ describe('useYubiKeySetupWorkflow - User Workflow', () => {
       expect(result.current.keyLabel).toBe('');
       expect(result.current.passphrase).toBe('');
       expect(result.current.confirmPassphrase).toBe('');
-      expect(result.current.protectionMode).toBe(ProtectionMode.PASSPHRASE_ONLY);
+      expect(result.current.protectionMode).toBe('PASSPHRASE_ONLY');
       // With lazy detection, no device is selected until user chooses YubiKey mode
       expect(result.current.selectedDevice).toBe(null);
       expect(result.current.hasCheckedDevices).toBe(false);
@@ -155,7 +144,7 @@ describe('useYubiKeySetupWorkflow - User Workflow', () => {
       // Should be back to initial state
       expect(result.current.keyLabel).toBe('');
       expect(result.current.passphrase).toBe('');
-      expect(result.current.protectionMode).toBe(ProtectionMode.PASSPHRASE_ONLY);
+      expect(result.current.protectionMode).toBe('PASSPHRASE_ONLY');
     });
   });
 });
