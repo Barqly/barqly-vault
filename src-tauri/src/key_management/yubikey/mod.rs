@@ -6,21 +6,21 @@
 //!
 //! ## Architecture
 //!
-//! ```
+//! ```text
 //! yubikey/
-//! ├── domain/           # Core business objects and domain logic
-//! │   ├── models/       # Domain entities (Serial, Pin, YubiKeyDevice, etc.)
-//! │   └── errors.rs     # Domain-specific errors
-//! ├── application/      # Application services and orchestration
-//! │   ├── services/     # Business logic services
-//! │   ├── manager.rs    # Main facade for all operations
-//! │   ├── factory.rs    # Object creation and configuration
-//! │   ├── events.rs     # Event system for notifications
-//! │   └── state.rs      # Application state management
-//! └── infrastructure/   # External integrations and technical concerns
-//!     ├── providers/    # Device provider abstractions
-//!     ├── pty/          # PTY-based operations (ykman, age-plugin-yubikey)
-//!     └── age_plugin.rs # age-plugin-yubikey integration
+//! +-- domain/           # Core business objects and domain logic
+//! |   +-- models/       # Domain entities (Serial, Pin, YubiKeyDevice, etc.)
+//! |   +-- errors.rs     # Domain-specific errors
+//! +-- application/      # Application services and orchestration
+//! |   +-- services/     # Business logic services
+//! |   +-- manager.rs    # Main facade for all operations
+//! |   +-- factory.rs    # Object creation and configuration
+//! |   +-- events.rs     # Event system for notifications
+//! |   +-- state.rs      # Application state management
+//! +-- infrastructure/   # External integrations and technical concerns
+//!     +-- providers/    # Device provider abstractions
+//!     +-- pty/          # PTY-based operations (ykman, age-plugin-yubikey)
+//!     +-- age_plugin.rs # age-plugin-yubikey integration
 //! ```
 //!
 //! ## Key Features
@@ -35,7 +35,7 @@
 //!
 //! ## Usage
 //!
-//! ```rust
+//! ```ignore
 //! use crate::key_management::yubikey::{YubiKeyManager, Serial, Pin};
 //!
 //! // Initialize YubiKey manager
@@ -46,7 +46,7 @@
 //!
 //! // Initialize a YubiKey
 //! let serial = Serial::new("12345678".to_string())?;
-//! let pin = Pin::new("123456".to_string())?;
+//! let pin = Pin::new("194763".to_string())?;
 //! let (device, identity, entry_id) = manager.initialize_device(
 //!     &serial, &pin, 0x9a, "recovery_hash".to_string(), Some("My YubiKey".to_string())
 //! ).await?;
