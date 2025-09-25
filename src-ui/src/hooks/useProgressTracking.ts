@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { safeListen } from '../lib/tauri-safe';
-import { ProgressUpdate } from '../lib/api-types';
+import { ProgressUpdate } from '../bindings';
 
 export interface ProgressTrackingState {
   progress: ProgressUpdate | null;

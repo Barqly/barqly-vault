@@ -10,7 +10,7 @@
 
 import React from 'react';
 import { Shield, Key, Fingerprint, CheckCircle } from 'lucide-react';
-import { ProtectionMode } from '../../lib/api-types';
+import { ProtectionMode } from '../../bindings';
 
 // Pure UI Props - only what's needed for rendering
 export interface ProtectionModeSelectorPureProps {

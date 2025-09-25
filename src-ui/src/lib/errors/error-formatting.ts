@@ -1,4 +1,4 @@
-import { CommandError, ErrorCode } from '../api-types';
+import { CommandError, ErrorCode } from '../../bindings';
 import { AlertCircle, AlertTriangle, Info, Shield } from 'lucide-react';
 
 export type ErrorVariant = 'default' | 'warning' | 'info' | 'security';
@@ -34,10 +34,10 @@ export function getErrorVariant(errorCode: ErrorCode | null): ErrorVariant {
   // Security errors
   if (
     [
-      ErrorCode.INVALID_KEY,
-      ErrorCode.WRONG_PASSPHRASE,
-      ErrorCode.TAMPERED_DATA,
-      ErrorCode.UNAUTHORIZED_ACCESS,
+      'INVALID_KEY',
+      'WRONG_PASSPHRASE',
+      'TAMPERED_DATA',
+      'UNAUTHORIZED_ACCESS',
     ].includes(errorCode)
   ) {
     return 'security';
@@ -46,10 +46,10 @@ export function getErrorVariant(errorCode: ErrorCode | null): ErrorVariant {
   // Warning-level errors
   if (
     [
-      ErrorCode.WEAK_PASSPHRASE,
-      ErrorCode.FILE_TOO_LARGE,
-      ErrorCode.TOO_MANY_FILES,
-      ErrorCode.CONCURRENT_OPERATION,
+      'WEAK_PASSPHRASE',
+      'FILE_TOO_LARGE',
+      'TOO_MANY_FILES',
+      'CONCURRENT_OPERATION',
     ].includes(errorCode)
   ) {
     return 'warning';
@@ -58,10 +58,10 @@ export function getErrorVariant(errorCode: ErrorCode | null): ErrorVariant {
   // Info-level errors
   if (
     [
-      ErrorCode.MISSING_PARAMETER,
-      ErrorCode.INVALID_PATH,
-      ErrorCode.KEY_NOT_FOUND,
-      ErrorCode.FILE_NOT_FOUND,
+      'MISSING_PARAMETER',
+      'INVALID_PATH',
+      'KEY_NOT_FOUND',
+      'FILE_NOT_FOUND',
     ].includes(errorCode)
   ) {
     return 'info';

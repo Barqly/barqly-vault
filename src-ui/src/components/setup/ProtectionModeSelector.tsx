@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Shield, Key, Fingerprint, CheckCircle } from 'lucide-react';
-import { ProtectionMode, YubiKeyDevice } from '../../lib/api-types';
+import { ProtectionMode, YubiKeyDevice } from '../../bindings';
 import { LoadingSpinner } from '../ui/loading-spinner';
 
 interface ProtectionModeSelectorProps {

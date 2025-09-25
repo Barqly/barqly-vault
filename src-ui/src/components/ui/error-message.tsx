@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { X } from 'lucide-react';
 
 import { cn } from '../../lib/utils';
-import { CommandError } from '../../lib/api-types';
+import { CommandError } from '../../bindings';
 import {
   parseError,
   getErrorVariant,

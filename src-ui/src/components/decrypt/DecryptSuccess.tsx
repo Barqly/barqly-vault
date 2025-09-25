@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, FolderOpen, Copy, FileText, HardDrive } from 'lucide-react';
-import { DecryptionResult } from '../../lib/api-types';
+import { DecryptionResult } from '../../bindings';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
 

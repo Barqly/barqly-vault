@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertCircle, CheckCircle } from 'lucide-react';
-import { GenerateKeyResponse } from '../../../lib/api-types';
+import { GenerateKeyResponse } from '../../../bindings';
 
 interface FormMessagesProps {
   error: string | null;

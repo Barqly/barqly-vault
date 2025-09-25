@@ -1,5 +1,5 @@
 import React from 'react';
-import { GenerateKeyResponse } from '../../lib/api-types';
+import { GenerateKeyResponse } from '../../bindings';
 import PassphraseInput from './PassphraseInput';
 import { useKeyGenerationForm } from '../../hooks/useKeyGenerationForm';
 import FormHeader from './KeyGenerationForm/FormHeader';

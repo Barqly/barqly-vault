@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { GenerateKeyInput, GenerateKeyResponse } from '../lib/api-types';
+import { GenerateKeyInput, GenerateKeyResponse } from '../bindings';
 import { validateKeyGenerationForm } from '../lib/validation/key-generation-validation';
 
 export interface KeyGenerationFormData {

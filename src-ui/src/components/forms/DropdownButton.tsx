@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { ChevronDown, Key } from 'lucide-react';
-import { KeyMetadata } from '../../lib/api-types';
+import { KeyMetadata } from '../../bindings';
 
 export interface DropdownButtonProps {
   selectedKey?: KeyMetadata;

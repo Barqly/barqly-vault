@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useReducer } from 'react';
-import { ProtectionMode } from '../lib/api-types';
+import { ProtectionMode } from '../bindings';
 import { yubiKeyService, YubiKeyService, YubiKeyServiceEvent } from '../services/YubiKeyService';
 import {
   YubiKeyWorkflowState,

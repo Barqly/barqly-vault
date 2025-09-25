@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { CommandError, ErrorCode } from '../lib/api-types';
+import { CommandError, ErrorCode } from '../bindings';
 import { logger } from '../lib/logger';
 import { executeKeyGenerationWithProgress } from '../lib/key-generation/key-generation-workflow';
 import { validateKeyGenerationInputs } from '../lib/key-generation/validation';
@@ -108,7 +108,7 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
         commandError = error as CommandError;
       } else {
         commandError = {
-          code: ErrorCode.INTERNAL_ERROR,
+          code: 'INTERNAL_ERROR',
           message: error instanceof Error ? error.message : 'An unexpected error occurred',
           recovery_guidance: 'Please try again. If the problem persists, restart the application.',
           user_actionable: true,

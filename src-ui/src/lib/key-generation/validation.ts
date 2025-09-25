@@ -1,4 +1,4 @@
-import { CommandError, ErrorCode } from '../api-types';
+import { CommandError, ErrorCode } from '../../bindings';
 import { validateField } from '../validation';
 import { logger } from '../logger';
 
@@ -26,7 +26,7 @@ export const validateKeyGenerationInputs = (
 
   if (!labelValidation.isValid) {
     const error: CommandError = {
-      code: ErrorCode.INVALID_INPUT,
+      code: 'INVALID_INPUT',
       message: labelValidation.error!,
       recovery_guidance: 'Please provide a unique label for the new key',
       user_actionable: true,
@@ -52,7 +52,7 @@ export const validateKeyGenerationInputs = (
 
   if (!passphraseValidation.isValid) {
     const error: CommandError = {
-      code: ErrorCode.INVALID_INPUT,
+      code: 'INVALID_INPUT',
       message: passphraseValidation.error!,
       recovery_guidance: 'Please provide a strong passphrase to protect the key',
       user_actionable: true,

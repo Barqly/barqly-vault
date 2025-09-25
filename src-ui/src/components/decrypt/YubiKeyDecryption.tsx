@@ -9,7 +9,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import { YubiKeyDecryptParams, ConnectionStatus } from '../../lib/api-types';
+import { YubiKeyDecryptParams, ConnectionStatus } from '../../bindings';
 import { commands, YubiKeyDevice } from '../../bindings';
 import { LoadingSpinner } from '../ui/loading-spinner';
 import { ErrorMessage } from '../ui/error-message';

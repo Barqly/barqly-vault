@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { ProtectionMode } from '../../lib/api-types';
+import { ProtectionMode } from '../../bindings';
 import { useYubiKeyWorkflow } from '../../hooks/useYubiKeyWorkflow';
 import { ProtectionModeSelectorPure } from './ProtectionModeSelectorPure';
 import { logger } from '../../lib/logger';
