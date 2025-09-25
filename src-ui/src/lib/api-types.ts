@@ -360,7 +360,7 @@ export interface KeyReference {
 
 export type KeyType =
   | { type: 'passphrase'; key_id: string }
-  | { type: 'yubikey'; serial: string; slot_index: number; piv_slot: number };
+  | { type: 'yubikey'; serial: string; firmware_version?: string | null };
 
 export enum KeyState {
   Active = 'active',
@@ -436,7 +436,6 @@ export interface YubiKeyInitForVaultParams {
   pin: string;
   label: string;
   vault_id: string;
-  slot_index: number;
 }
 
 export interface RegisterYubiKeyForVaultParams {
@@ -444,7 +443,6 @@ export interface RegisterYubiKeyForVaultParams {
   pin: string;
   label: string;
   vault_id: string;
-  slot_index: number;
 }
 
 export interface RegisterYubiKeyResult {

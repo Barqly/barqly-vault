@@ -375,7 +375,7 @@ async validateVaultPassphraseKey(vaultId: string) : Promise<Result<boolean, Comm
 /**
  * Initialize a new YubiKey and add it to a vault
  */
-async initYubikeyForVault(input: YubiKeyInitForVaultParams) : Promise<Result<InitializationResult, CommandError>> {
+async initYubikeyForVault(input: YubiKeyInitForVaultParams) : Promise<Result<YubiKeyVaultResult, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("init_yubikey_for_vault", { input }) };
 } catch (e) {
@@ -386,7 +386,7 @@ async initYubikeyForVault(input: YubiKeyInitForVaultParams) : Promise<Result<Ini
 /**
  * Register an existing YubiKey with a vault
  */
-async registerYubikeyForVault(input: RegisterYubiKeyForVaultParams) : Promise<Result<RegisterYubiKeyResult, CommandError>> {
+async registerYubikeyForVault(input: RegisterYubiKeyForVaultParams) : Promise<Result<YubiKeyVaultResult, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("register_yubikey_for_vault", { input }) };
 } catch (e) {
@@ -395,22 +395,22 @@ async registerYubikeyForVault(input: RegisterYubiKeyForVaultParams) : Promise<Re
 }
 },
 /**
- * List available YubiKeys with vault context
+ * List available YubiKeys for vault registration
  */
-async listAvailableYubikeys(vaultId: string) : Promise<Result<YubiKeyStateInfo[], CommandError>> {
+async listAvailableYubikeysForVault(vaultId: string) : Promise<Result<AvailableYubiKey[], CommandError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("list_available_yubikeys", { vaultId }) };
+    return { status: "ok", data: await TAURI_INVOKE("list_available_yubikeys_for_vault", { vaultId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
 /**
- * Check which YubiKey slots are available in a vault
+ * Check which KeyMenuBar display positions are available in a vault
  */
-async checkYubikeySlotAvailability(vaultId: string) : Promise<Result<boolean[], CommandError>> {
+async checkKeymenubarPositionsAvailable(vaultId: string) : Promise<Result<boolean[], CommandError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("check_yubikey_slot_availability", { vaultId }) };
+    return { status: "ok", data: await TAURI_INVOKE("check_keymenubar_positions_available", { vaultId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -496,6 +496,10 @@ export type AppConfig = { version: string; default_key_label: string | null; rem
  * Configuration update
  */
 export type AppConfigUpdate = { default_key_label: string | null; remember_last_folder: boolean | null; max_recent_files: number | null }
+/**
+ * Available YubiKey for vault registration - matches frontend YubiKeyStateInfo
+ */
+export type AvailableYubiKey = { serial: string; state: string; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: string }
 /**
  * Cache performance metrics
  */
@@ -716,7 +720,7 @@ export type KeyReference =
 /**
  * YubiKey hardware token
  */
-{ type: "yubikey"; serial: string; slot_index: number; piv_slot: number; firmware_version?: string | null }) & { 
+{ type: "yubikey"; serial: string; firmware_version?: string | null }) & { 
 /**
  * Unique identifier for this key reference
  */
@@ -825,11 +829,7 @@ export type ProtectionMode = "PassphraseOnly" | { YubiKeyOnly: { serial: string 
 /**
  * YubiKey registration parameters for vault
  */
-export type RegisterYubiKeyForVaultParams = { serial: string; pin: string; label: string; vault_id: string; slot_index: number }
-/**
- * Result from YubiKey registration
- */
-export type RegisterYubiKeyResult = { success: boolean; key_reference: KeyReference }
+export type RegisterYubiKeyForVaultParams = { serial: string; pin: string; label: string; vault_id: string }
 /**
  * Input for removing key from vault
  */
@@ -893,7 +893,7 @@ export type VerifyManifestResponse = { is_valid: boolean; message: string; file_
 /**
  * YubiKey initialization parameters for vault
  */
-export type YubiKeyInitForVaultParams = { serial: string; pin: string; label: string; vault_id: string; slot_index: number }
+export type YubiKeyInitForVaultParams = { serial: string; pin: string; label: string; vault_id: string }
 /**
  * Types of YubiKey operations
  */
@@ -910,6 +910,10 @@ export type YubiKeyState = "new" | "reused" | "registered" | "orphaned"
  * YubiKey state information
  */
 export type YubiKeyStateInfo = { serial: string; state: YubiKeyState; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus }
+/**
+ * Result from YubiKey operations
+ */
+export type YubiKeyVaultResult = { success: boolean; key_reference: KeyReference; recovery_code_hash: string }
 
 /** tauri-specta globals **/
 

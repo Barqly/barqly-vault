@@ -13,7 +13,6 @@ interface YubiKeySetupDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  slotIndex: number; // 0, 1, or 2
 }
 
 /**
@@ -24,7 +23,6 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  slotIndex,
 }) => {
   const { currentVault, refreshKeys } = useVault();
   const [yubikeys, setYubikeys] = useState<YubiKeyStateInfo[]>([]);
@@ -57,7 +55,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
       }
 
       // Get available YubiKeys for this vault
-      const result = await commands.listAvailableYubikeys(currentVault.id);
+      const result = await commands.listAvailableYubikeysForVault(currentVault.id);
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to list available YubiKeys');
       }
@@ -142,7 +140,6 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
           pin,
           label: label.trim(),
           vault_id: currentVault.id,
-          slot_index: slotIndex,
         };
 
         const initResult = await commands.initYubikeyForVault(initParams);
@@ -165,7 +162,6 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
           pin,
           label: label.trim(),
           vault_id: currentVault.id,
-          slot_index: slotIndex,
         };
 
         const registerResult = await commands.registerYubikeyForVault(registerParams);
@@ -230,7 +226,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <Fingerprint className="h-6 w-6 text-blue-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Setup YubiKey {slotIndex + 1}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Setup YubiKey</h2>
             </div>
             <button
               onClick={handleCancel}
@@ -532,7 +528,6 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                               pin: pin, // Real PIN for verification
                               label: label.trim(),
                               vault_id: currentVault!.id,
-                              slot_index: slotIndex,
                             };
 
                             const registerResult =

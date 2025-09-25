@@ -25,12 +25,6 @@ export function isYubiKey(key: KeyReference): key is YubiKeyReference {
   return key.type === 'yubikey';
 }
 
-/**
- * Get the slot index for a YubiKey, or undefined for other key types
- */
-export function getYubiKeySlotIndex(key: KeyReference): number | undefined {
-  return isYubiKey(key) ? key.slot_index : undefined;
-}
 
 /**
  * Get the serial number for a YubiKey, or undefined for other key types

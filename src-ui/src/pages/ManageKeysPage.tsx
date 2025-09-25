@@ -22,7 +22,7 @@ const ManageKeysPage: React.FC = () => {
   const [showCreateVault, setShowCreateVault] = useState(false);
   const [showPassphraseDialog, setShowPassphraseDialog] = useState(false);
   const [showYubiKeyDialog, setShowYubiKeyDialog] = useState(false);
-  const [selectedYubiKeyIndex, setSelectedYubiKeyIndex] = useState<number>(0);
+  // Removed selectedYubiKeyIndex - backend now handles slot assignment
 
   useEffect(() => {
     refreshVaults();
@@ -41,7 +41,7 @@ const ManageKeysPage: React.FC = () => {
     navigate('/decrypt');
   };
 
-  const handleKeySelect = (keyType: 'passphrase' | 'yubikey', index?: number) => {
+  const handleKeySelect = (keyType: 'passphrase' | 'yubikey') => {
     if (keyType === 'passphrase') {
       // Check if a passphrase key already exists
       const hasPassphrase = vaultKeys.some((k: any) => k.type === 'passphrase');
@@ -51,20 +51,15 @@ const ManageKeysPage: React.FC = () => {
         return;
       }
       setShowPassphraseDialog(true);
-    } else if (keyType === 'yubikey' && index !== undefined) {
-      // Check if this YubiKey slot is already filled
-      const hasYubiKeyInSlot = vaultKeys.some(
-        (k: any) =>
-          k.type === 'yubikey' &&
-          (k.slot_index === index ||
-            vaultKeys.filter((vk: any) => vk.type === 'yubikey').indexOf(k) === index),
-      );
-      if (hasYubiKeyInSlot) {
-        // TODO: Show a dialog to view/remove existing YubiKey
-        alert(`YubiKey slot ${index + 1} is already configured.`);
+    } else if (keyType === 'yubikey') {
+      // Check if vault has reached 3 YubiKey limit
+      const yubiKeyCount = vaultKeys.filter((k: any) => k.type === 'yubikey').length;
+      if (yubiKeyCount >= 3) {
+        alert(
+          'This vault already has the maximum of 3 YubiKeys. Remove an existing YubiKey first.',
+        );
         return;
       }
-      setSelectedYubiKeyIndex(index);
       setShowYubiKeyDialog(true);
     }
   };
@@ -196,7 +191,6 @@ const ManageKeysPage: React.FC = () => {
           <YubiKeySetupDialog
             isOpen={showYubiKeyDialog}
             onClose={() => setShowYubiKeyDialog(false)}
-            slotIndex={selectedYubiKeyIndex}
             onSuccess={async () => {
               setShowYubiKeyDialog(false);
               await refreshKeys();
