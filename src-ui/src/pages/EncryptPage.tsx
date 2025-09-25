@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEncryptionWorkflow } from '../hooks/useEncryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
-import type { ErrorCode } from '../bindings';
+import type { ErrorCode, CommandError } from '../bindings';
 import { Lock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import UniversalHeader from '../components/common/UniversalHeader';
@@ -142,8 +142,8 @@ const EncryptPage: React.FC = () => {
                   onClearFiles={clearSelection}
                   onFileError={(error) => {
                     // Create inline error for file validation failures
-                    const commandError = {
-                      code: ErrorCode.INVALID_INPUT,
+                    const commandError: CommandError = {
+                      code: 'INVALID_INPUT',
                       message: error.message,
                       user_actionable: true,
                     };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDecryptionWorkflow } from '../hooks/useDecryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
-import type { ErrorCode } from '../bindings';
+import type { ErrorCode, CommandError } from '../bindings';
 import { Unlock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import UniversalHeader from '../components/common/UniversalHeader';
@@ -117,8 +117,8 @@ const DecryptPage: React.FC = () => {
                   onClearFiles={clearSelection}
                   onFileError={(error) => {
                     // Create inline error for file validation failures
-                    const commandError = {
-                      code: ErrorCode.INVALID_INPUT,
+                    const commandError: CommandError = {
+                      code: 'INVALID_INPUT',
                       message: error.message,
                       user_actionable: true,
                     };
@@ -128,8 +128,8 @@ const DecryptPage: React.FC = () => {
                   onPassphraseChange={setPassphrase}
                   onPassphraseError={(error) => {
                     // Create command error for passphrase validation failures
-                    const commandError = {
-                      code: ErrorCode.WRONG_PASSPHRASE,
+                    const commandError: CommandError = {
+                      code: 'WRONG_PASSPHRASE',
                       message: error.message,
                       user_actionable: true,
                     };
