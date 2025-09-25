@@ -7,7 +7,7 @@ use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
 use crate::commands::yubikey_commands::{
     YubiKeyState, YubiKeyStateInfo, init_yubikey, list_yubikeys,
 };
-use crate::crypto::yubikey::YubiKeyInitResult;
+use crate::key_management::yubikey::domain::models::InitializationResult;
 use crate::models::{KeyReference, KeyState, KeyType};
 use crate::prelude::*;
 use crate::storage::{KeyRegistry, vault_store};
@@ -50,7 +50,7 @@ pub struct RegisterYubiKeyResult {
 #[instrument(skip(input))]
 pub async fn init_yubikey_for_vault(
     input: YubiKeyInitForVaultParams,
-) -> CommandResponse<YubiKeyInitResult> {
+) -> CommandResponse<InitializationResult> {
     info!(
         serial = %redact_serial(&input.serial),
         vault_id = input.vault_id,
@@ -143,13 +143,11 @@ pub async fn init_yubikey_for_vault(
         82 // Default to first retired slot
     };
 
-    // Convert StreamlinedYubiKeyInitResult to YubiKeyInitResult
-    let yubikey_result = YubiKeyInitResult {
-        public_key: streamlined_result.recipient.clone(), // Clone to avoid move
-        slot: streamlined_result.slot,
-        touch_required: true, // Default to true for security
-        pin_policy: crate::crypto::yubikey::management::PinPolicy::Once,
-    };
+    // Convert StreamlinedYubiKeyInitResult to InitializationResult
+    let yubikey_result = InitializationResult::with_defaults(
+        streamlined_result.recipient.clone(), // Clone to avoid move
+        streamlined_result.slot,
+    );
 
     // Add YubiKey to registry first
     let mut registry = registry; // We already loaded it above

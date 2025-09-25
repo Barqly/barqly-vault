@@ -23,6 +23,7 @@ pub mod pin;
 pub mod device;
 pub mod identity;
 pub mod state;
+pub mod initialization;
 
 // Re-export all domain objects for easy import
 pub use serial::{Serial, SerialValidationError};
@@ -39,6 +40,7 @@ pub use state::{
     YubiKeyState, YubiKeyOperation, PinStatus, StateTransitionError,
     YubiKeyStateMachine, StateTransition,
 };
+pub use initialization::{InitializationResult, PinPolicy};
 
 /// Commonly used type aliases
 pub type YubiKeySerial = Serial;

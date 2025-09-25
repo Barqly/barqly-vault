@@ -375,7 +375,7 @@ async validateVaultPassphraseKey(vaultId: string) : Promise<Result<boolean, Comm
 /**
  * Initialize a new YubiKey and add it to a vault
  */
-async initYubikeyForVault(input: YubiKeyInitForVaultParams) : Promise<Result<YubiKeyInitResult, CommandError>> {
+async initYubikeyForVault(input: YubiKeyInitForVaultParams) : Promise<Result<InitializationResult, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("init_yubikey_for_vault", { input }) };
 } catch (e) {
@@ -677,6 +677,27 @@ include_all: boolean | null }
  */
 export type GetVaultKeysResponse = { vault_id: string; keys: KeyReference[] }
 /**
+ * Result from YubiKey initialization containing all necessary information
+ * for registration and subsequent operations
+ */
+export type InitializationResult = { 
+/**
+ * Public key (age recipient string)
+ */
+public_key: string; 
+/**
+ * Slot number used for the key
+ */
+slot: number; 
+/**
+ * Whether touch is required for operations
+ */
+touch_required: boolean; 
+/**
+ * PIN policy for the key
+ */
+pin_policy: PinPolicy }
+/**
  * Key metadata for frontend display
  */
 export type KeyMetadata = { label: string; created_at: string; public_key: string | null }
@@ -750,6 +771,10 @@ export type PassphraseStrength = "weak" | "fair" | "good" | "strong"
 export type PassphraseValidationResult = { is_valid: boolean; strength: PassphraseStrength; feedback: string[]; score: number }
 /**
  * PIN policy for PIV operations
+ */
+export type PinPolicy = "Never" | "Once" | "Always"
+/**
+ * PIN policy for YubiKey operations (from crypto/yubikey management)
  */
 export type PinPolicy = "Never" | "Once" | "Always"
 /**
@@ -881,10 +906,6 @@ export type YubiKeyInfo = { serial: string; slot: number; public_key: string; pi
  * YubiKey initialization parameters for vault
  */
 export type YubiKeyInitForVaultParams = { serial: string; pin: string; label: string; vault_id: string; slot_index: number }
-/**
- * YubiKey initialization result
- */
-export type YubiKeyInitResult = { public_key: string; slot: number; touch_required: boolean; pin_policy: PinPolicy }
 /**
  * Types of YubiKey operations
  */
