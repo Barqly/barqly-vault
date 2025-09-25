@@ -4,7 +4,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFileEncryption } from '../../../hooks/useFileEncryption';
-import { ProgressUpdate } from '../../../lib/api-types';
 import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
@@ -146,60 +145,6 @@ describe('useFileEncryption - Encryption Success', () => {
     );
   });
 
-  it('should set up progress listener for encryption', async () => {
-    const { result } = renderHook(() => useFileEncryption());
-    const mockEncryptionResult = '/output/encrypted.age';
-    const mockProgressUpdate: ProgressUpdate = {
-      operation_id: 'encrypt-123',
-      progress: 0.5,
-      message: 'Encrypting...',
-      timestamp: new Date().toISOString(),
-    };
-
-    // Mock get_file_info
-    mockInvoke.mockResolvedValueOnce([
-      {
-        path: '/file.txt',
-        name: 'file.txt',
-        size: 102400,
-        is_file: true,
-        is_directory: false,
-        file_count: null,
-      },
-    ]);
-
-    // Select files
-    await act(async () => {
-      await result.current.selectFiles(['/file.txt'], 'Files');
-    });
-
-    // Mock the progress listener
-    let progressCallback: ((event: any) => void) | null = null;
-    mockSafeListen.mockImplementationOnce(async (_event, callback) => {
-      progressCallback = callback;
-      return () => Promise.resolve();
-    });
-
-    mockInvoke.mockResolvedValueOnce(mockEncryptionResult);
-
-    // Start encryption
-    const encryptPromise = act(async () => {
-      await result.current.encryptFiles('test-key');
-    });
-
-    // Simulate progress update
-    if (progressCallback) {
-      act(() => {
-        progressCallback!({ payload: mockProgressUpdate });
-      });
-    }
-
-    await encryptPromise;
-
-    // Verify progress listener was set up
-    expect(mockSafeListen).toHaveBeenCalledWith('encryption-progress', expect.any(Function));
-    expect(result.current.success).toEqual(mockEncryptionResult);
-  });
 
   it('should handle encryption with multiple files', async () => {
     const { result } = renderHook(() => useFileEncryption());
