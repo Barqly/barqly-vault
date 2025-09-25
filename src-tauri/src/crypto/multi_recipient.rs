@@ -3,7 +3,7 @@
 //! This module implements encryption and decryption operations that support
 //! multiple recipients including both passphrase and YubiKey protection.
 
-use crate::crypto::yubikey::{ProtectionMode, UnlockCredentials, UnlockMethod};
+use crate::key_management::yubikey::domain::models::{ProtectionMode, UnlockCredentials, UnlockMethod};
 use crate::crypto::{CryptoError, Result};
 use crate::key_management::yubikey::infrastructure::pty::core::get_age_path;
 use crate::storage::{RecipientInfo, RecipientType, VaultMetadataV2};

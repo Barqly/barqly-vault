@@ -74,6 +74,107 @@ impl InitializationResult {
     }
 }
 
+/// Unlock methods available for decryption
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, specta::Type)]
+pub enum UnlockMethod {
+    Passphrase,
+    YubiKey,
+}
+
+/// Credentials for unlocking vaults
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+pub enum UnlockCredentials {
+    Passphrase {
+        key_label: String,
+        passphrase: String,
+    },
+    YubiKey {
+        serial: String,
+        pin: Option<String>,
+    },
+}
+
+impl UnlockCredentials {
+    /// Get the unlock method for these credentials
+    pub fn method(&self) -> UnlockMethod {
+        match self {
+            UnlockCredentials::Passphrase { .. } => UnlockMethod::Passphrase,
+            UnlockCredentials::YubiKey { .. } => UnlockMethod::YubiKey,
+        }
+    }
+
+    /// Get a display name for these credentials (without exposing sensitive data)
+    pub fn display_name(&self) -> String {
+        match self {
+            UnlockCredentials::Passphrase { key_label, .. } => {
+                format!("Passphrase ({})", key_label)
+            }
+            UnlockCredentials::YubiKey { serial, .. } => {
+                format!("YubiKey ({})", &serial[..4.min(serial.len())]) // Only show first 4 chars
+            }
+        }
+    }
+
+    /// Check if these credentials are for a YubiKey
+    pub fn is_yubikey(&self) -> bool {
+        matches!(self, UnlockCredentials::YubiKey { .. })
+    }
+
+    /// Check if these credentials are for a passphrase
+    pub fn is_passphrase(&self) -> bool {
+        matches!(self, UnlockCredentials::Passphrase { .. })
+    }
+}
+
+/// Protection modes for vault security
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+pub enum ProtectionMode {
+    PassphraseOnly,
+    YubiKeyOnly { serial: String },
+    Hybrid { yubikey_serial: String },
+}
+
+impl ProtectionMode {
+    /// Check if this protection mode requires a YubiKey
+    pub fn requires_yubikey(&self) -> bool {
+        matches!(self, ProtectionMode::YubiKeyOnly { .. } | ProtectionMode::Hybrid { .. })
+    }
+
+    /// Check if this protection mode requires a passphrase
+    pub fn requires_passphrase(&self) -> bool {
+        matches!(self, ProtectionMode::PassphraseOnly | ProtectionMode::Hybrid { .. })
+    }
+
+    /// Get the YubiKey serial if applicable
+    pub fn yubikey_serial(&self) -> Option<&str> {
+        match self {
+            ProtectionMode::YubiKeyOnly { serial } => Some(serial),
+            ProtectionMode::Hybrid { yubikey_serial } => Some(yubikey_serial),
+            ProtectionMode::PassphraseOnly => None,
+        }
+    }
+
+    /// Get a display name for this protection mode
+    pub fn display_name(&self) -> String {
+        match self {
+            ProtectionMode::PassphraseOnly => "Passphrase Only".to_string(),
+            ProtectionMode::YubiKeyOnly { serial } => format!("YubiKey Only ({})", serial),
+            ProtectionMode::Hybrid { yubikey_serial } => {
+                format!("Hybrid (YubiKey + Passphrase, {})", yubikey_serial)
+            }
+        }
+    }
+
+    /// Get compatible unlock methods for this protection mode
+    pub fn compatible_methods(&self) -> Vec<UnlockMethod> {
+        match self {
+            ProtectionMode::PassphraseOnly => vec![UnlockMethod::Passphrase],
+            ProtectionMode::YubiKeyOnly { .. } => vec![UnlockMethod::YubiKey],
+            ProtectionMode::Hybrid { .. } => vec![UnlockMethod::Passphrase, UnlockMethod::YubiKey],
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

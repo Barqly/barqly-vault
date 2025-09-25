@@ -6,7 +6,7 @@
 //! ```
 
 use crate::commands::crypto::key_generation_multi::{GenerateKeyMultiInput, generate_key_multi};
-use crate::crypto::yubikey::ProtectionMode;
+use crate::key_management::yubikey::domain::models::ProtectionMode;
 use crate::log_sensitive;
 use crate::tracing_setup::debug;
 

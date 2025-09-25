@@ -2,7 +2,7 @@
 
 use crate::commands::command_types::CommandError;
 use crate::crypto::multi_recipient::{MultiRecipientCrypto, MultiRecipientDecryptParams};
-use crate::crypto::yubikey::{UnlockCredentials, UnlockMethod};
+use crate::key_management::yubikey::domain::models::{UnlockCredentials, UnlockMethod};
 use crate::prelude::*;
 use crate::storage::VaultMetadataV2;
 use serde::{Deserialize, Serialize};

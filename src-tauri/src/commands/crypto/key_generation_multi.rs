@@ -8,7 +8,8 @@
 use crate::commands::types::{
     CommandError, CommandResponse, ErrorCode, ErrorHandler, ValidateInput, ValidationHelper,
 };
-use crate::crypto::yubikey::{ProtectionMode, YubiIdentityProviderFactory, YubiKeyInfo};
+use crate::key_management::yubikey::domain::models::ProtectionMode;
+use crate::crypto::yubikey::{YubiIdentityProviderFactory, YubiKeyInfo};
 use crate::crypto::{encrypt_private_key, generate_keypair};
 use crate::prelude::*;
 use crate::storage::{self, RecipientInfo, RecipientType, VaultMetadataV2};
@@ -331,7 +332,7 @@ async fn generate_yubikey_only_key_with_initialization(
                 crate::storage::save_yubikey_metadata(
                     label,
                     &crate::storage::VaultMetadataV2::new(
-                        crate::crypto::yubikey::ProtectionMode::YubiKeyOnly {
+                        ProtectionMode::YubiKeyOnly {
                             serial: serial.to_string(),
                         },
                         vec![crate::storage::RecipientInfo {
