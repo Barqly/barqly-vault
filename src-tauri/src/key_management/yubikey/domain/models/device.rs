@@ -165,8 +165,8 @@ pub enum FormFactor {
 impl fmt::Display for FormFactor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            FormFactor::USB_A => write!(f, "USB-A"),
-            FormFactor::USB_C => write!(f, "USB-C"),
+            FormFactor::UsbA => write!(f, "USB-A"),
+            FormFactor::UsbC => write!(f, "USB-C"),
             FormFactor::Lightning => write!(f, "Lightning"),
             FormFactor::NFC => write!(f, "NFC"),
             FormFactor::Keychain => write!(f, "Keychain"),
@@ -310,11 +310,11 @@ pub enum SlotType {
 impl fmt::Display for SlotType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SlotType::PIV_Authentication => write!(f, "PIV Authentication"),
-            SlotType::PIV_Digital_Signature => write!(f, "PIV Digital Signature"),
-            SlotType::PIV_Key_Management => write!(f, "PIV Key Management"),
-            SlotType::PIV_Card_Authentication => write!(f, "PIV Card Authentication"),
-            SlotType::Age_Plugin => write!(f, "Age Plugin"),
+            SlotType::PivAuthentication => write!(f, "PIV Authentication"),
+            SlotType::PivDigitalSignature => write!(f, "PIV Digital Signature"),
+            SlotType::PivKeyManagement => write!(f, "PIV Key Management"),
+            SlotType::PivCardAuthentication => write!(f, "PIV Card Authentication"),
+            SlotType::AgePlugin => write!(f, "Age Plugin"),
             SlotType::Custom(name) => write!(f, "Custom: {}", name),
         }
     }
@@ -350,7 +350,7 @@ impl SlotInfo {
     pub fn is_available(&self) -> bool {
         // For age-plugin, we need an occupied slot
         match self.slot_type {
-            SlotType::Age_Plugin => self.is_occupied,
+            SlotType::AgePlugin => self.is_occupied,
             _ => !self.is_occupied,
         }
     }
@@ -383,13 +383,13 @@ mod tests {
         let device = YubiKeyDevice::new(
             serial.clone(),
             "YubiKey 5 NFC".to_string(),
-            FormFactor::USB_A,
+            FormFactor::UsbA,
             vec![Interface::USB, Interface::NFC],
         );
 
         assert_eq!(device.serial(), &serial);
         assert_eq!(device.name, "YubiKey 5 NFC");
-        assert_eq!(device.form_factor, FormFactor::USB_A);
+        assert_eq!(device.form_factor, FormFactor::UsbA);
         assert_eq!(device.connection_state, ConnectionState::Disconnected);
     }
 
@@ -399,7 +399,7 @@ mod tests {
         let device = YubiKeyDevice::from_detected_device(
             serial.clone(),
             "YubiKey 5 NFC".to_string(),
-            FormFactor::USB_A,
+            FormFactor::UsbA,
             vec![Interface::USB, Interface::NFC],
             Some("5.4.3".to_string()),
         );
@@ -417,7 +417,7 @@ mod tests {
         let mut device = YubiKeyDevice::new(
             serial,
             "YubiKey 5".to_string(),
-            FormFactor::USB_A,
+            FormFactor::UsbA,
             vec![Interface::USB],
         );
 
@@ -435,7 +435,7 @@ mod tests {
         let mut device = YubiKeyDevice::new(
             serial,
             "YubiKey 5".to_string(),
-            FormFactor::USB_A,
+            FormFactor::UsbA,
             vec![Interface::USB],
         );
 
@@ -460,18 +460,18 @@ mod tests {
         let mut device = YubiKeyDevice::new(
             serial,
             "YubiKey 5".to_string(),
-            FormFactor::USB_A,
+            FormFactor::UsbA,
             vec![Interface::USB],
         );
 
-        let mut slot = SlotInfo::new(SlotType::Age_Plugin);
+        let mut slot = SlotInfo::new(SlotType::AgePlugin);
         slot.is_occupied = true;
         slot.requires_pin = true;
 
         device.add_slot(slot.clone());
         assert_eq!(device.slots.len(), 1);
 
-        let found_slot = device.get_available_slot(SlotType::Age_Plugin);
+        let found_slot = device.get_available_slot(SlotType::AgePlugin);
         assert!(found_slot.is_some());
         assert!(found_slot.unwrap().is_available()); // Age plugin needs occupied slot
     }
@@ -482,7 +482,7 @@ mod tests {
         let mut device = YubiKeyDevice::new(
             serial,
             "YubiKey 5".to_string(),
-            FormFactor::USB_A,
+            FormFactor::UsbA,
             vec![Interface::USB],
         );
 
@@ -500,7 +500,7 @@ mod tests {
         let device = YubiKeyDevice::from_detected_device(
             serial,
             "YubiKey 5 NFC".to_string(),
-            FormFactor::USB_A,
+            FormFactor::UsbA,
             vec![Interface::USB, Interface::NFC],
             Some("5.4.3".to_string()),
         );
@@ -526,20 +526,20 @@ mod tests {
 
     #[test]
     fn test_form_factor_display() {
-        assert_eq!(FormFactor::USB_A.to_string(), "USB-A");
-        assert_eq!(FormFactor::USB_C.to_string(), "USB-C");
+        assert_eq!(FormFactor::UsbA.to_string(), "USB-A");
+        assert_eq!(FormFactor::UsbC.to_string(), "USB-C");
         assert_eq!(FormFactor::NFC.to_string(), "NFC");
     }
 
     #[test]
     fn test_slot_availability() {
-        let mut piv_slot = SlotInfo::new(SlotType::PIV_Authentication);
+        let mut piv_slot = SlotInfo::new(SlotType::PivAuthentication);
         assert!(piv_slot.is_available()); // Empty PIV slot is available
 
         piv_slot.is_occupied = true;
         assert!(!piv_slot.is_available()); // Occupied PIV slot not available
 
-        let mut age_slot = SlotInfo::new(SlotType::Age_Plugin);
+        let mut age_slot = SlotInfo::new(SlotType::AgePlugin);
         assert!(!age_slot.is_available()); // Empty age slot not available
 
         age_slot.is_occupied = true;
@@ -552,7 +552,7 @@ mod tests {
         let device = YubiKeyDevice::from_detected_device(
             serial,
             "YubiKey 5 NFC".to_string(),
-            FormFactor::USB_A,
+            FormFactor::UsbA,
             vec![Interface::USB, Interface::NFC],
             Some("5.4.3".to_string()),
         );

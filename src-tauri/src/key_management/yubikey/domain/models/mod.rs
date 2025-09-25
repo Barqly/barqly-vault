@@ -70,7 +70,7 @@ mod integration_tests {
         let device = YubiKeyDevice::from_detected_device(
             serial.clone(),
             "YubiKey 5 NFC".to_string(),
-            FormFactor::USB_A,
+            FormFactor::UsbA,
             vec![Interface::USB, Interface::NFC],
             Some("5.4.3".to_string()),
         );

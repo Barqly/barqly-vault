@@ -47,11 +47,11 @@ pub trait FileService: Send + Sync + std::fmt::Debug {
 #[derive(Debug)]
 pub struct TempDirectory {
     /// Inner temporary directory
-    temp_dir: TempDir,
+    pub temp_dir: TempDir,
     /// Additional metadata
-    prefix: String,
+    pub prefix: String,
     /// Creation timestamp
-    created_at: std::time::SystemTime,
+    pub created_at: std::time::SystemTime,
 }
 
 impl TempDirectory {
@@ -84,13 +84,13 @@ impl TempDirectory {
 #[derive(Debug)]
 pub struct TempFile {
     /// Path to the temporary file
-    path: PathBuf,
+    pub path: PathBuf,
     /// File suffix/extension
-    suffix: String,
+    pub suffix: String,
     /// File size in bytes
-    size: u64,
+    pub size: u64,
     /// Creation timestamp
-    created_at: std::time::SystemTime,
+    pub created_at: std::time::SystemTime,
 }
 
 impl TempFile {
@@ -119,6 +119,7 @@ impl TempFile {
 #[derive(Debug)]
 pub struct DefaultFileService {
     /// Base temporary directory for YubiKey operations
+    #[allow(dead_code)]
     base_temp_dir: Option<TempDir>,
 }
 
@@ -131,6 +132,7 @@ impl DefaultFileService {
     }
 
     /// Initialize base temporary directory if needed
+    #[allow(dead_code)]
     async fn ensure_base_temp_dir(&mut self) -> YubiKeyResult<&Path> {
         if self.base_temp_dir.is_none() {
             let temp_dir = TempDir::new().map_err(|e| {

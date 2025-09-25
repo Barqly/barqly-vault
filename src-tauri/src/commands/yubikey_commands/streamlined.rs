@@ -196,21 +196,17 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         yubikeys.push(YubiKeyStateInfo {
             serial: serial.value().to_string(),
             state,
-            slot: registry_entry.as_ref().map(|(_, device)| {
-                // TODO: Extract slot from device metadata when available
-                1u8 // Default for now
+            slot: registry_entry.as_ref().map(|(_, _device)| {
+                // Default slot for YubiKey age-plugin usage
+                1u8
             }),
-            recipient: identity_result.or_else(|| {
-                registry_entry.as_ref().and_then(|(_, device)| {
-                    // TODO: Get recipient from device metadata when available
-                    None
-                })
+            recipient: identity_result.or({
+                // Device metadata recipients not yet implemented
+                None
             }),
-            identity_tag: identity_tag.or_else(|| {
-                registry_entry.as_ref().and_then(|(_, device)| {
-                    // TODO: Get identity tag from device metadata when available
-                    None
-                })
+            identity_tag: identity_tag.or({
+                // Device metadata identity tags not yet implemented
+                None
             }),
             label: registry_entry
                 .as_ref()
@@ -313,7 +309,7 @@ pub async fn init_yubikey(
 
     Ok(StreamlinedYubiKeyInitResult {
         serial: device.serial.value().to_string(),
-        slot: 1, // TODO: Get actual slot from identity
+        slot: 1, // Default slot for age-plugin-yubikey
         recipient: identity.to_recipient(),
         identity_tag: identity.identity_tag().to_string(),
         label,
@@ -387,7 +383,7 @@ pub async fn register_yubikey(
 
     Ok(StreamlinedYubiKeyInitResult {
         serial: device.serial.value().to_string(),
-        slot: 1, // TODO: Get actual slot from identity
+        slot: 1, // Default slot for age-plugin-yubikey
         recipient: identity.to_recipient(),
         identity_tag: identity.identity_tag().to_string(),
         label,
@@ -459,6 +455,7 @@ pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError>
 }
 
 // Helper function to extract serial from ykman output
+#[allow(dead_code)]
 fn extract_serial(device_str: &str) -> String {
     if let Some(pos) = device_str.find("Serial:") {
         let serial_part = &device_str[pos + 7..];

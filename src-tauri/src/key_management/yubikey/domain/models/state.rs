@@ -12,6 +12,7 @@ use std::fmt;
 /// - commands/yubikey_commands/streamlined.rs:24
 /// - crypto/yubikey/age_plugin.rs:33
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[allow(unexpected_cfgs)]
 #[cfg_attr(feature = "generate-types", derive(specta::Type))]
 #[serde(rename_all = "lowercase")]
 pub enum YubiKeyState {
@@ -209,6 +210,7 @@ impl fmt::Display for YubiKeyOperation {
 
 /// PIN status for YubiKey
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[allow(unexpected_cfgs)]
 #[cfg_attr(feature = "generate-types", derive(specta::Type))]
 #[serde(rename_all = "lowercase")]
 pub enum PinStatus {

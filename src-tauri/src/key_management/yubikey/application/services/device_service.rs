@@ -42,6 +42,7 @@ pub trait DeviceService: Send + Sync + std::fmt::Debug {
 #[derive(Debug)]
 pub struct YkmanDeviceService {
     ykman_path: String,
+    #[allow(dead_code)]
     timeout: Duration,
 }
 
@@ -219,11 +220,11 @@ impl YkmanDeviceService {
         if name_lower.contains("nano") {
             FormFactor::Nano
         } else if name_lower.contains("5c") {
-            FormFactor::USB_C
+            FormFactor::UsbC
         } else if interfaces.contains(&Interface::NFC) {
             FormFactor::NFC
         } else {
-            FormFactor::USB_A // Default assumption
+            FormFactor::UsbA // Default assumption
         }
     }
 
@@ -410,17 +411,17 @@ mod tests {
         let service = YkmanDeviceService::with_ykman_path("ykman".to_string());
 
         assert_eq!(
-            service.determine_form_factor("YubiKey 5 Nano", &vec![Interface::USB]),
+            service.determine_form_factor("YubiKey 5 Nano", &[Interface::USB]),
             FormFactor::Nano
         );
 
         assert_eq!(
-            service.determine_form_factor("YubiKey 5C", &vec![Interface::USB]),
-            FormFactor::USB_C
+            service.determine_form_factor("YubiKey 5C", &[Interface::USB]),
+            FormFactor::UsbC
         );
 
         assert_eq!(
-            service.determine_form_factor("YubiKey 5 NFC", &vec![Interface::USB, Interface::NFC]),
+            service.determine_form_factor("YubiKey 5 NFC", &[Interface::USB, Interface::NFC]),
             FormFactor::NFC
         );
     }

@@ -1268,8 +1268,11 @@ mod tests {
             Ok(provider) => {
                 assert!(provider.plugin_path.exists());
             }
-            Err(YubiKeyError::age_plugin(msg)) => {
-                assert!(msg.contains("age-plugin-yubikey binary not found"));
+            Err(e) if e.to_string().contains("age-plugin-yubikey") => {
+                assert!(
+                    e.to_string()
+                        .contains("age-plugin-yubikey binary not found")
+                );
             }
             Err(e) => panic!("Unexpected error: {e:?}"),
         }

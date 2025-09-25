@@ -77,13 +77,11 @@ pub async fn init_yubikey_for_vault(
     // Load registry to check if slot is already taken
     let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
     let slot_taken = vault.keys.iter().any(|key_id| {
-        if let Some(entry) = registry.get_key(key_id) {
-            if let crate::storage::KeyEntry::Yubikey { slot, serial, .. } = entry {
-                // Only consider slot occupied if it's the same YubiKey (same serial)
-                *slot == input.slot_index && serial == &input.serial
-            } else {
-                false
-            }
+        if let Some(crate::storage::KeyEntry::Yubikey { slot, serial, .. }) =
+            registry.get_key(key_id)
+        {
+            // Only consider slot occupied if it's the same YubiKey (same serial)
+            *slot == input.slot_index && serial == &input.serial
         } else {
             false
         }
@@ -101,12 +99,8 @@ pub async fn init_yubikey_for_vault(
 
     // Check if YubiKey is already in this vault (registry was loaded above)
     let already_registered = vault.keys.iter().any(|key_id| {
-        if let Some(entry) = registry.get_key(key_id) {
-            if let crate::storage::KeyEntry::Yubikey { serial, .. } = entry {
-                serial == &input.serial
-            } else {
-                false
-            }
+        if let Some(crate::storage::KeyEntry::Yubikey { serial, .. }) = registry.get_key(key_id) {
+            serial == &input.serial
         } else {
             false
         }
@@ -225,13 +219,11 @@ pub async fn register_yubikey_for_vault(
     // Load registry to check if slot is already taken
     let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
     let slot_taken = vault.keys.iter().any(|key_id| {
-        if let Some(entry) = registry.get_key(key_id) {
-            if let crate::storage::KeyEntry::Yubikey { slot, serial, .. } = entry {
-                // Only consider slot occupied if it's the same YubiKey (same serial)
-                *slot == input.slot_index && serial == &input.serial
-            } else {
-                false
-            }
+        if let Some(crate::storage::KeyEntry::Yubikey { slot, serial, .. }) =
+            registry.get_key(key_id)
+        {
+            // Only consider slot occupied if it's the same YubiKey (same serial)
+            *slot == input.slot_index && serial == &input.serial
         } else {
             false
         }
@@ -410,12 +402,9 @@ pub async fn list_available_yubikeys(vault_id: String) -> CommandResponse<Vec<Yu
         .keys
         .iter()
         .filter_map(|key_id| {
-            if let Some(entry) = registry.get_key(key_id) {
-                if let crate::storage::KeyEntry::Yubikey { serial, .. } = entry {
-                    Some(serial.clone())
-                } else {
-                    None
-                }
+            if let Some(crate::storage::KeyEntry::Yubikey { serial, .. }) = registry.get_key(key_id)
+            {
+                Some(serial.clone())
             } else {
                 None
             }
@@ -483,6 +472,7 @@ pub async fn check_yubikey_slot_availability(vault_id: String) -> CommandRespons
 }
 
 /// Generate a unique key reference ID
+#[allow(dead_code)]
 fn generate_key_reference_id() -> String {
     use rand::Rng;
     let mut rng = rand::thread_rng();

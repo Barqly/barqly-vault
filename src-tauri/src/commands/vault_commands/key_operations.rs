@@ -273,7 +273,7 @@ pub async fn add_key_to_vault(
         }
     };
 
-    let key_reference = KeyReference {
+    let _key_reference = KeyReference {
         id: format!("{}_{}", input.vault_id, rand::random::<u32>()),
         key_type,
         label: input.label.trim().to_string(),
@@ -284,7 +284,7 @@ pub async fn add_key_to_vault(
 
     // Add key to vault - but we need to create the actual key in the registry first
     // This approach is deprecated - should use the specialized add_key functions instead
-    return Err(Box::new(CommandError {
+    Err(Box::new(CommandError {
         code: ErrorCode::InvalidInput,
         message: "Use add_passphrase_key_to_vault or register_yubikey_for_vault instead"
             .to_string(),
@@ -293,24 +293,7 @@ pub async fn add_key_to_vault(
         user_actionable: true,
         trace_id: None,
         span_id: None,
-    }));
-
-    // Save updated vault
-    match vault_store::save_vault(&vault).await {
-        Ok(_) => Ok(AddKeyToVaultResponse {
-            success: true,
-            key_reference,
-        }),
-        Err(e) => Err(Box::new(CommandError {
-            code: ErrorCode::StorageFailed,
-            message: "Failed to save vault".to_string(),
-            details: Some(e.to_string()),
-            recovery_guidance: None,
-            user_actionable: false,
-            trace_id: None,
-            span_id: None,
-        })),
-    }
+    }))
 }
 
 /// Remove a key from a vault

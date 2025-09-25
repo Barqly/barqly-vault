@@ -466,11 +466,11 @@ impl YubiKeyDevice {
         let form_factor = if label.contains("Nano") {
             crate::key_management::yubikey::domain::models::FormFactor::Nano
         } else if label.contains("5C") {
-            crate::key_management::yubikey::domain::models::FormFactor::USB_C
+            crate::key_management::yubikey::domain::models::FormFactor::UsbC
         } else if label.contains("NFC") {
             crate::key_management::yubikey::domain::models::FormFactor::NFC
         } else {
-            crate::key_management::yubikey::domain::models::FormFactor::USB_A
+            crate::key_management::yubikey::domain::models::FormFactor::UsbA
         };
 
         let interfaces = vec![crate::key_management::yubikey::domain::models::Interface::USB];
@@ -496,11 +496,9 @@ mod tests {
     }
 
     fn create_test_identity() -> YubiKeyIdentity {
-        YubiKeyIdentity::new(
-            "age1yubikey1testrecipient".to_string(),
-            "AGE-PLUGIN-YUBIKEY-1TESTIDENTITY".to_string(),
-        )
-        .unwrap()
+        let serial = Serial::new("12345678".to_string()).expect("Valid test serial");
+        YubiKeyIdentity::new("age1yubikey1testrecipient".to_string(), serial)
+            .expect("Valid test identity")
     }
 
     #[tokio::test]

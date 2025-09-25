@@ -305,6 +305,7 @@ impl OperationContext {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::key_management::yubikey::domain::models::{YubiKeyDevice, YubiKeyIdentity};
     use std::sync::Arc;
 
     #[test]
@@ -531,21 +532,18 @@ mod tests {
 
         async fn is_slot_occupied_by_device(
             &self,
-            _slot: u8,
             _serial: &Serial,
+            _slot: u8,
         ) -> YubiKeyResult<bool> {
             Ok(false)
         }
 
-        async fn get_by_id(
-            &self,
-            _key_id: &str,
-        ) -> YubiKeyResult<Option<(YubiKeyDevice, YubiKeyIdentity, u8)>> {
+        async fn get_by_id(&self, _key_id: &str) -> YubiKeyResult<Option<YubiKeyDevice>> {
             Ok(None)
         }
 
-        async fn validate_consistency(&self) -> YubiKeyResult<()> {
-            Ok(())
+        async fn validate_consistency(&self) -> YubiKeyResult<Vec<String>> {
+            Ok(vec![])
         }
     }
 
