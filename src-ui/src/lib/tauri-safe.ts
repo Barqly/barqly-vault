@@ -36,7 +36,7 @@ export async function safeInvoke<T>(
   if (!isTauri()) {
     // In web preview mode, return a mock error
     const error: CommandError = {
-      code: ErrorCode.INTERNAL_ERROR,
+      code: 'INTERNAL_ERROR',
       message: 'This feature requires the desktop application',
       recovery_guidance: 'Please use the desktop version of Barqly Vault to access this feature',
       user_actionable: true,
@@ -144,7 +144,7 @@ export async function safeInvokeCommand<T>(cmd: string, args?: any): Promise<T> 
   if (!isTauri()) {
     // In web preview mode, return a mock error
     throw {
-      code: ErrorCode.INTERNAL_ERROR,
+      code: 'INTERNAL_ERROR',
       message: 'This feature requires the desktop application',
       recovery_guidance: 'Please use the desktop version of Barqly Vault to access this feature',
       user_actionable: true,
