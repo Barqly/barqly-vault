@@ -64,7 +64,7 @@ mod integration_tests {
         let serial = Serial::new("12345678".to_string()).unwrap();
 
         // Create a PIN
-        let _pin = Pin::new("987654".to_string()).unwrap();
+        let _pin = Pin::new("194763".to_string()).unwrap();
 
         // Create a device
         let device = YubiKeyDevice::from_detected_device(
@@ -105,7 +105,7 @@ mod integration_tests {
     #[test]
     fn test_redaction_for_security() {
         let serial = Serial::new("12345678".to_string()).unwrap();
-        let pin = Pin::new("987654".to_string()).unwrap();
+        let pin = Pin::new("194763".to_string()).unwrap();
         let identity_tag = "age1yubikey1qyf0r7wdfvr3a3k2tqqqqqqqqqqqqqqqqqqqqqqqqqqqqq".to_string();
         let identity = YubiKeyIdentity::new(identity_tag, serial.clone()).unwrap();
 

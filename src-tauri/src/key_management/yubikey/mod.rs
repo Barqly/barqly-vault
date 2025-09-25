@@ -118,7 +118,7 @@ mod integration_tests {
 
         // Test domain types
         let _serial = Serial::new("12345678".to_string()).unwrap();
-        let _pin = Pin::new("123456".to_string()).unwrap();
+        let _pin = Pin::new("194763".to_string()).unwrap();
 
         println!("✅ Domain layer types accessible");
         println!("✅ Application layer facade defined");

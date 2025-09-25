@@ -246,8 +246,8 @@ mod tests {
 
     #[test]
     fn test_from_str() {
-        let pin = Pin::from_str("987654").unwrap();
-        assert_eq!(pin.value(), "987654");
+        let pin = Pin::from_str("194763").unwrap();
+        assert_eq!(pin.value(), "194763");
     }
 
     #[test]
@@ -329,7 +329,7 @@ mod tests {
         // Can't test because weak PIN validation prevents creation
 
         // Test with a non-default but valid PIN
-        let pin = Pin::new("987654".to_string()).unwrap();
+        let pin = Pin::new("194763".to_string()).unwrap();
         assert!(!pin.is_default());
     }
 
@@ -366,9 +366,9 @@ mod tests {
 
     #[test]
     fn test_equality() {
-        let pin1 = Pin::new("987654".to_string()).unwrap();
-        let pin2 = Pin::new("987654".to_string()).unwrap();
-        let pin3 = Pin::new("123478".to_string()).unwrap();
+        let pin1 = Pin::new("194763".to_string()).unwrap();
+        let pin2 = Pin::new("194763".to_string()).unwrap();
+        let pin3 = Pin::new("285047".to_string()).unwrap();
 
         assert_eq!(pin1, pin2);
         assert_ne!(pin1, pin3);
@@ -376,8 +376,8 @@ mod tests {
 
     #[test]
     fn test_zeroization() {
-        let mut pin = Pin::new("987654".to_string()).unwrap();
-        assert_eq!(pin.value(), "987654");
+        let mut pin = Pin::new("194763".to_string()).unwrap();
+        assert_eq!(pin.value(), "194763");
 
         pin.zeroize();
         assert_eq!(pin.value(), "");
@@ -385,15 +385,15 @@ mod tests {
 
     #[test]
     fn test_serialization() {
-        let pin = Pin::new("987654".to_string()).unwrap();
+        let pin = Pin::new("194763".to_string()).unwrap();
 
         // Serialization should not reveal actual PIN
         let json = serde_json::to_string(&pin).unwrap();
-        assert!(!json.contains("987654"));
+        assert!(!json.contains("194763"));
         assert!(json.contains("***"));
 
         // Deserialization should be blocked
-        let result: Result<Pin, _> = serde_json::from_str("\"987654\"");
+        let result: Result<Pin, _> = serde_json::from_str("\"194763\"");
         assert!(result.is_err());
     }
 }

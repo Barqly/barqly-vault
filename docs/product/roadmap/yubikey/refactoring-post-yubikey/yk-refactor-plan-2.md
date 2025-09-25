@@ -3,8 +3,8 @@
 ## Milestone 1: Dead Code Elimination (CRITICAL) ✅ COMPLETE
 - [x] Remove duplicate command files: `device_management.rs`, `initialization.rs`
 - [x] Remove old command exports from lib.rs: `yubikey_list_devices`, `yubikey_initialize`, etc.
-- [ ] Remove unused vault command YubiKey integrations
-- [ ] Clean up scattered crypto/yubikey legacy references
+- [x] Remove unused vault command YubiKey integrations
+- [x] Clean up scattered crypto/yubikey legacy references
 
 ## Milestone 2: Hardware Init Centralization ✅ COMPLETE
 - [x] Move `initialize_yubikey_with_recovery` into YubiKeyManager

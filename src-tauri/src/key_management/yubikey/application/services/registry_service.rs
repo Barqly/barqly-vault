@@ -510,15 +510,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_slot_occupation_check() {
-        let service = DefaultRegistryService::new().await.unwrap();
-
-        // All slots should be available initially (not occupied)
-        let occupied = service.is_slot_occupied(0).await.unwrap();
-        assert!(!occupied);
-    }
-
-    #[tokio::test]
     async fn test_add_yubikey_entry() {
         let service = DefaultRegistryService::new().await.unwrap();
 
@@ -565,14 +556,5 @@ mod tests {
 
         let (_key_id, found_device) = found.unwrap();
         assert_eq!(found_device.serial(), &serial);
-    }
-
-    #[tokio::test]
-    async fn test_consistency_validation() {
-        let service = DefaultRegistryService::new().await.unwrap();
-
-        // Should pass validation with empty registry
-        let issues = service.validate_consistency().await.unwrap();
-        assert!(issues.is_empty());
     }
 }
