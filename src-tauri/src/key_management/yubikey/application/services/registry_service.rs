@@ -497,7 +497,7 @@ mod tests {
 
     fn create_test_identity() -> YubiKeyIdentity {
         let serial = Serial::new("12345678".to_string()).expect("Valid test serial");
-        YubiKeyIdentity::new("age1yubikey1testrecipient".to_string(), serial)
+        YubiKeyIdentity::new("AGE-PLUGIN-YUBIKEY-TESTRECIPIENT".to_string(), serial)
             .expect("Valid test identity")
     }
 

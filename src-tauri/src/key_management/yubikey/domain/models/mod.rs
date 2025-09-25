@@ -76,7 +76,7 @@ mod integration_tests {
         );
 
         // Create an identity
-        let identity_tag = "age1yubikey1qyf0r7wdfvr3a3k2tqqqqqqqqqqqqqqqqqqqqqqqqqqqqq".to_string();
+        let identity_tag = "AGE-PLUGIN-YUBIKEY-TEST123INTEGRATION".to_string();
         let identity = YubiKeyIdentity::new(identity_tag, serial.clone()).unwrap();
 
         // Create state machine
@@ -106,7 +106,7 @@ mod integration_tests {
     fn test_redaction_for_security() {
         let serial = Serial::new("12345678".to_string()).unwrap();
         let pin = Pin::new("194763".to_string()).unwrap();
-        let identity_tag = "age1yubikey1qyf0r7wdfvr3a3k2tqqqqqqqqqqqqqqqqqqqqqqqqqqqqq".to_string();
+        let identity_tag = "AGE-PLUGIN-YUBIKEY-REDACTION123TEST".to_string();
         let identity = YubiKeyIdentity::new(identity_tag, serial.clone()).unwrap();
 
         // All domain objects should provide redacted versions for logging
@@ -119,7 +119,7 @@ mod integration_tests {
         assert!(!serial_redacted.contains("12345678"));
 
         assert!(pin_masked.contains("PIN("));
-        assert!(!pin_masked.contains("987654"));
+        assert!(!pin_masked.contains("194763"));
 
         assert!(!identity_redacted.serial_redacted.contains("12345678"));
     }
@@ -145,7 +145,7 @@ mod integration_tests {
         let serial = Serial::new("12345678".to_string()).unwrap();
         assert!(YubiKeyIdentity::new("".to_string(), serial.clone()).is_err());
         assert!(YubiKeyIdentity::new("invalid".to_string(), serial.clone()).is_err());
-        assert!(YubiKeyIdentity::new("age1yubikey1".to_string(), serial).is_err());
+        assert!(YubiKeyIdentity::new("AGE-PLUGIN-YUBIKEY-".to_string(), serial).is_err());
     }
 
     #[test]
