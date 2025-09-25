@@ -185,12 +185,7 @@ pub trait SigningProvider: HardwareSecurityDevice {
     ) -> DeviceResult<Vec<u8>>;
 
     /// Verify signature (if device supports verification)
-    async fn verify(
-        &self,
-        data: &[u8],
-        signature: &[u8],
-        identity_id: &str,
-    ) -> DeviceResult<bool>;
+    async fn verify(&self, data: &[u8], signature: &[u8], identity_id: &str) -> DeviceResult<bool>;
 }
 
 /// Factory trait for creating device instances
@@ -203,7 +198,10 @@ pub trait DeviceFactory: Debug + Send + Sync {
     async fn discover_devices(&self) -> DeviceResult<Vec<DeviceInfo>>;
 
     /// Create device instance by ID
-    async fn create_device(&self, device_id: &DeviceId) -> DeviceResult<Box<dyn HardwareSecurityDevice>>;
+    async fn create_device(
+        &self,
+        device_id: &DeviceId,
+    ) -> DeviceResult<Box<dyn HardwareSecurityDevice>>;
 
     /// Create device with specific capabilities
     async fn create_device_with_capabilities(

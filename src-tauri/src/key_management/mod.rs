@@ -51,17 +51,17 @@
 //! let passphrases = key_manager.get_keys_by_type(KeyType::Passphrase).await?;
 //! ```
 
-pub mod yubikey;
 pub mod passphrase;
-pub mod shared; // Shared device abstractions and traits
+pub mod shared;
+pub mod yubikey; // Shared device abstractions and traits
 
 // TODO: Implement common abstractions after passphrase refactoring is complete
 // pub mod common;
 
 // Re-export main types for convenience
 pub use yubikey::{
-    YubiKeyManager, YubiKeyDevice, YubiKeyError, YubiKeyResult,
-    Serial, Pin, YubiKeyState, YubiKeyIdentity
+    Pin, Serial, YubiKeyDevice, YubiKeyError, YubiKeyIdentity, YubiKeyManager, YubiKeyResult,
+    YubiKeyState,
 };
 
 // TODO: Add passphrase re-exports after implementation
@@ -92,7 +92,6 @@ pub enum KeyManagementError {
     // TODO: Add after passphrase refactoring
     // #[error("Passphrase operation failed: {0}")]
     // Passphrase(#[from] PassphraseError),
-
     #[error("Key type not supported: {key_type:?}")]
     UnsupportedKeyType { key_type: KeyType },
 

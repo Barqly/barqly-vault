@@ -125,10 +125,7 @@ pub fn decrypt_data_with_yubikey_pty(
     // Create identity file content with proper format (matching POC)
     let identity_content = format!(
         "#       Serial: {}, Slot: {}\n#   PIN policy: cached\n# Touch policy: cached\n#    Recipient: {}\n{}\n",
-        serial,
-        slot,
-        recipient,
-        identity_tag
+        serial, slot, recipient, identity_tag
     );
 
     // Write identity file
@@ -151,12 +148,7 @@ pub fn decrypt_data_with_yubikey_pty(
     );
 
     // Run age CLI with PTY
-    let result = run_age_decryption_pty(
-        &temp_encrypted,
-        &temp_identity,
-        &temp_output,
-        pin,
-    );
+    let result = run_age_decryption_pty(&temp_encrypted, &temp_identity, &temp_output, pin);
 
     // Clean up input files
     let _ = fs::remove_file(&temp_encrypted);
@@ -200,7 +192,7 @@ fn run_age_decryption_pty(
     output_file: &Path,
     pin: &str,
 ) -> Result<()> {
-    use super::core::{get_age_path, PtyState, COMMAND_TIMEOUT, PIN_INJECT_DELAY};
+    use super::core::{COMMAND_TIMEOUT, PIN_INJECT_DELAY, PtyState, get_age_path};
     use portable_pty::{CommandBuilder, PtySize, native_pty_system};
     use std::io::Write;
     use std::sync::mpsc;
@@ -223,7 +215,9 @@ fn run_age_decryption_pty(
         .map_err(|e| PtyError::PtyOperation(format!("Failed to open PTY: {e}")))?;
 
     // Set up environment for age CLI to find the plugin
-    let plugin_dir = age_path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let plugin_dir = age_path
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."));
     let current_path = std::env::var("PATH").unwrap_or_default();
     let new_path = format!("{}:{}", plugin_dir.display(), current_path);
 
@@ -291,13 +285,24 @@ fn run_age_decryption_pty(
                                 info!(age_output = %line, "Age CLI output line");
 
                                 // Pattern matching for age CLI states
-                                if line.contains("Enter PIN") || line.contains("PIN:") || line.contains("PIN for") {
+                                if line.contains("Enter PIN")
+                                    || line.contains("PIN:")
+                                    || line.contains("PIN for")
+                                {
                                     info!("🔐 PIN prompt detected");
                                     let _ = tx_reader.send(PtyState::WaitingForPin);
-                                } else if line.contains("Please touch") || line.contains("Touch your") || line.contains("👆") || line.contains("touch") {
+                                } else if line.contains("Please touch")
+                                    || line.contains("Touch your")
+                                    || line.contains("👆")
+                                    || line.contains("touch")
+                                {
                                     info!("👆 Touch prompt detected");
                                     let _ = tx_reader.send(PtyState::WaitingForTouch);
-                                } else if line.contains("error") || line.contains("failed") || line.contains("Error") || line.contains("Failed") {
+                                } else if line.contains("error")
+                                    || line.contains("failed")
+                                    || line.contains("Error")
+                                    || line.contains("Failed")
+                                {
                                     error!(error_line = %line, "Age CLI error detected");
                                     let _ = tx_reader.send(PtyState::Failed(line));
                                 }
@@ -307,10 +312,17 @@ fn run_age_decryption_pty(
                         // Check partial line for immediate patterns (like prompts without newlines)
                         let remaining = accumulated_output.trim();
                         if !remaining.is_empty() {
-                            if remaining.contains("Enter PIN") || remaining.contains("PIN:") || remaining.contains("PIN for") {
+                            if remaining.contains("Enter PIN")
+                                || remaining.contains("PIN:")
+                                || remaining.contains("PIN for")
+                            {
                                 info!("🔐 PIN prompt detected (partial)");
                                 let _ = tx_reader.send(PtyState::WaitingForPin);
-                            } else if remaining.contains("Please touch") || remaining.contains("Touch your") || remaining.contains("👆") || remaining.contains("touch") {
+                            } else if remaining.contains("Please touch")
+                                || remaining.contains("Touch your")
+                                || remaining.contains("👆")
+                                || remaining.contains("touch")
+                            {
                                 info!("👆 Touch prompt detected (partial)");
                                 let _ = tx_reader.send(PtyState::WaitingForTouch);
                             }
@@ -353,12 +365,11 @@ fn run_age_decryption_pty(
                 PtyState::WaitingForPin if !pin_sent => {
                     info!("PIN prompt detected, injecting PIN");
                     thread::sleep(PIN_INJECT_DELAY);
-                    writeln!(writer, "{}", pin).map_err(|e| {
-                        PtyError::PtyOperation(format!("Failed to send PIN: {e}"))
-                    })?;
-                    writer.flush().map_err(|e| {
-                        PtyError::PtyOperation(format!("Failed to flush: {e}"))
-                    })?;
+                    writeln!(writer, "{}", pin)
+                        .map_err(|e| PtyError::PtyOperation(format!("Failed to send PIN: {e}")))?;
+                    writer
+                        .flush()
+                        .map_err(|e| PtyError::PtyOperation(format!("Failed to flush: {e}")))?;
                     pin_sent = true;
                     debug!("PIN sent successfully");
                 }
@@ -383,7 +394,9 @@ fn run_age_decryption_pty(
                             info!("Age decryption completed successfully");
                             return Ok(());
                         } else {
-                            return Err(PtyError::PtyOperation("Age CLI process failed".to_string()));
+                            return Err(PtyError::PtyOperation(
+                                "Age CLI process failed".to_string(),
+                            ));
                         }
                     }
                     Ok(None) => {
@@ -391,7 +404,9 @@ fn run_age_decryption_pty(
                         continue;
                     }
                     Err(e) => {
-                        return Err(PtyError::PtyOperation(format!("Failed to check process: {e}")));
+                        return Err(PtyError::PtyOperation(format!(
+                            "Failed to check process: {e}"
+                        )));
                     }
                 }
             }
@@ -495,7 +510,9 @@ pub fn get_identity_for_serial(serial: &str) -> Result<String> {
         .arg("--serial")
         .arg(serial)
         .output()
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to execute age-plugin-yubikey: {e}")))?;
+        .map_err(|e| {
+            PtyError::PtyOperation(format!("Failed to execute age-plugin-yubikey: {e}"))
+        })?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);

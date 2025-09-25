@@ -9,8 +9,8 @@ use crate::commands::types::{
 use crate::constants::*;
 use crate::crypto::key_mgmt::decrypt_private_key;
 use crate::prelude::*;
-use crate::storage::key_store::load_encrypted_key;
 use crate::storage::KeyRegistry;
+use crate::storage::key_store::load_encrypted_key;
 use age::secrecy::SecretString;
 
 /// Input for passphrase validation command
@@ -314,7 +314,10 @@ pub async fn verify_key_passphrase(
             );
 
             // Use the dedicated PIN verification function with serial binding
-            match crate::key_management::yubikey::infrastructure::pty::verify_yubikey_pin(serial, &input.passphrase) {
+            match crate::key_management::yubikey::infrastructure::pty::verify_yubikey_pin(
+                serial,
+                &input.passphrase,
+            ) {
                 Ok(true) => {
                     info!(
                         key_id = %input.key_id,

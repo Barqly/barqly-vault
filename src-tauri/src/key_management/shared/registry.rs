@@ -3,7 +3,7 @@
 //! This module provides a registry for managing multiple device types
 //! and demonstrates the extensibility pattern for future devices.
 
-use super::traits::{DeviceFactory, DeviceInfo, DeviceResult, DeviceCapability};
+use super::traits::{DeviceCapability, DeviceFactory, DeviceInfo, DeviceResult};
 use std::collections::HashMap;
 
 /// Registry for managing multiple hardware security device types

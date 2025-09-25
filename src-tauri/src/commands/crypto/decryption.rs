@@ -170,11 +170,15 @@ pub async fn decrypt_data(
             );
 
             // Decrypt the private key with the passphrase
-            progress_manager.set_progress(PROGRESS_DECRYPT_KEY_DECRYPT, "Decrypting private key...");
+            progress_manager
+                .set_progress(PROGRESS_DECRYPT_KEY_DECRYPT, "Decrypting private key...");
             super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
             let private_key = error_handler.handle_crypto_operation_error(
-                crate::crypto::decrypt_private_key(&encrypted_key, SecretString::from(input.passphrase)),
+                crate::crypto::decrypt_private_key(
+                    &encrypted_key,
+                    SecretString::from(input.passphrase),
+                ),
                 "decrypt_private_key",
             )?;
 
@@ -198,7 +202,11 @@ pub async fn decrypt_data(
 
             // Use YubiKey-specific CLI function that creates identity file
             error_handler.handle_crypto_operation_error(
-                crate::crypto::decrypt_data_yubikey_cli(&encrypted_data, key_entry, &input.passphrase),
+                crate::crypto::decrypt_data_yubikey_cli(
+                    &encrypted_data,
+                    key_entry,
+                    &input.passphrase,
+                ),
                 "decrypt_data_yubikey_cli",
             )?
         }

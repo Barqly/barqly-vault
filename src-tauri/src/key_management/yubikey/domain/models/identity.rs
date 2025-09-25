@@ -26,10 +26,7 @@ pub struct YubiKeyIdentity {
 
 impl YubiKeyIdentity {
     /// Create a new identity with validation
-    pub fn new(
-        identity_tag: String,
-        serial: Serial,
-    ) -> Result<Self, IdentityValidationError> {
+    pub fn new(identity_tag: String, serial: Serial) -> Result<Self, IdentityValidationError> {
         if identity_tag.is_empty() {
             return Err(IdentityValidationError::EmptyTag);
         }
@@ -179,9 +176,12 @@ impl YubiKeyIdentity {
 
 impl fmt::Display for YubiKeyIdentity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "YubiKey Identity {} (Serial: {})",
-               &self.identity_tag[..15.min(self.identity_tag.len())],
-               self.serial.redacted())
+        write!(
+            f,
+            "YubiKey Identity {} (Serial: {})",
+            &self.identity_tag[..15.min(self.identity_tag.len())],
+            self.serial.redacted()
+        )
     }
 }
 
@@ -291,8 +291,12 @@ pub mod identity_utils {
     }
 
     /// Filter identities by serial
-    pub fn filter_by_serial<'a>(identities: &'a [YubiKeyIdentity], serial: &Serial) -> Vec<&'a YubiKeyIdentity> {
-        identities.iter()
+    pub fn filter_by_serial<'a>(
+        identities: &'a [YubiKeyIdentity],
+        serial: &Serial,
+    ) -> Vec<&'a YubiKeyIdentity> {
+        identities
+            .iter()
             .filter(|identity| identity.matches_serial(serial))
             .collect()
     }
@@ -360,7 +364,8 @@ mod tests {
             tag.clone(),
             serial.clone(),
             Some("9a".to_string()),
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(identity.identity_tag(), &tag);
         assert_eq!(identity.slot(), Some("9a"));

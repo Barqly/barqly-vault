@@ -6,13 +6,12 @@
 
 use crate::key_management::yubikey::{
     domain::errors::{YubiKeyError, YubiKeyResult},
-    domain::models::{Serial, Pin, YubiKeyDevice, FormFactor, Interface},
+    domain::models::{FormFactor, Interface, Pin, Serial, YubiKeyDevice},
 };
 use crate::prelude::*;
 use async_trait::async_trait;
 use std::process::Command;
 use std::time::Duration;
-use secrecy::{SecretString, ExposeSecret};
 
 /// Device service trait for YubiKey hardware operations
 #[async_trait]
@@ -84,7 +83,11 @@ impl YkmanDeviceService {
 
     /// Run ykman command with timeout
     async fn run_ykman_command(&self, args: Vec<String>) -> YubiKeyResult<String> {
-        debug!("Running ykman command: {} {}", self.ykman_path, args.join(" "));
+        debug!(
+            "Running ykman command: {} {}",
+            self.ykman_path,
+            args.join(" ")
+        );
 
         let output = tokio::process::Command::new(&self.ykman_path)
             .args(&args)
@@ -99,12 +102,19 @@ impl YkmanDeviceService {
         } else {
             let stderr = String::from_utf8_lossy(&output.stderr).to_string();
             error!("ykman command failed: {}", stderr);
-            Err(YubiKeyError::device(format!("ykman command failed: {}", stderr)))
+            Err(YubiKeyError::device(format!(
+                "ykman command failed: {}",
+                stderr
+            )))
         }
     }
 
     /// Run ykman command with serial parameter
-    async fn run_ykman_with_serial(&self, serial: &Serial, args: Vec<String>) -> YubiKeyResult<String> {
+    async fn run_ykman_with_serial(
+        &self,
+        serial: &Serial,
+        args: Vec<String>,
+    ) -> YubiKeyResult<String> {
         let mut full_args = vec!["--device".to_string(), serial.value().to_string()];
         full_args.extend(args);
         self.run_ykman_command(full_args).await
@@ -186,7 +196,7 @@ impl YkmanDeviceService {
 
         for part in parts {
             if part.starts_with('[') && part.ends_with(']') {
-                let interface_str = &part[1..part.len()-1];
+                let interface_str = &part[1..part.len() - 1];
                 match interface_str {
                     "USB" => interfaces.push(Interface::USB),
                     "NFC" => interfaces.push(Interface::NFC),
@@ -275,7 +285,10 @@ impl DeviceService for YkmanDeviceService {
 
         match self.run_ykman_with_serial(serial, args).await {
             Ok(_) => {
-                debug!("PIN validation successful for YubiKey: {}", serial.redacted());
+                debug!(
+                    "PIN validation successful for YubiKey: {}",
+                    serial.redacted()
+                );
                 Ok(true)
             }
             Err(_) => {
@@ -295,17 +308,20 @@ impl DeviceService for YkmanDeviceService {
     }
 
     async fn get_firmware_version(&self, serial: &Serial) -> YubiKeyResult<Option<String>> {
-        debug!("Getting firmware version for YubiKey: {}", serial.redacted());
+        debug!(
+            "Getting firmware version for YubiKey: {}",
+            serial.redacted()
+        );
 
         let args = vec!["info".to_string()];
         let output = self.run_ykman_with_serial(serial, args).await?;
 
         // Parse firmware version from info output
         for line in output.lines() {
-            if line.contains("Firmware version:") {
-                if let Some(version) = line.split(':').nth(1) {
-                    return Ok(Some(version.trim().to_string()));
-                }
+            if line.contains("Firmware version:")
+                && let Some(version) = line.split(':').nth(1)
+            {
+                return Ok(Some(version.trim().to_string()));
             }
         }
 

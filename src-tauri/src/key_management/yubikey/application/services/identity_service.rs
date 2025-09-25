@@ -5,17 +5,16 @@
 
 use crate::key_management::yubikey::{
     domain::errors::{YubiKeyError, YubiKeyResult},
-    domain::models::{Serial, Pin, YubiKeyIdentity},
+    domain::models::{Pin, Serial, YubiKeyIdentity},
 };
 use crate::prelude::*;
-use secrecy::ExposeSecret;
 use async_trait::async_trait;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::time::Duration;
+use tempfile::NamedTempFile;
 use tokio::fs;
 use tokio::process::Command;
-use tempfile::NamedTempFile;
 
 /// Identity service trait for age-plugin-yubikey operations
 #[async_trait]
@@ -25,11 +24,15 @@ pub trait IdentityService: Send + Sync + std::fmt::Debug {
         &self,
         serial: &Serial,
         pin: &Pin,
-        slot: u8
+        slot: u8,
     ) -> YubiKeyResult<YubiKeyIdentity>;
 
     /// Get existing identity from device (for orphaned keys)
-    async fn get_existing_identity(&self, serial: &Serial, slot: u8) -> YubiKeyResult<Option<YubiKeyIdentity>>;
+    async fn get_existing_identity(
+        &self,
+        serial: &Serial,
+        slot: u8,
+    ) -> YubiKeyResult<Option<YubiKeyIdentity>>;
 
     /// Check if device has identity in specified slot
     async fn has_identity(&self, serial: &Serial, slot: u8) -> YubiKeyResult<bool>;
@@ -42,7 +45,7 @@ pub trait IdentityService: Send + Sync + std::fmt::Debug {
         &self,
         serial: &Serial,
         identity_tag: &str,
-        encrypted_data: &[u8]
+        encrypted_data: &[u8],
     ) -> YubiKeyResult<Vec<u8>>;
 
     /// List all identities on device
@@ -110,7 +113,7 @@ impl AgePluginIdentityService {
     async fn run_plugin_command(
         &self,
         args: Vec<String>,
-        stdin_data: Option<&[u8]>
+        stdin_data: Option<&[u8]>,
     ) -> YubiKeyResult<Vec<u8>> {
         debug!("Running age-plugin-yubikey command: {}", args.join(" "));
 
@@ -123,25 +126,32 @@ impl AgePluginIdentityService {
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
 
-        let mut child = cmd.spawn()
-            .map_err(|e| YubiKeyError::age_plugin(format!("Failed to spawn age-plugin-yubikey: {}", e)))?;
+        let mut child = cmd.spawn().map_err(|e| {
+            YubiKeyError::age_plugin(format!("Failed to spawn age-plugin-yubikey: {}", e))
+        })?;
 
         // Write stdin data if provided
-        if let Some(data) = stdin_data {
-            if let Some(stdin) = child.stdin.take() {
-                use tokio::io::AsyncWriteExt;
-                let mut stdin = stdin;
-                stdin.write_all(data).await
-                    .map_err(|e| YubiKeyError::age_plugin(format!("Failed to write stdin: {}", e)))?;
-                stdin.shutdown().await
-                    .map_err(|e| YubiKeyError::age_plugin(format!("Failed to close stdin: {}", e)))?;
-            }
+        if let Some(data) = stdin_data
+            && let Some(stdin) = child.stdin.take()
+        {
+            use tokio::io::AsyncWriteExt;
+            let mut stdin = stdin;
+            stdin
+                .write_all(data)
+                .await
+                .map_err(|e| YubiKeyError::age_plugin(format!("Failed to write stdin: {}", e)))?;
+            stdin
+                .shutdown()
+                .await
+                .map_err(|e| YubiKeyError::age_plugin(format!("Failed to close stdin: {}", e)))?;
         }
 
         // Wait for command completion with timeout
         let output = tokio::time::timeout(self.timeout, child.wait_with_output())
             .await
-            .map_err(|_| YubiKeyError::timeout("age-plugin-yubikey operation", self.timeout.as_secs()))?
+            .map_err(|_| {
+                YubiKeyError::timeout("age-plugin-yubikey operation", self.timeout.as_secs())
+            })?
             .map_err(|e| YubiKeyError::age_plugin(format!("Command execution failed: {}", e)))?;
 
         if output.status.success() {
@@ -153,13 +163,18 @@ impl AgePluginIdentityService {
             Err(YubiKeyError::age_plugin_command_failed(
                 &args.join(" "),
                 output.status.code().unwrap_or(-1),
-                &stderr
+                &stderr,
             ))
         }
     }
 
     /// Parse identity information from age-plugin-yubikey output
-    fn parse_identity(&self, output: &[u8], serial: &Serial, slot: u8) -> YubiKeyResult<YubiKeyIdentity> {
+    fn parse_identity(
+        &self,
+        output: &[u8],
+        serial: &Serial,
+        slot: u8,
+    ) -> YubiKeyResult<YubiKeyIdentity> {
         let output_str = String::from_utf8_lossy(output);
 
         // Parse recipient (public key) - format: age1yubikey...
@@ -171,10 +186,7 @@ impl AgePluginIdentityService {
         // Validate the identity format (fixes the identity tag bug)
         self.validate_identity_format(&recipient, &identity_tag)?;
 
-        Ok(YubiKeyIdentity::new(
-            identity_tag,
-            serial.clone(),
-        )?)
+        Ok(YubiKeyIdentity::new(identity_tag, serial.clone())?)
     }
 
     /// Extract recipient from age-plugin output
@@ -186,7 +198,9 @@ impl AgePluginIdentityService {
             }
         }
 
-        Err(YubiKeyError::identity("No recipient found in age-plugin output"))
+        Err(YubiKeyError::identity(
+            "No recipient found in age-plugin output",
+        ))
     }
 
     /// Extract identity tag from age-plugin output
@@ -198,35 +212,41 @@ impl AgePluginIdentityService {
             }
         }
 
-        Err(YubiKeyError::identity("No identity tag found in age-plugin output"))
+        Err(YubiKeyError::identity(
+            "No identity tag found in age-plugin output",
+        ))
     }
 
     /// Validate identity format to prevent the identity tag bug
     fn validate_identity_format(&self, recipient: &str, identity_tag: &str) -> YubiKeyResult<()> {
         // Recipient validation
         if !recipient.starts_with("age1yubikey") {
-            return Err(YubiKeyError::validation(
-                format!("Invalid recipient format: '{}', expected to start with 'age1yubikey'", recipient)
-            ));
+            return Err(YubiKeyError::validation(format!(
+                "Invalid recipient format: '{}', expected to start with 'age1yubikey'",
+                recipient
+            )));
         }
 
         if recipient.len() < 20 {
-            return Err(YubiKeyError::validation(
-                format!("Recipient too short: {} chars, minimum 20", recipient.len())
-            ));
+            return Err(YubiKeyError::validation(format!(
+                "Recipient too short: {} chars, minimum 20",
+                recipient.len()
+            )));
         }
 
         // Identity tag validation
         if !identity_tag.starts_with("AGE-PLUGIN-YUBIKEY-") {
-            return Err(YubiKeyError::validation(
-                format!("Invalid identity tag format: '{}', expected to start with 'AGE-PLUGIN-YUBIKEY-'", identity_tag)
-            ));
+            return Err(YubiKeyError::validation(format!(
+                "Invalid identity tag format: '{}', expected to start with 'AGE-PLUGIN-YUBIKEY-'",
+                identity_tag
+            )));
         }
 
         if identity_tag.len() < 30 {
-            return Err(YubiKeyError::validation(
-                format!("Identity tag too short: {} chars, minimum 30", identity_tag.len())
-            ));
+            return Err(YubiKeyError::validation(format!(
+                "Identity tag too short: {} chars, minimum 30",
+                identity_tag.len()
+            )));
         }
 
         Ok(())
@@ -239,11 +259,14 @@ impl AgePluginIdentityService {
 
         let temp_path = temp_file.path().to_path_buf();
 
-        fs::write(&temp_path, identity_tag).await
+        fs::write(&temp_path, identity_tag)
+            .await
             .map_err(|e| YubiKeyError::file(format!("Failed to write identity file: {}", e)))?;
 
         // Prevent auto-deletion by keeping the file
-        temp_file.into_temp_path().keep()
+        temp_file
+            .into_temp_path()
+            .keep()
             .map_err(|e| YubiKeyError::file(format!("Failed to persist temp file: {}", e)))?;
 
         Ok(temp_path)
@@ -256,7 +279,7 @@ impl IdentityService for AgePluginIdentityService {
         &self,
         serial: &Serial,
         pin: &Pin,
-        slot: u8
+        slot: u8,
     ) -> YubiKeyResult<YubiKeyIdentity> {
         info!(
             serial = %serial.redacted(),
@@ -287,7 +310,11 @@ impl IdentityService for AgePluginIdentityService {
         Ok(identity)
     }
 
-    async fn get_existing_identity(&self, serial: &Serial, slot: u8) -> YubiKeyResult<Option<YubiKeyIdentity>> {
+    async fn get_existing_identity(
+        &self,
+        serial: &Serial,
+        slot: u8,
+    ) -> YubiKeyResult<Option<YubiKeyIdentity>> {
         debug!(
             serial = %serial.redacted(),
             slot = %slot,
@@ -303,26 +330,24 @@ impl IdentityService for AgePluginIdentityService {
         ];
 
         match self.run_plugin_command(args, None).await {
-            Ok(output) => {
-                match self.parse_identity(&output, serial, slot) {
-                    Ok(identity) => {
-                        debug!(
-                            serial = %serial.redacted(),
-                            slot = %slot,
-                            "Found existing YubiKey identity"
-                        );
-                        Ok(Some(identity))
-                    }
-                    Err(_) => {
-                        debug!(
-                            serial = %serial.redacted(),
-                            slot = %slot,
-                            "No valid identity found in slot"
-                        );
-                        Ok(None)
-                    }
+            Ok(output) => match self.parse_identity(&output, serial, slot) {
+                Ok(identity) => {
+                    debug!(
+                        serial = %serial.redacted(),
+                        slot = %slot,
+                        "Found existing YubiKey identity"
+                    );
+                    Ok(Some(identity))
                 }
-            }
+                Err(_) => {
+                    debug!(
+                        serial = %serial.redacted(),
+                        slot = %slot,
+                        "No valid identity found in slot"
+                    );
+                    Ok(None)
+                }
+            },
             Err(_) => {
                 debug!(
                     serial = %serial.redacted(),
@@ -367,7 +392,7 @@ impl IdentityService for AgePluginIdentityService {
         &self,
         serial: &Serial,
         identity_tag: &str,
-        encrypted_data: &[u8]
+        encrypted_data: &[u8],
     ) -> YubiKeyResult<Vec<u8>> {
         debug!(
             serial = %serial.redacted(),
@@ -452,7 +477,11 @@ impl IdentityService for AgePluginIdentityService {
 
 impl AgePluginIdentityService {
     /// Parse a single identity line from list output
-    fn parse_single_identity_line(&self, line: &str, serial: &Serial) -> YubiKeyResult<Option<YubiKeyIdentity>> {
+    fn parse_single_identity_line(
+        &self,
+        line: &str,
+        serial: &Serial,
+    ) -> YubiKeyResult<Option<YubiKeyIdentity>> {
         // This is a simplified implementation
         // In a real implementation, you'd parse the actual age-plugin-yubikey list format
 
@@ -463,12 +492,9 @@ impl AgePluginIdentityService {
         // This would need proper parsing based on actual output format
         if let (Some(recipient), Some(identity_tag)) = (
             self.extract_recipient(line).ok(),
-            self.extract_identity_tag(line).ok()
+            self.extract_identity_tag(line).ok(),
         ) {
-            Ok(Some(YubiKeyIdentity::new(
-                identity_tag,
-                serial.clone(),
-            )?))
+            Ok(Some(YubiKeyIdentity::new(identity_tag, serial.clone())?))
         } else {
             Ok(None)
         }
@@ -478,7 +504,7 @@ impl AgePluginIdentityService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::key_management::yubikey::domain::models::{Serial, Pin};
+    use crate::key_management::yubikey::domain::models::{Pin, Serial};
     use secrecy::SecretString;
 
     #[tokio::test]
@@ -490,7 +516,10 @@ mod tests {
             }
             Err(e) => {
                 // Plugin not found is acceptable in test environment
-                assert!(e.to_string().contains("age-plugin-yubikey binary not found"));
+                assert!(
+                    e.to_string()
+                        .contains("age-plugin-yubikey binary not found")
+                );
             }
         }
     }
@@ -522,14 +551,26 @@ mod tests {
         // Valid identity
         let recipient = "age1yubikey1qxe2f9w5h2k8r7t3y6u4i1o0p9l8k7j6h5g4f3d2s1a0";
         let identity_tag = "AGE-PLUGIN-YUBIKEY-1234567890ABCDEF";
-        assert!(service.validate_identity_format(recipient, identity_tag).is_ok());
+        assert!(
+            service
+                .validate_identity_format(recipient, identity_tag)
+                .is_ok()
+        );
 
         // Invalid recipient
         let invalid_recipient = "invalid_recipient";
-        assert!(service.validate_identity_format(invalid_recipient, identity_tag).is_err());
+        assert!(
+            service
+                .validate_identity_format(invalid_recipient, identity_tag)
+                .is_err()
+        );
 
         // Invalid identity tag
         let invalid_tag = "INVALID-TAG";
-        assert!(service.validate_identity_format(recipient, invalid_tag).is_err());
+        assert!(
+            service
+                .validate_identity_format(recipient, invalid_tag)
+                .is_err()
+        );
     }
 }

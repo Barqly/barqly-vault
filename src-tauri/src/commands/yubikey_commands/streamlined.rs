@@ -84,10 +84,18 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         debug!("Processing YubiKey with serial: {}", serial.redacted());
 
         // Check registry for this YubiKey using centralized service
-        let registry_entry = manager.find_by_serial(serial).await.map_err(|e| {
-            warn!("Failed to check registry for YubiKey {}: {}", serial.redacted(), e);
-            e
-        }).unwrap_or(None);
+        let registry_entry = manager
+            .find_by_serial(serial)
+            .await
+            .map_err(|e| {
+                warn!(
+                    "Failed to check registry for YubiKey {}: {}",
+                    serial.redacted(),
+                    e
+                );
+                e
+            })
+            .unwrap_or(None);
 
         let in_registry = registry_entry.is_some();
         debug!("YubiKey {} in registry: {}", serial.redacted(), in_registry);
@@ -106,44 +114,71 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
                     if let Ok(Some(identity)) = manager.get_existing_identity(serial, slot).await {
                         identity_result = Some(identity.to_recipient());
                         identity_tag = Some(identity.identity_tag().to_string());
-                        info!("YubiKey {} HAS identity in slot {}: {}",
-                            serial.redacted(), slot, identity.to_recipient());
+                        info!(
+                            "YubiKey {} HAS identity in slot {}: {}",
+                            serial.redacted(),
+                            slot,
+                            identity.to_recipient()
+                        );
                         break;
                     }
                 }
                 Ok(false) => continue,
                 Err(e) => {
-                    debug!("Error checking slot {} for YubiKey {}: {}", slot, serial.redacted(), e);
+                    debug!(
+                        "Error checking slot {} for YubiKey {}: {}",
+                        slot,
+                        serial.redacted(),
+                        e
+                    );
                 }
             }
         }
 
         if !has_identity {
-            info!("YubiKey {} has NO identity in common slots", serial.redacted());
+            info!(
+                "YubiKey {} has NO identity in common slots",
+                serial.redacted()
+            );
         }
 
         // Determine state based on registry and identity presence
         let state = match (in_registry, has_identity) {
             (true, true) => {
-                info!("YubiKey {} state: Registered (in registry + has identity)", serial.redacted());
+                info!(
+                    "YubiKey {} state: Registered (in registry + has identity)",
+                    serial.redacted()
+                );
                 YubiKeyState::Registered
             }
             (false, true) => {
-                info!("YubiKey {} state: Orphaned (has identity but not in registry)", serial.redacted());
+                info!(
+                    "YubiKey {} state: Orphaned (has identity but not in registry)",
+                    serial.redacted()
+                );
                 YubiKeyState::Orphaned
             }
             (true, false) => {
-                warn!("YubiKey {} in registry but no identity found - marking as Reused", serial.redacted());
+                warn!(
+                    "YubiKey {} in registry but no identity found - marking as Reused",
+                    serial.redacted()
+                );
                 YubiKeyState::Reused
             }
             (false, false) => {
                 // Check PIN status using centralized service
                 let has_default_pin = manager.has_default_pin(serial).await.unwrap_or(true);
                 if has_default_pin {
-                    info!("YubiKey {} state: New (default PIN, no identity)", serial.redacted());
+                    info!(
+                        "YubiKey {} state: New (default PIN, no identity)",
+                        serial.redacted()
+                    );
                     YubiKeyState::New
                 } else {
-                    info!("YubiKey {} state: Reused (custom PIN, no identity)", serial.redacted());
+                    info!(
+                        "YubiKey {} state: Reused (custom PIN, no identity)",
+                        serial.redacted()
+                    );
                     YubiKeyState::Reused
                 }
             }
@@ -185,7 +220,10 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
                 .map(|(_, device)| device.name.clone())
                 .or_else(|| {
                     if has_identity {
-                        Some(format!("YubiKey-{}", &serial.value()[..4.min(serial.value().len())]))
+                        Some(format!(
+                            "YubiKey-{}",
+                            &serial.value()[..4.min(serial.value().len())]
+                        ))
                     } else {
                         Some(device.name.clone())
                     }
@@ -210,17 +248,18 @@ pub async fn init_yubikey(
     new_pin: String,
     label: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
-    info!("Initializing YubiKey with label {} using YubiKeyManager", label);
+    info!(
+        "Initializing YubiKey with label {} using YubiKeyManager",
+        label
+    );
 
     // Create domain objects for type safety
-    use crate::key_management::yubikey::domain::models::{Serial, Pin};
-    let serial_obj = Serial::new(serial.clone()).map_err(|e| {
-        CommandError::validation(format!("Invalid serial format: {e}"))
-    })?;
+    use crate::key_management::yubikey::domain::models::{Pin, Serial};
+    let serial_obj = Serial::new(serial.clone())
+        .map_err(|e| CommandError::validation(format!("Invalid serial format: {e}")))?;
 
-    let pin_obj = Pin::new(new_pin).map_err(|e| {
-        CommandError::validation(format!("Invalid PIN: {e}"))
-    })?;
+    let pin_obj =
+        Pin::new(new_pin).map_err(|e| CommandError::validation(format!("Invalid PIN: {e}")))?;
 
     // Initialize YubiKey manager
     let manager = YubiKeyManager::new().await.map_err(|e| {
@@ -231,12 +270,15 @@ pub async fn init_yubikey(
     })?;
 
     // Generate recovery code using centralized hardware initialization
-    let recovery_code = manager.initialize_device_hardware(&pin_obj).await.map_err(|e| {
-        CommandError::operation(
-            ErrorCode::YubiKeyInitializationFailed,
-            format!("Failed to initialize YubiKey hardware: {e}"),
-        )
-    })?;
+    let recovery_code = manager
+        .initialize_device_hardware(&pin_obj)
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                format!("Failed to initialize YubiKey hardware: {e}"),
+            )
+        })?;
 
     // Hash recovery code for secure storage
     use sha2::{Digest, Sha256};
@@ -245,26 +287,32 @@ pub async fn init_yubikey(
     let recovery_code_hash = format!("{:x}", hasher.finalize());
 
     // Use centralized manager for the complete initialization workflow
-    let (device, identity, entry_id) = manager.initialize_device(
-        &serial_obj,
-        &pin_obj,
-        1, // Default to slot 1
-        recovery_code_hash,
-        Some(label.clone())
-    ).await.map_err(|e| {
-        CommandError::operation(
-            ErrorCode::YubiKeyInitializationFailed,
-            format!("Failed to initialize YubiKey through manager: {e}"),
+    let (device, identity, entry_id) = manager
+        .initialize_device(
+            &serial_obj,
+            &pin_obj,
+            1, // Default to slot 1
+            recovery_code_hash,
+            Some(label.clone()),
         )
-    })?;
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                format!("Failed to initialize YubiKey through manager: {e}"),
+            )
+        })?;
 
     // Shutdown manager gracefully
     if let Err(e) = manager.shutdown().await {
         warn!("Failed to shutdown YubiKey manager: {}", e);
     }
 
-    info!("Successfully initialized YubiKey: {} with entry ID: {}",
-        serial_obj.redacted(), entry_id);
+    info!(
+        "Successfully initialized YubiKey: {} with entry ID: {}",
+        serial_obj.redacted(),
+        entry_id
+    );
 
     Ok(StreamlinedYubiKeyInitResult {
         serial: device.serial.value().to_string(),
@@ -284,17 +332,18 @@ pub async fn register_yubikey(
     label: String,
     pin: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
-    info!("Registering reused YubiKey with label {} using YubiKeyManager", label);
+    info!(
+        "Registering reused YubiKey with label {} using YubiKeyManager",
+        label
+    );
 
     // Create domain objects for type safety
-    use crate::key_management::yubikey::domain::models::{Serial, Pin};
-    let serial_obj = Serial::new(serial.clone()).map_err(|e| {
-        CommandError::validation(format!("Invalid serial format: {e}"))
-    })?;
+    use crate::key_management::yubikey::domain::models::{Pin, Serial};
+    let serial_obj = Serial::new(serial.clone())
+        .map_err(|e| CommandError::validation(format!("Invalid serial format: {e}")))?;
 
-    let pin_obj = Pin::new(pin).map_err(|e| {
-        CommandError::validation(format!("Invalid PIN: {e}"))
-    })?;
+    let pin_obj =
+        Pin::new(pin).map_err(|e| CommandError::validation(format!("Invalid PIN: {e}")))?;
 
     // Initialize YubiKey manager
     let manager = YubiKeyManager::new().await.map_err(|e| {
@@ -312,26 +361,32 @@ pub async fn register_yubikey(
     let recovery_code_hash = format!("{:x}", hasher.finalize());
 
     // Use centralized manager for registration workflow (reused key = no hardware init)
-    let (device, identity, entry_id) = manager.initialize_device(
-        &serial_obj,
-        &pin_obj,
-        1, // Default to slot 1
-        recovery_code_hash,
-        Some(label.clone())
-    ).await.map_err(|e| {
-        CommandError::operation(
-            ErrorCode::YubiKeyInitializationFailed,
-            format!("Failed to register YubiKey through manager: {e}"),
+    let (device, identity, entry_id) = manager
+        .initialize_device(
+            &serial_obj,
+            &pin_obj,
+            1, // Default to slot 1
+            recovery_code_hash,
+            Some(label.clone()),
         )
-    })?;
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                format!("Failed to register YubiKey through manager: {e}"),
+            )
+        })?;
 
     // Shutdown manager gracefully
     if let Err(e) = manager.shutdown().await {
         warn!("Failed to shutdown YubiKey manager: {}", e);
     }
 
-    info!("Successfully registered reused YubiKey: {} with entry ID: {}",
-        serial_obj.redacted(), entry_id);
+    info!(
+        "Successfully registered reused YubiKey: {} with entry ID: {}",
+        serial_obj.redacted(),
+        entry_id
+    );
 
     Ok(StreamlinedYubiKeyInitResult {
         serial: device.serial.value().to_string(),
@@ -347,13 +402,15 @@ pub async fn register_yubikey(
 #[tauri::command]
 #[specta::specta]
 pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError> {
-    info!("Getting identities for YubiKey {} using YubiKeyManager", serial);
+    info!(
+        "Getting identities for YubiKey {} using YubiKeyManager",
+        serial
+    );
 
     // Create domain object for type safety
     use crate::key_management::yubikey::domain::models::Serial;
-    let serial_obj = Serial::new(serial.clone()).map_err(|e| {
-        CommandError::validation(format!("Invalid serial format: {e}"))
-    })?;
+    let serial_obj = Serial::new(serial.clone())
+        .map_err(|e| CommandError::validation(format!("Invalid serial format: {e}")))?;
 
     // Initialize YubiKey manager
     let manager = YubiKeyManager::new().await.map_err(|e| {
@@ -371,13 +428,22 @@ pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError>
                 // Convert YubiKeyIdentity to string format for backward compatibility
                 let identity_string = format!("{}:{}", serial_obj.value(), identity.identity_tag());
                 identities.push(identity_string);
-                debug!("Found identity in slot {}: {}", slot, identity.identity_tag());
+                debug!(
+                    "Found identity in slot {}: {}",
+                    slot,
+                    identity.identity_tag()
+                );
             }
             Ok(None) => {
                 debug!("No identity found in slot {}", slot);
             }
             Err(e) => {
-                debug!("Error checking slot {} for YubiKey {}: {}", slot, serial_obj.redacted(), e);
+                debug!(
+                    "Error checking slot {} for YubiKey {}: {}",
+                    slot,
+                    serial_obj.redacted(),
+                    e
+                );
             }
         }
     }
@@ -394,7 +460,11 @@ pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError>
         ));
     }
 
-    info!("Found {} identities for YubiKey {}", identities.len(), serial_obj.redacted());
+    info!(
+        "Found {} identities for YubiKey {}",
+        identities.len(),
+        serial_obj.redacted()
+    );
     Ok(identities)
 }
 

@@ -63,20 +63,15 @@ pub mod infrastructure;
 
 // Re-export key types from domain layer
 pub use domain::{
-    YubiKeyError, YubiKeyResult,
-    Serial, Pin, YubiKeyDevice, YubiKeyIdentity, YubiKeyState,
+    Pin, Serial, YubiKeyDevice, YubiKeyError, YubiKeyIdentity, YubiKeyResult, YubiKeyState,
 };
 
 // Re-export key types from application layer
-pub use application::{
-    YubiKeyManager, YubiKeyManagerConfig,
-    YubiKeyFactory,
-};
+pub use application::{YubiKeyFactory, YubiKeyManager, YubiKeyManagerConfig};
 
 // Re-export key infrastructure types
 pub use infrastructure::{
-    YubiIdentityProviderFactory,
-    YubiIdentityProvider, YubiRecipient, AgeHeader, DataEncryptionKey,
+    AgeHeader, DataEncryptionKey, YubiIdentityProvider, YubiIdentityProviderFactory, YubiRecipient,
 };
 
 /// Configuration for the YubiKey management system

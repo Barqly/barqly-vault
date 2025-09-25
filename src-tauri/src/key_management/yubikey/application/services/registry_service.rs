@@ -27,7 +27,10 @@ pub trait RegistryService: Send + Sync + std::fmt::Debug {
     ) -> YubiKeyResult<String>;
 
     /// Find registered YubiKey by serial
-    async fn find_by_serial(&self, serial: &Serial) -> YubiKeyResult<Option<(String, YubiKeyDevice)>>;
+    async fn find_by_serial(
+        &self,
+        serial: &Serial,
+    ) -> YubiKeyResult<Option<(String, YubiKeyDevice)>>;
 
     /// Get all YubiKey entries from registry
     async fn get_all_yubikeys(&self) -> YubiKeyResult<Vec<(String, YubiKeyDevice)>>;
@@ -89,10 +92,12 @@ impl DefaultRegistryService {
 
         // Check if any YubiKey in registry uses this slot
         for (_, entry) in registry.yubikey_keys() {
-            if let crate::storage::key_registry::KeyEntry::Yubikey { slot: entry_slot, .. } = entry {
-                if *entry_slot == slot {
-                    return Ok(true);
-                }
+            if let crate::storage::key_registry::KeyEntry::Yubikey {
+                slot: entry_slot, ..
+            } = entry
+                && *entry_slot == slot
+            {
+                return Ok(true);
             }
         }
 
@@ -100,7 +105,11 @@ impl DefaultRegistryService {
     }
 
     /// Check if slot is occupied by same YubiKey (serial match)
-    async fn check_slot_occupied_by_device(&self, serial: &Serial, slot: u8) -> YubiKeyResult<bool> {
+    async fn check_slot_occupied_by_device(
+        &self,
+        serial: &Serial,
+        slot: u8,
+    ) -> YubiKeyResult<bool> {
         let registry = self.load_registry().await?;
 
         // Check if slot is occupied by the SAME YubiKey (same serial)
@@ -109,10 +118,11 @@ impl DefaultRegistryService {
                 serial: entry_serial,
                 slot: entry_slot,
                 ..
-            } = entry {
-                if *entry_slot == slot && entry_serial == serial.value() {
-                    return Ok(true);
-                }
+            } = entry
+                && *entry_slot == slot
+                && entry_serial == serial.value()
+            {
+                return Ok(true);
             }
         }
 
@@ -148,7 +158,11 @@ impl RegistryService for DefaultRegistryService {
     }
 
     async fn is_slot_occupied_by_device(&self, serial: &Serial, slot: u8) -> YubiKeyResult<bool> {
-        debug!("Checking if slot {} is occupied by device {}", slot, serial.redacted());
+        debug!(
+            "Checking if slot {} is occupied by device {}",
+            slot,
+            serial.redacted()
+        );
         self.check_slot_occupied_by_device(serial, slot).await
     }
 
@@ -160,13 +174,18 @@ impl RegistryService for DefaultRegistryService {
         recovery_code_hash: String,
         label: Option<String>,
     ) -> YubiKeyResult<String> {
-        info!("Adding YubiKey entry: serial={}, slot={}", device.serial().redacted(), slot);
+        info!(
+            "Adding YubiKey entry: serial={}, slot={}",
+            device.serial().redacted(),
+            slot
+        );
 
         let mut registry = self.load_registry().await?;
 
         // Generate label if not provided
         let yubikey_count = registry.yubikey_keys().len();
-        let final_label = label.unwrap_or_else(|| self.generate_yubikey_label(device, yubikey_count));
+        let final_label =
+            label.unwrap_or_else(|| self.generate_yubikey_label(device, yubikey_count));
 
         // Calculate PIV slot from user slot (82-95 range)
         let piv_slot = 82 + slot;
@@ -190,30 +209,37 @@ impl RegistryService for DefaultRegistryService {
         Ok(key_id)
     }
 
-    async fn find_by_serial(&self, serial: &Serial) -> YubiKeyResult<Option<(String, YubiKeyDevice)>> {
+    async fn find_by_serial(
+        &self,
+        serial: &Serial,
+    ) -> YubiKeyResult<Option<(String, YubiKeyDevice)>> {
         debug!("Finding YubiKey by serial: {}", serial.redacted());
 
         let registry = self.load_registry().await?;
 
-        if let Some((key_id, entry)) = registry.find_yubikey_by_serial(serial.value()) {
-            if let crate::storage::key_registry::KeyEntry::Yubikey {
+        if let Some((key_id, entry)) = registry.find_yubikey_by_serial(serial.value())
+            && let crate::storage::key_registry::KeyEntry::Yubikey {
                 serial: entry_serial,
                 slot,
                 firmware_version,
                 label,
                 ..
-            } = entry {
-                // Convert registry entry back to YubiKeyDevice
-                let device = YubiKeyDevice::from_registry_entry(
-                    Serial::new(entry_serial.clone())?,
-                    label.clone(),
-                    *slot,
-                    firmware_version.clone(),
-                );
+            } = entry
+        {
+            // Convert registry entry back to YubiKeyDevice
+            let device = YubiKeyDevice::from_registry_entry(
+                Serial::new(entry_serial.clone())?,
+                label.clone(),
+                *slot,
+                firmware_version.clone(),
+            );
 
-                debug!("Found YubiKey: key_id={}, serial={}", key_id, serial.redacted());
-                return Ok(Some((key_id.clone(), device)));
-            }
+            debug!(
+                "Found YubiKey: key_id={}, serial={}",
+                key_id,
+                serial.redacted()
+            );
+            return Ok(Some((key_id.clone(), device)));
         }
 
         debug!("YubiKey not found: {}", serial.redacted());
@@ -233,7 +259,8 @@ impl RegistryService for DefaultRegistryService {
                 firmware_version,
                 label,
                 ..
-            } = entry {
+            } = entry
+            {
                 let device = YubiKeyDevice::from_registry_entry(
                     Serial::new(serial.clone())?,
                     label.clone(),
@@ -255,17 +282,25 @@ impl RegistryService for DefaultRegistryService {
         // Check if YubiKey is in registry
         let exists = registry.find_yubikey_by_serial(serial.value()).is_some();
 
-        debug!("YubiKey {} registration status: {}", serial.redacted(), exists);
+        debug!(
+            "YubiKey {} registration status: {}",
+            serial.redacted(),
+            exists
+        );
         Ok(exists)
     }
 
     async fn update_label(&self, key_id: &str, new_label: String) -> YubiKeyResult<()> {
-        info!("Updating YubiKey label: key_id={}, new_label={}", key_id, new_label);
+        info!(
+            "Updating YubiKey label: key_id={}, new_label={}",
+            key_id, new_label
+        );
 
         let mut registry = self.load_registry().await?;
 
         // Get current entry
-        let entry = registry.get_key(key_id)
+        let entry = registry
+            .get_key(key_id)
             .ok_or_else(|| YubiKeyError::registry(format!("Key not found: {}", key_id)))?
             .clone();
 
@@ -298,8 +333,9 @@ impl RegistryService for DefaultRegistryService {
         };
 
         // Update in registry
-        registry.update_key(key_id, updated_entry)
-            .map_err(|e| YubiKeyError::registry(e))?;
+        registry
+            .update_key(key_id, updated_entry)
+            .map_err(YubiKeyError::registry)?;
 
         // Save registry
         self.save_registry(&registry).await?;
@@ -313,8 +349,9 @@ impl RegistryService for DefaultRegistryService {
 
         let mut registry = self.load_registry().await?;
 
-        registry.mark_key_used(key_id)
-            .map_err(|e| YubiKeyError::registry(e))?;
+        registry
+            .mark_key_used(key_id)
+            .map_err(YubiKeyError::registry)?;
 
         self.save_registry(&registry).await?;
 
@@ -328,8 +365,9 @@ impl RegistryService for DefaultRegistryService {
         let mut registry = self.load_registry().await?;
 
         // Remove from registry
-        registry.remove_key(key_id)
-            .map_err(|e| YubiKeyError::registry(e))?;
+        registry
+            .remove_key(key_id)
+            .map_err(YubiKeyError::registry)?;
 
         // Save registry
         self.save_registry(&registry).await?;
@@ -343,24 +381,24 @@ impl RegistryService for DefaultRegistryService {
 
         let registry = self.load_registry().await?;
 
-        if let Some(entry) = registry.get_key(key_id) {
-            if let crate::storage::key_registry::KeyEntry::Yubikey {
+        if let Some(entry) = registry.get_key(key_id)
+            && let crate::storage::key_registry::KeyEntry::Yubikey {
                 serial,
                 slot,
                 firmware_version,
                 label,
                 ..
-            } = entry {
-                let device = YubiKeyDevice::from_registry_entry(
-                    Serial::new(serial.clone())?,
-                    label.clone(),
-                    *slot,
-                    firmware_version.clone(),
-                );
+            } = entry
+        {
+            let device = YubiKeyDevice::from_registry_entry(
+                Serial::new(serial.clone())?,
+                label.clone(),
+                *slot,
+                firmware_version.clone(),
+            );
 
-                debug!("Found YubiKey: {}", device.serial().redacted());
-                return Ok(Some(device));
-            }
+            debug!("Found YubiKey: {}", device.serial().redacted());
+            return Ok(Some(device));
         }
 
         debug!("YubiKey not found for key_id: {}", key_id);
@@ -378,8 +416,10 @@ impl RegistryService for DefaultRegistryService {
         for (key_id, entry) in registry.yubikey_keys() {
             if let crate::storage::key_registry::KeyEntry::Yubikey { slot, .. } = entry {
                 if let Some(existing_key) = slot_usage.get(slot) {
-                    issues.push(format!("Slot conflict: slot {} used by both {} and {}",
-                        slot, existing_key, key_id));
+                    issues.push(format!(
+                        "Slot conflict: slot {} used by both {} and {}",
+                        slot, existing_key, key_id
+                    ));
                 } else {
                     slot_usage.insert(*slot, key_id.clone());
                 }
@@ -391,8 +431,10 @@ impl RegistryService for DefaultRegistryService {
         for (key_id, entry) in registry.yubikey_keys() {
             if let crate::storage::key_registry::KeyEntry::Yubikey { serial, .. } = entry {
                 if let Some(existing_key) = serial_usage.get(serial) {
-                    issues.push(format!("Serial duplicate: serial {} used by both {} and {}",
-                        serial, existing_key, key_id));
+                    issues.push(format!(
+                        "Serial duplicate: serial {} used by both {} and {}",
+                        serial, existing_key, key_id
+                    ));
                 } else {
                     serial_usage.insert(serial.clone(), key_id.clone());
                 }
@@ -433,13 +475,7 @@ impl YubiKeyDevice {
 
         let interfaces = vec![crate::key_management::yubikey::domain::models::Interface::USB];
 
-        Self::from_detected_device(
-            serial,
-            label,
-            form_factor,
-            interfaces,
-            firmware_version,
-        )
+        Self::from_detected_device(serial, label, form_factor, interfaces, firmware_version)
     }
 }
 
@@ -463,7 +499,8 @@ mod tests {
         YubiKeyIdentity::new(
             "age1yubikey1testrecipient".to_string(),
             "AGE-PLUGIN-YUBIKEY-1TESTIDENTITY".to_string(),
-        ).unwrap()
+        )
+        .unwrap()
     }
 
     #[tokio::test]
@@ -490,13 +527,16 @@ mod tests {
         let device = create_test_device();
         let identity = create_test_identity();
 
-        let key_id = service.add_yubikey_entry(
-            &device,
-            &identity,
-            0,
-            "recovery_hash".to_string(),
-            Some("Test YubiKey".to_string()),
-        ).await.unwrap();
+        let key_id = service
+            .add_yubikey_entry(
+                &device,
+                &identity,
+                0,
+                "recovery_hash".to_string(),
+                Some("Test YubiKey".to_string()),
+            )
+            .await
+            .unwrap();
 
         assert!(key_id.starts_with("keyref_"));
     }
@@ -510,13 +550,16 @@ mod tests {
         let serial = device.serial().clone();
 
         // Register first
-        let _key_id = service.add_yubikey_entry(
-            &device,
-            &identity,
-            0,
-            "recovery_hash".to_string(),
-            Some("Test YubiKey".to_string()),
-        ).await.unwrap();
+        let _key_id = service
+            .add_yubikey_entry(
+                &device,
+                &identity,
+                0,
+                "recovery_hash".to_string(),
+                Some("Test YubiKey".to_string()),
+            )
+            .await
+            .unwrap();
 
         // Then find
         let found = service.find_by_serial(&serial).await.unwrap();

@@ -3,7 +3,6 @@
 //! Contains domain models for YubiKey initialization results and related types.
 //! This replaces the legacy YubiKeyInitResult from crypto/yubikey.
 
-use crate::key_management::yubikey::domain::models::serial::Serial;
 use serde::{Deserialize, Serialize};
 
 /// PIN policy for YubiKey operations (from crypto/yubikey management)
@@ -30,12 +29,7 @@ pub struct InitializationResult {
 
 impl InitializationResult {
     /// Create new initialization result
-    pub fn new(
-        public_key: String,
-        slot: u8,
-        touch_required: bool,
-        pin_policy: PinPolicy,
-    ) -> Self {
+    pub fn new(public_key: String, slot: u8, touch_required: bool, pin_policy: PinPolicy) -> Self {
         Self {
             public_key,
             slot,
@@ -66,7 +60,11 @@ impl InitializationResult {
 
     /// Get security summary for display
     pub fn security_summary(&self) -> String {
-        let touch = if self.touch_required { "Touch Required" } else { "No Touch" };
+        let touch = if self.touch_required {
+            "Touch Required"
+        } else {
+            "No Touch"
+        };
         let pin = match self.pin_policy {
             PinPolicy::Never => "No PIN",
             PinPolicy::Once => "PIN Once",
@@ -92,7 +90,10 @@ mod tests {
         assert_eq!(result.slot, 1);
         assert!(result.requires_touch());
         assert!(result.requires_pin());
-        assert_eq!(result.age_recipient(), "age1yubikey1qxf8r7wdfvr3a3k2tqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
+        assert_eq!(
+            result.age_recipient(),
+            "age1yubikey1qxf8r7wdfvr3a3k2tqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
+        );
     }
 
     #[test]

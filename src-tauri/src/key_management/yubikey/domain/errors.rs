@@ -3,7 +3,10 @@
 //! Provides unified error handling for all YubiKey operations, replacing
 //! the scattered error handling patterns found throughout the codebase.
 
-use crate::key_management::yubikey::domain::models::{Serial, IdentityValidationError, PinValidationError, SerialValidationError, StateTransitionError};
+use crate::key_management::yubikey::domain::models::{
+    IdentityValidationError, PinValidationError, Serial, SerialValidationError,
+    StateTransitionError,
+};
 use std::fmt;
 
 /// Main result type for all YubiKey operations
@@ -125,7 +128,9 @@ pub enum YubiKeyError {
     AgePluginNotFound { path: String },
 
     /// age-plugin-yubikey command failed
-    #[error("age-plugin-yubikey command failed: {command}, exit_code: {exit_code}, stderr: {stderr}")]
+    #[error(
+        "age-plugin-yubikey command failed: {command}, exit_code: {exit_code}, stderr: {stderr}"
+    )]
     AgePluginCommandFailed {
         command: String,
         exit_code: i32,
@@ -379,33 +384,31 @@ impl YubiKeyError {
     /// Get error category for metrics/logging
     pub fn category(&self) -> ErrorCategory {
         match self {
-            Self::Device { .. } | Self::DeviceNotFound { .. } | Self::MultipleDevicesFound { .. } => {
-                ErrorCategory::Device
-            }
-            Self::Identity { .. } | Self::IdentityNotFound { .. } | Self::IdentityValidation { .. } => {
-                ErrorCategory::Identity
-            }
-            Self::Registry { .. } | Self::RegistryEntryNotFound { .. } | Self::RegistryEntryExists { .. } => {
-                ErrorCategory::Registry
-            }
+            Self::Device { .. }
+            | Self::DeviceNotFound { .. }
+            | Self::MultipleDevicesFound { .. } => ErrorCategory::Device,
+            Self::Identity { .. }
+            | Self::IdentityNotFound { .. }
+            | Self::IdentityValidation { .. } => ErrorCategory::Identity,
+            Self::Registry { .. }
+            | Self::RegistryEntryNotFound { .. }
+            | Self::RegistryEntryExists { .. } => ErrorCategory::Registry,
             Self::File { .. } | Self::Encryption { .. } | Self::Decryption { .. } => {
                 ErrorCategory::File
             }
             Self::Pin { .. } | Self::PinValidation { .. } | Self::PinBlocked { .. } => {
                 ErrorCategory::Pin
             }
-            Self::State { .. } | Self::StateTransition { .. } | Self::OperationNotAllowed { .. } => {
-                ErrorCategory::State
-            }
+            Self::State { .. }
+            | Self::StateTransition { .. }
+            | Self::OperationNotAllowed { .. } => ErrorCategory::State,
             Self::Slot { .. } | Self::SlotNotAvailable { .. } | Self::SlotOccupied { .. } => {
                 ErrorCategory::Slot
             }
-            Self::AgePlugin { .. } | Self::AgePluginNotFound { .. } | Self::AgePluginCommandFailed { .. } => {
-                ErrorCategory::AgePlugin
-            }
-            Self::SerialValidation { .. } | Self::SerialRequired { .. } => {
-                ErrorCategory::Serial
-            }
+            Self::AgePlugin { .. }
+            | Self::AgePluginNotFound { .. }
+            | Self::AgePluginCommandFailed { .. } => ErrorCategory::AgePlugin,
+            Self::SerialValidation { .. } | Self::SerialRequired { .. } => ErrorCategory::Serial,
             _ => ErrorCategory::Other,
         }
     }
@@ -459,7 +462,10 @@ mod tests {
         assert!(matches!(slot_error, YubiKeyError::SlotOccupied { .. }));
 
         let serial_required = YubiKeyError::serial_required("encrypt");
-        assert!(matches!(serial_required, YubiKeyError::SerialRequired { .. }));
+        assert!(matches!(
+            serial_required,
+            YubiKeyError::SerialRequired { .. }
+        ));
     }
 
     #[test]

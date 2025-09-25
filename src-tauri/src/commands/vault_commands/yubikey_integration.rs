@@ -313,14 +313,10 @@ pub async fn register_yubikey_for_vault(
             .as_ref()
             .cloned()
             .unwrap_or_else(|| format!("age1yubikey1{}", &input.serial[..8])),
-        yubikey
-            .identity_tag
-            .as_ref()
-            .cloned()
-            .unwrap_or_else(|| {
-                error!("YubiKey has no identity tag, this should not happen");
-                format!("AGE-PLUGIN-YUBIKEY-MISSING")
-            }),
+        yubikey.identity_tag.as_ref().cloned().unwrap_or_else(|| {
+            error!("YubiKey has no identity tag, this should not happen");
+            "AGE-PLUGIN-YUBIKEY-MISSING".to_string()
+        }),
         None,                                               // firmware_version
         format!("{:x}", Sha256::digest(b"registered-key")), // Placeholder recovery hash for registered keys
     );
@@ -475,12 +471,11 @@ pub async fn check_yubikey_slot_availability(vault_id: String) -> CommandRespons
     let mut available = vec![true, true, true];
 
     for key_id in &vault.keys {
-        if let Some(entry) = registry.get_key(key_id) {
-            if let crate::storage::KeyEntry::Yubikey { slot, .. } = entry {
-                if *slot < 3 {
-                    available[*slot as usize] = false;
-                }
-            }
+        if let Some(entry) = registry.get_key(key_id)
+            && let crate::storage::KeyEntry::Yubikey { slot, .. } = entry
+            && *slot < 3
+        {
+            available[*slot as usize] = false;
         }
     }
 

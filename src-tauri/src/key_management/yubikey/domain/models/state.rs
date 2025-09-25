@@ -88,7 +88,9 @@ impl YubiKeyState {
     }
 
     /// Get the next state after age identity generation
-    pub fn next_state_after_identity_generation(&self) -> Result<YubiKeyState, StateTransitionError> {
+    pub fn next_state_after_identity_generation(
+        &self,
+    ) -> Result<YubiKeyState, StateTransitionError> {
         match self {
             YubiKeyState::Reused => Ok(YubiKeyState::Registered),
             YubiKeyState::New => Err(StateTransitionError::InvalidTransition {
@@ -120,10 +122,7 @@ impl YubiKeyState {
     /// Get available operations for this state
     pub fn available_operations(&self) -> Vec<YubiKeyOperation> {
         match self {
-            YubiKeyState::New => vec![
-                YubiKeyOperation::SetupPin,
-                YubiKeyOperation::CheckStatus,
-            ],
+            YubiKeyState::New => vec![YubiKeyOperation::SetupPin, YubiKeyOperation::CheckStatus],
             YubiKeyState::Reused => vec![
                 YubiKeyOperation::GenerateIdentity,
                 YubiKeyOperation::CheckStatus,
@@ -157,17 +156,15 @@ impl YubiKeyState {
         match self {
             YubiKeyState::New => vec![
                 "Set up a custom PIN (6-8 digits)",
-                "Generate age identity for encryption"
+                "Generate age identity for encryption",
             ],
-            YubiKeyState::Reused => vec![
-                "Generate age identity for Barqly encryption"
-            ],
-            YubiKeyState::Registered => vec![
-                "YubiKey is ready - you can encrypt and decrypt files"
-            ],
+            YubiKeyState::Reused => vec!["Generate age identity for Barqly encryption"],
+            YubiKeyState::Registered => {
+                vec!["YubiKey is ready - you can encrypt and decrypt files"]
+            }
             YubiKeyState::Orphaned => vec![
                 "Recover registry entry to restore full functionality",
-                "Or re-register the YubiKey with the system"
+                "Or re-register the YubiKey with the system",
             ],
         }
     }
@@ -274,11 +271,19 @@ impl YubiKeyStateMachine {
     pub fn transition(&mut self, operation: YubiKeyOperation) -> Result<(), StateTransitionError> {
         let new_state = match operation {
             YubiKeyOperation::SetupPin => self.current_state.next_state_after_pin_setup()?,
-            YubiKeyOperation::GenerateIdentity => self.current_state.next_state_after_identity_generation()?,
-            YubiKeyOperation::RecoverRegistry => self.current_state.next_state_after_registry_recovery()?,
+            YubiKeyOperation::GenerateIdentity => {
+                self.current_state.next_state_after_identity_generation()?
+            }
+            YubiKeyOperation::RecoverRegistry => {
+                self.current_state.next_state_after_registry_recovery()?
+            }
             _ => {
                 // Operations that don't change state
-                if !self.current_state.available_operations().contains(&operation) {
+                if !self
+                    .current_state
+                    .available_operations()
+                    .contains(&operation)
+                {
                     return Err(StateTransitionError::OperationNotAvailable {
                         operation: operation.to_string(),
                         current_state: self.current_state.clone(),
@@ -367,7 +372,9 @@ mod tests {
         assert_eq!(after_recovery, YubiKeyState::Registered);
 
         // Orphaned -> Registered (identity regeneration)
-        let after_identity = orphaned_state.next_state_after_identity_generation().unwrap();
+        let after_identity = orphaned_state
+            .next_state_after_identity_generation()
+            .unwrap();
         assert_eq!(after_identity, YubiKeyState::Registered);
     }
 
@@ -383,7 +390,11 @@ mod tests {
 
         // Can't recover registry when not orphaned
         let registered_state = YubiKeyState::Registered;
-        assert!(registered_state.next_state_after_registry_recovery().is_err());
+        assert!(
+            registered_state
+                .next_state_after_registry_recovery()
+                .is_err()
+        );
     }
 
     #[test]
@@ -413,7 +424,9 @@ mod tests {
         assert_eq!(machine.current_state(), &YubiKeyState::Reused);
 
         // Identity generation: Reused -> Registered
-        machine.transition(YubiKeyOperation::GenerateIdentity).unwrap();
+        machine
+            .transition(YubiKeyOperation::GenerateIdentity)
+            .unwrap();
         assert_eq!(machine.current_state(), &YubiKeyState::Registered);
 
         // Operations that don't change state
@@ -431,7 +444,10 @@ mod tests {
         // Can't encrypt in new state
         let result = machine.transition(YubiKeyOperation::Encrypt);
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), StateTransitionError::OperationNotAvailable { .. }));
+        assert!(matches!(
+            result.unwrap_err(),
+            StateTransitionError::OperationNotAvailable { .. }
+        ));
     }
 
     #[test]

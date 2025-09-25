@@ -74,9 +74,8 @@ impl Pin {
 
         // Check for simple patterns
         let weak_patterns = [
-            "111111", "222222", "333333", "444444", "555555",
-            "666666", "777777", "888888", "999999", "000000",
-            "123456", "654321", "987654", "456789",
+            "111111", "222222", "333333", "444444", "555555", "666666", "777777", "888888",
+            "999999", "000000", "123456", "654321", "987654", "456789",
         ];
 
         weak_patterns.contains(&pin)
@@ -101,7 +100,11 @@ impl Pin {
         }
 
         // Digit variety bonus
-        let unique_digits = self.value.chars().collect::<std::collections::HashSet<_>>().len();
+        let unique_digits = self
+            .value
+            .chars()
+            .collect::<std::collections::HashSet<_>>()
+            .len();
         match unique_digits {
             1..=2 => score += 10,
             3..=4 => score += 25,
@@ -155,7 +158,10 @@ impl Pin {
 
         // Check for AAAA pattern (4+ consecutive same digits)
         for i in 0..chars.len() - 3 {
-            if chars[i] == chars[i + 1] && chars[i + 1] == chars[i + 2] && chars[i + 2] == chars[i + 3] {
+            if chars[i] == chars[i + 1]
+                && chars[i + 1] == chars[i + 2]
+                && chars[i + 2] == chars[i + 3]
+            {
                 return true;
             }
         }
@@ -178,7 +184,7 @@ impl fmt::Display for Pin {
 
 // Custom serde module to handle sensitive data
 mod pin_serde {
-    use super::*;
+
     use serde::{Deserializer, Serializer};
 
     pub fn serialize<S>(pin: &String, serializer: S) -> Result<S::Ok, S::Error>
@@ -315,7 +321,9 @@ mod tests {
     fn test_default_pin_detection() {
         let default_pin = Pin::new("123456".to_string()).unwrap_or_else(|_| {
             // This should fail due to weak PIN validation, but test the logic
-            Pin { value: "123456".to_string() }
+            Pin {
+                value: "123456".to_string(),
+            }
         });
         // Can't test because weak PIN validation prevents creation
 
@@ -327,21 +335,31 @@ mod tests {
     #[test]
     fn test_complexity_score() {
         // Test with manually created PINs to bypass weak PIN validation
-        let simple_pin = Pin { value: "112233".to_string() };
-        let complex_pin = Pin { value: "197542".to_string() };
+        let simple_pin = Pin {
+            value: "112233".to_string(),
+        };
+        let complex_pin = Pin {
+            value: "197542".to_string(),
+        };
 
         assert!(simple_pin.complexity_score() < complex_pin.complexity_score());
     }
 
     #[test]
     fn test_pattern_detection() {
-        let sequential = Pin { value: "123789".to_string() };
+        let sequential = Pin {
+            value: "123789".to_string(),
+        };
         assert!(sequential.has_sequential_pattern());
 
-        let repeated = Pin { value: "121212".to_string() };
+        let repeated = Pin {
+            value: "121212".to_string(),
+        };
         assert!(repeated.has_repeated_pattern());
 
-        let quad_repeated = Pin { value: "111123".to_string() };
+        let quad_repeated = Pin {
+            value: "111123".to_string(),
+        };
         assert!(quad_repeated.has_repeated_pattern());
     }
 

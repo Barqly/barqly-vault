@@ -186,25 +186,13 @@ pub enum Interface {
 }
 
 /// Device capabilities
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct DeviceCapabilities {
     pub piv: bool,
     pub oath: bool,
     pub fido2: bool,
     pub openpgp: bool,
     pub otp: bool,
-}
-
-impl Default for DeviceCapabilities {
-    fn default() -> Self {
-        Self {
-            piv: false,
-            oath: false,
-            fido2: false,
-            openpgp: false,
-            otp: false,
-        }
-    }
 }
 
 impl DeviceCapabilities {
@@ -239,11 +227,21 @@ impl DeviceCapabilities {
     /// Get capability summary
     pub fn summary(&self) -> Vec<String> {
         let mut caps = Vec::new();
-        if self.piv { caps.push("PIV".to_string()); }
-        if self.oath { caps.push("OATH".to_string()); }
-        if self.fido2 { caps.push("FIDO2".to_string()); }
-        if self.openpgp { caps.push("OpenPGP".to_string()); }
-        if self.otp { caps.push("OTP".to_string()); }
+        if self.piv {
+            caps.push("PIV".to_string());
+        }
+        if self.oath {
+            caps.push("OATH".to_string());
+        }
+        if self.fido2 {
+            caps.push("FIDO2".to_string());
+        }
+        if self.openpgp {
+            caps.push("OpenPGP".to_string());
+        }
+        if self.otp {
+            caps.push("OTP".to_string());
+        }
         caps
     }
 }

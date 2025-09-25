@@ -591,10 +591,7 @@ pub async fn encrypt_files_multi(
         if let Some(registry_entry) = registry.get_key(key_id) {
             match registry_entry {
                 crate::storage::KeyEntry::Passphrase {
-                    label,
-                    public_key,
-                    key_filename,
-                    ..
+                    label, public_key, ..
                 } => {
                     debug!(
                         key_label = %label,

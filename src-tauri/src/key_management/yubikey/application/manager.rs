@@ -13,12 +13,11 @@
 //! - **Event Publishing**: Publishes events for UI updates and logging
 
 use crate::key_management::yubikey::{
+    application::services::{DeviceService, IdentityService, RegistryService, ServiceFactory},
     domain::errors::{YubiKeyError, YubiKeyResult},
-    domain::models::{Serial, Pin, YubiKeyDevice, YubiKeyIdentity, YubiKeyState},
-    application::services::{ServiceFactory, DeviceService, IdentityService, RegistryService, FileService},
+    domain::models::{Pin, Serial, YubiKeyDevice, YubiKeyIdentity},
 };
 use crate::prelude::*;
-use std::sync::Arc;
 
 /// YubiKey Manager - Main facade for all YubiKey operations
 ///
@@ -88,7 +87,11 @@ impl YubiKeyManager {
     pub async fn list_connected_devices(&self) -> YubiKeyResult<Vec<YubiKeyDevice>> {
         debug!("Listing connected YubiKey devices");
 
-        let devices = self.services.device_service().list_connected_devices().await?;
+        let devices = self
+            .services
+            .device_service()
+            .list_connected_devices()
+            .await?;
 
         info!("Found {} connected YubiKey devices", devices.len());
         Ok(devices)
@@ -103,14 +106,20 @@ impl YubiKeyManager {
 
     /// Check if YubiKey device is connected
     pub async fn is_device_connected(&self, serial: &Serial) -> YubiKeyResult<bool> {
-        self.services.device_service().is_device_connected(serial).await
+        self.services
+            .device_service()
+            .is_device_connected(serial)
+            .await
     }
 
     /// Validate PIN for YubiKey device
     pub async fn validate_pin(&self, serial: &Serial, pin: &Pin) -> YubiKeyResult<bool> {
         debug!("Validating PIN for YubiKey: {}", serial.redacted());
 
-        self.services.device_service().validate_pin(serial, pin).await
+        self.services
+            .device_service()
+            .validate_pin(serial, pin)
+            .await
     }
 
     /// Check if YubiKey has default PIN (123456)
@@ -126,7 +135,12 @@ impl YubiKeyManager {
 
     /// Generate new identity for YubiKey during initialization
     /// This fixes the identity tag bug by centralizing identity creation
-    pub async fn generate_identity(&self, serial: &Serial, pin: &Pin, slot: u8) -> YubiKeyResult<YubiKeyIdentity> {
+    pub async fn generate_identity(
+        &self,
+        serial: &Serial,
+        pin: &Pin,
+        slot: u8,
+    ) -> YubiKeyResult<YubiKeyIdentity> {
         info!(
             "Generating identity for YubiKey: {} slot: {}",
             serial.redacted(),
@@ -144,7 +158,11 @@ impl YubiKeyManager {
         }
 
         // Generate identity using service
-        let identity = self.services.identity_service().generate_identity(serial, pin, slot).await?;
+        let identity = self
+            .services
+            .identity_service()
+            .generate_identity(serial, pin, slot)
+            .await?;
 
         info!(
             "Generated identity for YubiKey: {} recipient: {}",
@@ -156,33 +174,62 @@ impl YubiKeyManager {
     }
 
     /// Get existing identity from YubiKey (for orphaned keys)
-    pub async fn get_existing_identity(&self, serial: &Serial, slot: u8) -> YubiKeyResult<Option<YubiKeyIdentity>> {
-        debug!("Getting existing identity for YubiKey: {} slot: {}", serial.redacted(), slot);
+    pub async fn get_existing_identity(
+        &self,
+        serial: &Serial,
+        slot: u8,
+    ) -> YubiKeyResult<Option<YubiKeyIdentity>> {
+        debug!(
+            "Getting existing identity for YubiKey: {} slot: {}",
+            serial.redacted(),
+            slot
+        );
 
-        self.services.identity_service().get_existing_identity(serial, slot).await
+        self.services
+            .identity_service()
+            .get_existing_identity(serial, slot)
+            .await
     }
 
     /// Check if YubiKey has identity in specified slot
     pub async fn has_identity(&self, serial: &Serial, slot: u8) -> YubiKeyResult<bool> {
-        self.services.identity_service().has_identity(serial, slot).await
+        self.services
+            .identity_service()
+            .has_identity(serial, slot)
+            .await
     }
 
     /// Encrypt data with YubiKey recipient
-    pub async fn encrypt_with_recipient(&self, recipient: &str, data: &[u8]) -> YubiKeyResult<Vec<u8>> {
+    pub async fn encrypt_with_recipient(
+        &self,
+        recipient: &str,
+        data: &[u8],
+    ) -> YubiKeyResult<Vec<u8>> {
         debug!("Encrypting {} bytes with recipient", data.len());
 
-        self.services.identity_service().encrypt_with_recipient(recipient, data).await
+        self.services
+            .identity_service()
+            .encrypt_with_recipient(recipient, data)
+            .await
     }
 
     /// Decrypt data with YubiKey identity
-    pub async fn decrypt_with_identity(&self, serial: &Serial, identity_tag: &str, encrypted_data: &[u8]) -> YubiKeyResult<Vec<u8>> {
+    pub async fn decrypt_with_identity(
+        &self,
+        serial: &Serial,
+        identity_tag: &str,
+        encrypted_data: &[u8],
+    ) -> YubiKeyResult<Vec<u8>> {
         debug!(
             "Decrypting {} bytes for YubiKey: {}",
             encrypted_data.len(),
             serial.redacted()
         );
 
-        self.services.identity_service().decrypt_with_identity(serial, identity_tag, encrypted_data).await
+        self.services
+            .identity_service()
+            .decrypt_with_identity(serial, identity_tag, encrypted_data)
+            .await
     }
 
     // =============================================================================
@@ -196,7 +243,7 @@ impl YubiKeyManager {
         identity: &YubiKeyIdentity,
         slot: u8,
         recovery_code_hash: String,
-        label: Option<String>
+        label: Option<String>,
     ) -> YubiKeyResult<String> {
         info!(
             "Registering YubiKey device: {} slot: {}",
@@ -204,7 +251,9 @@ impl YubiKeyManager {
             slot
         );
 
-        let entry_id = self.services.registry_service()
+        let entry_id = self
+            .services
+            .registry_service()
             .add_yubikey_entry(device, identity, slot, recovery_code_hash, label)
             .await?;
 
@@ -218,15 +267,24 @@ impl YubiKeyManager {
     }
 
     /// Find YubiKey registry entry by serial
-    pub async fn find_by_serial(&self, serial: &Serial) -> YubiKeyResult<Option<(String, YubiKeyDevice)>> {
+    pub async fn find_by_serial(
+        &self,
+        serial: &Serial,
+    ) -> YubiKeyResult<Option<(String, YubiKeyDevice)>> {
         debug!("Finding registry entry for YubiKey: {}", serial.redacted());
 
-        self.services.registry_service().find_by_serial(serial).await
+        self.services
+            .registry_service()
+            .find_by_serial(serial)
+            .await
     }
 
     /// Check if slot is occupied
     pub async fn is_slot_occupied(&self, slot: u8) -> YubiKeyResult<bool> {
-        self.services.registry_service().is_slot_occupied(slot).await
+        self.services
+            .registry_service()
+            .is_slot_occupied(slot)
+            .await
     }
 
     /// List all registered YubiKey devices
@@ -269,12 +327,14 @@ impl YubiKeyManager {
         pin: &Pin,
         slot: u8,
         recovery_code_hash: String,
-        label: Option<String>
+        label: Option<String>,
     ) -> YubiKeyResult<(YubiKeyDevice, YubiKeyIdentity, String)> {
         info!("Initializing YubiKey device: {}", serial.redacted());
 
         // 1. Detect device
-        let device = self.detect_device(serial).await?
+        let device = self
+            .detect_device(serial)
+            .await?
             .ok_or_else(|| YubiKeyError::device_not_found(serial))?;
 
         // 2. Validate PIN
@@ -291,7 +351,9 @@ impl YubiKeyManager {
         let identity = self.generate_identity(serial, pin, slot).await?;
 
         // 5. Register device
-        let entry_id = self.register_device(&device, &identity, slot, recovery_code_hash, label).await?;
+        let entry_id = self
+            .register_device(&device, &identity, slot, recovery_code_hash, label)
+            .await?;
 
         info!(
             "Successfully initialized YubiKey: {} with entry ID: {}",
@@ -304,11 +366,17 @@ impl YubiKeyManager {
 
     /// Perform complete YubiKey validation
     /// Validates device connection, PIN, and identity
-    pub async fn validate_device(&self, serial: &Serial, pin: &Pin) -> YubiKeyResult<YubiKeyDevice> {
+    pub async fn validate_device(
+        &self,
+        serial: &Serial,
+        pin: &Pin,
+    ) -> YubiKeyResult<YubiKeyDevice> {
         debug!("Validating YubiKey device: {}", serial.redacted());
 
         // 1. Check device connection
-        let device = self.detect_device(serial).await?
+        let device = self
+            .detect_device(serial)
+            .await?
             .ok_or_else(|| YubiKeyError::device_not_found(serial))?;
 
         // 2. Validate PIN
@@ -321,7 +389,10 @@ impl YubiKeyManager {
             return Err(YubiKeyError::registry_entry_not_found(serial));
         }
 
-        info!("YubiKey device validation successful: {}", serial.redacted());
+        info!(
+            "YubiKey device validation successful: {}",
+            serial.redacted()
+        );
         Ok(device)
     }
 
@@ -330,12 +401,26 @@ impl YubiKeyManager {
     // =============================================================================
 
     /// Get health status of all services
-    pub async fn get_service_health(&self) -> YubiKeyResult<std::collections::HashMap<String, crate::key_management::yubikey::application::services::ServiceHealth>> {
+    pub async fn get_service_health(
+        &self,
+    ) -> YubiKeyResult<
+        std::collections::HashMap<
+            String,
+            crate::key_management::yubikey::application::services::ServiceHealth,
+        >,
+    > {
         self.services.health_check_all_services().await
     }
 
     /// Get service metrics
-    pub async fn get_service_metrics(&self) -> YubiKeyResult<std::collections::HashMap<String, crate::key_management::yubikey::application::services::ServiceMetrics>> {
+    pub async fn get_service_metrics(
+        &self,
+    ) -> YubiKeyResult<
+        std::collections::HashMap<
+            String,
+            crate::key_management::yubikey::application::services::ServiceMetrics,
+        >,
+    > {
         self.services.get_all_service_metrics().await
     }
 

@@ -9,9 +9,9 @@ use crate::key_management::yubikey::{
 };
 use crate::prelude::*;
 use async_trait::async_trait;
-use std::path::{Path, PathBuf};
 use std::io::Write;
-use tempfile::{TempDir, NamedTempFile};
+use std::path::{Path, PathBuf};
+use tempfile::{NamedTempFile, TempDir};
 use tokio::fs;
 
 /// File service trait for temporary file operations
@@ -30,7 +30,11 @@ pub trait FileService: Send + Sync + std::fmt::Debug {
     async fn read_temp_file(&self, path: &Path) -> YubiKeyResult<Vec<u8>>;
 
     /// Create temporary identity file for age-plugin-yubikey
-    async fn create_identity_file(&self, serial: &Serial, identity_tag: &str) -> YubiKeyResult<TempFile>;
+    async fn create_identity_file(
+        &self,
+        serial: &Serial,
+        identity_tag: &str,
+    ) -> YubiKeyResult<TempFile>;
 
     /// Create temporary recipient file for age encryption
     async fn create_recipient_file(&self, recipient: &str) -> YubiKeyResult<TempFile>;
@@ -129,8 +133,9 @@ impl DefaultFileService {
     /// Initialize base temporary directory if needed
     async fn ensure_base_temp_dir(&mut self) -> YubiKeyResult<&Path> {
         if self.base_temp_dir.is_none() {
-            let temp_dir = TempDir::new()
-                .map_err(|e| YubiKeyError::file(format!("Failed to create base temp dir: {}", e)))?;
+            let temp_dir = TempDir::new().map_err(|e| {
+                YubiKeyError::file(format!("Failed to create base temp dir: {}", e))
+            })?;
 
             debug!("Created base temporary directory: {:?}", temp_dir.path());
             self.base_temp_dir = Some(temp_dir);
@@ -193,10 +198,12 @@ impl FileService for DefaultFileService {
             .map_err(|e| YubiKeyError::file(format!("Failed to create temp file: {}", e)))?;
 
         // Write content to file
-        temp_file.write_all(content.as_bytes())
+        temp_file
+            .write_all(content.as_bytes())
             .map_err(|e| YubiKeyError::file(format!("Failed to write temp file: {}", e)))?;
 
-        temp_file.flush()
+        temp_file
+            .flush()
             .map_err(|e| YubiKeyError::file(format!("Failed to flush temp file: {}", e)))?;
 
         let path = temp_file.path().to_path_buf();
@@ -206,7 +213,8 @@ impl FileService for DefaultFileService {
         self.set_secure_permissions(&path).await?;
 
         // Keep the temp file alive by persisting it
-        let (_, persistent_path) = temp_file.keep()
+        let (_, persistent_path) = temp_file
+            .keep()
             .map_err(|e| YubiKeyError::file(format!("Failed to persist temp file: {}", e)))?;
 
         let temp_file_wrapper = TempFile {
@@ -221,16 +229,22 @@ impl FileService for DefaultFileService {
     }
 
     async fn write_temp_file(&self, data: &[u8], suffix: &str) -> YubiKeyResult<TempFile> {
-        debug!("Writing {} bytes to temporary file with suffix: {}", data.len(), suffix);
+        debug!(
+            "Writing {} bytes to temporary file with suffix: {}",
+            data.len(),
+            suffix
+        );
 
         let mut temp_file = NamedTempFile::with_suffix(suffix)
             .map_err(|e| YubiKeyError::file(format!("Failed to create temp file: {}", e)))?;
 
         // Write data to file
-        temp_file.write_all(data)
+        temp_file
+            .write_all(data)
             .map_err(|e| YubiKeyError::file(format!("Failed to write temp file: {}", e)))?;
 
-        temp_file.flush()
+        temp_file
+            .flush()
             .map_err(|e| YubiKeyError::file(format!("Failed to flush temp file: {}", e)))?;
 
         let path = temp_file.path().to_path_buf();
@@ -239,7 +253,8 @@ impl FileService for DefaultFileService {
         self.set_secure_permissions(&path).await?;
 
         // Keep the temp file alive by persisting it
-        let (_, persistent_path) = temp_file.keep()
+        let (_, persistent_path) = temp_file
+            .keep()
             .map_err(|e| YubiKeyError::file(format!("Failed to persist temp file: {}", e)))?;
 
         let temp_file_wrapper = TempFile {
@@ -249,7 +264,11 @@ impl FileService for DefaultFileService {
             created_at: std::time::SystemTime::now(),
         };
 
-        debug!("Created temporary file with {} bytes: {:?}", data.len(), temp_file_wrapper.path());
+        debug!(
+            "Created temporary file with {} bytes: {:?}",
+            data.len(),
+            temp_file_wrapper.path()
+        );
         Ok(temp_file_wrapper)
     }
 
@@ -264,12 +283,19 @@ impl FileService for DefaultFileService {
         Ok(data)
     }
 
-    async fn create_identity_file(&self, serial: &Serial, identity_tag: &str) -> YubiKeyResult<TempFile> {
+    async fn create_identity_file(
+        &self,
+        serial: &Serial,
+        identity_tag: &str,
+    ) -> YubiKeyResult<TempFile> {
         debug!("Creating identity file for YubiKey: {}", serial.redacted());
 
         // Create identity file content in the format expected by age-plugin-yubikey
-        let identity_content = format!("# YubiKey identity for serial {}\n{}\n",
-            serial.redacted(), identity_tag);
+        let identity_content = format!(
+            "# YubiKey identity for serial {}\n{}\n",
+            serial.redacted(),
+            identity_tag
+        );
 
         let temp_file = self.create_temp_file(&identity_content, ".txt").await?;
 
@@ -359,7 +385,10 @@ mod tests {
     #[tokio::test]
     async fn test_create_temp_file() {
         let service = DefaultFileService::new().unwrap();
-        let temp_file = service.create_temp_file("test content", ".txt").await.unwrap();
+        let temp_file = service
+            .create_temp_file("test content", ".txt")
+            .await
+            .unwrap();
 
         assert!(temp_file.path().exists());
         assert_eq!(temp_file.suffix(), ".txt");
@@ -384,7 +413,10 @@ mod tests {
         let serial = Serial::new("12345678".to_string()).unwrap();
         let identity_tag = "age1yubikey1test123";
 
-        let identity_file = service.create_identity_file(&serial, identity_tag).await.unwrap();
+        let identity_file = service
+            .create_identity_file(&serial, identity_tag)
+            .await
+            .unwrap();
         let content = service.read_temp_file(identity_file.path()).await.unwrap();
         let content_str = String::from_utf8(content).unwrap();
 
@@ -410,7 +442,10 @@ mod tests {
         let temp_file1 = service.create_temp_file("test1", ".txt").await.unwrap();
         let temp_file2 = service.create_temp_file("test2", ".txt").await.unwrap();
 
-        let paths = vec![temp_file1.path().to_path_buf(), temp_file2.path().to_path_buf()];
+        let paths = vec![
+            temp_file1.path().to_path_buf(),
+            temp_file2.path().to_path_buf(),
+        ];
 
         // Files should exist
         assert!(paths[0].exists());

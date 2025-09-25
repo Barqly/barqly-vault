@@ -1,12 +1,12 @@
 use age::x25519::Identity;
 use std::io::Write;
 use std::iter;
-use std::str::FromStr;
 use std::process::{Command, Stdio};
+use std::str::FromStr;
 
 use super::{CryptoError, PrivateKey, PublicKey, Result};
-use crate::prelude::*;
 use crate::key_management::yubikey::infrastructure::pty::core::get_age_path;
+use crate::prelude::*;
 
 /// Parse a recipient string that could be either x25519 or plugin-based
 fn parse_recipient(recipient_str: &str) -> Result<Box<dyn age::Recipient + Send>> {
@@ -259,7 +259,9 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
     );
 
     // Set up environment for age CLI to find the plugin
-    let plugin_dir = age_path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let plugin_dir = age_path
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."));
     let current_path = std::env::var("PATH").unwrap_or_default();
     let new_path = format!("{}:{}", plugin_dir.display(), current_path);
 
@@ -305,7 +307,9 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
         debug!("Data written to age CLI stdin and closed");
     } else {
         error!("Failed to get stdin handle for age CLI process");
-        return Err(CryptoError::EncryptionFailed("Could not write to age CLI".to_string()));
+        return Err(CryptoError::EncryptionFailed(
+            "Could not write to age CLI".to_string(),
+        ));
     }
 
     // Wait for process and collect output
@@ -369,7 +373,7 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
 pub fn decrypt_data_yubikey_cli(
     encrypted_data: &[u8],
     key_entry: &crate::storage::KeyEntry,
-    pin: &str
+    pin: &str,
 ) -> Result<Vec<u8>> {
     debug_assert!(!encrypted_data.is_empty(), "Encrypted data cannot be empty");
     debug_assert!(!pin.is_empty(), "PIN cannot be empty");
@@ -385,7 +389,9 @@ pub fn decrypt_data_yubikey_cli(
         } => (serial, slot, recipient, identity_tag),
         _ => {
             error!("Invalid key entry type for YubiKey decryption");
-            return Err(CryptoError::DecryptionFailed("Expected YubiKey key entry".to_string()));
+            return Err(CryptoError::DecryptionFailed(
+                "Expected YubiKey key entry".to_string(),
+            ));
         }
     };
 
@@ -455,7 +461,9 @@ pub fn decrypt_data_cli(encrypted_data: &[u8]) -> Result<Vec<u8>> {
     );
 
     // Set up environment for age CLI to find the plugin
-    let plugin_dir = age_path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let plugin_dir = age_path
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."));
     let current_path = std::env::var("PATH").unwrap_or_default();
     let new_path = format!("{}:{}", plugin_dir.display(), current_path);
 
@@ -501,7 +509,9 @@ pub fn decrypt_data_cli(encrypted_data: &[u8]) -> Result<Vec<u8>> {
         debug!("Encrypted data written to age CLI stdin and closed");
     } else {
         error!("Failed to get stdin handle for age CLI decryption process");
-        return Err(CryptoError::DecryptionFailed("Could not write to age CLI".to_string()));
+        return Err(CryptoError::DecryptionFailed(
+            "Could not write to age CLI".to_string(),
+        ));
     }
 
     // Wait for process and collect output

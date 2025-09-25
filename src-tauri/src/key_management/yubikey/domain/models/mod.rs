@@ -18,29 +18,28 @@
 //! - `YubiKeyIdentity`: Age-plugin identity with validation
 //! - `YubiKeyState`: Single enum for all state management (eliminates duplicates)
 
-pub mod serial;
-pub mod pin;
 pub mod device;
 pub mod identity;
-pub mod state;
 pub mod initialization;
+pub mod pin;
+pub mod serial;
+pub mod state;
 
 // Re-export all domain objects for easy import
-pub use serial::{Serial, SerialValidationError};
-pub use pin::{Pin, PinValidationError};
 pub use device::{
-    YubiKeyDevice, FormFactor, Interface, DeviceCapabilities, Capability,
-    ConnectionState, DeviceHealth, SlotType, SlotInfo, DeviceSummary
+    Capability, ConnectionState, DeviceCapabilities, DeviceHealth, DeviceSummary, FormFactor,
+    Interface, SlotInfo, SlotType, YubiKeyDevice,
 };
 pub use identity::{
-    YubiKeyIdentity, IdentityBuilder, RedactedIdentity, IdentityValidationError,
-    identity_utils,
-};
-pub use state::{
-    YubiKeyState, YubiKeyOperation, PinStatus, StateTransitionError,
-    YubiKeyStateMachine, StateTransition,
+    IdentityBuilder, IdentityValidationError, RedactedIdentity, YubiKeyIdentity, identity_utils,
 };
 pub use initialization::{InitializationResult, PinPolicy};
+pub use pin::{Pin, PinValidationError};
+pub use serial::{Serial, SerialValidationError};
+pub use state::{
+    PinStatus, StateTransition, StateTransitionError, YubiKeyOperation, YubiKeyState,
+    YubiKeyStateMachine,
+};
 
 /// Commonly used type aliases
 pub type YubiKeySerial = Serial;
@@ -86,10 +85,14 @@ mod integration_tests {
         assert_eq!(state_machine.current_state(), &YubiKeyState::New);
 
         // Test state transitions
-        state_machine.transition(YubiKeyOperation::SetupPin).unwrap();
+        state_machine
+            .transition(YubiKeyOperation::SetupPin)
+            .unwrap();
         assert_eq!(state_machine.current_state(), &YubiKeyState::Reused);
 
-        state_machine.transition(YubiKeyOperation::GenerateIdentity).unwrap();
+        state_machine
+            .transition(YubiKeyOperation::GenerateIdentity)
+            .unwrap();
         assert_eq!(state_machine.current_state(), &YubiKeyState::Registered);
 
         // Verify final state
@@ -151,7 +154,9 @@ mod integration_tests {
         machine.transition(YubiKeyOperation::SetupPin).unwrap();
 
         assert!(machine.current_state().needs_age_identity());
-        machine.transition(YubiKeyOperation::GenerateIdentity).unwrap();
+        machine
+            .transition(YubiKeyOperation::GenerateIdentity)
+            .unwrap();
 
         assert!(machine.current_state().is_ready_for_operations());
 
@@ -161,7 +166,9 @@ mod integration_tests {
         // Test orphaned recovery
         let mut orphaned_machine = YubiKeyStateMachine::new(YubiKeyState::Orphaned);
         assert!(orphaned_machine.current_state().needs_registry_recovery());
-        orphaned_machine.transition(YubiKeyOperation::RecoverRegistry).unwrap();
+        orphaned_machine
+            .transition(YubiKeyOperation::RecoverRegistry)
+            .unwrap();
         assert!(orphaned_machine.current_state().is_ready_for_operations());
     }
 }

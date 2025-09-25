@@ -94,7 +94,10 @@ mod yubikey_baseline_tests {
         // This matches our analysis of 24+ scattered functions
         assert!(total_functions >= 24);
 
-        println!("✅ Documented {} YubiKey functions across {} modules", total_functions, 8);
+        println!(
+            "✅ Documented {} YubiKey functions across {} modules",
+            total_functions, 8
+        );
         println!("🔧 Ready to begin refactoring into centralized architecture");
     }
 
@@ -124,7 +127,10 @@ mod yubikey_baseline_tests {
 
         println!("🐛 IDENTITY TAG BUG LOCATIONS:");
         println!("   1. {} - streamlined_result.identity_tag", bug_location_1);
-        println!("   2. {} - yubikey.identity_tag fallback logic", bug_location_2);
+        println!(
+            "   2. {} - yubikey.identity_tag fallback logic",
+            bug_location_2
+        );
         println!("🎯 TARGET: Single identity service with get_identity_for_serial()");
     }
 

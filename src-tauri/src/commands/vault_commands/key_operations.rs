@@ -179,7 +179,7 @@ pub async fn add_key_to_vault(
     }
 
     // Load the vault
-    let mut vault = match vault_store::load_vault(&input.vault_id).await {
+    let vault = match vault_store::load_vault(&input.vault_id).await {
         Ok(v) => v,
         Err(_) => {
             return Err(Box::new(CommandError {
@@ -239,10 +239,7 @@ pub async fn add_key_to_vault(
             };
 
             // Load the key registry to count existing YubiKeys
-            let registry = match KeyRegistry::load() {
-                Ok(r) => r,
-                Err(_) => KeyRegistry::new(),
-            };
+            let registry = KeyRegistry::load().unwrap_or_default();
 
             // Determine slot index by counting existing YubiKeys in vault
             let yubikey_count = vault

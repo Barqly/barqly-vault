@@ -2,13 +2,16 @@
 //!
 //! Placeholder implementation - will be fully implemented in Week 2-3
 
-use crate::key_management::yubikey::domain::errors::{YubiKeyError, YubiKeyResult};
-use std::fmt;
-
 /// YubiKey Factory - Creates and configures YubiKey objects
 #[derive(Debug)]
 pub struct YubiKeyFactory {
     // Will be implemented
+}
+
+impl Default for YubiKeyFactory {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl YubiKeyFactory {
