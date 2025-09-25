@@ -6,11 +6,12 @@
  * and encryption/decryption operations.
  */
 
-import { commands, YubiKeyDevice } from '../bindings';
+import type { YubiKeyStateInfo } from '../bindings';
+import { commands } from '../bindings';
 import { logger } from '../lib/logger';
 
-// Re-export YubiKeyDevice from bindings
-export interface YubiKeyDeviceExtended extends YubiKeyDevice {
+// Re-export YubiKeyStateInfo from bindings
+export interface YubiKeyDeviceExtended extends YubiKeyStateInfo {
   // Extended properties for service
   status?: DeviceStatus;
   available_slots?: number[];
@@ -31,9 +32,9 @@ export interface YubiKeyServiceOptions {
 // Service Events
 export type YubiKeyServiceEvent =
   | { type: 'DETECTION_STARTED' }
-  | { type: 'DETECTION_COMPLETED'; devices: YubiKeyDevice[] }
+  | { type: 'DETECTION_COMPLETED'; devices: YubiKeyStateInfo[] }
   | { type: 'DETECTION_FAILED'; error: string }
-  | { type: 'DEVICE_CONNECTED'; device: YubiKeyDevice }
+  | { type: 'DEVICE_CONNECTED'; device: YubiKeyStateInfo }
   | { type: 'DEVICE_DISCONNECTED'; serial: string };
 
 export type YubiKeyServiceEventListener = (event: YubiKeyServiceEvent) => void;
@@ -50,7 +51,7 @@ export type YubiKeyServiceEventListener = (event: YubiKeyServiceEvent) => void;
  */
 export class YubiKeyService {
   private eventListeners: Set<YubiKeyServiceEventListener> = new Set();
-  private detectionCache: { devices: YubiKeyDevice[]; timestamp: number } | null = null;
+  private detectionCache: { devices: YubiKeyStateInfo[]; timestamp: number } | null = null;
   private readonly cacheExpiry = 30000; // 30 seconds
   private readonly options: Required<YubiKeyServiceOptions>;
 
@@ -87,7 +88,7 @@ export class YubiKeyService {
    * This is the ONLY method that should trigger hardware detection.
    * UI components should never call backend commands directly.
    */
-  async detectDevices(options: { useCache?: boolean } = {}): Promise<YubiKeyDevice[]> {
+  async detectDevices(options: { useCache?: boolean } = {}): Promise<YubiKeyStateInfo[]> {
     const { useCache = true } = options;
 
     // Check cache first
@@ -108,7 +109,7 @@ export class YubiKeyService {
       console.log('🔍 YubiKeyService: About to call yubikey_list_devices backend command...');
       logger.logComponentLifecycle('YubiKeyService', 'Starting YubiKey device detection');
 
-      const result = await commands.yubikeyListDevices();
+      const result = await commands.listYubikeys();
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to list YubiKey devices');
       }
@@ -161,7 +162,8 @@ export class YubiKeyService {
   async isAvailable(): Promise<boolean> {
     try {
       console.log('🔍 YubiKeyService: Checking YubiKey availability...');
-      const result = await commands.yubikeyDevicesAvailable();
+      // Use listYubikeys to check availability
+      const result = await commands.listYubikeys();
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to check YubiKey availability');
       }
@@ -185,7 +187,7 @@ export class YubiKeyService {
     pin: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const result = await commands.yubikeyTestConnection(deviceId, pin);
+      const result = await commands.checkYubikeyAvailability({ serial: deviceId });
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to test YubiKey connection');
       }
@@ -200,7 +202,7 @@ export class YubiKeyService {
    */
   async initializeDevice(deviceId: string, pin: string, slot: number): Promise<void> {
     try {
-      const result = await commands.yubikeyInitialize(deviceId, pin, slot, '');
+      const result = await commands.initYubikey(deviceId, pin, 'Default Label');
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to initialize YubiKey');
       }
@@ -220,13 +222,19 @@ export class YubiKeyService {
   /**
    * Get detailed information about a specific device
    */
-  async getDeviceInfo(deviceId: string): Promise<YubiKeyDevice> {
+  async getDeviceInfo(deviceId: string): Promise<YubiKeyStateInfo> {
     try {
-      const result = await commands.yubikeyGetDeviceInfo(deviceId);
+      // Get device info from listYubikeys result
+      const result = await commands.listYubikeys();
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to get YubiKey device info');
       }
-      return result.data;
+      // Find the specific device by serial
+      const device = result.data.find(d => d.serial === deviceId);
+      if (!device) {
+        throw new Error(`YubiKey with serial ${deviceId} not found`);
+      }
+      return device;
     } catch (error: any) {
       logger.logComponentLifecycle('YubiKeyService', 'Failed to get device info', {
         device_id: deviceId,

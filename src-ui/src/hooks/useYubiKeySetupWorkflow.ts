@@ -24,9 +24,8 @@ export const useYubiKeySetupWorkflow = () => {
   const [protectionMode, setProtectionMode] = useState<ProtectionMode>(
     ProtectionMode.PASSPHRASE_ONLY,
   );
-  const [availableDevices, setAvailableDevices] = useState<YubiKeyDevice[]>([]);
-  const [yubiKeyStates, setYubiKeyStates] = useState<YubiKeyStateInfo[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<YubiKeyDevice | null>(null);
+  const [availableDevices, setAvailableDevices] = useState<YubiKeyStateInfo[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<YubiKeyStateInfo | null>(null);
   const [yubiKeyInfo, setYubiKeyInfo] = useState<YubiKeyInfo | null>(null);
   const [isCheckingDevices, setIsCheckingDevices] = useState(false);
   const [hasCheckedDevices, setHasCheckedDevices] = useState(false);
@@ -63,27 +62,14 @@ export const useYubiKeySetupWorkflow = () => {
         firstYubikey: yubikeys[0],
       });
 
-      // Store the YubiKey state information
-      setYubiKeyStates(yubikeys);
-
-      // Convert YubiKeyStateInfo to YubiKeyDevice format for backward compatibility
-      const devices: YubiKeyDevice[] = yubikeys.map((yk: YubiKeyStateInfo) => ({
-        device_id: yk.serial, // Use serial as device_id
-        name: yk.label || `YubiKey (${yk.serial})`,
-        serial_number: yk.serial,
-        firmware_version: null,
-        has_piv: true,
-        has_oath: false,
-        has_fido: false,
-      }));
-
-      setAvailableDevices(devices);
+      // Store the YubiKey state information directly
+      setAvailableDevices(yubikeys);
       setHasCheckedDevices(true);
 
       // Auto-select the first (and typically only) YubiKey
-      if (devices.length > 0 && !selectedDevice) {
-        console.log('🎯 Auto-selecting first YubiKey:', devices[0]);
-        setSelectedDevice(devices[0]);
+      if (yubikeys.length > 0 && !selectedDevice) {
+        console.log('🎯 Auto-selecting first YubiKey:', yubikeys[0]);
+        setSelectedDevice(yubikeys[0]);
       }
 
       // Check YubiKey states and provide appropriate messaging
@@ -169,18 +155,18 @@ export const useYubiKeySetupWorkflow = () => {
     [hasCheckedDevices, checkForYubiKeys],
   );
 
-  const handleDeviceSelect = useCallback((device: YubiKeyDevice) => {
+  const handleDeviceSelect = useCallback((device: YubiKeyStateInfo) => {
     logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'Device selected', {
-      deviceName: device.name,
-      deviceId: device.device_id,
+      deviceName: device.label || `YubiKey (${device.serial})`,
+      deviceId: device.serial,
     });
     setSelectedDevice(device);
   }, []);
 
-  const handleYubiKeyConfigured = useCallback((device: YubiKeyDevice, info: YubiKeyInfo) => {
+  const handleYubiKeyConfigured = useCallback((device: YubiKeyStateInfo, info: YubiKeyInfo) => {
     logger.logComponentLifecycle('useYubiKeySetupWorkflow', 'YubiKey configured', {
-      deviceName: device.name,
-      deviceId: device.device_id,
+      deviceName: device.label || `YubiKey (${device.serial})`,
+      deviceId: device.serial,
       slots: info.piv_slots,
     });
     setYubiKeyInfo(info);

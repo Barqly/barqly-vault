@@ -10,7 +10,8 @@ import {
   WifiOff,
 } from 'lucide-react';
 import { YubiKeyDecryptParams, ConnectionStatus } from '../../bindings';
-import { commands, YubiKeyDevice } from '../../bindings';
+import { commands } from '../../bindings';
+import type { YubiKeyStateInfo } from '../../bindings';
 import { LoadingSpinner } from '../ui/loading-spinner';
 import { ErrorMessage } from '../ui/error-message';
 import EnhancedInput from '../forms/EnhancedInput';
@@ -18,9 +19,9 @@ import EnhancedInput from '../forms/EnhancedInput';
 interface YubiKeyDecryptionProps {
   filePath: string;
   outputDir: string;
-  selectedDevice?: YubiKeyDevice | null;
+  selectedDevice?: YubiKeyStateInfo | null;
   onDecryptionStart?: (params: YubiKeyDecryptParams) => void;
-  onDeviceSelect?: (device: YubiKeyDevice) => void;
+  onDeviceSelect?: (device: YubiKeyStateInfo) => void;
   isLoading?: boolean;
 }
 
@@ -36,7 +37,7 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
   onDeviceSelect,
   isLoading = false,
 }) => {
-  const [availableDevices, setAvailableDevices] = useState<YubiKeyDevice[]>([]);
+  const [availableDevices, setAvailableDevices] = useState<YubiKeyStateInfo[]>([]);
   const [pin, setPin] = useState('');
   const [showPin, setShowPin] = useState(false);
   const [isLoadingDevices, setIsLoadingDevices] = useState(true);
@@ -79,7 +80,7 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
     }
   };
 
-  const testDeviceConnection = async (device: YubiKeyDevice) => {
+  const testDeviceConnection = async (device: YubiKeyStateInfo) => {
     setIsTestingConnection(true);
     setConnectionStatus(null);
 
@@ -93,7 +94,7 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
         return;
       }
 
-      const result = await commands.yubikeyTestConnection(device.serial_number || '', pin);
+      const result = await commands.checkYubikeyAvailability({ serial: device.serial });
 
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Connection test failed');
@@ -143,7 +144,7 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
 
     const decryptParams: YubiKeyDecryptParams = {
       file_path: filePath,
-      device_id: selectedDevice.device_id,
+      device_id: selectedDevice.serial,
       pin: pin,
       output_dir: outputDir,
     };
@@ -202,12 +203,12 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
         <h4 className="font-medium text-gray-900">Select YubiKey Device</h4>
         <div className="grid grid-cols-1 gap-3">
           {availableDevices.map((device) => {
-            const isSelected = selectedDevice?.device_id === device.device_id;
+            const isSelected = selectedDevice?.serial === device.serial;
             const deviceConnectionStatus = isSelected ? connectionStatus : null;
 
             return (
               <div
-                key={device.device_id}
+                key={device.serial}
                 className={`
                   relative rounded-lg border-2 p-4 cursor-pointer transition-all duration-200
                   ${
@@ -243,7 +244,7 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
                       <h5
                         className={`font-medium ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}
                       >
-                        {device.name}
+                        {device.label || `YubiKey (${device.serial})`}
                       </h5>
 
                       {/* Connection Status */}
@@ -266,13 +267,8 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
                       )}
                     </div>
 
-                    {device.serial_number && (
-                      <p className="text-sm text-gray-600 mt-1">Serial: {device.serial_number}</p>
-                    )}
+                    <p className="text-sm text-gray-600 mt-1">Serial: {device.serial}</p>
 
-                    {device.firmware_version && (
-                      <p className="text-sm text-gray-600">Firmware: {device.firmware_version}</p>
-                    )}
 
                     {isSelected && connectionStatus?.error_message && (
                       <div className="mt-2 flex items-center text-red-600 text-sm">

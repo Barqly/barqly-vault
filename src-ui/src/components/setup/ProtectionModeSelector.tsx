@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { Shield, Key, Fingerprint, CheckCircle } from 'lucide-react';
-import { ProtectionMode, YubiKeyDevice } from '../../bindings';
+import type { ProtectionMode, YubiKeyStateInfo } from '../../bindings';
 import { LoadingSpinner } from '../ui/loading-spinner';
 
 interface ProtectionModeSelectorProps {
   selectedMode?: ProtectionMode;
   onModeChange: (mode: ProtectionMode) => void;
-  onYubiKeySelected?: (device: YubiKeyDevice | null) => void;
-  availableDevices?: YubiKeyDevice[];
+  onYubiKeySelected?: (device: YubiKeyStateInfo | null) => void;
+  availableDevices?: YubiKeyStateInfo[];
   isCheckingDevices?: boolean;
   isLoading?: boolean;
 }
@@ -119,11 +119,11 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
           <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0" />
           <div>
             <span className="text-sm text-green-800 font-medium">
-              YubiKey detected: {availableDevices[0].name}
+              YubiKey detected: {availableDevices[0].label || `YubiKey (${availableDevices[0].serial})`}
             </span>
-            {availableDevices[0].serial_number && (
+            {availableDevices[0].serial && (
               <span className="text-xs text-green-600 ml-2">
-                (Serial: {availableDevices[0].serial_number})
+                (Serial: {availableDevices[0].serial})
               </span>
             )}
           </div>
