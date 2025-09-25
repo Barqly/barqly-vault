@@ -66,6 +66,7 @@ pub fn get_age_plugin_path() -> PathBuf {
 /// Get path to ykman binary (bundled only - no fallbacks)
 pub fn get_ykman_path() -> PathBuf {
     // Use only bundled binary - no fallbacks to ensure consistent pinned versions
+    // Binaries are in src-tauri/bin/ directory
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("bin")
         .join(if cfg!(target_os = "macos") {
@@ -172,8 +173,13 @@ pub fn run_age_plugin_yubikey(
                         let _ = tx_reader.send(PtyState::WaitingForPin);
                     } else if line.contains("Touch your YubiKey") || line.contains("touch") {
                         let _ = tx_reader.send(PtyState::WaitingForTouch);
+                    } else if line.contains("AGE-PLUGIN-YUBIKEY-") {
+                        // Identity tag found - this is the completion signal for generation
+                        debug!(identity_tag = %line, "Found identity tag, generation complete");
+                        let _ = tx_reader.send(PtyState::Complete(output.clone()));
                     } else if line.contains("age1yubikey") {
-                        let _ = tx_reader.send(PtyState::Complete(line.to_string()));
+                        // Don't terminate early - identity tag comes after recipient
+                        debug!(recipient_line = %line, "Found recipient line, continuing to read");
                     } else if line.contains("error") || line.contains("failed") {
                         let _ = tx_reader.send(PtyState::Failed(line.to_string()));
                     }

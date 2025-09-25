@@ -2,7 +2,7 @@
 //!
 //! Commands for getting, adding, and removing keys from vaults.
 
-use crate::key_management::yubikey::infrastructure::pty::ykman_operations::list_yubikeys;
+use crate::key_management::yubikey::application::manager::YubiKeyManager;
 use crate::models::{KeyReference, KeyState, KeyType};
 use crate::prelude::*;
 use crate::storage::{KeyRegistry, key_store, vault_store};
@@ -113,15 +113,22 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
                     }
                 }
                 crate::storage::KeyEntry::Yubikey { serial, .. } => {
-                    // Check if YubiKey is inserted using ykman list
-                    let devices = list_yubikeys().unwrap_or_default();
-                    if devices.iter().any(|device_info| {
-                        // Extract serial from device string (format: "YubiKey 5 NFC (5.4.3) Serial: 12345678")
-                        device_info.contains("Serial:") && device_info.contains(serial)
-                    }) {
-                        KeyState::Active
-                    } else {
-                        KeyState::Registered
+                    // Check if YubiKey is connected using DDD manager
+                    match YubiKeyManager::new().await {
+                        Ok(manager) => {
+                            match crate::key_management::yubikey::domain::models::Serial::new(
+                                serial.clone(),
+                            ) {
+                                Ok(serial_obj) => {
+                                    match manager.is_device_connected(&serial_obj).await {
+                                        Ok(true) => KeyState::Active,
+                                        _ => KeyState::Registered,
+                                    }
+                                }
+                                _ => KeyState::Registered,
+                            }
+                        }
+                        _ => KeyState::Registered,
                     }
                 }
             };
@@ -242,7 +249,7 @@ pub async fn add_key_to_vault(
             let registry = KeyRegistry::load().unwrap_or_default();
 
             // Determine slot index by counting existing YubiKeys in vault
-            let yubikey_count = vault
+            let _yubikey_count = vault
                 .keys
                 .iter()
                 .filter_map(|key_id| {
@@ -255,9 +262,7 @@ pub async fn add_key_to_vault(
 
             KeyType::Yubikey {
                 serial: serial.clone(),
-                slot_index: yubikey_count as u8,
-                piv_slot: 82 + yubikey_count as u8, // Map to PIV retired slots
-                firmware_version: None,             // TODO: Get firmware version from device
+                firmware_version: None, // TODO: Get firmware version from device
             }
         }
         _ => {

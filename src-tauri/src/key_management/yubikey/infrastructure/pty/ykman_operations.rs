@@ -8,22 +8,29 @@ const DEFAULT_PUK: &str = "12345678";
 const DEFAULT_MGMT_KEY: &str = "010203040506070801020304050607080102030405060708";
 
 /// Check if YubiKey has default PIN
+/// Uses 'ykman piv info' without PIN and parses output for default PIN warnings
 #[instrument]
 pub fn has_default_pin() -> Result<bool> {
-    info!("Checking if YubiKey has default PIN");
+    info!("Checking if YubiKey has default PIN by parsing piv info output");
 
-    // Try to access PIV info with default PIN
+    // Run 'ykman piv info' without PIN - this doesn't require authentication
     let args = vec![
         "piv".to_string(),
         "info".to_string(),
-        "-p".to_string(),
-        DEFAULT_PIN.to_string(),
     ];
 
-    match run_ykman_command(args, Some(DEFAULT_PIN)) {
-        Ok(_) => Ok(true),
-        Err(_) => Ok(false),
-    }
+    let output = run_ykman_command(args, None)?;
+
+    // Check output for default PIN/PUK warnings
+    let has_default = output.contains("Using default PIN!") || output.contains("Using default PUK!");
+
+    info!(
+        has_default_credentials = has_default,
+        output_preview = %output.lines().take(3).collect::<Vec<_>>().join(" | "),
+        "Default PIN check result"
+    );
+
+    Ok(has_default)
 }
 
 /// Change YubiKey PIN via PTY

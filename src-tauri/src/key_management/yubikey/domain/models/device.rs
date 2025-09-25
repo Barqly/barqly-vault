@@ -7,6 +7,7 @@ use crate::key_management::yubikey::domain::models::serial::Serial;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
+use tracing::debug;
 
 /// YubiKey device with capabilities and state
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -64,7 +65,12 @@ impl YubiKeyDevice {
         firmware_version: Option<String>,
     ) -> Self {
         let mut device = Self::new(serial, name, form_factor, interfaces);
-        device.firmware_version = firmware_version;
+        device.firmware_version = firmware_version.clone();
+        debug!(
+            serial = %device.serial.redacted(),
+            firmware_version = ?firmware_version,
+            "Setting firmware version in YubiKeyDevice"
+        );
         device.connection_state = ConnectionState::Connected;
         device.capabilities = DeviceCapabilities::detect_from_interfaces(&device.interfaces);
         device

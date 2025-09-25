@@ -202,13 +202,6 @@ pub async fn enhanced_add_key_to_vault(
                 .and_then(|s| s.as_str())
                 .unwrap_or("pending")
                 .to_string(),
-            slot_index: metadata
-                .as_ref()
-                .and_then(|m| m.get("slot_index"))
-                .and_then(|s| s.as_u64())
-                .map(|n| n as u8)
-                .unwrap_or(0),
-            piv_slot: 82,           // Default to first retired slot
             firmware_version: None, // TODO: Get firmware version from device
         },
         label,

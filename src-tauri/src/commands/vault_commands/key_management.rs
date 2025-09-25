@@ -3,7 +3,7 @@
 //! Commands for updating key labels and checking YubiKey availability.
 
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
-use crate::key_management::yubikey::infrastructure::pty::ykman_operations::list_yubikeys;
+use crate::key_management::yubikey::application::manager::YubiKeyManager;
 use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -159,11 +159,20 @@ pub async fn update_key_label(
 pub async fn check_yubikey_availability(
     input: CheckYubiKeyAvailabilityRequest,
 ) -> CommandResponse<CheckYubiKeyAvailabilityResponse> {
-    let devices = list_yubikeys().unwrap_or_default();
-    let is_inserted = devices.iter().any(|device_info| {
-        // Extract serial from device string (format: "YubiKey 5 NFC (5.4.3) Serial: 12345678")
-        device_info.contains("Serial:") && device_info.contains(&input.serial)
-    });
+    // Check if YubiKey is connected using DDD manager
+    let is_inserted = match YubiKeyManager::new().await {
+        Ok(manager) => {
+            match crate::key_management::yubikey::domain::models::Serial::new(input.serial.clone())
+            {
+                Ok(serial_obj) => manager
+                    .is_device_connected(&serial_obj)
+                    .await
+                    .unwrap_or(false),
+                _ => false,
+            }
+        }
+        _ => false,
+    };
 
     // TODO: Check actual configuration state from YubiKey
     let is_configured = is_inserted; // Simplified for now

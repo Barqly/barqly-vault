@@ -48,7 +48,8 @@ pub struct YkmanDeviceService {
 impl YkmanDeviceService {
     /// Create new ykman device service using bundled binary
     pub async fn new() -> YubiKeyResult<Self> {
-        let ykman_path = crate::key_management::yubikey::infrastructure::pty::core::get_ykman_path();
+        let ykman_path =
+            crate::key_management::yubikey::infrastructure::pty::core::get_ykman_path();
 
         Ok(Self {
             ykman_path: ykman_path.to_string_lossy().to_string(),
@@ -63,7 +64,6 @@ impl YkmanDeviceService {
             timeout: Duration::from_secs(30),
         }
     }
-
 
     /// Run ykman command with timeout
     async fn run_ykman_command(&self, args: Vec<String>) -> YubiKeyResult<String> {
@@ -143,6 +143,12 @@ impl YkmanDeviceService {
             let interfaces = self.extract_interfaces(&parts);
             let form_factor = self.determine_form_factor(&device_name, &interfaces);
             let firmware_version = self.extract_firmware_version(&parts);
+            debug!(
+                serial = %serial.redacted(),
+                firmware_version = ?firmware_version,
+                line = %line,
+                "Parsed YubiKey device from ykman list output"
+            );
 
             let device = YubiKeyDevice::from_detected_device(
                 serial,
@@ -213,15 +219,31 @@ impl YkmanDeviceService {
 
     /// Extract firmware version from ykman output
     fn extract_firmware_version(&self, parts: &[&str]) -> Option<String> {
+        debug!(parts = ?parts, "Extracting firmware version from ykman output parts");
+
+        // Look for version in parentheses format: (5.7.1)
+        for part in parts {
+            if part.starts_with('(') && part.ends_with(')') && part.len() > 2 {
+                let version = &part[1..part.len()-1]; // Remove parentheses
+                // Check if it looks like a version (contains dots and numbers)
+                if version.contains('.') && version.chars().any(|c| c.is_numeric()) {
+                    debug!(firmware_version = %version, "Found firmware version in ykman list output (parentheses format)");
+                    return Some(version.to_string());
+                }
+            }
+        }
+
+        // Fallback: Look for "Version:" format (for other ykman commands)
         if let Some(version_pos) = parts.iter().position(|&x| x == "Version:") {
             if version_pos + 1 < parts.len() {
-                Some(parts[version_pos + 1].to_string())
-            } else {
-                None
+                let version = parts[version_pos + 1].to_string();
+                debug!(firmware_version = %version, "Found firmware version in ykman output (Version: format)");
+                return Some(version);
             }
-        } else {
-            None
         }
+
+        debug!("No firmware version found in ykman output");
+        None
     }
 }
 
@@ -258,7 +280,10 @@ impl DeviceService for YkmanDeviceService {
     }
 
     async fn validate_pin(&self, serial: &Serial, _pin: &Pin) -> YubiKeyResult<bool> {
-        debug!("PIN validation skipped for YubiKey: {} - PIN validation only happens during actual operations", serial.redacted());
+        debug!(
+            "PIN validation skipped for YubiKey: {} - PIN validation only happens during actual operations",
+            serial.redacted()
+        );
 
         // PIN validation is not possible without attempting an actual operation that requires PIN.
         // YubiKey has no API to "test" a PIN - you only discover PIN issues when using it.
@@ -270,10 +295,22 @@ impl DeviceService for YkmanDeviceService {
     async fn has_default_pin(&self, serial: &Serial) -> YubiKeyResult<bool> {
         debug!("Checking default PIN for YubiKey: {}", serial.redacted());
 
-        let default_pin = Pin::new("123456".to_string())
-            .map_err(|e| YubiKeyError::pin(format!("Invalid default PIN: {}", e)))?;
+        // Use the actual ykman PTY implementation to test default PIN
+        use crate::key_management::yubikey::infrastructure::pty::ykman_operations::has_default_pin;
 
-        self.validate_pin(serial, &default_pin).await
+        let result = tokio::task::spawn_blocking(move || {
+            has_default_pin().map_err(|e| YubiKeyError::device(format!("Default PIN check failed: {}", e)))
+        })
+        .await
+        .map_err(|e| YubiKeyError::device(format!("Task join error: {}", e)))??;
+
+        debug!(
+            "Default PIN check result for YubiKey {}: {}",
+            serial.redacted(),
+            result
+        );
+
+        Ok(result)
     }
 
     async fn get_firmware_version(&self, serial: &Serial) -> YubiKeyResult<Option<String>> {
@@ -282,12 +319,13 @@ impl DeviceService for YkmanDeviceService {
             serial.redacted()
         );
 
-        let args = vec!["info".to_string()];
+        let args = vec!["piv".to_string(), "info".to_string()];
         let output = self.run_ykman_with_serial(serial, args).await?;
 
-        // Parse firmware version from info output
+        // Parse firmware version from piv info output
+        // Looking for line like "PIV version:              5.7.1"
         for line in output.lines() {
-            if line.contains("Firmware version:")
+            if line.contains("PIV version:")
                 && let Some(version) = line.split(':').nth(1)
             {
                 return Ok(Some(version.trim().to_string()));

@@ -14,6 +14,8 @@ pub struct YubiKeyIdentity {
     identity_tag: String,
     /// Associated YubiKey serial number
     serial: Serial,
+    /// Age recipient (public key) for encryption (e.g., "age1yubikey1...")
+    recipient: String,
     /// Public key (if available)
     public_key: Option<String>,
     /// Slot where the key is stored
@@ -26,7 +28,7 @@ pub struct YubiKeyIdentity {
 
 impl YubiKeyIdentity {
     /// Create a new identity with validation
-    pub fn new(identity_tag: String, serial: Serial) -> Result<Self, IdentityValidationError> {
+    pub fn new(identity_tag: String, serial: Serial, recipient: String) -> Result<Self, IdentityValidationError> {
         if identity_tag.is_empty() {
             return Err(IdentityValidationError::EmptyTag);
         }
@@ -49,6 +51,7 @@ impl YubiKeyIdentity {
         Ok(Self {
             identity_tag,
             serial,
+            recipient,
             public_key: None,
             slot: None,
             algorithm: None,
@@ -60,9 +63,10 @@ impl YubiKeyIdentity {
     pub fn from_age_plugin_output(
         identity_tag: String,
         serial: Serial,
+        recipient: String,
         slot: Option<String>,
     ) -> Result<Self, IdentityValidationError> {
-        let mut identity = Self::new(identity_tag, serial)?;
+        let mut identity = Self::new(identity_tag, serial, recipient)?;
         identity.slot = slot;
         Ok(identity)
     }
@@ -134,12 +138,9 @@ impl YubiKeyIdentity {
 
     /// Extract recipient string for age encryption
     /// Note: Identity tags (AGE-PLUGIN-YUBIKEY-...) are different from recipients (age1yubikey1...)
-    /// This method should be used carefully - the identity tag is for identity detection,
-    /// while recipient format is for encryption
+    /// This method returns the proper recipient format for encryption operations
     pub fn to_recipient(&self) -> String {
-        // For now, return the identity tag but this should be converted to recipient format
-        // TODO: Implement proper identity->recipient conversion
-        self.identity_tag.clone()
+        self.recipient.clone()
     }
 
     /// Create a redacted version for logging
@@ -194,6 +195,7 @@ impl fmt::Display for YubiKeyIdentity {
 pub struct IdentityBuilder {
     identity_tag: String,
     serial: Serial,
+    recipient: Option<String>,
     public_key: Option<String>,
     slot: Option<String>,
     algorithm: Option<String>,
@@ -205,10 +207,17 @@ impl IdentityBuilder {
         Self {
             identity_tag,
             serial,
+            recipient: None,
             public_key: None,
             slot: None,
             algorithm: None,
         }
+    }
+
+    /// Set recipient
+    pub fn recipient(mut self, recipient: String) -> Self {
+        self.recipient = Some(recipient);
+        self
     }
 
     /// Set public key
@@ -231,7 +240,11 @@ impl IdentityBuilder {
 
     /// Build the identity
     pub fn build(self) -> Result<YubiKeyIdentity, IdentityValidationError> {
-        let mut identity = YubiKeyIdentity::new(self.identity_tag, self.serial)?;
+        let recipient = self.recipient.ok_or(IdentityValidationError::InvalidTagFormat {
+            tag: "missing recipient".to_string(),
+            expected: "recipient must be set on builder".to_string(),
+        })?;
+        let mut identity = YubiKeyIdentity::new(self.identity_tag, self.serial, recipient)?;
         identity.public_key = self.public_key;
         identity.slot = self.slot;
         identity.algorithm = self.algorithm;

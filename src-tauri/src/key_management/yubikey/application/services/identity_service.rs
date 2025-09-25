@@ -180,7 +180,7 @@ impl AgePluginIdentityService {
         // Validate the identity format (fixes the identity tag bug)
         self.validate_identity_format(&recipient, &identity_tag)?;
 
-        Ok(YubiKeyIdentity::new(identity_tag, serial.clone())?)
+        Ok(YubiKeyIdentity::new(identity_tag, serial.clone(), recipient)?)
     }
 
     /// Extract recipient from age-plugin output
@@ -212,14 +212,28 @@ impl AgePluginIdentityService {
 
     /// Extract identity tag from age-plugin output
     fn extract_identity_tag(&self, output: &str) -> YubiKeyResult<String> {
+        debug!(output_preview = %output.lines().take(5).collect::<Vec<_>>().join(" | "), "Parsing identity tag from output");
+
         for line in output.lines() {
             let line = line.trim();
             // Look for standalone AGE-PLUGIN-YUBIKEY line (not comment line with #)
             if line.starts_with("AGE-PLUGIN-YUBIKEY-") && !line.starts_with("#") {
+                debug!(identity_tag = %line, "Found identity tag");
                 return Ok(line.to_string());
             }
         }
 
+        // If not found in the main output, check the end of output for standalone tag
+        let lines: Vec<&str> = output.lines().collect();
+        if let Some(last_line) = lines.last() {
+            let last_line = last_line.trim();
+            if last_line.starts_with("AGE-PLUGIN-YUBIKEY-") {
+                debug!(identity_tag = %last_line, "Found identity tag at end of output");
+                return Ok(last_line.to_string());
+            }
+        }
+
+        error!(full_output = %output, "Failed to find identity tag in age-plugin output");
         Err(YubiKeyError::identity(
             "No identity tag found in age-plugin output",
         ))
@@ -296,16 +310,33 @@ impl IdentityService for AgePluginIdentityService {
         );
 
         let args = vec![
-            "--generate".to_string(),
+            "-g".to_string(),
             "--serial".to_string(),
-            serial.value().to_string(),
-            "--slot".to_string(),
-            slot.to_string(),
-            "--pin".to_string(),
-            pin.value().to_string(),
+            serial.value().to_string(),  // Bind to specific YubiKey
+            "--touch-policy".to_string(),
+            "cached".to_string(),  // Use cached touch policy like POC
+            "--name".to_string(),
+            format!("barqly-{}", serial.value()), // Descriptive name
         ];
 
-        let output = self.run_plugin_command(args, None).await?;
+        // Use PTY-based execution for PIN interaction
+        use crate::key_management::yubikey::infrastructure::pty::core::run_age_plugin_yubikey;
+        let output = tokio::task::spawn_blocking({
+            let args_clone = args.clone();
+            let pin_clone = pin.value().to_string();
+            move || run_age_plugin_yubikey(args_clone, Some(&pin_clone), false)
+        })
+        .await
+        .map_err(|e| YubiKeyError::device(format!("Task join error: {}", e)))?
+        .map_err(|e| YubiKeyError::device(format!("age-plugin-yubikey failed: {}", e)))?;
+
+        debug!(
+            output_length = output.len(),
+            output_preview = %output.lines().take(5).collect::<Vec<_>>().join(" | "),
+            "Raw age-plugin-yubikey output for identity generation"
+        );
+
+        let output = output.as_bytes().to_vec();
         let identity = self.parse_identity(&output, serial)?;
 
         info!(
@@ -494,11 +525,11 @@ impl AgePluginIdentityService {
 
         // Extract recipient and identity tag from line
         // This would need proper parsing based on actual output format
-        if let (Some(_recipient), Some(identity_tag)) = (
+        if let (Some(recipient), Some(identity_tag)) = (
             self.extract_recipient(line).ok(),
             self.extract_identity_tag(line).ok(),
         ) {
-            Ok(Some(YubiKeyIdentity::new(identity_tag, serial.clone())?))
+            Ok(Some(YubiKeyIdentity::new(identity_tag, serial.clone(), recipient)?))
         } else {
             Ok(None)
         }

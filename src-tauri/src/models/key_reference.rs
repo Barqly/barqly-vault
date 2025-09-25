@@ -45,12 +45,6 @@ pub enum KeyType {
         /// Serial number of the YubiKey
         serial: String,
 
-        /// Slot index (0-2) for UI display
-        slot_index: u8,
-
-        /// Actual PIV retired slot number (82-95)
-        piv_slot: u8,
-
         /// Firmware version for compatibility tracking
         #[serde(default)]
         firmware_version: Option<String>,
@@ -98,15 +92,11 @@ impl KeyReference {
                 created_at,
                 last_used,
                 serial,
-                slot,
-                piv_slot,
                 firmware_version,
                 ..
             } => (
                 KeyType::Yubikey {
                     serial: serial.clone(),
-                    slot_index: (*slot).saturating_sub(1), // Map slot 1-3 to UI slot_index 0-2
-                    piv_slot: *piv_slot,
                     firmware_version: firmware_version.clone(),
                 },
                 label.clone(),

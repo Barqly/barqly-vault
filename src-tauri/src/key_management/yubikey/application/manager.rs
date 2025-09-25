@@ -332,20 +332,34 @@ impl YubiKeyManager {
             .await?
             .ok_or_else(|| YubiKeyError::device_not_found(serial))?;
 
-        // 2. Validate PIN
-        if !self.validate_pin(serial, pin).await? {
-            return Err(YubiKeyError::pin("Invalid PIN"));
+        // 2. Check if YubiKey needs hardware initialization (fresh device)
+        let needs_hardware_init = self.has_default_pin(serial).await.unwrap_or(false);
+
+        info!(
+            needs_init = needs_hardware_init,
+            serial = %serial.redacted(),
+            "Hardware initialization check result"
+        );
+
+        if needs_hardware_init {
+            info!("Fresh YubiKey detected, initializing hardware first");
+            // Initialize hardware with new PIN/PUK/management key
+            let _recovery_code = self.initialize_device_hardware(pin).await?;
+            info!("Hardware initialization completed");
+        } else {
+            info!("YubiKey already initialized, validating PIN");
+            // Validate existing PIN
+            if !self.validate_pin(serial, pin).await? {
+                return Err(YubiKeyError::pin("Invalid PIN"));
+            }
         }
 
-        // 3. Check if slot is available
-        if self.is_slot_occupied(slot).await? {
-            return Err(YubiKeyError::slot_occupied(&slot.to_string(), serial));
-        }
-
-        // 4. Generate identity
+        // 3. Generate identity (reuse existing if present)
+        // Note: We skip slot occupancy check during initialization to allow
+        // reusing existing identities on YubiKeys that have been reset/orphaned
         let identity = self.generate_identity(serial, pin, slot).await?;
 
-        // 5. Register device
+        // 4. Register device
         let entry_id = self
             .register_device(&device, &identity, slot, recovery_code_hash, label)
             .await?;

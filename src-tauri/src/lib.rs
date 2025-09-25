@@ -45,8 +45,8 @@ use commands::{
     // Vault commands
     vault_commands::{
         add_key_to_vault, add_passphrase_key_to_vault, check_yubikey_availability,
-        check_yubikey_slot_availability, create_vault, delete_vault, get_current_vault,
-        get_vault_keys, init_yubikey_for_vault, list_available_yubikeys, list_vaults,
+        check_keymenubar_positions_available, create_vault, delete_vault, get_current_vault,
+        get_vault_keys, init_yubikey_for_vault, list_available_yubikeys_for_vault, list_vaults,
         register_yubikey_for_vault, remove_key_from_vault, set_current_vault, update_key_label,
         validate_vault_passphrase_key,
     },
@@ -117,8 +117,8 @@ pub fn run() {
             validate_vault_passphrase_key,
             init_yubikey_for_vault,
             register_yubikey_for_vault,
-            list_available_yubikeys,
-            check_yubikey_slot_availability,
+            list_available_yubikeys_for_vault,
+            check_keymenubar_positions_available,
             // Streamlined YubiKey commands
             list_yubikeys,
             init_yubikey,
@@ -180,8 +180,8 @@ pub fn run() {
             validate_vault_passphrase_key,
             init_yubikey_for_vault,
             register_yubikey_for_vault,
-            list_available_yubikeys,
-            check_yubikey_slot_availability,
+            list_available_yubikeys_for_vault,
+            check_keymenubar_positions_available,
             // Streamlined YubiKey commands
             list_yubikeys,
             init_yubikey,
