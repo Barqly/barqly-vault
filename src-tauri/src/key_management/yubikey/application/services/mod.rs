@@ -90,7 +90,7 @@ impl ServiceFactory {
         }
     }
 
-    /// Create a service factory with custom ykman path (for specific installations)
+    /// Create a service factory with custom ykman path (for testing only - production uses bundled binaries)
     pub async fn with_ykman_path(ykman_path: String) -> YubiKeyResult<Self> {
         debug!(
             "Creating ServiceFactory with custom ykman path: {}",

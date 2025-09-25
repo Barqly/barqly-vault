@@ -58,41 +58,28 @@ pub fn get_age_plugin_path() -> PathBuf {
                 "windows/age-plugin-yubikey.exe"
             });
 
-    if bundled.exists() {
-        info!(path = %bundled.display(), "Using bundled age-plugin-yubikey");
-        return bundled;
-    }
-
-    // Fall back to system binary
-    debug!(bundled_path = %bundled.display(), "Bundled age-plugin-yubikey not found, using system binary");
-    PathBuf::from("age-plugin-yubikey")
+    // Use only bundled binary - no fallbacks to ensure consistent pinned versions
+    info!(path = %bundled.display(), "Using bundled age-plugin-yubikey");
+    bundled
 }
 
-/// Get path to ykman binary
+/// Get path to ykman binary (bundled only - no fallbacks)
 pub fn get_ykman_path() -> PathBuf {
-    // First try bundled binary
-    let bundled =
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("bin")
-            .join(if cfg!(target_os = "macos") {
-                "darwin/ykman"
-            } else if cfg!(target_os = "linux") {
-                "linux/ykman"
-            } else {
-                "windows/ykman.exe"
-            });
-
-    if bundled.exists() {
-        return bundled;
-    }
-
-    // Fall back to system binary
-    PathBuf::from("ykman")
+    // Use only bundled binary - no fallbacks to ensure consistent pinned versions
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("bin")
+        .join(if cfg!(target_os = "macos") {
+            "darwin/ykman"
+        } else if cfg!(target_os = "linux") {
+            "linux/ykman"
+        } else {
+            "windows/ykman.exe"
+        })
 }
 
-/// Get path to age binary
+/// Get path to age binary (bundled only - no fallbacks)
 pub fn get_age_path() -> PathBuf {
-    // First try bundled binary
+    // Use only bundled binary - no fallbacks to ensure consistent pinned versions
     let bundled =
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("bin")
@@ -104,14 +91,8 @@ pub fn get_age_path() -> PathBuf {
                 "windows/age.exe"
             });
 
-    if bundled.exists() {
-        info!(path = %bundled.display(), "Using bundled age CLI");
-        return bundled;
-    }
-
-    // Fall back to system binary
-    debug!(bundled_path = %bundled.display(), "Bundled age not found, using system binary");
-    PathBuf::from("age")
+    info!(path = %bundled.display(), "Using bundled age CLI");
+    bundled
 }
 
 /// Run age-plugin-yubikey command with optional PIN injection
