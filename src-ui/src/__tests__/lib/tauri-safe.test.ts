@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { CommandError, ErrorCode } from '../../lib/api-types';
+import type { CommandError, ErrorCode } from '../bindings';
 
 // Unmock tauri-safe since we're testing it
 vi.unmock('../../lib/tauri-safe');
@@ -50,11 +50,14 @@ describe('tauri-safe', () => {
 
       it('should throw CommandError when not in Tauri environment', async () => {
         const expectedError: CommandError = {
-          code: ErrorCode.INTERNAL_ERROR,
+          code: 'INTERNAL_ERROR',
           message: 'This feature requires the desktop application',
+          details: null,
           recovery_guidance:
             'Please use the desktop version of Barqly Vault to access this feature',
           user_actionable: true,
+          trace_id: null,
+          span_id: null,
         };
 
         await expect(safeInvoke('test_command')).rejects.toEqual(expectedError);
@@ -64,7 +67,7 @@ describe('tauri-safe', () => {
         // The key here is that we should get the error immediately without
         // any attempt to import @tauri-apps/api/core
         await expect(safeInvoke('test_command')).rejects.toMatchObject({
-          code: ErrorCode.INTERNAL_ERROR,
+          code: 'INTERNAL_ERROR',
           message: 'This feature requires the desktop application',
         });
       });
@@ -84,13 +87,13 @@ describe('tauri-safe', () => {
         mockIsTauri.mockReturnValue(undefined as any);
 
         await expect(safeInvoke('test_command')).rejects.toMatchObject({
-          code: ErrorCode.INTERNAL_ERROR,
+          code: 'INTERNAL_ERROR',
         });
 
         mockIsTauri.mockReturnValue(null as any);
 
         await expect(safeInvoke('test_command')).rejects.toMatchObject({
-          code: ErrorCode.INTERNAL_ERROR,
+          code: 'INTERNAL_ERROR',
         });
       });
     });
@@ -102,11 +105,14 @@ describe('tauri-safe', () => {
 
         // Should not throw undefined property error, should throw our controlled error
         await expect(safeInvoke('any_command')).rejects.toEqual({
-          code: ErrorCode.INTERNAL_ERROR,
+          code: 'INTERNAL_ERROR',
           message: 'This feature requires the desktop application',
+          details: null,
           recovery_guidance:
             'Please use the desktop version of Barqly Vault to access this feature',
           user_actionable: true,
+          trace_id: null,
+          span_id: null,
         });
       });
 

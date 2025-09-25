@@ -4,7 +4,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useKeyGeneration } from '../../../hooks/useKeyGeneration';
-import { ErrorCode } from '../../../lib/api-types';
+import type { ErrorCode } from '../../bindings';
 import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module

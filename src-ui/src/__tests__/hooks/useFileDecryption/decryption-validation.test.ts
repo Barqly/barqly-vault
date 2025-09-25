@@ -4,7 +4,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useFileDecryption } from '../../../hooks/useFileDecryption';
-import { ErrorCode, FileSelection } from '../../../lib/api-types';
+import type { ErrorCode, FileSelection } from '../bindings';
 import { mockInvoke } from '../../../test-setup';
 
 // Mock the tauri-safe module
@@ -52,10 +52,13 @@ describe('useFileDecryption - Decryption Validation', () => {
     });
 
     expect(result.current.error).toEqual({
-      code: ErrorCode.INVALID_INPUT,
+      code: 'INVALID_INPUT',
       message: 'Encrypted file is required',
+      details: null,
       recovery_guidance: 'Please select an encrypted .age file to decrypt',
       user_actionable: true,
+      trace_id: null,
+      span_id: null,
     });
   });
 
@@ -85,10 +88,13 @@ describe('useFileDecryption - Decryption Validation', () => {
     });
 
     expect(result.current.error).toEqual({
-      code: ErrorCode.INVALID_INPUT,
+      code: 'INVALID_INPUT',
       message: 'Decryption key is required',
+      details: null,
       recovery_guidance: 'Please select the key that was used to encrypt this file',
       user_actionable: true,
+      trace_id: null,
+      span_id: null,
     });
   });
 
@@ -123,10 +129,13 @@ describe('useFileDecryption - Decryption Validation', () => {
     });
 
     expect(result.current.error).toEqual({
-      code: ErrorCode.INVALID_INPUT,
+      code: 'INVALID_INPUT',
       message: 'Passphrase is required',
+      details: null,
       recovery_guidance: 'Please enter the passphrase for the selected key',
       user_actionable: true,
+      trace_id: null,
+      span_id: null,
     });
   });
 
@@ -162,10 +171,13 @@ describe('useFileDecryption - Decryption Validation', () => {
     });
 
     expect(result.current.error).toEqual({
-      code: ErrorCode.INVALID_INPUT,
+      code: 'INVALID_INPUT',
       message: 'Output directory is required',
+      details: null,
       recovery_guidance: 'Please select where to save the decrypted files',
       user_actionable: true,
+      trace_id: null,
+      span_id: null,
     });
   });
 

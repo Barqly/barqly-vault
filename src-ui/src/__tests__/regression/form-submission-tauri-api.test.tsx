@@ -18,7 +18,7 @@ import { VaultProvider } from '../../contexts/VaultContext';
 import { useKeyGeneration } from '../../hooks/useKeyGeneration';
 import { safeListen } from '../../lib/tauri-safe';
 import { isTauri } from '../../lib/environment/platform';
-import { CommandError, ErrorCode } from '../../lib/api-types';
+import type { CommandError, ErrorCode } from '../../bindings';
 
 // Mock all dependencies
 vi.mock('../../hooks/useKeyGeneration');
@@ -167,10 +167,13 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
       mockIsTauri.mockReturnValue(true);
 
       const environmentChangeError: CommandError = {
-        code: ErrorCode.INTERNAL_ERROR,
+        code: 'INTERNAL_ERROR',
         message: 'This feature requires the desktop application',
+        details: null,
         recovery_guidance: 'Please use the desktop version of Barqly Vault to access this feature',
         user_actionable: true,
+        trace_id: null,
+        span_id: null,
       };
 
       const mockGenerateKey = vi.fn().mockRejectedValue(environmentChangeError);
@@ -295,10 +298,13 @@ describe.skip('Regression: Form Submission + Tauri API Integration (OLD - needs 
       mockIsTauri.mockReturnValue(false);
 
       const webError: CommandError = {
-        code: ErrorCode.INTERNAL_ERROR,
+        code: 'INTERNAL_ERROR',
         message: 'This feature requires the desktop application',
+        details: null,
         recovery_guidance: 'Please use the desktop version of Barqly Vault to access this feature',
         user_actionable: true,
+        trace_id: null,
+        span_id: null,
       };
 
       const mockGenerateKey = vi.fn().mockRejectedValue(webError);

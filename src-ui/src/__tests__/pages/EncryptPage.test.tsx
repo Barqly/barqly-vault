@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import EncryptPage from '../../pages/EncryptPage';
-import { ErrorCode } from '../../lib/api-types';
+import type { ErrorCode } from '../../bindings';
 import { createTauriTestEnvironment, MOCK_RESPONSES, resetTauriMocks } from '../utils/tauri-mocks';
 import { VaultProvider } from '../../contexts/VaultContext';
 

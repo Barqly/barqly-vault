@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import DecryptPage from '../../pages/DecryptPage';
 import { useFileDecryption } from '../../hooks/useFileDecryption';
 import { useDecryptionWorkflow } from '../../hooks/useDecryptionWorkflow';
-import { ErrorCode } from '../../lib/api-types';
+import type { ErrorCode } from '../../bindings';
 import { createTauriTestEnvironment, MOCK_RESPONSES, resetTauriMocks } from '../utils/tauri-mocks';
 import { VaultProvider } from '../../contexts/VaultContext';
 
