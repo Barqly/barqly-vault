@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEncryptionWorkflow } from '../hooks/useEncryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
-import { ErrorCode } from '../bindings';
+import type { ErrorCode } from '../bindings';
 import { Lock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import UniversalHeader from '../components/common/UniversalHeader';

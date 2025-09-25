@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileDecryption } from './useFileDecryption';
-import { ErrorCode, CommandError } from '../bindings';
+import type { ErrorCode, CommandError } from '../bindings';
 import { createCommandError } from '../lib/errors/command-error';
 
 interface VaultMetadata {

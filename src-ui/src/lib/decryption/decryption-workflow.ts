@@ -4,7 +4,7 @@
 
 import { safeListen } from '../tauri-safe';
 import { commands, DecryptDataInput, DecryptionResult } from '../../bindings';
-import { ProgressUpdate, CommandError, ErrorCode } from '../../bindings';
+import type { ProgressUpdate, CommandError, ErrorCode } from '../../bindings';
 import { logger } from '../logger';
 import { toCommandError } from '../errors/command-error';
 import { UnlistenFn } from '@tauri-apps/api/event';

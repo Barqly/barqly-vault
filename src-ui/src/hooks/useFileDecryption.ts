@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { CommandError, ErrorCode } from '../bindings';
+import type { CommandError, ErrorCode } from '../bindings';
 import { toCommandError } from '../lib/errors/command-error';
 import { selectEncryptedFileForDecryption } from '../lib/decryption/file-operations';
 import {
