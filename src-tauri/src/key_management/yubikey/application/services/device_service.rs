@@ -224,7 +224,7 @@ impl YkmanDeviceService {
         // Look for version in parentheses format: (5.7.1)
         for part in parts {
             if part.starts_with('(') && part.ends_with(')') && part.len() > 2 {
-                let version = &part[1..part.len()-1]; // Remove parentheses
+                let version = &part[1..part.len() - 1]; // Remove parentheses
                 // Check if it looks like a version (contains dots and numbers)
                 if version.contains('.') && version.chars().any(|c| c.is_numeric()) {
                     debug!(firmware_version = %version, "Found firmware version in ykman list output (parentheses format)");
@@ -299,7 +299,8 @@ impl DeviceService for YkmanDeviceService {
         use crate::key_management::yubikey::infrastructure::pty::ykman_operations::has_default_pin;
 
         let result = tokio::task::spawn_blocking(move || {
-            has_default_pin().map_err(|e| YubiKeyError::device(format!("Default PIN check failed: {}", e)))
+            has_default_pin()
+                .map_err(|e| YubiKeyError::device(format!("Default PIN check failed: {}", e)))
         })
         .await
         .map_err(|e| YubiKeyError::device(format!("Task join error: {}", e)))??;

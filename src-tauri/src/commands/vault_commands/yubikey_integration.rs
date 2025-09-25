@@ -133,7 +133,13 @@ pub async fn init_yubikey_for_vault(
     );
 
     let (device, identity, recovery_code_hash) = manager
-        .initialize_device(&serial, &pin, slot, recovery_placeholder.clone(), Some(input.label.clone()))
+        .initialize_device(
+            &serial,
+            &pin,
+            slot,
+            recovery_placeholder.clone(),
+            Some(input.label.clone()),
+        )
         .await
         .map_err(|e| {
             error!("initialize_device failed with error: {}", e);
@@ -153,7 +159,7 @@ pub async fn init_yubikey_for_vault(
     let key_registry_id = registry.add_yubikey_entry(
         input.label.clone(),
         input.serial.clone(),
-        1u8, // YubiKey retired slot number (not UI display slot)
+        1u8,  // YubiKey retired slot number (not UI display slot)
         82u8, // PIV slot 82 (first retired slot)
         identity.to_recipient().to_string(),
         identity.identity_tag().to_string(),
@@ -320,7 +326,7 @@ pub async fn register_yubikey_for_vault(
     let key_registry_id = registry.add_yubikey_entry(
         input.label.clone(),
         input.serial.clone(),
-        1u8, // YubiKey retired slot number (not UI display slot)
+        1u8,  // YubiKey retired slot number (not UI display slot)
         82u8, // PIV slot 82 (first retired slot)
         identity.to_recipient().to_string(),
         identity.identity_tag().to_string(),
@@ -376,7 +382,10 @@ pub async fn register_yubikey_for_vault(
 pub async fn list_available_yubikeys_for_vault(
     vault_id: String,
 ) -> CommandResponse<Vec<AvailableYubiKey>> {
-    debug!(vault_id = vault_id, "list_available_yubikeys_for_vault called");
+    debug!(
+        vault_id = vault_id,
+        "list_available_yubikeys_for_vault called"
+    );
 
     // Get vault and registry to filter out already registered YubiKeys
     let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
@@ -432,18 +441,19 @@ pub async fn list_available_yubikeys_for_vault(
         }
 
         // Check if device has identity
-        let has_identity = manager
-            .has_identity(device.serial())
-            .await
-            .unwrap_or(false);
+        let has_identity = manager.has_identity(device.serial()).await.unwrap_or(false);
 
         available.push(AvailableYubiKey {
             serial: serial_str,
-            state: if has_identity { "orphaned".to_string() } else { "new".to_string() },
-            slot: None, // Will be assigned during registration
-            recipient: None, // TODO: Get from identity if exists
-            identity_tag: None, // TODO: Get from identity if exists
-            label: None, // No label until registered
+            state: if has_identity {
+                "orphaned".to_string()
+            } else {
+                "new".to_string()
+            },
+            slot: None,                        // Will be assigned during registration
+            recipient: None,                   // TODO: Get from identity if exists
+            identity_tag: None,                // TODO: Get from identity if exists
+            label: None,                       // No label until registered
             pin_status: "unknown".to_string(), // Simplified for now
         });
     }

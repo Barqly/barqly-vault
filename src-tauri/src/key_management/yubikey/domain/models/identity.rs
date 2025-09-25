@@ -28,7 +28,11 @@ pub struct YubiKeyIdentity {
 
 impl YubiKeyIdentity {
     /// Create a new identity with validation
-    pub fn new(identity_tag: String, serial: Serial, recipient: String) -> Result<Self, IdentityValidationError> {
+    pub fn new(
+        identity_tag: String,
+        serial: Serial,
+        recipient: String,
+    ) -> Result<Self, IdentityValidationError> {
         if identity_tag.is_empty() {
             return Err(IdentityValidationError::EmptyTag);
         }
@@ -240,10 +244,12 @@ impl IdentityBuilder {
 
     /// Build the identity
     pub fn build(self) -> Result<YubiKeyIdentity, IdentityValidationError> {
-        let recipient = self.recipient.ok_or(IdentityValidationError::InvalidTagFormat {
-            tag: "missing recipient".to_string(),
-            expected: "recipient must be set on builder".to_string(),
-        })?;
+        let recipient = self
+            .recipient
+            .ok_or(IdentityValidationError::InvalidTagFormat {
+                tag: "missing recipient".to_string(),
+                expected: "recipient must be set on builder".to_string(),
+            })?;
         let mut identity = YubiKeyIdentity::new(self.identity_tag, self.serial, recipient)?;
         identity.public_key = self.public_key;
         identity.slot = self.slot;

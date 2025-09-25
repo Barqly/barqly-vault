@@ -180,7 +180,11 @@ impl AgePluginIdentityService {
         // Validate the identity format (fixes the identity tag bug)
         self.validate_identity_format(&recipient, &identity_tag)?;
 
-        Ok(YubiKeyIdentity::new(identity_tag, serial.clone(), recipient)?)
+        Ok(YubiKeyIdentity::new(
+            identity_tag,
+            serial.clone(),
+            recipient,
+        )?)
     }
 
     /// Extract recipient from age-plugin output
@@ -312,9 +316,9 @@ impl IdentityService for AgePluginIdentityService {
         let args = vec![
             "-g".to_string(),
             "--serial".to_string(),
-            serial.value().to_string(),  // Bind to specific YubiKey
+            serial.value().to_string(), // Bind to specific YubiKey
             "--touch-policy".to_string(),
-            "cached".to_string(),  // Use cached touch policy like POC
+            "cached".to_string(), // Use cached touch policy like POC
             "--name".to_string(),
             format!("barqly-{}", serial.value()), // Descriptive name
         ];
@@ -529,7 +533,11 @@ impl AgePluginIdentityService {
             self.extract_recipient(line).ok(),
             self.extract_identity_tag(line).ok(),
         ) {
-            Ok(Some(YubiKeyIdentity::new(identity_tag, serial.clone(), recipient)?))
+            Ok(Some(YubiKeyIdentity::new(
+                identity_tag,
+                serial.clone(),
+                recipient,
+            )?))
         } else {
             Ok(None)
         }

@@ -44,9 +44,9 @@ use commands::{
     validate_passphrase_strength,
     // Vault commands
     vault_commands::{
-        add_key_to_vault, add_passphrase_key_to_vault, check_yubikey_availability,
-        check_keymenubar_positions_available, create_vault, delete_vault, get_current_vault,
-        get_vault_keys, init_yubikey_for_vault, list_available_yubikeys_for_vault, list_vaults,
+        add_key_to_vault, add_passphrase_key_to_vault, check_keymenubar_positions_available,
+        check_yubikey_availability, create_vault, delete_vault, get_current_vault, get_vault_keys,
+        init_yubikey_for_vault, list_available_yubikeys_for_vault, list_vaults,
         register_yubikey_for_vault, remove_key_from_vault, set_current_vault, update_key_label,
         validate_vault_passphrase_key,
     },

@@ -14,15 +14,13 @@ pub fn has_default_pin() -> Result<bool> {
     info!("Checking if YubiKey has default PIN by parsing piv info output");
 
     // Run 'ykman piv info' without PIN - this doesn't require authentication
-    let args = vec![
-        "piv".to_string(),
-        "info".to_string(),
-    ];
+    let args = vec!["piv".to_string(), "info".to_string()];
 
     let output = run_ykman_command(args, None)?;
 
     // Check output for default PIN/PUK warnings
-    let has_default = output.contains("Using default PIN!") || output.contains("Using default PUK!");
+    let has_default =
+        output.contains("Using default PIN!") || output.contains("Using default PUK!");
 
     info!(
         has_default_credentials = has_default,
