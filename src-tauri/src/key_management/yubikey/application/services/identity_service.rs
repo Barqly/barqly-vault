@@ -188,13 +188,17 @@ impl AgePluginIdentityService {
         for line in output.lines() {
             let line = line.trim();
 
-            // Handle both formats:
-            // 1. "Recipient: age1yubikey..." (identity output)
-            // 2. "age1yubikey..." (direct recipient line)
-            if line.starts_with("Recipient: ") {
-                let recipient = line.strip_prefix("Recipient: ").unwrap_or("");
-                if recipient.starts_with("age1yubikey") {
-                    return Ok(recipient.to_string());
+            // Handle multiple formats with maximum robustness:
+            // 1. "Recipient: age1yubikey..." (direct)
+            // 2. "#     Recipient: age1yubikey..." (commented with spacing)
+            // 3. "# Recipient:age1yubikey..." (no space after colon)
+            // 4. "age1yubikey..." (direct recipient line)
+            if line.contains("Recipient:") {
+                if let Some(recipient_part) = line.split("Recipient:").nth(1) {
+                    let recipient = recipient_part.trim();
+                    if recipient.starts_with("age1yubikey") {
+                        return Ok(recipient.to_string());
+                    }
                 }
             } else if line.starts_with("age1yubikey") {
                 return Ok(line.to_string());
@@ -339,10 +343,12 @@ impl IdentityService for AgePluginIdentityService {
                     );
                     Ok(Some(identity))
                 }
-                Err(_) => {
+                Err(parse_error) => {
                     debug!(
                         serial = %serial.redacted(),
-                        "No valid identity found on YubiKey"
+                        error = %parse_error,
+                        output = %String::from_utf8_lossy(&output),
+                        "Failed to parse identity from YubiKey output"
                     );
                     Ok(None)
                 }
