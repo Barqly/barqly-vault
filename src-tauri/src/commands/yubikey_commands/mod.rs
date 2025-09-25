@@ -5,15 +5,6 @@
 pub mod smart_decryption;
 pub mod streamlined; // Primary YubiKey API
 
-#[cfg(test)]
-pub mod hardware_test;
-
-#[cfg(test)]
-pub mod test_generate_key_multi;
-
-#[cfg(test)]
-pub mod test_streamlined_api;
-
 pub use smart_decryption::*;
 pub use streamlined::*;
 

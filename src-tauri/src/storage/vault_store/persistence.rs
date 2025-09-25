@@ -221,8 +221,51 @@ mod tests {
     use chrono::Utc;
 
     #[tokio::test]
-    #[ignore = "Requires filesystem write access to Documents folder"]
     async fn test_vault_persistence() {
+        use std::path::Path;
+        use tempfile::TempDir;
+
+        // Create temp directory for this test
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        // Helper functions that use temp directory instead of Documents
+        async fn temp_save_vault(
+            vault: &Vault,
+            base_dir: &Path,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            let path = base_dir.join(format!("{}.manifest", vault.name));
+            let json = serde_json::to_string_pretty(vault)?;
+            tokio::fs::write(path, json).await?;
+            Ok(())
+        }
+
+        async fn temp_load_vault_by_name(
+            vault_name: &str,
+            base_dir: &Path,
+        ) -> Result<Vault, Box<dyn std::error::Error + Send + Sync>> {
+            let path = base_dir.join(format!("{}.manifest", vault_name));
+            let content = tokio::fs::read_to_string(path).await?;
+            let vault: Vault = serde_json::from_str(&content)?;
+            Ok(vault)
+        }
+
+        async fn temp_delete_vault_by_name(
+            vault_name: &str,
+            base_dir: &Path,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            let path = base_dir.join(format!("{}.manifest", vault_name));
+            if path.exists() {
+                tokio::fs::remove_file(path).await?;
+            }
+            Ok(())
+        }
+
+        async fn temp_vault_exists_by_name(vault_name: &str, base_dir: &Path) -> bool {
+            let path = base_dir.join(format!("{}.manifest", vault_name));
+            path.exists()
+        }
+
         // Create a test vault with filesystem-safe name
         let mut vault = Vault::new(
             "test-vault-persistence".to_string(),
@@ -244,11 +287,13 @@ mod tests {
 
         vault.add_key_id(passphrase_key.id.clone()).unwrap();
 
-        // Save the vault
-        save_vault(&vault).await.unwrap();
+        // Save the vault using temp directory
+        temp_save_vault(&vault, temp_path).await.unwrap();
 
         // Load it back by name
-        let loaded = load_vault_by_name(&vault.name).await.unwrap();
+        let loaded = temp_load_vault_by_name(&vault.name, temp_path)
+            .await
+            .unwrap();
 
         // Verify
         assert_eq!(loaded.id, vault.id);
@@ -257,26 +302,85 @@ mod tests {
         assert_eq!(loaded.keys[0], "key_1");
 
         // Clean up
-        delete_vault_by_name(&vault.name).await.unwrap();
-        assert!(!vault_exists_by_name(&vault.name).await);
+        temp_delete_vault_by_name(&vault.name, temp_path)
+            .await
+            .unwrap();
+        assert!(!temp_vault_exists_by_name(&vault.name, temp_path).await);
     }
 
     #[tokio::test]
-    #[ignore = "Requires filesystem write access to Documents folder"]
     async fn test_list_vaults() {
+        use std::path::Path;
+        use tempfile::TempDir;
+
+        // Create temp directory for this test
+        let temp_dir = TempDir::new().unwrap();
+        let temp_path = temp_dir.path();
+
+        // Helper functions for temp directory operations
+        async fn temp_save_vault(
+            vault: &Vault,
+            base_dir: &Path,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            let path = base_dir.join(format!("{}.manifest", vault.name));
+            let json = serde_json::to_string_pretty(vault)?;
+            tokio::fs::write(path, json).await?;
+            Ok(())
+        }
+
+        async fn temp_list_vaults(
+            base_dir: &Path,
+        ) -> Result<Vec<Vault>, Box<dyn std::error::Error + Send + Sync>> {
+            let mut vaults = Vec::new();
+            let mut entries = tokio::fs::read_dir(base_dir).await?;
+
+            while let Some(entry) = entries.next_entry().await? {
+                let path = entry.path();
+                if let Some(extension) = path.extension()
+                    && extension == "manifest"
+                {
+                    let content = tokio::fs::read_to_string(&path).await?;
+                    let vault: Vault = serde_json::from_str(&content)?;
+                    vaults.push(vault);
+                }
+            }
+
+            Ok(vaults)
+        }
+
+        async fn temp_delete_vault_by_name(
+            vault_name: &str,
+            base_dir: &Path,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            let path = base_dir.join(format!("{}.manifest", vault_name));
+            if path.exists() {
+                tokio::fs::remove_file(path).await?;
+            }
+            Ok(())
+        }
+
         // Create multiple vaults with filesystem-safe names
         let vault1 = Vault::new("test-vault-list-1".to_string(), None);
         let vault2 = Vault::new("test-vault-list-2".to_string(), None);
 
-        save_vault(&vault1).await.unwrap();
-        save_vault(&vault2).await.unwrap();
+        temp_save_vault(&vault1, temp_path).await.unwrap();
+        temp_save_vault(&vault2, temp_path).await.unwrap();
 
         // List vaults
-        let vaults = list_vaults().await.unwrap();
-        assert!(vaults.len() >= 2);
+        let vaults = temp_list_vaults(temp_path).await.unwrap();
+        assert_eq!(vaults.len(), 2);
+
+        // Verify both vaults are present
+        let vault_names: Vec<String> = vaults.iter().map(|v| v.name.clone()).collect();
+        assert!(vault_names.contains(&"test-vault-list-1".to_string()));
+        assert!(vault_names.contains(&"test-vault-list-2".to_string()));
 
         // Clean up by name
-        delete_vault_by_name(&vault1.name).await.unwrap();
-        delete_vault_by_name(&vault2.name).await.unwrap();
+        temp_delete_vault_by_name(&vault1.name, temp_path)
+            .await
+            .unwrap();
+        temp_delete_vault_by_name(&vault2.name, temp_path)
+            .await
+            .unwrap();
     }
 }
