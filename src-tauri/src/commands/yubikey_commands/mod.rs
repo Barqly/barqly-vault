@@ -18,124 +18,48 @@ pub use smart_decryption::*;
 pub use streamlined::*;
 
 use crate::commands::command_types::{CommandError, ErrorCode};
-use crate::crypto::yubikey::YubiKeyError as LegacyYubiKeyError;
-use crate::key_management::yubikey::domain::errors::YubiKeyError as NewYubiKeyError;
+use crate::key_management::yubikey::domain::errors::YubiKeyError;
 
 /// Convert YubiKey errors to command errors with appropriate recovery guidance
-impl From<LegacyYubiKeyError> for CommandError {
-    fn from(err: LegacyYubiKeyError) -> Self {
+impl From<YubiKeyError> for CommandError {
+    fn from(err: YubiKeyError) -> Self {
         match err {
-            LegacyYubiKeyError::NoDevicesFound => {
-                CommandError::operation(ErrorCode::YubiKeyNotFound, "No YubiKey devices found")
-                    .with_recovery_guidance("Please insert a YubiKey device and try again")
-            }
-            LegacyYubiKeyError::DeviceNotFound(serial) => CommandError::operation(
+            YubiKeyError::DeviceNotFound { serial } => CommandError::operation(
                 ErrorCode::YubiKeyNotFound,
                 format!("YubiKey with serial {serial} not found"),
             )
             .with_recovery_guidance("Please insert the correct YubiKey device"),
-            LegacyYubiKeyError::PinRequired(attempts) => CommandError::operation(
-                ErrorCode::YubiKeyPinRequired,
-                format!("YubiKey PIN required ({attempts} attempts remaining)"),
-            )
-            .with_recovery_guidance("Enter your 6-8 digit YubiKey PIN"),
-            LegacyYubiKeyError::PinBlocked => {
-                CommandError::operation(ErrorCode::YubiKeyPinBlocked, "YubiKey PIN is blocked")
-                    .with_recovery_guidance("Use your PUK (PIN Unblocking Key) to reset the PIN")
-            }
-            LegacyYubiKeyError::TouchRequired => {
-                CommandError::operation(ErrorCode::YubiKeyTouchRequired, "YubiKey touch required")
-                    .with_recovery_guidance("Touch the gold contact on your YubiKey when it blinks")
-            }
-            LegacyYubiKeyError::TouchTimeout => {
-                CommandError::operation(ErrorCode::YubiKeyTouchTimeout, "YubiKey touch timed out")
-                    .with_recovery_guidance("Touch the gold contact on your YubiKey when it blinks")
-            }
-            LegacyYubiKeyError::WrongDevice { expected, found } => CommandError::operation(
-                ErrorCode::WrongYubiKey,
-                format!("Wrong YubiKey connected. Expected {expected}, found {found}"),
-            )
-            .with_recovery_guidance("Connect the YubiKey that was used to create this vault"),
-            LegacyYubiKeyError::SlotInUse(slot) => CommandError::operation(
-                ErrorCode::YubiKeySlotInUse,
-                format!("PIV slot {slot} is already in use"),
-            )
-            .with_recovery_guidance("Choose a different slot or use a different YubiKey"),
-            LegacyYubiKeyError::InitializationFailed(msg) => CommandError::operation(
-                ErrorCode::YubiKeyInitializationFailed,
-                format!("YubiKey initialization failed: {msg}"),
-            )
-            .with_recovery_guidance(
-                "Try resetting the YubiKey PIV applet or use a different device",
-            ),
-            LegacyYubiKeyError::CommunicationError(msg) => CommandError::operation(
-                ErrorCode::YubiKeyCommunicationError,
-                format!("YubiKey communication error: {msg}"),
-            )
-            .with_recovery_guidance("Check YubiKey connection and try again"),
-            LegacyYubiKeyError::PluginError(msg) => CommandError::operation(
-                ErrorCode::PluginExecutionFailed,
-                format!("Plugin error: {msg}"),
-            )
-            .with_recovery_guidance("Check that age-plugin-yubikey is properly installed"),
-            LegacyYubiKeyError::SmartCardServiceUnavailable => CommandError::operation(
-                ErrorCode::YubiKeyCommunicationError,
-                "Smart card service is not available",
-            )
-            .with_recovery_guidance(
-                "Install PC/SC drivers and ensure the smart card service is running",
-            ),
-            _ => CommandError::operation(
-                ErrorCode::UnexpectedError,
-                format!("YubiKey operation failed: {err}"),
-            )
-            .with_recovery_guidance(
-                "Try reconnecting your YubiKey and attempting the operation again",
-            ),
-        }
-    }
-}
-
-/// Convert new YubiKey management errors to command errors
-impl From<NewYubiKeyError> for CommandError {
-    fn from(err: NewYubiKeyError) -> Self {
-        match err {
-            NewYubiKeyError::DeviceNotFound { serial } => CommandError::operation(
-                ErrorCode::YubiKeyNotFound,
-                format!("YubiKey with serial {serial} not found"),
-            )
-            .with_recovery_guidance("Please insert the correct YubiKey device"),
-            NewYubiKeyError::MultipleDevicesFound { serials } => CommandError::operation(
+            YubiKeyError::MultipleDevicesFound { serials } => CommandError::operation(
                 ErrorCode::UnexpectedError,
                 format!("Multiple YubiKey devices found: {serials:?}"),
             )
             .with_recovery_guidance("Disconnect extra YubiKey devices or specify serial number"),
-            NewYubiKeyError::Device { message } => CommandError::operation(
+            YubiKeyError::Device { message } => CommandError::operation(
                 ErrorCode::YubiKeyCommunicationError,
                 format!("YubiKey device error: {message}"),
             )
             .with_recovery_guidance("Check YubiKey connection and try again"),
-            NewYubiKeyError::Identity { message } => CommandError::operation(
+            YubiKeyError::Identity { message } => CommandError::operation(
                 ErrorCode::YubiKeyInitializationFailed,
                 format!("YubiKey identity error: {message}"),
             )
             .with_recovery_guidance("Try re-initializing the YubiKey or use a different device"),
-            NewYubiKeyError::IdentityNotFound { serial } => CommandError::operation(
+            YubiKeyError::IdentityNotFound { serial } => CommandError::operation(
                 ErrorCode::YubiKeyNotFound,
                 format!("No identity found for YubiKey: {serial}"),
             )
             .with_recovery_guidance("Initialize the YubiKey first or check the serial number"),
-            NewYubiKeyError::Registry { message } => CommandError::operation(
+            YubiKeyError::Registry { message } => CommandError::operation(
                 ErrorCode::UnexpectedError,
                 format!("YubiKey registry error: {message}"),
             )
             .with_recovery_guidance("Check application data integrity"),
-            NewYubiKeyError::Pin { message } => CommandError::operation(
+            YubiKeyError::Pin { message } => CommandError::operation(
                 ErrorCode::YubiKeyPinRequired,
                 format!("YubiKey PIN error: {message}"),
             )
             .with_recovery_guidance("Enter your 6-8 digit YubiKey PIN"),
-            NewYubiKeyError::AgePlugin { message } => CommandError::operation(
+            YubiKeyError::AgePlugin { message } => CommandError::operation(
                 ErrorCode::PluginExecutionFailed,
                 format!("age-plugin-yubikey error: {message}"),
             )

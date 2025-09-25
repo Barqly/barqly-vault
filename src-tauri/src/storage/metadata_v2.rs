@@ -302,8 +302,11 @@ impl RecipientInfo {
         match &self.recipient_type {
             RecipientType::Passphrase => true, // Passphrases are always "available"
             RecipientType::YubiKey { serial, .. } => {
-                // Check if the YubiKey is currently connected
-                crate::crypto::yubikey::detection::find_yubikey_by_serial(serial).is_ok()
+                // TODO: Replace with async YubiKeyManager.is_device_connected() when available
+                // For now, assume YubiKey is available (deprecated detection always returned true anyway)
+                // This will be properly implemented when device detection is needed
+                let _ = serial; // Acknowledge the parameter
+                true
             }
         }
     }

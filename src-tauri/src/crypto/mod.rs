@@ -27,7 +27,6 @@ pub mod age_ops;
 pub mod errors;
 pub mod key_mgmt;
 pub mod multi_recipient;
-pub mod yubikey;
 
 use age::secrecy::{ExposeSecret, SecretString};
 use std::fmt;

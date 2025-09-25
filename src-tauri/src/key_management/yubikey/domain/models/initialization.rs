@@ -4,13 +4,39 @@
 //! This replaces the legacy YubiKeyInitResult from crypto/yubikey.
 
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// PIN policy for YubiKey operations (from crypto/yubikey management)
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
 pub enum PinPolicy {
     Never,
     Once,
     Always,
+}
+
+/// Touch policy for YubiKey operations
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+pub enum TouchPolicy {
+    Never,
+    Always,
+    Cached,
+}
+
+/// Default policy configurations for YubiKey operations
+pub mod policy_config {
+    use super::*;
+
+    /// PIN policy for all YubiKey operations
+    /// - Once: PIN required once per session (recommended for usability)
+    /// - Always: PIN required for every operation (maximum security)
+    /// - Never: No PIN required (not recommended)
+    pub const DEFAULT_PIN_POLICY: PinPolicy = PinPolicy::Once;
+
+    /// Touch policy for all YubiKey operations
+    /// - Cached: Touch required once, then 15s window (recommended for usability)
+    /// - Always: Touch required for every operation (maximum security)
+    /// - Never: No touch required (for testing/debugging)
+    pub const DEFAULT_TOUCH_POLICY: TouchPolicy = TouchPolicy::Never;
 }
 
 /// Result from YubiKey initialization containing all necessary information
@@ -25,6 +51,26 @@ pub struct InitializationResult {
     pub touch_required: bool,
     /// PIN policy for the key
     pub pin_policy: PinPolicy,
+}
+
+impl fmt::Display for PinPolicy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PinPolicy::Never => write!(f, "Never"),
+            PinPolicy::Once => write!(f, "Once"),
+            PinPolicy::Always => write!(f, "Always"),
+        }
+    }
+}
+
+impl fmt::Display for TouchPolicy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TouchPolicy::Never => write!(f, "Never"),
+            TouchPolicy::Always => write!(f, "Always"),
+            TouchPolicy::Cached => write!(f, "Cached"),
+        }
+    }
 }
 
 impl InitializationResult {

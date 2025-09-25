@@ -8,8 +8,8 @@
 use crate::commands::types::{
     CommandError, CommandResponse, ErrorCode, ErrorHandler, ValidateInput, ValidationHelper,
 };
-use crate::key_management::yubikey::domain::models::ProtectionMode;
-use crate::crypto::yubikey::{YubiIdentityProviderFactory, YubiKeyInfo};
+use crate::key_management::yubikey::domain::models::{ProtectionMode, InitializationResult};
+use crate::key_management::yubikey::{YubiIdentityProviderFactory};
 use crate::crypto::{encrypt_private_key, generate_keypair};
 use crate::prelude::*;
 use crate::storage::{self, RecipientInfo, RecipientType, VaultMetadataV2};
@@ -22,7 +22,7 @@ pub struct GenerateKeyMultiInput {
     pub passphrase: Option<String>, // Optional for YubiKey-only mode
     pub protection_mode: Option<ProtectionMode>, // Defaults to PassphraseOnly for backward compat
     pub yubikey_device_id: Option<String>, // For YubiKey modes
-    pub yubikey_info: Option<YubiKeyInfo>, // YubiKey configuration
+    pub yubikey_info: Option<InitializationResult>, // YubiKey configuration
     pub yubikey_pin: Option<String>, // YubiKey PIN for hardware operations
 }
 
@@ -281,7 +281,7 @@ async fn generate_yubikey_only_key_with_initialization(
     label: &str,
     serial: &str,
     device_id: Option<&str>,
-    _yubikey_info: Option<&YubiKeyInfo>,
+    _yubikey_info: Option<&InitializationResult>,
     yubikey_pin: Option<&str>,
     error_handler: &ErrorHandler,
 ) -> Result<(String, std::path::PathBuf, Vec<String>), CommandError> {
@@ -440,7 +440,7 @@ async fn generate_hybrid_key(
     passphrase: &str,
     yubikey_serial: &str,
     device_id: Option<&str>,
-    _yubikey_info: Option<&YubiKeyInfo>,
+    _yubikey_info: Option<&InitializationResult>,
     yubikey_pin: Option<&str>,
     error_handler: &ErrorHandler,
 ) -> Result<(String, std::path::PathBuf, Vec<String>), CommandError> {

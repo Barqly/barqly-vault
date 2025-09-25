@@ -33,7 +33,7 @@ pub use device::{
 pub use identity::{
     IdentityBuilder, IdentityValidationError, RedactedIdentity, YubiKeyIdentity, identity_utils,
 };
-pub use initialization::{InitializationResult, PinPolicy, ProtectionMode, UnlockCredentials, UnlockMethod};
+pub use initialization::{InitializationResult, PinPolicy, ProtectionMode, TouchPolicy, UnlockCredentials, UnlockMethod, policy_config};
 pub use pin::{Pin, PinValidationError};
 pub use serial::{Serial, SerialValidationError};
 pub use state::{

@@ -61,7 +61,7 @@ impl AgePluginProvider {
     }
 
     /// Find the age-plugin-yubikey binary
-    fn find_plugin_binary() -> YubiKeyResult<PathBuf> {
+    pub fn find_plugin_binary() -> YubiKeyResult<PathBuf> {
         // First, try to find in PATH
         if let Ok(path) = Self::find_in_path("age-plugin-yubikey") {
             return Ok(path);
@@ -321,13 +321,13 @@ impl YubiIdentityProvider for AgePluginProvider {
         // Set PIN policy using centralized configuration
         args.push("--pin-policy");
         let pin_policy_str =
-            crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY.to_string();
+            crate::key_management::yubikey::domain::models::policy_config::DEFAULT_PIN_POLICY.to_string();
         args.push(&pin_policy_str);
 
         // Set touch policy using centralized configuration
         args.push("--touch-policy");
         let touch_policy_str =
-            crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY.to_string();
+            crate::key_management::yubikey::domain::models::policy_config::DEFAULT_TOUCH_POLICY.to_string();
         args.push(&touch_policy_str);
 
         args.push("--name");
@@ -777,7 +777,7 @@ impl AgePluginPtyProvider {
                         // Instead it shows "Generating key..." and then waits silently for touch
                         // IMPORTANT: Exclude our own debug messages (those with emojis)
                         // IMPORTANT: Skip touch detection if policy is Never
-                        let touch_policy = crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY;
+                        let touch_policy = crate::key_management::yubikey::domain::models::policy_config::DEFAULT_TOUCH_POLICY;
                         log_sensitive!(dev_only: {
 
                             debug!("🔧 POLICY CHECK: Current touch policy = {touch_policy:?}");
@@ -791,7 +791,7 @@ impl AgePluginPtyProvider {
                                 debug!("🔧 POLICY CHECK: Found 'Generating key' line, checking if should trigger touch detection...");
 
                             });
-                            if touch_policy != crate::crypto::yubikey::management::TouchPolicy::Never {
+                            if touch_policy != crate::key_management::yubikey::domain::models::TouchPolicy::Never {
                                 log_sensitive!(dev_only: {
 
                                     debug!("🔧 POLICY CHECK: Touch policy is NOT Never, triggering touch detection");
@@ -809,7 +809,7 @@ impl AgePluginPtyProvider {
 
                         if (line.contains("Generating key") || line.contains("generating key"))
                             && !line.contains("🔍") && !line.contains("TRACER:") && !line.contains("DETECTIVE:")
-                            && touch_policy != crate::crypto::yubikey::management::TouchPolicy::Never {
+                            && touch_policy != crate::key_management::yubikey::domain::models::TouchPolicy::Never {
                             log_sensitive!(dev_only: {
 
                                 debug!("👆 TRACER: KEY GENERATION STARTED - Touch will be required!");
@@ -1132,13 +1132,13 @@ impl YubiIdentityProvider for AgePluginPtyProvider {
         // Set PIN policy using centralized configuration
         args.push("--pin-policy");
         let pin_policy_str =
-            crate::crypto::yubikey::management::policy_config::DEFAULT_PIN_POLICY.to_string();
+            crate::key_management::yubikey::domain::models::policy_config::DEFAULT_PIN_POLICY.to_string();
         args.push(&pin_policy_str);
 
         // Set touch policy using centralized configuration
         args.push("--touch-policy");
         let touch_policy_str =
-            crate::crypto::yubikey::management::policy_config::DEFAULT_TOUCH_POLICY.to_string();
+            crate::key_management::yubikey::domain::models::policy_config::DEFAULT_TOUCH_POLICY.to_string();
         args.push(&touch_policy_str);
 
         args.push("--name");
