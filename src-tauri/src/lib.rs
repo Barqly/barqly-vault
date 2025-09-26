@@ -33,12 +33,15 @@ use commands::{
     init_yubikey,
     // Storage commands
     list_keys_command,
+    // Unified key management
+    list_unified_keys,
     // Streamlined YubiKey commands
     list_yubikeys,
     register_yubikey,
     select_directory,
     // File commands
     select_files,
+    test_unified_keys,
     update_config,
     validate_passphrase,
     validate_passphrase_strength,
@@ -101,6 +104,9 @@ pub fn run() {
             // Storage commands
             list_keys_command,
             delete_key_command,
+            // Unified key management
+            list_unified_keys,
+            test_unified_keys,
             get_config,
             update_config,
             get_cache_metrics,
@@ -171,6 +177,9 @@ pub fn run() {
             // Storage commands
             list_keys_command,
             delete_key_command,
+            // Unified key management
+            list_unified_keys,
+            test_unified_keys,
             get_config,
             update_config,
             get_cache_metrics,

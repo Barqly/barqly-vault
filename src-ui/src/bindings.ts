@@ -163,6 +163,28 @@ async deleteKeyCommand(keyId: string) : Promise<Result<null, CommandError>> {
 }
 },
 /**
+ * List keys with flexible filtering options - unified API
+ */
+async listUnifiedKeys(filter: KeyListFilter) : Promise<Result<KeyInfo[], CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_unified_keys", { filter }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Simple test command to verify the unified API works
+ */
+async testUnifiedKeys() : Promise<Result<string, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("test_unified_keys") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Get application configuration
  */
 async getConfig() : Promise<Result<AppConfig, CommandError>> {
@@ -691,6 +713,62 @@ touch_required: boolean;
  */
 pin_policy: PinPolicy }
 /**
+ * Unified key information structure
+ */
+export type KeyInfo = { 
+/**
+ * Unique identifier for this key
+ */
+id: string; 
+/**
+ * User-friendly label
+ */
+label: string; 
+/**
+ * Type-specific information
+ */
+key_type: KeyType; 
+/**
+ * Age recipient string for encryption
+ */
+recipient: string; 
+/**
+ * Whether key is currently available (green vs blue in UI)
+ */
+is_available: boolean; 
+/**
+ * Which vault this key belongs to (if any)
+ */
+vault_id: string | null; 
+/**
+ * Current state in relation to vaults
+ */
+state: KeyState; 
+/**
+ * Additional metadata for YubiKey keys
+ */
+yubikey_info: YubiKeyInfo | null }
+/**
+ * Filter options for key listing operations
+ */
+export type KeyListFilter = 
+/**
+ * All registered keys across all vaults
+ */
+{ type: "All" } | 
+/**
+ * Keys registered to a specific vault
+ */
+{ type: "ForVault"; value: string } | 
+/**
+ * Keys NOT in a specific vault but available to add
+ */
+{ type: "AvailableForVault"; value: string } | 
+/**
+ * Only currently connected/available keys (for decryption UI)
+ */
+{ type: "ConnectedOnly" }
+/**
  * Key metadata for frontend display
  */
 export type KeyMetadata = { label: string; created_at: string; public_key: string | null }
@@ -746,6 +824,18 @@ export type KeyState =
  * Key exists but is not associated with any vault
  */
 "orphaned"
+/**
+ * Key type classification for unified API
+ */
+export type KeyType = 
+/**
+ * Passphrase-based key
+ */
+{ type: "Passphrase"; data: { key_id: string } } | 
+/**
+ * YubiKey hardware token
+ */
+{ type: "YubiKey"; data: { serial: string; firmware_version: string | null } }
 /**
  * Response containing list of vaults
  */
@@ -882,6 +972,10 @@ export type VerifyManifestInput = { manifest_path: string; extracted_files_dir: 
  * Response from manifest verification command
  */
 export type VerifyManifestResponse = { is_valid: boolean; message: string; file_count: number; total_size: number }
+/**
+ * YubiKey-specific information for unified API
+ */
+export type YubiKeyInfo = { slot: number | null; identity_tag: string | null; pin_status: PinStatus; yubikey_state: YubiKeyState }
 /**
  * YubiKey initialization parameters for vault
  */

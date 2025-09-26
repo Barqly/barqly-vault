@@ -16,6 +16,9 @@ pub mod vault_yubikey_helpers;
 pub mod yubikey_crypto_commands;
 pub mod yubikey_device_commands;
 
+// Unified key management API
+pub mod unified_key_commands;
+
 // Re-export command types for backward compatibility
 // TODO: Remove this alias after updating all imports
 pub use command_types as types;
@@ -30,3 +33,6 @@ pub use storage_commands::*;
 pub use vault_yubikey_commands::*;
 pub use yubikey_crypto_commands::*;
 pub use yubikey_device_commands::*;
+
+// Re-export unified key management API
+pub use unified_key_commands::*;
