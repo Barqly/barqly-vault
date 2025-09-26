@@ -1,7 +1,7 @@
-//! Crypto commands module - maintains backward compatibility
+//! Crypto commands module
 //!
-//! This module provides all cryptographic operations for the Barqly Vault application,
-//! including key generation, encryption, decryption, and manifest verification.
+//! This module provides cryptographic operations for encryption, decryption,
+//! and manifest verification. For passphrase key operations, see commands::passphrase.
 
 pub mod decryption;
 pub mod encryption;
@@ -10,7 +10,6 @@ pub mod key_generation_multi;
 pub mod manifest;
 pub mod progress;
 
-// Re-export all commands and types to maintain existing interface
 pub use decryption::{DecryptDataInput, DecryptionResult, decrypt_data};
 pub use encryption::{
     EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse, encrypt_files,
@@ -23,14 +22,6 @@ pub use manifest::{VerifyManifestInput, VerifyManifestResponse, verify_manifest}
 pub use progress::{
     EncryptionStatus, EncryptionStatusResponse, GetEncryptionStatusInput, GetProgressInput,
     GetProgressResponse, get_encryption_status, get_progress,
-};
-
-// Passphrase commands moved to commands::passphrase module
-// Re-export for backward compatibility
-pub use crate::commands::passphrase::{
-    GenerateKeyInput, GenerateKeyResponse, PassphraseValidationResult, ValidatePassphraseInput,
-    ValidatePassphraseResponse, VerifyKeyPassphraseInput, VerifyKeyPassphraseResponse,
-    generate_key, validate_passphrase, validate_passphrase_strength, verify_key_passphrase,
 };
 
 // Shared state management

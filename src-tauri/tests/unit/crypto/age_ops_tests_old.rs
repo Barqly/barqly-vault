@@ -7,7 +7,8 @@
 //! - Performance with different data sizes
 
 use crate::common::cleanup::TestCleanup;
-use barqly_vault_lib::crypto::{decrypt_data, encrypt_data, generate_keypair, CryptoError};
+use barqly_vault_lib::crypto::{decrypt_data, encrypt_data, CryptoError};
+use barqly_vault_lib::key_management::passphrase::generate_keypair;
 
 #[test]
 fn test_encrypt_data_with_valid_public_key() {

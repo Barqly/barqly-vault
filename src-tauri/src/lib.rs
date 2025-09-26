@@ -22,7 +22,6 @@ use commands::{
     encrypt_files,
     encrypt_files_multi,
     // Crypto commands
-    generate_key,
     generate_key_multi,
     get_cache_metrics,
     get_config,
@@ -34,21 +33,21 @@ use commands::{
     list_keys_command,
     // Unified key management
     list_unified_keys,
+    // Passphrase commands
+    passphrase::{
+        add_passphrase_key_to_vault, generate_key, validate_passphrase,
+        validate_passphrase_strength, validate_vault_passphrase_key, verify_key_passphrase,
+    },
     select_directory,
     // File commands
     select_files,
     test_unified_keys,
     update_config,
-    validate_passphrase,
-    validate_passphrase_strength,
     // Vault commands
     vault_commands::{
-        add_key_to_vault, add_passphrase_key_to_vault,
-        /* check_yubikey_availability, */ create_vault, delete_vault, get_current_vault,
-        get_vault_keys, list_vaults, remove_key_from_vault, set_current_vault, update_key_label,
-        validate_vault_passphrase_key,
+        add_key_to_vault, create_vault, delete_vault, get_current_vault, get_vault_keys,
+        list_vaults, remove_key_from_vault, set_current_vault, update_key_label,
     },
-    verify_key_passphrase,
     verify_manifest,
     // New consolidated YubiKey commands from yubikey module
     yubikey::{

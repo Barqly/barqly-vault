@@ -10,8 +10,9 @@
 use crate::common::cleanup::TestCleanup;
 use crate::common::helpers::TestAssertions;
 use barqly_vault_lib::{
-    crypto::{decrypt_data, encrypt_data, generate_keypair},
+    crypto::{decrypt_data, encrypt_data},
     file_ops::{FileOpsConfig, FileSelection},
+    key_management::passphrase::generate_keypair,
 };
 use std::{fs, path::PathBuf, thread, time::Duration};
 use tempfile::TempDir;

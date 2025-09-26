@@ -8,10 +8,8 @@
 //! - Edge cases and error conditions
 
 use barqly_vault_lib::commands::{
-    crypto::{
-        DecryptDataInput, EncryptDataInput, GenerateKeyInput, GetEncryptionStatusInput,
-        ValidatePassphraseInput,
-    },
+    crypto::{DecryptDataInput, EncryptDataInput, GetEncryptionStatusInput},
+    passphrase::{GenerateKeyInput, ValidatePassphraseInput},
     types::{CommandError, ValidateInput},
 };
 

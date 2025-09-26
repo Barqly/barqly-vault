@@ -286,7 +286,7 @@ impl MultiRecipientCrypto {
         // Load the private key using the passphrase
         // Note: This assumes the public_key field actually contains encrypted private key data
         // In a real implementation, you would store encrypted private keys separately
-        let private_key = crate::crypto::key_mgmt::decrypt_private_key(
+        let private_key = crate::key_management::passphrase::decrypt_private_key(
             recipient.public_key.as_bytes(),
             secrecy::SecretString::from(passphrase.to_string()),
         )?;

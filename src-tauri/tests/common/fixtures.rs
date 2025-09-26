@@ -6,7 +6,8 @@
 //! - Parallel-safe: No shared state between tests
 
 use super::TestSuiteConfig;
-use barqly_vault_lib::crypto::{KeyPair, generate_keypair};
+use barqly_vault_lib::crypto::KeyPair;
+use barqly_vault_lib::key_management::passphrase::generate_keypair;
 use barqly_vault_lib::storage::{KeyInfo, save_encrypted_key};
 use secrecy::SecretString;
 use std::collections::HashMap;

@@ -9,23 +9,22 @@
 //!
 //! ## Public API
 //! The following functions are available for external use:
-//! - `generate_keypair()` - Create a new keypair
 //! - `encrypt_data()` - Encrypt data with a public key
 //! - `decrypt_data()` - Decrypt data with a private key
-//! - `encrypt_private_key()` - Encrypt a private key with a passphrase
-//! - `decrypt_private_key()` - Decrypt a private key with a passphrase
+//!
+//! For passphrase key operations, use `crate::key_management::passphrase` module.
 //!
 //! ## Example
 //! ```no_run
 //! use barqly_vault_lib::crypto;
+//! use barqly_vault_lib::key_management::passphrase;
 //!
-//! let keypair = crypto::generate_keypair().unwrap();
+//! let keypair = passphrase::generate_keypair().unwrap();
 //! let encrypted = crypto::encrypt_data(b"secret", &keypair.public_key).unwrap();
 //! ```
 
 pub mod age_ops;
 pub mod errors;
-pub mod key_mgmt;
 pub mod multi_recipient;
 
 use age::secrecy::{ExposeSecret, SecretString};
@@ -91,32 +90,8 @@ pub type Result<T> = std::result::Result<T, CryptoError>;
 // PUBLIC API - Functions available for external use
 // ============================================================================
 
-/// Generate a new keypair for encryption/decryption
-///
-/// **Deprecated**: Use `crate::key_management::passphrase::generate_keypair` instead
-pub use key_mgmt::generate_keypair;
-
-/// Encrypt data with a public key
-pub use age_ops::encrypt_data;
-
-/// Encrypt data with multiple public keys (multi-recipient)
-pub use age_ops::encrypt_data_multi_recipient;
-
-/// Decrypt data with a private key
 pub use age_ops::decrypt_data;
-
-/// Decrypt data using CLI approach (for YubiKey support)
 pub use age_ops::decrypt_data_cli;
-
-/// Decrypt data using YubiKey CLI approach with identity file
 pub use age_ops::decrypt_data_yubikey_cli;
-
-/// Encrypt a private key with a passphrase for secure storage
-///
-/// **Deprecated**: Use `crate::key_management::passphrase::encrypt_private_key` instead
-pub use key_mgmt::encrypt_private_key;
-
-/// Decrypt a private key with a passphrase
-///
-/// **Deprecated**: Use `crate::key_management::passphrase::decrypt_private_key` instead
-pub use key_mgmt::decrypt_private_key;
+pub use age_ops::encrypt_data;
+pub use age_ops::encrypt_data_multi_recipient;
