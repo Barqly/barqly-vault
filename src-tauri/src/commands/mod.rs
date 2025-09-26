@@ -13,6 +13,9 @@ pub mod vault_commands;
 // New consolidated YubiKey command module
 pub mod yubikey;
 
+// New consolidated Passphrase command module
+pub mod passphrase;
+
 // Legacy YubiKey command modules - REMOVED in Milestone 6
 // Files deleted: vault_yubikey_commands.rs, vault_yubikey_helpers.rs,
 //                yubikey_crypto_commands.rs, yubikey_device_commands.rs
