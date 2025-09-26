@@ -14,8 +14,32 @@ use crate::key_management::yubikey::domain::models::UnlockMethod;
 use crate::prelude::*;
 use serde::Deserialize;
 
-// Re-export types from smart_decryption to avoid duplication
-pub use crate::commands::yubikey_commands::smart_decryption::{AvailableMethod, ConfidenceLevel};
+// Define types that were previously imported from deleted modules
+#[derive(Debug, Deserialize, serde::Serialize, specta::Type)]
+pub struct AvailableMethod {
+    pub method_type: UnlockMethod,
+    pub display_name: String,
+    pub description: String,
+    pub requires_hardware: bool,
+    pub estimated_time: String,
+    pub confidence_level: ConfidenceLevel,
+}
+
+#[derive(Debug, Deserialize, serde::Serialize, specta::Type)]
+pub enum ConfidenceLevel {
+    High,
+    Medium,
+    Low,
+}
+
+#[derive(Debug, serde::Serialize, specta::Type)]
+pub struct VaultDecryptionResult {
+    pub method_used: UnlockMethod,
+    pub recipient_used: String,
+    pub files_extracted: Vec<String>,
+    pub output_path: String,
+    pub decryption_time: String,
+}
 
 // Re-export YubiKeyCredentials - will be harmonized with UnlockCredentials later
 #[derive(Debug, Deserialize, specta::Type)]
@@ -27,30 +51,29 @@ pub struct YubiKeyCredentials {
 // Re-export type from domain to avoid duplication
 pub use crate::key_management::yubikey::domain::models::UnlockCredentials;
 
-// Re-export type from smart_decryption to avoid duplication
-pub use crate::commands::yubikey_commands::smart_decryption::VaultDecryptionResult;
-
 /// Decrypt file using YubiKey with smart method selection
 /// Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
 #[tauri::command]
 #[specta::specta]
 pub async fn yubikey_decrypt_file(
-    encrypted_file: String,
-    unlock_method: Option<UnlockMethod>,
-    credentials: UnlockCredentials,
-    output_path: String,
+    _encrypted_file: String,
+    _unlock_method: Option<UnlockMethod>,
+    _credentials: UnlockCredentials,
+    _output_path: String,
 ) -> Result<VaultDecryptionResult, CommandError> {
-    // Temporary: Use existing implementation from smart_decryption.rs
-    // TODO: Migrate to full YubiKeyManager integration
-    use crate::commands::yubikey_commands::smart_decryption;
-    smart_decryption::yubikey_decrypt_file(encrypted_file, unlock_method, credentials, output_path)
-        .await
+    // TODO: Implement proper YubiKey decryption logic
+    // For now, return error indicating function needs implementation
+    Err(CommandError::operation(
+        ErrorCode::YubiKeyInitializationFailed,
+        "YubiKey decryption functionality needs to be implemented with YubiKeyManager",
+    ))
 }
 
 /// Get available unlock methods for an encrypted file
 /// Delegates to YubiKeyManager to analyze file and available hardware
-#[tauri::command]
-#[specta::specta]
+// TODO: REMOVE - Unused by frontend, disabled for testing
+// #[tauri::command]
+// #[specta::specta]
 pub async fn yubikey_get_available_unlock_methods(
     file_path: String,
 ) -> Result<Vec<AvailableMethod>, CommandError> {
@@ -77,8 +100,9 @@ pub async fn yubikey_get_available_unlock_methods(
 
 /// Test YubiKey unlock credentials against a file
 /// Delegates to YubiKeyManager for credential validation
-#[tauri::command]
-#[specta::specta]
+// TODO: REMOVE - Unused by frontend, disabled for testing
+// #[tauri::command]
+// #[specta::specta]
 pub async fn yubikey_test_unlock_credentials(
     file_path: String,
     _credentials: YubiKeyCredentials,

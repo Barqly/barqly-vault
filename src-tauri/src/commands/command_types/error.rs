@@ -179,3 +179,13 @@ impl From<Box<CommandError>> for CommandError {
         *boxed_error
     }
 }
+
+// Add support for YubiKey domain errors
+impl From<crate::key_management::yubikey::domain::errors::YubiKeyError> for CommandError {
+    fn from(error: crate::key_management::yubikey::domain::errors::YubiKeyError) -> Self {
+        CommandError::operation(
+            ErrorCode::YubiKeyInitializationFailed,
+            format!("YubiKey operation failed: {error}"),
+        )
+    }
+}

@@ -9,7 +9,6 @@ pub mod crypto;
 pub mod file_commands;
 pub mod storage_commands;
 pub mod vault_commands;
-pub mod yubikey_commands;
 
 // Consolidated YubiKey command modules
 pub mod vault_yubikey_commands;
@@ -26,7 +25,6 @@ pub use command_types::*;
 pub use crypto::*;
 pub use file_commands::*;
 pub use storage_commands::*;
-pub use yubikey_commands::*;
 
 // Re-export consolidated YubiKey commands
 pub use vault_yubikey_commands::*;

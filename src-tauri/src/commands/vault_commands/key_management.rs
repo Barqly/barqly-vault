@@ -153,8 +153,9 @@ pub async fn update_key_label(
 }
 
 /// Check YubiKey availability
-#[tauri::command]
-#[specta::specta]
+// TODO: REMOVE - Unused by frontend, disabled for testing
+// #[tauri::command]
+// #[specta::specta]
 #[instrument(skip_all, fields(serial = %input.serial))]
 pub async fn check_yubikey_availability(
     input: CheckYubiKeyAvailabilityRequest,

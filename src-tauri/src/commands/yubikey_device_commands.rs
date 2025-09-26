@@ -11,7 +11,7 @@
 //! - get_identities: Get YubiKey identity information
 
 use crate::commands::command_types::{CommandError, ErrorCode};
-use crate::commands::yubikey_commands::streamlined::StreamlinedYubiKeyInitResult;
+// Define StreamlinedYubiKeyInitResult locally since original module was removed
 use crate::key_management::yubikey::{
     YubiKeyManager,
     domain::models::{Pin, Serial},
@@ -22,10 +22,47 @@ use tauri;
 // Error handling implementation is already available in yubikey_commands/mod.rs
 // No need to duplicate it here
 
-// Re-export types from streamlined module to avoid duplication
-pub use crate::commands::yubikey_commands::streamlined::{
-    PinStatus, YubiKeyState, YubiKeyStateInfo,
-};
+// Define types that were previously imported from deleted modules
+#[derive(Debug, serde::Serialize, specta::Type)]
+pub enum PinStatus {
+    #[serde(rename = "default")]
+    Default,
+    #[serde(rename = "set")]
+    Set,
+}
+
+#[derive(Debug, serde::Serialize, specta::Type)]
+pub enum YubiKeyState {
+    #[serde(rename = "new")]
+    New,
+    #[serde(rename = "reused")]
+    Reused,
+    #[serde(rename = "registered")]
+    Registered,
+    #[serde(rename = "orphaned")]
+    Orphaned,
+}
+
+#[derive(Debug, serde::Serialize, specta::Type)]
+pub struct YubiKeyStateInfo {
+    pub serial: String,
+    pub state: YubiKeyState,
+    pub slot: Option<u8>,
+    pub recipient: Option<String>,
+    pub identity_tag: Option<String>,
+    pub label: Option<String>,
+    pub pin_status: PinStatus,
+}
+
+#[derive(Debug, serde::Serialize, specta::Type)]
+pub struct StreamlinedYubiKeyInitResult {
+    pub serial: String,
+    pub slot: u8,
+    pub recipient: String,
+    pub identity_tag: String,
+    pub label: String,
+    pub recovery_code: String,
+}
 
 // YubiKeyInitResult removed - using StreamlinedYubiKeyInitResult from existing implementation
 
@@ -240,21 +277,36 @@ pub async fn init_yubikey(
 #[tauri::command]
 #[specta::specta]
 pub async fn register_yubikey(
-    serial: String,
-    label: String,
-    pin: String,
+    _serial: String,
+    _label: String,
+    _pin: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
-    // Delegate to existing YubiKeyManager-based implementation
-    use crate::commands::yubikey_commands::streamlined;
-    streamlined::register_yubikey(serial, label, pin).await
+    // TODO: Implement YubiKey registration with YubiKeyManager
+    Err(CommandError::operation(
+        ErrorCode::YubiKeyInitializationFailed,
+        "YubiKey registration functionality needs to be implemented with YubiKeyManager",
+    ))
 }
 
 /// Get YubiKey identity information
 /// Uses existing streamlined implementation - fully integrated with YubiKeyManager
+// TODO: REMOVE - Unused by frontend, disabled for testing
+// #[tauri::command]
+// #[specta::specta]
+pub async fn get_identities(_serial: String) -> Result<Vec<String>, CommandError> {
+    // TODO: Implement identity retrieval with YubiKeyManager
+    Err(CommandError::operation(
+        ErrorCode::YubiKeyInitializationFailed,
+        "YubiKey identity retrieval functionality needs to be implemented with YubiKeyManager",
+    ))
+}
+
+/// List YubiKey devices (alias for list_yubikeys for decryption UI compatibility)
+/// This provides the same data as list_yubikeys but with a different command name
+/// for backward compatibility with the decryption workflow
 #[tauri::command]
 #[specta::specta]
-pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError> {
-    // Delegate to existing YubiKeyManager-based implementation
-    use crate::commands::yubikey_commands::streamlined;
-    streamlined::get_identities(serial).await
+pub async fn yubikey_list_devices() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
+    info!("Listing YubiKey devices for decryption UI (delegating to list_yubikeys)");
+    list_yubikeys().await
 }

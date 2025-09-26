@@ -28,7 +28,7 @@ use commands::{
     get_config,
     get_encryption_status,
     get_file_info,
-    get_identities,
+    // get_identities, // TODO: REMOVE - Disabled, unused by frontend
     get_progress,
     init_yubikey,
     // Storage commands
@@ -44,20 +44,22 @@ use commands::{
     validate_passphrase_strength,
     // Vault commands
     vault_commands::{
-        add_key_to_vault, add_passphrase_key_to_vault, check_yubikey_availability, create_vault,
-        delete_vault, get_current_vault, get_vault_keys, list_vaults, remove_key_from_vault,
-        set_current_vault, update_key_label, validate_vault_passphrase_key,
+        add_key_to_vault, add_passphrase_key_to_vault,
+        /* check_yubikey_availability, */ create_vault, delete_vault, get_current_vault,
+        get_vault_keys, list_vaults, remove_key_from_vault, set_current_vault, update_key_label,
+        validate_vault_passphrase_key,
     },
     // Consolidated YubiKey commands
     vault_yubikey_commands::{
-        check_keymenubar_positions_available, init_yubikey_for_vault,
+        /* check_keymenubar_positions_available, */ init_yubikey_for_vault,
         list_available_yubikeys_for_vault, register_yubikey_for_vault,
     },
     verify_key_passphrase,
     verify_manifest,
     yubikey_crypto_commands::{
-        yubikey_decrypt_file, yubikey_get_available_unlock_methods, yubikey_test_unlock_credentials,
+        yubikey_decrypt_file, /* yubikey_get_available_unlock_methods, yubikey_test_unlock_credentials, */
     },
+    yubikey_list_devices,
 };
 
 use crate::prelude::*;
@@ -117,23 +119,24 @@ pub fn run() {
             add_key_to_vault,
             remove_key_from_vault,
             update_key_label,
-            check_yubikey_availability,
+            // check_yubikey_availability, // TODO: REMOVE - Disabled, unused by frontend
             // Passphrase/YubiKey vault integration
             add_passphrase_key_to_vault,
             validate_vault_passphrase_key,
             init_yubikey_for_vault,
             register_yubikey_for_vault,
             list_available_yubikeys_for_vault,
-            check_keymenubar_positions_available,
+            // check_keymenubar_positions_available, // TODO: REMOVE - Disabled, legacy helper, unused by frontend
             // Streamlined YubiKey commands
             list_yubikeys,
             init_yubikey,
             register_yubikey,
-            get_identities,
+            // get_identities, // TODO: REMOVE - Disabled, unused by frontend
+            yubikey_list_devices,
             // YubiKey crypto commands
             yubikey_decrypt_file,
-            yubikey_get_available_unlock_methods,
-            yubikey_test_unlock_credentials,
+            // yubikey_get_available_unlock_methods, // TODO: REMOVE - Disabled, unused by frontend
+            // yubikey_test_unlock_credentials, // TODO: REMOVE - Disabled, unused by frontend
         ]);
 
         builder
@@ -186,23 +189,24 @@ pub fn run() {
             add_key_to_vault,
             remove_key_from_vault,
             update_key_label,
-            check_yubikey_availability,
+            // check_yubikey_availability, // TODO: REMOVE - Disabled, unused by frontend
             // Passphrase/YubiKey vault integration
             add_passphrase_key_to_vault,
             validate_vault_passphrase_key,
             init_yubikey_for_vault,
             register_yubikey_for_vault,
             list_available_yubikeys_for_vault,
-            check_keymenubar_positions_available,
+            // check_keymenubar_positions_available, // TODO: REMOVE - Disabled, legacy helper, unused by frontend
             // Streamlined YubiKey commands
             list_yubikeys,
             init_yubikey,
             register_yubikey,
-            get_identities,
+            // get_identities, // TODO: REMOVE - Disabled, unused by frontend
+            yubikey_list_devices,
             // YubiKey crypto commands
             yubikey_decrypt_file,
-            yubikey_get_available_unlock_methods,
-            yubikey_test_unlock_credentials,
+            // yubikey_get_available_unlock_methods, // TODO: REMOVE - Disabled, unused by frontend
+            // yubikey_test_unlock_credentials, // TODO: REMOVE - Disabled, unused by frontend
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -343,8 +343,9 @@ pub async fn list_available_yubikeys_for_vault(
 
 /// Check which KeyMenuBar display positions are available in a vault
 /// This is a legacy display helper - frontend should handle positioning
-#[tauri::command]
-#[specta::specta]
+// TODO: REMOVE - Unused by frontend, legacy display helper, disabled for testing
+// #[tauri::command]
+// #[specta::specta]
 pub async fn check_keymenubar_positions_available(vault_id: String) -> CommandResponse<Vec<bool>> {
     info!("Checking KeyMenuBar positions for vault: {}", vault_id);
 
