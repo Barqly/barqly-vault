@@ -6,12 +6,9 @@
 pub mod decryption;
 pub mod encryption;
 pub mod file_helpers;
-pub mod key_generation;
 pub mod key_generation_multi;
 pub mod manifest;
-pub mod passphrase_validation;
 pub mod progress;
-pub mod validation;
 
 // Re-export all commands and types to maintain existing interface
 pub use decryption::{DecryptDataInput, DecryptionResult, decrypt_data};
@@ -19,21 +16,21 @@ pub use encryption::{
     EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse, encrypt_files,
     encrypt_files_multi,
 };
-pub use key_generation::{GenerateKeyInput, GenerateKeyResponse, generate_key};
 pub use key_generation_multi::{
     GenerateKeyMultiInput, GenerateKeyMultiResponse, generate_key_multi,
 };
 pub use manifest::{VerifyManifestInput, VerifyManifestResponse, verify_manifest};
-pub use passphrase_validation::{
-    PassphraseStrength, PassphraseValidationResult, validate_passphrase_strength,
-};
 pub use progress::{
     EncryptionStatus, EncryptionStatusResponse, GetEncryptionStatusInput, GetProgressInput,
     GetProgressResponse, get_encryption_status, get_progress,
 };
-pub use validation::{
-    ValidatePassphraseInput, ValidatePassphraseResponse, VerifyKeyPassphraseInput,
-    VerifyKeyPassphraseResponse, validate_passphrase, verify_key_passphrase,
+
+// Passphrase commands moved to commands::passphrase module
+// Re-export for backward compatibility
+pub use crate::commands::passphrase::{
+    GenerateKeyInput, GenerateKeyResponse, PassphraseValidationResult, ValidatePassphraseInput,
+    ValidatePassphraseResponse, VerifyKeyPassphraseInput, VerifyKeyPassphraseResponse,
+    generate_key, validate_passphrase, validate_passphrase_strength, verify_key_passphrase,
 };
 
 // Shared state management

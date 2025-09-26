@@ -1,5 +1,7 @@
-use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
+use crate::commands::types::{CommandError, CommandResponse, ErrorCode, ValidateInput};
+use crate::constants::MIN_PASSPHRASE_LENGTH;
 use crate::key_management::passphrase::{PassphraseManager, PassphraseStrength};
+use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, specta::Type)]
@@ -36,6 +38,68 @@ pub struct VerifyKeyPassphraseInput {
 pub struct VerifyKeyPassphraseResponse {
     pub is_valid: bool,
     pub message: String,
+}
+
+#[derive(Debug, Deserialize, specta::Type)]
+pub struct ValidatePassphraseInput {
+    pub passphrase: String,
+}
+
+#[derive(Debug, Serialize, specta::Type)]
+pub struct ValidatePassphraseResponse {
+    pub is_valid: bool,
+    pub message: String,
+}
+
+impl ValidateInput for ValidatePassphraseInput {
+    fn validate(&self) -> Result<(), Box<CommandError>> {
+        if self.passphrase.is_empty() {
+            return Err(Box::new(CommandError::validation(
+                "Passphrase cannot be empty",
+            )));
+        }
+        Ok(())
+    }
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn validate_passphrase(
+    input: ValidatePassphraseInput,
+) -> CommandResponse<ValidatePassphraseResponse> {
+    let passphrase = &input.passphrase;
+
+    if passphrase.len() < MIN_PASSPHRASE_LENGTH {
+        return Ok(ValidatePassphraseResponse {
+            is_valid: false,
+            message: format!(
+                "Passphrase must be at least {} characters long",
+                MIN_PASSPHRASE_LENGTH
+            ),
+        });
+    }
+
+    let has_uppercase = passphrase.chars().any(|c| c.is_uppercase());
+    let has_lowercase = passphrase.chars().any(|c| c.is_lowercase());
+    let has_digit = passphrase.chars().any(|c| c.is_numeric());
+    let has_special = passphrase.chars().any(|c| !c.is_alphanumeric());
+
+    let complexity_score = [has_uppercase, has_lowercase, has_digit, has_special]
+        .iter()
+        .filter(|&&x| x)
+        .count();
+
+    if complexity_score < 3 {
+        return Ok(ValidatePassphraseResponse {
+            is_valid: false,
+            message: "Passphrase must contain at least 3 of: uppercase letters, lowercase letters, numbers, and special characters".to_string(),
+        });
+    }
+
+    Ok(ValidatePassphraseResponse {
+        is_valid: true,
+        message: "Passphrase meets security requirements".to_string(),
+    })
 }
 
 #[tauri::command]

@@ -2,10 +2,7 @@ use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum PassphraseError {
-    WeakPassphrase {
-        feedback: Vec<String>,
-        score: u8,
-    },
+    WeakPassphrase { feedback: Vec<String>, score: u8 },
     InvalidKeyFormat(String),
     EncryptionFailed(String),
     DecryptionFailed(String),
@@ -85,11 +82,13 @@ mod tests {
 
     #[test]
     fn test_is_recoverable() {
-        assert!(PassphraseError::WeakPassphrase {
-            feedback: vec![],
-            score: 0
-        }
-        .is_recoverable());
+        assert!(
+            PassphraseError::WeakPassphrase {
+                feedback: vec![],
+                score: 0
+            }
+            .is_recoverable()
+        );
         assert!(PassphraseError::WrongPassphrase.is_recoverable());
         assert!(PassphraseError::InvalidInput("test".to_string()).is_recoverable());
 
@@ -104,10 +103,12 @@ mod tests {
             score: 0,
         };
         assert!(error.recovery_guidance().is_some());
-        assert!(error
-            .recovery_guidance()
-            .unwrap()
-            .contains("stronger passphrase"));
+        assert!(
+            error
+                .recovery_guidance()
+                .unwrap()
+                .contains("stronger passphrase")
+        );
 
         let error = PassphraseError::WrongPassphrase;
         assert!(error.recovery_guidance().is_some());

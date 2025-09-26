@@ -1,5 +1,5 @@
 use crate::key_management::passphrase::infrastructure::{
-    encrypt_private_key, generate_keypair, PassphraseKeyRepository, StorageError,
+    PassphraseKeyRepository, StorageError, encrypt_private_key, generate_keypair,
 };
 use crate::storage::VaultMetadataV2;
 use age::secrecy::SecretString;
@@ -54,15 +54,13 @@ impl GenerationService {
         Self
     }
 
-    pub fn generate_passphrase_key(
-        &self,
-        label: &str,
-        passphrase: &str,
-    ) -> Result<GeneratedKey> {
+    pub fn generate_passphrase_key(&self, label: &str, passphrase: &str) -> Result<GeneratedKey> {
         let keypair = generate_keypair()?;
 
-        let encrypted_key =
-            encrypt_private_key(&keypair.private_key, SecretString::from(passphrase.to_string()))?;
+        let encrypted_key = encrypt_private_key(
+            &keypair.private_key,
+            SecretString::from(passphrase.to_string()),
+        )?;
 
         let saved_path = PassphraseKeyRepository::save_encrypted_key(
             label,
@@ -92,8 +90,10 @@ impl GenerationService {
     ) -> Result<GeneratedKey> {
         let keypair = generate_keypair()?;
 
-        let encrypted_key =
-            encrypt_private_key(&keypair.private_key, SecretString::from(passphrase.to_string()))?;
+        let encrypted_key = encrypt_private_key(
+            &keypair.private_key,
+            SecretString::from(passphrase.to_string()),
+        )?;
 
         let saved_path = crate::storage::save_encrypted_key_with_metadata(
             label,

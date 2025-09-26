@@ -5,11 +5,16 @@
 
 pub mod key_management;
 pub mod key_operations;
-pub mod passphrase_integration;
 pub mod vault_management;
 
 // Re-export all commands
 pub use key_management::*;
 pub use key_operations::*;
-pub use passphrase_integration::*;
 pub use vault_management::*;
+
+// Passphrase integration moved to commands::passphrase
+// Re-export for backward compatibility
+pub use crate::commands::passphrase::{
+    AddPassphraseKeyRequest, AddPassphraseKeyResponse, add_passphrase_key_to_vault,
+    validate_vault_passphrase_key,
+};

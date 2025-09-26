@@ -2,12 +2,13 @@ pub mod generation_commands;
 pub mod validation_commands;
 pub mod vault_commands;
 
-pub use generation_commands::{generate_key, GenerateKeyInput, GenerateKeyResponse};
+pub use generation_commands::{GenerateKeyInput, GenerateKeyResponse, generate_key};
 pub use validation_commands::{
-    validate_passphrase_strength, verify_key_passphrase, PassphraseValidationResult,
-    VerifyKeyPassphraseInput, VerifyKeyPassphraseResponse,
+    PassphraseValidationResult, ValidatePassphraseInput, ValidatePassphraseResponse,
+    VerifyKeyPassphraseInput, VerifyKeyPassphraseResponse, validate_passphrase,
+    validate_passphrase_strength, verify_key_passphrase,
 };
 pub use vault_commands::{
-    add_passphrase_key_to_vault, validate_vault_passphrase_key, AddPassphraseKeyRequest,
-    AddPassphraseKeyResponse,
+    AddPassphraseKeyRequest, AddPassphraseKeyResponse, add_passphrase_key_to_vault,
+    validate_vault_passphrase_key,
 };

@@ -92,6 +92,8 @@ pub type Result<T> = std::result::Result<T, CryptoError>;
 // ============================================================================
 
 /// Generate a new keypair for encryption/decryption
+///
+/// **Deprecated**: Use `crate::key_management::passphrase::generate_keypair` instead
 pub use key_mgmt::generate_keypair;
 
 /// Encrypt data with a public key
@@ -110,7 +112,11 @@ pub use age_ops::decrypt_data_cli;
 pub use age_ops::decrypt_data_yubikey_cli;
 
 /// Encrypt a private key with a passphrase for secure storage
+///
+/// **Deprecated**: Use `crate::key_management::passphrase::encrypt_private_key` instead
 pub use key_mgmt::encrypt_private_key;
 
 /// Decrypt a private key with a passphrase
+///
+/// **Deprecated**: Use `crate::key_management::passphrase::decrypt_private_key` instead
 pub use key_mgmt::decrypt_private_key;

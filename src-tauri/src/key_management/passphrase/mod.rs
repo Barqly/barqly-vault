@@ -17,8 +17,8 @@ pub mod state;
 pub use application::{
     GeneratedKey, GenerationError, PassphraseManager, ValidationError, VaultIntegrationError,
 };
-pub use domain::{calculate_strength_score, PassphraseError, PassphraseStrength, ValidationResult};
+pub use domain::{PassphraseError, PassphraseStrength, ValidationResult, calculate_strength_score};
 pub use infrastructure::{
-    decrypt_private_key, encrypt_private_key, generate_keypair, PassphraseKeyRepository,
-    StorageError,
+    PassphraseKeyRepository, StorageError, decrypt_private_key, encrypt_private_key,
+    generate_keypair,
 };

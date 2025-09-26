@@ -46,8 +46,14 @@ mod tests {
         assert_eq!(PassphraseStrength::from_score(50), PassphraseStrength::Fair);
         assert_eq!(PassphraseStrength::from_score(51), PassphraseStrength::Good);
         assert_eq!(PassphraseStrength::from_score(75), PassphraseStrength::Good);
-        assert_eq!(PassphraseStrength::from_score(76), PassphraseStrength::Strong);
-        assert_eq!(PassphraseStrength::from_score(100), PassphraseStrength::Strong);
+        assert_eq!(
+            PassphraseStrength::from_score(76),
+            PassphraseStrength::Strong
+        );
+        assert_eq!(
+            PassphraseStrength::from_score(100),
+            PassphraseStrength::Strong
+        );
     }
 
     #[test]

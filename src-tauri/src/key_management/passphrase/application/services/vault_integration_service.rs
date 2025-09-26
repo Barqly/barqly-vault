@@ -1,6 +1,6 @@
 use crate::key_management::passphrase::infrastructure::{PassphraseKeyRepository, StorageError};
 use crate::models::{KeyReference, KeyState, KeyType};
-use crate::storage::{vault_store, KeyRegistry};
+use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
 
 pub type Result<T> = std::result::Result<T, VaultIntegrationError>;
@@ -46,8 +46,8 @@ impl VaultIntegrationService {
             .await
             .map_err(|e| VaultIntegrationError::VaultNotFound(e.to_string()))?;
 
-        let registry = KeyRegistry::load()
-            .map_err(|e| StorageError::RegistryLoadFailed(e.to_string()))?;
+        let registry =
+            KeyRegistry::load().map_err(|e| StorageError::RegistryLoadFailed(e.to_string()))?;
 
         let has_passphrase = vault.keys.iter().any(|key_id| {
             if let Some(entry) = registry.get_key(key_id) {
