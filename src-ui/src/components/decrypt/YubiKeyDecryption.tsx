@@ -269,7 +269,6 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
 
                     <p className="text-sm text-gray-600 mt-1">Serial: {device.serial}</p>
 
-
                     {isSelected && connectionStatus?.error_message && (
                       <div className="mt-2 flex items-center text-red-600 text-sm">
                         <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0" />

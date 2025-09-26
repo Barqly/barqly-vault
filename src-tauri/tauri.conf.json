@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.barqly.vault",
   "build": {
-    "beforeDevCommand": "npm run dev --prefix src-ui",
+    "beforeDevCommand": "cargo run --bin generate-bindings && npm run dev --prefix src-ui",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build --prefix src-ui",
+    "beforeBuildCommand": "cargo run --bin generate-bindings && npm run build --prefix src-ui",
     "frontendDist": "../src-ui/dist"
   },
   "app": {

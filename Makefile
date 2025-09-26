@@ -45,6 +45,7 @@ help:
 	@echo "  clean         - Clean build artifacts"
 	@echo "  clean-releases - Clean all release files and build artifacts"
 	@echo "  install       - Install dependencies"
+	@echo "  generate-bindings - Generate TypeScript bindings from Rust commands"
 	@echo ""
 	@echo "Development Tools:"
 	@echo "  dev-reset     - Reset development environment (keys, logs, cache)"
@@ -388,7 +389,10 @@ publish-prod:
 # API SYNCHRONIZATION TARGETS
 # ============================================================================
 
-# TypeScript bindings are now automatically generated with tauri-specta
-# When you build the Rust code, TypeScript bindings are generated at:
-# src-ui/src/bindings.ts
-# No manual commands needed anymore!
+# Generate TypeScript bindings from Rust commands
+# Backend engineers: Run this after adding/modifying Tauri commands
+# CI/CD: This is also run automatically during builds via tauri.conf.json hooks
+generate-bindings:
+	@echo "🔄 Generating TypeScript bindings from Rust commands..."
+	@cd src-tauri && cargo run --bin generate-bindings
+	@echo "✅ Bindings updated at src-ui/src/bindings.ts"

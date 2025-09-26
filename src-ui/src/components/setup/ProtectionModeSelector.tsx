@@ -119,7 +119,8 @@ const ProtectionModeSelector: React.FC<ProtectionModeSelectorProps> = ({
           <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0" />
           <div>
             <span className="text-sm text-green-800 font-medium">
-              YubiKey detected: {availableDevices[0].label || `YubiKey (${availableDevices[0].serial})`}
+              YubiKey detected:{' '}
+              {availableDevices[0].label || `YubiKey (${availableDevices[0].serial})`}
             </span>
             {availableDevices[0].serial && (
               <span className="text-xs text-green-600 ml-2">

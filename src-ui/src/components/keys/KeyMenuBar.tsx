@@ -40,7 +40,7 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
 
   // Helper to get YubiKey data for a specific display position
   const getYubiKeyForPosition = (displayIndex: number) => {
-    return yubiKeys[displayIndex]; 
+    return yubiKeys[displayIndex];
   };
 
   // Map KeyState enum to slot state

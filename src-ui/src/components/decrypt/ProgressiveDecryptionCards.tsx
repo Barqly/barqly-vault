@@ -49,7 +49,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   // Update selected key when selectedKeyId changes
   useEffect(() => {
     if (selectedKeyId && availableKeys.length > 0) {
-      const foundKey = availableKeys.find(key => key.id === selectedKeyId);
+      const foundKey = availableKeys.find((key) => key.id === selectedKeyId);
       setSelectedKey(foundKey || null);
     } else {
       setSelectedKey(null);

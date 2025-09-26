@@ -33,36 +33,23 @@ export function getErrorVariant(errorCode: ErrorCode | null): ErrorVariant {
 
   // Security errors
   if (
-    [
-      'INVALID_KEY',
-      'WRONG_PASSPHRASE',
-      'TAMPERED_DATA',
-      'UNAUTHORIZED_ACCESS',
-    ].includes(errorCode)
+    ['INVALID_KEY', 'WRONG_PASSPHRASE', 'TAMPERED_DATA', 'UNAUTHORIZED_ACCESS'].includes(errorCode)
   ) {
     return 'security';
   }
 
   // Warning-level errors
   if (
-    [
-      'WEAK_PASSPHRASE',
-      'FILE_TOO_LARGE',
-      'TOO_MANY_FILES',
-      'CONCURRENT_OPERATION',
-    ].includes(errorCode)
+    ['WEAK_PASSPHRASE', 'FILE_TOO_LARGE', 'TOO_MANY_FILES', 'CONCURRENT_OPERATION'].includes(
+      errorCode,
+    )
   ) {
     return 'warning';
   }
 
   // Info-level errors
   if (
-    [
-      'MISSING_PARAMETER',
-      'INVALID_PATH',
-      'KEY_NOT_FOUND',
-      'FILE_NOT_FOUND',
-    ].includes(errorCode)
+    ['MISSING_PARAMETER', 'INVALID_PATH', 'KEY_NOT_FOUND', 'FILE_NOT_FOUND'].includes(errorCode)
   ) {
     return 'info';
   }

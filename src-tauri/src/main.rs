@@ -7,5 +7,5 @@ fn main() {
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     let _ = fix_path_env::fix();
 
-    barqly_vault_lib::run()
+    barqly_vault_lib::run_app()
 }

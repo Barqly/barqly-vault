@@ -3,7 +3,6 @@
 **Created**: 2025-01-21
 **Updated**: 2025-09-24
 **Status**: Implemented (Phase 1)
-**Parent**: [Technical Debt Analysis](./technical-debt-analysis.md)
 
 ## Overview
 
@@ -48,7 +47,27 @@ This architectural decision addresses several critical issues:
 - **Performance**: Efficient resource usage for 1M+ users
 - **Security**: Proper secret handling and validation
 
-## High-Level Architecture
+## High-Level Architecture:
+
+This is a high level standard layer integration pattern implemented for yubikey in two places:
+Commands:
+        src-tauri/src/commands/yubikey/
+DDD:    
+        src-tauri/src/key_management/yubikey/
+
+
+                                                 Domain Layer
+UI --> Tauri Command --> DDD (Manager Facade)   /
+                                                \
+                                                Infrastructure
+
+- So, above Yubikey implementation, while not perfect and will continue to evolve, can be used as a template for all the modules: Vault, Passpharase, DeviceX, DeviceZ.
+- For our new code of applciation or refactoring of application, we shoudld respect this architecture pattern. We should not have lower layer depnds on upper layer or we should not have comingling of responsibilities. For example, there were examples which we refectored where backend code (Yubikey Rust module was dciding WHERE on the UI a key should be displayed and backend was sending a display_ui_index to the UI, which is wrong.)
+- We must follow enterprise standard patterns and pracctices. Claude initially coded the classes without considering DDD etc and it took the whole week now to refactor.
+- During refactoring specially, utmost care and hard thinking should be done to be very careful in not changing the logic/steps as that can break the existing working code. Fully understand the context, ask the question form the manager who can always share more detail that can help solve problems more effectively.
+- Never do bulk changes. Do the work incrementally in small scope, small batch, group of related items.
+- During the refactoring, look at the big picture: analyze the overall project structure, identifiy the patterns or anti-patterns. While you might have been tasked to solve a specific issue, as a system architect/sr. engineer, identify the opportunities where the application code can be enhanced. We can document those opportunities and address them later, while keeping the current focus. Or in some cases if it make sense, do the right thing fist to make sure we are solving the problems effectively with safe and sound architectural design patterns not in a superficial way!
+- All backend classes should be less than 250-300 locs
 
 ```mermaid
 graph TB
@@ -85,7 +104,7 @@ graph TB
     FS --> TEMP[Temp Files]
 ```
 
-## Design Patterns Implementation
+## Design Patterns Implementation - Already implemented and evolved, shared here as examples! Always look for the enterprise design pattern to solve the problems in more creative way, with less code but more maintainable and scalable architecture & design.
 
 ### 1. Facade Pattern - YubiKeyManager
 
@@ -864,68 +883,3 @@ async fn test_full_yubikey_initialization_flow() {
     assert!(devices.iter().any(|d| d.device.serial.value() == "test_serial"));
 }
 ```
-
-## Migration Strategy
-
-### Phase 1: Foundation Components
-1. Create domain models (Serial, Pin, etc.)
-2. Implement YubiKeyFactory
-3. Create base service interfaces
-4. Set up event system
-
-### Phase 2: Core Services
-1. Implement DeviceService
-2. Implement IdentityService
-3. Implement RegistryService (Repository)
-4. Implement FileService
-
-### Phase 3: State Management
-1. Create YubiKeyStateMachine
-2. Implement Strategy pattern
-3. Create YubiKeyManager facade
-
-### Phase 4: Command Integration
-1. Update command functions to use YubiKeyManager
-2. Deprecate old scattered functions
-3. Update error handling
-4. Add comprehensive testing
-
-## Benefits of New Architecture
-
-### Developer Experience
-- **Single Entry Point**: All YubiKey operations through YubiKeyManager
-- **Clear Contracts**: Well-defined interfaces for all services
-- **Type Safety**: Domain objects prevent invalid states
-- **Easy Testing**: Mock all dependencies easily
-
-### Maintainability
-- **Single Responsibility**: Each service has one clear purpose
-- **Loose Coupling**: Services depend on interfaces, not implementations
-- **Easy Extension**: Add new features by extending interfaces
-- **Clear Ownership**: Each operation has a clear owning service
-
-### Performance & Scalability
-- **Resource Pooling**: PTY operations can be pooled
-- **Efficient State Management**: State machine prevents invalid operations
-- **Proper Cleanup**: File service ensures no resource leaks
-- **Observable Operations**: Event system enables monitoring
-
-### Quality Assurance
-- **100% Test Coverage**: All services easily testable
-- **Consistent Behavior**: Same interface for all YubiKey operations
-- **Robust Error Handling**: Centralized error types and handling
-- **Clear Documentation**: Self-documenting code with domain objects
-
-## Conclusion
-
-This centralized architecture design eliminates the technical debt identified in our analysis and creates a solid foundation for YubiKey operations. The use of established design patterns ensures the code is maintainable, testable, and extensible.
-
-**Key Improvements**:
-- Reduces 46 scattered files to ~20 organized files
-- Reduces 19 public functions to 6 clear operations
-- Eliminates all DRY violations with single source of truth
-- Provides foundation for scaling to 1M+ users
-- Enables 100% test coverage with proper mocking
-- Creates clear separation of concerns and ownership
-
-**Next Step**: Implement the refactoring plan with clear phases and priorities as outlined in the main technical debt analysis document.

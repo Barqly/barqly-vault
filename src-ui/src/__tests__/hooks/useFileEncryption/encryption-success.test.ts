@@ -145,7 +145,6 @@ describe('useFileEncryption - Encryption Success', () => {
     );
   });
 
-
   it('should handle encryption with multiple files', async () => {
     const { result } = renderHook(() => useFileEncryption());
     const mockEncryptionResult = '/output/encrypted.age';

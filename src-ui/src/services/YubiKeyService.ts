@@ -230,7 +230,7 @@ export class YubiKeyService {
         throw new Error(result.error.message || 'Failed to get YubiKey device info');
       }
       // Find the specific device by serial
-      const device = result.data.find(d => d.serial === deviceId);
+      const device = result.data.find((d) => d.serial === deviceId);
       if (!device) {
         throw new Error(`YubiKey with serial ${deviceId} not found`);
       }
