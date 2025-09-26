@@ -1,7 +1,6 @@
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode, ValidateInput};
 use crate::constants::MIN_PASSPHRASE_LENGTH;
 use crate::key_management::passphrase::{PassphraseManager, PassphraseStrength};
-use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, specta::Type)]

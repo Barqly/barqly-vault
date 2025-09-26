@@ -65,7 +65,7 @@ impl PassphraseKeyRepository {
 
         registry
             .register_key(key_id, entry)
-            .map_err(|e| StorageError::RegistrySaveFailed(e))?;
+            .map_err(StorageError::RegistrySaveFailed)?;
 
         registry
             .save()

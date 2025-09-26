@@ -1,4 +1,4 @@
-use crate::key_management::passphrase::infrastructure::{PassphraseKeyRepository, StorageError};
+use crate::key_management::passphrase::infrastructure::StorageError;
 use crate::models::{KeyReference, KeyState, KeyType};
 use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
@@ -65,7 +65,7 @@ impl VaultIntegrationService {
         vault_id: &str,
         key_id: String,
         label: String,
-        public_key: String,
+        _public_key: String,
     ) -> Result<KeyReference> {
         let mut vault = vault_store::get_vault(vault_id)
             .await
@@ -88,7 +88,7 @@ impl VaultIntegrationService {
 
         vault
             .add_key_id(key_id)
-            .map_err(|e| VaultIntegrationError::VaultOperationFailed(e))?;
+            .map_err(VaultIntegrationError::VaultOperationFailed)?;
 
         vault_store::save_vault(&vault)
             .await

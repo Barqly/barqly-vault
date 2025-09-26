@@ -8,7 +8,7 @@
 use crate::commands::types::{
     CommandError, CommandResponse, ErrorCode, ErrorHandler, ValidateInput, ValidationHelper,
 };
-use crate::crypto::{encrypt_private_key, generate_keypair};
+use crate::key_management::passphrase::{encrypt_private_key, generate_keypair};
 use crate::key_management::yubikey::YubiIdentityProviderFactory;
 use crate::key_management::yubikey::domain::models::{InitializationResult, ProtectionMode};
 use crate::prelude::*;
