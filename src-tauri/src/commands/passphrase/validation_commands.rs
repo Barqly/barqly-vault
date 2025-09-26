@@ -106,20 +106,80 @@ pub async fn validate_passphrase(
 pub async fn verify_key_passphrase(
     input: VerifyKeyPassphraseInput,
 ) -> CommandResponse<VerifyKeyPassphraseResponse> {
-    let manager = PassphraseManager::new();
+    use crate::key_management::passphrase::PassphraseKeyRepository;
+    use crate::prelude::*;
 
-    match manager.verify_key_passphrase(&input.key_id, &input.passphrase) {
-        Ok(true) => Ok(VerifyKeyPassphraseResponse {
-            is_valid: true,
-            message: "Passphrase is correct".to_string(),
-        }),
-        Ok(false) => Ok(VerifyKeyPassphraseResponse {
-            is_valid: false,
-            message: "Incorrect passphrase".to_string(),
-        }),
-        Err(_) => Err(Box::new(CommandError::operation(
+    let key_entry = PassphraseKeyRepository::get_key(&input.key_id).map_err(|_| {
+        Box::new(CommandError::operation(
             ErrorCode::KeyNotFound,
             format!("Key '{}' not found", input.key_id),
-        ))),
+        ))
+    })?;
+
+    match key_entry {
+        crate::storage::KeyEntry::Passphrase { .. } => {
+            let manager = PassphraseManager::new();
+            match manager.verify_key_passphrase(&input.key_id, &input.passphrase) {
+                Ok(true) => Ok(VerifyKeyPassphraseResponse {
+                    is_valid: true,
+                    message: "Passphrase is correct".to_string(),
+                }),
+                Ok(false) => Ok(VerifyKeyPassphraseResponse {
+                    is_valid: false,
+                    message: "Incorrect passphrase".to_string(),
+                }),
+                Err(_) => Err(Box::new(CommandError::operation(
+                    ErrorCode::KeyNotFound,
+                    format!("Key '{}' not found", input.key_id),
+                ))),
+            }
+        }
+        crate::storage::KeyEntry::Yubikey { serial, .. } => {
+            info!(
+                key_id = %input.key_id,
+                serial = %serial,
+                "Starting YubiKey PIN verification"
+            );
+
+            match crate::key_management::yubikey::infrastructure::pty::verify_yubikey_pin(
+                &serial,
+                &input.passphrase,
+            ) {
+                Ok(true) => {
+                    info!(
+                        key_id = %input.key_id,
+                        serial = %serial,
+                        "YubiKey PIN verification successful"
+                    );
+                    Ok(VerifyKeyPassphraseResponse {
+                        is_valid: true,
+                        message: "PIN is correct".to_string(),
+                    })
+                }
+                Ok(false) => {
+                    info!(
+                        key_id = %input.key_id,
+                        serial = %serial,
+                        "YubiKey PIN verification failed - incorrect PIN"
+                    );
+                    Ok(VerifyKeyPassphraseResponse {
+                        is_valid: false,
+                        message: "Incorrect PIN".to_string(),
+                    })
+                }
+                Err(e) => {
+                    error!(
+                        key_id = %input.key_id,
+                        serial = %serial,
+                        error = %e,
+                        "YubiKey PIN verification failed due to error"
+                    );
+                    Ok(VerifyKeyPassphraseResponse {
+                        is_valid: false,
+                        message: "YubiKey PIN verification failed. Please ensure your YubiKey is connected and try again.".to_string(),
+                    })
+                }
+            }
+        }
     }
 }
