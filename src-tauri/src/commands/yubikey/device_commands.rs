@@ -8,10 +8,9 @@
 //! - list_yubikeys: List all YubiKeys with state detection
 //! - init_yubikey: Initialize new YubiKey device
 //! - register_yubikey: Register existing YubiKey device
-//! - get_identities: Get YubiKey identity information
+//! - yubikey_list_devices: Alias for compatibility
 
 use crate::commands::command_types::{CommandError, ErrorCode};
-// Define StreamlinedYubiKeyInitResult locally since original module was removed
 use crate::key_management::yubikey::{
     YubiKeyManager,
     domain::models::{Pin, Serial},
@@ -19,10 +18,7 @@ use crate::key_management::yubikey::{
 use crate::prelude::*;
 use tauri;
 
-// Error handling implementation is already available in yubikey_commands/mod.rs
-// No need to duplicate it here
-
-// Define types that were previously imported from deleted modules
+// Type definitions for YubiKey device operations
 #[derive(Debug, serde::Serialize, specta::Type)]
 pub enum PinStatus {
     #[serde(rename = "default")]
@@ -63,8 +59,6 @@ pub struct StreamlinedYubiKeyInitResult {
     pub label: String,
     pub recovery_code: String,
 }
-
-// YubiKeyInitResult removed - using StreamlinedYubiKeyInitResult from existing implementation
 
 /// List all YubiKeys with intelligent state detection
 /// Uses YubiKeyManager for centralized device and registry operations
@@ -285,19 +279,6 @@ pub async fn register_yubikey(
     Err(CommandError::operation(
         ErrorCode::YubiKeyInitializationFailed,
         "YubiKey registration functionality needs to be implemented with YubiKeyManager",
-    ))
-}
-
-/// Get YubiKey identity information
-/// Uses existing streamlined implementation - fully integrated with YubiKeyManager
-// TODO: REMOVE - Unused by frontend, disabled for testing
-// #[tauri::command]
-// #[specta::specta]
-pub async fn get_identities(_serial: String) -> Result<Vec<String>, CommandError> {
-    // TODO: Implement identity retrieval with YubiKeyManager
-    Err(CommandError::operation(
-        ErrorCode::YubiKeyInitializationFailed,
-        "YubiKey identity retrieval functionality needs to be implemented with YubiKeyManager",
     ))
 }
 

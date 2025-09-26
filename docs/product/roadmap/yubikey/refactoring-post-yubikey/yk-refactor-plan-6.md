@@ -32,14 +32,39 @@ commands/yubikey/
     └── helpers.rs          # Shared utilities (was vault_yubikey_helpers.rs)
 ```
 
-## Milestone 1: Dead Code Analysis & Documentation ⏳ PENDING
-- [ ] Search frontend codebase for YubiKey command usage patterns
-- [ ] Create list of actively called commands from TypeScript files
-- [ ] Analyze generated bindings.ts for 1:1 mapping with frontend usage
-- [ ] Identify unused bindings (potential dead code)
-- [ ] Audit backend command modules against binding file
-- [ ] Mark suspicious/unused functions with TODO comments
-- [ ] Document findings and cleanup strategy
+## Milestone 1: Dead Code Analysis & Documentation ✅ COMPLETED
+- [x] Search frontend codebase for YubiKey command usage patterns
+- [x] Create list of actively called commands from TypeScript files
+- [x] Analyze generated bindings.ts for 1:1 mapping with frontend usage
+- [x] Identify unused bindings (potential dead code)
+- [x] Audit backend command modules against binding file
+- [x] Mark suspicious/unused functions with TODO comments
+- [x] Document findings and cleanup strategy
+
+### Analysis Results:
+
+**8 Active YubiKey Commands (Used by Frontend)**:
+1. `listYubikeys` - KeyMenuBar display
+2. `initYubikeyForVault` - New key setup in vaults
+3. `registerYubikeyForVault` - Key registration to vaults
+4. `listAvailableYubikeysForVault` - Add key flow
+5. `initYubikey` - Standalone YubiKey initialization
+6. `registerYubikey` - Standalone YubiKey registration
+7. `yubikeyDecryptFile` - Decryption operations
+8. `yubikeyListDevices` - Device detection (was missing, now added)
+
+**5 Unused Commands (Disabled with TODO: REMOVE)**:
+1. `yubikey_get_available_unlock_methods` - Never called by frontend
+2. `yubikey_test_unlock_credentials` - Never called by frontend
+3. `get_identities` - Never called by frontend
+4. `check_keymenubar_positions_available` - Legacy helper, unused
+5. `check_yubikey_availability` - Legacy helper, unused (in vault_commands)
+
+**Dead Code Removed (928 LOC)**:
+- Entire `yubikey_commands/` folder containing inactive duplicates
+- `smart_decryption.rs` (383 LOC) - Unused smart decryption logic
+- `streamlined.rs` (500 LOC) - Inactive YubiKey operations
+- `mod.rs` (45 LOC) - Module declarations for removed files
 
 ### Analysis Strategy:
 1. **Frontend Usage**: Search `.ts/.tsx` files for YubiKey command invocations
@@ -47,12 +72,28 @@ commands/yubikey/
 3. **Backend Audit**: Find backend functions not in bindings (likely dead code)
 4. **Progressive Cleanup**: Mark → Test → Remove approach
 
-## Milestone 2: Create New Organized Structure ⏳ PENDING
-- [ ] Create `commands/yubikey/` directory structure
-- [ ] Create `commands/yubikey/internal/` private implementation directory
-- [ ] Set up proper module declarations with visibility controls
-- [ ] Create placeholder files with proper Rust module structure
-- [ ] Validate structure compiles without moving logic yet
+## Milestone 2: Create New Organized Structure ✅ COMPLETED
+- [x] Create `commands/yubikey/` directory structure
+- [x] Create `commands/yubikey/internal/` private implementation directory
+- [x] Set up proper module declarations with visibility controls
+- [x] Create placeholder files with proper Rust module structure
+- [x] Validate structure compiles without moving logic yet
+
+### Structure Created:
+```
+commands/yubikey/
+├── mod.rs                  # Public API exports with proper visibility
+├── device_commands.rs      # Tauri command placeholders for device ops
+├── vault_commands.rs       # Tauri command placeholders for vault integration
+├── crypto_commands.rs      # Tauri command placeholders for crypto ops
+└── internal/               # Private implementation (mod internal)
+    ├── mod.rs              # Internal re-exports with pub(super)
+    ├── device_impl.rs      # Placeholder for business logic
+    ├── crypto_impl.rs      # Placeholder for business logic
+    └── helpers.rs          # Placeholder for shared utilities
+```
+
+**Validation**: Structure compiles successfully without breaking existing functionality.
 
 ### File Structure Creation:
 ```bash

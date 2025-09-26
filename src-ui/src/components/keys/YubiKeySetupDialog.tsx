@@ -54,12 +54,22 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
         return;
       }
 
-      // Get available YubiKeys for this vault
-      const result = await commands.listAvailableYubikeysForVault(currentVault.id);
+      // Get available YubiKeys for this vault using unified API
+      const result = await commands.listUnifiedKeys({ type: "AvailableForVault", value: currentVault.id });
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to list available YubiKeys');
       }
-      const keys = result.data;
+      const unifiedKeys = result.data;
+
+      // Convert unified KeyInfo to AvailableYubiKey format for compatibility
+      const keys = unifiedKeys.map(key => ({
+        serial: key.key_type.type === 'YubiKey' ? key.key_type.data.serial : '',
+        name: key.label,
+        firmware_version: key.key_type.type === 'YubiKey' ? key.key_type.data.firmware_version : null,
+        is_available: key.is_available,
+        state: key.yubikey_info?.yubikey_state || 'New',
+        pin_status: key.yubikey_info?.pin_status || 'Set',
+      }));
 
       logger.info('YubiKeySetupDialog', 'YubiKeys returned from backend', {
         count: keys.length,

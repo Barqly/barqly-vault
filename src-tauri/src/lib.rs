@@ -30,14 +30,10 @@ use commands::{
     get_file_info,
     // get_identities, // TODO: REMOVE - Disabled, unused by frontend
     get_progress,
-    init_yubikey,
     // Storage commands
     list_keys_command,
     // Unified key management
     list_unified_keys,
-    // Streamlined YubiKey commands
-    list_yubikeys,
-    register_yubikey,
     select_directory,
     // File commands
     select_files,
@@ -52,17 +48,22 @@ use commands::{
         get_vault_keys, list_vaults, remove_key_from_vault, set_current_vault, update_key_label,
         validate_vault_passphrase_key,
     },
-    // Consolidated YubiKey commands
-    vault_yubikey_commands::{
-        /* check_keymenubar_positions_available, */ init_yubikey_for_vault,
-        list_available_yubikeys_for_vault, register_yubikey_for_vault,
-    },
     verify_key_passphrase,
     verify_manifest,
-    yubikey_crypto_commands::{
-        yubikey_decrypt_file, /* yubikey_get_available_unlock_methods, yubikey_test_unlock_credentials, */
+    // New consolidated YubiKey commands from yubikey module
+    yubikey::{
+        // Device commands
+        init_yubikey,
+        // Vault commands
+        init_yubikey_for_vault,
+        list_available_yubikeys_for_vault,
+        list_yubikeys,
+        register_yubikey,
+        register_yubikey_for_vault,
+        // Crypto commands
+        yubikey_decrypt_file,
+        yubikey_list_devices,
     },
-    yubikey_list_devices,
 };
 
 use crate::prelude::*;

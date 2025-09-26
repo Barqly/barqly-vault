@@ -9,10 +9,11 @@
 //! - yubikey_get_available_unlock_methods: Get available unlock methods for file
 //! - yubikey_test_unlock_credentials: Test YubiKey credentials
 
-use crate::commands::command_types::CommandError;
+use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::key_management::yubikey::domain::models::UnlockMethod;
 use crate::prelude::*;
 use serde::Deserialize;
+use tauri;
 
 // Define types that were previously imported from deleted modules
 #[derive(Debug, Deserialize, serde::Serialize, specta::Type)]

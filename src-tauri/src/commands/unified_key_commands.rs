@@ -10,7 +10,7 @@
 //! - Simplified frontend integration with unified data structures
 
 use crate::commands::command_types::{CommandError, ErrorCode};
-use crate::commands::yubikey_device_commands::{PinStatus, YubiKeyState};
+use crate::commands::yubikey::device_commands::{PinStatus, YubiKeyState};
 use crate::key_management::yubikey::{YubiKeyManager, domain::models::Serial};
 use crate::models::KeyState;
 use crate::prelude::*;
