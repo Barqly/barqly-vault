@@ -13,6 +13,7 @@ pub mod yubikey_commands;
 
 // Consolidated YubiKey command modules
 pub mod vault_yubikey_commands;
+pub mod vault_yubikey_helpers;
 pub mod yubikey_crypto_commands;
 pub mod yubikey_device_commands;
 

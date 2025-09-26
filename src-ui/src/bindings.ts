@@ -420,8 +420,8 @@ async checkKeymenubarPositionsAvailable(vaultId: string) : Promise<Result<boolea
 }
 },
 /**
- * List all YubiKeys with state detection
- * Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
+ * List all YubiKeys with intelligent state detection
+ * Uses YubiKeyManager for centralized device and registry operations
  */
 async listYubikeys() : Promise<Result<YubiKeyStateInfo[], CommandError>> {
     try {
@@ -432,8 +432,8 @@ async listYubikeys() : Promise<Result<YubiKeyStateInfo[], CommandError>> {
 }
 },
 /**
- * Initialize a new YubiKey device
- * Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
+ * Initialize a brand new YubiKey device
+ * Uses YubiKeyManager for complete hardware and software initialization
  */
 async initYubikey(serial: string, newPin: string, label: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
     try {
@@ -445,7 +445,7 @@ async initYubikey(serial: string, newPin: string, label: string) : Promise<Resul
 },
 /**
  * Register an existing YubiKey device (orphaned state)
- * Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
+ * Uses existing streamlined implementation - fully integrated with YubiKeyManager
  */
 async registerYubikey(serial: string, label: string, pin: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
     try {
@@ -457,7 +457,7 @@ async registerYubikey(serial: string, label: string, pin: string) : Promise<Resu
 },
 /**
  * Get YubiKey identity information
- * Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
+ * Uses existing streamlined implementation - fully integrated with YubiKeyManager
  */
 async getIdentities(serial: string) : Promise<Result<string[], CommandError>> {
     try {
