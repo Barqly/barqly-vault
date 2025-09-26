@@ -307,7 +307,7 @@ async fn generate_yubikey_only_key_with_initialization(
         });
 
         // Use the streamlined initialization from the yubikey_commands module
-        use crate::commands::yubikey_commands::streamlined::init_yubikey;
+        use crate::commands::yubikey_device_commands::init_yubikey;
 
         // Initialize YubiKey with the proper sequence before using age-plugin-yubikey
         log_sensitive!(dev_only: {

@@ -2,11 +2,15 @@
 //!
 //! This module provides all YubiKey-related commands for the frontend interface.
 
+// Temporarily re-enabled for compilation - will be fully migrated later
 pub mod smart_decryption;
 pub mod streamlined; // Primary YubiKey API
 
-pub use smart_decryption::*;
-pub use streamlined::*;
+// NOTE: Commands are now consolidated in separate modules, but keeping these
+// temporarily to avoid breaking existing internal usage
+// NOT re-exporting to avoid conflicts with new consolidated commands:
+// pub use smart_decryption::*;
+// pub use streamlined::*;
 
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::key_management::yubikey::domain::errors::YubiKeyError;

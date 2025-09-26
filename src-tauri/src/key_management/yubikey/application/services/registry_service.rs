@@ -517,7 +517,10 @@ mod tests {
             Ok(key_id)
         }
 
-        async fn find_by_serial(&self, serial: &Serial) -> YubiKeyResult<Option<(String, YubiKeyDevice)>> {
+        async fn find_by_serial(
+            &self,
+            serial: &Serial,
+        ) -> YubiKeyResult<Option<(String, YubiKeyDevice)>> {
             // For tests, return None (not found)
             debug!(serial = %serial.redacted(), "Test: Looking for YubiKey in in-memory registry");
             Ok(None)
@@ -551,7 +554,11 @@ mod tests {
             Ok(false)
         }
 
-        async fn is_slot_occupied_by_device(&self, _serial: &Serial, _slot: u8) -> YubiKeyResult<bool> {
+        async fn is_slot_occupied_by_device(
+            &self,
+            _serial: &Serial,
+            _slot: u8,
+        ) -> YubiKeyResult<bool> {
             Ok(false)
         }
 
@@ -638,6 +645,9 @@ mod tests {
 
         // Then find (our test service returns None, so test that behavior)
         let found = service.find_by_serial(&serial).await.unwrap();
-        assert!(found.is_none(), "Test service returns None for find_by_serial");
+        assert!(
+            found.is_none(),
+            "Test service returns None for find_by_serial"
+        );
     }
 }

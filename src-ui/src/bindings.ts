@@ -373,6 +373,7 @@ async validateVaultPassphraseKey(vaultId: string) : Promise<Result<boolean, Comm
 },
 /**
  * Initialize a new YubiKey and add it to a vault
+ * Delegates YubiKey operations to YubiKeyManager, handles vault integration
  */
 async initYubikeyForVault(input: YubiKeyInitForVaultParams) : Promise<Result<YubiKeyVaultResult, CommandError>> {
     try {
@@ -384,6 +385,7 @@ async initYubikeyForVault(input: YubiKeyInitForVaultParams) : Promise<Result<Yub
 },
 /**
  * Register an existing YubiKey with a vault
+ * Delegates YubiKey operations to YubiKeyManager, handles vault integration
  */
 async registerYubikeyForVault(input: RegisterYubiKeyForVaultParams) : Promise<Result<YubiKeyVaultResult, CommandError>> {
     try {
@@ -395,6 +397,7 @@ async registerYubikeyForVault(input: RegisterYubiKeyForVaultParams) : Promise<Re
 },
 /**
  * List available YubiKeys for vault registration
+ * Delegates to YubiKeyManager and filters for vault compatibility
  */
 async listAvailableYubikeysForVault(vaultId: string) : Promise<Result<AvailableYubiKey[], CommandError>> {
     try {
@@ -406,6 +409,7 @@ async listAvailableYubikeysForVault(vaultId: string) : Promise<Result<AvailableY
 },
 /**
  * Check which KeyMenuBar display positions are available in a vault
+ * This is a legacy display helper - frontend should handle positioning
  */
 async checkKeymenubarPositionsAvailable(vaultId: string) : Promise<Result<boolean[], CommandError>> {
     try {
@@ -416,7 +420,8 @@ async checkKeymenubarPositionsAvailable(vaultId: string) : Promise<Result<boolea
 }
 },
 /**
- * List YubiKeys with intelligent state detection (Refactored with YubiKeyManager)
+ * List all YubiKeys with state detection
+ * Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
  */
 async listYubikeys() : Promise<Result<YubiKeyStateInfo[], CommandError>> {
     try {
@@ -427,7 +432,8 @@ async listYubikeys() : Promise<Result<YubiKeyStateInfo[], CommandError>> {
 }
 },
 /**
- * Initialize a brand new YubiKey (Refactored with YubiKeyManager)
+ * Initialize a new YubiKey device
+ * Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
  */
 async initYubikey(serial: string, newPin: string, label: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
     try {
@@ -438,7 +444,8 @@ async initYubikey(serial: string, newPin: string, label: string) : Promise<Resul
 }
 },
 /**
- * Register a reused YubiKey (Refactored with YubiKeyManager)
+ * Register an existing YubiKey device (orphaned state)
+ * Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
  */
 async registerYubikey(serial: string, label: string, pin: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
     try {
@@ -449,11 +456,48 @@ async registerYubikey(serial: string, label: string, pin: string) : Promise<Resu
 }
 },
 /**
- * Get identities for a specific YubiKey (Refactored with YubiKeyManager)
+ * Get YubiKey identity information
+ * Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
  */
 async getIdentities(serial: string) : Promise<Result<string[], CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_identities", { serial }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Decrypt file using YubiKey with smart method selection
+ * Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
+ */
+async yubikeyDecryptFile(encryptedFile: string, unlockMethod: UnlockMethod | null, credentials: UnlockCredentials, outputPath: string) : Promise<Result<VaultDecryptionResult, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("yubikey_decrypt_file", { encryptedFile, unlockMethod, credentials, outputPath }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get available unlock methods for an encrypted file
+ * Delegates to YubiKeyManager to analyze file and available hardware
+ */
+async yubikeyGetAvailableUnlockMethods(filePath: string) : Promise<Result<AvailableMethod[], CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("yubikey_get_available_unlock_methods", { filePath }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Test YubiKey unlock credentials against a file
+ * Delegates to YubiKeyManager for credential validation
+ */
+async yubikeyTestUnlockCredentials(filePath: string, credentials: YubiKeyCredentials) : Promise<Result<boolean, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("yubikey_test_unlock_credentials", { filePath, credentials }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -495,6 +539,10 @@ export type AppConfig = { version: string; default_key_label: string | null; rem
  * Configuration update
  */
 export type AppConfigUpdate = { default_key_label: string | null; remember_last_folder: boolean | null; max_recent_files: number | null }
+/**
+ * Available unlock method matching frontend structure
+ */
+export type AvailableMethod = { method_type: UnlockMethod; display_name: string; description: string; requires_hardware: boolean; estimated_time: string; confidence_level: ConfidenceLevel }
 /**
  * Available YubiKey for vault registration - matches frontend YubiKeyStateInfo
  */
@@ -563,6 +611,10 @@ trace_id: string | null;
  * Optional span ID for debugging
  */
 span_id: string | null }
+/**
+ * Method confidence level matching frontend expectations
+ */
+export type ConfidenceLevel = "High" | "Medium" | "Low"
 /**
  * Input for creating a new vault
  */
@@ -854,6 +906,14 @@ export type SetCurrentVaultResponse = { success: boolean; vault: VaultSummary }
  */
 export type StreamlinedYubiKeyInitResult = { serial: string; slot: number; recipient: string; identity_tag: string; label: string; recovery_code: string }
 /**
+ * Credentials for unlocking vaults
+ */
+export type UnlockCredentials = { Passphrase: { key_label: string; passphrase: string } } | { YubiKey: { serial: string; pin: string | null } }
+/**
+ * Unlock methods available for decryption
+ */
+export type UnlockMethod = "Passphrase" | "YubiKey"
+/**
  * Input for updating key label
  */
 export type UpdateKeyLabelRequest = { vault_id: string; key_id: string; new_label: string }
@@ -869,6 +929,10 @@ export type ValidatePassphraseInput = { passphrase: string }
  * Response from passphrase validation
  */
 export type ValidatePassphraseResponse = { is_valid: boolean; message: string }
+/**
+ * Result of vault decryption operation
+ */
+export type VaultDecryptionResult = { method_used: UnlockMethod; recipient_used: string; files_extracted: string[]; output_path: string; decryption_time: string }
 /**
  * Summary information about a vault (for listing)
  */
@@ -889,6 +953,7 @@ export type VerifyManifestInput = { manifest_path: string; extracted_files_dir: 
  * Response from manifest verification command
  */
 export type VerifyManifestResponse = { is_valid: boolean; message: string; file_count: number; total_size: number }
+export type YubiKeyCredentials = { serial: string; pin: string }
 /**
  * YubiKey initialization parameters for vault
  */

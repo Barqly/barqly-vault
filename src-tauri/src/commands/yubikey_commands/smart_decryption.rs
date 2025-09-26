@@ -6,7 +6,7 @@ use crate::key_management::yubikey::domain::models::{UnlockCredentials, UnlockMe
 use crate::prelude::*;
 use crate::storage::VaultMetadataV2;
 use serde::{Deserialize, Serialize};
-use tauri;
+// tauri removed - command attribute disabled
 
 /// Method confidence level matching frontend expectations
 #[derive(Debug, Serialize, Deserialize, specta::Type)]
@@ -40,8 +40,9 @@ pub struct AvailableMethod {
 ///
 /// # Returns
 /// DecryptionResult with information about the decryption process
-#[tauri::command]
-#[specta::specta]
+// Command attribute removed - now using consolidated yubikey_crypto_commands.rs
+// #[tauri::command]
+// #[specta::specta]
 #[instrument(skip(credentials))]
 pub async fn yubikey_decrypt_file(
     encrypted_file: String,
@@ -111,8 +112,9 @@ pub async fn yubikey_decrypt_file(
 ///
 /// # Returns
 /// AvailableUnlockMethods with information about available methods
-#[tauri::command]
-#[specta::specta]
+// Command attribute removed - now using consolidated yubikey_crypto_commands.rs
+// #[tauri::command]
+// #[specta::specta]
 pub async fn yubikey_get_available_unlock_methods(
     file_path: String,
 ) -> std::result::Result<Vec<AvailableMethod>, CommandError> {
@@ -166,8 +168,9 @@ pub async fn yubikey_get_available_unlock_methods(
 ///
 /// # Returns
 /// CredentialsTestResult with validation status
-#[tauri::command]
-#[specta::specta]
+// Command attribute removed - now using consolidated yubikey_crypto_commands.rs
+// #[tauri::command]
+// #[specta::specta]
 #[instrument(skip(credentials))]
 pub async fn yubikey_test_unlock_credentials(
     encrypted_file: String,

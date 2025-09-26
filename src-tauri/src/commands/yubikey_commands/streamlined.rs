@@ -8,7 +8,7 @@ use crate::key_management::yubikey::YubiKeyManager;
 use crate::prelude::*;
 // KeyRegistry operations now handled by YubiKeyManager
 // PIN validation now handled by Pin domain object
-use tauri;
+// tauri removed - command attribute disabled
 
 /// YubiKey state classification
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
@@ -52,8 +52,9 @@ pub struct StreamlinedYubiKeyInitResult {
 }
 
 /// List YubiKeys with intelligent state detection (Refactored with YubiKeyManager)
-#[tauri::command]
-#[specta::specta]
+// Command attribute removed - now using consolidated yubikey_device_commands.rs
+// #[tauri::command]
+// #[specta::specta]
 pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
     info!("Listing YubiKeys with state detection using YubiKeyManager");
 
@@ -234,8 +235,9 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
 }
 
 /// Initialize a brand new YubiKey (Refactored with YubiKeyManager)
-#[tauri::command]
-#[specta::specta]
+// Command attribute removed - now using consolidated yubikey_device_commands.rs
+// #[tauri::command]
+// #[specta::specta]
 pub async fn init_yubikey(
     serial: String,
     new_pin: String,
@@ -318,8 +320,9 @@ pub async fn init_yubikey(
 }
 
 /// Register a reused YubiKey (Refactored with YubiKeyManager)
-#[tauri::command]
-#[specta::specta]
+// Command attribute removed - now using consolidated yubikey_device_commands.rs
+// #[tauri::command]
+// #[specta::specta]
 pub async fn register_yubikey(
     serial: String,
     label: String,
@@ -392,8 +395,9 @@ pub async fn register_yubikey(
 }
 
 /// Get identities for a specific YubiKey (Refactored with YubiKeyManager)
-#[tauri::command]
-#[specta::specta]
+// Command attribute removed - now using consolidated yubikey_device_commands.rs
+// #[tauri::command]
+// #[specta::specta]
 pub async fn get_identities(serial: String) -> Result<Vec<String>, CommandError> {
     info!(
         "Getting identities for YubiKey {} using YubiKeyManager",

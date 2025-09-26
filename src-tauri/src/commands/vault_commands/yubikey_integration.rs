@@ -15,7 +15,7 @@ use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use tauri::command;
+// use tauri::command; // Unused after command consolidation
 
 // Removed display slot logic - frontend handles display order based on manifest
 
@@ -58,10 +58,11 @@ pub struct AvailableYubiKey {
 }
 
 /// Initialize a new YubiKey and add it to a vault
-#[command]
-#[specta::specta]
-#[instrument(skip(input))]
-pub async fn init_yubikey_for_vault(
+// OLD IMPLEMENTATION - DEPRECATED
+// #[command]
+// #[specta::specta]
+// #[instrument(skip(input))]
+pub async fn init_yubikey_for_vault_old(
     input: YubiKeyInitForVaultParams,
 ) -> CommandResponse<YubiKeyVaultResult> {
     info!(
@@ -209,10 +210,10 @@ pub async fn init_yubikey_for_vault(
 }
 
 /// Register an existing YubiKey with a vault
-#[command]
-#[specta::specta]
-#[instrument(skip(input))]
-pub async fn register_yubikey_for_vault(
+// #[command]
+// #[specta::specta]
+// #[instrument(skip(input))]
+pub async fn register_yubikey_for_vault_old(
     input: RegisterYubiKeyForVaultParams,
 ) -> CommandResponse<YubiKeyVaultResult> {
     debug!(
@@ -376,10 +377,10 @@ pub async fn register_yubikey_for_vault(
 }
 
 /// List available YubiKeys for vault registration
-#[tauri::command]
-#[specta::specta]
-#[instrument]
-pub async fn list_available_yubikeys_for_vault(
+// #[tauri::command]
+// #[specta::specta]
+// #[instrument]
+pub async fn list_available_yubikeys_for_vault_old(
     vault_id: String,
 ) -> CommandResponse<Vec<AvailableYubiKey>> {
     debug!(
@@ -468,10 +469,12 @@ pub async fn list_available_yubikeys_for_vault(
 }
 
 /// Check which KeyMenuBar display positions are available in a vault
-#[tauri::command]
-#[specta::specta]
-#[instrument]
-pub async fn check_keymenubar_positions_available(vault_id: String) -> CommandResponse<Vec<bool>> {
+// #[tauri::command]
+// #[specta::specta]
+// #[instrument]
+pub async fn check_keymenubar_positions_available_old(
+    vault_id: String,
+) -> CommandResponse<Vec<bool>> {
     let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
         Box::new(
             CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
