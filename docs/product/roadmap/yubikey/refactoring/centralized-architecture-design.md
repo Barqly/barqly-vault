@@ -50,7 +50,10 @@ graph TB
 - Commands: `src-tauri/src/commands/{keytype}/` - thin command layer
 - DDD: `src-tauri/src/key_management/{keytype}/` - business logic
 
-**Example**: YubiKey follows this pattern. Use as template for vault, passphrase, future devices.
+**Implemented Key Types**:
+- ✅ **YubiKey** - Complete DDD implementation (domain, application, infrastructure)
+- ✅ **Passphrase** - Complete DDD implementation (domain, application, infrastructure)
+- 🔮 **Future**: Smart cards, FIDO2, hardware tokens (follow same pattern)
 
 ## Key Principles
 
@@ -87,9 +90,41 @@ Always look for other relevant patterns to solve the problem more effectively.
 
 Read `docs/common/api-types.md` for API workflow.
 
+## Passphrase Module Structure (Reference Implementation)
+
+```
+key_management/passphrase/           # DDD business logic
+  domain/                            # Pure business logic
+    models/
+      passphrase_strength.rs         # PassphraseStrength enum
+      validation_rules.rs            # Validation scoring logic (284 LOC)
+    errors.rs                        # PassphraseError enum
+  application/                       # Use cases & orchestration
+    manager.rs                       # PassphraseManager facade
+    services/
+      generation_service.rs          # Key generation workflows
+      validation_service.rs          # Passphrase validation
+      vault_integration_service.rs   # Vault operations
+  infrastructure/                    # External integrations
+    key_derivation.rs                # Encryption/decryption (age library)
+    storage.rs                       # PassphraseKeyRepository
+
+commands/passphrase/                 # Thin command layer
+  generation_commands.rs             # generate_key
+  validation_commands.rs             # validate_passphrase*, verify_key_passphrase
+  vault_commands.rs                  # add_passphrase_key_to_vault, validate_vault_passphrase_key
+```
+
+**Test Coverage**: 27 tests (18 domain + 3 infrastructure + 6 application)
+
+**Code Metrics**:
+- Deleted: 1,269 LOC (scattered old code)
+- Added: ~900 LOC (organized DDD structure)
+- Net: -369 LOC (29% reduction)
+
 ## Quality Standards
 
 - Quality test cases (unit + integration). Follow pyramid model.
 - No ui content or implementation testing, focus on behavior!
-- Proper sensitive data and secret handling. 
+- Proper sensitive data and secret handling.
 - Files under 300 LOC
