@@ -12,11 +12,11 @@
 
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
 use crate::commands::vault_yubikey_helpers::{
-    create_yubikey_manager, load_vault, register_yubikey_in_vault,
-    check_duplicate_yubikey_in_vault, generate_recovery_placeholder
+    RegisterYubiKeyParams, check_duplicate_yubikey_in_vault, create_yubikey_manager,
+    generate_recovery_placeholder, load_vault, register_yubikey_in_vault,
 };
 use crate::key_management::yubikey::domain::models::{Pin, Serial};
-use crate::models::{KeyState};
+use crate::models::KeyState;
 use crate::prelude::*;
 use crate::storage::{KeyRegistry, vault_store};
 // use tauri::command; // Using #[tauri::command] instead
@@ -132,13 +132,16 @@ pub async fn init_yubikey_for_vault(
     let (key_reference, recovery_code_hash) = register_yubikey_in_vault(
         vault,
         registry,
-        input.serial.clone(),
-        input.label.clone(),
-        identity,
-        device,
-        recovery_code_hash,
-        KeyState::Active,
-    ).await?;
+        RegisterYubiKeyParams {
+            serial: input.serial.clone(),
+            label: input.label.clone(),
+            identity,
+            device,
+            recovery_code_hash,
+            key_state: KeyState::Active,
+        },
+    )
+    .await?;
 
     info!("Successfully initialized YubiKey and added to vault");
 
@@ -244,13 +247,16 @@ pub async fn register_yubikey_for_vault(
     let (key_reference, recovery_code_hash) = register_yubikey_in_vault(
         vault,
         registry,
-        input.serial.clone(),
-        input.label,
-        identity,
-        device,
-        recovery_placeholder,
-        KeyState::Registered,
-    ).await?;
+        RegisterYubiKeyParams {
+            serial: input.serial.clone(),
+            label: input.label,
+            identity,
+            device,
+            recovery_code_hash: recovery_placeholder,
+            key_state: KeyState::Registered,
+        },
+    )
+    .await?;
 
     info!("Successfully registered YubiKey for vault");
 

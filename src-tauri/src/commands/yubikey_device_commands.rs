@@ -12,7 +12,10 @@
 
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::commands::yubikey_commands::streamlined::StreamlinedYubiKeyInitResult;
-use crate::key_management::yubikey::{YubiKeyManager, domain::models::{Pin, Serial}};
+use crate::key_management::yubikey::{
+    YubiKeyManager,
+    domain::models::{Pin, Serial},
+};
 use crate::prelude::*;
 use tauri;
 
@@ -94,7 +97,7 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         // Determine state based on registry and identity presence
         let state = match (in_registry, has_identity) {
             (true, true) => YubiKeyState::Registered,
-            (false, true) => YubiKeyState::Orphaned,  // Has identity but not in registry
+            (false, true) => YubiKeyState::Orphaned, // Has identity but not in registry
             (false, false) => {
                 // Check if has default PIN to distinguish between new and reused
                 let has_default_pin = manager.has_default_pin(serial).await.unwrap_or(false);
@@ -103,10 +106,13 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
                 } else {
                     YubiKeyState::Reused
                 }
-            },
+            }
             (true, false) => {
                 // This is an inconsistent state - registry entry without identity
-                warn!("YubiKey {} has registry entry but no identity", serial.redacted());
+                warn!(
+                    "YubiKey {} has registry entry but no identity",
+                    serial.redacted()
+                );
                 YubiKeyState::Orphaned
             }
         };

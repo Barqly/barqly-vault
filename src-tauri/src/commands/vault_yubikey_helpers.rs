@@ -33,26 +33,31 @@ pub async fn load_vault(vault_id: &str) -> Result<crate::models::Vault, Box<Comm
     })
 }
 
+/// Parameters for registering a YubiKey in vault
+pub struct RegisterYubiKeyParams {
+    pub serial: String,
+    pub label: String,
+    pub identity: crate::key_management::yubikey::domain::models::YubiKeyIdentity,
+    pub device: crate::key_management::yubikey::domain::models::YubiKeyDevice,
+    pub recovery_code_hash: String,
+    pub key_state: KeyState,
+}
+
 /// Helper to add YubiKey entry to registry and vault
 pub async fn register_yubikey_in_vault(
     mut vault: crate::models::Vault,
     mut registry: KeyRegistry,
-    serial: String,
-    label: String,
-    identity: crate::key_management::yubikey::domain::models::YubiKeyIdentity,
-    device: crate::key_management::yubikey::domain::models::YubiKeyDevice,
-    recovery_code_hash: String,
-    key_state: KeyState,
+    params: RegisterYubiKeyParams,
 ) -> Result<(KeyReference, String), Box<CommandError>> {
     let key_registry_id = registry.add_yubikey_entry(
-        label.clone(),
-        serial.clone(),
+        params.label.clone(),
+        params.serial.clone(),
         1u8,  // YubiKey retired slot number (not UI display slot)
         82u8, // PIV slot 82 (first retired slot)
-        identity.to_recipient().to_string(),
-        identity.identity_tag().to_string(),
-        device.firmware_version.clone(),
-        recovery_code_hash.clone(),
+        params.identity.to_recipient().to_string(),
+        params.identity.identity_tag().to_string(),
+        params.device.firmware_version.clone(),
+        params.recovery_code_hash.clone(),
     );
 
     registry.save().map_err(|e| {
@@ -79,17 +84,17 @@ pub async fn register_yubikey_in_vault(
 
     let key_reference = KeyReference {
         id: key_registry_id,
-        label,
-        state: key_state,
+        label: params.label,
+        state: params.key_state,
         key_type: KeyType::Yubikey {
-            serial,
-            firmware_version: device.firmware_version.clone(),
+            serial: params.serial,
+            firmware_version: params.device.firmware_version.clone(),
         },
         created_at: Utc::now(),
         last_used: None,
     };
 
-    Ok((key_reference, recovery_code_hash))
+    Ok((key_reference, params.recovery_code_hash))
 }
 
 /// Helper to check for duplicate YubiKey in vault
