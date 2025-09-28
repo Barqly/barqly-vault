@@ -457,34 +457,3 @@ pub async fn list_available_yubikeys_for_vault(
     Ok(available)
 }
 
-/// Check which KeyMenuBar display positions are available in a vault
-/// This is a legacy display helper - frontend should handle positioning
-// TODO: REMOVE - Unused by frontend, legacy display helper, disabled for testing
-// #[tauri::command]
-// #[specta::specta]
-pub async fn check_keymenubar_positions_available(vault_id: String) -> CommandResponse<Vec<bool>> {
-    info!("Checking KeyMenuBar positions for vault: {}", vault_id);
-
-    let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
-        Box::new(
-            CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
-                .with_recovery_guidance("Ensure the vault exists"),
-        )
-    })?;
-
-    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
-
-    // Check positions 0, 1, 2 for YubiKeys (position after passphrase slot)
-    let mut available = vec![true, true, true];
-
-    for key_id in &vault.keys {
-        if let Some(entry) = registry.get_key(key_id)
-            && let crate::storage::KeyEntry::Yubikey { slot, .. } = entry
-            && *slot < 3
-        {
-            available[*slot as usize] = false;
-        }
-    }
-
-    Ok(available)
-}

@@ -1,4 +1,4 @@
-use crate::commands::types::{CommandError, CommandResponse, ErrorCode, ValidateInput};
+use crate::commands::types::{CommandError, CommandResponse, ValidateInput};
 use crate::constants::MIN_PASSPHRASE_LENGTH;
 use crate::key_management::passphrase::{PassphraseManager, PassphraseStrength};
 use serde::{Deserialize, Serialize};

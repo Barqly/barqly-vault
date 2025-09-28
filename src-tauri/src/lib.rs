@@ -35,8 +35,9 @@ use commands::{
     list_unified_keys,
     // Passphrase commands
     passphrase::{
-        add_passphrase_key_to_vault, generate_key, validate_passphrase,
-        validate_passphrase_strength, validate_vault_passphrase_key, verify_key_passphrase,
+        add_passphrase_key_to_vault, generate_key, list_available_passphrase_keys_for_vault,
+        list_passphrase_keys_for_vault, validate_passphrase, validate_passphrase_strength,
+        validate_vault_passphrase_key, verify_key_passphrase,
     },
     select_directory,
     // File commands
@@ -128,6 +129,8 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         update_key_label,
         // Passphrase/YubiKey vault integration
         add_passphrase_key_to_vault,
+        list_passphrase_keys_for_vault,
+        list_available_passphrase_keys_for_vault,
         validate_vault_passphrase_key,
         init_yubikey_for_vault,
         register_yubikey_for_vault,
@@ -210,6 +213,8 @@ pub fn run_app() {
             // check_yubikey_availability, // TODO: REMOVE - Disabled, unused by frontend
             // Passphrase/YubiKey vault integration
             add_passphrase_key_to_vault,
+            list_passphrase_keys_for_vault,
+            list_available_passphrase_keys_for_vault,
             validate_vault_passphrase_key,
             init_yubikey_for_vault,
             register_yubikey_for_vault,

@@ -27,7 +27,7 @@ pub enum PinStatus {
     Set,
 }
 
-#[derive(Debug, serde::Serialize, specta::Type)]
+#[derive(Debug, PartialEq, serde::Serialize, specta::Type)]
 pub enum YubiKeyState {
     #[serde(rename = "new")]
     New,

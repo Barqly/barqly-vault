@@ -10,8 +10,16 @@
 //! - Simplified frontend integration with unified data structures
 
 use crate::commands::command_types::{CommandError, ErrorCode};
-use crate::commands::yubikey::device_commands::{PinStatus, YubiKeyState};
-use crate::key_management::yubikey::{YubiKeyManager, domain::models::Serial};
+use crate::commands::passphrase::{
+    PassphraseKeyInfo, list_available_passphrase_keys_for_vault, list_passphrase_keys_for_vault,
+};
+use crate::commands::yubikey::device_commands::{
+    PinStatus, YubiKeyState, YubiKeyStateInfo, list_yubikeys,
+};
+use crate::commands::yubikey::vault_commands::{
+    AvailableYubiKey, list_available_yubikeys_for_vault,
+};
+// Note: YubiKeyManager and Serial imports removed as we now delegate to Layer 2 commands
 use crate::models::KeyState;
 use crate::prelude::*;
 use crate::storage::{KeyRegistry, vault_store};
@@ -75,6 +83,105 @@ pub struct YubiKeyInfo {
     pub yubikey_state: YubiKeyState,
 }
 
+// Conversion functions to transform Layer 2 types to unified types
+
+/// Convert PassphraseKeyInfo to unified KeyInfo
+fn convert_passphrase_to_unified(
+    passphrase_key: PassphraseKeyInfo,
+    vault_id: Option<String>,
+) -> KeyInfo {
+    let key_id = passphrase_key.id.clone();
+    KeyInfo {
+        id: passphrase_key.id,
+        label: passphrase_key.label,
+        key_type: KeyType::Passphrase { key_id },
+        recipient: passphrase_key.public_key, // Real public key from registry!
+        is_available: passphrase_key.is_available,
+        vault_id,
+        state: if passphrase_key.is_available {
+            KeyState::Active
+        } else {
+            KeyState::Registered
+        },
+        yubikey_info: None,
+    }
+}
+
+/// Convert YubiKeyStateInfo to unified KeyInfo
+fn convert_yubikey_to_unified(yubikey_key: YubiKeyStateInfo, vault_id: Option<String>) -> KeyInfo {
+    let is_available = match yubikey_key.state {
+        YubiKeyState::Registered => true,
+        YubiKeyState::Orphaned => true,
+        YubiKeyState::Reused => true,
+        YubiKeyState::New => false,
+    };
+
+    KeyInfo {
+        id: format!("yubikey_{}", yubikey_key.serial), // Generate consistent ID
+        label: yubikey_key
+            .label
+            .unwrap_or_else(|| format!("YubiKey-{}", yubikey_key.serial)),
+        key_type: KeyType::YubiKey {
+            serial: yubikey_key.serial.clone(),
+            firmware_version: None, // YubiKeyStateInfo doesn't include firmware version
+        },
+        recipient: yubikey_key
+            .recipient
+            .unwrap_or_else(|| "unknown".to_string()), // Real recipient from registry!
+        is_available,
+        vault_id,
+        state: match yubikey_key.state {
+            YubiKeyState::Registered => KeyState::Active,
+            YubiKeyState::Orphaned => KeyState::Orphaned,
+            YubiKeyState::Reused => KeyState::Registered,
+            YubiKeyState::New => KeyState::Orphaned,
+        },
+        yubikey_info: Some(YubiKeyInfo {
+            slot: yubikey_key.slot,
+            identity_tag: yubikey_key.identity_tag,
+            pin_status: yubikey_key.pin_status,
+            yubikey_state: yubikey_key.state,
+        }),
+    }
+}
+
+/// Convert AvailableYubiKey to unified KeyInfo
+fn convert_available_yubikey_to_unified(
+    available_key: AvailableYubiKey,
+    vault_id: Option<String>,
+) -> KeyInfo {
+    KeyInfo {
+        id: format!("available_yubikey_{}", available_key.serial),
+        label: available_key
+            .label
+            .unwrap_or_else(|| format!("YubiKey-{}", available_key.serial)),
+        key_type: KeyType::YubiKey {
+            serial: available_key.serial.clone(),
+            firmware_version: None,
+        },
+        recipient: available_key
+            .recipient
+            .unwrap_or_else(|| "pending".to_string()),
+        is_available: true,
+        vault_id,
+        state: match available_key.state.as_str() {
+            "new" => KeyState::Orphaned,
+            "orphaned" => KeyState::Orphaned,
+            _ => KeyState::Orphaned,
+        },
+        yubikey_info: Some(YubiKeyInfo {
+            slot: available_key.slot,
+            identity_tag: available_key.identity_tag,
+            pin_status: PinStatus::Set, // Simplified for available keys
+            yubikey_state: match available_key.state.as_str() {
+                "new" => YubiKeyState::New,
+                "orphaned" => YubiKeyState::Orphaned,
+                _ => YubiKeyState::Orphaned,
+            },
+        }),
+    }
+}
+
 /// List keys with flexible filtering options - unified API
 #[tauri::command]
 #[specta::specta]
@@ -98,86 +205,81 @@ pub async fn test_unified_keys() -> Result<String, CommandError> {
 
 /// Implementation: List all registered keys across all vaults
 async fn list_all_keys() -> Result<Vec<KeyInfo>, CommandError> {
+    let mut all_keys = Vec::new();
+
+    // Get all YubiKeys using proper Layer 2 delegation
+    match list_yubikeys().await {
+        Ok(yubikey_list) => {
+            for yubikey in yubikey_list {
+                all_keys.push(convert_yubikey_to_unified(
+                    yubikey, None, // No specific vault context
+                ));
+            }
+        }
+        Err(e) => {
+            warn!("Failed to get all YubiKeys: {:?}", e);
+            // Continue with other key types even if YubiKeys fail
+        }
+    }
+
+    // For passphrase keys, we need to iterate through all keys in registry
+    // since we don't have a global list_all_passphrase_keys function yet
     let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
-    let mut keys = Vec::new();
+    for (key_id, entry) in &registry.keys {
+        if let crate::storage::KeyEntry::Passphrase {
+            label,
+            created_at,
+            last_used,
+            public_key,
+            ..
+        } = entry
+        {
+            let passphrase_info = PassphraseKeyInfo {
+                id: key_id.clone(),
+                label: label.clone(),
+                public_key: public_key.clone(),
+                created_at: *created_at,
+                last_used: *last_used,
+                is_available: true,
+            };
+            all_keys.push(convert_passphrase_to_unified(passphrase_info, None));
+        }
+    }
 
-    // Get all passphrase keys
-    keys.extend(get_passphrase_keys(&registry, None).await?);
-
-    // Get all YubiKey keys with availability status
-    keys.extend(get_yubikey_keys(&registry, None, false).await?);
-
-    Ok(keys)
+    Ok(all_keys)
 }
 
 /// Implementation: List keys for a specific vault
 async fn list_vault_keys(vault_id: String) -> Result<Vec<KeyInfo>, CommandError> {
-    let vault = vault_store::get_vault(&vault_id)
-        .await
-        .map_err(|e| CommandError::operation(ErrorCode::VaultNotFound, e.to_string()))?;
+    let mut unified_keys = Vec::new();
 
-    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
-    let mut keys = Vec::new();
-
-    // Filter to only keys in this vault
-    for key_id in &vault.keys {
-        if let Some(entry) = registry.get_key(key_id) {
-            match entry {
-                crate::storage::KeyEntry::Passphrase { label, .. } => {
-                    keys.push(KeyInfo {
-                        id: key_id.clone(),
-                        label: label.clone(),
-                        key_type: KeyType::Passphrase {
-                            key_id: key_id.clone(),
-                        },
-                        recipient: "passphrase".to_string(), // TODO: Get actual recipient
-                        is_available: true,                  // Passphrase keys always available
-                        vault_id: Some(vault_id.clone()),
-                        state: KeyState::Active,
-                        yubikey_info: None,
-                    });
-                }
-                crate::storage::KeyEntry::Yubikey { label, serial, .. } => {
-                    let is_connected = check_yubikey_connected(serial).await;
-                    keys.push(KeyInfo {
-                        id: key_id.clone(),
-                        label: label.clone(),
-                        key_type: KeyType::YubiKey {
-                            serial: serial.clone(),
-                            firmware_version: None, // TODO: Get from registry
-                        },
-                        recipient: "yubikey".to_string(), // TODO: Get actual recipient
-                        is_available: is_connected,
-                        vault_id: Some(vault_id.clone()),
-                        state: if is_connected {
-                            KeyState::Active
-                        } else {
-                            KeyState::Registered
-                        },
-                        yubikey_info: Some(YubiKeyInfo {
-                            slot: None,                 // TODO: Get from registry
-                            identity_tag: None,         // TODO: Get from registry
-                            pin_status: PinStatus::Set, // TODO: Check actual PIN status
-                            yubikey_state: YubiKeyState::Registered,
-                        }),
-                    });
-                }
+    // Get passphrase keys for this vault using proper Layer 2 delegation
+    match list_passphrase_keys_for_vault(vault_id.clone()).await {
+        Ok(passphrase_response) => {
+            for passphrase_key in passphrase_response.keys {
+                unified_keys.push(convert_passphrase_to_unified(
+                    passphrase_key,
+                    Some(vault_id.clone()),
+                ));
             }
+        }
+        Err(e) => {
+            warn!(
+                "Failed to get passphrase keys for vault {}: {:?}",
+                vault_id, e
+            );
+            // Continue with other key types even if passphrase keys fail
         }
     }
 
-    Ok(keys)
-}
-
-/// Implementation: List keys available to add to a vault (not currently in vault)
-async fn list_available_for_vault(vault_id: String) -> Result<Vec<KeyInfo>, CommandError> {
+    // Get YubiKey keys by filtering all YubiKeys for this vault
+    // Note: We don't have a direct list_yubikeys_for_vault function yet,
+    // so we'll use list_yubikeys and filter
     let vault = vault_store::get_vault(&vault_id)
         .await
         .map_err(|e| CommandError::operation(ErrorCode::VaultNotFound, e.to_string()))?;
 
     let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
-
-    // Get vault's current key serials for filtering
     let vault_yubikey_serials: HashSet<String> = vault
         .keys
         .iter()
@@ -191,53 +293,63 @@ async fn list_available_for_vault(vault_id: String) -> Result<Vec<KeyInfo>, Comm
         })
         .collect();
 
+    // Get all YubiKeys and filter for ones in this vault
+    match list_yubikeys().await {
+        Ok(all_yubikeys) => {
+            for yubikey in all_yubikeys {
+                if vault_yubikey_serials.contains(&yubikey.serial) {
+                    unified_keys.push(convert_yubikey_to_unified(yubikey, Some(vault_id.clone())));
+                }
+            }
+        }
+        Err(e) => {
+            warn!("Failed to get YubiKeys for vault filtering: {:?}", e);
+            // Continue even if YubiKey listing fails
+        }
+    }
+
+    Ok(unified_keys)
+}
+
+/// Implementation: List keys available to add to a vault (not currently in vault)
+async fn list_available_for_vault(vault_id: String) -> Result<Vec<KeyInfo>, CommandError> {
     let mut available_keys = Vec::new();
 
-    // Get connected YubiKeys not in this vault
-    if let Ok(manager) = YubiKeyManager::new().await
-        && let Ok(devices) = manager.list_connected_devices().await
-    {
-        for device in devices {
-            let serial_str = device.serial().value().to_string();
-
-            // Skip if already in this vault
-            if vault_yubikey_serials.contains(&serial_str) {
-                continue;
+    // Get available passphrase keys using proper Layer 2 delegation
+    match list_available_passphrase_keys_for_vault(vault_id.clone()).await {
+        Ok(passphrase_response) => {
+            for passphrase_key in passphrase_response.keys {
+                available_keys.push(convert_passphrase_to_unified(
+                    passphrase_key,
+                    None, // Not in vault yet
+                ));
             }
+        }
+        Err(e) => {
+            warn!(
+                "Failed to get available passphrase keys for vault {}: {:?}",
+                vault_id, e
+            );
+            // Continue with other key types even if passphrase keys fail
+        }
+    }
 
-            // Check if device has identity
-            let has_identity = manager.has_identity(device.serial()).await.unwrap_or(false);
-
-            available_keys.push(KeyInfo {
-                id: format!("available_{}", serial_str), // Temp ID for available keys
-                label: format!("YubiKey {}", &serial_str[..8.min(serial_str.len())]),
-                key_type: KeyType::YubiKey {
-                    serial: serial_str,
-                    firmware_version: device.firmware_version.clone(),
-                },
-                recipient: "pending".to_string(), // Will be generated on registration
-                is_available: true,
-                vault_id: None,            // Not yet in vault
-                state: KeyState::Orphaned, // Available to add
-                yubikey_info: Some(YubiKeyInfo {
-                    slot: None,
-                    identity_tag: None,
-                    pin_status: if manager
-                        .has_default_pin(device.serial())
-                        .await
-                        .unwrap_or(false)
-                    {
-                        PinStatus::Default
-                    } else {
-                        PinStatus::Set
-                    },
-                    yubikey_state: if has_identity {
-                        YubiKeyState::Orphaned
-                    } else {
-                        YubiKeyState::New
-                    },
-                }),
-            });
+    // Get available YubiKeys using proper Layer 2 delegation
+    match list_available_yubikeys_for_vault(vault_id.clone()).await {
+        Ok(yubikey_response) => {
+            for available_yubikey in yubikey_response {
+                available_keys.push(convert_available_yubikey_to_unified(
+                    available_yubikey,
+                    None, // Not in vault yet
+                ));
+            }
+        }
+        Err(e) => {
+            warn!(
+                "Failed to get available YubiKeys for vault {}: {:?}",
+                vault_id, e
+            );
+            // Continue even if YubiKey listing fails
         }
     }
 
@@ -246,104 +358,51 @@ async fn list_available_for_vault(vault_id: String) -> Result<Vec<KeyInfo>, Comm
 
 /// Implementation: List only currently connected/available keys
 async fn list_connected_keys() -> Result<Vec<KeyInfo>, CommandError> {
-    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
     let mut connected_keys = Vec::new();
 
-    // Passphrase keys are always "connected"
-    connected_keys.extend(get_passphrase_keys(&registry, None).await?);
+    // Get all YubiKeys and filter for connected ones
+    match list_yubikeys().await {
+        Ok(yubikey_list) => {
+            for yubikey in yubikey_list {
+                // Only include connected/available YubiKeys
+                if yubikey.state == YubiKeyState::Registered
+                    || yubikey.state == YubiKeyState::Orphaned
+                    || yubikey.state == YubiKeyState::Reused
+                {
+                    connected_keys.push(convert_yubikey_to_unified(
+                        yubikey, None, // No specific vault context
+                    ));
+                }
+            }
+        }
+        Err(e) => {
+            warn!("Failed to get connected YubiKeys: {:?}", e);
+            // Continue with other key types even if YubiKeys fail
+        }
+    }
 
-    // Only connected YubiKeys
-    connected_keys.extend(get_yubikey_keys(&registry, None, true).await?);
+    // Passphrase keys are always "connected" - get all of them
+    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+    for (key_id, entry) in &registry.keys {
+        if let crate::storage::KeyEntry::Passphrase {
+            label,
+            created_at,
+            last_used,
+            public_key,
+            ..
+        } = entry
+        {
+            let passphrase_info = PassphraseKeyInfo {
+                id: key_id.clone(),
+                label: label.clone(),
+                public_key: public_key.clone(),
+                created_at: *created_at,
+                last_used: *last_used,
+                is_available: true,
+            };
+            connected_keys.push(convert_passphrase_to_unified(passphrase_info, None));
+        }
+    }
 
     Ok(connected_keys)
-}
-
-/// Helper: Get passphrase keys from registry
-async fn get_passphrase_keys(
-    registry: &KeyRegistry,
-    vault_filter: Option<&str>,
-) -> Result<Vec<KeyInfo>, CommandError> {
-    let mut keys = Vec::new();
-
-    for (key_id, entry) in &registry.keys {
-        if let crate::storage::KeyEntry::Passphrase { label, .. } = entry {
-            // TODO: Implement vault filtering for passphrase keys
-            keys.push(KeyInfo {
-                id: key_id.clone(),
-                label: label.clone(),
-                key_type: KeyType::Passphrase {
-                    key_id: key_id.clone(),
-                },
-                recipient: "passphrase".to_string(), // TODO: Get actual recipient
-                is_available: true,                  // Passphrase keys always available
-                vault_id: vault_filter.map(|s| s.to_string()),
-                state: KeyState::Active,
-                yubikey_info: None,
-            });
-        }
-    }
-
-    Ok(keys)
-}
-
-/// Helper: Get YubiKey keys from registry with availability checking
-async fn get_yubikey_keys(
-    registry: &KeyRegistry,
-    vault_filter: Option<&str>,
-    connected_only: bool,
-) -> Result<Vec<KeyInfo>, CommandError> {
-    let mut keys = Vec::new();
-
-    for (key_id, entry) in &registry.keys {
-        if let crate::storage::KeyEntry::Yubikey { label, serial, .. } = entry {
-            let is_connected = check_yubikey_connected(serial).await;
-
-            // Skip disconnected keys if connected_only filter
-            if connected_only && !is_connected {
-                continue;
-            }
-
-            keys.push(KeyInfo {
-                id: key_id.clone(),
-                label: label.clone(),
-                key_type: KeyType::YubiKey {
-                    serial: serial.clone(),
-                    firmware_version: None, // TODO: Get from registry
-                },
-                recipient: "yubikey".to_string(), // TODO: Get actual recipient
-                is_available: is_connected,
-                vault_id: vault_filter.map(|s| s.to_string()),
-                state: if is_connected {
-                    KeyState::Active
-                } else {
-                    KeyState::Registered
-                },
-                yubikey_info: Some(YubiKeyInfo {
-                    slot: None,                 // TODO: Get from registry
-                    identity_tag: None,         // TODO: Get from registry
-                    pin_status: PinStatus::Set, // TODO: Check actual PIN status
-                    yubikey_state: YubiKeyState::Registered,
-                }),
-            });
-        }
-    }
-
-    Ok(keys)
-}
-
-/// Helper: Check if YubiKey with given serial is currently connected
-async fn check_yubikey_connected(serial: &str) -> bool {
-    if let Ok(manager) = YubiKeyManager::new().await {
-        if let Ok(serial_obj) = Serial::new(serial.to_string()) {
-            manager
-                .detect_device(&serial_obj)
-                .await
-                .unwrap_or(None)
-                .is_some()
-        } else {
-            false
-        }
-    } else {
-        false
-    }
 }

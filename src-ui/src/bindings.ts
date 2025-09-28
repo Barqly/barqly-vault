@@ -5,9 +5,6 @@
 
 
 export const commands = {
-/**
- * Generate a new encryption keypair
- */
 async generateKey(input: GenerateKeyInput) : Promise<Result<GenerateKeyResponse, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("generate_key", { input }) };
@@ -27,9 +24,6 @@ async generateKeyMulti(input: GenerateKeyMultiInput) : Promise<Result<GenerateKe
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Validate passphrase strength
- */
 async validatePassphrase(input: ValidatePassphraseInput) : Promise<Result<ValidatePassphraseResponse, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("validate_passphrase", { input }) };
@@ -38,23 +32,6 @@ async validatePassphrase(input: ValidatePassphraseInput) : Promise<Result<Valida
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Verify that a passphrase can decrypt a specific key
- * 
- * This command efficiently validates a key-passphrase combination
- * without performing full file decryption. It only attempts to decrypt
- * the private key, making it suitable for validation workflows.
- * 
- * # Security
- * - Constant-time operations where possible to prevent timing attacks
- * - No unnecessary file I/O or temporary file creation
- * - Proper error handling without information leakage
- * 
- * # Performance
- * - Fast operation independent of encrypted file size
- * - Only loads and decrypts the private key
- * - Minimal memory footprint
- */
 async verifyKeyPassphrase(input: VerifyKeyPassphraseInput) : Promise<Result<VerifyKeyPassphraseResponse, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("verify_key_passphrase", { input }) };
@@ -63,9 +40,6 @@ async verifyKeyPassphrase(input: VerifyKeyPassphraseInput) : Promise<Result<Veri
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Validate passphrase strength with detailed feedback
- */
 async validatePassphraseStrength(passphrase: string) : Promise<Result<PassphraseValidationResult, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("validate_passphrase_strength", { passphrase }) };
@@ -360,9 +334,6 @@ async updateKeyLabel(input: UpdateKeyLabelRequest) : Promise<Result<UpdateKeyLab
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Add a passphrase key to a vault with actual key generation
- */
 async addPassphraseKeyToVault(input: AddPassphraseKeyRequest) : Promise<Result<AddPassphraseKeyResponse, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("add_passphrase_key_to_vault", { input }) };
@@ -371,9 +342,22 @@ async addPassphraseKeyToVault(input: AddPassphraseKeyRequest) : Promise<Result<A
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Check if a passphrase key exists and is valid
- */
+async listPassphraseKeysForVault(vaultId: string) : Promise<Result<ListPassphraseKeysResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_passphrase_keys_for_vault", { vaultId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async listAvailablePassphraseKeysForVault(vaultId: string) : Promise<Result<ListPassphraseKeysResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_available_passphrase_keys_for_vault", { vaultId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async validateVaultPassphraseKey(vaultId: string) : Promise<Result<boolean, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("validate_vault_passphrase_key", { vaultId }) };
@@ -499,13 +483,7 @@ export type AddKeyToVaultRequest = { vault_id: string; key_type: string; passphr
  * Response from adding key
  */
 export type AddKeyToVaultResponse = { success: boolean; key_reference: KeyReference }
-/**
- * Enhanced add key to vault request with passphrase support
- */
 export type AddPassphraseKeyRequest = { vault_id: string; label: string; passphrase: string }
-/**
- * Response after adding a passphrase key
- */
 export type AddPassphraseKeyResponse = { key_reference: KeyReference; public_key: string }
 /**
  * Application configuration
@@ -647,9 +625,6 @@ export type FileInfo = { path: string; name: string; size: number; is_file: bool
  * File selection result
  */
 export type FileSelection = { paths: string[]; total_size: number; file_count: number; selection_type: string }
-/**
- * Input for key generation command
- */
 export type GenerateKeyInput = { label: string; passphrase: string }
 /**
  * Input for multi-recipient key generation command
@@ -659,9 +634,6 @@ export type GenerateKeyMultiInput = { label: string; passphrase: string | null; 
  * Response from key generation
  */
 export type GenerateKeyMultiResponse = { public_key: string; key_id: string; saved_path: string; protection_mode: ProtectionMode; recipients: string[] }
-/**
- * Response from key generation
- */
 export type GenerateKeyResponse = { public_key: string; key_id: string; saved_path: string }
 /**
  * Response containing current vault
@@ -836,6 +808,7 @@ export type KeyType =
  * YubiKey hardware token
  */
 { type: "YubiKey"; data: { serial: string; firmware_version: string | null } }
+export type ListPassphraseKeysResponse = { keys: PassphraseKeyInfo[] }
 /**
  * Response containing list of vaults
  */
@@ -844,13 +817,8 @@ export type ListVaultsResponse = { vaults: VaultSummary[] }
  * Manifest for encrypted archives
  */
 export type Manifest = { version: string; created_at: string; files: FileInfo[]; total_size: number; file_count: number }
-/**
- * Passphrase strength levels
- */
+export type PassphraseKeyInfo = { id: string; label: string; public_key: string; created_at: string; last_used: string | null; is_available: boolean }
 export type PassphraseStrength = "weak" | "fair" | "good" | "strong"
-/**
- * Passphrase validation result
- */
 export type PassphraseValidationResult = { is_valid: boolean; strength: PassphraseStrength; feedback: string[]; score: number }
 /**
  * PIN policy for YubiKey operations (from crypto/yubikey management)
@@ -943,26 +911,14 @@ export type UpdateKeyLabelRequest = { vault_id: string; key_id: string; new_labe
  * Response from updating key label
  */
 export type UpdateKeyLabelResponse = { success: boolean }
-/**
- * Input for passphrase validation command
- */
 export type ValidatePassphraseInput = { passphrase: string }
-/**
- * Response from passphrase validation
- */
 export type ValidatePassphraseResponse = { is_valid: boolean; message: string }
 export type VaultDecryptionResult = { method_used: UnlockMethod; recipient_used: string; files_extracted: string[]; output_path: string; decryption_time: string }
 /**
  * Summary information about a vault (for listing)
  */
 export type VaultSummary = { id: string; name: string; description: string | null; created_at: string; key_count: number }
-/**
- * Input for key-passphrase verification command
- */
 export type VerifyKeyPassphraseInput = { key_id: string; passphrase: string }
-/**
- * Response from key-passphrase verification
- */
 export type VerifyKeyPassphraseResponse = { is_valid: boolean; message: string }
 /**
  * Input for manifest verification command

@@ -1,6 +1,8 @@
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::key_management::passphrase::PassphraseManager;
 use crate::models::KeyReference;
+use crate::storage::{KeyRegistry, vault_store};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, specta::Type)]
@@ -14,6 +16,21 @@ pub struct AddPassphraseKeyRequest {
 pub struct AddPassphraseKeyResponse {
     pub key_reference: KeyReference,
     pub public_key: String,
+}
+
+#[derive(Debug, Serialize, specta::Type)]
+pub struct PassphraseKeyInfo {
+    pub id: String,
+    pub label: String,
+    pub public_key: String,
+    pub created_at: DateTime<Utc>,
+    pub last_used: Option<DateTime<Utc>>,
+    pub is_available: bool,
+}
+
+#[derive(Debug, Serialize, specta::Type)]
+pub struct ListPassphraseKeysResponse {
+    pub keys: Vec<PassphraseKeyInfo>,
 }
 
 #[tauri::command]
@@ -67,4 +84,102 @@ pub async fn validate_vault_passphrase_key(vault_id: String) -> CommandResponse<
                     .with_recovery_guidance("Ensure the vault exists"),
             )
         })
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn list_passphrase_keys_for_vault(
+    vault_id: String,
+) -> CommandResponse<ListPassphraseKeysResponse> {
+    let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
+                .with_recovery_guidance("Ensure the vault exists"),
+        )
+    })?;
+
+    let registry = KeyRegistry::load().map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::ConfigurationError, e.to_string())
+                .with_recovery_guidance("Check system configuration"),
+        )
+    })?;
+
+    let mut passphrase_keys = Vec::new();
+
+    for key_id in &vault.keys {
+        if let Some(crate::storage::KeyEntry::Passphrase {
+            label,
+            created_at,
+            last_used,
+            public_key,
+            ..
+        }) = registry.get_key(key_id)
+        {
+            passphrase_keys.push(PassphraseKeyInfo {
+                id: key_id.clone(),
+                label: label.clone(),
+                public_key: public_key.clone(),
+                created_at: *created_at,
+                last_used: *last_used,
+                is_available: true, // Passphrase keys are always available
+            });
+        }
+    }
+
+    Ok(ListPassphraseKeysResponse {
+        keys: passphrase_keys,
+    })
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn list_available_passphrase_keys_for_vault(
+    vault_id: String,
+) -> CommandResponse<ListPassphraseKeysResponse> {
+    // First verify vault exists
+    let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
+                .with_recovery_guidance("Ensure the vault exists"),
+        )
+    })?;
+
+    let registry = KeyRegistry::load().map_err(|e| {
+        Box::new(
+            CommandError::operation(ErrorCode::ConfigurationError, e.to_string())
+                .with_recovery_guidance("Check system configuration"),
+        )
+    })?;
+
+    // Get all passphrase keys that are NOT in this vault
+    let vault_key_ids: std::collections::HashSet<String> = vault.keys.iter().cloned().collect();
+    let mut available_keys = Vec::new();
+
+    for (key_id, entry) in registry.keys.iter() {
+        if let crate::storage::KeyEntry::Passphrase {
+            label,
+            created_at,
+            last_used,
+            public_key,
+            ..
+        } = entry
+        {
+            // Only include if not already in this vault
+            if !vault_key_ids.contains(key_id) {
+                available_keys.push(PassphraseKeyInfo {
+                    id: key_id.clone(),
+                    label: label.clone(),
+                    public_key: public_key.clone(),
+                    created_at: *created_at,
+                    last_used: *last_used,
+                    is_available: true, // Passphrase keys are always available
+                });
+            }
+        }
+    }
+
+    Ok(ListPassphraseKeysResponse {
+        keys: available_keys,
+    })
 }
