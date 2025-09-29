@@ -39,7 +39,7 @@
 //! use crate::services::yubikey::{YubiKeyManager, Serial, Pin};
 //!
 //! // Initialize YubiKey manager
-//! let manager = YubiKeyManager::new().await?;
+//! let _manager = YubiKeyManager::new().await?;
 //!
 //! // List connected devices
 //! let devices = manager.list_connected_devices().await?;

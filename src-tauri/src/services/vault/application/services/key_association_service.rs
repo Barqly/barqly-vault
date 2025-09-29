@@ -1,6 +1,6 @@
+use crate::models::{KeyReference, KeyState, KeyType};
 use crate::services::vault::domain::{VaultError, VaultResult, VaultRules};
 use crate::services::vault::infrastructure::VaultRepository;
-use crate::models::{KeyReference, KeyState, KeyType};
 use crate::storage::KeyRegistry;
 use chrono::Utc;
 
@@ -18,25 +18,38 @@ impl KeyAssociationService {
     /// Get all keys for a vault
     pub async fn get_vault_keys(&self, vault_id: &str) -> VaultResult<Vec<KeyReference>> {
         let vault = self.repository.get_vault(vault_id).await?;
-        let registry = KeyRegistry::load()
-            .map_err(|e| VaultError::StorageError(e.to_string()))?;
+        let registry = KeyRegistry::load().map_err(|e| VaultError::StorageError(e.to_string()))?;
 
         let mut key_references = Vec::new();
 
         for key_id in &vault.keys {
             if let Some(entry) = registry.get_key(key_id) {
                 let key_ref = match entry {
-                    crate::storage::KeyEntry::Passphrase { label, created_at, last_used, .. } => {
+                    crate::storage::KeyEntry::Passphrase {
+                        label,
+                        created_at,
+                        last_used,
+                        ..
+                    } => {
                         KeyReference {
                             id: key_id.clone(),
-                            key_type: KeyType::Passphrase { key_id: key_id.clone() },
+                            key_type: KeyType::Passphrase {
+                                key_id: key_id.clone(),
+                            },
                             label: label.clone(),
                             state: KeyState::Active, // Passphrase keys are always active
                             created_at: *created_at,
                             last_used: *last_used,
                         }
                     }
-                    crate::storage::KeyEntry::Yubikey { label, serial, created_at, last_used, firmware_version, .. } => {
+                    crate::storage::KeyEntry::Yubikey {
+                        label,
+                        serial,
+                        created_at,
+                        last_used,
+                        firmware_version,
+                        ..
+                    } => {
                         KeyReference {
                             id: key_id.clone(),
                             key_type: KeyType::Yubikey {
@@ -73,22 +86,33 @@ impl KeyAssociationService {
         // Check if key already in vault
         if vault.keys.contains(&key_id) {
             return Err(VaultError::InvalidOperation(
-                "Key is already associated with this vault".to_string()
+                "Key is already associated with this vault".to_string(),
             ));
         }
 
         // Add key to vault
-        vault.add_key_id(key_id.clone())
-            .map_err(|e| VaultError::InvalidOperation(e))?;
+        vault
+            .add_key_id(key_id.clone())
+            .map_err(VaultError::InvalidOperation)?;
 
         // Save updated vault
         self.repository.save_vault(&vault).await?;
 
         // Create key reference for response
         let key_type_enum = match key_type.as_str() {
-            "passphrase" => KeyType::Passphrase { key_id: key_id.clone() },
-            "yubikey" => KeyType::Yubikey { serial: key_id.clone(), firmware_version: None }, // TODO: Get real serial
-            _ => return Err(VaultError::InvalidOperation(format!("Unknown key type: {}", key_type))),
+            "passphrase" => KeyType::Passphrase {
+                key_id: key_id.clone(),
+            },
+            "yubikey" => KeyType::Yubikey {
+                serial: key_id.clone(),
+                firmware_version: None,
+            }, // TODO: Get real serial
+            _ => {
+                return Err(VaultError::InvalidOperation(format!(
+                    "Unknown key type: {}",
+                    key_type
+                )));
+            }
         };
 
         Ok(KeyReference {
@@ -102,11 +126,7 @@ impl KeyAssociationService {
     }
 
     /// Remove key from vault with business rule validation
-    pub async fn remove_key_from_vault(
-        &self,
-        vault_id: &str,
-        key_id: &str,
-    ) -> VaultResult<()> {
+    pub async fn remove_key_from_vault(&self, vault_id: &str, key_id: &str) -> VaultResult<()> {
         let mut vault = self.repository.get_vault(vault_id).await?;
 
         // Apply business rules
@@ -118,8 +138,9 @@ impl KeyAssociationService {
         }
 
         // Remove key from vault
-        vault.remove_key(key_id)
-            .map_err(|e| VaultError::InvalidOperation(e))?;
+        vault
+            .remove_key(key_id)
+            .map_err(VaultError::InvalidOperation)?;
 
         // Save updated vault
         self.repository.save_vault(&vault).await?;
@@ -137,7 +158,7 @@ impl KeyAssociationService {
         // TODO: Implement key label update logic
         // This would need to update the key registry, not just the vault
         Err(VaultError::InvalidOperation(
-            "Key label update not implemented yet".to_string()
+            "Key label update not implemented yet".to_string(),
         ))
     }
 }
@@ -154,7 +175,7 @@ mod tests {
 
     #[test]
     fn test_key_association_service_creation() {
-        let service = KeyAssociationService::new();
-        assert!(std::mem::size_of_val(&service) >= 0);
+        let _service = KeyAssociationService::new();
+        // Just verify creation works
     }
 }

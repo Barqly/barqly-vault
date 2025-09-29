@@ -1,5 +1,5 @@
-use crate::services::vault::domain::{VaultError, VaultResult};
 use crate::models::Vault;
+use crate::services::vault::domain::{VaultError, VaultResult};
 use crate::storage::vault_store;
 
 pub struct VaultRepository;

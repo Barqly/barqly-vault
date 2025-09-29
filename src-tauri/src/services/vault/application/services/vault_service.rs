@@ -1,6 +1,6 @@
+use crate::models::{Vault, VaultSummary};
 use crate::services::vault::domain::{VaultError, VaultResult, VaultRules};
 use crate::services::vault::infrastructure::VaultRepository;
-use crate::models::{Vault, VaultSummary};
 
 pub struct VaultService {
     repository: VaultRepository,
@@ -52,7 +52,7 @@ impl VaultService {
         // Business rule: Don't delete vaults with keys unless forced
         if !force && !vault.keys.is_empty() {
             return Err(VaultError::InvalidOperation(
-                "Cannot delete vault with keys. Use force=true to override".to_string()
+                "Cannot delete vault with keys. Use force=true to override".to_string(),
             ));
         }
 
@@ -72,7 +72,7 @@ mod tests {
 
     #[test]
     fn test_vault_service_creation() {
-        let service = VaultService::new();
-        assert!(std::mem::size_of_val(&service) >= 0);
+        let _service = VaultService::new();
+        // Just verify creation works
     }
 }

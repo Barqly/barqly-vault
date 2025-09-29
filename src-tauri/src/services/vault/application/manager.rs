@@ -1,6 +1,6 @@
-use super::services::{VaultService, KeyAssociationService};
-use crate::services::vault::domain::VaultResult;
+use super::services::{KeyAssociationService, VaultService};
 use crate::models::{KeyReference, Vault, VaultSummary};
+use crate::services::vault::domain::VaultResult;
 
 pub struct VaultManager {
     vault_service: VaultService,
@@ -52,16 +52,16 @@ impl VaultManager {
         key_type: String,
         label: String,
     ) -> VaultResult<KeyReference> {
-        self.key_service.add_key_to_vault(vault_id, key_id, key_type, label).await
+        self.key_service
+            .add_key_to_vault(vault_id, key_id, key_type, label)
+            .await
     }
 
     /// Remove key from vault
-    pub async fn remove_key_from_vault(
-        &self,
-        vault_id: &str,
-        key_id: &str,
-    ) -> VaultResult<()> {
-        self.key_service.remove_key_from_vault(vault_id, key_id).await
+    pub async fn remove_key_from_vault(&self, vault_id: &str, key_id: &str) -> VaultResult<()> {
+        self.key_service
+            .remove_key_from_vault(vault_id, key_id)
+            .await
     }
 
     /// Update key label
@@ -71,7 +71,9 @@ impl VaultManager {
         key_id: &str,
         new_label: String,
     ) -> VaultResult<()> {
-        self.key_service.update_key_label(vault_id, key_id, new_label).await
+        self.key_service
+            .update_key_label(vault_id, key_id, new_label)
+            .await
     }
 }
 
@@ -87,7 +89,7 @@ mod tests {
 
     #[test]
     fn test_vault_manager_creation() {
-        let manager = VaultManager::new();
-        assert!(std::mem::size_of_val(&manager) >= 0);
+        let _manager = VaultManager::new();
+        // Just verify manager creation works
     }
 }

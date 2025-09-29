@@ -18,16 +18,22 @@ impl VaultRules {
         let trimmed = name.trim();
 
         if trimmed.is_empty() {
-            return Err(VaultError::InvalidName("Vault name cannot be empty".to_string()));
+            return Err(VaultError::InvalidName(
+                "Vault name cannot be empty".to_string(),
+            ));
         }
 
         if trimmed.len() > 100 {
-            return Err(VaultError::InvalidName("Vault name must be less than 100 characters".to_string()));
+            return Err(VaultError::InvalidName(
+                "Vault name must be less than 100 characters".to_string(),
+            ));
         }
 
         // Check for invalid characters that might cause file system issues
         if trimmed.contains(['/', '\\', ':', '*', '?', '"', '<', '>', '|']) {
-            return Err(VaultError::InvalidName("Vault name contains invalid characters".to_string()));
+            return Err(VaultError::InvalidName(
+                "Vault name contains invalid characters".to_string(),
+            ));
         }
 
         Ok(())
@@ -36,9 +42,10 @@ impl VaultRules {
     /// Validate if vault can accept a new key
     pub fn can_add_key(current_key_count: usize, key_type: &str) -> VaultResult<()> {
         if current_key_count >= Self::MAX_KEYS_PER_VAULT {
-            return Err(VaultError::KeyLimitExceeded(
-                format!("Vault already has maximum of {} keys", Self::MAX_KEYS_PER_VAULT)
-            ));
+            return Err(VaultError::KeyLimitExceeded(format!(
+                "Vault already has maximum of {} keys",
+                Self::MAX_KEYS_PER_VAULT
+            )));
         }
 
         // Additional key-type specific validation can be added here
@@ -51,9 +58,10 @@ impl VaultRules {
                 // YubiKey validation is handled elsewhere
                 Ok(())
             }
-            _ => Err(VaultError::InvalidOperation(
-                format!("Unknown key type: {}", key_type)
-            ))
+            _ => Err(VaultError::InvalidOperation(format!(
+                "Unknown key type: {}",
+                key_type
+            ))),
         }
     }
 
@@ -61,7 +69,7 @@ impl VaultRules {
     pub fn can_remove_key(current_key_count: usize) -> VaultResult<()> {
         if current_key_count <= 1 {
             return Err(VaultError::InvalidOperation(
-                "Cannot remove the last key from a vault".to_string()
+                "Cannot remove the last key from a vault".to_string(),
             ));
         }
         Ok(())

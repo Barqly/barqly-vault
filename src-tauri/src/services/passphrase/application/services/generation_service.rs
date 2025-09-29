@@ -130,7 +130,7 @@ mod tests {
 
     #[test]
     fn test_generation_service_creation() {
-        let service = GenerationService::new();
-        assert!(std::mem::size_of_val(&service) == 0);
+        let _service = GenerationService::new();
+        assert!(std::mem::size_of_val(&_service) == 0);
     }
 }

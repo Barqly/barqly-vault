@@ -1,5 +1,5 @@
-pub mod vault_service;
 pub mod key_association_service;
+pub mod vault_service;
 
-pub use vault_service::VaultService;
 pub use key_association_service::KeyAssociationService;
+pub use vault_service::VaultService;

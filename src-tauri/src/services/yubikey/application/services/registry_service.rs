@@ -596,7 +596,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_registry_service_creation() {
-        let service = create_test_registry_service().await;
+        let _service = create_test_registry_service().await;
 
         // Should be able to create service
         assert!(!format!("{:?}", service).is_empty());
@@ -604,7 +604,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_add_yubikey_entry() {
-        let service = create_test_registry_service().await;
+        let _service = create_test_registry_service().await;
 
         let device = create_test_device();
         let identity = create_test_identity();
@@ -625,7 +625,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_find_by_serial() {
-        let service = create_test_registry_service().await;
+        let _service = create_test_registry_service().await;
 
         let device = create_test_device();
         let identity = create_test_identity();

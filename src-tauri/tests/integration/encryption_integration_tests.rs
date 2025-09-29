@@ -12,7 +12,7 @@ use crate::common::helpers::{PerformanceHelper, TestAssertions};
 use barqly_vault_lib::{
     commands::{
         crypto::{EncryptDataInput, GetEncryptionStatusInput},
-        file_commands::create_manifest,
+        file::create_manifest,
         types::ValidateInput,
     },
     crypto::encrypt_data,

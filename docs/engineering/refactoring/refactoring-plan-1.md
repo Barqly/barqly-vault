@@ -15,13 +15,13 @@
 - [x] Create `services/vault/infrastructure/vault_repository.rs` - Storage abstraction
 - [x] Move business logic from vault_commands into VaultManager (500+ LOC)
 
-## Milestone 3: File Service Layer Creation
-- [ ] Create `services/file/domain/` with File domain models and validation rules
-- [ ] Create `services/file/application/manager.rs` - FileManager facade
-- [ ] Create `services/file/application/services/archive_service.rs` - Archive operations
-- [ ] Create `services/file/application/services/manifest_service.rs` - Manifest operations
-- [ ] Create `services/file/infrastructure/file_repository.rs` - File system abstraction
-- [ ] Move business logic from file_commands and file_ops into FileManager
+## Milestone 3: File Service Layer Creation ✅ COMPLETE
+- [x] Create `services/file/domain/` with File domain models and validation rules
+- [x] Create `services/file/application/manager.rs` - FileManager facade
+- [x] Create `services/file/application/services/archive_service.rs` - Archive operations
+- [x] Create `services/file/application/services/manifest_service.rs` - Manifest operations
+- [x] Create `services/file/infrastructure/file_repository.rs` - File system abstraction
+- [x] Move business logic from file_commands and file_ops into FileManager
 
 ## Milestone 4: Crypto Service Layer Creation
 - [ ] Create `services/crypto/domain/` with encryption domain models

@@ -73,15 +73,23 @@ pub async fn create_vault(input: CreateVaultRequest) -> CommandResponse<CreateVa
         }),
         Err(e) => Err(Box::new(CommandError {
             code: match e {
-                crate::services::vault::domain::VaultError::InvalidName(_) => ErrorCode::InvalidInput,
-                crate::services::vault::domain::VaultError::AlreadyExists(_) => ErrorCode::VaultAlreadyExists,
+                crate::services::vault::domain::VaultError::InvalidName(_) => {
+                    ErrorCode::InvalidInput
+                }
+                crate::services::vault::domain::VaultError::AlreadyExists(_) => {
+                    ErrorCode::VaultAlreadyExists
+                }
                 _ => ErrorCode::StorageFailed,
             },
             message: e.to_string(),
             details: None,
             recovery_guidance: Some(match e {
-                crate::services::vault::domain::VaultError::InvalidName(_) => "Enter a valid vault name".to_string(),
-                crate::services::vault::domain::VaultError::AlreadyExists(_) => "Choose a different vault name".to_string(),
+                crate::services::vault::domain::VaultError::InvalidName(_) => {
+                    "Enter a valid vault name".to_string()
+                }
+                crate::services::vault::domain::VaultError::AlreadyExists(_) => {
+                    "Choose a different vault name".to_string()
+                }
                 _ => "Check disk space and permissions".to_string(),
             }),
             user_actionable: true,

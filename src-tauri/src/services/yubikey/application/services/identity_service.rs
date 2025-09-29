@@ -569,7 +569,7 @@ mod tests {
 
     #[test]
     fn test_recipient_extraction() {
-        let service = AgePluginIdentityService::with_plugin_path(PathBuf::from("test"));
+        let _service = AgePluginIdentityService::with_plugin_path(PathBuf::from("test"));
 
         let output = "Generated identity:\nage1yubikey1qxe2f9w5h2k8r7t3y6u4i1o0p9l8k7j6h5g4f3d2s1a0\nAGE-PLUGIN-YUBIKEY-1234567890ABCDEF";
 
@@ -579,7 +579,7 @@ mod tests {
 
     #[test]
     fn test_identity_tag_extraction() {
-        let service = AgePluginIdentityService::with_plugin_path(PathBuf::from("test"));
+        let _service = AgePluginIdentityService::with_plugin_path(PathBuf::from("test"));
 
         let output = "Generated identity:\nage1yubikey1qxe2f9w5h2k8r7t3y6u4i1o0p9l8k7j6h5g4f3d2s1a0\nAGE-PLUGIN-YUBIKEY-1234567890ABCDEF";
 
@@ -589,7 +589,7 @@ mod tests {
 
     #[test]
     fn test_identity_validation() {
-        let service = AgePluginIdentityService::with_plugin_path(PathBuf::from("test"));
+        let _service = AgePluginIdentityService::with_plugin_path(PathBuf::from("test"));
 
         // Valid identity
         let recipient = "age1yubikey1qxe2f9w5h2k8r7t3y6u4i1o0p9l8k7j6h5g4f3d2s1a0";

@@ -10,7 +10,6 @@
 //! - `get_file_info` - Get information about files/folders
 //! - `create_manifest` - Create manifest for file set
 
-mod helpers;
 mod manifest;
 mod selection;
 
@@ -32,6 +31,3 @@ pub struct Manifest {
     pub total_size: u64,
     pub file_count: usize,
 }
-
-// Internal exports for use within this module
-pub(crate) use helpers::{cleanup_temp_files, create_file_selection_atomic};
