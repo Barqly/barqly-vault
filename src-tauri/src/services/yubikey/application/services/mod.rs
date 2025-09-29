@@ -315,7 +315,7 @@ mod tests {
         struct TestService;
         impl SerialScoped for TestService {}
 
-        let _service = TestService;
+        let service = TestService;
         let context = service.create_operation_context("test_operation", &serial);
 
         assert_eq!(context.operation, "test_operation");
@@ -330,7 +330,7 @@ mod tests {
         struct TestService;
         impl SerialScoped for TestService {}
 
-        let _service = TestService;
+        let service = TestService;
         assert!(service.validate_serial(&serial).is_ok());
     }
 

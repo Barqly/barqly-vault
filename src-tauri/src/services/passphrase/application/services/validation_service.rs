@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn test_validate_strength_weak() {
-        let _service = ValidationService::new();
+        let service = ValidationService::new();
         let result = service.validate_strength("weak");
         assert!(!result.is_valid);
         assert!(result.score < 30);
@@ -78,7 +78,7 @@ mod tests {
 
     #[test]
     fn test_validate_strength_strong() {
-        let _service = ValidationService::new();
+        let service = ValidationService::new();
         let result = service.validate_strength("MySecure#Pass2024!");
         assert!(result.is_valid);
         assert!(result.score > 70);

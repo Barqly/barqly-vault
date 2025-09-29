@@ -51,6 +51,7 @@
 //! let passphrases = key_manager.get_keys_by_type(KeyType::Passphrase).await?;
 //! ```
 
+pub mod crypto; // Crypto operations service layer
 pub mod file; // File operations service layer
 pub mod passphrase;
 pub mod shared;

@@ -110,7 +110,7 @@ mod tests {
 
     #[test]
     fn test_vault_integration_service_creation() {
-        let _service = VaultIntegrationService::new();
+        let service = VaultIntegrationService::new();
         assert!(std::mem::size_of_val(&service) == 0);
     }
 }

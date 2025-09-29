@@ -370,13 +370,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_file_service_creation() {
-        let _service = DefaultFileService::new().unwrap();
+        let service = DefaultFileService::new().unwrap();
         assert!(!format!("{:?}", service).is_empty());
     }
 
     #[tokio::test]
     async fn test_create_temp_dir() {
-        let _service = DefaultFileService::new().unwrap();
+        let service = DefaultFileService::new().unwrap();
         let temp_dir = service.create_temp_dir("yubikey_test").await.unwrap();
 
         assert!(temp_dir.path().exists());
@@ -386,7 +386,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_temp_file() {
-        let _service = DefaultFileService::new().unwrap();
+        let service = DefaultFileService::new().unwrap();
         let temp_file = service
             .create_temp_file("test content", ".txt")
             .await
@@ -399,7 +399,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_write_and_read_temp_file() {
-        let _service = DefaultFileService::new().unwrap();
+        let service = DefaultFileService::new().unwrap();
         let test_data = b"test data for yubikey";
 
         let temp_file = service.write_temp_file(test_data, ".bin").await.unwrap();
@@ -411,7 +411,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_identity_file() {
-        let _service = DefaultFileService::new().unwrap();
+        let service = DefaultFileService::new().unwrap();
         let serial = Serial::new("12345678".to_string()).unwrap();
         let identity_tag = "age1yubikey1test123";
 
@@ -428,7 +428,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_recipient_file() {
-        let _service = DefaultFileService::new().unwrap();
+        let service = DefaultFileService::new().unwrap();
         let recipient = "age1yubikey1recipient123";
 
         let recipient_file = service.create_recipient_file(recipient).await.unwrap();
@@ -440,7 +440,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cleanup_temp_resources() {
-        let _service = DefaultFileService::new().unwrap();
+        let service = DefaultFileService::new().unwrap();
         let temp_file1 = service.create_temp_file("test1", ".txt").await.unwrap();
         let temp_file2 = service.create_temp_file("test2", ".txt").await.unwrap();
 

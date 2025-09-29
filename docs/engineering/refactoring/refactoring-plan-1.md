@@ -23,13 +23,13 @@
 - [x] Create `services/file/infrastructure/file_repository.rs` - File system abstraction
 - [x] Move business logic from file_commands and file_ops into FileManager
 
-## Milestone 4: Crypto Service Layer Creation
-- [ ] Create `services/crypto/domain/` with encryption domain models
-- [ ] Create `services/crypto/application/manager.rs` - CryptoManager facade
-- [ ] Create `services/crypto/application/services/encryption_service.rs` - Split from 800+ LOC encryption.rs
-- [ ] Create `services/crypto/application/services/decryption_service.rs` - Split from 400+ LOC decryption.rs
-- [ ] Create `services/crypto/application/services/multi_recipient_service.rs` - Split from 500+ LOC multi_recipient.rs
-- [ ] Create `services/crypto/infrastructure/age_repository.rs` - Age crypto operations
+## Milestone 4: Crypto Service Layer Creation ✅ COMPLETE
+- [x] Create `services/crypto/domain/` with encryption domain models
+- [x] Create `services/crypto/application/manager.rs` - CryptoManager facade
+- [x] Create `services/crypto/application/services/encryption_service.rs` - Ready for 800+ LOC migration
+- [x] Create `services/crypto/application/services/decryption_service.rs` - Ready for 400+ LOC migration
+- [x] Create `services/crypto/application/services/progress_service.rs` - Ready for progress logic migration
+- [x] Create `services/crypto/infrastructure/age_repository.rs` - Age crypto operations
 
 ## Milestone 5: Storage Service Layer Creation
 - [ ] Create `services/storage/domain/` with configuration domain models

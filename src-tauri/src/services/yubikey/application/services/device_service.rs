@@ -388,7 +388,7 @@ mod tests {
 
     #[test]
     fn test_device_list_parsing() {
-        let _service = YkmanDeviceService::with_ykman_path("ykman".to_string());
+        let service = YkmanDeviceService::with_ykman_path("ykman".to_string());
 
         let output = "YubiKey 5 NFC [USB] Serial: 12345678 Version: 5.4.3\nYubiKey 5C [USB] Serial: 87654321 Version: 5.2.7";
         let devices = service.parse_device_list(output).unwrap();
@@ -400,7 +400,7 @@ mod tests {
 
     #[test]
     fn test_interface_extraction() {
-        let _service = YkmanDeviceService::with_ykman_path("ykman".to_string());
+        let service = YkmanDeviceService::with_ykman_path("ykman".to_string());
 
         let parts_usb = vec!["YubiKey", "5", "NFC", "[USB]", "Serial:", "12345678"];
         let interfaces = service.extract_interfaces(&parts_usb);
@@ -414,7 +414,7 @@ mod tests {
 
     #[test]
     fn test_form_factor_determination() {
-        let _service = YkmanDeviceService::with_ykman_path("ykman".to_string());
+        let service = YkmanDeviceService::with_ykman_path("ykman".to_string());
 
         assert_eq!(
             service.determine_form_factor("YubiKey 5 Nano", &[Interface::USB]),

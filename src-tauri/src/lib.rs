@@ -27,7 +27,6 @@ use commands::{
     get_config,
     get_encryption_status,
     get_file_info,
-    // get_identities, // TODO: REMOVE - Disabled, unused by frontend
     get_progress,
     // Key management commands
     key_management::{
@@ -201,7 +200,6 @@ pub fn run_app() {
             add_key_to_vault,
             remove_key_from_vault,
             update_key_label,
-            // check_yubikey_availability, // TODO: REMOVE - Disabled, unused by frontend
             // Passphrase/YubiKey vault integration
             add_passphrase_key_to_vault,
             list_passphrase_keys_for_vault,
@@ -210,17 +208,13 @@ pub fn run_app() {
             init_yubikey_for_vault,
             register_yubikey_for_vault,
             list_available_yubikeys_for_vault,
-            // check_keymenubar_positions_available, // TODO: REMOVE - Disabled, legacy helper, unused by frontend
             // Streamlined YubiKey commands
             list_yubikeys,
             init_yubikey,
             register_yubikey,
-            // get_identities, // TODO: REMOVE - Disabled, unused by frontend
             yubikey_list_devices,
             // YubiKey crypto commands
             yubikey_decrypt_file,
-            // yubikey_get_available_unlock_methods, // TODO: REMOVE - Disabled, unused by frontend
-            // yubikey_test_unlock_credentials, // TODO: REMOVE - Disabled, unused by frontend
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
