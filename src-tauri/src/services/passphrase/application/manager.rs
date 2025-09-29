@@ -4,7 +4,7 @@ use super::services::{
 };
 use crate::models::KeyReference;
 use crate::services::passphrase::domain::ValidationResult;
-use crate::storage::VaultMetadataV2;
+use crate::storage::VaultMetadata;
 
 pub struct PassphraseManager {
     generation_service: GenerationService,
@@ -47,7 +47,7 @@ impl PassphraseManager {
         &self,
         label: &str,
         passphrase: &str,
-        metadata: &VaultMetadataV2,
+        metadata: &VaultMetadata,
     ) -> Result<GeneratedKey, GenerationError> {
         self.generation_service
             .generate_with_metadata(label, passphrase, metadata)

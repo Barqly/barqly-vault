@@ -12,7 +12,7 @@ use crate::prelude::*;
 use crate::services::passphrase::{encrypt_private_key, generate_keypair};
 use crate::services::yubikey::YubiIdentityProviderFactory;
 use crate::services::yubikey::domain::models::{InitializationResult, ProtectionMode};
-use crate::storage::{self, RecipientInfo, RecipientType, VaultMetadataV2};
+use crate::storage::{self, RecipientInfo, RecipientType, VaultMetadata};
 use age::secrecy::SecretString;
 
 /// Input for multi-recipient key generation command
@@ -248,7 +248,7 @@ async fn generate_passphrase_only_key(
         RecipientInfo::new_passphrase(keypair.public_key.to_string(), label.to_string());
 
     // Create metadata with passphrase-only protection
-    let metadata = VaultMetadataV2::new(
+    let metadata = VaultMetadata::new(
         ProtectionMode::PassphraseOnly,
         vec![recipient.clone()],
         1, // Single key file
@@ -331,7 +331,7 @@ async fn generate_yubikey_only_key_with_initialization(
             error_handler.handle_operation_error(
                 crate::storage::save_yubikey_metadata(
                     label,
-                    &crate::storage::VaultMetadataV2::new(
+                    &crate::storage::VaultMetadata::new(
                         ProtectionMode::YubiKeyOnly {
                             serial: serial.to_string(),
                         },
@@ -409,7 +409,7 @@ async fn generate_yubikey_only_key_internal(
     };
 
     // Create metadata with YubiKey-only protection
-    let metadata = VaultMetadataV2::new(
+    let metadata = VaultMetadata::new(
         ProtectionMode::YubiKeyOnly {
             serial: serial.to_string(),
         },
@@ -502,7 +502,7 @@ async fn generate_hybrid_key(
 
     // Create metadata with hybrid protection
     let recipients = vec![passphrase_recipient.clone(), yubikey_recipient.clone()];
-    let metadata = VaultMetadataV2::new(
+    let metadata = VaultMetadata::new(
         ProtectionMode::Hybrid {
             yubikey_serial: yubikey_serial.to_string(),
         },

@@ -1,18 +1,17 @@
-//! Vault metadata v2.0 with multi-recipient support
+//! Vault metadata with multi-recipient support
 //!
-//! This module implements the enhanced metadata structure that supports
+//! This module implements the metadata structure that supports
 //! multiple recipients including both passphrase and YubiKey protection modes.
 
-use crate::file_ops::external_manifest::ExternalManifest;
 use crate::services::yubikey::domain::models::ProtectionMode;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-/// Enhanced vault metadata supporting multiple protection modes
+/// Vault metadata supporting multiple protection modes
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct VaultMetadataV2 {
-    pub version: String, // "2.0"
+pub struct VaultMetadata {
+    pub version: String, // "1.0"
     pub protection_mode: ProtectionMode,
     pub created_at: DateTime<Utc>,
     pub recipients: Vec<RecipientInfo>,
@@ -43,8 +42,8 @@ pub enum RecipientType {
     },
 }
 
-impl VaultMetadataV2 {
-    /// Create new v2.0 metadata for a vault
+impl VaultMetadata {
+    /// Create new current metadata for a vault
     pub fn new(
         protection_mode: ProtectionMode,
         recipients: Vec<RecipientInfo>,
@@ -58,7 +57,7 @@ impl VaultMetadataV2 {
         );
 
         Self {
-            version: "2.0".to_string(),
+            version: "1.0".to_string(),
             protection_mode,
             created_at: Utc::now(),
             recipients,
@@ -68,30 +67,6 @@ impl VaultMetadataV2 {
             total_size,
             checksum,
         }
-    }
-
-    /// Convert v1.0 metadata to v2.0 format (backward compatibility)
-    pub fn from_v1_metadata(v1: &ExternalManifest) -> Self {
-        // Create a passphrase recipient from v1.0 metadata
-        let passphrase_recipient = RecipientInfo {
-            recipient_type: RecipientType::Passphrase,
-            public_key: v1.encryption.public_key.clone(),
-            label: v1.encryption.key_label.clone(),
-            created_at: v1.vault_info.created,
-        };
-
-        Self::new(
-            ProtectionMode::PassphraseOnly,
-            vec![passphrase_recipient],
-            v1.vault_info.total_files,
-            0,              // v1 doesn't have total_size directly available
-            "".to_string(), // v1 doesn't have a checksum field
-        )
-    }
-
-    /// Check if this vault can be decrypted by v1.0 clients
-    pub fn is_compatible_with_v1(&self) -> bool {
-        self.backward_compatible
     }
 
     /// Get recipients of a specific type
@@ -163,7 +138,7 @@ impl VaultMetadataV2 {
     /// Validate metadata consistency
     pub fn validate(&self) -> Result<(), MetadataValidationError> {
         // Check version
-        if self.version != "2.0" {
+        if self.version != "1.0" {
             return Err(MetadataValidationError::InvalidVersion(
                 self.version.clone(),
             ));
@@ -313,50 +288,32 @@ impl RecipientInfo {
 }
 
 /// Metadata storage operations
-pub struct MetadataV2Storage;
+pub struct MetadataStorage;
 
-impl MetadataV2Storage {
-    /// Save metadata v2.0 to file
-    pub fn save_metadata(metadata: &VaultMetadataV2, path: &PathBuf) -> Result<(), std::io::Error> {
+impl MetadataStorage {
+    /// Save metadata current to file
+    pub fn save_metadata(metadata: &VaultMetadata, path: &PathBuf) -> Result<(), std::io::Error> {
         let json = serde_json::to_string_pretty(metadata)?;
         std::fs::write(path, json)
     }
 
-    /// Load metadata v2.0 from file
-    pub fn load_metadata(path: &PathBuf) -> Result<VaultMetadataV2, Box<dyn std::error::Error>> {
+    /// Load metadata current from file
+    pub fn load_metadata(path: &PathBuf) -> Result<VaultMetadata, Box<dyn std::error::Error>> {
         let content = std::fs::read_to_string(path)?;
-        let metadata: VaultMetadataV2 = serde_json::from_str(&content)?;
+        let metadata: VaultMetadata = serde_json::from_str(&content)?;
         metadata.validate()?;
         Ok(metadata)
     }
 
-    /// Check if a metadata file is v2.0 format
-    pub fn is_v2_metadata(path: &PathBuf) -> bool {
+    /// Check if a metadata file is valid format
+    pub fn is_valid_metadata(path: &PathBuf) -> bool {
         if let Ok(content) = std::fs::read_to_string(path)
             && let Ok(value) = serde_json::from_str::<serde_json::Value>(&content)
             && let Some(version) = value.get("version").and_then(|v| v.as_str())
         {
-            return version == "2.0";
+            return version == "1.0";
         }
         false
-    }
-
-    /// Migrate v1.0 metadata to v2.0 format
-    pub fn migrate_from_v1(
-        v1_path: &PathBuf,
-        v2_path: &PathBuf,
-    ) -> Result<VaultMetadataV2, Box<dyn std::error::Error>> {
-        // Load v1.0 metadata
-        let v1_content = std::fs::read_to_string(v1_path)?;
-        let v1_metadata: ExternalManifest = serde_json::from_str(&v1_content)?;
-
-        // Convert to v2.0
-        let v2_metadata = VaultMetadataV2::from_v1_metadata(&v1_metadata);
-
-        // Save v2.0 metadata
-        Self::save_metadata(&v2_metadata, v2_path)?;
-
-        Ok(v2_metadata)
     }
 }
 
@@ -370,7 +327,7 @@ mod tests {
         let recipient =
             RecipientInfo::new_passphrase("age1test123".to_string(), "test-key".to_string());
 
-        let metadata = VaultMetadataV2::new(
+        let metadata = VaultMetadata::new(
             ProtectionMode::PassphraseOnly,
             vec![recipient],
             5,
@@ -378,7 +335,7 @@ mod tests {
             "checksum123".to_string(),
         );
 
-        assert_eq!(metadata.version, "2.0");
+        assert_eq!(metadata.version, "1.0");
         assert!(metadata.backward_compatible);
         assert!(metadata.validate().is_ok());
     }
@@ -393,7 +350,7 @@ mod tests {
             "YubiKey 5 Series".to_string(),
         );
 
-        let metadata = VaultMetadataV2::new(
+        let metadata = VaultMetadata::new(
             ProtectionMode::YubiKeyOnly {
                 serial: "12345678".to_string(),
             },
@@ -403,7 +360,7 @@ mod tests {
             "checksum456".to_string(),
         );
 
-        assert_eq!(metadata.version, "2.0");
+        assert_eq!(metadata.version, "1.0");
         assert!(!metadata.backward_compatible);
         assert!(metadata.validate().is_ok());
     }
@@ -421,7 +378,7 @@ mod tests {
             "YubiKey 5 Series".to_string(),
         );
 
-        let metadata = VaultMetadataV2::new(
+        let metadata = VaultMetadata::new(
             ProtectionMode::Hybrid {
                 yubikey_serial: "87654321".to_string(),
             },
@@ -431,7 +388,7 @@ mod tests {
             "checksum789".to_string(),
         );
 
-        assert_eq!(metadata.version, "2.0");
+        assert_eq!(metadata.version, "1.0");
         assert!(metadata.backward_compatible);
         assert!(metadata.validate().is_ok());
         assert_eq!(metadata.recipients.len(), 2);
@@ -439,7 +396,7 @@ mod tests {
 
     #[test]
     fn test_metadata_validation_failure() {
-        let metadata = VaultMetadataV2 {
+        let metadata = VaultMetadata {
             version: "1.0".to_string(), // Invalid version
             protection_mode: ProtectionMode::PassphraseOnly,
             created_at: Utc::now(),
@@ -462,7 +419,7 @@ mod tests {
         let recipient =
             RecipientInfo::new_passphrase("age1test123".to_string(), "test-key".to_string());
 
-        let original_metadata = VaultMetadataV2::new(
+        let original_metadata = VaultMetadata::new(
             ProtectionMode::PassphraseOnly,
             vec![recipient],
             1,
@@ -471,16 +428,16 @@ mod tests {
         );
 
         // Save metadata
-        MetadataV2Storage::save_metadata(&original_metadata, &metadata_path).unwrap();
+        MetadataStorage::save_metadata(&original_metadata, &metadata_path).unwrap();
 
         // Load metadata
-        let loaded_metadata = MetadataV2Storage::load_metadata(&metadata_path).unwrap();
+        let loaded_metadata = MetadataStorage::load_metadata(&metadata_path).unwrap();
 
         assert_eq!(original_metadata.version, loaded_metadata.version);
         assert_eq!(
             original_metadata.recipients.len(),
             loaded_metadata.recipients.len()
         );
-        assert!(MetadataV2Storage::is_v2_metadata(&metadata_path));
+        assert!(MetadataStorage::is_valid_metadata(&metadata_path));
     }
 }

@@ -40,7 +40,7 @@ pub mod cache;
 pub mod errors;
 pub mod key_registry;
 pub mod key_store;
-pub mod metadata_v2;
+pub mod metadata;
 pub mod path_management;
 pub mod vault_store;
 
@@ -53,7 +53,7 @@ pub use key_store::{
     KeyInfo, delete_key, get_key_info, key_exists, list_keys, load_encrypted_key,
     save_encrypted_key, save_encrypted_key_with_metadata, save_yubikey_metadata,
 };
-pub use metadata_v2::{MetadataV2Storage, RecipientInfo, RecipientType, VaultMetadataV2};
+pub use metadata::{MetadataStorage, RecipientInfo, RecipientType, VaultMetadata};
 pub use path_management::{get_key_file_path, get_key_metadata_path};
 
 /// Result type for storage operations

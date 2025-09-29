@@ -6,7 +6,7 @@
 use crate::crypto::{CryptoError, Result};
 use crate::services::yubikey::domain::models::{ProtectionMode, UnlockCredentials, UnlockMethod};
 use crate::services::yubikey::infrastructure::pty::core::get_age_path;
-use crate::storage::{RecipientInfo, RecipientType, VaultMetadataV2};
+use crate::storage::{RecipientInfo, RecipientType, VaultMetadata};
 use age::Recipient;
 use std::io::Write;
 use std::str::FromStr;
@@ -22,7 +22,7 @@ pub struct MultiRecipientEncryptParams {
 /// Multi-recipient decryption parameters  
 #[derive(Debug, Clone)]
 pub struct MultiRecipientDecryptParams {
-    pub metadata: VaultMetadataV2,
+    pub metadata: VaultMetadata,
     pub unlock_method: Option<UnlockMethod>,
     pub credentials: UnlockCredentials,
     pub encrypted_data: Vec<u8>,
@@ -32,7 +32,7 @@ pub struct MultiRecipientDecryptParams {
 #[derive(Debug, Clone)]
 pub struct EncryptionResult {
     pub encrypted_data: Vec<u8>,
-    pub metadata: VaultMetadataV2,
+    pub metadata: VaultMetadata,
     pub recipients_used: Vec<String>,
 }
 
@@ -73,7 +73,7 @@ impl MultiRecipientCrypto {
         let encrypted_data = Self::encrypt_with_age_recipients(&data, age_recipients)?;
 
         // Create vault metadata
-        let metadata = VaultMetadataV2::new(
+        let metadata = VaultMetadata::new(
             protection_mode,
             recipients,
             1, // Single data blob
@@ -158,7 +158,7 @@ impl MultiRecipientCrypto {
     }
 
     /// Determine which unlock methods are currently available
-    fn determine_available_methods(metadata: &VaultMetadataV2) -> Result<Vec<UnlockMethod>> {
+    fn determine_available_methods(metadata: &VaultMetadata) -> Result<Vec<UnlockMethod>> {
         let mut available_methods = Vec::new();
 
         // Check for passphrase recipients
@@ -180,7 +180,7 @@ impl MultiRecipientCrypto {
 
     /// Select the best unlock method based on metadata and preferences
     fn select_unlock_method(
-        metadata: &VaultMetadataV2,
+        metadata: &VaultMetadata,
         available_methods: &[UnlockMethod],
         user_preference: Option<UnlockMethod>,
     ) -> Result<UnlockMethod> {
@@ -266,7 +266,7 @@ impl MultiRecipientCrypto {
     /// Decrypt using passphrase method
     fn decrypt_with_passphrase(
         encrypted_data: &[u8],
-        metadata: &VaultMetadataV2,
+        metadata: &VaultMetadata,
         key_label: &str,
         passphrase: &str,
     ) -> Result<DecryptionResult> {
@@ -302,7 +302,7 @@ impl MultiRecipientCrypto {
     /// Decrypt using YubiKey method
     async fn decrypt_with_yubikey(
         encrypted_data: &[u8],
-        metadata: &VaultMetadataV2,
+        metadata: &VaultMetadata,
         serial: &str,
         pin: Option<&str>,
     ) -> Result<DecryptionResult> {
@@ -436,7 +436,7 @@ mod tests {
         let passphrase_recipient =
             RecipientInfo::new_passphrase("age1test123".to_string(), "test-key".to_string());
 
-        let metadata = VaultMetadataV2::new(
+        let metadata = VaultMetadata::new(
             ProtectionMode::PassphraseOnly,
             vec![passphrase_recipient],
             1,
@@ -454,7 +454,7 @@ mod tests {
         let passphrase_recipient =
             RecipientInfo::new_passphrase("age1test123".to_string(), "test-key".to_string());
 
-        let metadata = VaultMetadataV2::new(
+        let metadata = VaultMetadata::new(
             ProtectionMode::PassphraseOnly,
             vec![passphrase_recipient],
             1,
