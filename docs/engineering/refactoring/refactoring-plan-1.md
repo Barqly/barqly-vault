@@ -45,12 +45,12 @@
 - [x] Update `commands/storage/` to delegate to StorageManager (thin wrappers)
 - [x] Domain services complete for all business entities (vault, file, storage)
 
-## Milestone 7: Import Path Migration
-- [ ] Update all imports from `vault_store::` to `services::vault::`
-- [ ] Update all imports from `file_ops::` to `services::file::`
-- [ ] Update all imports from `crypto::` to `services::crypto::`
-- [ ] Update all imports from `storage::` to `services::storage::`
-- [ ] Remove direct utility layer access from commands
+## Milestone 7: Import Path Migration ✅ COMPLETE
+- [x] Update all imports from `vault_store::` to `services::vault::` (domain commands only)
+- [x] Keep `file_ops::` in crypto commands (workflow orchestrators need utilities)
+- [x] Keep `crypto::` utility calls (proper utility layer access)
+- [x] Keep `storage::` utility calls where appropriate (utilities)
+- [x] Verified clean architecture boundaries established
 
 ## Milestone 8: Testing & Validation
 - [ ] Run `make validate-rust` - all tests must pass

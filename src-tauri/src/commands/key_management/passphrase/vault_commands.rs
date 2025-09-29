@@ -1,7 +1,7 @@
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::models::KeyReference;
 use crate::services::passphrase::PassphraseManager;
-use crate::storage::{KeyRegistry, vault_store};
+use crate::storage::KeyRegistry;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -91,7 +91,9 @@ pub async fn validate_vault_passphrase_key(vault_id: String) -> CommandResponse<
 pub async fn list_passphrase_keys_for_vault(
     vault_id: String,
 ) -> CommandResponse<ListPassphraseKeysResponse> {
-    let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
+    // Use VaultManager for vault operations (not direct vault_store)
+    let manager = crate::services::vault::VaultManager::new();
+    let vault = manager.get_vault(&vault_id).await.map_err(|e| {
         Box::new(
             CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
                 .with_recovery_guidance("Ensure the vault exists"),
@@ -138,7 +140,9 @@ pub async fn list_available_passphrase_keys_for_vault(
     vault_id: String,
 ) -> CommandResponse<ListPassphraseKeysResponse> {
     // First verify vault exists
-    let vault = vault_store::get_vault(&vault_id).await.map_err(|e| {
+    // Use VaultManager for vault operations (not direct vault_store)
+    let manager = crate::services::vault::VaultManager::new();
+    let vault = manager.get_vault(&vault_id).await.map_err(|e| {
         Box::new(
             CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
                 .with_recovery_guidance("Ensure the vault exists"),
