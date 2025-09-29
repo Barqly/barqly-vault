@@ -2,9 +2,9 @@
 //!
 //! Commands for getting, adding, and removing keys from vaults.
 
-use crate::key_management::yubikey::application::manager::YubiKeyManager;
 use crate::models::{KeyReference, KeyState, KeyType};
 use crate::prelude::*;
+use crate::services::yubikey::application::manager::YubiKeyManager;
 use crate::storage::{KeyRegistry, key_store, vault_store};
 use chrono::Utc;
 
@@ -116,7 +116,7 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
                     // Check if YubiKey is connected using DDD manager
                     match YubiKeyManager::new().await {
                         Ok(manager) => {
-                            match crate::key_management::yubikey::domain::models::Serial::new(
+                            match crate::services::yubikey::domain::models::Serial::new(
                                 serial.clone(),
                             ) {
                                 Ok(serial_obj) => {

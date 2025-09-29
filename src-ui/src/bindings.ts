@@ -945,7 +945,7 @@ export type YubiKeyOperationType = "Detection" | "Initialization" | "Authenticat
  */
 export type YubiKeyPhase = "Starting" | { InProgress: { percentage: number | null } } | "WaitingForPin" | "WaitingForTouch" | "Completing" | "Completed" | { Failed: { error: string } }
 export type YubiKeyState = "new" | "reused" | "registered" | "orphaned"
-export type YubiKeyStateInfo = { serial: string; state: YubiKeyState; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus }
+export type YubiKeyStateInfo = { serial: string; state: YubiKeyState; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus; firmware_version: string | null }
 /**
  * Result from YubiKey operations
  */

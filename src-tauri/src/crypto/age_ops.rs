@@ -5,8 +5,8 @@ use std::process::{Command, Stdio};
 use std::str::FromStr;
 
 use super::{CryptoError, PrivateKey, PublicKey, Result};
-use crate::key_management::yubikey::infrastructure::pty::core::get_age_path;
 use crate::prelude::*;
+use crate::services::yubikey::infrastructure::pty::core::get_age_path;
 
 /// Parse a recipient string that could be either x25519 or plugin-based
 fn parse_recipient(recipient_str: &str) -> Result<Box<dyn age::Recipient + Send>> {
@@ -403,7 +403,7 @@ pub fn decrypt_data_yubikey_cli(
     );
 
     // Use the existing PTY-based decryption function
-    crate::key_management::yubikey::infrastructure::pty::age_operations::decrypt_data_with_yubikey_pty(
+    crate::services::yubikey::infrastructure::pty::age_operations::decrypt_data_with_yubikey_pty(
         encrypted_data,
         serial,
         *slot,

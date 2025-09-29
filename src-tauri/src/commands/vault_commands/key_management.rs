@@ -3,7 +3,7 @@
 //! Commands for updating key labels and checking YubiKey availability.
 
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
-use crate::key_management::yubikey::application::manager::YubiKeyManager;
+use crate::services::yubikey::application::manager::YubiKeyManager;
 use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -163,8 +163,7 @@ pub async fn check_yubikey_availability(
     // Check if YubiKey is connected using DDD manager
     let is_inserted = match YubiKeyManager::new().await {
         Ok(manager) => {
-            match crate::key_management::yubikey::domain::models::Serial::new(input.serial.clone())
-            {
+            match crate::services::yubikey::domain::models::Serial::new(input.serial.clone()) {
                 Ok(serial_obj) => manager
                     .is_device_connected(&serial_obj)
                     .await

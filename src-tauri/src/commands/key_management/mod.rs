@@ -1,0 +1,34 @@
+//! Key Management Commands Module
+//!
+//! This module provides all command layer functionality for key management operations.
+//! Commands are organized by key type with unified cross-cutting operations.
+//!
+//! Structure:
+//! - passphrase/: Passphrase key commands (generation, validation, vault integration)
+//! - yubikey/: YubiKey commands (device management, crypto operations, vault integration)
+//! - unified_keys.rs: Cross-key-type operations and unified APIs
+
+pub mod passphrase;
+pub mod unified_keys;
+pub mod yubikey;
+
+// Re-export command functions - avoiding glob imports to prevent name conflicts
+pub use passphrase::{
+    AddPassphraseKeyRequest, AddPassphraseKeyResponse, GenerateKeyInput, GenerateKeyResponse,
+    ListPassphraseKeysResponse, PassphraseKeyInfo, PassphraseValidationResult,
+    ValidatePassphraseInput, ValidatePassphraseResponse, VerifyKeyPassphraseInput,
+    VerifyKeyPassphraseResponse, add_passphrase_key_to_vault, generate_key,
+    list_available_passphrase_keys_for_vault, list_passphrase_keys_for_vault, validate_passphrase,
+    validate_passphrase_strength, validate_vault_passphrase_key, verify_key_passphrase,
+};
+
+pub use yubikey::{
+    AvailableYubiKey, PinStatus, RegisterYubiKeyForVaultParams, StreamlinedYubiKeyInitResult,
+    UnlockCredentials, YubiKeyInitForVaultParams, YubiKeyState, YubiKeyStateInfo, init_yubikey,
+    init_yubikey_for_vault, list_available_yubikeys_for_vault, list_yubikeys, register_yubikey,
+    register_yubikey_for_vault, yubikey_decrypt_file, yubikey_list_devices,
+};
+
+pub use unified_keys::{
+    KeyInfo, KeyListFilter, KeyType, YubiKeyInfo, list_unified_keys, test_unified_keys,
+};

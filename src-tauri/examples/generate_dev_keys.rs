@@ -5,7 +5,7 @@
 // CLI utility examples are allowed to use println! for user interaction
 #![allow(clippy::disallowed_macros)]
 
-use barqly_vault_lib::key_management::passphrase::{encrypt_private_key, generate_keypair};
+use barqly_vault_lib::services::passphrase::{encrypt_private_key, generate_keypair};
 use barqly_vault_lib::storage::key_store::{key_exists, save_encrypted_key};
 use secrecy::SecretString;
 

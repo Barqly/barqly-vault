@@ -12,7 +12,7 @@ use crate::common::cleanup::TestCleanup;
 use crate::common::fixtures::CryptoFixtures;
 use crate::common::helpers::{PerformanceHelper, TestAssertions};
 use barqly_vault_lib::crypto::CryptoError;
-use barqly_vault_lib::key_management::passphrase::{
+use barqly_vault_lib::services::passphrase::{
     decrypt_private_key, encrypt_private_key, generate_keypair,
 };
 use rstest::*;

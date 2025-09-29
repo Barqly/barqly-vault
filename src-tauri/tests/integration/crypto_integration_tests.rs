@@ -11,7 +11,7 @@
 use crate::common::cleanup::TestCleanup;
 use crate::common::helpers::TestAssertions;
 use barqly_vault_lib::crypto::{decrypt_data, encrypt_data};
-use barqly_vault_lib::key_management::passphrase::{
+use barqly_vault_lib::services::passphrase::{
     decrypt_private_key, encrypt_private_key, generate_keypair,
 };
 use rstest::*;

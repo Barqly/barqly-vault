@@ -9,9 +9,9 @@ pub mod commands; // Keep public - this is the UI interface
 pub mod constants; // Centralized constants for the application
 pub mod crypto; // Public for tests, but should be treated as private for external use
 pub mod file_ops; // Public for tests, but should be treated as private for external use
-pub mod key_management;
 pub mod models; // Vault and key management models
 pub mod prelude;
+pub mod services; // Business logic layer (DDD) - renamed from key_management
 pub mod storage; // Public for tests, but should be treated as private for external use
 pub mod tracing_setup; // New centralized tracing configuration // Project-wide common imports // Centralized key management architecture (YubiKey, passphrase, etc.)
 
@@ -29,20 +29,25 @@ use commands::{
     get_file_info,
     // get_identities, // TODO: REMOVE - Disabled, unused by frontend
     get_progress,
+    // Key management commands
+    key_management::{
+        passphrase::{
+            add_passphrase_key_to_vault, generate_key, list_available_passphrase_keys_for_vault,
+            list_passphrase_keys_for_vault, validate_passphrase, validate_passphrase_strength,
+            validate_vault_passphrase_key, verify_key_passphrase,
+        },
+        unified_keys::{list_unified_keys, test_unified_keys},
+        yubikey::{
+            init_yubikey, init_yubikey_for_vault, list_available_yubikeys_for_vault, list_yubikeys,
+            register_yubikey, register_yubikey_for_vault, yubikey_decrypt_file,
+            yubikey_list_devices,
+        },
+    },
     // Storage commands
     list_keys_command,
-    // Unified key management
-    list_unified_keys,
-    // Passphrase commands
-    passphrase::{
-        add_passphrase_key_to_vault, generate_key, list_available_passphrase_keys_for_vault,
-        list_passphrase_keys_for_vault, validate_passphrase, validate_passphrase_strength,
-        validate_vault_passphrase_key, verify_key_passphrase,
-    },
     select_directory,
     // File commands
     select_files,
-    test_unified_keys,
     update_config,
     // Vault commands
     vault_commands::{
@@ -50,20 +55,6 @@ use commands::{
         list_vaults, remove_key_from_vault, set_current_vault, update_key_label,
     },
     verify_manifest,
-    // New consolidated YubiKey commands from yubikey module
-    yubikey::{
-        // Device commands
-        init_yubikey,
-        // Vault commands
-        init_yubikey_for_vault,
-        list_available_yubikeys_for_vault,
-        list_yubikeys,
-        register_yubikey,
-        register_yubikey_for_vault,
-        // Crypto commands
-        yubikey_decrypt_file,
-        yubikey_list_devices,
-    },
 };
 
 use crate::prelude::*;

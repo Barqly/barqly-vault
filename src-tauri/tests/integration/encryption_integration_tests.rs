@@ -17,7 +17,7 @@ use barqly_vault_lib::{
     },
     crypto::encrypt_data,
     file_ops::{FileOpsConfig, FileSelection},
-    key_management::passphrase::generate_keypair,
+    services::passphrase::generate_keypair,
     storage,
 };
 use rand::Rng;

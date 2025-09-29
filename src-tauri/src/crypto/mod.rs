@@ -12,12 +12,12 @@
 //! - `encrypt_data()` - Encrypt data with a public key
 //! - `decrypt_data()` - Decrypt data with a private key
 //!
-//! For passphrase key operations, use `crate::key_management::passphrase` module.
+//! For passphrase key operations, use `crate::services::passphrase` module.
 //!
 //! ## Example
 //! ```no_run
 //! use barqly_vault_lib::crypto;
-//! use barqly_vault_lib::key_management::passphrase;
+//! use barqly_vault_lib::services::passphrase;
 //!
 //! let keypair = passphrase::generate_keypair().unwrap();
 //! let encrypted = crypto::encrypt_data(b"secret", &keypair.public_key).unwrap();

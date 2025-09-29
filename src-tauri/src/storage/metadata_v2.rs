@@ -4,7 +4,7 @@
 //! multiple recipients including both passphrase and YubiKey protection modes.
 
 use crate::file_ops::external_manifest::ExternalManifest;
-use crate::key_management::yubikey::domain::models::ProtectionMode;
+use crate::services::yubikey::domain::models::ProtectionMode;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;

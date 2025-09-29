@@ -29,7 +29,7 @@ If `{ARG}` is empty:
 
 ## Step 2: Load Session Context
 
-1. Find and read the most recent quick start file in `tbd/ssn*.quick.md` or `tbd/ssd*-quick.md`
+1. Find and read the most recent quick start file in `tbd/ssc*.md` or `tbd/ssd*-quick.md`
 2. Also reference the corresponding detailed summary `tbd/ssd*.md` for full context
 3. If multiple files exist, use the most recent one
 
