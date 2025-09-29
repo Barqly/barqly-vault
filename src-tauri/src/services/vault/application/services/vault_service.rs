@@ -2,6 +2,7 @@ use crate::models::{Vault, VaultSummary};
 use crate::services::vault::domain::{VaultError, VaultResult, VaultRules};
 use crate::services::vault::infrastructure::VaultRepository;
 
+#[derive(Debug)]
 pub struct VaultService {
     repository: VaultRepository,
 }
