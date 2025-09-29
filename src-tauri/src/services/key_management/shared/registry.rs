@@ -133,7 +133,7 @@ unsafe impl Sync for DeviceRegistry {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::shared::traits::{DeviceId, HardwareSecurityDevice};
+    use crate::services::key_management::shared::traits::{DeviceId, HardwareSecurityDevice};
     use async_trait::async_trait;
 
     // Mock device factory for testing

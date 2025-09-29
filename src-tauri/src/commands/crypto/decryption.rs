@@ -175,7 +175,7 @@ pub async fn decrypt_data(
             super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
             let private_key = error_handler.handle_crypto_operation_error(
-                crate::services::passphrase::decrypt_private_key(
+                crate::services::key_management::passphrase::decrypt_private_key(
                     &encrypted_key,
                     SecretString::from(input.passphrase),
                 ),

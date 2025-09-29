@@ -1,6 +1,6 @@
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::models::KeyReference;
-use crate::services::passphrase::PassphraseManager;
+use crate::services::key_management::passphrase::PassphraseManager;
 use crate::storage::KeyRegistry;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

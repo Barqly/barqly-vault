@@ -31,8 +31,8 @@ pub use identity_service::{AgePluginIdentityService, IdentityService};
 pub use registry_service::{DefaultRegistryService, RegistryService};
 
 use crate::prelude::*;
-use crate::services::yubikey::domain::errors::YubiKeyResult;
-use crate::services::yubikey::domain::models::Serial;
+use crate::services::key_management::yubikey::domain::errors::YubiKeyResult;
+use crate::services::key_management::yubikey::domain::models::Serial;
 use async_trait::async_trait;
 use std::sync::Arc;
 
@@ -259,7 +259,7 @@ pub trait SerialScoped {
     fn validate_serial(&self, serial: &Serial) -> YubiKeyResult<()> {
         if serial.value().is_empty() {
             return Err(
-                crate::services::yubikey::domain::errors::YubiKeyError::serial_required(
+                crate::services::key_management::yubikey::domain::errors::YubiKeyError::serial_required(
                     "operation",
                 ),
             );
@@ -305,7 +305,9 @@ impl OperationContext {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::yubikey::domain::models::{YubiKeyDevice, YubiKeyIdentity};
+    use crate::services::key_management::yubikey::domain::models::{
+        YubiKeyDevice, YubiKeyIdentity,
+    };
     use std::sync::Arc;
 
     #[test]
@@ -366,15 +368,18 @@ mod tests {
     impl DeviceService for MockDeviceService {
         async fn list_connected_devices(
             &self,
-        ) -> YubiKeyResult<Vec<crate::services::yubikey::domain::models::YubiKeyDevice>> {
+        ) -> YubiKeyResult<
+            Vec<crate::services::key_management::yubikey::domain::models::YubiKeyDevice>,
+        > {
             Ok(vec![])
         }
 
         async fn detect_device(
             &self,
             _serial: &Serial,
-        ) -> YubiKeyResult<Option<crate::services::yubikey::domain::models::YubiKeyDevice>>
-        {
+        ) -> YubiKeyResult<
+            Option<crate::services::key_management::yubikey::domain::models::YubiKeyDevice>,
+        > {
             Ok(None)
         }
 
@@ -385,7 +390,7 @@ mod tests {
         async fn validate_pin(
             &self,
             _serial: &Serial,
-            _pin: &crate::services::yubikey::domain::models::Pin,
+            _pin: &crate::services::key_management::yubikey::domain::models::Pin,
         ) -> YubiKeyResult<bool> {
             Ok(true)
         }
@@ -411,12 +416,13 @@ mod tests {
         async fn generate_identity(
             &self,
             _serial: &Serial,
-            _pin: &crate::services::yubikey::domain::models::Pin,
+            _pin: &crate::services::key_management::yubikey::domain::models::Pin,
             _slot: u8,
-        ) -> YubiKeyResult<crate::services::yubikey::domain::models::YubiKeyIdentity> {
+        ) -> YubiKeyResult<crate::services::key_management::yubikey::domain::models::YubiKeyIdentity>
+        {
             let serial = Serial::new("12345678".to_string()).unwrap();
             Ok(
-                crate::services::yubikey::domain::models::YubiKeyIdentity::new(
+                crate::services::key_management::yubikey::domain::models::YubiKeyIdentity::new(
                     "age1yubikey1test123".to_string(),
                     serial.clone(),
                     "age1yubikey1test123".to_string(),
@@ -447,7 +453,7 @@ mod tests {
             _serial: &Serial,
         ) -> YubiKeyResult<Option<YubiKeyIdentity>> {
             Ok(Some(
-                crate::services::yubikey::domain::models::YubiKeyIdentity::new(
+                crate::services::key_management::yubikey::domain::models::YubiKeyIdentity::new(
                     "age1yubikey1existing123".to_string(),
                     _serial.clone(),
                     "age1yubikey1existing123".to_string(),
@@ -462,7 +468,7 @@ mod tests {
 
         async fn list_identities(&self, _serial: &Serial) -> YubiKeyResult<Vec<YubiKeyIdentity>> {
             Ok(vec![
-                crate::services::yubikey::domain::models::YubiKeyIdentity::new(
+                crate::services::key_management::yubikey::domain::models::YubiKeyIdentity::new(
                     "age1yubikey1test123".to_string(),
                     _serial.clone(),
                     "age1yubikey1test123".to_string(),
@@ -479,8 +485,8 @@ mod tests {
     impl RegistryService for MockRegistryService {
         async fn add_yubikey_entry(
             &self,
-            _device: &crate::services::yubikey::domain::models::YubiKeyDevice,
-            _identity: &crate::services::yubikey::domain::models::YubiKeyIdentity,
+            _device: &crate::services::key_management::yubikey::domain::models::YubiKeyDevice,
+            _identity: &crate::services::key_management::yubikey::domain::models::YubiKeyIdentity,
             _slot: u8,
             _recovery_code_hash: String,
             _label: Option<String>,
@@ -494,7 +500,7 @@ mod tests {
         ) -> YubiKeyResult<
             Option<(
                 String,
-                crate::services::yubikey::domain::models::YubiKeyDevice,
+                crate::services::key_management::yubikey::domain::models::YubiKeyDevice,
             )>,
         > {
             Ok(None)
@@ -505,7 +511,7 @@ mod tests {
         ) -> YubiKeyResult<
             Vec<(
                 String,
-                crate::services::yubikey::domain::models::YubiKeyDevice,
+                crate::services::key_management::yubikey::domain::models::YubiKeyDevice,
             )>,
         > {
             Ok(vec![])

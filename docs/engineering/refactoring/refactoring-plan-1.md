@@ -23,6 +23,7 @@
 - [x] Create `services/file/infrastructure/file_repository.rs` - File system abstraction
 - [x] Move business logic from file_commands and file_ops into FileManager
 
+
 ## Milestone 4: Crypto Service Layer Creation ✅ COMPLETE
 - [x] Create `services/crypto/domain/` with encryption domain models
 - [x] Create `services/crypto/application/manager.rs` - CryptoManager facade

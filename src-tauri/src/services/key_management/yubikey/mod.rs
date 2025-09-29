@@ -36,7 +36,7 @@
 //! ## Usage
 //!
 //! ```ignore
-//! use crate::services::yubikey::{YubiKeyManager, Serial, Pin};
+//! use crate::services::key_management::yubikey::{YubiKeyManager, Serial, Pin};
 //!
 //! // Initialize YubiKey manager
 //! let _manager = YubiKeyManager::new().await?;

@@ -4,7 +4,7 @@
 //! and decryption workflows, including age-plugin-yubikey file operations.
 
 use crate::prelude::*;
-use crate::services::yubikey::{
+use crate::services::key_management::yubikey::{
     domain::errors::{YubiKeyError, YubiKeyResult},
     domain::models::Serial,
 };

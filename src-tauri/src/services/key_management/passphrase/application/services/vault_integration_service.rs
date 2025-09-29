@@ -1,5 +1,5 @@
 use crate::models::{KeyReference, KeyState, KeyType};
-use crate::services::passphrase::infrastructure::StorageError;
+use crate::services::key_management::passphrase::infrastructure::StorageError;
 use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
 

@@ -1,4 +1,4 @@
-use crate::services::passphrase::infrastructure::{
+use crate::services::key_management::passphrase::infrastructure::{
     PassphraseKeyRepository, StorageError, encrypt_private_key, generate_keypair,
 };
 use crate::storage::VaultMetadata;

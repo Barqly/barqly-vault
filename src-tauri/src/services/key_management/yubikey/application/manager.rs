@@ -13,7 +13,7 @@
 //! - **Event Publishing**: Publishes events for UI updates and logging
 
 use crate::prelude::*;
-use crate::services::yubikey::{
+use crate::services::key_management::yubikey::{
     application::services::ServiceFactory,
     domain::errors::{YubiKeyError, YubiKeyResult},
     domain::models::{Pin, Serial, YubiKeyDevice, YubiKeyIdentity},
@@ -299,7 +299,7 @@ impl YubiKeyManager {
         info!("Initializing YubiKey hardware with auto-generated recovery code");
 
         // Import the PTY function for hardware initialization
-        use crate::services::yubikey::infrastructure::pty::ykman_operations::initialize_yubikey_with_recovery;
+        use crate::services::key_management::yubikey::infrastructure::pty::ykman_operations::initialize_yubikey_with_recovery;
 
         // Generate recovery code and initialize hardware
         let recovery_code = tokio::task::spawn_blocking({
@@ -415,7 +415,7 @@ impl YubiKeyManager {
     ) -> YubiKeyResult<
         std::collections::HashMap<
             String,
-            crate::services::yubikey::application::services::ServiceHealth,
+            crate::services::key_management::yubikey::application::services::ServiceHealth,
         >,
     > {
         self.services.health_check_all_services().await
@@ -427,7 +427,7 @@ impl YubiKeyManager {
     ) -> YubiKeyResult<
         std::collections::HashMap<
             String,
-            crate::services::yubikey::application::services::ServiceMetrics,
+            crate::services::key_management::yubikey::application::services::ServiceMetrics,
         >,
     > {
         self.services.get_all_service_metrics().await
@@ -461,7 +461,7 @@ unsafe impl Sync for YubiKeyManager {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::yubikey::domain::models::Serial;
+    use crate::services::key_management::yubikey::domain::models::Serial;
 
     #[tokio::test]
     async fn test_manager_creation() {

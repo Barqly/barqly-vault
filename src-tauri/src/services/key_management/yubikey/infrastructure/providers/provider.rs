@@ -3,7 +3,7 @@
 //! This module defines the core abstraction for YubiKey identity providers,
 //! allowing multiple implementation strategies (age-plugin-yubikey, direct hardware, etc.)
 
-use crate::services::yubikey::domain::errors::{YubiKeyError, YubiKeyResult};
+use crate::services::key_management::yubikey::domain::errors::{YubiKeyError, YubiKeyResult};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use zeroize::ZeroizeOnDrop;

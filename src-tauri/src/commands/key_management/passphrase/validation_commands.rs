@@ -1,6 +1,6 @@
 use crate::commands::types::{CommandError, CommandResponse, ValidateInput};
 use crate::constants::MIN_PASSPHRASE_LENGTH;
-use crate::services::passphrase::{PassphraseManager, PassphraseStrength};
+use crate::services::key_management::passphrase::{PassphraseManager, PassphraseStrength};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, specta::Type)]
@@ -107,7 +107,7 @@ pub async fn verify_key_passphrase(
     input: VerifyKeyPassphraseInput,
 ) -> CommandResponse<VerifyKeyPassphraseResponse> {
     use crate::prelude::*;
-    use crate::services::passphrase::PassphraseKeyRepository;
+    use crate::services::key_management::passphrase::PassphraseKeyRepository;
 
     let key_entry = PassphraseKeyRepository::get_key(&input.key_id).map_err(|_| {
         Box::new(CommandError::operation(
@@ -141,7 +141,7 @@ pub async fn verify_key_passphrase(
                 "Starting YubiKey PIN verification"
             );
 
-            match crate::services::yubikey::infrastructure::pty::verify_yubikey_pin(
+            match crate::services::key_management::yubikey::infrastructure::pty::verify_yubikey_pin(
                 &serial,
                 &input.passphrase,
             ) {

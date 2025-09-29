@@ -4,8 +4,10 @@
 //! multiple recipients including both passphrase and YubiKey protection.
 
 use crate::crypto::{CryptoError, Result};
-use crate::services::yubikey::domain::models::{ProtectionMode, UnlockCredentials, UnlockMethod};
-use crate::services::yubikey::infrastructure::pty::core::get_age_path;
+use crate::services::key_management::yubikey::domain::models::{
+    ProtectionMode, UnlockCredentials, UnlockMethod,
+};
+use crate::services::key_management::yubikey::infrastructure::pty::core::get_age_path;
 use crate::storage::{RecipientInfo, RecipientType, VaultMetadata};
 use age::Recipient;
 use std::io::Write;
@@ -284,7 +286,7 @@ impl MultiRecipientCrypto {
         // Load the private key using the passphrase
         // Note: This assumes the public_key field actually contains encrypted private key data
         // In a real implementation, you would store encrypted private keys separately
-        let private_key = crate::services::passphrase::decrypt_private_key(
+        let private_key = crate::services::key_management::passphrase::decrypt_private_key(
             recipient.public_key.as_bytes(),
             secrecy::SecretString::from(passphrase.to_string()),
         )?;
@@ -332,7 +334,7 @@ impl MultiRecipientCrypto {
         pin: Option<&str>,
     ) -> Result<DecryptionResult> {
         // Get the plugin path from DDD infrastructure
-        let plugin_path = crate::services::yubikey::infrastructure::age_plugin::AgePluginProvider::find_plugin_binary()
+        let plugin_path = crate::services::key_management::yubikey::infrastructure::age_plugin::AgePluginProvider::find_plugin_binary()
             .map_err(|e| CryptoError::DecryptionFailed(format!("Plugin error: {e}")))?;
 
         // Set up environment for age decryption

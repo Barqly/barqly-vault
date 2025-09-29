@@ -3,7 +3,7 @@ use super::services::{
     VaultIntegrationError, VaultIntegrationService,
 };
 use crate::models::KeyReference;
-use crate::services::passphrase::domain::ValidationResult;
+use crate::services::key_management::passphrase::domain::ValidationResult;
 use crate::storage::VaultMetadata;
 
 pub struct PassphraseManager {

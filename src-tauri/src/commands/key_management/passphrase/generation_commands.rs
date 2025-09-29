@@ -2,7 +2,7 @@ use crate::commands::types::{
     CommandError, CommandResponse, ErrorCode, ErrorHandler, ValidateInput, ValidationHelper,
 };
 use crate::prelude::*;
-use crate::services::passphrase::PassphraseManager;
+use crate::services::key_management::passphrase::PassphraseManager;
 use crate::storage;
 use serde::{Deserialize, Serialize};
 

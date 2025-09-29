@@ -13,8 +13,8 @@
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
 use crate::models::{KeyReference, KeyState, KeyType};
 use crate::prelude::*;
-use crate::services::yubikey::YubiKeyManager;
-use crate::services::yubikey::domain::models::{Pin, Serial};
+use crate::services::key_management::yubikey::YubiKeyManager;
+use crate::services::key_management::yubikey::domain::models::{Pin, Serial};
 use crate::storage::{KeyRegistry, vault_store};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -26,8 +26,8 @@ use tauri;
 struct RegisterYubiKeyParams {
     serial: String,
     label: String,
-    identity: crate::services::yubikey::domain::models::YubiKeyIdentity,
-    device: crate::services::yubikey::domain::models::YubiKeyDevice,
+    identity: crate::services::key_management::yubikey::domain::models::YubiKeyIdentity,
+    device: crate::services::key_management::yubikey::domain::models::YubiKeyDevice,
     recovery_code_hash: String,
     key_state: KeyState,
 }

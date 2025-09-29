@@ -17,7 +17,7 @@
 //! ## Example
 //! ```no_run
 //! use barqly_vault_lib::crypto;
-//! use barqly_vault_lib::services::passphrase;
+//! use barqly_vault_lib::services::key_management::passphrase;
 //!
 //! let keypair = passphrase::generate_keypair().unwrap();
 //! let encrypted = crypto::encrypt_data(b"secret", &keypair.public_key).unwrap();

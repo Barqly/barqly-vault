@@ -12,7 +12,7 @@
 
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::prelude::*;
-use crate::services::yubikey::{
+use crate::services::key_management::yubikey::{
     YubiKeyManager,
     domain::models::{Pin, Serial},
 };

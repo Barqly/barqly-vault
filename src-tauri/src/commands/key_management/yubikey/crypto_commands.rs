@@ -8,7 +8,7 @@
 //! - yubikey_decrypt_file: Smart decryption with method selection
 
 use crate::commands::command_types::{CommandError, ErrorCode};
-use crate::services::yubikey::domain::models::UnlockMethod;
+use crate::services::key_management::yubikey::domain::models::UnlockMethod;
 use serde::Deserialize;
 use tauri;
 
@@ -47,7 +47,7 @@ pub struct YubiKeyCredentials {
 }
 
 // Re-export type from domain to avoid duplication
-pub use crate::services::yubikey::domain::models::UnlockCredentials;
+pub use crate::services::key_management::yubikey::domain::models::UnlockCredentials;
 
 /// Decrypt file using YubiKey with smart method selection
 /// Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration

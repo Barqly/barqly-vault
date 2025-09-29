@@ -8,7 +8,7 @@ use super::providers::provider::{
 };
 use super::pty::core::get_age_path;
 use crate::log_sensitive;
-use crate::services::yubikey::domain::errors::{YubiKeyError, YubiKeyResult};
+use crate::services::key_management::yubikey::domain::errors::{YubiKeyError, YubiKeyResult};
 use crate::tracing_setup::debug;
 // serde_json::Value removed - not needed
 use std::path::PathBuf;
@@ -321,13 +321,13 @@ impl YubiIdentityProvider for AgePluginProvider {
         // Set PIN policy using centralized configuration
         args.push("--pin-policy");
         let pin_policy_str =
-            crate::services::yubikey::domain::models::policy_config::DEFAULT_PIN_POLICY.to_string();
+            crate::services::key_management::yubikey::domain::models::policy_config::DEFAULT_PIN_POLICY.to_string();
         args.push(&pin_policy_str);
 
         // Set touch policy using centralized configuration
         args.push("--touch-policy");
         let touch_policy_str =
-            crate::services::yubikey::domain::models::policy_config::DEFAULT_TOUCH_POLICY
+            crate::services::key_management::yubikey::domain::models::policy_config::DEFAULT_TOUCH_POLICY
                 .to_string();
         args.push(&touch_policy_str);
 
@@ -778,7 +778,7 @@ impl AgePluginPtyProvider {
                         // Instead it shows "Generating key..." and then waits silently for touch
                         // IMPORTANT: Exclude our own debug messages (those with emojis)
                         // IMPORTANT: Skip touch detection if policy is Never
-                        let touch_policy = crate::services::yubikey::domain::models::policy_config::DEFAULT_TOUCH_POLICY;
+                        let touch_policy = crate::services::key_management::yubikey::domain::models::policy_config::DEFAULT_TOUCH_POLICY;
                         log_sensitive!(dev_only: {
 
                             debug!("🔧 POLICY CHECK: Current touch policy = {touch_policy:?}");
@@ -792,7 +792,7 @@ impl AgePluginPtyProvider {
                                 debug!("🔧 POLICY CHECK: Found 'Generating key' line, checking if should trigger touch detection...");
 
                             });
-                            if touch_policy != crate::services::yubikey::domain::models::TouchPolicy::Never {
+                            if touch_policy != crate::services::key_management::yubikey::domain::models::TouchPolicy::Never {
                                 log_sensitive!(dev_only: {
 
                                     debug!("🔧 POLICY CHECK: Touch policy is NOT Never, triggering touch detection");
@@ -810,7 +810,7 @@ impl AgePluginPtyProvider {
 
                         if (line.contains("Generating key") || line.contains("generating key"))
                             && !line.contains("🔍") && !line.contains("TRACER:") && !line.contains("DETECTIVE:")
-                            && touch_policy != crate::services::yubikey::domain::models::TouchPolicy::Never {
+                            && touch_policy != crate::services::key_management::yubikey::domain::models::TouchPolicy::Never {
                             log_sensitive!(dev_only: {
 
                                 debug!("👆 TRACER: KEY GENERATION STARTED - Touch will be required!");
@@ -1133,13 +1133,13 @@ impl YubiIdentityProvider for AgePluginPtyProvider {
         // Set PIN policy using centralized configuration
         args.push("--pin-policy");
         let pin_policy_str =
-            crate::services::yubikey::domain::models::policy_config::DEFAULT_PIN_POLICY.to_string();
+            crate::services::key_management::yubikey::domain::models::policy_config::DEFAULT_PIN_POLICY.to_string();
         args.push(&pin_policy_str);
 
         // Set touch policy using centralized configuration
         args.push("--touch-policy");
         let touch_policy_str =
-            crate::services::yubikey::domain::models::policy_config::DEFAULT_TOUCH_POLICY
+            crate::services::key_management::yubikey::domain::models::policy_config::DEFAULT_TOUCH_POLICY
                 .to_string();
         args.push(&touch_policy_str);
 

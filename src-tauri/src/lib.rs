@@ -35,7 +35,10 @@ use commands::{
             list_passphrase_keys_for_vault, validate_passphrase, validate_passphrase_strength,
             validate_vault_passphrase_key, verify_key_passphrase,
         },
-        unified_keys::{list_unified_keys, test_unified_keys},
+        unified_keys::{
+            get_vault_keys, list_unified_keys, remove_key_from_vault, test_unified_keys,
+            update_key_label,
+        },
         yubikey::{
             init_yubikey, init_yubikey_for_vault, list_available_yubikeys_for_vault, list_yubikeys,
             register_yubikey, register_yubikey_for_vault, yubikey_decrypt_file,
@@ -49,10 +52,7 @@ use commands::{
     select_files,
     update_config,
     // Vault commands
-    vault::{
-        add_key_to_vault, create_vault, delete_vault, get_current_vault, get_vault_keys,
-        list_vaults, remove_key_from_vault, set_current_vault, update_key_label,
-    },
+    vault::{create_vault, delete_vault, get_current_vault, list_vaults, set_current_vault},
     verify_manifest,
 };
 
@@ -99,6 +99,9 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         // Unified key management
         list_unified_keys,
         test_unified_keys,
+        get_vault_keys,
+        remove_key_from_vault,
+        update_key_label,
         get_config,
         update_config,
         get_cache_metrics,
@@ -113,10 +116,6 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         get_current_vault,
         set_current_vault,
         delete_vault,
-        get_vault_keys,
-        add_key_to_vault,
-        remove_key_from_vault,
-        update_key_label,
         // Passphrase/YubiKey vault integration
         add_passphrase_key_to_vault,
         list_passphrase_keys_for_vault,
@@ -182,6 +181,9 @@ pub fn run_app() {
             // Unified key management
             list_unified_keys,
             test_unified_keys,
+            get_vault_keys,
+            remove_key_from_vault,
+            update_key_label,
             get_config,
             update_config,
             get_cache_metrics,
@@ -196,10 +198,6 @@ pub fn run_app() {
             get_current_vault,
             set_current_vault,
             delete_vault,
-            get_vault_keys,
-            add_key_to_vault,
-            remove_key_from_vault,
-            update_key_label,
             // Passphrase/YubiKey vault integration
             add_passphrase_key_to_vault,
             list_passphrase_keys_for_vault,

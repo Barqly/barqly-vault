@@ -53,23 +53,18 @@
 
 pub mod crypto; // Crypto operations service layer
 pub mod file; // File operations service layer
-pub mod passphrase;
-pub mod shared;
+pub mod key_management; // Key management service layer (passphrase, yubikey, shared)
 pub mod storage; // Storage operations service layer
 pub mod vault; // Vault management service layer
-pub mod yubikey; // Shared device abstractions and traits
 
 // TODO: Implement common abstractions after passphrase refactoring is complete
 // pub mod common;
 
-// Re-export main types for convenience
-pub use yubikey::{
-    Pin, Serial, YubiKeyDevice, YubiKeyError, YubiKeyIdentity, YubiKeyManager, YubiKeyResult,
-    YubiKeyState,
+// Re-export main types for convenience from key_management
+pub use key_management::{
+    PassphraseError, PassphraseManager, Pin, Serial, YubiKeyDevice, YubiKeyError, YubiKeyIdentity,
+    YubiKeyManager, YubiKeyResult, YubiKeyState,
 };
-
-// TODO: Add passphrase re-exports after implementation
-// pub use passphrase::{PassphraseManager, PassphraseKey, PassphraseError};
 
 /// Key management system version for compatibility tracking
 pub const KEY_MANAGEMENT_VERSION: &str = "1.0.0";

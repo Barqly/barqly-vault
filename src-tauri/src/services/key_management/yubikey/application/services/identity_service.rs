@@ -4,7 +4,7 @@
 //! identity tag bug by centralizing identity management and validation.
 
 use crate::prelude::*;
-use crate::services::yubikey::{
+use crate::services::key_management::yubikey::{
     domain::errors::{YubiKeyError, YubiKeyResult},
     domain::models::{Pin, Serial, YubiKeyIdentity},
 };
@@ -324,7 +324,7 @@ impl IdentityService for AgePluginIdentityService {
         ];
 
         // Use PTY-based execution for PIN interaction
-        use crate::services::yubikey::infrastructure::pty::core::run_age_plugin_yubikey;
+        use crate::services::key_management::yubikey::infrastructure::pty::core::run_age_plugin_yubikey;
         let output = tokio::task::spawn_blocking({
             let args_clone = args.clone();
             let pin_clone = pin.value().to_string();

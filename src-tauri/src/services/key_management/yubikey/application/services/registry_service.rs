@@ -6,7 +6,7 @@
 //! TODO: Integration with vault management to be handled by higher-level services
 
 use crate::prelude::*;
-use crate::services::yubikey::{
+use crate::services::key_management::yubikey::{
     domain::errors::{YubiKeyError, YubiKeyResult},
     domain::models::{Serial, YubiKeyDevice, YubiKeyIdentity},
 };
@@ -464,16 +464,17 @@ impl YubiKeyDevice {
         // Determine form factor and interfaces from label/name patterns
         // TODO: This is a temporary solution - should store actual values in registry
         let form_factor = if label.contains("Nano") {
-            crate::services::yubikey::domain::models::FormFactor::Nano
+            crate::services::key_management::yubikey::domain::models::FormFactor::Nano
         } else if label.contains("5C") {
-            crate::services::yubikey::domain::models::FormFactor::UsbC
+            crate::services::key_management::yubikey::domain::models::FormFactor::UsbC
         } else if label.contains("NFC") {
-            crate::services::yubikey::domain::models::FormFactor::NFC
+            crate::services::key_management::yubikey::domain::models::FormFactor::NFC
         } else {
-            crate::services::yubikey::domain::models::FormFactor::UsbA
+            crate::services::key_management::yubikey::domain::models::FormFactor::UsbA
         };
 
-        let interfaces = vec![crate::services::yubikey::domain::models::Interface::USB];
+        let interfaces =
+            vec![crate::services::key_management::yubikey::domain::models::Interface::USB];
 
         Self::from_detected_device(serial, label, form_factor, interfaces, firmware_version)
     }
@@ -482,7 +483,9 @@ impl YubiKeyDevice {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::yubikey::domain::models::{FormFactor, Interface, YubiKeyIdentity};
+    use crate::services::key_management::yubikey::domain::models::{
+        FormFactor, Interface, YubiKeyIdentity,
+    };
     use std::sync::Arc;
 
     /// Create a test registry service that uses in-memory storage only

@@ -203,6 +203,86 @@ pub async fn test_unified_keys() -> Result<String, CommandError> {
     Ok("Unified key API is working!".to_string())
 }
 
+/// Input for getting vault keys
+#[derive(Debug, Deserialize, specta::Type)]
+pub struct GetVaultKeysRequest {
+    pub vault_id: String,
+    /// Include all keys regardless of availability (for decrypt operations)
+    pub include_all: Option<bool>,
+}
+
+/// Response containing vault keys
+#[derive(Debug, Serialize, specta::Type)]
+pub struct GetVaultKeysResponse {
+    pub vault_id: String,
+    pub keys: Vec<crate::models::KeyReference>,
+}
+
+/// Get all keys for a vault - wrapper around unified API
+#[tauri::command]
+#[specta::specta]
+#[instrument(skip_all, fields(vault_id = %input.vault_id))]
+pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVaultKeysResponse> {
+    debug!(vault_id = %input.vault_id, "get_vault_keys called");
+
+    // Delegate to unified API for actual implementation
+    match list_unified_keys(KeyListFilter::ForVault(input.vault_id.clone())).await {
+        Ok(unified_keys) => {
+            // Convert from unified KeyInfo to vault KeyReference
+            let key_refs: Vec<crate::models::KeyReference> = unified_keys
+                .into_iter()
+                .map(|key_info| crate::models::KeyReference {
+                    id: key_info.id,
+                    key_type: match key_info.key_type {
+                        KeyType::Passphrase { key_id } => {
+                            crate::models::KeyType::Passphrase { key_id }
+                        }
+                        KeyType::YubiKey {
+                            serial,
+                            firmware_version,
+                        } => crate::models::KeyType::Yubikey {
+                            serial,
+                            firmware_version,
+                        },
+                    },
+                    label: key_info.label,
+                    state: match key_info.state {
+                        crate::models::KeyState::Active => crate::models::KeyState::Active,
+                        crate::models::KeyState::Registered => crate::models::KeyState::Registered,
+                        crate::models::KeyState::Orphaned => crate::models::KeyState::Orphaned,
+                    },
+                    created_at: chrono::DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z")
+                        .unwrap()
+                        .with_timezone(&chrono::Utc), // TODO: Get real timestamp
+                    last_used: None,
+                })
+                .collect();
+
+            info!(
+                vault_id = %input.vault_id,
+                keys_count = key_refs.len(),
+                "Returning vault keys from unified API"
+            );
+            Ok(GetVaultKeysResponse {
+                vault_id: input.vault_id,
+                keys: key_refs,
+            })
+        }
+        Err(e) => {
+            error!(vault_id = %input.vault_id, error = ?e, "Failed to get vault keys");
+            Err(Box::new(CommandError {
+                code: ErrorCode::VaultNotFound,
+                message: format!("Failed to get vault keys: {:?}", e),
+                details: None,
+                recovery_guidance: Some("Check vault ID and try again".to_string()),
+                user_actionable: true,
+                trace_id: None,
+                span_id: None,
+            }))
+        }
+    }
+}
+
 /// Implementation: List all registered keys across all vaults
 async fn list_all_keys() -> Result<Vec<KeyInfo>, CommandError> {
     let mut all_keys = Vec::new();
@@ -405,4 +485,199 @@ async fn list_connected_keys() -> Result<Vec<KeyInfo>, CommandError> {
     }
 
     Ok(connected_keys)
+}
+
+// Key management operations moved from vault/ domain to proper key_management/ domain
+
+/// Input for removing key from vault
+#[derive(Debug, Deserialize, specta::Type)]
+pub struct RemoveKeyFromVaultRequest {
+    pub vault_id: String,
+    pub key_id: String,
+}
+
+/// Response from removing key
+#[derive(Debug, Serialize, specta::Type)]
+pub struct RemoveKeyFromVaultResponse {
+    pub success: bool,
+}
+
+/// Remove a key from a vault - moved from vault domain to key domain
+#[tauri::command]
+#[specta::specta]
+#[instrument(skip_all, fields(vault_id = %input.vault_id, key_id = %input.key_id))]
+pub async fn remove_key_from_vault(
+    input: RemoveKeyFromVaultRequest,
+) -> CommandResponse<RemoveKeyFromVaultResponse> {
+    // Key operation properly located in key_management domain
+    let mut vault = match crate::storage::vault_store::load_vault(&input.vault_id).await {
+        Ok(v) => v,
+        Err(_) => {
+            return Err(Box::new(CommandError {
+                code: ErrorCode::VaultNotFound,
+                message: format!("Vault '{}' not found", input.vault_id),
+                details: None,
+                recovery_guidance: Some("Check vault ID".to_string()),
+                user_actionable: true,
+                trace_id: None,
+                span_id: None,
+            }));
+        }
+    };
+
+    // Remove the key
+    if let Err(e) = vault.remove_key(&input.key_id) {
+        return Err(Box::new(CommandError {
+            code: ErrorCode::KeyNotFound,
+            message: e,
+            details: None,
+            recovery_guidance: Some("Check key ID".to_string()),
+            user_actionable: true,
+            trace_id: None,
+            span_id: None,
+        }));
+    }
+
+    // Save updated vault
+    match crate::storage::vault_store::save_vault(&vault).await {
+        Ok(_) => Ok(RemoveKeyFromVaultResponse { success: true }),
+        Err(e) => Err(Box::new(CommandError {
+            code: ErrorCode::StorageFailed,
+            message: "Failed to save vault".to_string(),
+            details: Some(e.to_string()),
+            recovery_guidance: Some("Check storage system".to_string()),
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        })),
+    }
+}
+
+/// Input for updating key label
+#[derive(Debug, Deserialize, specta::Type)]
+pub struct UpdateKeyLabelRequest {
+    pub vault_id: String,
+    pub key_id: String,
+    pub new_label: String,
+}
+
+/// Response from updating key label
+#[derive(Debug, Serialize, specta::Type)]
+pub struct UpdateKeyLabelResponse {
+    pub success: bool,
+}
+
+/// Update a key's label - moved from vault domain to key domain
+#[tauri::command]
+#[specta::specta]
+#[instrument(skip_all, fields(vault_id = %input.vault_id, key_id = %input.key_id))]
+pub async fn update_key_label(
+    input: UpdateKeyLabelRequest,
+) -> CommandResponse<UpdateKeyLabelResponse> {
+    if input.new_label.trim().is_empty() {
+        return Err(Box::new(CommandError {
+            code: ErrorCode::InvalidInput,
+            message: "New label cannot be empty".to_string(),
+            details: None,
+            recovery_guidance: Some("Provide a valid label".to_string()),
+            user_actionable: true,
+            trace_id: None,
+            span_id: None,
+        }));
+    }
+
+    // Load the vault
+    let mut vault = match crate::storage::vault_store::load_vault(&input.vault_id).await {
+        Ok(v) => v,
+        Err(_) => {
+            return Err(Box::new(CommandError {
+                code: ErrorCode::KeyNotFound,
+                message: format!("Vault '{}' not found", input.vault_id),
+                details: None,
+                recovery_guidance: None,
+                user_actionable: false,
+                trace_id: None,
+                span_id: None,
+            }));
+        }
+    };
+
+    // Check if key exists in vault
+    if !vault.keys.contains(&input.key_id) {
+        return Err(Box::new(CommandError {
+            code: ErrorCode::KeyNotFound,
+            message: "Key not found in vault".to_string(),
+            details: None,
+            recovery_guidance: None,
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        }));
+    }
+
+    // Load key registry and update the key label
+    let mut registry = match crate::storage::KeyRegistry::load() {
+        Ok(r) => r,
+        Err(e) => {
+            return Err(Box::new(CommandError {
+                code: ErrorCode::StorageFailed,
+                message: "Failed to load key registry".to_string(),
+                details: Some(e.to_string()),
+                recovery_guidance: None,
+                user_actionable: false,
+                trace_id: None,
+                span_id: None,
+            }));
+        }
+    };
+
+    // Update the key label in the registry
+    if let Some(entry) = registry.get_key_mut(&input.key_id) {
+        match entry {
+            crate::storage::KeyEntry::Passphrase { label, .. } => {
+                *label = input.new_label.trim().to_string();
+            }
+            crate::storage::KeyEntry::Yubikey { label, .. } => {
+                *label = input.new_label.trim().to_string();
+            }
+        }
+    } else {
+        return Err(Box::new(CommandError {
+            code: ErrorCode::KeyNotFound,
+            message: "Key not found in registry".to_string(),
+            details: None,
+            recovery_guidance: None,
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        }));
+    }
+
+    // Save updated registry
+    if let Err(e) = registry.save() {
+        return Err(Box::new(CommandError {
+            code: ErrorCode::StorageFailed,
+            message: "Failed to save key registry".to_string(),
+            details: Some(e.to_string()),
+            recovery_guidance: None,
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        }));
+    }
+
+    // Save updated vault
+    vault.updated_at = chrono::Utc::now();
+    match crate::storage::vault_store::save_vault(&vault).await {
+        Ok(_) => Ok(UpdateKeyLabelResponse { success: true }),
+        Err(e) => Err(Box::new(CommandError {
+            code: ErrorCode::StorageFailed,
+            message: "Failed to save vault".to_string(),
+            details: Some(e.to_string()),
+            recovery_guidance: None,
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        })),
+    }
 }

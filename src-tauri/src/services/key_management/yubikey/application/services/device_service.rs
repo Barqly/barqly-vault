@@ -5,7 +5,7 @@
 //! over the physical device interactions.
 
 use crate::prelude::*;
-use crate::services::yubikey::{
+use crate::services::key_management::yubikey::{
     domain::errors::{YubiKeyError, YubiKeyResult},
     domain::models::{FormFactor, Interface, Pin, Serial, YubiKeyDevice},
 };
@@ -48,7 +48,8 @@ pub struct YkmanDeviceService {
 impl YkmanDeviceService {
     /// Create new ykman device service using bundled binary
     pub async fn new() -> YubiKeyResult<Self> {
-        let ykman_path = crate::services::yubikey::infrastructure::pty::core::get_ykman_path();
+        let ykman_path =
+            crate::services::key_management::yubikey::infrastructure::pty::core::get_ykman_path();
 
         Ok(Self {
             ykman_path: ykman_path.to_string_lossy().to_string(),
@@ -295,7 +296,7 @@ impl DeviceService for YkmanDeviceService {
         debug!("Checking default PIN for YubiKey: {}", serial.redacted());
 
         // Use the actual ykman PTY implementation to test default PIN
-        use crate::services::yubikey::infrastructure::pty::ykman_operations::has_default_pin;
+        use crate::services::key_management::yubikey::infrastructure::pty::ykman_operations::has_default_pin;
 
         let result = tokio::task::spawn_blocking(move || {
             has_default_pin()

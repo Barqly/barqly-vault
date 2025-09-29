@@ -3,7 +3,7 @@
 //! This module implements the metadata structure that supports
 //! multiple recipients including both passphrase and YubiKey protection modes.
 
-use crate::services::yubikey::domain::models::ProtectionMode;
+use crate::services::key_management::yubikey::domain::models::ProtectionMode;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;

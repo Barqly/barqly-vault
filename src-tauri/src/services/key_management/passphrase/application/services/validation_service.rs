@@ -1,5 +1,7 @@
-use crate::services::passphrase::domain::{ValidationResult, calculate_strength_score};
-use crate::services::passphrase::infrastructure::{
+use crate::services::key_management::passphrase::domain::{
+    ValidationResult, calculate_strength_score,
+};
+use crate::services::key_management::passphrase::infrastructure::{
     PassphraseKeyRepository, StorageError, decrypt_private_key,
 };
 use age::secrecy::SecretString;
