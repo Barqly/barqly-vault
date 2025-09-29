@@ -1,19 +1,19 @@
 # Backend DDD Refactoring Plan - Phase 1
 
 ## Milestone 1: Command Structure Standardization (CRITICAL) ✅ COMPLETE
-- [ ] Rename `commands/vault_commands/` � `commands/vault/`
-- [ ] Rename `commands/file_commands/` � `commands/file/`
-- [ ] Convert `commands/storage_commands.rs` � `commands/storage/` folder
-- [ ] Update command imports in lib.rs and commands/mod.rs
-- [ ] Update TypeScript bindings via `make generate-bindings`
+- [x] Rename `commands/vault_commands/` `commands/vault/`
+- [x] Rename `commands/file_commands/`  `commands/file/`
+- [x] Convert `commands/storage_commands.rs`  `commands/storage/` folder
+- [x] Update command imports in lib.rs and commands/mod.rs
+- [x] Update TypeScript bindings via `make generate-bindings`
 
-## Milestone 2: Vault Service Layer Creation
-- [ ] Create `services/vault/domain/` with Vault domain models and business rules
-- [ ] Create `services/vault/application/manager.rs` - VaultManager facade
-- [ ] Create `services/vault/application/services/vault_service.rs` - CRUD operations
-- [ ] Create `services/vault/application/services/key_association_service.rs` - Key management
-- [ ] Create `services/vault/infrastructure/vault_repository.rs` - Storage abstraction
-- [ ] Move business logic from vault_commands into VaultManager (500+ LOC)
+## Milestone 2: Vault Service Layer Creation ✅ COMPLETE
+- [x] Create `services/vault/domain/` with Vault domain models and business rules
+- [x] Create `services/vault/application/manager.rs` - VaultManager facade
+- [x] Create `services/vault/application/services/vault_service.rs` - CRUD operations
+- [x] Create `services/vault/application/services/key_association_service.rs` - Key management
+- [x] Create `services/vault/infrastructure/vault_repository.rs` - Storage abstraction
+- [x] Move business logic from vault_commands into VaultManager (500+ LOC)
 
 ## Milestone 3: File Service Layer Creation
 - [ ] Create `services/file/domain/` with File domain models and validation rules
@@ -60,13 +60,13 @@
 - [ ] Ensure no regression in functionality
 
 ## Success Criteria
--  All command modules follow `commands/{domain}/` pattern
--  All domains have `services/{domain}/` DDD structure
--  All command files are <300 LOC (thin wrappers)
--  UI � Commands � Services � Domain/Infrastructure flow
--  Zero direct utility layer access from commands
--  All 570+ tests passing
--  Complete architectural consistency with key_management pattern
+- All command modules follow `commands/{domain}/` pattern
+- All domains have `services/{domain}/` DDD structure
+- ll command files are <300 LOC (thin wrappers)
+- UI -> Commands -> Services -> Domain/Infrastructure flow
+- Zero direct utility layer access from commands
+- All 570+ tests passing
+- Complete architectural consistency with key_management pattern
 
 ## Code Impact Estimate
 - **Files to create**: ~25 new service files

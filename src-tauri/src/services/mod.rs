@@ -53,6 +53,7 @@
 
 pub mod passphrase;
 pub mod shared;
+pub mod vault; // Vault management service layer
 pub mod yubikey; // Shared device abstractions and traits
 
 // TODO: Implement common abstractions after passphrase refactoring is complete

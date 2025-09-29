@@ -3,8 +3,8 @@
 //! Commands for creating, listing, and managing vaults.
 
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
-use crate::models::{Vault, VaultSummary};
-use crate::storage::vault_store;
+use crate::models::VaultSummary;
+use crate::services::vault::VaultManager;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
@@ -65,32 +65,25 @@ pub struct DeleteVaultResponse {
 #[specta::specta]
 #[instrument(skip_all, fields(name = %input.name))]
 pub async fn create_vault(input: CreateVaultRequest) -> CommandResponse<CreateVaultResponse> {
-    // Validate input
-    if input.name.trim().is_empty() {
-        return Err(Box::new(CommandError {
-            code: ErrorCode::InvalidInput,
-            message: "Vault name cannot be empty".to_string(),
-            details: Some("Please provide a valid vault name".to_string()),
-            recovery_guidance: Some("Enter a descriptive name for your vault".to_string()),
-            user_actionable: true,
-            trace_id: None,
-            span_id: None,
-        }));
-    }
+    let manager = VaultManager::new();
 
-    // Create new vault
-    let vault = Vault::new(input.name.trim().to_string(), input.description);
-
-    // Save vault
-    match vault_store::save_vault(&vault).await {
-        Ok(_) => Ok(CreateVaultResponse {
-            vault: vault.to_summary(),
+    match manager.create_vault(input.name, input.description).await {
+        Ok(vault_summary) => Ok(CreateVaultResponse {
+            vault: vault_summary,
         }),
         Err(e) => Err(Box::new(CommandError {
-            code: ErrorCode::StorageFailed,
-            message: "Failed to save vault".to_string(),
-            details: Some(e.to_string()),
-            recovery_guidance: Some("Check disk space and permissions".to_string()),
+            code: match e {
+                crate::services::vault::domain::VaultError::InvalidName(_) => ErrorCode::InvalidInput,
+                crate::services::vault::domain::VaultError::AlreadyExists(_) => ErrorCode::VaultAlreadyExists,
+                _ => ErrorCode::StorageFailed,
+            },
+            message: e.to_string(),
+            details: None,
+            recovery_guidance: Some(match e {
+                crate::services::vault::domain::VaultError::InvalidName(_) => "Enter a valid vault name".to_string(),
+                crate::services::vault::domain::VaultError::AlreadyExists(_) => "Choose a different vault name".to_string(),
+                _ => "Check disk space and permissions".to_string(),
+            }),
             user_actionable: true,
             trace_id: None,
             span_id: None,
@@ -103,12 +96,10 @@ pub async fn create_vault(input: CreateVaultRequest) -> CommandResponse<CreateVa
 #[specta::specta]
 #[instrument]
 pub async fn list_vaults() -> CommandResponse<ListVaultsResponse> {
-    match vault_store::list_vaults().await {
-        Ok(vaults) => {
-            let summaries: Vec<VaultSummary> = vaults.into_iter().map(|v| v.to_summary()).collect();
+    let manager = VaultManager::new();
 
-            Ok(ListVaultsResponse { vaults: summaries })
-        }
+    match manager.list_vaults().await {
+        Ok(vaults) => Ok(ListVaultsResponse { vaults }),
         Err(e) => Err(Box::new(CommandError {
             code: ErrorCode::StorageFailed,
             message: "Failed to list vaults".to_string(),
@@ -140,11 +131,12 @@ pub async fn set_current_vault(
 ) -> CommandResponse<SetCurrentVaultResponse> {
     // This endpoint is deprecated - UI should track the current vault
     // Just verify the vault exists and return success
-    let vault = match vault_store::load_vault(&input.vault_id).await {
+    let manager = VaultManager::new();
+    let vault = match manager.get_vault(&input.vault_id).await {
         Ok(v) => v,
         Err(_) => {
             return Err(Box::new(CommandError {
-                code: ErrorCode::KeyNotFound, // Using KeyNotFound for vault not found
+                code: ErrorCode::VaultNotFound,
                 message: format!("Vault '{}' not found", input.vault_id),
                 details: None,
                 recovery_guidance: Some("Check vault ID and try again".to_string()),
@@ -168,7 +160,8 @@ pub async fn set_current_vault(
 #[instrument(skip_all, fields(vault_id = %input.vault_id, force = %input.force))]
 pub async fn delete_vault(input: DeleteVaultRequest) -> CommandResponse<DeleteVaultResponse> {
     // Load the vault to check if it exists and has keys
-    let vault = match vault_store::load_vault(&input.vault_id).await {
+    let manager = VaultManager::new();
+    let vault = match manager.get_vault(&input.vault_id).await {
         Ok(v) => v,
         Err(_) => {
             return Err(Box::new(CommandError {
@@ -196,8 +189,9 @@ pub async fn delete_vault(input: DeleteVaultRequest) -> CommandResponse<DeleteVa
         }));
     }
 
-    // Delete the vault
-    match vault_store::delete_vault(&input.vault_id).await {
+    // Delete the vault using VaultManager
+    let manager = VaultManager::new();
+    match manager.delete_vault(&input.vault_id, input.force).await {
         Ok(_) => Ok(DeleteVaultResponse {
             success: true,
             message: format!("Vault '{}' deleted successfully", vault.name),
