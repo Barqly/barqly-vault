@@ -6,9 +6,9 @@
 
 pub mod command_types;
 pub mod crypto;
-pub mod file_commands;
-pub mod storage_commands;
-pub mod vault_commands;
+pub mod file;
+pub mod storage;
+pub mod vault;
 
 // Key management commands - organized by domain
 pub mod key_management;
@@ -20,8 +20,9 @@ pub use command_types as types;
 // Re-export all commands for Tauri handler
 pub use command_types::*;
 pub use crypto::*;
-pub use file_commands::*;
-pub use storage_commands::*;
+pub use file::*;
+pub use storage::*;
+pub use vault::*;
 
 // Re-export key management commands
 pub use key_management::*;

@@ -50,7 +50,7 @@ use commands::{
     select_files,
     update_config,
     // Vault commands
-    vault_commands::{
+    vault::{
         add_key_to_vault, create_vault, delete_vault, get_current_vault, get_vault_keys,
         list_vaults, remove_key_from_vault, set_current_vault, update_key_label,
     },
