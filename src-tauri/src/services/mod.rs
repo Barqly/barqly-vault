@@ -55,6 +55,7 @@ pub mod crypto; // Crypto operations service layer
 pub mod file; // File operations service layer
 pub mod passphrase;
 pub mod shared;
+pub mod storage; // Storage operations service layer
 pub mod vault; // Vault management service layer
 pub mod yubikey; // Shared device abstractions and traits
 

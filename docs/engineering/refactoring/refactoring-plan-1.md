@@ -31,12 +31,12 @@
 - [x] Create `services/crypto/application/services/progress_service.rs` - Ready for progress logic migration
 - [x] Create `services/crypto/infrastructure/age_repository.rs` - Age crypto operations
 
-## Milestone 5: Storage Service Layer Creation
-- [ ] Create `services/storage/domain/` with configuration domain models
-- [ ] Create `services/storage/application/manager.rs` - StorageManager facade
-- [ ] Create `services/storage/application/services/config_service.rs` - App configuration
-- [ ] Create `services/storage/application/services/cache_service.rs` - Cache management
-- [ ] Create `services/storage/infrastructure/config_repository.rs` - Config persistence
+## Milestone 5: Storage Service Layer Creation ✅ COMPLETE
+- [x] Create `services/storage/domain/` with configuration domain models
+- [x] Create `services/storage/application/manager.rs` - StorageManager facade
+- [x] Create `services/storage/application/services/config_service.rs` - App configuration
+- [x] Create `services/storage/application/services/cache_service.rs` - Cache management
+- [x] Create `services/storage/infrastructure/config_repository.rs` - Config persistence
 
 ## Milestone 6: Command Layer Refactoring
 - [ ] Update `commands/vault/` to delegate to VaultManager (thin wrappers)

@@ -3,9 +3,9 @@
 //! This module provides Tauri commands that expose the storage module
 //! functionality to the frontend with proper validation and error handling.
 
-use super::types::{CommandResponse, ErrorCode, ErrorHandler};
+use super::types::{CommandError, CommandResponse, ErrorCode};
 use crate::prelude::*;
-use crate::storage::{CacheMetrics, delete_key, get_cache, list_keys};
+use crate::storage::CacheMetrics;
 
 /// Key metadata for frontend display
 #[derive(Debug, Serialize, specta::Type)]
@@ -37,31 +37,20 @@ pub struct AppConfigUpdate {
 #[specta::specta]
 #[instrument]
 pub async fn list_keys_command() -> CommandResponse<Vec<KeyMetadata>> {
-    // Create error handler
-    let error_handler = ErrorHandler::new();
+    let manager = crate::services::storage::StorageManager::new();
 
-    // Log operation start
-    info!("Starting key listing operation");
-
-    let keys =
-        error_handler.handle_operation_error(list_keys(), "list_keys", ErrorCode::StorageFailed)?;
-
-    let metadata: Vec<KeyMetadata> = keys
-        .into_iter()
-        .map(|key| KeyMetadata {
-            label: key.label,
-            created_at: key.created_at.to_rfc3339(),
-            public_key: key.public_key,
-        })
-        .collect();
-
-    // Log operation completion
-    info!(
-        key_count = metadata.len(),
-        "Key listing operation completed successfully"
-    );
-
-    Ok(metadata)
+    match manager.list_keys().await {
+        Ok(metadata) => Ok(metadata),
+        Err(e) => Err(Box::new(CommandError {
+            code: ErrorCode::StorageFailed,
+            message: e.to_string(),
+            details: None,
+            recovery_guidance: Some("Check storage system".to_string()),
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        })),
+    }
 }
 
 /// Delete a key by ID
@@ -69,38 +58,28 @@ pub async fn list_keys_command() -> CommandResponse<Vec<KeyMetadata>> {
 #[specta::specta]
 #[instrument(skip(key_id), fields(key_id = %key_id))]
 pub async fn delete_key_command(key_id: String) -> CommandResponse<()> {
-    // Create error handler
-    let error_handler = ErrorHandler::new();
+    let manager = crate::services::storage::StorageManager::new();
 
-    // Log operation start
-    info!(
-        key_id = %key_id,
-        "Starting key deletion operation"
-    );
-
-    // Validate key exists
-    let keys =
-        error_handler.handle_operation_error(list_keys(), "list_keys", ErrorCode::StorageFailed)?;
-
-    if !keys.iter().any(|k| k.label == key_id) {
-        return Err(error_handler
-            .handle_validation_error("key_id", &format!("No key found with label '{key_id}'")));
+    match manager.delete_key(key_id.clone()).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(Box::new(CommandError {
+            code: match e {
+                crate::services::storage::domain::StorageError::KeyDeletionFailed(_) => {
+                    ErrorCode::KeyNotFound
+                }
+                crate::services::storage::domain::StorageError::ConfigurationInvalid(_) => {
+                    ErrorCode::InvalidInput
+                }
+                _ => ErrorCode::StorageFailed,
+            },
+            message: e.to_string(),
+            details: None,
+            recovery_guidance: Some("Check key ID and try again".to_string()),
+            user_actionable: true,
+            trace_id: None,
+            span_id: None,
+        })),
     }
-
-    // Delete the key
-    error_handler.handle_operation_error(
-        delete_key(&key_id),
-        "delete_key",
-        ErrorCode::StorageFailed,
-    )?;
-
-    // Log operation completion
-    info!(
-        key_id = %key_id,
-        "Key deletion operation completed successfully"
-    );
-
-    Ok(())
 }
 
 /// Get application configuration
@@ -108,27 +87,20 @@ pub async fn delete_key_command(key_id: String) -> CommandResponse<()> {
 #[specta::specta]
 #[instrument]
 pub async fn get_config() -> CommandResponse<AppConfig> {
-    // Log operation start
-    info!("Starting configuration retrieval");
+    let manager = crate::services::storage::StorageManager::new();
 
-    // TODO: Implement configuration loading from file
-    // For now, return default configuration
-    let config = AppConfig {
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        default_key_label: None,
-        remember_last_folder: true,
-        max_recent_files: 10,
-    };
-
-    // Log operation completion
-    info!(
-        version = %config.version,
-        remember_last_folder = config.remember_last_folder,
-        max_recent_files = config.max_recent_files,
-        "Configuration retrieval completed successfully"
-    );
-
-    Ok(config)
+    match manager.get_config().await {
+        Ok(config) => Ok(config),
+        Err(e) => Err(Box::new(CommandError {
+            code: ErrorCode::ConfigurationError,
+            message: e.to_string(),
+            details: None,
+            recovery_guidance: Some("Check configuration system".to_string()),
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        })),
+    }
 }
 
 /// Update application configuration
@@ -136,22 +108,25 @@ pub async fn get_config() -> CommandResponse<AppConfig> {
 #[specta::specta]
 #[instrument(skip(config))]
 pub async fn update_config(config: AppConfigUpdate) -> CommandResponse<()> {
-    // Create error handler (for future use)
-    let _error_handler = ErrorHandler::new();
+    let manager = crate::services::storage::StorageManager::new();
 
-    // Log operation start
-    info!("Starting configuration update");
-
-    // TODO: Implement configuration validation and persistence
-    // For now, just log the update
-    info!(
-        default_key_label = ?config.default_key_label,
-        remember_last_folder = ?config.remember_last_folder,
-        max_recent_files = ?config.max_recent_files,
-        "Configuration update completed successfully"
-    );
-
-    Ok(())
+    match manager.update_config(config).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(Box::new(CommandError {
+            code: match e {
+                crate::services::storage::domain::StorageError::ConfigurationInvalid(_) => {
+                    ErrorCode::InvalidInput
+                }
+                _ => ErrorCode::ConfigurationError,
+            },
+            message: e.to_string(),
+            details: None,
+            recovery_guidance: Some("Check configuration values".to_string()),
+            user_actionable: true,
+            trace_id: None,
+            span_id: None,
+        })),
+    }
 }
 
 /// Get cache performance metrics
@@ -159,21 +134,18 @@ pub async fn update_config(config: AppConfigUpdate) -> CommandResponse<()> {
 #[specta::specta]
 #[instrument]
 pub async fn get_cache_metrics() -> CommandResponse<CacheMetrics> {
-    // Log operation start
-    info!("Starting cache metrics retrieval");
+    let manager = crate::services::storage::StorageManager::new();
 
-    // Get cache metrics
-    let cache = get_cache();
-    let metrics = cache.get_metrics();
-
-    // Log operation completion with metrics
-    info!(
-        hit_rate = format_args!("{:.2}%", metrics.hit_rate() * 100.0),
-        key_list_hit_rate = format_args!("{:.2}%", metrics.key_list_hit_rate() * 100.0),
-        total_requests = metrics.total_requests,
-        cache_invalidations = metrics.cache_invalidations,
-        "Cache metrics retrieval completed successfully"
-    );
-
-    Ok(metrics)
+    match manager.get_cache_metrics().await {
+        Ok(metrics) => Ok(metrics),
+        Err(e) => Err(Box::new(CommandError {
+            code: ErrorCode::StorageFailed,
+            message: e.to_string(),
+            details: None,
+            recovery_guidance: Some("Check cache system".to_string()),
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        })),
+    }
 }
