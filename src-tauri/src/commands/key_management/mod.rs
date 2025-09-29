@@ -8,6 +8,7 @@
 //! - yubikey/: YubiKey commands (device management, crypto operations, vault integration)
 //! - unified_keys.rs: Cross-key-type operations and unified APIs
 
+pub mod key_menu_commands;
 pub mod passphrase;
 pub mod unified_keys;
 pub mod yubikey;
@@ -27,6 +28,10 @@ pub use yubikey::{
     UnlockCredentials, YubiKeyInitForVaultParams, YubiKeyState, YubiKeyStateInfo, init_yubikey,
     init_yubikey_for_vault, list_available_yubikeys_for_vault, list_yubikeys, register_yubikey,
     register_yubikey_for_vault, yubikey_decrypt_file, yubikey_list_devices,
+};
+
+pub use key_menu_commands::{
+    GetKeyMenuDataRequest, GetKeyMenuDataResponse, KeyMenuInfo, KeyMenuMetadata, get_key_menu_data,
 };
 
 pub use unified_keys::{
