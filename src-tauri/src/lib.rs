@@ -30,8 +30,8 @@ use commands::{
     get_file_info,
     get_progress,
     // Key management commands
+    get_key_menu_data,
     key_management::{
-        get_key_menu_data,
         passphrase::{
             add_passphrase_key_to_vault, generate_key, list_available_passphrase_keys_for_vault,
             list_passphrase_keys_for_vault, validate_passphrase, validate_passphrase_strength,
@@ -185,6 +185,7 @@ pub fn run_app() {
             list_unified_keys,
             test_unified_keys,
             get_vault_keys,
+            get_key_menu_data,
             remove_key_from_vault,
             update_key_label,
             get_config,

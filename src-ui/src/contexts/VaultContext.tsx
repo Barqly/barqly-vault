@@ -92,19 +92,34 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setError(null);
 
     try {
+      console.log('🔍 VaultContext: Starting getKeyMenuData call for vault:', currentVault.id);
+
       const menuRequest: GetKeyMenuDataRequest = { vault_id: currentVault.id };
+      console.log('🔍 VaultContext: Calling backend with request:', menuRequest);
+
       const menuResult = await commands.getKeyMenuData(menuRequest);
+      console.log('🔍 VaultContext: Backend response received:', menuResult);
+
       if (menuResult.status === 'error') {
+        console.error('🚨 VaultContext: Backend returned error:', menuResult.error);
         throw new Error(menuResult.error.message || 'Failed to get key menu data');
       }
+
       const menuResponse = menuResult.data;
+      console.log('🔍 VaultContext: Processing menu response:', menuResponse);
+
       logger.info('VaultContext', 'Key menu data loaded for vault', {
         vaultId: currentVault.id,
         keyCount: menuResponse.keys.length,
         keys: menuResponse.keys,
       });
+
       // Convert KeyMenuInfo to KeyReference for backward compatibility
-      const keyRefs: KeyReference[] = menuResponse.keys.map((keyMenuInfo: KeyMenuInfo) => {
+      console.log('🔍 VaultContext: Starting key conversion, keys count:', menuResponse.keys.length);
+
+      const keyRefs = menuResponse.keys.map((keyMenuInfo: KeyMenuInfo, index: number) => {
+        console.log(`🔍 VaultContext: Processing key ${index}:`, keyMenuInfo);
+
         const baseRef = {
           id: keyMenuInfo.internal_id,
           label: keyMenuInfo.label, // Now uses actual label from registry!
@@ -113,23 +128,43 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           last_used: null
         };
 
+        console.log(`🔍 VaultContext: Base ref for key ${index}:`, baseRef);
+        console.log(`🔍 VaultContext: Key type for key ${index}:`, keyMenuInfo.key_type);
+        console.log(`🔍 VaultContext: Metadata for key ${index}:`, keyMenuInfo.metadata);
+
         if (keyMenuInfo.key_type === 'passphrase') {
+          console.log(`🔍 VaultContext: Creating passphrase key reference for key ${index}`);
           return {
             ...baseRef,
             type: 'passphrase' as const,
             key_id: keyMenuInfo.internal_id,
           };
         } else {
-          // YubiKey type
-          const yubiKeyMeta = keyMenuInfo.metadata as any; // Type assertion for YubiKey metadata
-          return {
-            ...baseRef,
-            type: 'yubikey' as const,
-            serial: yubiKeyMeta.serial || '',
-            firmware_version: yubiKeyMeta.firmware_version || null,
-          };
+          console.log(`🔍 VaultContext: Creating YubiKey reference for key ${index}`);
+          console.log(`🔍 VaultContext: Metadata type check for key ${index}:`, keyMenuInfo.metadata);
+
+          // Properly handle discriminated union by checking property existence
+          if ('serial' in keyMenuInfo.metadata) {
+            console.log(`✅ VaultContext: YubiKey metadata detected for key ${index}`);
+            return {
+              ...baseRef,
+              type: 'yubikey' as const,
+              serial: keyMenuInfo.metadata.serial,
+              firmware_version: keyMenuInfo.metadata.firmware_version || null,
+            };
+          } else {
+            console.warn(`⚠️ VaultContext: Unexpected metadata type for key ${index}:`, keyMenuInfo.metadata);
+            return {
+              ...baseRef,
+              type: 'yubikey' as const,
+              serial: '',
+              firmware_version: null,
+            };
+          }
         }
       });
+
+      console.log('🔍 VaultContext: Final key references:', keyRefs);
       setVaultKeys(keyRefs);
     } catch (err: any) {
       logger.error('VaultContext', 'Failed to refresh keys', err);
