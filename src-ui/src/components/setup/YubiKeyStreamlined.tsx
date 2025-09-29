@@ -51,7 +51,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
       // Auto-select if only one key
       if (keys.length === 1) {
         setSelectedKey(keys[0]);
-        setLabel(`YubiKey-${keys[0].serial.substring(0, 6)}`);
+        setLabel(`YubiKey-${keys[0].serial}`);
       }
     } catch (err) {
       logger.error('YubiKeyStreamlined', 'Failed to detect YubiKeys', err as Error);
@@ -75,7 +75,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
         const initResult = await commands.initYubikey(
           selectedKey.serial,
           pin,
-          label || `YubiKey-${selectedKey.serial.substring(0, 6)}`,
+          label || `YubiKey-${selectedKey.serial}`,
         );
         if (initResult.status === 'error') {
           throw new Error(initResult.error.message || 'Failed to initialize YubiKey');
@@ -85,7 +85,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
         // Register reused YubiKey
         const registerResult = await commands.registerYubikey(
           selectedKey.serial,
-          label || `YubiKey-${selectedKey.serial.substring(0, 6)}`,
+          label || `YubiKey-${selectedKey.serial}`,
           pin,
         );
         if (registerResult.status === 'error') {
@@ -189,7 +189,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                       onClick={() => {
                         if (yk.state !== 'registered') {
                           setSelectedKey(yk);
-                          setLabel(`YubiKey-${yk.serial.substring(0, 6)}`);
+                          setLabel(`YubiKey-${yk.serial}`);
                           setOperation('setup');
                         }
                       }}

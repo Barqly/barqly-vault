@@ -101,7 +101,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
       if (availableKeys.length === 1) {
         const key = availableKeys[0];
         setSelectedKey(key);
-        setLabel(key.label || `YubiKey-${key.serial.substring(0, 6)}`);
+        setLabel(key.label || `YubiKey-${key.serial}`);
       }
     } catch (err: any) {
       logger.error('YubiKeySetupDialog', 'Failed to detect YubiKeys', err);
@@ -304,7 +304,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                           onClick={() => {
                             console.log('[YubiKey] Selected:', yk.serial, 'State:', yk.state);
                             setSelectedKey(yk);
-                            setLabel(yk.label || `YubiKey-${yk.serial.substring(0, 6)}`);
+                            setLabel(yk.label || `YubiKey-${yk.serial}`);
                             setStep('setup');
                           }}
                           className={`w-full p-3 border rounded-lg text-left transition-colors hover:bg-blue-50 hover:border-blue-300 ${

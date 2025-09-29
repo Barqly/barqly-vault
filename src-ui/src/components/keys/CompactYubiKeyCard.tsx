@@ -74,7 +74,8 @@ export const CompactYubiKeyCard: React.FC<CompactYubiKeySlotProps> = ({
   const displayLabel = () => {
     if (state === 'empty') return 'Add';
     if (label) {
-      return label.length > 10 ? label.substring(0, 10) + '...' : label;
+      // Don't truncate labels - let them display fully
+      return label;
     }
     return `YubiKey ${index + 1}`;
   };
