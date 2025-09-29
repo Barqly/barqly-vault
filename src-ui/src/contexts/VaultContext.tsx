@@ -14,6 +14,9 @@ import {
   SetCurrentVaultRequest,
   RemoveKeyFromVaultRequest,
   GetVaultKeysRequest,
+  GetKeyMenuDataRequest,
+  KeyMenuInfo,
+  KeyState,
 } from '../bindings';
 import { logger } from '../lib/logger';
 
@@ -89,18 +92,33 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setError(null);
 
     try {
-      const keysRequest: GetVaultKeysRequest = { vault_id: currentVault.id };
-      const keysResult = await commands.getVaultKeys(keysRequest);
-      if (keysResult.status === 'error') {
-        throw new Error(keysResult.error.message || 'Failed to get vault keys');
+      const menuRequest: GetKeyMenuDataRequest = { vault_id: currentVault.id };
+      const menuResult = await commands.getKeyMenuData(menuRequest);
+      if (menuResult.status === 'error') {
+        throw new Error(menuResult.error.message || 'Failed to get key menu data');
       }
-      const keysResponse = keysResult.data;
-      logger.info('VaultContext', 'Keys loaded for vault', {
+      const menuResponse = menuResult.data;
+      logger.info('VaultContext', 'Key menu data loaded for vault', {
         vaultId: currentVault.id,
-        keyCount: keysResponse.keys.length,
-        keys: keysResponse.keys,
+        keyCount: menuResponse.keys.length,
+        keys: menuResponse.keys,
       });
-      setVaultKeys(keysResponse.keys);
+      // Convert KeyMenuInfo to KeyReference for backward compatibility
+      const keyRefs = menuResponse.keys.map((keyMenuInfo: KeyMenuInfo) => ({
+        id: keyMenuInfo.internal_id,
+        label: keyMenuInfo.label, // Now uses actual label from registry!
+        state: keyMenuInfo.state as KeyState,
+        key_type: keyMenuInfo.key_type === 'passphrase'
+          ? { type: 'passphrase' as const, key_id: keyMenuInfo.internal_id }
+          : {
+              type: 'yubikey' as const,
+              serial: keyMenuInfo.metadata.type === 'YubiKey' ? keyMenuInfo.metadata.serial : '',
+              firmware_version: keyMenuInfo.metadata.type === 'YubiKey' ? keyMenuInfo.metadata.firmware_version : null
+            },
+        created_at: keyMenuInfo.created_at,
+        last_used: null
+      } as KeyReference));
+      setVaultKeys(keyRefs);
     } catch (err: any) {
       logger.error('VaultContext', 'Failed to refresh keys', err);
       setError(err.message || 'Failed to load keys');

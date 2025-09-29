@@ -49,7 +49,7 @@ async validatePassphraseStrength(passphrase: string) : Promise<Result<Passphrase
 }
 },
 /**
- * Encrypt files with progress streaming
+ * Encrypt files with progress streaming - delegates to service layer
  */
 async encryptFiles(input: EncryptDataInput) : Promise<Result<string, CommandError>> {
     try {
@@ -60,7 +60,7 @@ async encryptFiles(input: EncryptDataInput) : Promise<Result<string, CommandErro
 }
 },
 /**
- * Encrypt files to all vault keys with progress streaming
+ * Encrypt files with multiple keys (vault) - delegates to service layer
  */
 async encryptFilesMulti(input: EncryptFilesMultiInput) : Promise<Result<EncryptFilesMultiResponse, CommandError>> {
     try {
@@ -153,6 +153,50 @@ async listUnifiedKeys(filter: KeyListFilter) : Promise<Result<KeyInfo[], Command
 async testUnifiedKeys() : Promise<Result<string, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("test_unified_keys") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get all keys for a vault - wrapper around unified API
+ */
+async getVaultKeys(input: GetVaultKeysRequest) : Promise<Result<GetVaultKeysResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_vault_keys", { input }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get structured key menu data for UI display
+ */
+async getKeyMenuData(input: GetKeyMenuDataRequest) : Promise<Result<GetKeyMenuDataResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_key_menu_data", { input }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Remove a key from a vault - moved from vault domain to key domain
+ */
+async removeKeyFromVault(input: RemoveKeyFromVaultRequest) : Promise<Result<RemoveKeyFromVaultResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("remove_key_from_vault", { input }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Update a key's label - moved from vault domain to key domain
+ */
+async updateKeyLabel(input: UpdateKeyLabelRequest) : Promise<Result<UpdateKeyLabelResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_key_label", { input }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -285,50 +329,6 @@ async setCurrentVault(input: SetCurrentVaultRequest) : Promise<Result<SetCurrent
 async deleteVault(input: DeleteVaultRequest) : Promise<Result<DeleteVaultResponse, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("delete_vault", { input }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Get all keys for a vault
- */
-async getVaultKeys(input: GetVaultKeysRequest) : Promise<Result<GetVaultKeysResponse, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_vault_keys", { input }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Add a key to a vault
- */
-async addKeyToVault(input: AddKeyToVaultRequest) : Promise<Result<AddKeyToVaultResponse, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("add_key_to_vault", { input }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Remove a key from a vault
- */
-async removeKeyFromVault(input: RemoveKeyFromVaultRequest) : Promise<Result<RemoveKeyFromVaultResponse, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("remove_key_from_vault", { input }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Update a key's label
- */
-async updateKeyLabel(input: UpdateKeyLabelRequest) : Promise<Result<UpdateKeyLabelResponse, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("update_key_label", { input }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -475,14 +475,6 @@ async yubikeyDecryptFile(encryptedFile: string, unlockMethod: UnlockMethod | nul
 
 /** user-defined types **/
 
-/**
- * Input for adding a key to vault
- */
-export type AddKeyToVaultRequest = { vault_id: string; key_type: string; passphrase: string | null; yubikey_serial: string | null; label: string }
-/**
- * Response from adding key
- */
-export type AddKeyToVaultResponse = { success: boolean; key_reference: KeyReference }
 export type AddPassphraseKeyRequest = { vault_id: string; label: string; passphrase: string }
 export type AddPassphraseKeyResponse = { key_reference: KeyReference; public_key: string }
 /**
@@ -586,7 +578,7 @@ export type EncryptDataInput = { key_id: string; file_paths: string[]; output_na
  */
 export type EncryptFilesMultiInput = { vault_id: string; in_file_paths: string[]; out_encrypted_file_name: string | null; out_encrypted_file_path: string | null }
 /**
- * Response for multi-key encryption
+ * Response from multi-key encryption command
  */
 export type EncryptFilesMultiResponse = { encrypted_file_path: string; manifest_file_path: string; file_exists_warning: boolean; keys_used: string[] }
 /**
@@ -643,6 +635,14 @@ export type GetCurrentVaultResponse = { vault: VaultSummary | null }
  * Input for encryption status command
  */
 export type GetEncryptionStatusInput = { operation_id: string }
+/**
+ * Request for key menu data
+ */
+export type GetKeyMenuDataRequest = { vault_id: string }
+/**
+ * Response with structured key menu data
+ */
+export type GetKeyMenuDataResponse = { vault_id: string; keys: KeyMenuInfo[] }
 /**
  * Input for progress status command
  */
@@ -740,6 +740,42 @@ export type KeyListFilter =
  * Only currently connected/available keys (for decryption UI)
  */
 { type: "ConnectedOnly" }
+/**
+ * Key menu data optimized for UI display
+ */
+export type KeyMenuInfo = { 
+/**
+ * UI display position (0=passphrase, 1-3=yubikeys)
+ */
+display_index: number; 
+/**
+ * Key type for UI logic
+ */
+key_type: string; 
+/**
+ * User-friendly display label
+ */
+label: string; 
+/**
+ * Internal key reference ID
+ */
+internal_id: string; 
+/**
+ * Current key state
+ */
+state: string; 
+/**
+ * Creation timestamp
+ */
+created_at: string; 
+/**
+ * Type-specific metadata
+ */
+metadata: KeyMenuMetadata }
+/**
+ * Type-specific metadata for different key types
+ */
+export type KeyMenuMetadata = { type: "Passphrase"; public_key: string; key_filename: string } | { type: "YubiKey"; serial: string; slot: number; piv_slot: number; recipient: string; identity_tag: string; firmware_version: string }
 /**
  * Key metadata for frontend display
  */
