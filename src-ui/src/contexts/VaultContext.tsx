@@ -104,20 +104,32 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         keys: menuResponse.keys,
       });
       // Convert KeyMenuInfo to KeyReference for backward compatibility
-      const keyRefs = menuResponse.keys.map((keyMenuInfo: KeyMenuInfo) => ({
-        id: keyMenuInfo.internal_id,
-        label: keyMenuInfo.label, // Now uses actual label from registry!
-        state: keyMenuInfo.state as KeyState,
-        key_type: keyMenuInfo.key_type === 'passphrase'
-          ? { type: 'passphrase' as const, key_id: keyMenuInfo.internal_id }
-          : {
-              type: 'yubikey' as const,
-              serial: keyMenuInfo.metadata.type === 'YubiKey' ? keyMenuInfo.metadata.serial : '',
-              firmware_version: keyMenuInfo.metadata.type === 'YubiKey' ? keyMenuInfo.metadata.firmware_version : null
-            },
-        created_at: keyMenuInfo.created_at,
-        last_used: null
-      } as KeyReference));
+      const keyRefs: KeyReference[] = menuResponse.keys.map((keyMenuInfo: KeyMenuInfo) => {
+        const baseRef = {
+          id: keyMenuInfo.internal_id,
+          label: keyMenuInfo.label, // Now uses actual label from registry!
+          state: keyMenuInfo.state as KeyState,
+          created_at: keyMenuInfo.created_at,
+          last_used: null
+        };
+
+        if (keyMenuInfo.key_type === 'passphrase') {
+          return {
+            ...baseRef,
+            type: 'passphrase' as const,
+            key_id: keyMenuInfo.internal_id,
+          };
+        } else {
+          // YubiKey type
+          const yubiKeyMeta = keyMenuInfo.metadata as any; // Type assertion for YubiKey metadata
+          return {
+            ...baseRef,
+            type: 'yubikey' as const,
+            serial: yubiKeyMeta.serial || '',
+            firmware_version: yubiKeyMeta.firmware_version || null,
+          };
+        }
+      });
       setVaultKeys(keyRefs);
     } catch (err: any) {
       logger.error('VaultContext', 'Failed to refresh keys', err);

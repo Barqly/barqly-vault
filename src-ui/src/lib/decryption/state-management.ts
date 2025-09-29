@@ -2,13 +2,13 @@
  * State management utilities for file decryption
  */
 
-import { CommandError, DecryptionResult, ProgressUpdate } from '../../bindings';
+import { CommandError, DecryptionResult, GetProgressResponse } from '../../bindings';
 
 export interface FileDecryptionState {
   isLoading: boolean;
   error: CommandError | null;
   success: DecryptionResult | null;
-  progress: ProgressUpdate | null;
+  progress: GetProgressResponse | null;
   selectedFile: string | null;
   selectedKeyId: string | null;
   passphrase: string;
@@ -72,7 +72,7 @@ export const decryptionStateUpdates = {
   /**
    * Update progress
    */
-  updateProgress: (prev: FileDecryptionState, progress: ProgressUpdate): FileDecryptionState => ({
+  updateProgress: (prev: FileDecryptionState, progress: GetProgressResponse): FileDecryptionState => ({
     ...prev,
     progress,
   }),

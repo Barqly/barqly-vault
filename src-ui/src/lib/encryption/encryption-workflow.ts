@@ -1,6 +1,6 @@
 import { safeListen } from '../tauri-safe';
 import { commands, EncryptDataInput } from '../../bindings';
-import { ProgressUpdate } from '../../bindings';
+import { GetProgressResponse } from '../../bindings';
 import { logger } from '../logger';
 
 /**
@@ -18,10 +18,10 @@ export type EncryptionInput = EncryptDataInput;
  */
 export const executeEncryptionWithProgress = async (
   input: EncryptionInput,
-  onProgress: (progress: ProgressUpdate) => void,
+  onProgress: (progress: GetProgressResponse) => void,
 ): Promise<string> => {
   // Create a progress listener
-  const unlisten = await safeListen<ProgressUpdate>('encryption-progress', (event) => {
+  const unlisten = await safeListen<GetProgressResponse>('encryption-progress', (event) => {
     onProgress(event.payload);
   });
 

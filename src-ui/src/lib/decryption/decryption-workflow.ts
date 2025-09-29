@@ -4,7 +4,7 @@
 
 import { safeListen } from '../tauri-safe';
 import { commands, DecryptDataInput, DecryptionResult } from '../../bindings';
-import type { ProgressUpdate, CommandError, ErrorCode } from '../../bindings';
+import type { GetProgressResponse, CommandError, ErrorCode } from '../../bindings';
 import { logger } from '../logger';
 import { toCommandError } from '../errors/command-error';
 import { UnlistenFn } from '@tauri-apps/api/event';
@@ -25,9 +25,9 @@ export interface DecryptionWorkflowResult {
  * Returns the unlisten function to clean up the listener
  */
 export const setupDecryptionProgressListener = async (
-  onProgress: (progress: ProgressUpdate) => void,
+  onProgress: (progress: GetProgressResponse) => void,
 ): Promise<UnlistenFn> => {
-  return await safeListen<ProgressUpdate>('decryption-progress', (event) => {
+  return await safeListen<GetProgressResponse>('decryption-progress', (event) => {
     onProgress(event.payload);
   });
 };
@@ -73,7 +73,7 @@ export const executeDecryption = async (
  */
 export const executeDecryptionWithProgress = async (
   input: DecryptionWorkflowInput,
-  onProgress: (progress: ProgressUpdate) => void,
+  onProgress: (progress: GetProgressResponse) => void,
 ): Promise<DecryptionResult> => {
   // Set up progress listener
   const unlisten = await setupDecryptionProgressListener(onProgress);

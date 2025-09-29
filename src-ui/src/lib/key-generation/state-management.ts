@@ -1,4 +1,4 @@
-import { CommandError, GenerateKeyResponse, ProgressUpdate } from '../../bindings';
+import { CommandError, GenerateKeyResponse, GetProgressResponse } from '../../bindings';
 
 /**
  * State management for key generation operations
@@ -7,7 +7,7 @@ export interface KeyGenerationState {
   isLoading: boolean;
   error: CommandError | null;
   success: GenerateKeyResponse | null;
-  progress: ProgressUpdate | null;
+  progress: GetProgressResponse | null;
   label: string;
   passphrase: string;
 }
@@ -47,7 +47,7 @@ export const keyGenerationStateUpdates = {
     progress: null,
   }),
 
-  updateProgress: (prev: KeyGenerationState, progress: ProgressUpdate): KeyGenerationState => ({
+  updateProgress: (prev: KeyGenerationState, progress: GetProgressResponse): KeyGenerationState => ({
     ...prev,
     progress,
   }),

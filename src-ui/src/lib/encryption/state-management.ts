@@ -1,4 +1,4 @@
-import { CommandError, ProgressUpdate, FileSelection } from '../../bindings';
+import { CommandError, GetProgressResponse, FileSelection } from '../../bindings';
 
 /**
  * State management for file encryption operations
@@ -8,7 +8,7 @@ export interface FileEncryptionState {
   error: CommandError | null;
   selectedFiles: FileSelection | null;
   success: string | null; // Backend returns string path
-  progress: ProgressUpdate | null;
+  progress: GetProgressResponse | null;
 }
 
 /**
@@ -53,7 +53,7 @@ export const encryptionStateUpdates = {
     progress: null,
   }),
 
-  updateProgress: (prev: FileEncryptionState, progress: ProgressUpdate): FileEncryptionState => ({
+  updateProgress: (prev: FileEncryptionState, progress: GetProgressResponse): FileEncryptionState => ({
     ...prev,
     progress,
   }),

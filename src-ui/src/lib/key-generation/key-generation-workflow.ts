@@ -6,7 +6,7 @@ import {
   ValidatePassphraseInput,
   ValidatePassphraseResponse,
 } from '../../bindings';
-import { ProgressUpdate, CommandError, ErrorCode } from '../../bindings';
+import { CommandError, ErrorCode, GetProgressResponse } from '../../bindings';
 import { logger } from '../logger';
 
 /**
@@ -51,7 +51,7 @@ export const validatePassphraseStrength = async (
 export const executeKeyGenerationWithProgress = async (
   label: string,
   passphrase: string,
-  onProgress: (progress: ProgressUpdate) => void,
+  onProgress: (progress: GetProgressResponse) => void,
 ): Promise<GenerateKeyResponse> => {
   logger.info('key-generation-workflow', 'Starting key generation process', {
     label,
@@ -63,10 +63,13 @@ export const executeKeyGenerationWithProgress = async (
 
   if (!validationResult.is_valid) {
     const error: CommandError = {
-      code: ErrorCode.WEAK_PASSPHRASE,
+      code: "WEAK_PASSPHRASE" as ErrorCode,
       message: 'Passphrase is too weak',
+      details: null,
       recovery_guidance: validationResult.message || 'Please use a stronger passphrase',
       user_actionable: true,
+      trace_id: null,
+      span_id: null,
     };
     logger.error(
       'key-generation-workflow',
@@ -81,7 +84,7 @@ export const executeKeyGenerationWithProgress = async (
 
   // Set up progress listener
   logger.debug('key-generation-workflow', 'Setting up progress listener');
-  const unlisten = await safeListen<ProgressUpdate>('key-generation-progress', (event) => {
+  const unlisten = await safeListen<GetProgressResponse>('key-generation-progress', (event) => {
     logger.debug('key-generation-workflow', 'Progress update received', event.payload);
     onProgress(event.payload);
   });
