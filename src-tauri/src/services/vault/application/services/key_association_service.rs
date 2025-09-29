@@ -50,6 +50,32 @@ impl KeyAssociationService {
                         firmware_version,
                         ..
                     } => {
+                        // Check if YubiKey is actually connected
+                        let state = if let Ok(manager) =
+                            crate::services::yubikey::YubiKeyManager::new().await
+                        {
+                            if let Ok(serial_obj) =
+                                crate::services::yubikey::domain::models::Serial::new(
+                                    serial.clone(),
+                                )
+                            {
+                                if manager
+                                    .detect_device(&serial_obj)
+                                    .await
+                                    .unwrap_or(None)
+                                    .is_some()
+                                {
+                                    KeyState::Active // YubiKey is connected
+                                } else {
+                                    KeyState::Registered // YubiKey is registered but not connected
+                                }
+                            } else {
+                                KeyState::Registered
+                            }
+                        } else {
+                            KeyState::Registered
+                        };
+
                         KeyReference {
                             id: key_id.clone(),
                             key_type: KeyType::Yubikey {
@@ -57,7 +83,7 @@ impl KeyAssociationService {
                                 firmware_version: firmware_version.clone(),
                             },
                             label: label.clone(),
-                            state: KeyState::Registered, // TODO: Check if YubiKey is actually connected
+                            state,
                             created_at: *created_at,
                             last_used: *last_used,
                         }
