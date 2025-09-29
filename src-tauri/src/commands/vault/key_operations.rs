@@ -57,25 +57,56 @@ pub struct RemoveKeyFromVaultResponse {
 pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVaultKeysResponse> {
     debug!(vault_id = %input.vault_id, "get_vault_keys called");
 
-    // Simple delegation to VaultManager (eliminates 80+ LOC of duplicate logic)
-    let manager = crate::services::vault::VaultManager::new();
-    match manager.get_vault_keys(&input.vault_id).await {
-        Ok(keys) => {
+    // Direct delegation to unified key API (no VaultManager for key operations)
+    use crate::commands::key_management::unified_keys::{KeyListFilter, list_unified_keys};
+
+    match list_unified_keys(KeyListFilter::ForVault(input.vault_id.clone())).await {
+        Ok(unified_keys) => {
+            // Convert from unified KeyInfo to vault KeyReference
+            let key_refs: Vec<KeyReference> = unified_keys
+                .into_iter()
+                .map(|key_info| KeyReference {
+                    id: key_info.id,
+                    key_type: match key_info.key_type {
+                        crate::commands::key_management::unified_keys::KeyType::Passphrase {
+                            key_id,
+                        } => crate::models::KeyType::Passphrase { key_id },
+                        crate::commands::key_management::unified_keys::KeyType::YubiKey {
+                            serial,
+                            firmware_version,
+                        } => crate::models::KeyType::Yubikey {
+                            serial,
+                            firmware_version,
+                        },
+                    },
+                    label: key_info.label,
+                    state: match key_info.state {
+                        crate::models::KeyState::Active => crate::models::KeyState::Active,
+                        crate::models::KeyState::Registered => crate::models::KeyState::Registered,
+                        crate::models::KeyState::Orphaned => crate::models::KeyState::Orphaned,
+                    },
+                    created_at: chrono::DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z")
+                        .unwrap()
+                        .with_timezone(&chrono::Utc), // TODO: Get real timestamp
+                    last_used: None,
+                })
+                .collect();
+
             info!(
                 vault_id = %input.vault_id,
-                keys_count = keys.len(),
-                "Returning vault keys from VaultManager"
+                keys_count = key_refs.len(),
+                "Returning vault keys from unified API"
             );
             Ok(GetVaultKeysResponse {
                 vault_id: input.vault_id,
-                keys,
+                keys: key_refs,
             })
         }
         Err(e) => {
             error!(vault_id = %input.vault_id, error = ?e, "Failed to get vault keys");
             Err(Box::new(CommandError {
                 code: ErrorCode::VaultNotFound,
-                message: e.to_string(),
+                message: format!("Failed to get vault keys: {:?}", e),
                 details: None,
                 recovery_guidance: Some("Check vault ID and try again".to_string()),
                 user_actionable: true,
@@ -113,25 +144,45 @@ pub async fn add_key_to_vault(
 pub async fn remove_key_from_vault(
     input: RemoveKeyFromVaultRequest,
 ) -> CommandResponse<RemoveKeyFromVaultResponse> {
-    // Simple delegation to VaultManager
-    let manager = crate::services::vault::VaultManager::new();
-    match manager
-        .remove_key_from_vault(&input.vault_id, &input.key_id)
-        .await
-    {
+    // TODO: Move this to key_management domain
+    // For now, implement directly without VaultManager to avoid duplication
+    let mut vault = match crate::storage::vault_store::load_vault(&input.vault_id).await {
+        Ok(v) => v,
+        Err(_) => {
+            return Err(Box::new(CommandError {
+                code: ErrorCode::VaultNotFound,
+                message: format!("Vault '{}' not found", input.vault_id),
+                details: None,
+                recovery_guidance: Some("Check vault ID".to_string()),
+                user_actionable: true,
+                trace_id: None,
+                span_id: None,
+            }));
+        }
+    };
+
+    // Remove the key
+    if let Err(e) = vault.remove_key(&input.key_id) {
+        return Err(Box::new(CommandError {
+            code: ErrorCode::KeyNotFound,
+            message: e,
+            details: None,
+            recovery_guidance: Some("Check key ID".to_string()),
+            user_actionable: true,
+            trace_id: None,
+            span_id: None,
+        }));
+    }
+
+    // Save updated vault
+    match crate::storage::vault_store::save_vault(&vault).await {
         Ok(_) => Ok(RemoveKeyFromVaultResponse { success: true }),
         Err(e) => Err(Box::new(CommandError {
-            code: match e {
-                crate::services::vault::domain::VaultError::NotFound(_) => ErrorCode::VaultNotFound,
-                crate::services::vault::domain::VaultError::KeyNotFound(_) => {
-                    ErrorCode::KeyNotFound
-                }
-                _ => ErrorCode::StorageFailed,
-            },
-            message: e.to_string(),
-            details: None,
-            recovery_guidance: Some("Check vault and key IDs".to_string()),
-            user_actionable: true,
+            code: ErrorCode::StorageFailed,
+            message: "Failed to save vault".to_string(),
+            details: Some(e.to_string()),
+            recovery_guidance: Some("Check storage system".to_string()),
+            user_actionable: false,
             trace_id: None,
             span_id: None,
         })),

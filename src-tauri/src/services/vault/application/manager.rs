@@ -1,17 +1,15 @@
-use super::services::{KeyAssociationService, VaultService};
-use crate::models::{KeyReference, Vault, VaultSummary};
+use super::services::VaultService;
+use crate::models::{Vault, VaultSummary};
 use crate::services::vault::domain::VaultResult;
 
 pub struct VaultManager {
     vault_service: VaultService,
-    key_service: KeyAssociationService,
 }
 
 impl VaultManager {
     pub fn new() -> Self {
         Self {
             vault_service: VaultService::new(),
-            key_service: KeyAssociationService::new(),
         }
     }
 
@@ -37,43 +35,6 @@ impl VaultManager {
     /// Delete vault
     pub async fn delete_vault(&self, vault_id: &str, force: bool) -> VaultResult<()> {
         self.vault_service.delete_vault(vault_id, force).await
-    }
-
-    /// Get all keys for a vault
-    pub async fn get_vault_keys(&self, vault_id: &str) -> VaultResult<Vec<KeyReference>> {
-        self.key_service.get_vault_keys(vault_id).await
-    }
-
-    /// Add key to vault
-    pub async fn add_key_to_vault(
-        &self,
-        vault_id: &str,
-        key_id: String,
-        key_type: String,
-        label: String,
-    ) -> VaultResult<KeyReference> {
-        self.key_service
-            .add_key_to_vault(vault_id, key_id, key_type, label)
-            .await
-    }
-
-    /// Remove key from vault
-    pub async fn remove_key_from_vault(&self, vault_id: &str, key_id: &str) -> VaultResult<()> {
-        self.key_service
-            .remove_key_from_vault(vault_id, key_id)
-            .await
-    }
-
-    /// Update key label
-    pub async fn update_key_label(
-        &self,
-        vault_id: &str,
-        key_id: &str,
-        new_label: String,
-    ) -> VaultResult<()> {
-        self.key_service
-            .update_key_label(vault_id, key_id, new_label)
-            .await
     }
 }
 

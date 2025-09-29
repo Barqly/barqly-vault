@@ -2,4 +2,4 @@ pub mod manager;
 pub mod services;
 
 pub use manager::VaultManager;
-pub use services::{KeyAssociationService, VaultService};
+pub use services::VaultService;
