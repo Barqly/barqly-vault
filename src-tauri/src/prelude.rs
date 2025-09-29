@@ -4,13 +4,13 @@
 //! across the codebase. Import with `use crate::prelude::*;`
 
 // Re-export tracing macros for logging
-pub use crate::tracing_setup::{debug, error, info, trace, warn};
-pub use crate::tracing_setup::{debug_span, error_span, info_span, trace_span, warn_span};
-pub use crate::tracing_setup::{event, instrument, span};
+pub use crate::logging::{debug, error, info, trace, warn};
+pub use crate::logging::{debug_span, error_span, info_span, trace_span, warn_span};
+pub use crate::logging::{event, instrument, span};
 
 // Re-export redaction utilities for sensitive data
 pub use crate::log_sensitive;
-pub use crate::tracing_setup::redaction::{Sensitive, redact_key, redact_pin, redact_serial};
+pub use crate::logging::redaction::{Sensitive, redact_key, redact_pin, redact_serial};
 
 // Re-export common error types
 pub use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};

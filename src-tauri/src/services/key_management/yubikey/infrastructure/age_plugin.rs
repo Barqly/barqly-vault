@@ -8,8 +8,8 @@ use super::providers::provider::{
 };
 use super::pty::core::get_age_path;
 use crate::log_sensitive;
+use crate::logging::debug;
 use crate::services::key_management::yubikey::domain::errors::{YubiKeyError, YubiKeyResult};
-use crate::tracing_setup::debug;
 // serde_json::Value removed - not needed
 use std::path::PathBuf;
 use std::process::Stdio;

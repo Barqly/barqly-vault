@@ -8,12 +8,13 @@
 pub mod commands; // Keep public - this is the UI interface
 pub mod constants; // Centralized constants for the application
 pub mod crypto; // Public for tests, but should be treated as private for external use
+pub mod error; // Centralized error handling infrastructure
 pub mod file_ops; // Public for tests, but should be treated as private for external use
+pub mod logging; // Centralized logging and tracing infrastructure
 pub mod models; // Vault and key management models
 pub mod prelude;
 pub mod services; // Business logic layer (DDD) - renamed from key_management
 pub mod storage; // Public for tests, but should be treated as private for external use
-pub mod tracing_setup; // New centralized tracing configuration // Project-wide common imports // Centralized key management architecture (YubiKey, passphrase, etc.)
 
 use commands::{
     create_manifest,
@@ -61,7 +62,7 @@ use crate::prelude::*;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Initialize new tracing system
-    if let Err(e) = tracing_setup::init() {
+    if let Err(e) = logging::init() {
         // Use eprintln only for initialization errors
         // This is before logging is set up, so it's acceptable
         #[allow(clippy::disallowed_macros, clippy::print_stderr)]
@@ -146,7 +147,7 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run_app() {
     // Initialize new tracing system
-    if let Err(e) = tracing_setup::init() {
+    if let Err(e) = logging::init() {
         // Use eprintln only for initialization errors
         // This is before logging is set up, so it's acceptable
         #[allow(clippy::disallowed_macros, clippy::print_stderr)]

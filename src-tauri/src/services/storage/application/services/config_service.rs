@@ -1,4 +1,4 @@
-use crate::commands::storage::{AppConfig, AppConfigUpdate};
+use crate::services::storage::domain::models::config::{AppConfig, AppConfigUpdate};
 use crate::services::storage::domain::{StorageResult, StorageRules};
 
 pub struct ConfigService;

@@ -40,7 +40,7 @@ pub async fn list_keys_command() -> CommandResponse<Vec<KeyMetadata>> {
     let manager = crate::services::storage::StorageManager::new();
 
     match manager.list_keys().await {
-        Ok(metadata) => Ok(metadata),
+        Ok(metadata) => Ok(metadata.into_iter().map(|m| m.into()).collect()),
         Err(e) => Err(Box::new(CommandError {
             code: ErrorCode::StorageFailed,
             message: e.to_string(),
@@ -90,7 +90,7 @@ pub async fn get_config() -> CommandResponse<AppConfig> {
     let manager = crate::services::storage::StorageManager::new();
 
     match manager.get_config().await {
-        Ok(config) => Ok(config),
+        Ok(config) => Ok(config.into()),
         Err(e) => Err(Box::new(CommandError {
             code: ErrorCode::ConfigurationError,
             message: e.to_string(),
@@ -110,7 +110,7 @@ pub async fn get_config() -> CommandResponse<AppConfig> {
 pub async fn update_config(config: AppConfigUpdate) -> CommandResponse<()> {
     let manager = crate::services::storage::StorageManager::new();
 
-    match manager.update_config(config).await {
+    match manager.update_config(config.into()).await {
         Ok(_) => Ok(()),
         Err(e) => Err(Box::new(CommandError {
             code: match e {

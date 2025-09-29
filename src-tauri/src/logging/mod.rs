@@ -18,7 +18,7 @@ use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use crate::tracing_setup::formatter::BarqlyFormatter;
+use crate::logging::formatter::BarqlyFormatter;
 
 static INIT: OnceCell<()> = OnceCell::new();
 
