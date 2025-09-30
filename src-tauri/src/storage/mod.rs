@@ -40,9 +40,9 @@ pub mod cache;
 pub mod errors;
 pub mod key_registry; // DEPRECATED: Use services::key_management::shared::infrastructure::KeyRegistry
 pub mod key_store;
-pub mod metadata;
+pub mod metadata; // DEPRECATED: Use services::vault::infrastructure::persistence::metadata
 pub mod path_management;
-pub mod vault_store;
+pub mod vault_store; // DEPRECATED: Use services::vault::infrastructure::persistence
 
 use std::path::PathBuf;
 

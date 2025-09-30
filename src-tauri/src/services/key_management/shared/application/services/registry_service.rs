@@ -11,7 +11,8 @@
 
 use crate::prelude::*;
 use crate::services::key_management::shared::infrastructure::{KeyEntry, KeyRegistry};
-use crate::storage::{self, KeyInfo, vault_store};
+use crate::services::vault;
+use crate::storage::{self, KeyInfo};
 
 /// Error types for key registry operations
 #[derive(Debug, thiserror::Error)]
@@ -205,7 +206,7 @@ impl KeyRegistryService {
         let _key_entry = self.get_key(key_id)?;
 
         // Load vault
-        let mut vault = vault_store::load_vault(vault_id).await.map_err(|e| {
+        let mut vault = vault::load_vault(vault_id).await.map_err(|e| {
             error!(vault_id = %vault_id, error = %e, "Failed to load vault");
             KeyManagementError::VaultNotFound(vault_id.to_string())
         })?;
@@ -223,7 +224,7 @@ impl KeyRegistryService {
         }
 
         // Save updated vault
-        vault_store::save_vault(&vault).await.map_err(|e| {
+        vault::save_vault(&vault).await.map_err(|e| {
             error!(vault_id = %vault_id, error = %e, "Failed to save vault after detaching key");
             KeyManagementError::StorageError(e.to_string())
         })?;
@@ -238,7 +239,7 @@ impl KeyRegistryService {
         debug!(key_id = %key_id, "Checking vault usage for key");
 
         // List all vaults
-        let vaults = vault_store::list_vaults().await.map_err(|e| {
+        let vaults = vault::list_vaults().await.map_err(|e| {
             error!(error = %e, "Failed to list vaults");
             KeyManagementError::StorageError(e.to_string())
         })?;

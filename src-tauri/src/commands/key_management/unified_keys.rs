@@ -18,7 +18,7 @@ use crate::prelude::*;
 use crate::services::key_management::shared::{
     KeyEntry, KeyRegistryService, UnifiedKeyListService,
 };
-use crate::storage::vault_store;
+use crate::services::vault;
 use serde::{Deserialize, Serialize};
 
 /// Filter options for key listing operations
@@ -413,22 +413,20 @@ pub async fn update_key_label(
     })?;
 
     // Update vault timestamp
-    let mut vault = vault_store::load_vault(&input.vault_id)
-        .await
-        .map_err(|e| {
-            Box::new(CommandError {
-                code: ErrorCode::VaultNotFound,
-                message: format!("Vault not found: {}", e),
-                details: None,
-                recovery_guidance: Some("Check vault ID".to_string()),
-                user_actionable: true,
-                trace_id: None,
-                span_id: None,
-            })
-        })?;
+    let mut vault = vault::load_vault(&input.vault_id).await.map_err(|e| {
+        Box::new(CommandError {
+            code: ErrorCode::VaultNotFound,
+            message: format!("Vault not found: {}", e),
+            details: None,
+            recovery_guidance: Some("Check vault ID".to_string()),
+            user_actionable: true,
+            trace_id: None,
+            span_id: None,
+        })
+    })?;
 
     vault.updated_at = chrono::Utc::now();
-    vault_store::save_vault(&vault).await.map_err(|e| {
+    vault::save_vault(&vault).await.map_err(|e| {
         Box::new(CommandError {
             code: ErrorCode::InternalError,
             message: format!("Failed to save vault: {}", e),

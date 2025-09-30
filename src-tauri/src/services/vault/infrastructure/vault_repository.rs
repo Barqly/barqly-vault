@@ -1,6 +1,6 @@
 use crate::models::Vault;
+use crate::services::vault;
 use crate::services::vault::domain::{VaultError, VaultResult};
-use crate::storage::vault_store;
 
 #[derive(Debug)]
 pub struct VaultRepository;
@@ -12,40 +12,40 @@ impl VaultRepository {
 
     /// Save vault to storage
     pub async fn save_vault(&self, vault: &Vault) -> VaultResult<()> {
-        vault_store::save_vault(vault)
+        vault::save_vault(vault)
             .await
             .map_err(|e| VaultError::StorageError(e.to_string()))
     }
 
     /// Load vault from storage
     pub async fn get_vault(&self, vault_id: &str) -> VaultResult<Vault> {
-        vault_store::get_vault(vault_id)
+        vault::get_vault(vault_id)
             .await
             .map_err(|e| VaultError::NotFound(e.to_string()))
     }
 
     /// Load vault by name
     pub async fn load_vault(&self, vault_id: &str) -> VaultResult<Vault> {
-        vault_store::load_vault(vault_id)
+        vault::load_vault(vault_id)
             .await
             .map_err(|e| VaultError::NotFound(e.to_string()))
     }
 
     /// List all vaults
     pub async fn list_vaults(&self) -> VaultResult<Vec<Vault>> {
-        vault_store::list_vaults()
+        vault::list_vaults()
             .await
             .map_err(|e| VaultError::StorageError(e.to_string()))
     }
 
     /// Check if vault exists
     pub async fn vault_exists(&self, vault_name: &str) -> VaultResult<bool> {
-        Ok(vault_store::vault_exists(vault_name).await)
+        Ok(vault::vault_exists(vault_name).await)
     }
 
     /// Delete vault
     pub async fn delete_vault(&self, vault_id: &str) -> VaultResult<()> {
-        vault_store::delete_vault(vault_id)
+        vault::delete_vault(vault_id)
             .await
             .map_err(|e| VaultError::StorageError(e.to_string()))
     }

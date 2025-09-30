@@ -6,7 +6,8 @@
 use crate::commands::key_management::yubikey::device_commands::list_yubikeys;
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::prelude::*;
-use crate::storage::{KeyEntry, KeyRegistry, vault_store};
+use crate::services::key_management::shared::{KeyEntry, KeyRegistry};
+use crate::services::vault;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -70,7 +71,7 @@ pub async fn get_key_menu_data(
     info!(vault_id = %input.vault_id, "Getting key menu data for UI");
 
     // Load vault to get key order
-    let vault = vault_store::get_vault(&input.vault_id).await.map_err(|e| {
+    let vault = vault::get_vault(&input.vault_id).await.map_err(|e| {
         Box::new(CommandError::operation(
             ErrorCode::VaultNotFound,
             e.to_string(),

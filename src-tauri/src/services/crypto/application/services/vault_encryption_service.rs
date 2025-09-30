@@ -12,8 +12,9 @@ use crate::models::vault::{ArchiveContent, EncryptedArchive};
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::key_management::shared::{KeyEntry, KeyRegistryService};
+use crate::services::vault;
 use crate::services::vault::application::services::VaultService;
-use crate::storage::{path_management, vault_store};
+use crate::storage::path_management;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
@@ -57,11 +58,9 @@ impl VaultEncryptionService {
         // Step 1: Load vault using existing vault service
         progress_manager.set_progress(PROGRESS_ENCRYPT_KEY_RETRIEVAL, "Loading vault and keys...");
 
-        let mut vault = vault_store::load_vault(&input.vault_id)
-            .await
-            .map_err(|e| {
-                CryptoError::InvalidInput(format!("Vault '{}' not found: {}", input.vault_id, e))
-            })?;
+        let mut vault = vault::load_vault(&input.vault_id).await.map_err(|e| {
+            CryptoError::InvalidInput(format!("Vault '{}' not found: {}", input.vault_id, e))
+        })?;
 
         if vault.keys.is_empty() {
             return Err(CryptoError::ConfigurationError(
@@ -312,7 +311,7 @@ impl VaultEncryptionService {
         };
 
         vault.add_encrypted_archive(encrypted_archive);
-        vault_store::save_vault(vault)
+        vault::save_vault(vault)
             .await
             .map_err(|e| CryptoError::ConfigurationError(format!("Failed to save vault: {}", e)))?;
 

@@ -13,9 +13,10 @@
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
 use crate::models::{KeyReference, KeyState, KeyType};
 use crate::prelude::*;
+use crate::services::key_management::shared::KeyRegistry;
 use crate::services::key_management::yubikey::YubiKeyManager;
 use crate::services::key_management::yubikey::domain::models::{Pin, Serial};
-use crate::storage::{KeyRegistry, vault_store};
+use crate::services::vault;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -47,7 +48,7 @@ async fn create_yubikey_manager() -> Result<YubiKeyManager, Box<CommandError>> {
 
 /// Helper to validate vault exists and load it
 async fn load_vault(vault_id: &str) -> Result<crate::models::Vault, Box<CommandError>> {
-    vault_store::get_vault(vault_id).await.map_err(|e| {
+    vault::get_vault(vault_id).await.map_err(|e| {
         Box::new(
             CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
                 .with_recovery_guidance("Ensure the vault exists"),
@@ -87,7 +88,7 @@ async fn register_yubikey_in_vault(
         )
     })?;
 
-    vault_store::save_vault(&vault).await.map_err(|e| {
+    vault::save_vault(&vault).await.map_err(|e| {
         Box::new(
             CommandError::operation(ErrorCode::StorageFailed, e.to_string())
                 .with_recovery_guidance("Failed to save vault"),

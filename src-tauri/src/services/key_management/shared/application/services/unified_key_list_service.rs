@@ -121,7 +121,7 @@ impl UnifiedKeyListService {
         }
 
         // Get YubiKeys for vault by filtering all YubiKeys
-        let vault = crate::storage::vault_store::load_vault(&vault_id)
+        let vault = crate::services::vault::load_vault(&vault_id)
             .await
             .map_err(|e| format!("Failed to load vault: {}", e))?;
 

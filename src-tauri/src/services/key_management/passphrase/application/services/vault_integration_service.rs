@@ -1,6 +1,7 @@
 use crate::models::{KeyReference, KeyState, KeyType};
 use crate::services::key_management::passphrase::infrastructure::StorageError;
-use crate::storage::{KeyRegistry, vault_store};
+use crate::services::key_management::shared::KeyRegistry;
+use crate::services::vault;
 use chrono::Utc;
 
 pub type Result<T> = std::result::Result<T, VaultIntegrationError>;
@@ -42,7 +43,7 @@ impl VaultIntegrationService {
     }
 
     pub async fn validate_vault_has_passphrase_key(&self, vault_id: &str) -> Result<bool> {
-        let vault = vault_store::get_vault(vault_id)
+        let vault = vault::get_vault(vault_id)
             .await
             .map_err(|e| VaultIntegrationError::VaultNotFound(e.to_string()))?;
 
@@ -67,7 +68,7 @@ impl VaultIntegrationService {
         label: String,
         _public_key: String,
     ) -> Result<KeyReference> {
-        let mut vault = vault_store::get_vault(vault_id)
+        let mut vault = vault::get_vault(vault_id)
             .await
             .map_err(|e| VaultIntegrationError::VaultNotFound(e.to_string()))?;
 
@@ -90,7 +91,7 @@ impl VaultIntegrationService {
             .add_key_id(key_id)
             .map_err(VaultIntegrationError::VaultOperationFailed)?;
 
-        vault_store::save_vault(&vault)
+        vault::save_vault(&vault)
             .await
             .map_err(|e| VaultIntegrationError::VaultOperationFailed(e.to_string()))?;
 
