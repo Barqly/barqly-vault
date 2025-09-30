@@ -10,21 +10,16 @@
 //! - Simplified frontend integration with unified data structures
 
 use crate::commands::command_types::{CommandError, ErrorCode};
-use crate::commands::passphrase::{
-    PassphraseKeyInfo, list_available_passphrase_keys_for_vault, list_passphrase_keys_for_vault,
-};
-use crate::commands::yubikey::device_commands::{
-    PinStatus, YubiKeyState, YubiKeyStateInfo, list_yubikeys,
-};
-use crate::commands::yubikey::vault_commands::{
-    AvailableYubiKey, list_available_yubikeys_for_vault,
-};
-// Note: YubiKeyManager and Serial imports removed as we now delegate to Layer 2 commands
+use crate::commands::passphrase::PassphraseKeyInfo;
+use crate::commands::yubikey::device_commands::{PinStatus, YubiKeyState, YubiKeyStateInfo};
+use crate::commands::yubikey::vault_commands::AvailableYubiKey;
 use crate::models::KeyState;
 use crate::prelude::*;
-use crate::storage::{KeyRegistry, vault_store};
+use crate::services::key_management::shared::{
+    KeyEntry, KeyRegistryService, UnifiedKeyListService,
+};
+use crate::storage::vault_store;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 
 /// Filter options for key listing operations
 #[derive(Debug, Deserialize, Serialize, specta::Type)]
@@ -191,12 +186,11 @@ pub fn convert_available_yubikey_to_unified(
 pub async fn list_unified_keys(filter: KeyListFilter) -> Result<Vec<KeyInfo>, CommandError> {
     info!("Listing keys with filter: {:?}", filter);
 
-    match filter {
-        KeyListFilter::All => list_all_keys().await,
-        KeyListFilter::ForVault(vault_id) => list_vault_keys(vault_id).await,
-        KeyListFilter::AvailableForVault(vault_id) => list_available_for_vault(vault_id).await,
-        KeyListFilter::ConnectedOnly => list_connected_keys().await,
-    }
+    let service = UnifiedKeyListService::new();
+    service
+        .list_keys(filter)
+        .await
+        .map_err(|e| CommandError::operation(ErrorCode::InternalError, e.to_string()))
 }
 
 /// Simple test command to verify the unified API works
@@ -286,210 +280,6 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
     }
 }
 
-/// Implementation: List all registered keys across all vaults
-async fn list_all_keys() -> Result<Vec<KeyInfo>, CommandError> {
-    let mut all_keys = Vec::new();
-
-    // Get all YubiKeys using proper Layer 2 delegation
-    match list_yubikeys().await {
-        Ok(yubikey_list) => {
-            for yubikey in yubikey_list {
-                all_keys.push(convert_yubikey_to_unified(
-                    yubikey, None, // No specific vault context
-                ));
-            }
-        }
-        Err(e) => {
-            warn!("Failed to get all YubiKeys: {:?}", e);
-            // Continue with other key types even if YubiKeys fail
-        }
-    }
-
-    // For passphrase keys, we need to iterate through all keys in registry
-    // since we don't have a global list_all_passphrase_keys function yet
-    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
-    for (key_id, entry) in &registry.keys {
-        if let crate::storage::KeyEntry::Passphrase {
-            label,
-            created_at,
-            last_used,
-            public_key,
-            ..
-        } = entry
-        {
-            let passphrase_info = PassphraseKeyInfo {
-                id: key_id.clone(),
-                label: label.clone(),
-                public_key: public_key.clone(),
-                created_at: *created_at,
-                last_used: *last_used,
-                is_available: true,
-            };
-            all_keys.push(convert_passphrase_to_unified(passphrase_info, None));
-        }
-    }
-
-    Ok(all_keys)
-}
-
-/// Implementation: List keys for a specific vault
-async fn list_vault_keys(vault_id: String) -> Result<Vec<KeyInfo>, CommandError> {
-    let mut unified_keys = Vec::new();
-
-    // Get passphrase keys for this vault using proper Layer 2 delegation
-    match list_passphrase_keys_for_vault(vault_id.clone()).await {
-        Ok(passphrase_response) => {
-            for passphrase_key in passphrase_response.keys {
-                unified_keys.push(convert_passphrase_to_unified(
-                    passphrase_key,
-                    Some(vault_id.clone()),
-                ));
-            }
-        }
-        Err(e) => {
-            warn!(
-                "Failed to get passphrase keys for vault {}: {:?}",
-                vault_id, e
-            );
-            // Continue with other key types even if passphrase keys fail
-        }
-    }
-
-    // Get YubiKey keys by filtering all YubiKeys for this vault
-    // Note: We don't have a direct list_yubikeys_for_vault function yet,
-    // so we'll use list_yubikeys and filter
-    let vault = vault_store::get_vault(&vault_id)
-        .await
-        .map_err(|e| CommandError::operation(ErrorCode::VaultNotFound, e.to_string()))?;
-
-    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
-    let vault_yubikey_serials: HashSet<String> = vault
-        .keys
-        .iter()
-        .filter_map(|key_id| {
-            if let Some(crate::storage::KeyEntry::Yubikey { serial, .. }) = registry.get_key(key_id)
-            {
-                Some(serial.clone())
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    // Get all YubiKeys and filter for ones in this vault
-    match list_yubikeys().await {
-        Ok(all_yubikeys) => {
-            for yubikey in all_yubikeys {
-                if vault_yubikey_serials.contains(&yubikey.serial) {
-                    unified_keys.push(convert_yubikey_to_unified(yubikey, Some(vault_id.clone())));
-                }
-            }
-        }
-        Err(e) => {
-            warn!("Failed to get YubiKeys for vault filtering: {:?}", e);
-            // Continue even if YubiKey listing fails
-        }
-    }
-
-    Ok(unified_keys)
-}
-
-/// Implementation: List keys available to add to a vault (not currently in vault)
-async fn list_available_for_vault(vault_id: String) -> Result<Vec<KeyInfo>, CommandError> {
-    let mut available_keys = Vec::new();
-
-    // Get available passphrase keys using proper Layer 2 delegation
-    match list_available_passphrase_keys_for_vault(vault_id.clone()).await {
-        Ok(passphrase_response) => {
-            for passphrase_key in passphrase_response.keys {
-                available_keys.push(convert_passphrase_to_unified(
-                    passphrase_key,
-                    None, // Not in vault yet
-                ));
-            }
-        }
-        Err(e) => {
-            warn!(
-                "Failed to get available passphrase keys for vault {}: {:?}",
-                vault_id, e
-            );
-            // Continue with other key types even if passphrase keys fail
-        }
-    }
-
-    // Get available YubiKeys using proper Layer 2 delegation
-    match list_available_yubikeys_for_vault(vault_id.clone()).await {
-        Ok(yubikey_response) => {
-            for available_yubikey in yubikey_response {
-                available_keys.push(convert_available_yubikey_to_unified(
-                    available_yubikey,
-                    None, // Not in vault yet
-                ));
-            }
-        }
-        Err(e) => {
-            warn!(
-                "Failed to get available YubiKeys for vault {}: {:?}",
-                vault_id, e
-            );
-            // Continue even if YubiKey listing fails
-        }
-    }
-
-    Ok(available_keys)
-}
-
-/// Implementation: List only currently connected/available keys
-async fn list_connected_keys() -> Result<Vec<KeyInfo>, CommandError> {
-    let mut connected_keys = Vec::new();
-
-    // Get all YubiKeys and filter for connected ones
-    match list_yubikeys().await {
-        Ok(yubikey_list) => {
-            for yubikey in yubikey_list {
-                // Only include connected/available YubiKeys
-                if yubikey.state == YubiKeyState::Registered
-                    || yubikey.state == YubiKeyState::Orphaned
-                    || yubikey.state == YubiKeyState::Reused
-                {
-                    connected_keys.push(convert_yubikey_to_unified(
-                        yubikey, None, // No specific vault context
-                    ));
-                }
-            }
-        }
-        Err(e) => {
-            warn!("Failed to get connected YubiKeys: {:?}", e);
-            // Continue with other key types even if YubiKeys fail
-        }
-    }
-
-    // Passphrase keys are always "connected" - get all of them
-    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
-    for (key_id, entry) in &registry.keys {
-        if let crate::storage::KeyEntry::Passphrase {
-            label,
-            created_at,
-            last_used,
-            public_key,
-            ..
-        } = entry
-        {
-            let passphrase_info = PassphraseKeyInfo {
-                id: key_id.clone(),
-                label: label.clone(),
-                public_key: public_key.clone(),
-                created_at: *created_at,
-                last_used: *last_used,
-                is_available: true,
-            };
-            connected_keys.push(convert_passphrase_to_unified(passphrase_info, None));
-        }
-    }
-
-    Ok(connected_keys)
-}
-
 // Key management operations moved from vault/ domain to proper key_management/ domain
 
 /// Input for removing key from vault
@@ -505,55 +295,42 @@ pub struct RemoveKeyFromVaultResponse {
     pub success: bool,
 }
 
-/// Remove a key from a vault - moved from vault domain to key domain
+/// Remove a key from a vault - delegates to KeyRegistryService
 #[tauri::command]
 #[specta::specta]
 #[instrument(skip_all, fields(vault_id = %input.vault_id, key_id = %input.key_id))]
 pub async fn remove_key_from_vault(
     input: RemoveKeyFromVaultRequest,
 ) -> CommandResponse<RemoveKeyFromVaultResponse> {
-    // Key operation properly located in key_management domain
-    let mut vault = match crate::storage::vault_store::load_vault(&input.vault_id).await {
-        Ok(v) => v,
-        Err(_) => {
-            return Err(Box::new(CommandError {
-                code: ErrorCode::VaultNotFound,
-                message: format!("Vault '{}' not found", input.vault_id),
+    info!(
+        vault_id = %input.vault_id,
+        key_id = %input.key_id,
+        "Removing key from vault"
+    );
+
+    let service = KeyRegistryService::new();
+
+    service
+        .detach_key_from_vault(&input.key_id, &input.vault_id)
+        .await
+        .map(|_| RemoveKeyFromVaultResponse { success: true })
+        .map_err(|e| {
+            error!(
+                vault_id = %input.vault_id,
+                key_id = %input.key_id,
+                error = %e,
+                "Failed to remove key from vault"
+            );
+            Box::new(CommandError {
+                code: ErrorCode::InternalError,
+                message: format!("Failed to remove key from vault: {}", e),
                 details: None,
-                recovery_guidance: Some("Check vault ID".to_string()),
+                recovery_guidance: Some("Check vault and key IDs".to_string()),
                 user_actionable: true,
                 trace_id: None,
                 span_id: None,
-            }));
-        }
-    };
-
-    // Remove the key
-    if let Err(e) = vault.remove_key(&input.key_id) {
-        return Err(Box::new(CommandError {
-            code: ErrorCode::KeyNotFound,
-            message: e,
-            details: None,
-            recovery_guidance: Some("Check key ID".to_string()),
-            user_actionable: true,
-            trace_id: None,
-            span_id: None,
-        }));
-    }
-
-    // Save updated vault
-    match crate::storage::vault_store::save_vault(&vault).await {
-        Ok(_) => Ok(RemoveKeyFromVaultResponse { success: true }),
-        Err(e) => Err(Box::new(CommandError {
-            code: ErrorCode::StorageFailed,
-            message: "Failed to save vault".to_string(),
-            details: Some(e.to_string()),
-            recovery_guidance: Some("Check storage system".to_string()),
-            user_actionable: false,
-            trace_id: None,
-            span_id: None,
-        })),
-    }
+            })
+        })
 }
 
 /// Input for updating key label
@@ -570,13 +347,14 @@ pub struct UpdateKeyLabelResponse {
     pub success: bool,
 }
 
-/// Update a key's label - moved from vault domain to key domain
+/// Update a key's label - delegates to KeyRegistryService
 #[tauri::command]
 #[specta::specta]
 #[instrument(skip_all, fields(vault_id = %input.vault_id, key_id = %input.key_id))]
 pub async fn update_key_label(
     input: UpdateKeyLabelRequest,
 ) -> CommandResponse<UpdateKeyLabelResponse> {
+    // Validate input
     if input.new_label.trim().is_empty() {
         return Err(Box::new(CommandError {
             code: ErrorCode::InvalidInput,
@@ -589,98 +367,78 @@ pub async fn update_key_label(
         }));
     }
 
-    // Load the vault
-    let mut vault = match crate::storage::vault_store::load_vault(&input.vault_id).await {
-        Ok(v) => v,
-        Err(_) => {
-            return Err(Box::new(CommandError {
-                code: ErrorCode::KeyNotFound,
-                message: format!("Vault '{}' not found", input.vault_id),
+    info!(
+        vault_id = %input.vault_id,
+        key_id = %input.key_id,
+        new_label = %input.new_label,
+        "Updating key label"
+    );
+
+    let service = KeyRegistryService::new();
+
+    // Get existing key entry
+    let mut entry = service.get_key(&input.key_id).map_err(|e| {
+        Box::new(CommandError {
+            code: ErrorCode::KeyNotFound,
+            message: format!("Key not found: {}", e),
+            details: None,
+            recovery_guidance: Some("Check key ID".to_string()),
+            user_actionable: true,
+            trace_id: None,
+            span_id: None,
+        })
+    })?;
+
+    // Update label based on key type
+    match &mut entry {
+        KeyEntry::Passphrase { label, .. } => {
+            *label = input.new_label.trim().to_string();
+        }
+        KeyEntry::Yubikey { label, .. } => {
+            *label = input.new_label.trim().to_string();
+        }
+    }
+
+    // Save updated entry
+    service.update_key(&input.key_id, entry).map_err(|e| {
+        Box::new(CommandError {
+            code: ErrorCode::InternalError,
+            message: format!("Failed to update key label: {}", e),
+            details: None,
+            recovery_guidance: Some("Try again or check system logs".to_string()),
+            user_actionable: true,
+            trace_id: None,
+            span_id: None,
+        })
+    })?;
+
+    // Update vault timestamp
+    let mut vault = vault_store::load_vault(&input.vault_id)
+        .await
+        .map_err(|e| {
+            Box::new(CommandError {
+                code: ErrorCode::VaultNotFound,
+                message: format!("Vault not found: {}", e),
                 details: None,
-                recovery_guidance: None,
-                user_actionable: false,
+                recovery_guidance: Some("Check vault ID".to_string()),
+                user_actionable: true,
                 trace_id: None,
                 span_id: None,
-            }));
-        }
-    };
+            })
+        })?;
 
-    // Check if key exists in vault
-    if !vault.keys.contains(&input.key_id) {
-        return Err(Box::new(CommandError {
-            code: ErrorCode::KeyNotFound,
-            message: "Key not found in vault".to_string(),
-            details: None,
-            recovery_guidance: None,
-            user_actionable: false,
-            trace_id: None,
-            span_id: None,
-        }));
-    }
-
-    // Load key registry and update the key label
-    let mut registry = match crate::storage::KeyRegistry::load() {
-        Ok(r) => r,
-        Err(e) => {
-            return Err(Box::new(CommandError {
-                code: ErrorCode::StorageFailed,
-                message: "Failed to load key registry".to_string(),
-                details: Some(e.to_string()),
-                recovery_guidance: None,
-                user_actionable: false,
-                trace_id: None,
-                span_id: None,
-            }));
-        }
-    };
-
-    // Update the key label in the registry
-    if let Some(entry) = registry.get_key_mut(&input.key_id) {
-        match entry {
-            crate::storage::KeyEntry::Passphrase { label, .. } => {
-                *label = input.new_label.trim().to_string();
-            }
-            crate::storage::KeyEntry::Yubikey { label, .. } => {
-                *label = input.new_label.trim().to_string();
-            }
-        }
-    } else {
-        return Err(Box::new(CommandError {
-            code: ErrorCode::KeyNotFound,
-            message: "Key not found in registry".to_string(),
-            details: None,
-            recovery_guidance: None,
-            user_actionable: false,
-            trace_id: None,
-            span_id: None,
-        }));
-    }
-
-    // Save updated registry
-    if let Err(e) = registry.save() {
-        return Err(Box::new(CommandError {
-            code: ErrorCode::StorageFailed,
-            message: "Failed to save key registry".to_string(),
-            details: Some(e.to_string()),
-            recovery_guidance: None,
-            user_actionable: false,
-            trace_id: None,
-            span_id: None,
-        }));
-    }
-
-    // Save updated vault
     vault.updated_at = chrono::Utc::now();
-    match crate::storage::vault_store::save_vault(&vault).await {
-        Ok(_) => Ok(UpdateKeyLabelResponse { success: true }),
-        Err(e) => Err(Box::new(CommandError {
-            code: ErrorCode::StorageFailed,
-            message: "Failed to save vault".to_string(),
-            details: Some(e.to_string()),
+    vault_store::save_vault(&vault).await.map_err(|e| {
+        Box::new(CommandError {
+            code: ErrorCode::InternalError,
+            message: format!("Failed to save vault: {}", e),
+            details: None,
             recovery_guidance: None,
             user_actionable: false,
             trace_id: None,
             span_id: None,
-        })),
-    }
+        })
+    })?;
+
+    Ok(UpdateKeyLabelResponse { success: true })
 }
