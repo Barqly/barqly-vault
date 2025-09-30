@@ -2,9 +2,9 @@
 //!
 //! Handles decryption using YubiKey hardware tokens via age CLI plugin.
 
-use crate::crypto;
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
+use crate::services::crypto::infrastructure as crypto;
 use crate::services::key_management::shared::KeyEntry;
 
 /// Service for YubiKey-based decryption operations

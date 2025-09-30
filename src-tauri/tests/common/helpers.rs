@@ -245,7 +245,9 @@ pub struct ValidationHelpers;
 
 impl ValidationHelpers {
     /// Validate that a key pair is properly formatted
-    pub fn validate_key_pair_format(key_pair: &barqly_vault_lib::crypto::KeyPair) -> bool {
+    pub fn validate_key_pair_format(
+        key_pair: &barqly_vault_lib::services::crypto::infrastructure::KeyPair,
+    ) -> bool {
         let public_key = &key_pair.public_key;
         let private_key = &key_pair.private_key;
 

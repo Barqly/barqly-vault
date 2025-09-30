@@ -15,9 +15,10 @@ use barqly_vault_lib::{
         file::create_manifest,
         types::ValidateInput,
     },
-    crypto::encrypt_data,
     file_ops::{FileOpsConfig, FileSelection},
-    services::key_management::passphrase::generate_keypair,
+    services::{
+        crypto::infrastructure::encrypt_data, key_management::passphrase::generate_keypair,
+    },
     storage,
 };
 use rand::Rng;

@@ -7,7 +7,7 @@
 //! - Performance with different data sizes
 
 use crate::common::cleanup::TestCleanup;
-use barqly_vault_lib::crypto::{decrypt_data, encrypt_data, CryptoError};
+use barqly_vault_lib::services::crypto::infrastructure::{decrypt_data, encrypt_data, CryptoError};
 use barqly_vault_lib::services::key_management::passphrase::generate_keypair;
 
 #[test]
@@ -108,7 +108,7 @@ fn test_encrypt_large_data() {
 #[test]
 fn test_encrypt_with_invalid_public_key() {
     // Arrange
-    let invalid_key = barqly_vault_lib::crypto::PublicKey::from("invalid-key".to_string());
+    let invalid_key = barqly_vault_lib::services::crypto::infrastructure::PublicKey::from("invalid-key".to_string());
     let test_data = b"test";
 
     // Act
@@ -126,7 +126,7 @@ fn test_decrypt_with_invalid_private_key() {
     let keypair = generate_keypair().unwrap();
     let test_data = b"test";
     let encrypted = encrypt_data(test_data, &keypair.public_key).unwrap();
-    let invalid_private_key = barqly_vault_lib::crypto::PrivateKey::from(
+    let invalid_private_key = barqly_vault_lib::services::crypto::infrastructure::PrivateKey::from(
         secrecy::SecretString::from("AGE-SECRET-KEY-INVALID".to_string()),
     );
 

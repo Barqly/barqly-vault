@@ -7,7 +7,7 @@
 
 pub mod commands; // Keep public - this is the UI interface
 pub mod constants; // Centralized constants for the application
-pub mod crypto; // Public for tests, but should be treated as private for external use
+// Crypto module moved to services/crypto/infrastructure for proper DDD architecture
 pub mod error; // Centralized error handling infrastructure
 pub mod file_ops; // Public for tests, but should be treated as private for external use
 pub mod logging; // Centralized logging and tracing infrastructure

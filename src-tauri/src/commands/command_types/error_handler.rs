@@ -51,12 +51,12 @@ impl ErrorHandler {
     #[instrument(skip(self, result), fields(context = %context))]
     pub fn handle_crypto_operation_error<T>(
         &self,
-        result: Result<T, crate::crypto::CryptoError>,
+        result: Result<T, crate::services::crypto::infrastructure::CryptoError>,
         context: &str,
     ) -> Result<T, Box<CommandError>> {
         result.map_err(|e| {
             let (error_code, error_message) = match &e {
-                crate::crypto::CryptoError::WrongPassphrase => {
+                crate::services::crypto::infrastructure::CryptoError::WrongPassphrase => {
                     debug!(
                         operation = %context,
                         error_type = "WrongPassphrase",
@@ -67,7 +67,7 @@ impl ErrorHandler {
                         "Incorrect passphrase for the selected key".to_string(),
                     )
                 }
-                crate::crypto::CryptoError::InvalidKeyFormat(msg) => {
+                crate::services::crypto::infrastructure::CryptoError::InvalidKeyFormat(msg) => {
                     error!(
                         operation = %context,
                         error_type = "InvalidKeyFormat",
@@ -76,7 +76,7 @@ impl ErrorHandler {
                     );
                     (ErrorCode::InvalidKey, format!("Invalid key format: {msg}"))
                 }
-                crate::crypto::CryptoError::DecryptionFailed(msg) => {
+                crate::services::crypto::infrastructure::CryptoError::DecryptionFailed(msg) => {
                     error!(
                         operation = %context,
                         error_type = "DecryptionFailed",
@@ -88,7 +88,7 @@ impl ErrorHandler {
                         format!("Decryption failed: {msg}"),
                     )
                 }
-                crate::crypto::CryptoError::EncryptionFailed(msg) => {
+                crate::services::crypto::infrastructure::CryptoError::EncryptionFailed(msg) => {
                     error!(
                         operation = %context,
                         error_type = "EncryptionFailed",
@@ -103,7 +103,7 @@ impl ErrorHandler {
                 _ => {
                     error!(
                         operation = %context,
-                        error_type = %std::any::type_name::<crate::crypto::CryptoError>(),
+                        error_type = %std::any::type_name::<crate::services::crypto::infrastructure::CryptoError>(),
                         error = %e,
                         "Crypto operation failed"
                     );

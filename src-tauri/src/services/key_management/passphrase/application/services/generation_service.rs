@@ -20,10 +20,12 @@ impl From<StorageError> for GenerationError {
     }
 }
 
-impl From<crate::crypto::CryptoError> for GenerationError {
-    fn from(err: crate::crypto::CryptoError) -> Self {
+impl From<crate::services::crypto::infrastructure::CryptoError> for GenerationError {
+    fn from(err: crate::services::crypto::infrastructure::CryptoError) -> Self {
         match err {
-            crate::crypto::CryptoError::EncryptionFailed(msg) => Self::EncryptionFailed(msg),
+            crate::services::crypto::infrastructure::CryptoError::EncryptionFailed(msg) => {
+                Self::EncryptionFailed(msg)
+            }
             _ => Self::KeyGenerationFailed(err.to_string()),
         }
     }

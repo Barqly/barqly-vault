@@ -6,10 +6,10 @@
 use crate::commands::crypto::update_global_progress;
 use crate::commands::types::{ErrorHandler, ProgressManager};
 use crate::constants::*;
-use crate::crypto;
 use crate::file_ops::ArchiveOperation;
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
+use crate::services::crypto::infrastructure as crypto;
 
 #[derive(Debug)]
 pub struct CoreEncryptionService;

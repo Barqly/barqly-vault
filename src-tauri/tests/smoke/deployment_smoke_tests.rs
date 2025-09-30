@@ -69,7 +69,7 @@ fn test_critical_crypto_key_generation() {
 #[test]
 fn test_critical_error_handling() {
     // Test that error handling works correctly
-    let invalid_key = barqly_vault_lib::crypto::PublicKey::from("invalid-key".to_string());
+    let invalid_key = barqly_vault_lib::services::crypto::infrastructure::PublicKey::from("invalid-key".to_string());
     let test_data = b"test";
     
     let result = encrypt_data(test_data, &invalid_key);

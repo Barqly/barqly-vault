@@ -10,7 +10,7 @@
 
 use crate::common::cleanup::TestCleanup;
 use crate::common::helpers::TestAssertions;
-use barqly_vault_lib::crypto::{decrypt_data, encrypt_data};
+use barqly_vault_lib::services::crypto::infrastructure::{decrypt_data, encrypt_data};
 use barqly_vault_lib::services::key_management::passphrase::{
     decrypt_private_key, encrypt_private_key, generate_keypair,
 };
@@ -252,7 +252,9 @@ fn should_reject_decryption_with_wrong_key() {
 #[test]
 fn should_handle_invalid_public_key_gracefully() {
     // Given: An invalid public key
-    let invalid_key = barqly_vault_lib::crypto::PublicKey::from("invalid-key".to_string());
+    let invalid_key = barqly_vault_lib::services::crypto::infrastructure::PublicKey::from(
+        "invalid-key".to_string(),
+    );
     let test_data = b"test";
 
     // When: Attempting to encrypt with invalid key

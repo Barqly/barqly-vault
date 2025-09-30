@@ -2,9 +2,9 @@
 //!
 //! Handles decryption using passphrase-protected private keys.
 
-use crate::crypto;
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
+use crate::services::crypto::infrastructure as crypto;
 use crate::services::key_management::passphrase;
 use crate::storage;
 use age::secrecy::SecretString;

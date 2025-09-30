@@ -10,7 +10,7 @@
 
 use crate::common::fixtures::CryptoFixtures;
 use crate::common::helpers::{PerformanceHelper, TestAssertions};
-use barqly_vault_lib::crypto::{CryptoError, decrypt_data, encrypt_data};
+use barqly_vault_lib::services::crypto::infrastructure::{CryptoError, decrypt_data, encrypt_data};
 use rstest::*;
 
 // ============================================================================
@@ -72,7 +72,9 @@ fn should_encrypt_large_data_within_performance_target(
 #[test]
 fn should_fail_encryption_with_invalid_public_key() {
     // Given: An invalid public key and test data
-    let invalid_key = barqly_vault_lib::crypto::PublicKey::from("invalid-key".to_string());
+    let invalid_key = barqly_vault_lib::services::crypto::infrastructure::PublicKey::from(
+        "invalid-key".to_string(),
+    );
     let test_data = b"test data";
 
     // When: Attempting to encrypt with invalid key
@@ -139,7 +141,7 @@ fn should_fail_decryption_with_invalid_private_key() {
     let keypair = CryptoFixtures::create_test_key_pair("test_invalid_decryption");
     let test_data = b"test data";
     let encrypted = encrypt_data(test_data, &keypair.public_key).unwrap();
-    let invalid_private_key = barqly_vault_lib::crypto::PrivateKey::from(
+    let invalid_private_key = barqly_vault_lib::services::crypto::infrastructure::PrivateKey::from(
         secrecy::SecretString::from("AGE-SECRET-KEY-INVALID".to_string()),
     );
 

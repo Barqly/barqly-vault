@@ -10,9 +10,11 @@
 use crate::common::cleanup::TestCleanup;
 use crate::common::helpers::TestAssertions;
 use barqly_vault_lib::{
-    crypto::{decrypt_data, encrypt_data},
     file_ops::{FileOpsConfig, FileSelection},
-    services::key_management::passphrase::generate_keypair,
+    services::{
+        crypto::infrastructure::{decrypt_data, encrypt_data},
+        key_management::passphrase::generate_keypair,
+    },
 };
 use std::{fs, path::PathBuf, thread, time::Duration};
 use tempfile::TempDir;
@@ -26,7 +28,7 @@ struct TestEnvironment {
     temp_dir: TempDir,
     test_files: Vec<PathBuf>,
     encrypted_data: Vec<u8>,
-    keypair: barqly_vault_lib::crypto::KeyPair,
+    keypair: barqly_vault_lib::services::crypto::infrastructure::KeyPair,
     _cleanup: TestCleanup,
 }
 

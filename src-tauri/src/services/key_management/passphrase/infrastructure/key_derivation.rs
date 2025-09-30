@@ -3,8 +3,10 @@ use age::x25519::Identity;
 use std::io::Write;
 use std::str::FromStr;
 
-use crate::crypto::{CryptoError, KeyPair, PrivateKey, PublicKey, Result};
 use crate::prelude::*;
+use crate::services::crypto::infrastructure::{
+    CryptoError, KeyPair, PrivateKey, PublicKey, Result,
+};
 
 pub fn generate_keypair() -> Result<KeyPair> {
     let identity = Identity::generate();
