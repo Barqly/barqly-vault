@@ -71,7 +71,7 @@ async getEncryptionStatus(input: GetEncryptionStatusInput) : Promise<Result<Encr
 }
 },
 /**
- * Decrypt files with progress streaming
+ * Decrypt files with progress streaming - delegates to DecryptionOrchestrationService
  */
 async decryptData(input: DecryptDataInput) : Promise<Result<DecryptionResult, CommandError>> {
     try {
@@ -170,7 +170,7 @@ async getKeyMenuData(input: GetKeyMenuDataRequest) : Promise<Result<GetKeyMenuDa
 }
 },
 /**
- * Remove a key from a vault - moved from vault domain to key domain
+ * Remove a key from a vault - delegates to KeyRegistryService
  */
 async removeKeyFromVault(input: RemoveKeyFromVaultRequest) : Promise<Result<RemoveKeyFromVaultResponse, CommandError>> {
     try {
@@ -181,7 +181,7 @@ async removeKeyFromVault(input: RemoveKeyFromVaultRequest) : Promise<Result<Remo
 }
 },
 /**
- * Update a key's label - moved from vault domain to key domain
+ * Update a key's label - delegates to KeyRegistryService
  */
 async updateKeyLabel(input: UpdateKeyLabelRequest) : Promise<Result<UpdateKeyLabelResponse, CommandError>> {
     try {
