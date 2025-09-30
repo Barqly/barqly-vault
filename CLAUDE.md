@@ -41,12 +41,8 @@ make validate  # MUST PASS - mirrors CI exactly
 ## Agent-Specific Patterns
 
 ### Generate TypeScript Types
-
-After adding new Tauri commands:
-
-```bash
-cd src-tauri && cargo build --features generate-types
-```
+- Read docs/common/api-command-registration.md for command registration process
+- Must register new commands in both collect_commands! and tauri::generate_handler! macros
 
 ### Debug Mode
 
