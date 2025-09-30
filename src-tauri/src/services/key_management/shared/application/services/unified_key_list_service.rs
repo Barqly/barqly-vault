@@ -4,17 +4,18 @@
 //! Provides filtering and coordination logic for cross-subsystem key operations.
 
 use crate::commands::key_management::unified_keys::{
-    convert_available_yubikey_to_unified, convert_passphrase_to_unified, convert_yubikey_to_unified,
-    KeyInfo, KeyListFilter,
+    KeyInfo, KeyListFilter, convert_available_yubikey_to_unified, convert_passphrase_to_unified,
+    convert_yubikey_to_unified,
 };
 use crate::commands::passphrase::{
-    list_available_passphrase_keys_for_vault, list_passphrase_keys_for_vault, PassphraseKeyInfo,
+    PassphraseKeyInfo, list_available_passphrase_keys_for_vault, list_passphrase_keys_for_vault,
 };
-use crate::commands::yubikey::device_commands::{list_yubikeys, YubiKeyStateInfo};
-use crate::commands::yubikey::vault_commands::{list_available_yubikeys_for_vault, AvailableYubiKey};
+use crate::commands::yubikey::device_commands::list_yubikeys;
+use crate::commands::yubikey::vault_commands::list_available_yubikeys_for_vault;
 use crate::prelude::*;
+use crate::services::key_management::shared::KeyEntry;
 use crate::services::key_management::shared::application::services::KeyRegistryService;
-use crate::storage::KeyEntry;
+use std::collections::HashSet;
 
 /// Service for unified key listing across all key types
 #[derive(Debug)]
@@ -65,37 +66,31 @@ impl UnifiedKeyListService {
         }
 
         // Get all passphrase keys from registry using KeyRegistryService
-        let key_infos = self
-            .registry_service
-            .list_keys()
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
-
-        for key_info in key_infos {
-            // list_keys returns storage::KeyInfo, need to get full entry to check type
-            let entry = self.registry_service.get_key(&key_info.id).ok();
-
-            if let Some(KeyEntry::Passphrase {
-                label,
-                created_at,
-                last_used,
-                public_key,
-                ..
-            }) = entry
-            {
-                let passphrase_info = PassphraseKeyInfo {
-                    id: key_info.id.clone(),
-                    label,
-                    public_key,
-                    created_at,
-                    last_used,
-                    is_available: true,
-                };
-                all_keys.push(
-                    convert_passphrase_to_unified(
-                        passphrase_info,
-                        None,
-                    ),
-                );
+        match self.registry_service.load_registry() {
+            Ok(registry) => {
+                for (key_id, entry) in registry.keys {
+                    if let KeyEntry::Passphrase {
+                        label,
+                        created_at,
+                        last_used,
+                        public_key,
+                        ..
+                    } = entry
+                    {
+                        let passphrase_info = PassphraseKeyInfo {
+                            id: key_id,
+                            label,
+                            public_key,
+                            created_at,
+                            last_used,
+                            is_available: true,
+                        };
+                        all_keys.push(convert_passphrase_to_unified(passphrase_info, None));
+                    }
+                }
+            }
+            Err(e) => {
+                warn!("Failed to load key registry: {:?}", e);
             }
         }
 
@@ -109,16 +104,11 @@ impl UnifiedKeyListService {
     ) -> Result<Vec<KeyInfo>, Box<dyn std::error::Error>> {
         let mut unified_keys = Vec::new();
 
-        // Get passphrase keys for vault
+        // Get passphrase keys for vault using Layer 2 command
         match list_passphrase_keys_for_vault(vault_id.clone()).await {
-            Ok(passphrase_keys) => {
-                for key in passphrase_keys {
-                    unified_keys.push(
-                        convert_passphrase_to_unified(
-                            key,
-                            Some(vault_id.clone()),
-                        ),
-                    );
+            Ok(passphrase_response) => {
+                for key in passphrase_response.keys {
+                    unified_keys.push(convert_passphrase_to_unified(key, Some(vault_id.clone())));
                 }
             }
             Err(e) => {
@@ -130,23 +120,35 @@ impl UnifiedKeyListService {
             }
         }
 
-        // Get YubiKeys for vault (using existing command delegation)
+        // Get YubiKeys for vault by filtering all YubiKeys
+        let vault = crate::storage::vault_store::load_vault(&vault_id)
+            .await
+            .map_err(|e| format!("Failed to load vault: {}", e))?;
+
+        let registry = self
+            .registry_service
+            .load_registry()
+            .map_err(|e| format!("Failed to load registry: {}", e))?;
+
+        let vault_yubikey_serials: HashSet<String> = vault
+            .keys
+            .iter()
+            .filter_map(|key_id| {
+                if let Some(KeyEntry::Yubikey { serial, .. }) = registry.get_key(key_id) {
+                    Some(serial.clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // Get all YubiKeys and filter for ones in this vault
         match list_yubikeys().await {
-            Ok(yubikey_list) => {
-                // Filter YubiKeys that belong to this vault
-                let vault = crate::storage::vault_store::load_vault(&vault_id).await.ok();
-                if let Some(vault) = vault {
-                    for yubikey in yubikey_list {
-                        // Check if this YubiKey's serial is in vault's keys
-                        let yubikey_id = format!("yubikey_{}", yubikey.serial);
-                        if vault.keys.contains(&yubikey_id) {
-                            unified_keys.push(
-                                convert_yubikey_to_unified(
-                                    yubikey,
-                                    Some(vault_id.clone()),
-                                ),
-                            );
-                        }
+            Ok(all_yubikeys) => {
+                for yubikey in all_yubikeys {
+                    if vault_yubikey_serials.contains(&yubikey.serial) {
+                        unified_keys
+                            .push(convert_yubikey_to_unified(yubikey, Some(vault_id.clone())));
                     }
                 }
             }
@@ -154,7 +156,7 @@ impl UnifiedKeyListService {
                 warn!(
                     vault_id = %vault_id,
                     error = ?e,
-                    "Failed to get YubiKeys for vault"
+                    "Failed to get YubiKeys for vault filtering"
                 );
             }
         }
@@ -169,15 +171,11 @@ impl UnifiedKeyListService {
     ) -> Result<Vec<KeyInfo>, Box<dyn std::error::Error>> {
         let mut available_keys = Vec::new();
 
-        // Get available passphrase keys
+        // Get available passphrase keys using Layer 2 command
         match list_available_passphrase_keys_for_vault(vault_id.clone()).await {
-            Ok(passphrase_keys) => {
-                for key in passphrase_keys {
-                    available_keys.push(
-                        convert_passphrase_to_unified(
-                            key, None,
-                        ),
-                    );
+            Ok(passphrase_response) => {
+                for key in passphrase_response.keys {
+                    available_keys.push(convert_passphrase_to_unified(key, None));
                 }
             }
             Err(e) => {
@@ -189,15 +187,11 @@ impl UnifiedKeyListService {
             }
         }
 
-        // Get available YubiKeys
+        // Get available YubiKeys using Layer 2 command
         match list_available_yubikeys_for_vault(vault_id.clone()).await {
             Ok(available_yubikeys) => {
                 for yubikey in available_yubikeys {
-                    available_keys.push(
-                        convert_available_yubikey_to_unified(
-                            yubikey, None,
-                        ),
-                    );
+                    available_keys.push(convert_available_yubikey_to_unified(yubikey, None));
                 }
             }
             Err(e) => {
@@ -217,36 +211,31 @@ impl UnifiedKeyListService {
         let mut connected_keys = Vec::new();
 
         // All passphrase keys are always "connected" (available on disk)
-        let key_infos = self
-            .registry_service
-            .list_keys()
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
-
-        for key_info in key_infos {
-            let entry = self.registry_service.get_key(&key_info.id).ok();
-
-            if let Some(KeyEntry::Passphrase {
-                label,
-                created_at,
-                last_used,
-                public_key,
-                ..
-            }) = entry
-            {
-                let passphrase_info = PassphraseKeyInfo {
-                    id: key_info.id.clone(),
-                    label,
-                    public_key,
-                    created_at,
-                    last_used,
-                    is_available: true,
-                };
-                connected_keys.push(
-                    convert_passphrase_to_unified(
-                        passphrase_info,
-                        None,
-                    ),
-                );
+        match self.registry_service.load_registry() {
+            Ok(registry) => {
+                for (key_id, entry) in registry.keys {
+                    if let KeyEntry::Passphrase {
+                        label,
+                        created_at,
+                        last_used,
+                        public_key,
+                        ..
+                    } = entry
+                    {
+                        let passphrase_info = PassphraseKeyInfo {
+                            id: key_id,
+                            label,
+                            public_key,
+                            created_at,
+                            last_used,
+                            is_available: true,
+                        };
+                        connected_keys.push(convert_passphrase_to_unified(passphrase_info, None));
+                    }
+                }
+            }
+            Err(e) => {
+                warn!("Failed to load key registry: {:?}", e);
             }
         }
 
@@ -261,11 +250,7 @@ impl UnifiedKeyListService {
                             | crate::commands::yubikey::device_commands::YubiKeyState::Orphaned
                             | crate::commands::yubikey::device_commands::YubiKeyState::Reused
                     ) {
-                        connected_keys.push(
-                            convert_yubikey_to_unified(
-                                yubikey, None,
-                            ),
-                        );
+                        connected_keys.push(convert_yubikey_to_unified(yubikey, None));
                     }
                 }
             }
