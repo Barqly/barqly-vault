@@ -19,7 +19,11 @@ pub use traits::{
 pub use registry::{DeviceRegistry, RegistryStatistics};
 
 // Re-export key registry infrastructure types
-pub use infrastructure::{KeyEntry, KeyRegistry, generate_key_id, generate_recovery_code};
+pub use infrastructure::{
+    KeyEntry, KeyInfo, KeyRegistry, delete_key, generate_key_id, generate_recovery_code,
+    get_key_info, key_exists, list_keys, load_encrypted_key, save_encrypted_key,
+    save_encrypted_key_with_metadata, save_yubikey_metadata,
+};
 
 // Re-export application layer services
 pub use application::{KeyManagementError, KeyRegistryService, UnifiedKeyListService};

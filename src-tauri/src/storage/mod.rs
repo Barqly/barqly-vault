@@ -53,7 +53,8 @@ pub use errors::StorageError;
 // TODO: Remove these after all callers migrate to key_management::shared
 pub use crate::services::key_management::shared::{KeyEntry, KeyRegistry, generate_key_id};
 
-pub use key_store::{
+// Re-export from new location (key_store module deprecated)
+pub use crate::services::key_management::shared::infrastructure::{
     KeyInfo, delete_key, get_key_info, key_exists, list_keys, load_encrypted_key,
     save_encrypted_key, save_encrypted_key_with_metadata, save_yubikey_metadata,
 };

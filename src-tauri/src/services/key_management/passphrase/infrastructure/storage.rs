@@ -1,4 +1,6 @@
-use crate::storage::{self, KeyEntry, KeyRegistry};
+use crate::services::key_management::shared::infrastructure::{
+    KeyEntry, KeyRegistry, load_encrypted_key, save_encrypted_key,
+};
 use chrono::Utc;
 use std::path::PathBuf;
 
@@ -37,13 +39,12 @@ impl PassphraseKeyRepository {
         encrypted_key: &[u8],
         public_key: Option<&str>,
     ) -> Result<PathBuf> {
-        storage::save_encrypted_key(label, encrypted_key, public_key)
+        save_encrypted_key(label, encrypted_key, public_key)
             .map_err(|e| StorageError::KeySaveFailed(e.to_string()))
     }
 
     pub fn load_encrypted_key(filename: &str) -> Result<Vec<u8>> {
-        storage::key_store::load_encrypted_key(filename)
-            .map_err(|e| StorageError::KeyFileLoadFailed(e.to_string()))
+        load_encrypted_key(filename).map_err(|e| StorageError::KeyFileLoadFailed(e.to_string()))
     }
 
     pub fn register_key(

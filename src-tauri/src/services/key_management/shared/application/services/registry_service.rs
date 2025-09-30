@@ -10,9 +10,11 @@
 //! - Comprehensive error handling and logging
 
 use crate::prelude::*;
-use crate::services::key_management::shared::infrastructure::{KeyEntry, KeyRegistry};
+use crate::services::key_management::shared::infrastructure::{
+    KeyEntry, KeyInfo, KeyRegistry, list_keys as list_key_files,
+};
 use crate::services::vault;
-use crate::storage::{self, KeyInfo};
+use crate::storage; // For path_management (shared infrastructure)
 
 /// Error types for key registry operations
 #[derive(Debug, thiserror::Error)]
@@ -85,7 +87,7 @@ impl KeyRegistryService {
     pub fn list_keys(&self) -> Result<Vec<KeyInfo>> {
         debug!("Listing all keys");
 
-        storage::list_keys().map_err(|e| {
+        list_key_files().map_err(|e| {
             error!(error = %e, "Failed to list keys");
             KeyManagementError::StorageError(e.to_string())
         })

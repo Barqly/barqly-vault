@@ -6,7 +6,7 @@
 use super::metrics::CacheMetrics;
 use super::ttl_lru::TtlLruCache;
 use crate::constants::{DEFAULT_CACHE_SIZE, DIRECTORY_CACHE_TTL_SECONDS, KEY_CACHE_TTL_SECONDS};
-use crate::storage::KeyInfo;
+use crate::services::key_management::shared::infrastructure::KeyInfo;
 use std::sync::{Arc, Mutex};
 
 /// Cache manager for storage operations

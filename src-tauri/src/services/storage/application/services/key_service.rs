@@ -1,8 +1,8 @@
 use crate::commands::types::ErrorCode;
 use crate::error::ErrorHandler;
+use crate::services::key_management::shared::{delete_key, list_keys};
 use crate::services::storage::domain::models::KeyMetadata;
 use crate::services::storage::domain::{StorageError, StorageResult, StorageRules};
-use crate::storage::{delete_key, list_keys};
 
 pub struct KeyService;
 
