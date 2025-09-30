@@ -144,24 +144,67 @@
 
 ## Phase 5: Storage Dissolution
 
-### Milestone 5.1: Move vault_store
-- [ ] Move `storage/vault_store/` → `vault/infrastructure/metadata_persistence/`
-- [ ] Update all vault_store imports
-- [ ] Verify: `make validate-rust` passes
+**Goal:** Eliminate the storage "fake domain" by moving components to proper domain ownership. Storage was a technical layer masquerading as a domain - dissolve it into proper infrastructure.
 
-### Milestone 5.2: Move Remaining Storage Utilities
-- [ ] Assess `storage/path_management/` - keep as shared infrastructure or move
-- [ ] Assess `storage/cache/` - move to crypto/infrastructure or remove
-- [ ] Update imports as needed
-- [ ] Verify: `make validate-rust` passes
+**Current Storage Analysis (18 import sites across codebase):**
 
-### Milestone 5.3: Delete Storage Module
-- [ ] Verify NO remaining `use crate::storage::KeyRegistry` references
-- [ ] Verify NO remaining `use crate::storage::vault_store` references
-- [ ] Delete `src-tauri/src/storage/` directory (except path_management if keeping)
-- [ ] Remove storage from `src-tauri/src/lib.rs`
+**Components to Migrate:**
+1. `vault_store/` (7 functions) → belongs to **Vault domain**
+2. `key_registry.rs` → ✅ Already moved to `key_management/infrastructure` (Phase 1)
+3. `key_store/` (8 functions + metadata) → belongs to **Key Management domain**
+4. `path_management/` (5 directories + validation) → **Shared Infrastructure** (keep location)
+5. `cache/` (metrics + storage cache) → **Shared Infrastructure** OR services/storage
+6. `metadata.rs` (VaultMetadata) → belongs to **Vault domain**
+7. `errors.rs` (StorageError) → **Shared Infrastructure**
+
+### Milestone 5.1: Move vault_store to Vault Domain
+- [ ] Backup current vault_store files
+- [ ] Create `services/vault/infrastructure/persistence/` directory
+- [ ] Move `storage/vault_store/persistence.rs` → `vault/infrastructure/persistence/vault_persistence.rs`
+- [ ] Move `storage/metadata.rs` (VaultMetadata) → `vault/infrastructure/persistence/metadata.rs`
+- [ ] Update `vault_store` imports (7 files):
+  - commands/key_management/unified_keys.rs
+  - commands/key_management/yubikey/vault_commands.rs
+  - services/crypto/application/services/vault_encryption_service.rs
+  - services/key_management/passphrase/application/services/vault_integration_service.rs
+  - services/key_management/shared/application/services/registry_service.rs
+  - services/vault/infrastructure/vault_repository.rs
+  - Plus any in commands/vault if exists
+- [ ] Update vault domain mod.rs exports
 - [ ] Verify: `make validate-rust` passes
-- [ ] Commit: "feat: dissolve storage module into domain infrastructure"
+- [ ] Commit: "feat: move vault_store to vault domain infrastructure"
+
+### Milestone 5.2: Move key_store to Key Management Domain
+- [ ] Create `services/key_management/shared/infrastructure/key_storage/` directory
+- [ ] Move `storage/key_store/*` → `key_management/shared/infrastructure/key_storage/`
+  - mod.rs, operations.rs, validation.rs, metadata.rs
+- [ ] Update key_store imports (8 files):
+  - services/key_management/shared/application/services/registry_service.rs (uses KeyInfo, vault_store)
+  - services/key_management/passphrase/infrastructure/storage.rs
+  - services/storage/application/services/key_service.rs (uses delete_key, list_keys)
+  - Any commands using load_encrypted_key, save_encrypted_key
+- [ ] Update key_management mod.rs exports
+- [ ] Verify: `make validate-rust` passes
+- [ ] Commit: "feat: move key_store to key_management infrastructure"
+
+### Milestone 5.3: Handle Shared Infrastructure (path_management, cache, errors)
+- [ ] **Option A: Keep in place** - path_management is truly shared (used by multiple domains)
+- [ ] **Option B: Move to root infrastructure/** - create src-tauri/src/infrastructure/
+- [ ] Decision: Assess usage patterns
+- [ ] Update imports if moved
+- [ ] Verify: `make validate-rust` passes
+- [ ] Commit: "refactor: consolidate shared infrastructure utilities"
+
+### Milestone 5.4: Eliminate storage Module
+- [ ] Verify NO `use crate::storage::KeyRegistry` (should be key_management::shared)
+- [ ] Verify NO `use crate::storage::vault_store` (should be vault::infrastructure)
+- [ ] Verify NO `use crate::storage::key_store` (should be key_management::infrastructure)
+- [ ] Update remaining backward compatibility re-exports to point to new locations
+- [ ] Remove `pub mod storage` from src-tauri/src/lib.rs
+- [ ] Delete `src-tauri/src/storage/` directory (or rename to `infrastructure/` if keeping shared utils)
+- [ ] Verify: `make validate-rust` passes - all tests must pass
+- [ ] Manual test: full encryption/decryption workflow
+- [ ] Commit: "feat: dissolve storage fake domain into proper domain infrastructure"
 
 ---
 
