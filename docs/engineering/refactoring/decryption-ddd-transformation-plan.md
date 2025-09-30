@@ -103,22 +103,41 @@
 
 ## Phase 4: unified_keys.rs Refactoring
 
-### Milestone 4.1: Analysis & Planning
-- [ ] Analyze 683-line `commands/key_management/unified_keys.rs`
-- [ ] Identify logical groupings (list ops, vault ops, label ops)
-- [ ] Determine module boundaries
-- [ ] Plan decomposition structure
+**Goal:** Transform 683-line monolithic command file using Service-First approach. Eliminate tech debt: architectural violations, code duplication, missing service delegation.
 
-### Milestone 4.2: Module Decomposition
-- [ ] Create `unified_keys/` directory
-- [ ] Create `list_operations.rs` (~150 lines) - list filtering logic
-- [ ] Create `vault_operations.rs` (~200 lines) - vault key management
-- [ ] Create `label_operations.rs` (~100 lines) - label updates
-- [ ] Create `mod.rs` with exports
-- [ ] Preserve all business logic exactly
-- [ ] Update imports throughout codebase
+### Milestone 4.1: Complete UnifiedKeyListService ✅ STARTED
+- [x] Backup original file to `docs/engineering/backups/unified_keys_original.rs`
+- [x] Analyze 683-line file: 6 types, 3 converters, 5 list functions, 2 operations
+- [x] Identify architectural violations:
+  - Direct `KeyRegistry::load()` calls (3 occurrences)
+  - `remove_key_from_vault` duplicates `KeyRegistryService.detach_key_from_vault()`
+  - `update_key_label` should use `KeyRegistryService.update_key()`
+- [x] Create `UnifiedKeyListService` in `services/key_management/shared/application/services/`
+- [ ] Fix compilation errors in UnifiedKeyListService
+- [ ] Move all list_* helper functions to service (5 functions, ~330 lines)
+- [ ] Replace all `KeyRegistry::load()` with `KeyRegistryService` calls
+- [ ] Add comprehensive logging and instrumentation
+- [ ] Add tests for UnifiedKeyListService
 - [ ] Verify: `make validate-rust` passes
-- [ ] Commit: "refactor: decompose unified_keys into focused modules"
+- [ ] Commit: "feat: create UnifiedKeyListService for cross-subsystem key aggregation"
+
+### Milestone 4.2: Transform Commands to Thin Wrappers
+- [ ] Update `list_unified_keys()` → delegate to `UnifiedKeyListService.list_keys()`
+- [ ] Update `get_vault_keys()` → delegate to `UnifiedKeyListService.list_keys(ForVault)`
+- [ ] Update `remove_key_from_vault()` → delegate to `KeyRegistryService.detach_key_from_vault()`
+- [ ] Update `update_key_label()` → delegate to `KeyRegistryService.update_key()`
+- [ ] Keep only: validation, progress tracking, response formatting in commands
+- [ ] Target: Reduce from 683 lines → ~150 lines (78% reduction)
+- [ ] Verify: `make validate-rust` passes
+- [ ] Commit: "refactor: transform unified_keys commands to thin service wrappers"
+
+### Milestone 4.3: Final Validation
+- [ ] Run `make validate-rust` - all tests must pass
+- [ ] Verify no code duplication remains
+- [ ] Verify no direct `KeyRegistry::load()` calls in commands
+- [ ] Manual test: key listing UI functionality
+- [ ] Verify: Commands now ~150 lines (down from 683)
+- [ ] Phase 4 complete - all tech debt eliminated
 
 ---
 
