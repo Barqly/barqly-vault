@@ -3,6 +3,7 @@
 //! This module provides common traits, types, and utilities that can be shared
 //! across different hardware security device implementations (YubiKey, smartcard, etc.).
 
+pub mod infrastructure;
 pub mod registry;
 pub mod traits;
 
@@ -15,3 +16,6 @@ pub use traits::{
 
 // Re-export registry types
 pub use registry::{DeviceRegistry, RegistryStatistics};
+
+// Re-export key registry infrastructure types
+pub use infrastructure::{KeyEntry, KeyRegistry, generate_key_id, generate_recovery_code};

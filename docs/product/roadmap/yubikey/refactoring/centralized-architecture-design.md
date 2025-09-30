@@ -128,3 +128,174 @@ commands/passphrase/                 # Thin command layer
 - No ui content or implementation testing, focus on behavior!
 - Proper sensitive data and secret handling.
 - Files under 300 LOC
+
+---
+
+## DDD Transformation: Domain vs Infrastructure Separation
+
+### BEFORE: Current State (Mixed Concerns)
+
+```mermaid
+graph TB
+    subgraph "Current Architecture - Mixed Domains & Infrastructure"
+        Vault["🏛️ Vault<br/>(Domain)"]
+        Encrypt["🔒 Encrypt<br/>(Domain)"]
+        Decrypt["🔓 Decrypt<br/>(Domain)"]
+        ManageKeys["🔑 Manage Keys<br/>(Domain)"]
+
+        Storage["💾 Storage<br/>(Fake Domain)"]
+        File["📁 File<br/>(Mixed)"]
+        Crypto["🔐 crypto<br/>(Fake Domain)"]
+        Manifest["📋 Manifest<br/>(Utility)"]
+        Progress["⏳ Progress<br/>(Utility)"]
+
+        Plugins["🔌 Plugins<br/>(age, yubikey, ykman)"]
+
+        %% Current messy dependencies
+        Vault --> Encrypt
+        Vault --> Decrypt
+        Encrypt --> Storage
+        Encrypt --> Crypto
+        Encrypt --> File
+        Encrypt --> ManageKeys
+        Decrypt --> Storage
+        Decrypt --> Crypto
+        Decrypt --> File
+        Decrypt --> ManageKeys
+        ManageKeys --> Storage
+        ManageKeys --> Plugins
+        File --> Manifest
+        Crypto --> Plugins
+    end
+
+    style Storage fill:#ff9999
+    style Crypto fill:#ff9999
+    style Manifest fill:#ffcc99
+    style Progress fill:#ffcc99
+```
+
+**Problems:**
+- ❌ `storage` is a fake domain - really infrastructure used by everyone
+- ❌ `crypto` is a fake domain - really age library wrappers
+- ❌ Multiple domains call `storage` directly (no encapsulation)
+- ❌ `manifest` and `progress` scattered as utilities
+- ❌ No clear domain boundaries
+
+---
+
+### AFTER: Clean DDD Architecture (Domain + Infrastructure)
+
+```mermaid
+graph TB
+    subgraph "Domain Layer - Business Logic"
+        direction TB
+        subgraph VaultDomain["🏛️ Vault Domain"]
+            VaultApp["Application<br/>(Services)"]
+            VaultDom["Domain<br/>(Rules & Errors)"]
+        end
+
+        subgraph KeyMgmtDomain["🔑 Key Management Domain"]
+            KeyApp["Application<br/>(Services)"]
+            KeyDom["Domain<br/>(Rules & Errors)"]
+        end
+
+        subgraph FileDomain["📁 File Domain"]
+            FileApp["Application<br/>(Services)"]
+            FileDom["Domain<br/>(Rules & Errors)"]
+        end
+    end
+
+    subgraph "Infrastructure Layer - Technical Implementations"
+        direction TB
+        VaultInfra["🏛️ Vault Infrastructure<br/>• Crypto operations (age)<br/>• Metadata persistence<br/>• Manifest operations"]
+
+        KeyInfra["🔑 Key Management Infrastructure<br/>• Registry persistence<br/>• Encrypted key storage<br/>• YubiKey PTY<br/>• Passphrase derivation"]
+
+        FileInfra["📁 File Infrastructure<br/>• Archive operations (TAR)<br/>• Filesystem I/O<br/>• Path validation"]
+    end
+
+    subgraph "Shared Infrastructure"
+        Plugins["🔌 External Plugins<br/>• age library<br/>• age-plugin-yubikey<br/>• ykman binary"]
+    end
+
+    %% Domain dependencies (high-level → low-level)
+    VaultApp --> KeyApp
+    VaultApp --> FileApp
+    VaultApp --> VaultDom
+
+    KeyApp --> KeyDom
+    FileApp --> FileDom
+
+    %% Infrastructure dependencies (domains → their infrastructure)
+    VaultApp --> VaultInfra
+    KeyApp --> KeyInfra
+    FileApp --> FileInfra
+
+    %% Infrastructure → plugins
+    VaultInfra --> Plugins
+    KeyInfra --> Plugins
+    FileInfra --> Plugins
+
+    style VaultDomain fill:#90EE90
+    style KeyMgmtDomain fill:#87CEEB
+    style FileDomain fill:#DDA0DD
+    style VaultInfra fill:#F0E68C
+    style KeyInfra fill:#F0E68C
+    style FileInfra fill:#F0E68C
+    style Plugins fill:#D3D3D3
+```
+
+**Solutions:**
+- ✅ **Storage dissolved**: Registry → key_management/infrastructure, Metadata → vault/infrastructure
+- ✅ **Crypto dissolved**: age operations → vault/infrastructure (encryption/decryption)
+- ✅ **Clear domain boundaries**: Vault uses Key Management and File domains
+- ✅ **Infrastructure encapsulated**: Each domain owns its technical implementations
+- ✅ **Single direction dependencies**: Domains → Infrastructure → Plugins (no cycles)
+
+---
+
+### Domain Responsibilities
+
+| Domain | Business Logic | Infrastructure |
+|--------|----------------|----------------|
+| **Vault** | Create vaults, encrypt files, decrypt vaults, manage vault lifecycle | Age encryption/decryption wrappers, vault metadata persistence, external manifest management |
+| **Key Management** | Generate keys, register keys, validate keys, manage key lifecycle, maintain registry | Key registry file I/O, encrypted key storage, YubiKey PTY communication, passphrase derivation (scrypt) |
+| **File** | Create archives, extract archives, generate manifests, verify manifests, validate file selections | TAR operations, filesystem I/O, path validation, file staging |
+
+---
+
+### Key Architectural Decisions
+
+**1. Storage Module Dissolution**
+```
+BEFORE: storage/ (shared by all domains) ❌
+AFTER:
+  ✅ key_registry.rs → key_management/infrastructure/registry_persistence.rs
+  ✅ vault_store.rs → vault/infrastructure/metadata_persistence.rs
+  ✅ cache/ → crypto/infrastructure/ (if needed)
+  ✅ Eliminated as separate module
+```
+
+**2. Crypto Module Transformation**
+```
+BEFORE: crypto/ (age wrappers called directly by commands) ❌
+AFTER:
+  ✅ encrypt_data() → vault/infrastructure/crypto_operations.rs
+  ✅ decrypt_data() → vault/infrastructure/crypto_operations.rs
+  ✅ Encryption/decryption services in vault/application/services/
+```
+
+**3. Service-to-Service Communication**
+```
+✅ vault.encrypt() → key_management.get_vault_keys()
+✅ vault.decrypt() → key_management.get_decryption_key()
+✅ vault.encrypt() → file.create_archive()
+✅ vault.decrypt() → file.extract_archive()
+```
+
+**4. Infrastructure Isolation**
+```
+✅ Commands never call infrastructure directly
+✅ Commands → Services → Infrastructure
+✅ Infrastructure layer is private to each domain
+```
