@@ -11,8 +11,9 @@ use crate::crypto;
 use crate::models::vault::{ArchiveContent, EncryptedArchive};
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
+use crate::services::key_management::shared::{KeyEntry, KeyRegistryService};
 use crate::services::vault::application::services::VaultService;
-use crate::storage::{KeyEntry, KeyRegistry, path_management, vault_store};
+use crate::storage::{path_management, vault_store};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
@@ -22,6 +23,7 @@ pub struct VaultEncryptionService {
     file_validation: FileValidationService,
     archive_orchestration: ArchiveOrchestrationService,
     core_encryption: CoreEncryptionService,
+    key_registry_service: KeyRegistryService,
 }
 
 impl VaultEncryptionService {
@@ -31,6 +33,7 @@ impl VaultEncryptionService {
             file_validation: FileValidationService::new(),
             archive_orchestration: ArchiveOrchestrationService::new(),
             core_encryption: CoreEncryptionService::new(),
+            key_registry_service: KeyRegistryService::new(),
         }
     }
 
@@ -66,12 +69,8 @@ impl VaultEncryptionService {
             ));
         }
 
-        // Step 2: Collect public keys from vault using existing KeyRegistry
-        let registry = KeyRegistry::load().map_err(|e| {
-            CryptoError::ConfigurationError(format!("Failed to load key registry: {}", e))
-        })?;
-
-        let (public_keys, keys_used) = self.collect_vault_public_keys(&vault, &registry)?;
+        // Step 2: Collect public keys from vault using KeyRegistryService
+        let (public_keys, keys_used) = self.collect_vault_public_keys(&vault)?;
 
         if public_keys.is_empty() {
             return Err(CryptoError::ConfigurationError(
@@ -158,18 +157,17 @@ impl VaultEncryptionService {
         })
     }
 
-    /// Collect all public keys from vault (extracted from backup logic)
+    /// Collect all public keys from vault using KeyRegistryService
     fn collect_vault_public_keys(
         &self,
         vault: &crate::models::Vault,
-        registry: &KeyRegistry,
     ) -> CryptoResult<(Vec<crypto::PublicKey>, Vec<String>)> {
         let mut public_keys = Vec::new();
         let mut keys_used = Vec::new();
 
         for key_id in &vault.keys {
-            if let Some(registry_entry) = registry.get_key(key_id) {
-                match registry_entry {
+            match self.key_registry_service.get_key(key_id) {
+                Ok(registry_entry) => match registry_entry {
                     KeyEntry::Passphrase {
                         label, public_key, ..
                     } => {
@@ -184,13 +182,14 @@ impl VaultEncryptionService {
                         public_keys.push(public_key);
                         keys_used.push(label.clone());
                     }
+                },
+                Err(_) => {
+                    warn!(
+                        key_id = %key_id,
+                        vault_id = %vault.id,
+                        "Key ID referenced by vault not found in registry - skipping"
+                    );
                 }
-            } else {
-                warn!(
-                    key_id = %key_id,
-                    vault_id = %vault.id,
-                    "Key ID referenced by vault not found in registry - skipping"
-                );
             }
         }
 
