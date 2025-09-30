@@ -3,10 +3,12 @@
 //! This module provides a clean, structured API for key menu bar display,
 //! eliminating display logic confusion and label mapping issues.
 
+use crate::commands::key_management::yubikey::device_commands::list_yubikeys;
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::prelude::*;
 use crate::storage::{KeyEntry, KeyRegistry, vault_store};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Key menu data optimized for UI display
 #[derive(Debug, Serialize, specta::Type)]
@@ -83,6 +85,28 @@ pub async fn get_key_menu_data(
         ))
     })?;
 
+    // Get real-time YubiKey states using existing architecture
+    let yubikey_states: HashMap<String, String> = match list_yubikeys().await {
+        Ok(yubikeys) => {
+            yubikeys
+                .into_iter()
+                .map(|yk| {
+                    let state = match yk.state {
+                        crate::commands::key_management::yubikey::device_commands::YubiKeyState::Registered => "active",
+                        crate::commands::key_management::yubikey::device_commands::YubiKeyState::Orphaned => "registered",
+                        crate::commands::key_management::yubikey::device_commands::YubiKeyState::Reused => "registered",
+                        crate::commands::key_management::yubikey::device_commands::YubiKeyState::New => "registered",
+                    };
+                    (yk.serial, state.to_string())
+                })
+                .collect()
+        }
+        Err(e) => {
+            warn!("Failed to get YubiKey states: {:?}", e);
+            HashMap::new()
+        }
+    };
+
     let mut key_menu_items = Vec::new();
     let mut yubikey_index = 1u8; // YubiKeys start at display index 1
 
@@ -129,7 +153,10 @@ pub async fn get_key_menu_data(
                             key_type: "yubikey".to_string(),
                             label: label.clone(), // Use actual label from registry!
                             internal_id: key_id.clone(),
-                            state: "active".to_string(), // TODO: Determine actual state
+                            state: yubikey_states
+                                .get(serial)
+                                .unwrap_or(&"registered".to_string())
+                                .clone(),
                             created_at: created_at.to_rfc3339(),
                             metadata: KeyMenuMetadata::YubiKey {
                                 serial: serial.clone(),

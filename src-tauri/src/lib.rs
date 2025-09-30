@@ -28,9 +28,9 @@ use commands::{
     get_config,
     get_encryption_status,
     get_file_info,
-    get_progress,
     // Key management commands
     get_key_menu_data,
+    get_progress,
     key_management::{
         passphrase::{
             add_passphrase_key_to_vault, generate_key, list_available_passphrase_keys_for_vault,
