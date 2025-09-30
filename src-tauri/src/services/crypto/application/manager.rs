@@ -1,23 +1,26 @@
-use super::services::{DecryptionService, EncryptionService, ProgressService};
+//! Crypto Domain Manager
+//!
+//! Facade for crypto operations following Command → Manager → Service pattern.
+//! Coordinates encryption, decryption, and progress tracking services.
+
+use super::services::{DecryptionOrchestrationService, EncryptionService};
 use crate::commands::crypto::{
-    DecryptDataInput, DecryptionResult, EncryptDataInput, EncryptFilesMultiInput,
-    EncryptFilesMultiResponse, EncryptionStatusResponse, GetEncryptionStatusInput,
-    GetProgressInput, GetProgressResponse, VerifyManifestInput, VerifyManifestResponse,
+    EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse,
 };
+use crate::commands::types::ProgressManager;
 use crate::services::crypto::domain::CryptoResult;
+use std::path::Path;
 
 pub struct CryptoManager {
     encryption_service: EncryptionService,
-    decryption_service: DecryptionService,
-    progress_service: ProgressService,
+    decryption_orchestration: DecryptionOrchestrationService,
 }
 
 impl CryptoManager {
     pub fn new() -> Self {
         Self {
             encryption_service: EncryptionService::new(),
-            decryption_service: DecryptionService::new(),
-            progress_service: ProgressService::new(),
+            decryption_orchestration: DecryptionOrchestrationService::new(),
         }
     }
 
@@ -34,33 +37,25 @@ impl CryptoManager {
         self.encryption_service.encrypt_files_multi(input).await
     }
 
-    /// Decrypt data
-    pub async fn decrypt_data(&self, input: DecryptDataInput) -> CryptoResult<DecryptionResult> {
-        self.decryption_service.decrypt_data(input).await
-    }
-
-    // NOTE: generate_key_multi removed - use key_management commands instead
-    // Key generation belongs in key_management domain, not crypto domain
-
-    /// Verify manifest
-    pub async fn verify_manifest(
+    /// Decrypt data using DecryptionOrchestrationService
+    pub async fn decrypt_data(
         &self,
-        input: VerifyManifestInput,
-    ) -> CryptoResult<VerifyManifestResponse> {
-        self.decryption_service.verify_manifest(input).await
-    }
+        encrypted_file: &str,
+        key_id: &str,
+        passphrase: age::secrecy::SecretString,
+        output_dir: &Path,
+        progress_manager: &mut ProgressManager,
+    ) -> CryptoResult<super::services::DecryptionOutput> {
+        let input = super::services::DecryptionInput {
+            encrypted_file,
+            key_id,
+            passphrase,
+            output_dir,
+        };
 
-    /// Get encryption status
-    pub async fn get_encryption_status(
-        &self,
-        input: GetEncryptionStatusInput,
-    ) -> CryptoResult<EncryptionStatusResponse> {
-        self.progress_service.get_encryption_status(input).await
-    }
-
-    /// Get operation progress
-    pub async fn get_progress(&self, input: GetProgressInput) -> CryptoResult<GetProgressResponse> {
-        self.progress_service.get_progress(input).await
+        self.decryption_orchestration
+            .decrypt(input, progress_manager)
+            .await
     }
 }
 
@@ -77,6 +72,6 @@ mod tests {
     #[test]
     fn test_crypto_manager_creation() {
         let _manager = CryptoManager::new();
-        // Just verify creation works
+        // Verify creation works
     }
 }

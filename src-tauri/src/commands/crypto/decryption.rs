@@ -1,10 +1,7 @@
 //! File decryption command
 //!
-//! Thin wrapper around DecryptionOrchestrationService that handles:
-//! - Input validation
-//! - Progress tracking and global progress updates
-//! - Command-level error handling
-//! - Response formatting
+//! Thin wrapper following Command → Manager → Service pattern.
+//! Handles input validation, progress tracking, and response formatting.
 
 use crate::commands::types::{
     CommandError, CommandResponse, ErrorCode, ErrorHandler, ProgressManager, ValidateInput,
@@ -12,9 +9,7 @@ use crate::commands::types::{
 };
 use crate::constants::*;
 use crate::prelude::*;
-use crate::services::crypto::application::services::{
-    DecryptionInput, DecryptionOrchestrationService,
-};
+use crate::services::crypto::CryptoManager;
 use age::secrecy::SecretString;
 use std::path::Path;
 use tauri::Window;
@@ -84,21 +79,20 @@ pub async fn decrypt_data(
     );
     super::update_global_progress(&operation_id, progress_manager.get_current_update());
 
-    // Create service and execute decryption
-    let decryption_service = DecryptionOrchestrationService::new();
+    // Use CryptoManager following Command → Manager → Service pattern
+    let manager = CryptoManager::new();
 
-    let decryption_input = DecryptionInput {
-        encrypted_file: &input.encrypted_file,
-        key_id: &input.key_id,
-        passphrase: SecretString::from(input.passphrase),
-        output_dir: Path::new(&input.output_dir),
-    };
-
-    let output = decryption_service
-        .decrypt(decryption_input, &mut progress_manager)
+    let output = manager
+        .decrypt_data(
+            &input.encrypted_file,
+            &input.key_id,
+            SecretString::from(input.passphrase),
+            Path::new(&input.output_dir),
+            &mut progress_manager,
+        )
         .await
         .map_err(|e| {
-            error!(error = %e, "Decryption orchestration failed");
+            error!(error = %e, "Decryption failed");
             Box::new(CommandError::operation(
                 ErrorCode::InternalError,
                 format!("Decryption failed: {}", e),

@@ -8,7 +8,7 @@ use crate::commands::types::{
 };
 use crate::constants::*;
 use crate::prelude::*;
-use crate::services::crypto::application::services::EncryptionService;
+use crate::services::crypto::CryptoManager;
 use tauri::Window;
 
 /// Input for encryption command
@@ -62,9 +62,9 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
     input.validate()?;
 
     // Delegate to service layer for business logic
-    let service = EncryptionService::new();
+    let manager = CryptoManager::new();
 
-    match service.encrypt_files(input).await {
+    match manager.encrypt_files(input).await {
         Ok(encrypted_path) => Ok(encrypted_path),
         Err(crypto_error) => {
             // Convert service error to command error
@@ -124,9 +124,9 @@ pub async fn encrypt_files_multi(
     input.validate()?;
 
     // Delegate to service layer for business logic
-    let service = EncryptionService::new();
+    let manager = CryptoManager::new();
 
-    match service.encrypt_files_multi(input).await {
+    match manager.encrypt_files_multi(input).await {
         Ok(response) => Ok(response),
         Err(crypto_error) => {
             // Convert service error to command error

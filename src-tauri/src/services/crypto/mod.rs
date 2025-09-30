@@ -3,6 +3,7 @@ pub mod domain;
 pub mod infrastructure;
 
 pub use application::CryptoManager;
+pub use application::services::DecryptionOutput;
 pub use domain::{CryptoError, CryptoResult};
 
 // Re-export infrastructure for convenience (replaces root crate::crypto)
