@@ -3,7 +3,10 @@
 //! Aggregates keys from multiple subsystems (passphrase, YubiKey) into a unified view.
 //! Provides filtering and coordination logic for cross-subsystem key operations.
 
-use crate::commands::key_management::unified_keys::{KeyInfo, KeyListFilter};
+use crate::commands::key_management::unified_keys::{
+    convert_available_yubikey_to_unified, convert_passphrase_to_unified, convert_yubikey_to_unified,
+    KeyInfo, KeyListFilter,
+};
 use crate::commands::passphrase::{
     list_available_passphrase_keys_for_vault, list_passphrase_keys_for_vault, PassphraseKeyInfo,
 };
@@ -52,11 +55,7 @@ impl UnifiedKeyListService {
         match list_yubikeys().await {
             Ok(yubikey_list) => {
                 for yubikey in yubikey_list {
-                    all_keys.push(
-                        crate::commands::key_management::unified_keys::type_conversions::convert_yubikey_to_unified(
-                            yubikey, None,
-                        ),
-                    );
+                    all_keys.push(convert_yubikey_to_unified(yubikey, None));
                 }
             }
             Err(e) => {
@@ -92,7 +91,7 @@ impl UnifiedKeyListService {
                     is_available: true,
                 };
                 all_keys.push(
-                    crate::commands::key_management::unified_keys::type_conversions::convert_passphrase_to_unified(
+                    convert_passphrase_to_unified(
                         passphrase_info,
                         None,
                     ),
@@ -115,7 +114,7 @@ impl UnifiedKeyListService {
             Ok(passphrase_keys) => {
                 for key in passphrase_keys {
                     unified_keys.push(
-                        crate::commands::key_management::unified_keys::type_conversions::convert_passphrase_to_unified(
+                        convert_passphrase_to_unified(
                             key,
                             Some(vault_id.clone()),
                         ),
@@ -142,7 +141,7 @@ impl UnifiedKeyListService {
                         let yubikey_id = format!("yubikey_{}", yubikey.serial);
                         if vault.keys.contains(&yubikey_id) {
                             unified_keys.push(
-                                crate::commands::key_management::unified_keys::type_conversions::convert_yubikey_to_unified(
+                                convert_yubikey_to_unified(
                                     yubikey,
                                     Some(vault_id.clone()),
                                 ),
@@ -175,7 +174,7 @@ impl UnifiedKeyListService {
             Ok(passphrase_keys) => {
                 for key in passphrase_keys {
                     available_keys.push(
-                        crate::commands::key_management::unified_keys::type_conversions::convert_passphrase_to_unified(
+                        convert_passphrase_to_unified(
                             key, None,
                         ),
                     );
@@ -195,7 +194,7 @@ impl UnifiedKeyListService {
             Ok(available_yubikeys) => {
                 for yubikey in available_yubikeys {
                     available_keys.push(
-                        crate::commands::key_management::unified_keys::type_conversions::convert_available_yubikey_to_unified(
+                        convert_available_yubikey_to_unified(
                             yubikey, None,
                         ),
                     );
@@ -243,7 +242,7 @@ impl UnifiedKeyListService {
                     is_available: true,
                 };
                 connected_keys.push(
-                    crate::commands::key_management::unified_keys::type_conversions::convert_passphrase_to_unified(
+                    convert_passphrase_to_unified(
                         passphrase_info,
                         None,
                     ),
@@ -263,7 +262,7 @@ impl UnifiedKeyListService {
                             | crate::commands::yubikey::device_commands::YubiKeyState::Reused
                     ) {
                         connected_keys.push(
-                            crate::commands::key_management::unified_keys::type_conversions::convert_yubikey_to_unified(
+                            convert_yubikey_to_unified(
                                 yubikey, None,
                             ),
                         );

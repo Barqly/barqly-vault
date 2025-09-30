@@ -86,7 +86,7 @@ pub struct YubiKeyInfo {
 // Conversion functions to transform Layer 2 types to unified types
 
 /// Convert PassphraseKeyInfo to unified KeyInfo
-fn convert_passphrase_to_unified(
+pub fn convert_passphrase_to_unified(
     passphrase_key: PassphraseKeyInfo,
     vault_id: Option<String>,
 ) -> KeyInfo {
@@ -108,7 +108,10 @@ fn convert_passphrase_to_unified(
 }
 
 /// Convert YubiKeyStateInfo to unified KeyInfo
-fn convert_yubikey_to_unified(yubikey_key: YubiKeyStateInfo, vault_id: Option<String>) -> KeyInfo {
+pub fn convert_yubikey_to_unified(
+    yubikey_key: YubiKeyStateInfo,
+    vault_id: Option<String>,
+) -> KeyInfo {
     let is_available = match yubikey_key.state {
         YubiKeyState::Registered => true,
         YubiKeyState::Orphaned => true,
@@ -146,7 +149,7 @@ fn convert_yubikey_to_unified(yubikey_key: YubiKeyStateInfo, vault_id: Option<St
 }
 
 /// Convert AvailableYubiKey to unified KeyInfo
-fn convert_available_yubikey_to_unified(
+pub fn convert_available_yubikey_to_unified(
     available_key: AvailableYubiKey,
     vault_id: Option<String>,
 ) -> KeyInfo {

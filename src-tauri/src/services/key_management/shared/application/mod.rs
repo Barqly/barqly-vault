@@ -4,4 +4,4 @@
 
 pub mod services;
 
-pub use services::{KeyManagementError, KeyRegistryService, UnifiedKeyListService};
+pub use services::{KeyManagementError, KeyRegistryService};

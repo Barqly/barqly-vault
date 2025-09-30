@@ -22,4 +22,4 @@ pub use registry::{DeviceRegistry, RegistryStatistics};
 pub use infrastructure::{KeyEntry, KeyRegistry, generate_key_id, generate_recovery_code};
 
 // Re-export application layer services
-pub use application::{KeyManagementError, KeyRegistryService, UnifiedKeyListService};
+pub use application::{KeyManagementError, KeyRegistryService};
