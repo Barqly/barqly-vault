@@ -1,7 +1,7 @@
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::models::KeyReference;
 use crate::services::key_management::passphrase::PassphraseManager;
-use crate::storage::KeyRegistry;
+use crate::services::key_management::shared::KeyRegistry;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 

@@ -198,7 +198,7 @@ pub fn initialize_yubikey(new_pin: &str, new_puk: &str) -> Result<()> {
 /// Initialize YubiKey with auto-generated recovery code
 #[instrument(skip(new_pin))]
 pub fn initialize_yubikey_with_recovery(new_pin: &str) -> Result<String> {
-    use crate::storage::key_registry::generate_recovery_code;
+    use crate::services::key_management::shared::generate_recovery_code;
 
     info!("Initializing YubiKey with auto-generated recovery code");
 

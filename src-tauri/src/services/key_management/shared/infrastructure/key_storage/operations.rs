@@ -194,14 +194,14 @@ pub fn save_encrypted_key_with_metadata(
     label: &str,
     encrypted_key: &[u8],
     _public_key: Option<&str>,
-    metadata: &crate::storage::metadata::VaultMetadata,
+    metadata: &crate::services::vault::VaultMetadata,
 ) -> Result<PathBuf, StorageError> {
     // First save the encrypted key using the existing function
     let key_path = save_encrypted_key(label, encrypted_key, _public_key)?;
 
     // Then save the v2 metadata
     let metadata_path = get_key_metadata_path(label)?.with_file_name(format!("{label}.v2.json"));
-    crate::storage::metadata::MetadataStorage::save_metadata(metadata, &metadata_path)?;
+    crate::services::vault::MetadataStorage::save_metadata(metadata, &metadata_path)?;
 
     Ok(key_path)
 }
@@ -225,7 +225,7 @@ pub fn save_encrypted_key_with_metadata(
 /// - `StorageError::IoError` if file operations fail
 pub fn save_yubikey_metadata(
     label: &str,
-    metadata: &crate::storage::metadata::VaultMetadata,
+    metadata: &crate::services::vault::VaultMetadata,
     _public_key: Option<&str>,
 ) -> Result<PathBuf, StorageError> {
     // Get the key file path (even though we won't store an encrypted key)
@@ -258,7 +258,7 @@ pub fn save_yubikey_metadata(
 
     // Save the v2 metadata
     let metadata_path = get_key_metadata_path(label)?.with_file_name(format!("{label}.v2.json"));
-    crate::storage::metadata::MetadataStorage::save_metadata(metadata, &metadata_path)?;
+    crate::services::vault::MetadataStorage::save_metadata(metadata, &metadata_path)?;
 
     // Invalidate key list cache since we added a new key
     let cache = get_cache();

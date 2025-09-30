@@ -8,7 +8,7 @@
 use barqly_vault_lib::services::key_management::passphrase::{
     encrypt_private_key, generate_keypair,
 };
-use barqly_vault_lib::storage::key_store::{key_exists, save_encrypted_key};
+use barqly_vault_lib::storage::{key_exists, save_encrypted_key};
 use secrecy::SecretString;
 
 // Development key configurations

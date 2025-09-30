@@ -6,11 +6,11 @@
 //! TODO: Integration with vault management to be handled by higher-level services
 
 use crate::prelude::*;
+use crate::services::key_management::shared::{KeyEntry, KeyRegistry};
 use crate::services::key_management::yubikey::{
     domain::errors::{YubiKeyError, YubiKeyResult},
     domain::models::{Serial, YubiKeyDevice, YubiKeyIdentity},
 };
-use crate::storage::key_registry::KeyRegistry;
 use async_trait::async_trait;
 
 /// Registry service trait for key registry operations
@@ -92,7 +92,7 @@ impl DefaultRegistryService {
 
         // Check if any YubiKey in registry uses this slot
         for (_, entry) in registry.yubikey_keys() {
-            if let crate::storage::key_registry::KeyEntry::Yubikey {
+            if let KeyEntry::Yubikey {
                 slot: entry_slot, ..
             } = entry
                 && *entry_slot == slot
@@ -114,7 +114,7 @@ impl DefaultRegistryService {
 
         // Check if slot is occupied by the SAME YubiKey (same serial)
         for (_, entry) in registry.yubikey_keys() {
-            if let crate::storage::key_registry::KeyEntry::Yubikey {
+            if let KeyEntry::Yubikey {
                 serial: entry_serial,
                 slot: entry_slot,
                 ..
@@ -218,7 +218,7 @@ impl RegistryService for DefaultRegistryService {
         let registry = self.load_registry().await?;
 
         if let Some((key_id, entry)) = registry.find_yubikey_by_serial(serial.value())
-            && let crate::storage::key_registry::KeyEntry::Yubikey {
+            && let KeyEntry::Yubikey {
                 serial: entry_serial,
                 slot,
                 firmware_version,
@@ -253,7 +253,7 @@ impl RegistryService for DefaultRegistryService {
         let mut yubikeys = Vec::new();
 
         for (key_id, entry) in registry.yubikey_keys() {
-            if let crate::storage::key_registry::KeyEntry::Yubikey {
+            if let KeyEntry::Yubikey {
                 serial,
                 slot,
                 firmware_version,
@@ -306,7 +306,7 @@ impl RegistryService for DefaultRegistryService {
 
         // Update label
         let updated_entry = match entry {
-            crate::storage::key_registry::KeyEntry::Yubikey {
+            KeyEntry::Yubikey {
                 serial,
                 created_at,
                 last_used,
@@ -317,7 +317,7 @@ impl RegistryService for DefaultRegistryService {
                 firmware_version,
                 recovery_code_hash,
                 ..
-            } => crate::storage::key_registry::KeyEntry::Yubikey {
+            } => KeyEntry::Yubikey {
                 label: new_label,
                 created_at,
                 last_used,
@@ -382,7 +382,7 @@ impl RegistryService for DefaultRegistryService {
         let registry = self.load_registry().await?;
 
         if let Some(entry) = registry.get_key(key_id)
-            && let crate::storage::key_registry::KeyEntry::Yubikey {
+            && let KeyEntry::Yubikey {
                 serial,
                 slot,
                 firmware_version,
@@ -414,7 +414,7 @@ impl RegistryService for DefaultRegistryService {
         // Check for slot conflicts
         let mut slot_usage = std::collections::HashMap::new();
         for (key_id, entry) in registry.yubikey_keys() {
-            if let crate::storage::key_registry::KeyEntry::Yubikey { slot, .. } = entry {
+            if let KeyEntry::Yubikey { slot, .. } = entry {
                 if let Some(existing_key) = slot_usage.get(slot) {
                     issues.push(format!(
                         "Slot conflict: slot {} used by both {} and {}",
@@ -429,7 +429,7 @@ impl RegistryService for DefaultRegistryService {
         // Check for serial number duplicates
         let mut serial_usage = std::collections::HashMap::new();
         for (key_id, entry) in registry.yubikey_keys() {
-            if let crate::storage::key_registry::KeyEntry::Yubikey { serial, .. } = entry {
+            if let KeyEntry::Yubikey { serial, .. } = entry {
                 if let Some(existing_key) = serial_usage.get(serial) {
                     issues.push(format!(
                         "Serial duplicate: serial {} used by both {} and {}",
