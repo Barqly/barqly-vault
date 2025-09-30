@@ -6,7 +6,6 @@
 pub mod decryption;
 pub mod encryption;
 pub mod file_helpers;
-pub mod key_generation_multi;
 pub mod manifest;
 pub mod progress;
 
@@ -14,9 +13,6 @@ pub use decryption::{DecryptDataInput, DecryptionResult, decrypt_data};
 pub use encryption::{
     EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse, encrypt_files,
     encrypt_files_multi,
-};
-pub use key_generation_multi::{
-    GenerateKeyMultiInput, GenerateKeyMultiResponse, generate_key_multi,
 };
 pub use manifest::{VerifyManifestInput, VerifyManifestResponse, verify_manifest};
 pub use progress::{

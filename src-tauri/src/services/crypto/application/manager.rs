@@ -1,9 +1,8 @@
 use super::services::{DecryptionService, EncryptionService, ProgressService};
 use crate::commands::crypto::{
     DecryptDataInput, DecryptionResult, EncryptDataInput, EncryptFilesMultiInput,
-    EncryptFilesMultiResponse, EncryptionStatusResponse, GenerateKeyMultiInput,
-    GenerateKeyMultiResponse, GetEncryptionStatusInput, GetProgressInput, GetProgressResponse,
-    VerifyManifestInput, VerifyManifestResponse,
+    EncryptFilesMultiResponse, EncryptionStatusResponse, GetEncryptionStatusInput,
+    GetProgressInput, GetProgressResponse, VerifyManifestInput, VerifyManifestResponse,
 };
 use crate::services::crypto::domain::CryptoResult;
 
@@ -40,13 +39,8 @@ impl CryptoManager {
         self.decryption_service.decrypt_data(input).await
     }
 
-    /// Generate multi-recipient key
-    pub async fn generate_key_multi(
-        &self,
-        input: GenerateKeyMultiInput,
-    ) -> CryptoResult<GenerateKeyMultiResponse> {
-        self.encryption_service.generate_key_multi(input).await
-    }
+    // NOTE: generate_key_multi removed - use key_management commands instead
+    // Key generation belongs in key_management domain, not crypto domain
 
     /// Verify manifest
     pub async fn verify_manifest(

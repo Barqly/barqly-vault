@@ -4,7 +4,6 @@ use super::{
 };
 use crate::commands::crypto::{
     self as crypto_commands, EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse,
-    GenerateKeyMultiInput, GenerateKeyMultiResponse,
 };
 use crate::constants::*;
 use crate::prelude::*;
@@ -136,17 +135,8 @@ impl EncryptionService {
         self.vault_encryption.encrypt_files_multi(input).await
     }
 
-    /// Generate multi-recipient key - delegates to existing command implementation
-    pub async fn generate_key_multi(
-        &self,
-        _input: GenerateKeyMultiInput,
-    ) -> CryptoResult<GenerateKeyMultiResponse> {
-        // TODO: Move logic from commands/crypto/key_generation_multi.rs here
-        // For now, return error to maintain interface without breaking functionality
-        Err(CryptoError::ConfigurationError(
-            "Key generation service implementation pending - use command layer".to_string(),
-        ))
-    }
+    // NOTE: generate_key_multi removed - use key_management commands instead
+    // Key generation belongs in key_management domain, not crypto domain
 }
 
 impl Default for EncryptionService {

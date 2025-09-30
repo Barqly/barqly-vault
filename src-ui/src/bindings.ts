@@ -13,17 +13,6 @@ async generateKey(input: GenerateKeyInput) : Promise<Result<GenerateKeyResponse,
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Generate a new encryption keypair with multi-recipient support
- */
-async generateKeyMulti(input: GenerateKeyMultiInput) : Promise<Result<GenerateKeyMultiResponse, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("generate_key_multi", { input }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
 async validatePassphrase(input: ValidatePassphraseInput) : Promise<Result<ValidatePassphraseResponse, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("validate_passphrase", { input }) };
@@ -618,14 +607,6 @@ export type FileInfo = { path: string; name: string; size: number; is_file: bool
  */
 export type FileSelection = { paths: string[]; total_size: number; file_count: number; selection_type: string }
 export type GenerateKeyInput = { label: string; passphrase: string }
-/**
- * Input for multi-recipient key generation command
- */
-export type GenerateKeyMultiInput = { label: string; passphrase: string | null; protection_mode: ProtectionMode | null; yubikey_device_id: string | null; yubikey_info: InitializationResult | null; yubikey_pin: string | null }
-/**
- * Response from key generation
- */
-export type GenerateKeyMultiResponse = { public_key: string; key_id: string; saved_path: string; protection_mode: ProtectionMode; recipients: string[] }
 export type GenerateKeyResponse = { public_key: string; key_id: string; saved_path: string }
 /**
  * Response containing current vault
@@ -663,27 +644,6 @@ include_all: boolean | null }
  * Response containing vault keys
  */
 export type GetVaultKeysResponse = { vault_id: string; keys: KeyReference[] }
-/**
- * Result from YubiKey initialization containing all necessary information
- * for registration and subsequent operations
- */
-export type InitializationResult = { 
-/**
- * Public key (age recipient string)
- */
-public_key: string; 
-/**
- * Slot number used for the key
- */
-slot: number; 
-/**
- * Whether touch is required for operations
- */
-touch_required: boolean; 
-/**
- * PIN policy for the key
- */
-pin_policy: PinPolicy }
 /**
  * Unified key information structure
  */
@@ -856,10 +816,6 @@ export type Manifest = { version: string; created_at: string; files: FileInfo[];
 export type PassphraseKeyInfo = { id: string; label: string; public_key: string; created_at: string; last_used: string | null; is_available: boolean }
 export type PassphraseStrength = "weak" | "fair" | "good" | "strong"
 export type PassphraseValidationResult = { is_valid: boolean; strength: PassphraseStrength; feedback: string[]; score: number }
-/**
- * PIN policy for YubiKey operations (from crypto/yubikey management)
- */
-export type PinPolicy = "Never" | "Once" | "Always"
 export type PinStatus = "default" | "set"
 /**
  * Operation-specific progress details for different command types
@@ -902,10 +858,6 @@ export type ProgressDetails =
  * YubiKey operation progress
  */
 { type: "YubiKeyOperation"; operation: YubiKeyOperationType; phase: YubiKeyPhase; requires_interaction: boolean; context: string | null }
-/**
- * Protection modes for vault security
- */
-export type ProtectionMode = "PassphraseOnly" | { YubiKeyOnly: { serial: string } } | { Hybrid: { yubikey_serial: string } }
 /**
  * YubiKey registration parameters for vault
  */

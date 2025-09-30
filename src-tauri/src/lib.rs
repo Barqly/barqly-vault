@@ -23,7 +23,6 @@ use commands::{
     encrypt_files,
     encrypt_files_multi,
     // Crypto commands
-    generate_key_multi,
     get_cache_metrics,
     get_config,
     get_encryption_status,
@@ -85,7 +84,6 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
     let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
         // Crypto commands
         generate_key,
-        generate_key_multi,
         validate_passphrase,
         verify_key_passphrase,
         validate_passphrase_strength,
@@ -168,7 +166,6 @@ pub fn run_app() {
         .invoke_handler(tauri::generate_handler![
             // Crypto commands
             generate_key,
-            generate_key_multi,
             validate_passphrase,
             verify_key_passphrase,
             validate_passphrase_strength,
