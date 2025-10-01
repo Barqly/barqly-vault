@@ -8,7 +8,7 @@
 //! - Performance measurement and validation
 //! - Proper integration with hierarchical test structure
 
-use barqly_vault_lib::storage::StorageError;
+use barqly_vault_lib::error::StorageError;
 use rstest::*;
 
 // ============================================================================

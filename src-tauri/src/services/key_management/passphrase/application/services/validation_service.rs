@@ -46,7 +46,9 @@ impl ValidationService {
         let key_entry = PassphraseKeyRepository::get_key(key_id)?;
 
         match key_entry {
-            crate::storage::KeyEntry::Passphrase { key_filename, .. } => {
+            crate::services::key_management::shared::KeyEntry::Passphrase {
+                key_filename, ..
+            } => {
                 let encrypted_key = PassphraseKeyRepository::load_encrypted_key(&key_filename)?;
 
                 let passphrase_secret = SecretString::from(passphrase.to_string());

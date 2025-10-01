@@ -9,7 +9,8 @@
 //! - Proper integration with hierarchical test structure
 
 use crate::common::helpers::TestAssertions;
-use barqly_vault_lib::storage::{StorageError, get_key_file_path, get_key_metadata_path};
+use barqly_vault_lib::error::StorageError;
+use barqly_vault_lib::services::shared::{get_key_file_path, get_key_metadata_path};
 use rstest::*;
 
 // ============================================================================

@@ -14,7 +14,6 @@ pub mod logging; // Centralized logging and tracing infrastructure
 pub mod models; // Vault and key management models
 pub mod prelude;
 pub mod services; // Business logic layer (DDD) - renamed from key_management
-pub mod storage; // Public for tests, but should be treated as private for external use
 
 use commands::{
     create_manifest,

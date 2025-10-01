@@ -425,7 +425,7 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
 #[instrument(skip(encrypted_data, pin), fields(encrypted_size = encrypted_data.len()))]
 pub fn decrypt_data_yubikey_cli(
     encrypted_data: &[u8],
-    key_entry: &crate::storage::KeyEntry,
+    key_entry: &crate::services::key_management::shared::KeyEntry,
     pin: &str,
 ) -> Result<Vec<u8>> {
     debug_assert!(!encrypted_data.is_empty(), "Encrypted data cannot be empty");
@@ -433,7 +433,7 @@ pub fn decrypt_data_yubikey_cli(
 
     // Extract YubiKey details from key entry
     let (serial, slot, recipient, identity_tag) = match key_entry {
-        crate::storage::KeyEntry::Yubikey {
+        crate::services::key_management::shared::KeyEntry::Yubikey {
             serial,
             slot,
             recipient,

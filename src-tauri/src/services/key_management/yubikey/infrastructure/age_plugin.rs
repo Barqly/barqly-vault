@@ -79,7 +79,7 @@ impl AgePluginProvider {
         }
 
         // Try application-specific locations
-        if let Ok(app_dir) = crate::storage::get_application_directory() {
+        if let Ok(app_dir) = crate::services::shared::get_app_dir() {
             let runtime_path = app_dir.join("runtime").join("age-plugin-yubikey");
             if runtime_path.exists() {
                 return Ok(runtime_path);

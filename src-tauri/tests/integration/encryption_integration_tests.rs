@@ -19,7 +19,7 @@ use barqly_vault_lib::{
     services::{
         crypto::infrastructure::encrypt_data, key_management::passphrase::generate_keypair,
     },
-    storage,
+    // storage tests now use proper domain modules
 };
 use rand::Rng;
 use std::fs;
@@ -93,8 +93,12 @@ impl Task3IntegrationTestEnv {
         let encrypted_key = vec![0x42; 1024]; // Create test encrypted key data
         let public_key = keypair.public_key.to_string();
 
-        storage::save_encrypted_key(&self.key_label, &encrypted_key, Some(&public_key))
-            .expect("Failed to save test key");
+        barqly_vault_lib::services::key_management::shared::save_encrypted_key(
+            &self.key_label,
+            &encrypted_key,
+            Some(&public_key),
+        )
+        .expect("Failed to save test key");
 
         self.key_label.clone()
     }

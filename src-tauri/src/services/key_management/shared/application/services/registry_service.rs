@@ -13,8 +13,8 @@ use crate::prelude::*;
 use crate::services::key_management::shared::infrastructure::{
     KeyEntry, KeyInfo, KeyRegistry, list_keys as list_key_files,
 };
+use crate::services::shared;
 use crate::services::vault;
-use crate::storage; // For path_management (shared infrastructure)
 
 /// Error types for key registry operations
 #[derive(Debug, thiserror::Error)]
@@ -295,7 +295,7 @@ impl KeyRegistryService {
         if let KeyEntry::Passphrase { key_filename, .. } = &key_entry {
             debug!(key_id = %key_id, key_filename = %key_filename, "Deleting passphrase key file");
 
-            let key_path = storage::get_key_file_path(key_filename)
+            let key_path = shared::get_key_file_path(key_filename)
                 .map_err(|e| KeyManagementError::ConfigurationError(e.to_string()))?;
 
             if key_path.exists() {

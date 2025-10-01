@@ -6,7 +6,8 @@
 // CLI utility examples are allowed to use println! for user interaction
 #![allow(clippy::disallowed_macros)]
 
-use barqly_vault_lib::storage::{get_cache, list_keys, save_encrypted_key};
+use barqly_vault_lib::services::key_management::shared::{list_keys, save_encrypted_key};
+use barqly_vault_lib::services::shared::get_cache;
 use std::time::{Duration, Instant};
 
 const NUM_KEYS: usize = 10;
@@ -78,7 +79,7 @@ fn setup_test_keys() -> Result<(), Box<dyn std::error::Error>> {
         let fake_public_key = format!("age1test{i}publickey");
 
         // Only create if it doesn't exist
-        if !barqly_vault_lib::storage::key_exists(&label)? {
+        if !barqly_vault_lib::services::key_management::shared::key_exists(&label)? {
             save_encrypted_key(&label, &fake_encrypted_key, Some(&fake_public_key))?;
         }
     }
@@ -126,8 +127,8 @@ fn cleanup_test_keys() -> Result<(), Box<dyn std::error::Error>> {
 
     for i in 0..NUM_KEYS {
         let label = format!("test_cache_key_{i}");
-        if barqly_vault_lib::storage::key_exists(&label)? {
-            barqly_vault_lib::storage::delete_key(&label)?;
+        if barqly_vault_lib::services::key_management::shared::key_exists(&label)? {
+            barqly_vault_lib::services::key_management::shared::delete_key(&label)?;
         }
     }
 

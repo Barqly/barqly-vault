@@ -4,7 +4,7 @@ use super::services::{
 };
 use crate::models::KeyReference;
 use crate::services::key_management::passphrase::domain::ValidationResult;
-use crate::storage::VaultMetadata;
+use crate::services::vault::VaultMetadata;
 
 pub struct PassphraseManager {
     generation_service: GenerationService,
@@ -32,6 +32,14 @@ impl PassphraseManager {
     ) -> Result<bool, ValidationError> {
         self.validation_service
             .verify_key_passphrase(key_id, passphrase)
+    }
+
+    /// Check if a key with the given label already exists
+    pub fn label_exists(&self, label: &str) -> Result<bool, GenerationError> {
+        let existing_keys = crate::services::key_management::shared::list_keys()
+            .map_err(|e| GenerationError::KeyGenerationFailed(e.to_string()))?;
+
+        Ok(existing_keys.iter().any(|k| k.label == label))
     }
 
     pub fn generate_key(

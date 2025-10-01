@@ -9,8 +9,8 @@
 //! - Concurrent access testing
 
 use crate::common::helpers::TestAssertions;
-use barqly_vault_lib::storage;
-use barqly_vault_lib::storage::{KeyInfo, StorageError};
+// Storage tests now use proper domain modules
+use barqly_vault_lib::services::key_management::shared::KeyInfo, barqly_vault_lib::error::StorageError;
 use rstest::*;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -63,7 +63,7 @@ fn should_initialize_storage_module_successfully() {
     // Given: A request to initialize the storage module
     
     // When: Getting the application directory
-    let result = storage::get_application_directory();
+    let result = crate::services::key_management::shared::get_application_directory();
 
     // Then: Storage module should initialize successfully
     TestAssertions::assert_ok(
@@ -92,7 +92,7 @@ fn should_complete_key_storage_lifecycle_successfully() {
 
     // When: Checking if key exists initially
     let exists_initially = TestAssertions::assert_ok(
-        storage::key_exists(&label),
+        crate::services::key_management::shared::key_exists(&label),
         "Key existence check should succeed"
     );
 
@@ -101,7 +101,7 @@ fn should_complete_key_storage_lifecycle_successfully() {
 
     // When: Saving the key
     let saved_path = TestAssertions::assert_ok(
-        storage::save_encrypted_key(&label, &encrypted_data, Some(public_key)),
+        crate::services::key_management::shared::save_encrypted_key(&label, &encrypted_data, Some(public_key)),
         "Key saving should succeed"
     );
 
@@ -110,7 +110,7 @@ fn should_complete_key_storage_lifecycle_successfully() {
 
     // When: Verifying key exists
     let exists_after_save = TestAssertions::assert_ok(
-        storage::key_exists(&label),
+        crate::services::key_management::shared::key_exists(&label),
         "Key existence check after save should succeed"
     );
 
@@ -119,7 +119,7 @@ fn should_complete_key_storage_lifecycle_successfully() {
 
     // When: Loading the key
     let loaded_data = TestAssertions::assert_ok(
-        storage::load_encrypted_key(&label),
+        crate::services::key_management::shared::load_encrypted_key(&label),
         "Key loading should succeed"
     );
 
@@ -128,7 +128,7 @@ fn should_complete_key_storage_lifecycle_successfully() {
 
     // When: Getting key info
     let key_info = TestAssertions::assert_ok(
-        storage::get_key_info(&label),
+        crate::services::key_management::shared::get_key_info(&label),
         "Key info retrieval should succeed"
     );
 
@@ -139,7 +139,7 @@ fn should_complete_key_storage_lifecycle_successfully() {
 
     // When: Listing keys
     let keys = TestAssertions::assert_ok(
-        storage::list_keys(),
+        crate::services::key_management::shared::list_keys(),
         "Key listing should succeed"
     );
 
@@ -150,20 +150,20 @@ fn should_complete_key_storage_lifecycle_successfully() {
 
     // When: Deleting the key
     TestAssertions::assert_ok(
-        storage::delete_key(&label),
+        crate::services::key_management::shared::delete_key(&label),
         "Key deletion should succeed"
     );
 
     // Then: Key should not exist after deletion
     let exists_after_delete = TestAssertions::assert_ok(
-        storage::key_exists(&label),
+        crate::services::key_management::shared::key_exists(&label),
         "Key existence check after delete should succeed"
     );
     assert!(!exists_after_delete, "Key should not exist after deletion");
 
     // When: Listing keys after deletion
     let keys_after_delete = TestAssertions::assert_ok(
-        storage::list_keys(),
+        crate::services::key_management::shared::list_keys(),
         "Key listing after delete should succeed"
     );
 
@@ -199,7 +199,7 @@ fn should_manage_multiple_keys_successfully() {
         let public_key = format!("age1testpublickey{}", i);
 
         let path = TestAssertions::assert_ok(
-            storage::save_encrypted_key(label, &data, Some(&public_key)),
+            crate::services::key_management::shared::save_encrypted_key(label, &data, Some(&public_key)),
             &format!("Saving key {} should succeed", label)
         );
         saved_paths.push(path);
@@ -207,7 +207,7 @@ fn should_manage_multiple_keys_successfully() {
 
     // When: Listing all keys
     let keys = TestAssertions::assert_ok(
-        storage::list_keys(),
+        crate::services::key_management::shared::list_keys(),
         "Key listing should succeed"
     );
 
@@ -232,7 +232,7 @@ fn should_manage_multiple_keys_successfully() {
     for (i, label) in labels.iter().enumerate() {
         let expected_data = env.create_test_key_data(512 + i * 100);
         let loaded_data = TestAssertions::assert_ok(
-            storage::load_encrypted_key(label),
+            crate::services::key_management::shared::load_encrypted_key(label),
             &format!("Loading key {} should succeed", label)
         );
         assert_eq!(loaded_data, expected_data, "Loaded data should match for key {}", label);
@@ -241,14 +241,14 @@ fn should_manage_multiple_keys_successfully() {
     // When: Deleting keys one by one
     for label in labels.iter() {
         TestAssertions::assert_ok(
-            storage::delete_key(label),
+            crate::services::key_management::shared::delete_key(label),
             &format!("Deleting key {} should succeed", label)
         );
     }
 
     // Then: All our keys should be gone
     let keys_after_delete = TestAssertions::assert_ok(
-        storage::list_keys(),
+        crate::services::key_management::shared::list_keys(),
         "Key listing after delete should succeed"
     );
     for label in labels.iter() {
@@ -284,7 +284,7 @@ fn should_validate_key_labels_correctly(
     let data = env.create_test_key_data(100);
 
     // When: Attempting to save key with the label
-    let result = storage::save_encrypted_key(label, &data, None);
+    let result = crate::services::key_management::shared::save_encrypted_key(label, &data, None);
 
     // Then: Result should match expectation
     if should_succeed {
@@ -293,7 +293,7 @@ fn should_validate_key_labels_correctly(
             &format!("Label '{}' should be valid for {test_name}", label)
         );
         // Clean up
-        let _ = storage::delete_key(label);
+        let _ = crate::services::key_management::shared::delete_key(label);
     } else {
         assert!(
             result.is_err(),
@@ -324,12 +324,12 @@ fn should_handle_key_already_exists_error() {
 
     // When: Saving a key
     TestAssertions::assert_ok(
-        storage::save_encrypted_key(label, &data1, None),
+        crate::services::key_management::shared::save_encrypted_key(label, &data1, None),
         "First key save should succeed"
     );
 
     // When: Attempting to save another key with same label
-    let result = storage::save_encrypted_key(label, &data2, None);
+    let result = crate::services::key_management::shared::save_encrypted_key(label, &data2, None);
 
     // Then: Should get key already exists error
     assert!(
@@ -343,7 +343,7 @@ fn should_handle_key_already_exists_error() {
     }
 
     // Clean up
-    let _ = storage::delete_key(label);
+    let _ = crate::services::key_management::shared::delete_key(label);
 }
 
 #[test]
@@ -355,7 +355,7 @@ fn should_handle_key_not_found_error() {
     let label = "non-existent-key";
 
     // When: Attempting to load non-existent key
-    let result = storage::load_encrypted_key(label);
+    let result = crate::services::key_management::shared::load_encrypted_key(label);
 
     // Then: Should get key not found error
     assert!(
@@ -385,13 +385,13 @@ fn should_persist_key_metadata_correctly() {
 
     // When: Saving key with metadata
     TestAssertions::assert_ok(
-        storage::save_encrypted_key(label, &data, Some(public_key)),
+        crate::services::key_management::shared::save_encrypted_key(label, &data, Some(public_key)),
         "Saving key with metadata should succeed"
     );
 
     // When: Getting key info
     let key_info = TestAssertions::assert_ok(
-        storage::get_key_info(label),
+        crate::services::key_management::shared::get_key_info(label),
         "Getting key info should succeed"
     );
 
@@ -403,7 +403,7 @@ fn should_persist_key_metadata_correctly() {
     assert!(key_info.last_accessed > 0, "Last accessed timestamp should be positive");
 
     // Clean up
-    let _ = storage::delete_key(label);
+    let _ = crate::services::key_management::shared::delete_key(label);
 }
 
 // ============================================================================
@@ -428,7 +428,7 @@ fn should_handle_large_key_storage_successfully(
     // When: Saving large key
     let start = std::time::Instant::now();
     let saved_path = TestAssertions::assert_ok(
-        storage::save_encrypted_key(&label, &data, None),
+        crate::services::key_management::shared::save_encrypted_key(&label, &data, None),
         &format!("Saving large key should succeed for {test_name}")
     );
     let save_time = start.elapsed();
@@ -444,7 +444,7 @@ fn should_handle_large_key_storage_successfully(
     // When: Loading large key
     let start = std::time::Instant::now();
     let loaded_data = TestAssertions::assert_ok(
-        storage::load_encrypted_key(&label),
+        crate::services::key_management::shared::load_encrypted_key(&label),
         &format!("Loading large key should succeed for {test_name}")
     );
     let load_time = start.elapsed();
@@ -458,7 +458,7 @@ fn should_handle_large_key_storage_successfully(
     );
 
     // Clean up
-    let _ = storage::delete_key(&label);
+    let _ = crate::services::key_management::shared::delete_key(&label);
 }
 
 // ============================================================================
@@ -486,7 +486,7 @@ fn should_handle_concurrent_key_access() {
             let label = label.clone();
             let data = env.create_test_key_data(512);
             std::thread::spawn(move || {
-                storage::save_encrypted_key(&label, &data, None)
+                crate::services::key_management::shared::save_encrypted_key(&label, &data, None)
             })
         })
         .collect();
@@ -505,7 +505,7 @@ fn should_handle_concurrent_key_access() {
         .map(|label| {
             let label = label.clone();
             std::thread::spawn(move || {
-                storage::load_encrypted_key(&label)
+                crate::services::key_management::shared::load_encrypted_key(&label)
             })
         })
         .collect();
@@ -520,7 +520,7 @@ fn should_handle_concurrent_key_access() {
 
     // Clean up
     for label in labels {
-        let _ = storage::delete_key(&label);
+        let _ = crate::services::key_management::shared::delete_key(&label);
     }
 }
 
@@ -539,13 +539,13 @@ fn should_recover_from_storage_errors() {
 
     // When: Saving a key
     TestAssertions::assert_ok(
-        storage::save_encrypted_key(label, &data, None),
+        crate::services::key_management::shared::save_encrypted_key(label, &data, None),
         "Key save should succeed"
     );
 
     // When: Verifying key exists
     let exists = TestAssertions::assert_ok(
-        storage::key_exists(label),
+        crate::services::key_management::shared::key_exists(label),
         "Key existence check should succeed"
     );
 
@@ -554,7 +554,7 @@ fn should_recover_from_storage_errors() {
 
     // When: Loading the key
     let loaded_data = TestAssertions::assert_ok(
-        storage::load_encrypted_key(label),
+        crate::services::key_management::shared::load_encrypted_key(label),
         "Key load should succeed"
     );
 
@@ -562,7 +562,7 @@ fn should_recover_from_storage_errors() {
     assert_eq!(loaded_data, data, "Loaded data should match original");
 
     // Clean up
-    let _ = storage::delete_key(label);
+    let _ = crate::services::key_management::shared::delete_key(label);
 }
 
 // ============================================================================
@@ -580,7 +580,7 @@ fn should_create_proper_directory_structure() {
 
     // When: Saving a key
     let saved_path = TestAssertions::assert_ok(
-        storage::save_encrypted_key(label, &data, None),
+        crate::services::key_management::shared::save_encrypted_key(label, &data, None),
         "Key save should succeed"
     );
 
@@ -591,5 +591,5 @@ fn should_create_proper_directory_structure() {
     assert!(saved_path.starts_with(&env.keys_dir), "Key should be in keys directory");
 
     // Clean up
-    let _ = storage::delete_key(label);
+    let _ = crate::services::key_management::shared::delete_key(label);
 }

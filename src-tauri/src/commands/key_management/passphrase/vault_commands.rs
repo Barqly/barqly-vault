@@ -110,7 +110,7 @@ pub async fn list_passphrase_keys_for_vault(
     let mut passphrase_keys = Vec::new();
 
     for key_id in &vault.keys {
-        if let Some(crate::storage::KeyEntry::Passphrase {
+        if let Some(crate::services::key_management::shared::KeyEntry::Passphrase {
             label,
             created_at,
             last_used,
@@ -161,7 +161,7 @@ pub async fn list_available_passphrase_keys_for_vault(
     let mut available_keys = Vec::new();
 
     for (key_id, entry) in registry.keys.iter() {
-        if let crate::storage::KeyEntry::Passphrase {
+        if let crate::services::key_management::shared::KeyEntry::Passphrase {
             label,
             created_at,
             last_used,

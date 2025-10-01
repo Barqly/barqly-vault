@@ -117,7 +117,7 @@ pub async fn verify_key_passphrase(
     })?;
 
     match key_entry {
-        crate::storage::KeyEntry::Passphrase { .. } => {
+        crate::services::key_management::shared::KeyEntry::Passphrase { .. } => {
             let manager = PassphraseManager::new();
             match manager.verify_key_passphrase(&input.key_id, &input.passphrase) {
                 Ok(true) => Ok(VerifyKeyPassphraseResponse {
@@ -134,7 +134,7 @@ pub async fn verify_key_passphrase(
                 ))),
             }
         }
-        crate::storage::KeyEntry::Yubikey { serial, .. } => {
+        crate::services::key_management::shared::KeyEntry::Yubikey { serial, .. } => {
             info!(
                 key_id = %input.key_id,
                 serial = %serial,

@@ -6,7 +6,7 @@ use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::crypto::infrastructure as crypto;
 use crate::services::key_management::passphrase;
-use crate::storage;
+use crate::services::key_management::shared;
 use age::secrecy::SecretString;
 
 /// Service for passphrase-based decryption operations
@@ -33,7 +33,7 @@ impl PassphraseDecryptionService {
         );
 
         // Load the encrypted private key
-        let encrypted_key = storage::load_encrypted_key(key_filename).map_err(|e| {
+        let encrypted_key = shared::load_encrypted_key(key_filename).map_err(|e| {
             error!(
                 key_filename = %key_filename,
                 error = %e,

@@ -8,7 +8,7 @@
 use super::TestSuiteConfig;
 use barqly_vault_lib::services::crypto::infrastructure::KeyPair;
 use barqly_vault_lib::services::key_management::passphrase::generate_keypair;
-use barqly_vault_lib::storage::{KeyInfo, save_encrypted_key};
+use barqly_vault_lib::services::key_management::shared::{KeyInfo, save_encrypted_key};
 use secrecy::SecretString;
 use std::collections::HashMap;
 use std::fs;

@@ -22,7 +22,7 @@
 use std::sync::Once;
 use std::time::{Duration, Instant};
 
-use barqly_vault_lib::storage;
+use barqly_vault_lib::services::shared;
 
 /// Global test cleanup state
 static CLEANUP_INIT: Once = Once::new();
@@ -53,7 +53,7 @@ impl TestCleanup {
         let mut cleanup = Self::new();
 
         // Pre-register any keys that match common test patterns
-        if let Ok(keys_dir) = storage::get_keys_directory()
+        if let Ok(keys_dir) = shared::get_keys_dir()
             && keys_dir.exists()
         {
             // Register any existing test keys for cleanup
@@ -91,7 +91,7 @@ impl TestCleanup {
 
     /// Register a key label for cleanup
     pub fn register_key(&mut self, key_label: &str) {
-        if let Ok(keys_dir) = storage::get_keys_directory() {
+        if let Ok(keys_dir) = shared::get_keys_dir() {
             let key_file = keys_dir.join(format!("{key_label}.agekey.enc"));
             let meta_file = keys_dir.join(format!("{key_label}.agekey.meta"));
 
@@ -139,7 +139,7 @@ impl TestSuiteCleanup {
         println!("🧹 Cleaning up test suite artifacts...");
 
         // Clean up all test keys
-        if let Ok(keys_dir) = storage::get_keys_directory()
+        if let Ok(keys_dir) = shared::get_keys_dir()
             && let Ok(entries) = std::fs::read_dir(keys_dir)
         {
             for entry in entries.flatten() {

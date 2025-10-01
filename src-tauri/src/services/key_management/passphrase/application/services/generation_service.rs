@@ -1,7 +1,7 @@
 use crate::services::key_management::passphrase::infrastructure::{
     PassphraseKeyRepository, StorageError, encrypt_private_key, generate_keypair,
 };
-use crate::storage::VaultMetadata;
+use crate::services::vault::VaultMetadata;
 use age::secrecy::SecretString;
 use std::path::PathBuf;
 
@@ -97,7 +97,7 @@ impl GenerationService {
             SecretString::from(passphrase.to_string()),
         )?;
 
-        let saved_path = crate::storage::save_encrypted_key_with_metadata(
+        let saved_path = crate::services::key_management::shared::save_encrypted_key_with_metadata(
             label,
             &encrypted_key,
             Some(&keypair.public_key.to_string()),

@@ -6,7 +6,7 @@
 // Example/utility files are allowed to use println! for user interaction
 #![allow(clippy::disallowed_macros)]
 
-use barqly_vault_lib::storage::{get_app_dir, get_config_dir, get_keys_dir, get_logs_dir};
+use barqly_vault_lib::services::shared::{get_app_dir, get_config_dir, get_keys_dir, get_logs_dir};
 use std::fs;
 use std::io::{self, Write};
 

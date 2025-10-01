@@ -5,7 +5,7 @@
 
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
-use crate::storage;
+// Key retrieval service uses KeyRegistryService
 
 #[derive(Debug)]
 pub struct KeyRetrievalService;
@@ -18,7 +18,7 @@ impl KeyRetrievalService {
     /// Retrieve and validate encryption key for operations
     pub async fn get_encryption_key(&self, key_id: &str) -> CryptoResult<String> {
         // Get available keys from storage
-        let keys = storage::list_keys()
+        let keys = crate::services::key_management::shared::list_keys()
             .map_err(|e| CryptoError::EncryptionFailed(format!("Failed to list keys: {}", e)))?;
 
         // Find the requested key

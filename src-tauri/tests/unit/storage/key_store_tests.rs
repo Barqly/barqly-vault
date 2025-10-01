@@ -9,7 +9,7 @@
 //! - Proper integration with hierarchical test structure
 
 use crate::common::helpers::TestAssertions;
-use barqly_vault_lib::storage::KeyInfo;
+use barqly_vault_lib::services::key_management::shared::KeyInfo;
 use chrono::{Datelike, Timelike};
 use rstest::*;
 use std::path::PathBuf;

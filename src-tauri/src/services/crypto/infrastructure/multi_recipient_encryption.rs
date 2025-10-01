@@ -8,7 +8,7 @@ use crate::services::key_management::yubikey::domain::models::{
     ProtectionMode, UnlockCredentials, UnlockMethod,
 };
 use crate::services::key_management::yubikey::infrastructure::pty::core::get_age_path;
-use crate::storage::{RecipientInfo, RecipientType, VaultMetadata};
+use crate::services::vault::{RecipientInfo, RecipientType, VaultMetadata};
 use age::Recipient;
 use std::io::Write;
 use std::str::FromStr;
@@ -412,7 +412,7 @@ impl MultiRecipientCrypto {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::storage::RecipientInfo;
+    use crate::services::vault::RecipientInfo;
 
     #[test]
     fn test_checksum_calculation() {

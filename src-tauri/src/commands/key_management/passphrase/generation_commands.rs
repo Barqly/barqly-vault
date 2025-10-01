@@ -3,7 +3,6 @@ use crate::commands::types::{
 };
 use crate::prelude::*;
 use crate::services::key_management::passphrase::PassphraseManager;
-use crate::storage;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, specta::Type)]
@@ -43,20 +42,15 @@ pub async fn generate_key(input: GenerateKeyInput) -> CommandResponse<GenerateKe
         "Starting key generation via PassphraseManager"
     );
 
-    let existing_keys = error_handler.handle_operation_error(
-        storage::list_keys(),
-        "list_keys",
-        ErrorCode::StorageFailed,
-    )?;
+    let manager = PassphraseManager::new();
 
-    if existing_keys.iter().any(|k| k.label == input.label) {
+    // Check if label already exists using manager
+    if manager.label_exists(&input.label).unwrap_or(false) {
         return Err(error_handler.handle_validation_error(
             "label",
             &format!("A key with label '{}' already exists. Please choose a different label or use the existing key.", input.label),
         ));
     }
-
-    let manager = PassphraseManager::new();
     let generated = manager
         .generate_key(&input.label, &input.passphrase)
         .map_err(|e| {

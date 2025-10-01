@@ -119,7 +119,7 @@ fn check_duplicate_yubikey_in_vault(
     if vault.keys.iter().any(|key_id| {
         matches!(
             registry.get_key(key_id),
-            Some(crate::storage::KeyEntry::Yubikey { serial: existing_serial, .. })
+            Some(crate::services::key_management::shared::KeyEntry::Yubikey { serial: existing_serial, .. })
             if existing_serial == serial
         )
     }) {
@@ -400,7 +400,9 @@ pub async fn list_available_yubikeys_for_vault(
         .keys
         .iter()
         .filter_map(|key_id| {
-            if let Some(crate::storage::KeyEntry::Yubikey { serial, .. }) = registry.get_key(key_id)
+            if let Some(crate::services::key_management::shared::KeyEntry::Yubikey {
+                serial, ..
+            }) = registry.get_key(key_id)
             {
                 Some(serial.clone())
             } else {

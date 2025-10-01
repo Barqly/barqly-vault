@@ -52,7 +52,10 @@ impl VaultIntegrationService {
 
         let has_passphrase = vault.keys.iter().any(|key_id| {
             if let Some(entry) = registry.get_key(key_id) {
-                matches!(entry, crate::storage::KeyEntry::Passphrase { .. })
+                matches!(
+                    entry,
+                    crate::services::key_management::shared::KeyEntry::Passphrase { .. }
+                )
             } else {
                 false
             }

@@ -69,11 +69,11 @@ impl KeyReference {
     /// Create a KeyReference from a key registry entry
     pub fn from_registry_entry(
         key_id: String,
-        entry: &crate::storage::KeyEntry,
+        entry: &crate::services::key_management::shared::KeyEntry,
         state: KeyState,
     ) -> Self {
         let (key_type, label, created_at, last_used) = match entry {
-            crate::storage::KeyEntry::Passphrase {
+            crate::services::key_management::shared::KeyEntry::Passphrase {
                 label,
                 created_at,
                 last_used,
@@ -87,7 +87,7 @@ impl KeyReference {
                 *created_at,
                 *last_used,
             ),
-            crate::storage::KeyEntry::Yubikey {
+            crate::services::key_management::shared::KeyEntry::Yubikey {
                 label,
                 created_at,
                 last_used,
