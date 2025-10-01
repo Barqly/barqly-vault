@@ -2,10 +2,10 @@
 //!
 //! This module handles the creation of TAR.GZ archives from file selections.
 
-use crate::file_ops::staging::StagingArea;
-use crate::file_ops::utils::calculate_file_hash;
-use crate::file_ops::validation::validate_archive_path;
-use crate::file_ops::{
+use super::super::staging::StagingArea;
+use super::super::utils::calculate_file_hash;
+use super::super::validation::validate_archive_path;
+use super::super::{
     ArchiveInfo, ArchiveOperation, FileOpsConfig, FileOpsError, FileSelection, ProgressCallback,
     Result,
 };
@@ -121,7 +121,7 @@ pub fn create_archive_with_file_info(
     config: &FileOpsConfig,
 ) -> Result<(
     ArchiveOperation,
-    Vec<crate::file_ops::FileInfo>,
+    Vec<super::super::FileInfo>,
     std::path::PathBuf,
 )> {
     info!(
@@ -141,7 +141,7 @@ pub fn create_archive_with_file_info(
     staging.stage_files(selection)?;
 
     // Get file information and staging path before creating archive
-    let file_info: Vec<crate::file_ops::FileInfo> = staging.staged_files().to_vec();
+    let file_info: Vec<super::super::FileInfo> = staging.staged_files().to_vec();
     let staging_path = staging.path().to_path_buf();
 
     // Create archive

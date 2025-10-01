@@ -1,19 +1,16 @@
 use crate::commands::{FileInfo, FileSelection, SelectionType};
-use crate::file_ops::ArchiveOperation;
 use crate::prelude::*;
 use crate::services::file::domain::{FileError, FileResult, FileRules};
-use crate::services::file::infrastructure::FileRepository;
+use crate::services::file::infrastructure::file_operations::{
+    self as file_operations, ArchiveOperation,
+};
 use std::path::PathBuf;
 
-pub struct ArchiveService {
-    repository: FileRepository,
-}
+pub struct ArchiveService;
 
 impl ArchiveService {
     pub fn new() -> Self {
-        Self {
-            repository: FileRepository::new(),
-        }
+        Self
     }
 
     /// Get file information with exact logic from commands/file/selection.rs
@@ -82,8 +79,18 @@ impl ArchiveService {
         FileRules::validate_file_paths(&selection.paths)?;
         FileRules::validate_total_size(selection.total_size)?;
 
-        // Delegate to repository for actual archive creation
-        self.repository.create_archive(selection, output_path).await
+        // Convert command types to file_operations types
+        let path_bufs: Vec<PathBuf> = selection.paths.iter().map(PathBuf::from).collect();
+        let file_ops_selection = if path_bufs.len() == 1 && path_bufs[0].is_dir() {
+            file_operations::FileSelection::Folder(path_bufs[0].clone())
+        } else {
+            file_operations::FileSelection::Files(path_bufs)
+        };
+
+        // Call file_operations directly
+        let config = file_operations::FileOpsConfig::default();
+        file_operations::create_archive(&file_ops_selection, &output_path, &config)
+            .map_err(|e| FileError::ArchiveCreationFailed(e.to_string()))
     }
 
     /// Handle file selection with exact logic from commands/file/selection.rs

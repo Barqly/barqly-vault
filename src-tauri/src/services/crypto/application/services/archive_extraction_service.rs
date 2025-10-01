@@ -2,9 +2,9 @@
 //!
 //! Handles extraction of decrypted TAR archives to output directories.
 
-use crate::file_ops;
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
+use crate::services::file::infrastructure::file_operations;
 use std::path::Path;
 
 /// Service for archive extraction operations
@@ -22,7 +22,7 @@ impl ArchiveExtractionService {
         &self,
         decrypted_data: &[u8],
         output_path: &Path,
-    ) -> CryptoResult<Vec<file_ops::FileInfo>> {
+    ) -> CryptoResult<Vec<file_operations::FileInfo>> {
         debug!(
             decrypted_data_size = decrypted_data.len(),
             output_path = %output_path.display(),
@@ -50,12 +50,14 @@ impl ArchiveExtractionService {
         );
 
         // Extract the archive
-        let config = file_ops::FileOpsConfig::default();
-        let extracted_files = file_ops::extract_archive(&temp_archive_path, output_path, &config)
-            .map_err(|e| {
-            error!(error = %e, "Failed to extract archive");
-            CryptoError::DecryptionFailed(format!("Archive extraction failed: {}", e))
-        })?;
+        let config = file_operations::FileOpsConfig::default();
+        let extracted_files =
+            file_operations::extract_archive(&temp_archive_path, output_path, &config).map_err(
+                |e| {
+                    error!(error = %e, "Failed to extract archive");
+                    CryptoError::DecryptionFailed(format!("Archive extraction failed: {}", e))
+                },
+            )?;
 
         // Clean up temporary file (best effort)
         let _ = std::fs::remove_file(&temp_archive_path);

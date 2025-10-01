@@ -2,8 +2,8 @@
 //!
 //! Handles verification of extracted file manifests and restoration of external manifests.
 
-use crate::file_ops;
 use crate::prelude::*;
+use crate::services::file::infrastructure::file_operations;
 use std::path::Path;
 
 /// Service for manifest verification and restoration
@@ -19,7 +19,7 @@ impl ManifestVerificationService {
     #[instrument(skip(self, extracted_files))]
     pub fn verify_manifest(
         &self,
-        extracted_files: &[file_ops::FileInfo],
+        extracted_files: &[file_operations::FileInfo],
         output_path: &Path,
     ) -> bool {
         debug!(
@@ -44,12 +44,12 @@ impl ManifestVerificationService {
             );
 
             // Try to load and verify the manifest
-            match file_ops::archive_manifest::Manifest::load(&manifest_path) {
+            match file_operations::archive_manifest::Manifest::load(&manifest_path) {
                 Ok(manifest) => {
-                    match file_ops::verify_manifest(
+                    match file_operations::verify_manifest(
                         &manifest,
                         extracted_files,
-                        &file_ops::FileOpsConfig::default(),
+                        &file_operations::FileOpsConfig::default(),
                     ) {
                         Ok(()) => {
                             info!("Manifest verification successful");
@@ -81,7 +81,8 @@ impl ManifestVerificationService {
         output_path: &Path,
     ) -> Option<bool> {
         let encrypted_path = Path::new(encrypted_file_path);
-        let external_manifest_path = file_ops::generate_external_manifest_path(encrypted_path);
+        let external_manifest_path =
+            file_operations::generate_external_manifest_path(encrypted_path);
 
         debug!(
             encrypted_file_path = %encrypted_file_path,

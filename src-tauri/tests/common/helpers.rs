@@ -259,7 +259,7 @@ impl ValidationHelpers {
 
     /// Validate that a manifest contains expected files
     pub fn validate_manifest_files(
-        manifest: &barqly_vault_lib::file_ops::archive_manifest::Manifest,
+        manifest: &barqly_vault_lib::services::file::infrastructure::file_operations::archive_manifest::Manifest,
         expected_files: &[&str],
     ) -> bool {
         let manifest_files: Vec<String> = manifest

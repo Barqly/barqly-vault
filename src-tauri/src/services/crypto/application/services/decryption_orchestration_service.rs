@@ -9,9 +9,9 @@ use super::{
 };
 use crate::commands::types::ProgressManager;
 use crate::constants::*;
-use crate::file_ops;
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
+use crate::services::file::infrastructure::file_operations;
 use crate::services::key_management::shared::KeyEntry;
 use age::secrecy::{ExposeSecret, SecretString};
 use std::path::Path;
@@ -28,7 +28,7 @@ pub struct DecryptionInput<'a> {
 /// Result of decryption orchestration
 #[derive(Debug)]
 pub struct DecryptionOutput {
-    pub extracted_files: Vec<file_ops::FileInfo>,
+    pub extracted_files: Vec<file_operations::FileInfo>,
     pub manifest_verified: bool,
     pub external_manifest_restored: Option<bool>,
 }

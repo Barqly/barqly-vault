@@ -8,8 +8,8 @@ use crate::commands::types::{
     ValidationHelper,
 };
 use crate::constants::*;
-use crate::file_ops;
 use crate::prelude::*;
+use crate::services::file::infrastructure::file_operations;
 
 /// Input for manifest verification command
 #[derive(Debug, Deserialize, specta::Type)]
@@ -92,7 +92,9 @@ pub async fn verify_manifest(
     progress_manager.set_progress(PROGRESS_VERIFY_LOAD, "Loading manifest file...");
 
     let manifest = error_handler.handle_operation_error(
-        file_ops::archive_manifest::Manifest::load(std::path::Path::new(&input.manifest_path)),
+        file_operations::archive_manifest::Manifest::load(std::path::Path::new(
+            &input.manifest_path,
+        )),
         "load_manifest",
         ErrorCode::FileNotFound,
     )?;
@@ -109,10 +111,10 @@ pub async fn verify_manifest(
     // Verify the manifest
     progress_manager.set_progress(PROGRESS_VERIFY_CHECK, "Verifying file integrity...");
 
-    let verification_result = file_ops::verify_manifest(
+    let verification_result = file_operations::verify_manifest(
         &manifest,
         &extracted_files,
-        &file_ops::FileOpsConfig::default(),
+        &file_operations::FileOpsConfig::default(),
     );
 
     match verification_result {
@@ -157,7 +159,10 @@ pub async fn verify_manifest(
 /// Helper function to get file information from extracted directory
 pub(crate) fn get_extracted_files_info(
     extracted_dir: &str,
-) -> Result<Vec<crate::file_ops::FileInfo>, crate::file_ops::FileOpsError> {
+) -> Result<
+    Vec<crate::services::file::infrastructure::file_operations::FileInfo>,
+    crate::services::file::infrastructure::file_operations::FileOpsError,
+> {
     use std::fs;
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
@@ -184,7 +189,7 @@ pub(crate) fn get_extracted_files_info(
         // Calculate hash for file
         let hash = calculate_file_hash_simple(path)?;
 
-        let file_info = crate::file_ops::FileInfo {
+        let file_info = crate::services::file::infrastructure::file_operations::FileInfo {
             path: relative_path,
             size: metadata.len(),
             modified: chrono::DateTime::from(metadata.modified()?),
@@ -202,13 +207,15 @@ pub(crate) fn get_extracted_files_info(
 /// Helper function to calculate simple file hash
 pub(crate) fn calculate_file_hash_simple(
     path: &std::path::Path,
-) -> Result<String, crate::file_ops::FileOpsError> {
+) -> Result<String, crate::services::file::infrastructure::file_operations::FileOpsError> {
     use sha2::{Digest, Sha256};
     use std::fs::File;
     use std::io::Read;
 
-    let mut file = File::open(path).map_err(|_e| crate::file_ops::FileOpsError::FileNotFound {
-        path: path.to_path_buf(),
+    let mut file = File::open(path).map_err(|_e| {
+        crate::services::file::infrastructure::file_operations::FileOpsError::FileNotFound {
+            path: path.to_path_buf(),
+        }
     })?;
 
     let mut hasher = Sha256::new();
@@ -216,7 +223,7 @@ pub(crate) fn calculate_file_hash_simple(
 
     loop {
         let n = file.read(&mut buffer).map_err(|e| {
-            crate::file_ops::FileOpsError::HashCalculationFailed {
+            crate::services::file::infrastructure::file_operations::FileOpsError::HashCalculationFailed {
                 message: format!("Failed to read file: {e}"),
             }
         })?;

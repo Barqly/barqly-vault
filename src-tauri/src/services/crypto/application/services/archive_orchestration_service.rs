@@ -6,9 +6,11 @@
 use crate::commands::crypto::{EncryptDataInput, file_helpers, update_global_progress};
 use crate::commands::types::{ErrorHandler, ProgressManager};
 use crate::constants::*;
-use crate::file_ops::{self, ArchiveOperation, FileOpsConfig};
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
+use crate::services::file::infrastructure::file_operations::{
+    self as file_operations, ArchiveOperation, FileOpsConfig,
+};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
@@ -26,7 +28,7 @@ impl ArchiveOrchestrationService {
         output_dir: &Path,
         progress_manager: &mut ProgressManager,
         operation_id: &str,
-    ) -> CryptoResult<(ArchiveOperation, Vec<file_ops::FileInfo>, Vec<u8>)> {
+    ) -> CryptoResult<(ArchiveOperation, Vec<file_operations::FileInfo>, Vec<u8>)> {
         let error_handler = ErrorHandler::new();
 
         // Determine output file name
@@ -41,7 +43,7 @@ impl ArchiveOrchestrationService {
 
         // Validate file selection
         let config = FileOpsConfig::default();
-        file_ops::validate_selection(&file_selection, &config).map_err(|e| {
+        file_operations::validate_selection(&file_selection, &config).map_err(|e| {
             CryptoError::InvalidInput(format!("File selection validation failed: {}", e))
         })?;
 
@@ -50,7 +52,7 @@ impl ArchiveOrchestrationService {
         self.update_progress(operation_id, progress_manager);
 
         let (archive_operation, archive_files, _staging_path) =
-            file_ops::create_archive_with_file_info(&file_selection, &output_path, &config)
+            file_operations::create_archive_with_file_info(&file_selection, &output_path, &config)
                 .map_err(|e| {
                     CryptoError::EncryptionFailed(format!("Archive creation failed: {}", e))
                 })?;
@@ -84,14 +86,14 @@ impl ArchiveOrchestrationService {
     fn create_file_selection_from_input(
         &self,
         input: &EncryptDataInput,
-    ) -> CryptoResult<file_ops::FileSelection> {
+    ) -> CryptoResult<file_operations::FileSelection> {
         let path_bufs: Vec<PathBuf> = input.file_paths.iter().map(PathBuf::from).collect();
 
         // Determine if this is a single folder or multiple files
         let selection = if path_bufs.len() == 1 && path_bufs[0].is_dir() {
-            file_ops::FileSelection::Folder(path_bufs[0].clone())
+            file_operations::FileSelection::Folder(path_bufs[0].clone())
         } else {
-            file_ops::FileSelection::Files(path_bufs)
+            file_operations::FileSelection::Files(path_bufs)
         };
 
         Ok(selection)

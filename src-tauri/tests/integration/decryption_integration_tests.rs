@@ -9,12 +9,10 @@
 
 use crate::common::cleanup::TestCleanup;
 use crate::common::helpers::TestAssertions;
-use barqly_vault_lib::{
-    file_ops::{FileOpsConfig, FileSelection},
-    services::{
-        crypto::infrastructure::{decrypt_data, encrypt_data},
-        key_management::passphrase::generate_keypair,
-    },
+use barqly_vault_lib::services::{
+    crypto::infrastructure::{decrypt_data, encrypt_data},
+    file::infrastructure::file_operations::{FileOpsConfig, FileSelection},
+    key_management::passphrase::generate_keypair,
 };
 use std::{fs, path::PathBuf, thread, time::Duration};
 use tempfile::TempDir;

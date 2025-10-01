@@ -233,13 +233,15 @@ impl VaultEncryptionService {
     fn create_file_selection_from_paths(
         &self,
         file_paths: &[String],
-    ) -> CryptoResult<crate::file_ops::FileSelection> {
+    ) -> CryptoResult<crate::services::file::infrastructure::file_operations::FileSelection> {
         let path_bufs: Vec<PathBuf> = file_paths.iter().map(PathBuf::from).collect();
 
         let selection = if path_bufs.len() == 1 && path_bufs[0].is_dir() {
-            crate::file_ops::FileSelection::Folder(path_bufs[0].clone())
+            crate::services::file::infrastructure::file_operations::FileSelection::Folder(
+                path_bufs[0].clone(),
+            )
         } else {
-            crate::file_ops::FileSelection::Files(path_bufs)
+            crate::services::file::infrastructure::file_operations::FileSelection::Files(path_bufs)
         };
 
         Ok(selection)
@@ -248,22 +250,27 @@ impl VaultEncryptionService {
     /// Create archive for vault (helper using existing services)
     async fn create_archive_for_vault(
         &self,
-        file_selection: &crate::file_ops::FileSelection,
+        file_selection: &crate::services::file::infrastructure::file_operations::FileSelection,
         output_path: &Path,
         progress_manager: &mut ProgressManager,
         _operation_id: &str,
     ) -> CryptoResult<(
-        crate::file_ops::ArchiveOperation,
-        Vec<crate::file_ops::FileInfo>,
+        crate::services::file::infrastructure::file_operations::ArchiveOperation,
+        Vec<crate::services::file::infrastructure::file_operations::FileInfo>,
     )> {
         progress_manager.set_progress(PROGRESS_ENCRYPT_ARCHIVE_START, "Creating archive...");
 
-        let config = crate::file_ops::FileOpsConfig::default();
+        let config =
+            crate::services::file::infrastructure::file_operations::FileOpsConfig::default();
         let (archive_operation, archive_files, _staging_path) =
-            crate::file_ops::create_archive_with_file_info(file_selection, output_path, &config)
-                .map_err(|e| {
-                    CryptoError::EncryptionFailed(format!("Archive creation failed: {}", e))
-                })?;
+            crate::services::file::infrastructure::file_operations::create_archive_with_file_info(
+                file_selection,
+                output_path,
+                &config,
+            )
+            .map_err(|e| {
+                CryptoError::EncryptionFailed(format!("Archive creation failed: {}", e))
+            })?;
 
         progress_manager.set_progress(
             PROGRESS_ENCRYPT_ARCHIVE_COMPLETE,
@@ -277,8 +284,8 @@ impl VaultEncryptionService {
     async fn update_vault_manifest(
         &self,
         vault: &mut crate::models::Vault,
-        archive_operation: &crate::file_ops::ArchiveOperation,
-        archive_files: &[crate::file_ops::FileInfo],
+        archive_operation: &crate::services::file::infrastructure::file_operations::ArchiveOperation,
+        archive_files: &[crate::services::file::infrastructure::file_operations::FileInfo],
         encrypted_path: &Path,
     ) -> CryptoResult<()> {
         // Create archive contents from file info

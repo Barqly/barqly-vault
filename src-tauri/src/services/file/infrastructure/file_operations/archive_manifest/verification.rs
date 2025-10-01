@@ -3,8 +3,8 @@
 //! This module provides functionality for verifying archive manifests
 //! and calculating hashes for integrity checking.
 
+use super::super::{FileInfo, FileOpsConfig, FileOpsError, Result};
 use super::types::Manifest;
-use crate::file_ops::{FileInfo, FileOpsConfig, FileOpsError, Result};
 use sha2::{Digest, Sha256};
 use tracing::{info, warn};
 

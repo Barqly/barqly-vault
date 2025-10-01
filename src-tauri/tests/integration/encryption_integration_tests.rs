@@ -15,9 +15,10 @@ use barqly_vault_lib::{
         file::create_manifest,
         types::ValidateInput,
     },
-    file_ops::{FileOpsConfig, FileSelection},
     services::{
-        crypto::infrastructure::encrypt_data, key_management::passphrase::generate_keypair,
+        crypto::infrastructure::encrypt_data,
+        file::infrastructure::file_operations::{FileOpsConfig, FileSelection},
+        key_management::passphrase::generate_keypair,
     },
     // storage tests now use proper domain modules
 };
@@ -520,7 +521,10 @@ fn should_integrate_file_ops_with_crypto_operations() {
 
     // When: Validating file selection
     let validation_result =
-        barqly_vault_lib::file_ops::validate_selection(&file_selection, &config);
+        barqly_vault_lib::services::file::infrastructure::file_operations::validate_selection(
+            &file_selection,
+            &config,
+        );
     TestAssertions::assert_ok(
         validation_result,
         "File selection validation should succeed",

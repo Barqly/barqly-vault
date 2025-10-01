@@ -1,7 +1,7 @@
 //! Unit tests for archive manifest functionality
 
-use barqly_vault_lib::file_ops::archive_manifest::*;
-use barqly_vault_lib::file_ops::{
+use barqly_vault_lib::services::file::infrastructure::file_operations::archive_manifest::*;
+use barqly_vault_lib::services::file::infrastructure::file_operations::{
     ArchiveOperation, FileInfo, FileOpsConfig, FileSelection, create_archive,
 };
 use chrono::Utc;

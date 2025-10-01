@@ -2,9 +2,9 @@
 //!
 //! This module handles the extraction of TAR.GZ archives.
 
-use crate::file_ops::utils::calculate_file_hash;
-use crate::file_ops::validation::contains_traversal_attempt;
-use crate::file_ops::{FileInfo, FileOpsConfig, FileOpsError, Result};
+use super::super::utils::calculate_file_hash;
+use super::super::validation::contains_traversal_attempt;
+use super::super::{FileInfo, FileOpsConfig, FileOpsError, Result};
 use flate2::read::GzDecoder;
 use std::fs::{self, File};
 use std::io;

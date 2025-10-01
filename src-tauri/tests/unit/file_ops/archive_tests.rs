@@ -1,9 +1,11 @@
 //! Unit tests for archive operations
 
-use barqly_vault_lib::file_ops::archive_operations::{
+use barqly_vault_lib::services::file::infrastructure::file_operations::archive_operations::{
     create_archive, create_archive_with_progress, extract_archive,
 };
-use barqly_vault_lib::file_ops::{FileOpsConfig, FileOpsError, FileSelection};
+use barqly_vault_lib::services::file::infrastructure::file_operations::{
+    FileOpsConfig, FileOpsError, FileSelection,
+};
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use std::fs;

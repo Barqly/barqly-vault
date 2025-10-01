@@ -9,7 +9,7 @@
 //! - Performance validation with realistic file sizes
 
 use crate::common::helpers::TestAssertions;
-use barqly_vault_lib::file_ops::{
+use barqly_vault_lib::services::file::infrastructure::file_operations::{
     FileOpsConfig, FileSelection, create_archive, create_manifest_for_archive, create_staging_area,
     extract_archive, validate_selection, verify_manifest,
 };

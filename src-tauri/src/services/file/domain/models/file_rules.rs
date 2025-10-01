@@ -31,7 +31,9 @@ impl FileRules {
         let path_obj = Path::new(path);
 
         // Check for directory traversal attempts
-        if crate::file_ops::contains_traversal_attempt(path_obj) {
+        if crate::services::file::infrastructure::file_operations::contains_traversal_attempt(
+            path_obj,
+        ) {
             return Err(FileError::InvalidPath(
                 "Path contains traversal attempt".to_string(),
             ));

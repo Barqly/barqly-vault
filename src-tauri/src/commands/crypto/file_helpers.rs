@@ -5,7 +5,7 @@
 //! and maintain consistency across crypto operations.
 
 use crate::commands::types::{CommandError, ErrorCode, ErrorHandler};
-use crate::file_ops;
+use crate::services::file::infrastructure::file_operations;
 use std::path::Path;
 
 /// Create file selection with atomic validation to prevent TOCTOU
@@ -15,7 +15,7 @@ use std::path::Path;
 pub fn create_file_selection_atomic(
     file_paths: &[String],
     error_handler: &ErrorHandler,
-) -> Result<file_ops::FileSelection, Box<CommandError>> {
+) -> Result<file_operations::FileSelection, Box<CommandError>> {
     if file_paths.len() == 1 {
         // Atomic check: validate path exists and get metadata in single operation
         let path = Path::new(&file_paths[0]);
@@ -28,14 +28,14 @@ pub fn create_file_selection_atomic(
         )?;
 
         if metadata.is_dir() {
-            Ok(file_ops::FileSelection::Folder(path.to_path_buf()))
+            Ok(file_operations::FileSelection::Folder(path.to_path_buf()))
         } else {
-            Ok(file_ops::FileSelection::Files(
+            Ok(file_operations::FileSelection::Files(
                 file_paths.iter().map(|p| p.into()).collect(),
             ))
         }
     } else {
-        Ok(file_ops::FileSelection::Files(
+        Ok(file_operations::FileSelection::Files(
             file_paths.iter().map(|p| p.into()).collect(),
         ))
     }

@@ -9,7 +9,9 @@
 //! - Proper integration with hierarchical test structure
 
 use crate::common::helpers::TestAssertions;
-use barqly_vault_lib::file_ops::{FileOpsError, validate_file_size, validate_paths};
+use barqly_vault_lib::services::file::infrastructure::file_operations::{
+    FileOpsError, validate_file_size, validate_paths,
+};
 use rstest::*;
 use std::fs;
 use std::io::Write;
@@ -43,7 +45,7 @@ fn should_fail_validation_for_nonexistent_path() {
     let path = Path::new("/nonexistent/path");
 
     // When: Validating the path
-    let result = barqly_vault_lib::file_ops::validation::validate_single_path(path);
+    let result = barqly_vault_lib::services::file::infrastructure::file_operations::validation::validate_single_path(path);
 
     // Then: Validation should fail with appropriate error
     assert!(
@@ -141,7 +143,7 @@ fn should_detect_path_traversal_attempts(#[case] path_str: &str, #[case] test_na
     let path = Path::new(path_str);
 
     // When: Validating the path
-    let result = barqly_vault_lib::file_ops::validation::validate_single_path(path);
+    let result = barqly_vault_lib::services::file::infrastructure::file_operations::validation::validate_single_path(path);
 
     // Then: Validation should fail
     TestAssertions::assert_err(result, &format!("Should detect traversal in {test_name}"));
@@ -157,7 +159,7 @@ fn should_allow_normal_paths_without_traversal(#[case] path_str: &str, #[case] t
     let path = Path::new(path_str);
 
     // When: Validating the path
-    let result = barqly_vault_lib::file_ops::validation::validate_single_path(path);
+    let result = barqly_vault_lib::services::file::infrastructure::file_operations::validation::validate_single_path(path);
 
     // Then: If validation fails, it should not be due to traversal
     if let Err(err) = result {
@@ -183,7 +185,7 @@ fn should_normalize_existing_file_path() {
     fs::write(&test_file, b"test").unwrap();
 
     // When: Normalizing the path
-    let result = barqly_vault_lib::file_ops::validation::normalize_path(&test_file);
+    let result = barqly_vault_lib::services::file::infrastructure::file_operations::validation::normalize_path(&test_file);
 
     // Then: Normalization should succeed
     let normalized = TestAssertions::assert_ok(
@@ -209,7 +211,7 @@ fn should_get_relative_path_for_nested_file() {
     let full_path = Path::new("/base/directory/subfolder/file.txt");
 
     // When: Getting the relative path
-    let result = barqly_vault_lib::file_ops::validation::get_relative_path(full_path, base_path);
+    let result = barqly_vault_lib::services::file::infrastructure::file_operations::validation::get_relative_path(full_path, base_path);
 
     // Then: The operation should succeed
     let relative = TestAssertions::assert_ok(
@@ -233,7 +235,7 @@ fn should_fail_getting_relative_path_for_unrelated_paths() {
 
     // When: Getting the relative path
     let result =
-        barqly_vault_lib::file_ops::validation::get_relative_path(unrelated_path, base_path);
+        barqly_vault_lib::services::file::infrastructure::file_operations::validation::get_relative_path(unrelated_path, base_path);
 
     // Then: The operation should fail
     assert!(
@@ -260,7 +262,7 @@ fn should_validate_archive_path_with_valid_directory() {
     let archive_path = temp_dir.path().join("archive.tar.gz");
 
     // When: Validating the archive path
-    let result = barqly_vault_lib::file_ops::validation::validate_archive_path(&archive_path);
+    let result = barqly_vault_lib::services::file::infrastructure::file_operations::validation::validate_archive_path(&archive_path);
 
     // Then: Validation should succeed
     TestAssertions::assert_ok(
@@ -275,7 +277,7 @@ fn should_fail_validation_for_relative_archive_path() {
     let relative_path = Path::new("relative/archive.tar.gz");
 
     // When: Validating the archive path
-    let result = barqly_vault_lib::file_ops::validation::validate_archive_path(relative_path);
+    let result = barqly_vault_lib::services::file::infrastructure::file_operations::validation::validate_archive_path(relative_path);
 
     // Then: Validation should fail
     assert!(
@@ -297,7 +299,7 @@ fn should_fail_validation_for_nonexistent_parent_directory() {
     let nonexistent_path = Path::new("/nonexistent/directory/archive.tar.gz");
 
     // When: Validating the archive path
-    let result = barqly_vault_lib::file_ops::validation::validate_archive_path(nonexistent_path);
+    let result = barqly_vault_lib::services::file::infrastructure::file_operations::validation::validate_archive_path(nonexistent_path);
 
     // Then: Validation should fail
     assert!(

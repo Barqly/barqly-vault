@@ -13,10 +13,10 @@
 //! use barqly_vault_lib::services::file::infrastructure::file_operations;
 //! use std::path::Path;
 //!
-//! let selection = file_ops::FileSelection::Files(vec!["/path/to/file1.txt".into()]);
+//! let selection = file_operations::FileSelection::Files(vec!["/path/to/file1.txt".into()]);
 //! let output_path = Path::new("/output/dir/archive.tar.gz");
-//! let config = file_ops::FileOpsConfig::default();
-//! let archive = file_ops::create_archive(&selection, output_path, &config).unwrap();
+//! let config = file_operations::FileOpsConfig::default();
+//! let archive = file_operations::create_archive(&selection, output_path, &config).unwrap();
 //! ```
 
 pub mod archive_manifest;

@@ -8,7 +8,7 @@
 //! - Performance measurement and validation
 //! - Proper integration with hierarchical test structure
 
-use barqly_vault_lib::file_ops::FileSelection;
+use barqly_vault_lib::services::file::infrastructure::file_operations::FileSelection;
 use rstest::*;
 use std::path::PathBuf;
 

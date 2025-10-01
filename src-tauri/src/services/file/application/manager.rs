@@ -1,8 +1,8 @@
 use super::services::{ArchiveService, ManifestService};
 use crate::commands::Manifest;
 use crate::commands::{FileInfo, FileSelection};
-use crate::file_ops::ArchiveOperation;
 use crate::services::file::domain::FileResult;
+use crate::services::file::infrastructure::file_operations::ArchiveOperation;
 use std::path::PathBuf;
 
 pub struct FileManager {
