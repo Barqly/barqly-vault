@@ -7,8 +7,8 @@ use super::services::{DecryptionOrchestrationService, EncryptionService};
 use crate::commands::crypto::{
     EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse,
 };
-use crate::commands::types::ProgressManager;
 use crate::services::crypto::domain::CryptoResult;
+use crate::services::shared::infrastructure::progress::ProgressManager;
 use std::path::Path;
 
 pub struct CryptoManager {

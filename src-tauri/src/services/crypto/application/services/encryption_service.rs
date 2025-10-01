@@ -3,7 +3,7 @@ use super::{
     VaultEncryptionService,
 };
 use crate::commands::crypto::{
-    self as crypto_commands, EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse,
+    EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse,
 };
 use crate::constants::*;
 use crate::prelude::*;
@@ -34,7 +34,7 @@ impl EncryptionService {
     #[instrument(skip(input), fields(key_id = %input.key_id, file_count = input.file_paths.len()))]
     pub async fn encrypt_files(&self, input: EncryptDataInput) -> CryptoResult<String> {
         // Check for concurrent operations (from original logic)
-        if crypto_commands::ENCRYPTION_IN_PROGRESS
+        if crate::services::shared::infrastructure::progress::ENCRYPTION_IN_PROGRESS
             .compare_exchange(
                 false,
                 true,
@@ -51,7 +51,10 @@ impl EncryptionService {
         // Initialize progress manager (from original logic)
         let operation_id = format!("encrypt_{}", chrono::Utc::now().timestamp());
         let mut progress_manager =
-            crate::commands::types::ProgressManager::new(operation_id.clone(), PROGRESS_TOTAL_WORK);
+            crate::services::shared::infrastructure::progress::ProgressManager::new(
+                operation_id.clone(),
+                PROGRESS_TOTAL_WORK,
+            );
 
         info!(
             key_id = %input.key_id,
@@ -113,7 +116,7 @@ impl EncryptionService {
             PROGRESS_ENCRYPT_CLEANUP,
             "Encryption completed successfully",
         );
-        crypto_commands::update_global_progress(
+        crate::services::shared::infrastructure::progress::update_global_progress(
             &operation_id,
             progress_manager.get_current_update(),
         );

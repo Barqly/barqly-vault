@@ -3,14 +3,15 @@
 //! Handles the file → archive → encrypt workflow including file selection,
 //! archive creation, and preparation for encryption operations.
 
-use crate::commands::crypto::{EncryptDataInput, update_global_progress};
-use crate::commands::types::{ErrorHandler, ProgressManager};
+use crate::commands::crypto::EncryptDataInput;
 use crate::constants::*;
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::file::infrastructure::file_operations::{
     self as file_operations, ArchiveOperation, FileOpsConfig,
 };
+use crate::services::shared::infrastructure::error::ErrorHandler;
+use crate::services::shared::infrastructure::progress::{ProgressManager, update_global_progress};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]

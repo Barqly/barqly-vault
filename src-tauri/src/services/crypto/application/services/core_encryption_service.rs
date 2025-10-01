@@ -3,13 +3,13 @@
 //! Handles the actual age encryption/decryption operations.
 //! Extracted from commands/crypto/encryption.rs for proper domain separation.
 
-use crate::commands::crypto::update_global_progress;
-use crate::commands::types::{ErrorHandler, ProgressManager};
 use crate::constants::*;
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::crypto::infrastructure as crypto;
 use crate::services::file::infrastructure::file_operations::ArchiveOperation;
+use crate::services::shared::infrastructure::error::ErrorHandler;
+use crate::services::shared::infrastructure::progress::{ProgressManager, update_global_progress};
 
 #[derive(Debug)]
 pub struct CoreEncryptionService;

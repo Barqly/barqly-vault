@@ -7,12 +7,12 @@ use super::{
     ArchiveExtractionService, KeyRetrievalDecryptionService, ManifestVerificationService,
     PassphraseDecryptionService, YubiKeyDecryptionService,
 };
-use crate::commands::types::ProgressManager;
 use crate::constants::*;
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::file::infrastructure::file_operations;
 use crate::services::key_management::shared::KeyEntry;
+use crate::services::shared::infrastructure::progress::ProgressManager;
 use age::secrecy::{ExposeSecret, SecretString};
 use std::path::Path;
 

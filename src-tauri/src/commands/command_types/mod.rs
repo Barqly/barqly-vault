@@ -26,17 +26,17 @@
 mod core;
 mod error;
 mod error_code;
-mod error_handler;
 mod error_recovery;
 mod progress;
-mod progress_manager;
 mod validation;
 
 // Re-export all types for backward compatibility
 pub use core::{CommandResponse, CommandResult, ProgressCallback};
 pub use error::CommandError;
 pub use error_code::ErrorCode;
-pub use error_handler::ErrorHandler;
 pub use progress::{ProgressDetails, ProgressUpdate, YubiKeyOperationType, YubiKeyPhase};
-pub use progress_manager::ProgressManager;
 pub use validation::{ValidateInput, ValidateInputDetailed, ValidationHelper};
+
+// Re-export infrastructure utilities for backward compatibility
+pub use crate::services::shared::infrastructure::error::ErrorHandler;
+pub use crate::services::shared::infrastructure::progress::ProgressManager;

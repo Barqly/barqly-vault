@@ -5,13 +5,13 @@
 
 use super::{ArchiveOrchestrationService, CoreEncryptionService, FileValidationService};
 use crate::commands::crypto::{EncryptFilesMultiInput, EncryptFilesMultiResponse};
-use crate::commands::types::ProgressManager;
 use crate::constants::*;
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::crypto::infrastructure as crypto;
 use crate::services::key_management::shared::{KeyEntry, KeyRegistryService};
 use crate::services::shared::infrastructure::path_management;
+use crate::services::shared::infrastructure::progress::ProgressManager;
 use crate::services::vault;
 use crate::services::vault::application::services::VaultService;
 use crate::services::vault::domain::models::{ArchiveContent, EncryptedArchive};
