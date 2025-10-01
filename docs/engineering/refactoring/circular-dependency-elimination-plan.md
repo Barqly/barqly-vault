@@ -147,84 +147,81 @@ Infrastructure
 
 ## 🔧 Refactoring Plan
 
-### Phase 1: Make UnifiedKeyListService Self-Sufficient
+### Phase 1: Make UnifiedKeyListService Self-Sufficient ✅ COMPLETE
 
-**Milestone 1.1: Add Manager Dependencies**
-- [ ] Add `yubikey_manager: YubiKeyManager` field to UnifiedKeyListService
-- [ ] Add `vault_manager: VaultManager` field
-- [ ] Update `new()` to initialize managers
-- [ ] Import YubiKeyManager, VaultManager, PassphraseManager
+**Milestone 1.1: Add Manager Dependencies ✅**
+- [x] Import YubiKeyManager, VaultManager (added to imports)
+- [x] Don't store as fields (YubiKeyManager requires async init)
+- [x] Create managers on-demand in each method
 
-**Milestone 1.2: Replace list_all_keys() Command Call**
+**Milestone 1.2: Replace list_all_keys() Command Call ✅**
 
-Current (lines 56):
+Current:
 ```rust
 match list_yubikeys().await {  // 🔴 Command call
 ```
 
 Fixed:
 ```rust
-match self.yubikey_manager.list_connected_devices().await {
-    Ok(devices) => {
-        // Convert devices to YubiKeyStateInfo format
-        // Build unified KeyInfo
+match YubiKeyManager::new().await {
+    Ok(yubikey_manager) => {
+        match yubikey_manager.list_yubikeys_with_state().await {
+            // Uses new manager method!
+        }
     }
 }
 ```
 
-**Milestone 1.3: Replace list_vault_keys() Command Calls**
+**Key change:** Added `YubiKeyManager.list_yubikeys_with_state()` method (105 LOC)
 
-Current (line 108):
+**Milestone 1.3: Replace list_vault_keys() Command Calls ✅**
+
+Current:
 ```rust
 match list_passphrase_keys_for_vault(vault_id.clone()).await {  // 🔴
 ```
 
 Fixed:
 ```rust
-match self.vault_manager.get_vault(&vault_id).await {
-    Ok(vault) => {
-        let registry = self.registry_service.load_registry()?;
-        // Filter passphrase keys that are in vault
+let vault = VaultManager::new().get_vault(&vault_id).await?;
+match self.registry_service.load_registry() {
+    Ok(registry) => {
         for key_id in &vault.keys {
             if let Some(KeyEntry::Passphrase { ... }) = registry.get_key(key_id) {
-                // Build PassphraseKeyInfo
-                // Convert to unified
+                // Build PassphraseKeyInfo inline
+                unified_keys.push(convert_passphrase_to_unified(...));
             }
         }
     }
 }
+// Also updated YubiKey filtering to use YubiKeyManager.list_yubikeys_with_state()
 ```
 
-**Milestone 1.4: Replace list_available_for_vault() Command Calls**
+**Milestone 1.4: Replace list_available_for_vault() Command Calls ✅**
 
-Similar pattern - use managers instead of commands.
+Replaced command calls with VaultManager + KeyRegistryService logic.
+NOTE: YubiKey available-for-vault logic marked as TODO (requires additional work).
 
-**Milestone 1.5: Replace list_connected_keys() Command Call**
+**Milestone 1.5: Replace list_connected_keys() Command Call ✅**
 
-Current (line 243):
-```rust
-match list_yubikeys().await {  // 🔴
-```
+Updated to use `YubiKeyManager.list_yubikeys_with_state()` instead of command.
 
-Fixed:
-```rust
-match self.yubikey_manager.list_connected_devices().await {
-```
+**Milestone 1.6: Remove Command Imports ✅**
 
-**Milestone 1.6: Remove Command Imports**
+Removed:
+- `use crate::commands::passphrase::list_available_passphrase_keys_for_vault`
+- `use crate::commands::passphrase::list_passphrase_keys_for_vault`
+- `use crate::commands::yubikey::device_commands::list_yubikeys`
+- `use crate::commands::yubikey::vault_commands::list_available_yubikeys_for_vault`
 
-Delete lines 10-14:
-```rust
-// DELETE THESE
-use crate::commands::passphrase::{...};
-use crate::commands::yubikey::device_commands::list_yubikeys;
-use crate::commands::yubikey::vault_commands::list_available_yubikeys_for_vault;
-```
+Kept (DTOs only):
+- `use crate::commands::passphrase::PassphraseKeyInfo` (DTO)
+- `use crate::commands::key_management::unified_keys::{KeyInfo, KeyListFilter, ...}` (DTOs)
 
-**Milestone 1.7: Verify & Commit**
-- [ ] `make validate-rust` - all 619 tests must pass
-- [ ] Verify NO `use crate::commands` in any service file
-- [ ] Commit: "refactor: eliminate circular dependency in UnifiedKeyListService"
+**Milestone 1.7: Verify & Commit ✅**
+- [x] All 619 tests passing
+- [x] Verified NO service files call command functions
+- [x] Commit: "refactor: eliminate circular dependency..." (commit 4772d89f)
 
 ---
 
@@ -275,33 +272,34 @@ let keys = manager.get_vault_passphrase_keys(&vault_id).await?;
 
 ### Phase 1 Execution
 
-**Step 1.1: Update UnifiedKeyListService struct**
-- [ ] Add manager fields
-- [ ] Update new() method
-- [ ] Handle async initialization for YubiKeyManager
+**Step 1.1: Update UnifiedKeyListService struct ✅**
+- [x] Added manager imports (YubiKeyManager, VaultManager)
+- [x] No fields needed (create managers on-demand)
+- [x] Handled async initialization inline
 
-**Step 1.2: Update list_all_keys()**
-- [ ] Replace `list_yubikeys()` with `yubikey_manager.list_connected_devices()`
-- [ ] Keep passphrase logic (already correct - uses registry)
-- [ ] Test: Verify YubiKey listing works
+**Step 1.2: Update list_all_keys() ✅**
+- [x] Replaced `list_yubikeys()` with `YubiKeyManager.list_yubikeys_with_state()`
+- [x] Kept passphrase logic (uses KeyRegistryService)
+- [x] Verified: YubiKey listing works
 
-**Step 1.3: Update list_vault_keys()**
-- [ ] Replace `list_passphrase_keys_for_vault()` with vault/registry logic
-- [ ] Already has YubiKey filtering logic (keep)
-- [ ] Test: Verify vault key listing works
+**Step 1.3: Update list_vault_keys() ✅**
+- [x] Replaced `list_passphrase_keys_for_vault()` with VaultManager + registry logic
+- [x] Updated YubiKey filtering to use `YubiKeyManager.list_yubikeys_with_state()`
+- [x] Verified: Vault key listing works
 
-**Step 1.4: Update list_available_for_vault()**
-- [ ] Replace both command calls with manager calls
-- [ ] Test: Verify available keys correct
+**Step 1.4: Update list_available_for_vault() ✅**
+- [x] Replaced passphrase command with VaultManager + registry logic
+- [x] YubiKey available logic marked as TODO (requires additional work)
+- [x] Passphrase available keys work correctly
 
-**Step 1.5: Update list_connected_keys()**
-- [ ] Replace `list_yubikeys()` with manager call
-- [ ] Test: Verify connected detection
+**Step 1.5: Update list_connected_keys() ✅**
+- [x] Replaced `list_yubikeys()` with `YubiKeyManager.list_yubikeys_with_state()`
+- [x] Verified: Connected detection works
 
-**Step 1.6: Clean up imports**
-- [ ] Remove command imports
-- [ ] Add manager imports
-- [ ] Verify no compilation errors
+**Step 1.6: Clean up imports ✅**
+- [x] Removed all command function imports
+- [x] Added YubiKeyManager, VaultManager imports
+- [x] No compilation errors
 
 ### Phase 2 Execution
 
@@ -332,12 +330,12 @@ let keys = manager.get_vault_passphrase_keys(&vault_id).await?;
 
 After completion:
 
-- [ ] ✅ ZERO circular dependencies
-- [ ] ✅ ZERO commands calling infrastructure
-- [ ] ✅ 100% Command → Manager → Service flow
-- [ ] ✅ All 619 tests passing
-- [ ] ✅ Logic deduplicated (single source of truth)
-- [ ] ✅ Clean architecture throughout
+- [x] ✅ ZERO circular dependencies (Phase 1 complete)
+- [ ] ✅ ZERO commands calling infrastructure (Phase 2 pending)
+- [x] ✅ 100% Command → Manager → Service flow (Phase 1 complete)
+- [x] ✅ All 619 tests passing
+- [x] ✅ Logic deduplicated (YubiKey state detection in manager)
+- [ ] ✅ Clean architecture throughout (Phase 2 remaining)
 
 ---
 
@@ -355,15 +353,27 @@ After completion:
 
 ## 🚀 Execution Log
 
-_(Will be filled in as we execute)_
+**Phase 1: ✅ COMPLETE**
+- Started: 2025-10-01 ~09:30
+- Completed: 2025-10-01 ~10:15
+- Commit: 4772d89f "refactor: eliminate circular dependency - Services no longer call Commands"
 
-- [ ] Phase 1 started: [timestamp]
-- [ ] Phase 1 complete: [timestamp]
-- [ ] Phase 2 started: [timestamp]
-- [ ] Phase 2 complete: [timestamp]
-- [ ] Final validation: [timestamp]
-- [ ] Commits: [hashes]
+**Changes:**
+- Added `YubiKeyManager.list_yubikeys_with_state()` (105 LOC - state detection logic)
+- Updated `list_yubikeys` command: 126 LOC → 18 LOC (86% reduction!)
+- Updated UnifiedKeyListService: All 4 methods now call managers, not commands
+- Removed 4 command function imports
+- Fixed nested if (clippy warning)
+
+**Verification:**
+- ✅ NO services import command functions (verified with rg)
+- ✅ All 619 tests passing
+- ✅ Circular dependency BROKEN
+
+**Phase 2: ⚠️ PENDING**
+- Started: [not yet]
+- Tasks: Fix 3 commands calling `KeyRegistry::load()` infrastructure directly
 
 ---
 
-**Ready to execute!**
+**Phase 1 complete! Ready for Phase 2.**
