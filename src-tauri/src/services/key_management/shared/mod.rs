@@ -22,8 +22,8 @@ pub use infrastructure::{
     save_encrypted_key_with_metadata, save_yubikey_metadata,
 };
 
-// Re-export application layer services
-pub use application::{KeyManagementError, KeyRegistryService, UnifiedKeyListService};
+// Re-export application layer services and manager
+pub use application::{KeyManagementError, KeyManager, KeyRegistryService, UnifiedKeyListService};
 
 // Re-export domain types
 pub use domain::models::{KeyReference, KeyState, KeyType};

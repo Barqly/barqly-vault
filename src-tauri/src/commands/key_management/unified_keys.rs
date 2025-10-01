@@ -15,9 +15,7 @@ use crate::commands::yubikey::device_commands::{PinStatus, YubiKeyState, YubiKey
 use crate::commands::yubikey::vault_commands::AvailableYubiKey;
 use crate::prelude::*;
 use crate::services::key_management::shared::domain::models::KeyState;
-use crate::services::key_management::shared::{
-    KeyEntry, KeyRegistryService, UnifiedKeyListService,
-};
+use crate::services::key_management::shared::{KeyEntry, KeyManager};
 use crate::services::vault;
 use serde::{Deserialize, Serialize};
 
@@ -186,8 +184,8 @@ pub fn convert_available_yubikey_to_unified(
 pub async fn list_unified_keys(filter: KeyListFilter) -> Result<Vec<KeyInfo>, CommandError> {
     info!("Listing keys with filter: {:?}", filter);
 
-    let service = UnifiedKeyListService::new();
-    service
+    let manager = KeyManager::new();
+    manager
         .list_keys(filter)
         .await
         .map_err(|e| CommandError::operation(ErrorCode::InternalError, e.to_string()))
@@ -308,9 +306,9 @@ pub async fn remove_key_from_vault(
         "Removing key from vault"
     );
 
-    let service = KeyRegistryService::new();
+    let manager = KeyManager::new();
 
-    service
+    manager
         .detach_key_from_vault(&input.key_id, &input.vault_id)
         .await
         .map(|_| RemoveKeyFromVaultResponse { success: true })
@@ -374,10 +372,10 @@ pub async fn update_key_label(
         "Updating key label"
     );
 
-    let service = KeyRegistryService::new();
+    let manager = KeyManager::new();
 
     // Get existing key entry
-    let mut entry = service.get_key(&input.key_id).map_err(|e| {
+    let mut entry = manager.get_key(&input.key_id).map_err(|e| {
         Box::new(CommandError {
             code: ErrorCode::KeyNotFound,
             message: format!("Key not found: {}", e),
@@ -400,7 +398,7 @@ pub async fn update_key_label(
     }
 
     // Save updated entry
-    service.update_key(&input.key_id, entry).map_err(|e| {
+    manager.update_key(&input.key_id, entry).map_err(|e| {
         Box::new(CommandError {
             code: ErrorCode::InternalError,
             message: format!("Failed to update key label: {}", e),
