@@ -111,24 +111,89 @@ impl ManifestService {
         Ok(command_manifest)
     }
 
-    /// Helper function moved from commands/file/helpers.rs
+    /// Verify manifest against extracted files
+    pub async fn verify_manifest(
+        &self,
+        manifest_path: String,
+        extracted_files_dir: String,
+    ) -> FileResult<bool> {
+        use std::path::Path;
+
+        // Load manifest
+        let manifest = file_ops::archive_manifest::Manifest::load(Path::new(&manifest_path))
+            .map_err(|e| {
+                crate::services::file::domain::FileError::ValidationFailed(e.to_string())
+            })?;
+
+        // Get extracted file info
+        let extracted_files = self.get_extracted_files_info(&extracted_files_dir)?;
+
+        // Verify
+        file_ops::verify_manifest(
+            &manifest,
+            &extracted_files,
+            &file_ops::FileOpsConfig::default(),
+        )
+        .map(|_| true)
+        .map_err(|e| crate::services::file::domain::FileError::ValidationFailed(e.to_string()))
+    }
+
+    /// Get file information from extracted directory
+    fn get_extracted_files_info(&self, extracted_dir: &str) -> FileResult<Vec<file_ops::FileInfo>> {
+        use std::fs;
+        #[cfg(unix)]
+        use std::os::unix::fs::PermissionsExt;
+        use std::path::Path;
+        use walkdir::WalkDir;
+
+        let mut file_infos = Vec::new();
+        let extracted_path = Path::new(extracted_dir);
+
+        for entry in WalkDir::new(extracted_path)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .filter(|e| e.file_type().is_file())
+        {
+            let path = entry.path();
+            let metadata = fs::metadata(path)
+                .map_err(|e| crate::services::file::domain::FileError::IoError(e.to_string()))?;
+
+            let relative_path = path
+                .strip_prefix(extracted_path)
+                .unwrap_or(path)
+                .to_path_buf();
+
+            let hash = file_ops::utils::calculate_file_hash(path)
+                .map_err(|e| crate::services::file::domain::FileError::IoError(e.to_string()))?;
+
+            let file_info = file_ops::FileInfo {
+                path: relative_path,
+                size: metadata.len(),
+                modified: chrono::DateTime::from(
+                    metadata
+                        .modified()
+                        .unwrap_or_else(|_| std::time::SystemTime::now()),
+                ),
+                hash,
+                #[cfg(unix)]
+                permissions: metadata.permissions().mode(),
+            };
+
+            file_infos.push(file_info);
+        }
+
+        Ok(file_infos)
+    }
+
+    /// Helper function - uses canonical FileSelection::from_paths
     fn create_file_selection_atomic(
         &self,
         file_paths: &[String],
         _error_handler: &ErrorHandler,
     ) -> FileResult<file_ops::FileSelection> {
         use std::path::PathBuf;
-
         let path_bufs: Vec<PathBuf> = file_paths.iter().map(PathBuf::from).collect();
-
-        // Determine if this is a single folder or multiple files
-        let selection = if path_bufs.len() == 1 && path_bufs[0].is_dir() {
-            file_ops::FileSelection::Folder(path_bufs[0].clone())
-        } else {
-            file_ops::FileSelection::Files(path_bufs)
-        };
-
-        Ok(selection)
+        Ok(file_ops::FileSelection::from_paths(&path_bufs))
     }
 }
 

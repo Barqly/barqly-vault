@@ -147,6 +147,18 @@ impl FileSelection {
 
         Ok(file_infos)
     }
+
+    /// Create FileSelection from paths - single directory becomes Folder, otherwise Files
+    ///
+    /// This is the canonical method for converting path lists to FileSelection.
+    /// Replaces duplicate logic across the codebase.
+    pub fn from_paths(paths: &[PathBuf]) -> Self {
+        if paths.len() == 1 && paths[0].is_dir() {
+            FileSelection::Folder(paths[0].clone())
+        } else {
+            FileSelection::Files(paths.to_vec())
+        }
+    }
 }
 
 /// Validate a file selection

@@ -79,13 +79,9 @@ impl ArchiveService {
         FileRules::validate_file_paths(&selection.paths)?;
         FileRules::validate_total_size(selection.total_size)?;
 
-        // Convert command types to file_operations types
+        // Convert command types to file_operations types using canonical method
         let path_bufs: Vec<PathBuf> = selection.paths.iter().map(PathBuf::from).collect();
-        let file_ops_selection = if path_bufs.len() == 1 && path_bufs[0].is_dir() {
-            file_operations::FileSelection::Folder(path_bufs[0].clone())
-        } else {
-            file_operations::FileSelection::Files(path_bufs)
-        };
+        let file_ops_selection = file_operations::FileSelection::from_paths(&path_bufs);
 
         // Call file_operations directly
         let config = file_operations::FileOpsConfig::default();

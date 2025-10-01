@@ -71,30 +71,16 @@ impl ArchiveExtractionService {
         Ok(extracted_files)
     }
 
-    /// Validate and create output directory if it doesn't exist
+    /// Validate and create output directory using canonical method
     fn validate_output_directory(&self, output_path: &Path) -> CryptoResult<()> {
-        // If directory doesn't exist, create it
-        if !output_path.exists() {
-            debug!(
+        file_operations::validate_and_create_output_directory(output_path).map_err(|e| {
+            error!(
                 output_path = %output_path.display(),
-                "Output directory does not exist, creating it"
+                error = %e,
+                "Failed to validate output directory"
             );
-            std::fs::create_dir_all(output_path).map_err(|e| {
-                error!(
-                    output_path = %output_path.display(),
-                    error = %e,
-                    "Failed to create output directory"
-                );
-                CryptoError::InvalidInput(format!("Failed to create output directory: {}", e))
-            })?;
-        } else if !output_path.is_dir() {
-            return Err(CryptoError::InvalidInput(format!(
-                "Output path '{}' exists but is not a directory",
-                output_path.display()
-            )));
-        }
-
-        Ok(())
+            CryptoError::InvalidInput(format!("Output directory validation failed: {}", e))
+        })
     }
 }
 

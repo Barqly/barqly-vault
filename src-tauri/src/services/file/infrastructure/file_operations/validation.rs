@@ -224,3 +224,37 @@ fn is_writable(path: &Path) -> bool {
         false
     }
 }
+
+/// Validate output directory exists and is writable, creating it if necessary
+///
+/// This is the canonical method for output directory validation.
+/// Replaces duplicate logic across commands and services.
+pub fn validate_and_create_output_directory(path: &Path) -> Result<()> {
+    // Create directory if it doesn't exist
+    if !path.exists() {
+        std::fs::create_dir_all(path).map_err(|e| FileOpsError::IoError {
+            message: format!("Failed to create output directory '{}'", path.display()),
+            source: e,
+        })?;
+    }
+
+    // Verify it's actually a directory
+    if !path.is_dir() {
+        return Err(FileOpsError::PathValidationFailed {
+            path: path.to_path_buf(),
+            reason: "Path exists but is not a directory".to_string(),
+        });
+    }
+
+    // Test write permissions
+    let test_file = path.join(format!(".barqly_write_test_{}", std::process::id()));
+    match std::fs::write(&test_file, b"test") {
+        Ok(_) => {
+            let _ = std::fs::remove_file(test_file);
+            Ok(())
+        }
+        Err(_) => Err(FileOpsError::PermissionDenied {
+            path: path.to_path_buf(),
+        }),
+    }
+}

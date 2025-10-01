@@ -3,7 +3,7 @@
 //! Handles the file → archive → encrypt workflow including file selection,
 //! archive creation, and preparation for encryption operations.
 
-use crate::commands::crypto::{EncryptDataInput, file_helpers, update_global_progress};
+use crate::commands::crypto::{EncryptDataInput, update_global_progress};
 use crate::commands::types::{ErrorHandler, ProgressManager};
 use crate::constants::*;
 use crate::prelude::*;
@@ -29,7 +29,7 @@ impl ArchiveOrchestrationService {
         progress_manager: &mut ProgressManager,
         operation_id: &str,
     ) -> CryptoResult<(ArchiveOperation, Vec<file_operations::FileInfo>, Vec<u8>)> {
-        let error_handler = ErrorHandler::new();
+        let _error_handler = ErrorHandler::new();
 
         // Determine output file name
         let output_name = input.output_name.clone().unwrap_or_else(|| {
@@ -67,11 +67,11 @@ impl ArchiveOrchestrationService {
         progress_manager.set_progress(PROGRESS_ENCRYPT_READ_ARCHIVE, "Reading archive file...");
         self.update_progress(operation_id, progress_manager);
 
-        let archive_data =
-            file_helpers::read_archive_file_safely(&archive_operation.archive_path, &error_handler)
-                .map_err(|e| {
-                    CryptoError::EncryptionFailed(format!("Failed to read archive: {}", e))
-                })?;
+        let archive_data = file_operations::read_archive_with_size_check(
+            &archive_operation.archive_path,
+            crate::constants::MAX_ARCHIVE_SIZE,
+        )
+        .map_err(|e| CryptoError::EncryptionFailed(format!("Failed to read archive: {}", e)))?;
 
         debug!(
             archive_size = archive_data.len(),
@@ -82,21 +82,13 @@ impl ArchiveOrchestrationService {
         Ok((archive_operation, archive_files, archive_data))
     }
 
-    /// Create file selection from input paths (extracted from original logic)
+    /// Create file selection from input paths using canonical method
     fn create_file_selection_from_input(
         &self,
         input: &EncryptDataInput,
     ) -> CryptoResult<file_operations::FileSelection> {
         let path_bufs: Vec<PathBuf> = input.file_paths.iter().map(PathBuf::from).collect();
-
-        // Determine if this is a single folder or multiple files
-        let selection = if path_bufs.len() == 1 && path_bufs[0].is_dir() {
-            file_operations::FileSelection::Folder(path_bufs[0].clone())
-        } else {
-            file_operations::FileSelection::Files(path_bufs)
-        };
-
-        Ok(selection)
+        Ok(file_operations::FileSelection::from_paths(&path_bufs))
     }
 
     /// Update global progress (helper method)

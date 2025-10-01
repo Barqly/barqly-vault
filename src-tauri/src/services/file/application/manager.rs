@@ -48,6 +48,17 @@ impl FileManager {
     pub async fn select_directory(&self, title: Option<String>) -> FileResult<String> {
         self.archive_service.select_directory(title).await
     }
+
+    /// Verify manifest against extracted files
+    pub async fn verify_manifest(
+        &self,
+        manifest_path: String,
+        extracted_files_dir: String,
+    ) -> FileResult<bool> {
+        self.manifest_service
+            .verify_manifest(manifest_path, extracted_files_dir)
+            .await
+    }
 }
 
 impl Default for FileManager {

@@ -229,22 +229,17 @@ impl VaultEncryptionService {
         Ok((output_dir, output_name))
     }
 
-    /// Create file selection from paths (helper)
+    /// Create file selection from paths using canonical method
     fn create_file_selection_from_paths(
         &self,
         file_paths: &[String],
     ) -> CryptoResult<crate::services::file::infrastructure::file_operations::FileSelection> {
         let path_bufs: Vec<PathBuf> = file_paths.iter().map(PathBuf::from).collect();
-
-        let selection = if path_bufs.len() == 1 && path_bufs[0].is_dir() {
-            crate::services::file::infrastructure::file_operations::FileSelection::Folder(
-                path_bufs[0].clone(),
-            )
-        } else {
-            crate::services::file::infrastructure::file_operations::FileSelection::Files(path_bufs)
-        };
-
-        Ok(selection)
+        Ok(
+            crate::services::file::infrastructure::file_operations::FileSelection::from_paths(
+                &path_bufs,
+            ),
+        )
     }
 
     /// Create archive for vault (helper using existing services)

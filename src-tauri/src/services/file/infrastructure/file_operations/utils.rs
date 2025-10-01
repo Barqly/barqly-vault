@@ -41,3 +41,28 @@ pub fn calculate_file_hash(path: &Path) -> Result<String> {
     let result = hasher.finalize();
     Ok(hex::encode(result))
 }
+
+/// Read archive file with size validation to prevent memory exhaustion
+///
+/// This is the canonical method for safely reading archives.
+/// Validates file size before reading to prevent memory exhaustion attacks.
+pub fn read_archive_with_size_check(path: &Path, max_size: u64) -> Result<Vec<u8>> {
+    // Check file size before reading
+    let metadata = std::fs::metadata(path).map_err(|e| FileOpsError::IoError {
+        message: format!("Failed to get file metadata for {}", path.display()),
+        source: e,
+    })?;
+
+    if metadata.len() > max_size {
+        return Err(FileOpsError::ArchiveTooLarge {
+            size: metadata.len(),
+            max: max_size,
+        });
+    }
+
+    // Read file
+    std::fs::read(path).map_err(|e| FileOpsError::IoError {
+        message: format!("Failed to read archive file: {}", path.display()),
+        source: e,
+    })
+}
