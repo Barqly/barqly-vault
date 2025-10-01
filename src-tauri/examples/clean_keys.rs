@@ -6,7 +6,7 @@
 // CLI utility examples are allowed to use println! for user interaction
 #![allow(clippy::disallowed_macros)]
 
-use barqly_vault_lib::storage::path_management::get_keys_dir;
+use barqly_vault_lib::storage::get_keys_dir;
 use std::fs;
 use std::io::{self, Write};
 

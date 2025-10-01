@@ -10,15 +10,16 @@
 //! - Key storage → services::key_management::shared::infrastructure::key_storage
 //! - Key registry → services::key_management::shared::infrastructure::registry_persistence
 
-pub mod cache;
-pub mod errors;
-pub mod path_management;
-
 use std::path::PathBuf;
 
-pub use cache::{CacheMetrics, StorageCache, get_cache};
-pub use errors::StorageError;
-pub use path_management::{get_key_file_path, get_key_metadata_path};
+// Re-export from services/shared/infrastructure
+pub use crate::services::shared::{
+    CacheMetrics, StorageCache, get_app_dir, get_cache, get_config_dir, get_key_file_path,
+    get_key_metadata_path, get_keys_dir, get_logs_dir,
+};
+
+// Re-export StorageError from error module
+pub use crate::error::StorageError;
 
 // Re-exports from new locations for backward compatibility
 pub use crate::services::key_management::shared::infrastructure::{
@@ -45,9 +46,6 @@ pub fn get_keys_directory() -> Result<PathBuf> {
 pub fn get_logs_directory() -> Result<PathBuf> {
     get_logs_dir()
 }
-
-// Internal function imports
-use path_management::{get_app_dir, get_keys_dir, get_logs_dir};
 
 #[cfg(test)]
 mod tests {

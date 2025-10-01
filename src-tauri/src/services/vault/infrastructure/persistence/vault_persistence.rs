@@ -4,7 +4,7 @@
 
 use crate::models::Vault;
 use crate::prelude::*;
-use crate::storage::path_management::{
+use crate::services::shared::infrastructure::path_management::{
     get_vault_manifest_path, get_vaults_directory, validate_vault_name,
 };
 use std::path::PathBuf;

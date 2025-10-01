@@ -3,7 +3,7 @@
 //! Centralizes management of all encryption keys (passphrase and YubiKey) in a single registry.
 //! This replaces the previous scattered approach of individual .meta files and separate manifests.
 
-use crate::storage::path_management::get_keys_dir;
+use crate::services::shared::infrastructure::path_management::get_keys_dir;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

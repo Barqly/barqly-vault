@@ -3,7 +3,7 @@
 //! This module provides security checks and validation for key files
 //! including permission verification and integrity checks.
 
-use crate::storage::errors::StorageError;
+use crate::error::StorageError;
 use std::fs;
 use std::path::Path;
 

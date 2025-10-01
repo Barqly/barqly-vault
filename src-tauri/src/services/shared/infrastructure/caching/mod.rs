@@ -13,7 +13,7 @@
 //! ## Usage
 //!
 //! ```rust,no_run
-//! # use barqly_vault_lib::storage::cache::get_cache;
+//! # use barqly_vault_lib::services::shared::infrastructure::caching::get_cache;
 //! let cache = get_cache();
 //! cache.cache_key_list("my_key".to_string(), vec![]);
 //! ```

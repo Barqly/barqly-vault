@@ -12,9 +12,9 @@ use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::crypto::infrastructure as crypto;
 use crate::services::key_management::shared::{KeyEntry, KeyRegistryService};
+use crate::services::shared::infrastructure::path_management;
 use crate::services::vault;
 use crate::services::vault::application::services::VaultService;
-use crate::storage::path_management;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]

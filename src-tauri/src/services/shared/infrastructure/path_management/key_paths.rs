@@ -5,7 +5,7 @@
 
 use super::directories::get_keys_dir;
 use super::validation::is_safe_label;
-use crate::storage::errors::StorageError;
+use crate::error::StorageError;
 use std::path::PathBuf;
 
 /// Get the path to a key file by label

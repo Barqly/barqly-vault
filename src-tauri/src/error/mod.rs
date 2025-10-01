@@ -5,7 +5,9 @@
 //! enhancement with advanced error handling capabilities.
 
 pub mod handler;
+pub mod storage;
 pub mod universal;
 
 pub use handler::*;
+pub use storage::StorageError;
 pub use universal::*;

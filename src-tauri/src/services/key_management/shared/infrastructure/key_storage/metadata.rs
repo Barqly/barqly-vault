@@ -4,9 +4,11 @@
 //! retrieving key information, and updating access times with caching support.
 
 use super::KeyInfo;
-use crate::storage::cache::get_cache;
-use crate::storage::errors::StorageError;
-use crate::storage::path_management::{get_key_metadata_path, get_keys_dir};
+use crate::error::StorageError;
+use crate::services::shared::infrastructure::caching::get_cache;
+use crate::services::shared::infrastructure::path_management::{
+    get_key_metadata_path, get_keys_dir,
+};
 use std::fs;
 
 /// List all available keys

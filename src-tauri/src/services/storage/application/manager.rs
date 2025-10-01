@@ -1,7 +1,7 @@
 use super::services::{CacheService, ConfigService, KeyService};
+use crate::services::shared::CacheMetrics;
 use crate::services::storage::domain::StorageResult;
 use crate::services::storage::domain::models::{AppConfig, AppConfigUpdate, KeyMetadata};
-use crate::storage::CacheMetrics;
 
 pub struct StorageManager {
     config_service: ConfigService,

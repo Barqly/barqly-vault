@@ -5,7 +5,7 @@
 //! - **Windows**: `%APPDATA%\barqly-vault\`
 //! - **Linux**: `~/.config/barqly-vault/`
 
-use crate::storage::errors::StorageError;
+use crate::error::StorageError;
 use directories::ProjectDirs;
 use std::path::{Path, PathBuf};
 

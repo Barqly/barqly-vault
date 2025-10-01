@@ -54,6 +54,7 @@
 pub mod crypto; // Crypto operations service layer
 pub mod file; // File operations service layer
 pub mod key_management; // Key management service layer (passphrase, yubikey, shared)
+pub mod shared; // Shared cross-domain infrastructure
 pub mod storage; // Storage operations service layer
 pub mod vault; // Vault management service layer
 

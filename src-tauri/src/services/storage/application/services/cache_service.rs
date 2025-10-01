@@ -1,5 +1,5 @@
+use crate::services::shared::{CacheMetrics, get_cache};
 use crate::services::storage::domain::StorageResult;
-use crate::storage::{CacheMetrics, get_cache};
 
 pub struct CacheService;
 

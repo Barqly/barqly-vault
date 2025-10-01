@@ -4,9 +4,11 @@
 //! encrypted keys with proper security measures.
 
 use super::{update_key_metadata_access_time, validate_key_file};
-use crate::storage::cache::get_cache;
-use crate::storage::errors::StorageError;
-use crate::storage::path_management::{get_key_file_path, get_key_metadata_path};
+use crate::error::StorageError;
+use crate::services::shared::infrastructure::caching::get_cache;
+use crate::services::shared::infrastructure::path_management::{
+    get_key_file_path, get_key_metadata_path,
+};
 use rand::Rng;
 use std::fs;
 use std::path::PathBuf;

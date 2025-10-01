@@ -4,8 +4,8 @@
 //! - `~/Documents/Barqly-Vaults/` - Encrypted vaults and manifests
 //! - `~/Documents/Barqly-Recovery/` - Decrypted/recovered files
 
+use crate::error::StorageError;
 use crate::prelude::*;
-use crate::storage::errors::StorageError;
 use directories::UserDirs;
 use std::path::PathBuf;
 use std::sync::Once;
