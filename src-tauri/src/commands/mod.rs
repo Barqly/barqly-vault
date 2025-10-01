@@ -7,7 +7,6 @@
 pub mod command_types;
 pub mod crypto;
 pub mod file;
-pub mod storage;
 pub mod vault;
 
 // Key management commands - organized by domain
@@ -21,7 +20,6 @@ pub use command_types as types;
 pub use command_types::*;
 pub use crypto::*;
 pub use file::*;
-pub use storage::*;
 pub use vault::*;
 
 // Re-export key management commands

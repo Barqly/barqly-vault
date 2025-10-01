@@ -19,12 +19,9 @@ pub mod storage; // Public for tests, but should be treated as private for exter
 use commands::{
     create_manifest,
     decrypt_data,
-    delete_key_command,
     encrypt_files,
     encrypt_files_multi,
     // Crypto commands
-    get_cache_metrics,
-    get_config,
     get_encryption_status,
     get_file_info,
     // Key management commands
@@ -47,11 +44,9 @@ use commands::{
         },
     },
     // Storage commands
-    list_keys_command,
     select_directory,
     // File commands
     select_files,
-    update_config,
     // Vault commands
     vault::{create_vault, delete_vault, get_current_vault, list_vaults, set_current_vault},
     verify_manifest,
@@ -94,8 +89,6 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         verify_manifest,
         get_progress,
         // Storage commands
-        list_keys_command,
-        delete_key_command,
         // Unified key management
         list_unified_keys,
         test_unified_keys,
@@ -103,9 +96,6 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         get_key_menu_data,
         remove_key_from_vault,
         update_key_label,
-        get_config,
-        update_config,
-        get_cache_metrics,
         // File commands
         select_files,
         select_directory,
@@ -176,8 +166,6 @@ pub fn run_app() {
             verify_manifest,
             get_progress,
             // Storage commands
-            list_keys_command,
-            delete_key_command,
             // Unified key management
             list_unified_keys,
             test_unified_keys,
@@ -185,9 +173,6 @@ pub fn run_app() {
             get_key_menu_data,
             remove_key_from_vault,
             update_key_label,
-            get_config,
-            update_config,
-            get_cache_metrics,
             // File commands
             select_files,
             select_directory,

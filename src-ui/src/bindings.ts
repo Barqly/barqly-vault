@@ -104,28 +104,6 @@ async getProgress(input: GetProgressInput) : Promise<Result<GetProgressResponse,
 }
 },
 /**
- * List all available keys
- */
-async listKeysCommand() : Promise<Result<KeyMetadata[], CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("list_keys_command") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Delete a key by ID
- */
-async deleteKeyCommand(keyId: string) : Promise<Result<null, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("delete_key_command", { keyId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
  * List keys with flexible filtering options - unified API
  */
 async listUnifiedKeys(filter: KeyListFilter) : Promise<Result<KeyInfo[], CommandError>> {
@@ -186,39 +164,6 @@ async removeKeyFromVault(input: RemoveKeyFromVaultRequest) : Promise<Result<Remo
 async updateKeyLabel(input: UpdateKeyLabelRequest) : Promise<Result<UpdateKeyLabelResponse, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("update_key_label", { input }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Get application configuration
- */
-async getConfig() : Promise<Result<AppConfig, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_config") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Update application configuration
- */
-async updateConfig(config: AppConfigUpdate) : Promise<Result<null, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("update_config", { config }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Get cache performance metrics
- */
-async getCacheMetrics() : Promise<Result<CacheMetrics, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_cache_metrics") };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -467,21 +412,9 @@ async yubikeyDecryptFile(encryptedFile: string, unlockMethod: UnlockMethod | nul
 export type AddPassphraseKeyRequest = { vault_id: string; label: string; passphrase: string }
 export type AddPassphraseKeyResponse = { key_reference: KeyReference; public_key: string }
 /**
- * Application configuration
- */
-export type AppConfig = { version: string; default_key_label: string | null; remember_last_folder: boolean; max_recent_files: number }
-/**
- * Configuration update
- */
-export type AppConfigUpdate = { default_key_label: string | null; remember_last_folder: boolean | null; max_recent_files: number | null }
-/**
  * Available YubiKey for vault registration - matches frontend YubiKeyStateInfo
  */
 export type AvailableYubiKey = { serial: string; state: string; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: string }
-/**
- * Cache performance metrics
- */
-export type CacheMetrics = { key_list_hits: number; key_list_misses: number; directory_hits: number; directory_misses: number; total_requests: number; cache_invalidations: number }
 /**
  * Unified error type for all commands with comprehensive error information
  * 
@@ -736,10 +669,6 @@ metadata: KeyMenuMetadata }
  * Type-specific metadata for different key types
  */
 export type KeyMenuMetadata = { type: "Passphrase"; public_key: string; key_filename: string } | { type: "YubiKey"; serial: string; slot: number; piv_slot: number; recipient: string; identity_tag: string; firmware_version: string }
-/**
- * Key metadata for frontend display
- */
-export type KeyMetadata = { label: string; created_at: string; public_key: string | null }
 /**
  * Reference to a key that can unlock a vault (for frontend communication)
  */
