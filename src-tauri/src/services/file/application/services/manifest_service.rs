@@ -1,8 +1,8 @@
-use crate::commands::types::ErrorHandler;
-use crate::commands::{FileInfo, Manifest};
 use crate::prelude::*;
 use crate::services::file::domain::FileResult;
+use crate::services::file::domain::models::{FileInfo, Manifest};
 use crate::services::file::infrastructure::file_operations::{self as file_ops, FileOpsConfig};
+use crate::services::shared::infrastructure::error::ErrorHandler;
 
 pub struct ManifestService;
 

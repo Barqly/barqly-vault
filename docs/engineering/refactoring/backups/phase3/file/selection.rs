@@ -4,11 +4,36 @@
 //! and retrieving information about selected items.
 
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
+use serde::{Deserialize, Serialize};
 use tauri::Window;
 use tracing::instrument;
 
-// Re-export DTOs from domain layer for Tauri bindings
-pub use crate::services::file::domain::models::{FileInfo, FileSelection, SelectionType};
+/// File selection type
+#[derive(Debug, Deserialize, specta::Type)]
+pub enum SelectionType {
+    Files,
+    Folder,
+}
+
+/// File selection result
+#[derive(Debug, Serialize, specta::Type)]
+pub struct FileSelection {
+    pub paths: Vec<String>,
+    pub total_size: u64,
+    pub file_count: usize,
+    pub selection_type: String,
+}
+
+/// File information
+#[derive(Debug, Serialize, specta::Type)]
+pub struct FileInfo {
+    pub path: String,
+    pub name: String,
+    pub size: u64,
+    pub is_file: bool,
+    pub is_directory: bool,
+    pub file_count: Option<usize>, // For directories, the number of files inside
+}
 
 /// Select files or folder for encryption
 #[tauri::command]

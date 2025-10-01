@@ -1,5 +1,5 @@
-use crate::commands::{FileInfo, FileSelection, SelectionType};
 use crate::prelude::*;
+use crate::services::file::domain::models::{FileInfo, FileSelection, SelectionType};
 use crate::services::file::domain::{FileError, FileResult, FileRules};
 use crate::services::file::infrastructure::file_operations::{
     self as file_operations, ArchiveOperation,

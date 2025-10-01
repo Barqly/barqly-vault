@@ -140,27 +140,28 @@ make validate-rust
 
 **Goal:** Move DTOs to their proper domain locations. Commands will import from services (correct DDD pattern).
 
-### Milestone 2.1: Move File Domain DTOs ✅
-**Estimated:** 2 hours
+### Milestone 2.1: Move File Domain DTOs ✅ COMPLETE
+**Estimated:** 2 hours | **Actual:** 1 hour
 
 #### Tasks:
-- [ ] Create `services/file/domain/models/` if not exists
-- [ ] Move DTOs to domain:
-  - [ ] `FileInfo` struct (from `commands/file/selection.rs:29`) → `services/file/domain/models/file_info.rs`
-  - [ ] `FileSelection` struct (from `commands/file/selection.rs:20`) → `services/file/domain/models/file_selection.rs`
-  - [ ] `SelectionType` enum (from `commands/file/selection.rs`) → `services/file/domain/models/selection_type.rs`
-  - [ ] `Manifest` struct (from `commands/file/mod.rs:27`) → `services/file/domain/models/manifest.rs`
-- [ ] Update `services/file/domain/mod.rs` to re-export models
-- [ ] Backup originals to `docs/engineering/refactoring/backups/phase3/file/`
+- [x] Create `services/file/domain/models/` if not exists
+- [x] Move DTOs to domain:
+  - [x] `FileInfo` struct (from `commands/file/selection.rs:29`) → `services/file/domain/models/file_info.rs`
+  - [x] `FileSelection` struct (from `commands/file/selection.rs:20`) → `services/file/domain/models/file_selection.rs`
+  - [x] `SelectionType` enum (from `commands/file/selection.rs`) → `services/file/domain/models/selection_type.rs`
+  - [x] `Manifest` struct (from `commands/file/mod.rs:27`) → `services/file/domain/models/manifest.rs`
+- [x] Update `services/file/domain/models/mod.rs` to export all models
+- [x] Update `services/file/domain/mod.rs` (already had models re-export)
+- [x] Backup originals to `docs/engineering/refactoring/backups/phase3/file/`
 
-**Files to Update:**
-- Services (3 files):
+**Files Updated:**
+- Services (3 files): ✅
   - `services/file/application/services/archive_service.rs`
   - `services/file/application/services/manifest_service.rs`
   - `services/file/application/manager.rs`
-- Commands (2 files):
-  - `commands/file/selection.rs` (re-export from services)
-  - `commands/file/mod.rs` (re-export Manifest)
+- Commands (2 files): ✅
+  - `commands/file/selection.rs` (re-exports from services)
+  - `commands/file/mod.rs` (re-exports Manifest)
 
 **Import Pattern:**
 ```rust
