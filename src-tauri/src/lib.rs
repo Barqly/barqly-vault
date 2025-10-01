@@ -51,22 +51,6 @@ use commands::{
 
 use crate::prelude::*;
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    // Initialize new tracing system
-    if let Err(e) = logging::init() {
-        // Use eprintln only for initialization errors
-        // This is before logging is set up, so it's acceptable
-        #[allow(clippy::disallowed_macros, clippy::print_stderr)]
-        {
-            eprintln!("Failed to initialize tracing: {e:?}");
-        }
-    }
-
-    // Use tracing for application started message
-    info!("Barqly Vault application started");
-}
-
 /// Generate TypeScript bindings for all Tauri commands
 /// This is called by the generate-bindings binary and the build hooks
 pub fn generate_typescript_bindings() -> Result<(), String> {
