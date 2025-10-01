@@ -135,11 +135,9 @@ impl YubiKeyManager {
             let mut identity_recipient = None;
             let mut identity_tag = None;
 
-            if has_identity {
-                if let Ok(Some(identity)) = self.get_existing_identity(serial).await {
-                    identity_recipient = Some(identity.to_recipient().to_string());
-                    identity_tag = Some(identity.identity_tag().to_string());
-                }
+            if has_identity && let Ok(Some(identity)) = self.get_existing_identity(serial).await {
+                identity_recipient = Some(identity.to_recipient().to_string());
+                identity_tag = Some(identity.identity_tag().to_string());
             }
 
             // Determine state based on registry and identity presence

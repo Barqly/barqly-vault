@@ -115,17 +115,16 @@ impl KeyManager {
                 public_key,
                 ..
             } = entry
+                && !vault_key_ids.contains(key_id)
             {
-                if !vault_key_ids.contains(key_id) {
-                    available_keys.push(PassphraseKeyInfo {
-                        id: key_id.clone(),
-                        label: label.clone(),
-                        public_key: public_key.clone(),
-                        created_at: *created_at,
-                        last_used: *last_used,
-                        is_available: true,
-                    });
-                }
+                available_keys.push(PassphraseKeyInfo {
+                    id: key_id.clone(),
+                    label: label.clone(),
+                    public_key: public_key.clone(),
+                    created_at: *created_at,
+                    last_used: *last_used,
+                    is_available: true,
+                });
             }
         }
 

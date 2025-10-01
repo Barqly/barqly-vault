@@ -4,7 +4,8 @@
 //! Provides filtering and coordination logic for cross-subsystem key operations.
 
 use crate::commands::key_management::unified_keys::{
-    KeyInfo, KeyListFilter, convert_passphrase_to_unified, convert_yubikey_to_unified,
+    KeyInfo, KeyListFilter, convert_available_yubikey_to_unified, convert_passphrase_to_unified,
+    convert_yubikey_to_unified,
 };
 use crate::commands::passphrase::PassphraseKeyInfo;
 use crate::prelude::*;
@@ -236,9 +237,76 @@ impl UnifiedKeyListService {
                     }
                 }
 
-                // Get available YubiKeys (not in vault) - would need YubiKey availability logic
-                // For now, skip as this requires more complex YubiKey state management
-                // TODO: Implement YubiKey available-for-vault logic without calling commands
+                // Get available YubiKeys (not in vault)
+                // Collect YubiKey serials already in this vault
+                let vault_yubikey_serials: HashSet<String> = vault
+                    .keys
+                    .iter()
+                    .filter_map(|key_id| {
+                        if let Ok(registry) = self.registry_service.load_registry() {
+                            if let Some(KeyEntry::Yubikey { serial, .. }) = registry.get_key(key_id)
+                            {
+                                Some(serial.clone())
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+                // List connected YubiKey devices and filter for available ones
+                match YubiKeyManager::new().await {
+                    Ok(yubikey_manager) => {
+                        match yubikey_manager.list_connected_devices().await {
+                            Ok(devices) => {
+                                for device in devices {
+                                    let serial_str = device.serial().value().to_string();
+
+                                    // Skip if already in vault
+                                    if vault_yubikey_serials.contains(&serial_str) {
+                                        continue;
+                                    }
+
+                                    // Check if device has identity
+                                    let has_identity = yubikey_manager
+                                        .has_identity(device.serial())
+                                        .await
+                                        .unwrap_or(false);
+
+                                    // Build AvailableYubiKey
+                                    let available_yubikey =
+                                        crate::commands::yubikey::vault_commands::AvailableYubiKey {
+                                            serial: serial_str,
+                                            state: if has_identity {
+                                                "orphaned".to_string()
+                                            } else {
+                                                "new".to_string()
+                                            },
+                                            slot: None,
+                                            recipient: None,
+                                            identity_tag: None,
+                                            label: None,
+                                            pin_status: "unknown".to_string(),
+                                        };
+
+                                    // Convert to unified format and add
+                                    available_keys.push(convert_available_yubikey_to_unified(
+                                        available_yubikey,
+                                        None,
+                                    ));
+                                }
+                            }
+                            Err(e) => {
+                                warn!(vault_id = %vault_id, error = ?e, "Failed to list YubiKey devices");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        warn!(vault_id = %vault_id, error = ?e, "Failed to initialize YubiKeyManager");
+                    }
+                }
             }
             Err(e) => {
                 warn!(vault_id = %vault_id, error = ?e, "Failed to load vault");
