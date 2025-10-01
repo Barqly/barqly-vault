@@ -276,22 +276,6 @@ async addPassphraseKeyToVault(input: AddPassphraseKeyRequest) : Promise<Result<A
     else return { status: "error", error: e  as any };
 }
 },
-async listPassphraseKeysForVault(vaultId: string) : Promise<Result<ListPassphraseKeysResponse, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("list_passphrase_keys_for_vault", { vaultId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async listAvailablePassphraseKeysForVault(vaultId: string) : Promise<Result<ListPassphraseKeysResponse, CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("list_available_passphrase_keys_for_vault", { vaultId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
 async validateVaultPassphraseKey(vaultId: string) : Promise<Result<boolean, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("validate_vault_passphrase_key", { vaultId }) };
@@ -319,18 +303,6 @@ async initYubikeyForVault(input: YubiKeyInitForVaultParams) : Promise<Result<Yub
 async registerYubikeyForVault(input: RegisterYubiKeyForVaultParams) : Promise<Result<YubiKeyVaultResult, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("register_yubikey_for_vault", { input }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * List available YubiKeys for vault registration
- * Delegates to YubiKeyManager and filters for vault compatibility
- */
-async listAvailableYubikeysForVault(vaultId: string) : Promise<Result<AvailableYubiKey[], CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("list_available_yubikeys_for_vault", { vaultId }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -411,10 +383,6 @@ async yubikeyDecryptFile(encryptedFile: string, unlockMethod: UnlockMethod | nul
 
 export type AddPassphraseKeyRequest = { vault_id: string; label: string; passphrase: string }
 export type AddPassphraseKeyResponse = { key_reference: KeyReference; public_key: string }
-/**
- * Available YubiKey for vault registration - matches frontend YubiKeyStateInfo
- */
-export type AvailableYubiKey = { serial: string; state: string; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: string }
 /**
  * Unified error type for all commands with comprehensive error information
  * 
@@ -733,7 +701,6 @@ export type KeyType =
  * YubiKey hardware token
  */
 { type: "YubiKey"; data: { serial: string; firmware_version: string | null } }
-export type ListPassphraseKeysResponse = { keys: PassphraseKeyInfo[] }
 /**
  * Response containing list of vaults
  */
@@ -742,7 +709,6 @@ export type ListVaultsResponse = { vaults: VaultSummary[] }
  * Manifest for encrypted archives
  */
 export type Manifest = { version: string; created_at: string; files: FileInfo[]; total_size: number; file_count: number }
-export type PassphraseKeyInfo = { id: string; label: string; public_key: string; created_at: string; last_used: string | null; is_available: boolean }
 export type PassphraseStrength = "weak" | "fair" | "good" | "strong"
 export type PassphraseValidationResult = { is_valid: boolean; strength: PassphraseStrength; feedback: string[]; score: number }
 export type PinStatus = "default" | "set"

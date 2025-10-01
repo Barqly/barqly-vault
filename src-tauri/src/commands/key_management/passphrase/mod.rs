@@ -10,6 +10,5 @@ pub use validation_commands::{
 };
 pub use vault_commands::{
     AddPassphraseKeyRequest, AddPassphraseKeyResponse, ListPassphraseKeysResponse,
-    PassphraseKeyInfo, add_passphrase_key_to_vault, list_available_passphrase_keys_for_vault,
-    list_passphrase_keys_for_vault, validate_vault_passphrase_key,
+    PassphraseKeyInfo, add_passphrase_key_to_vault, validate_vault_passphrase_key,
 };

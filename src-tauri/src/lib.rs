@@ -26,18 +26,16 @@ use commands::{
     get_progress,
     key_management::{
         passphrase::{
-            add_passphrase_key_to_vault, generate_key, list_available_passphrase_keys_for_vault,
-            list_passphrase_keys_for_vault, validate_passphrase, validate_passphrase_strength,
-            validate_vault_passphrase_key, verify_key_passphrase,
+            add_passphrase_key_to_vault, generate_key, validate_passphrase,
+            validate_passphrase_strength, validate_vault_passphrase_key, verify_key_passphrase,
         },
         unified_keys::{
             get_vault_keys, list_unified_keys, remove_key_from_vault, test_unified_keys,
             update_key_label,
         },
         yubikey::{
-            init_yubikey, init_yubikey_for_vault, list_available_yubikeys_for_vault, list_yubikeys,
-            register_yubikey, register_yubikey_for_vault, yubikey_decrypt_file,
-            yubikey_list_devices,
+            init_yubikey, init_yubikey_for_vault, list_yubikeys, register_yubikey,
+            register_yubikey_for_vault, yubikey_decrypt_file, yubikey_list_devices,
         },
     },
     // Storage commands
@@ -90,12 +88,9 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         delete_vault,
         // Passphrase/YubiKey vault integration
         add_passphrase_key_to_vault,
-        list_passphrase_keys_for_vault,
-        list_available_passphrase_keys_for_vault,
         validate_vault_passphrase_key,
         init_yubikey_for_vault,
         register_yubikey_for_vault,
-        list_available_yubikeys_for_vault,
         // Streamlined YubiKey commands
         list_yubikeys,
         init_yubikey,
@@ -167,12 +162,9 @@ pub fn run_app() {
             delete_vault,
             // Passphrase/YubiKey vault integration
             add_passphrase_key_to_vault,
-            list_passphrase_keys_for_vault,
-            list_available_passphrase_keys_for_vault,
             validate_vault_passphrase_key,
             init_yubikey_for_vault,
             register_yubikey_for_vault,
-            list_available_yubikeys_for_vault,
             // Streamlined YubiKey commands
             list_yubikeys,
             init_yubikey,

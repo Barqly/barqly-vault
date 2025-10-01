@@ -18,16 +18,15 @@ pub use passphrase::{
     AddPassphraseKeyRequest, AddPassphraseKeyResponse, GenerateKeyInput, GenerateKeyResponse,
     ListPassphraseKeysResponse, PassphraseKeyInfo, PassphraseValidationResult,
     ValidatePassphraseInput, ValidatePassphraseResponse, VerifyKeyPassphraseInput,
-    VerifyKeyPassphraseResponse, add_passphrase_key_to_vault, generate_key,
-    list_available_passphrase_keys_for_vault, list_passphrase_keys_for_vault, validate_passphrase,
+    VerifyKeyPassphraseResponse, add_passphrase_key_to_vault, generate_key, validate_passphrase,
     validate_passphrase_strength, validate_vault_passphrase_key, verify_key_passphrase,
 };
 
 pub use yubikey::{
     AvailableYubiKey, PinStatus, RegisterYubiKeyForVaultParams, StreamlinedYubiKeyInitResult,
     UnlockCredentials, YubiKeyInitForVaultParams, YubiKeyState, YubiKeyStateInfo, init_yubikey,
-    init_yubikey_for_vault, list_available_yubikeys_for_vault, list_yubikeys, register_yubikey,
-    register_yubikey_for_vault, yubikey_decrypt_file, yubikey_list_devices,
+    init_yubikey_for_vault, list_yubikeys, register_yubikey, register_yubikey_for_vault,
+    yubikey_decrypt_file, yubikey_list_devices,
 };
 
 pub use key_menu_commands::{
