@@ -196,7 +196,9 @@ pub async fn init_yubikey_for_vault(
 
     // Validate vault and check for duplicates
     let vault = load_vault(&input.vault_id).await?;
-    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+    let registry = crate::services::key_management::shared::KeyManager::new()
+        .load_registry()
+        .unwrap_or_else(|_| KeyRegistry::new());
     check_duplicate_yubikey_in_vault(&vault, &registry, &input.serial)?;
 
     // Initialize YubiKey manager and create domain objects
@@ -286,7 +288,9 @@ pub async fn register_yubikey_for_vault(
 
     // Validate vault exists
     let vault = load_vault(&input.vault_id).await?;
-    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+    let registry = crate::services::key_management::shared::KeyManager::new()
+        .load_registry()
+        .unwrap_or_else(|_| KeyRegistry::new());
 
     // Initialize YubiKey manager and validate device
     let manager = create_yubikey_manager().await?;
@@ -397,7 +401,9 @@ pub async fn list_available_yubikeys_for_vault(
 
     // Get vault and collect already registered serials
     let vault = load_vault(&vault_id).await?;
-    let registry = KeyRegistry::load().unwrap_or_else(|_| KeyRegistry::new());
+    let registry = crate::services::key_management::shared::KeyManager::new()
+        .load_registry()
+        .unwrap_or_else(|_| KeyRegistry::new());
     let vault_serials: std::collections::HashSet<String> = vault
         .keys
         .iter()

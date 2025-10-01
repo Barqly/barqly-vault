@@ -6,7 +6,7 @@
 use crate::commands::key_management::yubikey::device_commands::list_yubikeys;
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::prelude::*;
-use crate::services::key_management::shared::{KeyEntry, KeyRegistry};
+use crate::services::key_management::shared::KeyEntry;
 use crate::services::vault;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -79,12 +79,14 @@ pub async fn get_key_menu_data(
     })?;
 
     // Load key registry to get actual labels and metadata
-    let registry = KeyRegistry::load().map_err(|e| {
-        Box::new(CommandError::operation(
-            ErrorCode::StorageFailed,
-            e.to_string(),
-        ))
-    })?;
+    let registry = crate::services::key_management::shared::KeyManager::new()
+        .load_registry()
+        .map_err(|e| {
+            Box::new(CommandError::operation(
+                ErrorCode::StorageFailed,
+                e.to_string(),
+            ))
+        })?;
 
     // Get real-time YubiKey states using existing architecture
     let yubikey_states: HashMap<String, String> = match list_yubikeys().await {

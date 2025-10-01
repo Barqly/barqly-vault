@@ -48,6 +48,96 @@ impl KeyManager {
             .detach_key_from_vault(key_id, vault_id)
             .await
     }
+
+    /// Get all passphrase keys for a specific vault
+    pub async fn get_vault_passphrase_keys(
+        &self,
+        vault_id: &str,
+    ) -> std::result::Result<
+        Vec<crate::commands::passphrase::PassphraseKeyInfo>,
+        Box<dyn std::error::Error>,
+    > {
+        use crate::commands::passphrase::PassphraseKeyInfo;
+        use crate::services::vault::VaultManager;
+
+        let vault_manager = VaultManager::new();
+        let vault = vault_manager.get_vault(vault_id).await?;
+        let registry = self.registry_service.load_registry()?;
+
+        let mut passphrase_keys = Vec::new();
+
+        for key_id in &vault.keys {
+            if let Some(crate::services::key_management::shared::KeyEntry::Passphrase {
+                label,
+                created_at,
+                last_used,
+                public_key,
+                ..
+            }) = registry.get_key(key_id)
+            {
+                passphrase_keys.push(PassphraseKeyInfo {
+                    id: key_id.clone(),
+                    label: label.clone(),
+                    public_key: public_key.clone(),
+                    created_at: *created_at,
+                    last_used: *last_used,
+                    is_available: true,
+                });
+            }
+        }
+
+        Ok(passphrase_keys)
+    }
+
+    /// Get all passphrase keys available to add to a vault (not already in vault)
+    pub async fn get_available_passphrase_keys(
+        &self,
+        vault_id: &str,
+    ) -> std::result::Result<
+        Vec<crate::commands::passphrase::PassphraseKeyInfo>,
+        Box<dyn std::error::Error>,
+    > {
+        use crate::commands::passphrase::PassphraseKeyInfo;
+        use crate::services::vault::VaultManager;
+
+        let vault_manager = VaultManager::new();
+        let vault = vault_manager.get_vault(vault_id).await?;
+        let registry = self.registry_service.load_registry()?;
+
+        let vault_key_ids: std::collections::HashSet<String> = vault.keys.iter().cloned().collect();
+        let mut available_keys = Vec::new();
+
+        for (key_id, entry) in registry.keys.iter() {
+            if let crate::services::key_management::shared::KeyEntry::Passphrase {
+                label,
+                created_at,
+                last_used,
+                public_key,
+                ..
+            } = entry
+            {
+                if !vault_key_ids.contains(key_id) {
+                    available_keys.push(PassphraseKeyInfo {
+                        id: key_id.clone(),
+                        label: label.clone(),
+                        public_key: public_key.clone(),
+                        created_at: *created_at,
+                        last_used: *last_used,
+                        is_available: true,
+                    });
+                }
+            }
+        }
+
+        Ok(available_keys)
+    }
+
+    /// Load the key registry (for commands that need registry access)
+    pub fn load_registry(
+        &self,
+    ) -> Result<crate::services::key_management::shared::infrastructure::KeyRegistry> {
+        self.registry_service.load_registry()
+    }
 }
 
 impl Default for KeyManager {
