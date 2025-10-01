@@ -66,9 +66,9 @@ pub struct StreamlinedYubiKeyInitResult {
 #[tauri::command]
 #[specta::specta]
 pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
-    info!("Listing YubiKeys with state detection using YubiKeyManager");
+    info!("Listing YubiKeys with state detection");
 
-    // Initialize YubiKey manager
+    // Delegate to YubiKeyManager - logic moved to service layer
     let manager = YubiKeyManager::new().await.map_err(|e| {
         error!("Failed to initialize YubiKeyManager: {}", e);
         CommandError::operation(
@@ -77,118 +77,13 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
         )
     })?;
 
-    // Get list of connected devices using centralized service
-    let devices = manager.list_connected_devices().await.map_err(|e| {
-        error!("Failed to list YubiKey devices: {}", e);
+    manager.list_yubikeys_with_state().await.map_err(|e| {
+        error!("Failed to list YubiKeys: {}", e);
         CommandError::operation(
             ErrorCode::YubiKeyCommunicationError,
-            format!("Failed to list YubiKey devices: {e}"),
+            format!("Failed to list YubiKeys: {e}"),
         )
-    })?;
-
-    if devices.is_empty() {
-        info!("No YubiKey devices found");
-        return Ok(Vec::new());
-    }
-
-    let mut yubikeys = Vec::new();
-
-    for device in devices {
-        let serial = device.serial();
-        debug!("Processing YubiKey with serial: {}", serial.redacted());
-
-        // Check registry for this YubiKey using centralized service
-        let registry_entry = manager
-            .find_by_serial(serial)
-            .await
-            .map_err(|e| {
-                warn!(
-                    "Failed to check registry for YubiKey {}: {}",
-                    serial.redacted(),
-                    e
-                );
-                e
-            })
-            .unwrap_or(None);
-
-        let in_registry = registry_entry.is_some();
-
-        // Check if YubiKey has identity
-        let has_identity = manager.has_identity(serial).await.unwrap_or(false);
-        let mut identity_recipient = None;
-        let mut identity_tag = None;
-
-        if has_identity {
-            // Get existing identity for display
-            if let Ok(Some(identity)) = manager.get_existing_identity(serial).await {
-                identity_recipient = Some(identity.to_recipient().to_string());
-                identity_tag = Some(identity.identity_tag().to_string());
-            }
-        }
-
-        // Determine state based on registry and identity presence
-        let state = match (in_registry, has_identity) {
-            (true, true) => YubiKeyState::Registered,
-            (false, true) => YubiKeyState::Orphaned, // Has identity but not in registry
-            (false, false) => {
-                // Check if has default PIN to distinguish between new and reused
-                let has_default_pin = manager.has_default_pin(serial).await.unwrap_or(false);
-                if has_default_pin {
-                    YubiKeyState::New
-                } else {
-                    YubiKeyState::Reused
-                }
-            }
-            (true, false) => {
-                // This is an inconsistent state - registry entry without identity
-                warn!(
-                    "YubiKey {} has registry entry but no identity",
-                    serial.redacted()
-                );
-                YubiKeyState::Orphaned
-            }
-        };
-
-        let pin_status = if manager.has_default_pin(serial).await.unwrap_or(false) {
-            PinStatus::Default
-        } else {
-            PinStatus::Set
-        };
-
-        // Extract additional data from registry entry if available
-        let (slot, label, firmware_version) =
-            if let Some((key_id, yubikey_device)) = &registry_entry {
-                (
-                    Some(1),                                 // TODO: Extract actual slot from registry if needed
-                    Some(key_id.clone()),                    // Use key_id as label from registry
-                    yubikey_device.firmware_version.clone(), // Real firmware version from registry!
-                )
-            } else {
-                (None, None, device.firmware_version.clone()) // From detected device
-            };
-
-        let yubikey_info = YubiKeyStateInfo {
-            serial: serial.value().to_string(),
-            state,
-            slot,
-            recipient: identity_recipient,
-            identity_tag,
-            label,
-            pin_status,
-            firmware_version,
-        };
-
-        info!(
-            "YubiKey {} state: {:?}",
-            serial.redacted(),
-            yubikey_info.state
-        );
-
-        yubikeys.push(yubikey_info);
-    }
-
-    info!("Found {} YubiKey devices", yubikeys.len());
-    Ok(yubikeys)
+    })
 }
 
 /// Initialize a brand new YubiKey device

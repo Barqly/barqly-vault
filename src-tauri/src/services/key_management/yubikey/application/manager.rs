@@ -97,6 +97,113 @@ impl YubiKeyManager {
         Ok(devices)
     }
 
+    /// List YubiKeys with state detection (for UI display)
+    ///
+    /// Returns YubiKeys with full state information including:
+    /// - State (New, Registered, Orphaned, Reused)
+    /// - PIN status
+    /// - Identity information
+    /// - Registry data
+    pub async fn list_yubikeys_with_state(
+        &self,
+    ) -> YubiKeyResult<Vec<crate::commands::yubikey::device_commands::YubiKeyStateInfo>> {
+        use crate::commands::yubikey::device_commands::{
+            PinStatus, YubiKeyState, YubiKeyStateInfo,
+        };
+
+        debug!("Listing YubiKeys with state detection");
+
+        let devices = self.list_connected_devices().await?;
+
+        if devices.is_empty() {
+            info!("No YubiKey devices found");
+            return Ok(Vec::new());
+        }
+
+        let mut yubikeys = Vec::new();
+
+        for device in devices {
+            let serial = device.serial();
+            debug!("Processing YubiKey with serial: {}", serial.redacted());
+
+            // Check registry for this YubiKey
+            let registry_entry = self.find_by_serial(serial).await.unwrap_or(None);
+            let in_registry = registry_entry.is_some();
+
+            // Check if YubiKey has identity
+            let has_identity = self.has_identity(serial).await.unwrap_or(false);
+            let mut identity_recipient = None;
+            let mut identity_tag = None;
+
+            if has_identity {
+                if let Ok(Some(identity)) = self.get_existing_identity(serial).await {
+                    identity_recipient = Some(identity.to_recipient().to_string());
+                    identity_tag = Some(identity.identity_tag().to_string());
+                }
+            }
+
+            // Determine state based on registry and identity presence
+            let state = match (in_registry, has_identity) {
+                (true, true) => YubiKeyState::Registered,
+                (false, true) => YubiKeyState::Orphaned,
+                (false, false) => {
+                    let has_default_pin = self.has_default_pin(serial).await.unwrap_or(false);
+                    if has_default_pin {
+                        YubiKeyState::New
+                    } else {
+                        YubiKeyState::Reused
+                    }
+                }
+                (true, false) => {
+                    warn!(
+                        "YubiKey {} has registry entry but no identity",
+                        serial.redacted()
+                    );
+                    YubiKeyState::Orphaned
+                }
+            };
+
+            let pin_status = if self.has_default_pin(serial).await.unwrap_or(false) {
+                PinStatus::Default
+            } else {
+                PinStatus::Set
+            };
+
+            let (slot, label, firmware_version) =
+                if let Some((key_id, yubikey_device)) = &registry_entry {
+                    (
+                        Some(1),
+                        Some(key_id.clone()),
+                        yubikey_device.firmware_version.clone(),
+                    )
+                } else {
+                    (None, None, device.firmware_version.clone())
+                };
+
+            let yubikey_info = YubiKeyStateInfo {
+                serial: serial.value().to_string(),
+                state,
+                slot,
+                recipient: identity_recipient,
+                identity_tag,
+                label,
+                pin_status,
+                firmware_version,
+            };
+
+            info!(
+                "YubiKey {} state: {:?}",
+                serial.redacted(),
+                yubikey_info.state
+            );
+
+            yubikeys.push(yubikey_info);
+        }
+
+        info!("Found {} YubiKey devices with state", yubikeys.len());
+        Ok(yubikeys)
+    }
+
     /// Detect specific YubiKey device by serial
     pub async fn detect_device(&self, serial: &Serial) -> YubiKeyResult<Option<YubiKeyDevice>> {
         debug!("Detecting YubiKey device: {}", serial.redacted());
