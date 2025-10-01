@@ -3,8 +3,8 @@
 //! Commands for creating, listing, and managing vaults.
 
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
-use crate::models::VaultSummary;
 use crate::services::vault::VaultManager;
+use crate::services::vault::domain::models::VaultSummary;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 

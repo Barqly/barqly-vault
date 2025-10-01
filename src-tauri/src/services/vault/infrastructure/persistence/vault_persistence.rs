@@ -2,11 +2,11 @@
 //!
 //! Handles saving and loading vaults from the file system.
 
-use crate::models::Vault;
 use crate::prelude::*;
 use crate::services::shared::infrastructure::path_management::{
     get_vault_manifest_path, get_vaults_directory, validate_vault_name,
 };
+use crate::services::vault::domain::models::Vault;
 use std::path::PathBuf;
 use std::sync::Once;
 use tokio::fs as async_fs;

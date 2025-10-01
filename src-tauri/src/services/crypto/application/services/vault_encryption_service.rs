@@ -7,7 +7,6 @@ use super::{ArchiveOrchestrationService, CoreEncryptionService, FileValidationSe
 use crate::commands::crypto::{EncryptFilesMultiInput, EncryptFilesMultiResponse};
 use crate::commands::types::ProgressManager;
 use crate::constants::*;
-use crate::models::vault::{ArchiveContent, EncryptedArchive};
 use crate::prelude::*;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::crypto::infrastructure as crypto;
@@ -15,6 +14,7 @@ use crate::services::key_management::shared::{KeyEntry, KeyRegistryService};
 use crate::services::shared::infrastructure::path_management;
 use crate::services::vault;
 use crate::services::vault::application::services::VaultService;
+use crate::services::vault::domain::models::{ArchiveContent, EncryptedArchive};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
@@ -159,7 +159,7 @@ impl VaultEncryptionService {
     /// Collect all public keys from vault using KeyRegistryService
     fn collect_vault_public_keys(
         &self,
-        vault: &crate::models::Vault,
+        vault: &crate::services::vault::domain::models::Vault,
     ) -> CryptoResult<(Vec<crypto::PublicKey>, Vec<String>)> {
         let mut public_keys = Vec::new();
         let mut keys_used = Vec::new();
@@ -283,7 +283,7 @@ impl VaultEncryptionService {
     /// Update vault manifest with encryption info
     async fn update_vault_manifest(
         &self,
-        vault: &mut crate::models::Vault,
+        vault: &mut crate::services::vault::domain::models::Vault,
         archive_operation: &crate::services::file::infrastructure::file_operations::ArchiveOperation,
         archive_files: &[crate::services::file::infrastructure::file_operations::FileInfo],
         encrypted_path: &Path,

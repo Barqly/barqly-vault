@@ -9,21 +9,22 @@
 
 ---
 
-## Phase 1: Consolidate File Operations
+## Phase 1: Consolidate File Operations ✅ COMPLETE
 
-### Milestone 1.1: Move file_ops to File Domain
-- [ ] Backup src/file_ops/
-- [ ] Move `src/file_ops/` → `services/file/infrastructure/file_operations/`
-- [ ] Delete `services/file/infrastructure/file_repository.rs` (wrapper - duplication)
-- [ ] Update services/file/infrastructure/mod.rs exports
-- [ ] Update all imports (2 commands, 9 services):
+### Milestone 1.1: Move file_ops to File Domain ✅
+- [x] Backup src/file_ops/ (existed in both locations)
+- [x] Move `src/file_ops/` → `services/file/infrastructure/file_operations/` (already done by previous session)
+- [x] Delete `services/file/infrastructure/file_repository.rs` (wrapper - duplication)
+- [x] Update services/file/infrastructure/mod.rs exports
+- [x] Update all imports (2 commands, 9 services, 12 tests - 18 total):
   - commands/crypto/file_helpers.rs
   - commands/crypto/manifest.rs
   - services/file/* (3 files)
   - services/crypto/* (6 files)
-- [ ] Remove `pub mod file_ops` from src/lib.rs
-- [ ] Verify: `make validate-rust` passes
-- [ ] Commit: "refactor: move file_ops to file domain infrastructure"
+  - tests/* (12 files)
+- [x] Remove `pub mod file_ops` from src/lib.rs
+- [x] Verify: `make validate-rust` passes (All 619 tests passing)
+- [x] Commit: "refactor: complete file_ops migration to file domain infrastructure" (commit 3367a004)
 
 ---
 
@@ -71,13 +72,13 @@
 
 ## Success Criteria
 
-- [ ] src/file_ops/ moved to services/file/infrastructure
+- [x] src/file_ops/ moved to services/file/infrastructure ✅
 - [ ] src/models/ deleted - all models in their domains
-- [ ] services/file/infrastructure/file_repository.rs deleted (wrapper)
+- [x] services/file/infrastructure/file_repository.rs deleted (wrapper) ✅
 - [ ] key_management/shared properly organized (application/domain/infrastructure)
-- [ ] All 619 tests passing
-- [ ] Zero duplication
-- [ ] Clean DDD structure throughout
+- [x] All 619 tests passing ✅
+- [x] Zero duplication ✅
+- [ ] Clean DDD structure throughout (Phase 1 complete, Phases 2-3 remaining)
 
 ---
 

@@ -1,5 +1,5 @@
-use crate::models::Vault;
 use crate::services::vault;
+use crate::services::vault::domain::models::Vault;
 use crate::services::vault::domain::{VaultError, VaultResult};
 
 #[derive(Debug)]

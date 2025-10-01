@@ -1,6 +1,6 @@
 use super::services::VaultService;
-use crate::models::{Vault, VaultSummary};
 use crate::services::vault::domain::VaultResult;
+use crate::services::vault::domain::models::{Vault, VaultSummary};
 
 pub struct VaultManager {
     vault_service: VaultService,

@@ -47,7 +47,9 @@ async fn create_yubikey_manager() -> Result<YubiKeyManager, Box<CommandError>> {
 }
 
 /// Helper to validate vault exists and load it
-async fn load_vault(vault_id: &str) -> Result<crate::models::Vault, Box<CommandError>> {
+async fn load_vault(
+    vault_id: &str,
+) -> Result<crate::services::vault::domain::models::Vault, Box<CommandError>> {
     vault::get_vault(vault_id).await.map_err(|e| {
         Box::new(
             CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
@@ -58,7 +60,7 @@ async fn load_vault(vault_id: &str) -> Result<crate::models::Vault, Box<CommandE
 
 /// Helper to add YubiKey entry to registry and vault
 async fn register_yubikey_in_vault(
-    mut vault: crate::models::Vault,
+    mut vault: crate::services::vault::domain::models::Vault,
     mut registry: KeyRegistry,
     params: RegisterYubiKeyParams,
 ) -> Result<(KeyReference, String), Box<CommandError>> {
@@ -112,7 +114,7 @@ async fn register_yubikey_in_vault(
 
 /// Helper to check for duplicate YubiKey in vault
 fn check_duplicate_yubikey_in_vault(
-    vault: &crate::models::Vault,
+    vault: &crate::services::vault::domain::models::Vault,
     registry: &KeyRegistry,
     serial: &str,
 ) -> Result<(), Box<CommandError>> {
