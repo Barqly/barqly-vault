@@ -13,8 +13,8 @@ use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::commands::passphrase::PassphraseKeyInfo;
 use crate::commands::yubikey::device_commands::{PinStatus, YubiKeyState, YubiKeyStateInfo};
 use crate::commands::yubikey::vault_commands::AvailableYubiKey;
-use crate::models::KeyState;
 use crate::prelude::*;
+use crate::services::key_management::shared::domain::models::KeyState;
 use crate::services::key_management::shared::{
     KeyEntry, KeyRegistryService, UnifiedKeyListService,
 };
@@ -212,7 +212,7 @@ pub struct GetVaultKeysRequest {
 #[derive(Debug, Serialize, specta::Type)]
 pub struct GetVaultKeysResponse {
     pub vault_id: String,
-    pub keys: Vec<crate::models::KeyReference>,
+    pub keys: Vec<crate::services::key_management::shared::domain::models::KeyReference>,
 }
 
 /// Get all keys for a vault - wrapper around unified API
@@ -226,27 +226,27 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
     match list_unified_keys(KeyListFilter::ForVault(input.vault_id.clone())).await {
         Ok(unified_keys) => {
             // Convert from unified KeyInfo to vault KeyReference
-            let key_refs: Vec<crate::models::KeyReference> = unified_keys
+            let key_refs: Vec<crate::services::key_management::shared::domain::models::KeyReference> = unified_keys
                 .into_iter()
-                .map(|key_info| crate::models::KeyReference {
+                .map(|key_info| crate::services::key_management::shared::domain::models::KeyReference {
                     id: key_info.id,
                     key_type: match key_info.key_type {
                         KeyType::Passphrase { key_id } => {
-                            crate::models::KeyType::Passphrase { key_id }
+                            crate::services::key_management::shared::domain::models::KeyType::Passphrase { key_id }
                         }
                         KeyType::YubiKey {
                             serial,
                             firmware_version,
-                        } => crate::models::KeyType::Yubikey {
+                        } => crate::services::key_management::shared::domain::models::KeyType::Yubikey {
                             serial,
                             firmware_version,
                         },
                     },
                     label: key_info.label,
                     state: match key_info.state {
-                        crate::models::KeyState::Active => crate::models::KeyState::Active,
-                        crate::models::KeyState::Registered => crate::models::KeyState::Registered,
-                        crate::models::KeyState::Orphaned => crate::models::KeyState::Orphaned,
+                        crate::services::key_management::shared::domain::models::KeyState::Active => crate::services::key_management::shared::domain::models::KeyState::Active,
+                        crate::services::key_management::shared::domain::models::KeyState::Registered => crate::services::key_management::shared::domain::models::KeyState::Registered,
+                        crate::services::key_management::shared::domain::models::KeyState::Orphaned => crate::services::key_management::shared::domain::models::KeyState::Orphaned,
                     },
                     created_at: chrono::DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z")
                         .unwrap()

@@ -2,8 +2,8 @@ use super::services::{
     GeneratedKey, GenerationError, GenerationService, ValidationError, ValidationService,
     VaultIntegrationError, VaultIntegrationService,
 };
-use crate::models::KeyReference;
 use crate::services::key_management::passphrase::domain::ValidationResult;
+use crate::services::key_management::shared::domain::models::KeyReference;
 use crate::services::vault::VaultMetadata;
 
 pub struct PassphraseManager {

@@ -4,6 +4,7 @@
 //! across different hardware security device implementations (YubiKey, smartcard, etc.).
 
 pub mod application;
+pub mod domain;
 pub mod infrastructure;
 pub mod registry;
 pub mod traits;
@@ -27,3 +28,6 @@ pub use infrastructure::{
 
 // Re-export application layer services
 pub use application::{KeyManagementError, KeyRegistryService, UnifiedKeyListService};
+
+// Re-export domain types
+pub use domain::models::{KeyReference, KeyState, KeyType};

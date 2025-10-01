@@ -1,9 +1,5 @@
-//! Key management models
+//! Models module
 //!
-//! This module defines data structures for key references.
-//! Vault models have been moved to services/vault/domain/models/
-
-pub mod key_reference;
-
-// Re-export main types
-pub use key_reference::{KeyReference, KeyState, KeyType};
+//! This module is deprecated. All models have been moved to their respective domain layers:
+//! - Vault models: services/vault/domain/models/
+//! - Key models: services/key_management/shared/domain/models/

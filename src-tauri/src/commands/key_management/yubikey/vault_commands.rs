@@ -11,9 +11,9 @@
 //! - check_keymenubar_positions_available: Check vault display positions
 
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
-use crate::models::{KeyReference, KeyState, KeyType};
 use crate::prelude::*;
 use crate::services::key_management::shared::KeyRegistry;
+use crate::services::key_management::shared::domain::models::{KeyReference, KeyState, KeyType};
 use crate::services::key_management::yubikey::YubiKeyManager;
 use crate::services::key_management::yubikey::domain::models::{Pin, Serial};
 use crate::services::vault;
@@ -165,7 +165,7 @@ pub struct RegisterYubiKeyForVaultParams {
 #[derive(Debug, Serialize, specta::Type)]
 pub struct YubiKeyVaultResult {
     pub success: bool,
-    pub key_reference: crate::models::KeyReference,
+    pub key_reference: crate::services::key_management::shared::domain::models::KeyReference,
     pub recovery_code_hash: String,
 }
 

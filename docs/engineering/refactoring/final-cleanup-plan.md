@@ -30,13 +30,13 @@
 
 ## Phase 2: Move Domain Models to Domains
 
-### Milestone 2.1: Move Vault Model
-- [ ] Backup src/models/vault.rs
-- [ ] Move `src/models/vault.rs` → `services/vault/domain/models/vault.rs`
-- [ ] Update services/vault/domain/models/mod.rs to export Vault
-- [ ] Update all imports (~15 files across commands and services)
-- [ ] Verify: `make validate-rust` passes
-- [ ] Commit: "refactor: move Vault model to vault domain"
+### Milestone 2.1: Move Vault Model ✅
+- [x] Backup src/models/vault.rs (git has it)
+- [x] Move `src/models/vault.rs` → `services/vault/domain/models/vault.rs`
+- [x] Update services/vault/domain/models/mod.rs to export Vault
+- [x] Update all imports (1 command, 7 services, 0 tests)
+- [x] Verify: `make validate-rust` passes (All 619 tests passing)
+- [x] Commit: "refactor: move Vault model to vault domain" (commit 36478b46)
 
 ### Milestone 2.2: Move KeyReference to Key Management
 - [ ] Create `services/key_management/shared/domain/` directory

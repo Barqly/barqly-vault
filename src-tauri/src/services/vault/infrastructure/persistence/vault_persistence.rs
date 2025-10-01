@@ -217,7 +217,9 @@ pub async fn get_current_vault() -> Result<Option<Vault>, Box<dyn std::error::Er
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{KeyReference, KeyState, KeyType};
+    use crate::services::key_management::shared::domain::models::{
+        KeyReference, KeyState, KeyType,
+    };
     use chrono::Utc;
 
     #[tokio::test]

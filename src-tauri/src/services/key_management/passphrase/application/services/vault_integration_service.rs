@@ -1,6 +1,6 @@
-use crate::models::{KeyReference, KeyState, KeyType};
 use crate::services::key_management::passphrase::infrastructure::StorageError;
 use crate::services::key_management::shared::KeyRegistry;
+use crate::services::key_management::shared::domain::models::{KeyReference, KeyState, KeyType};
 use crate::services::vault;
 use chrono::Utc;
 
