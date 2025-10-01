@@ -180,20 +180,20 @@ make generate-bindings  # Ensure TypeScript bindings still work
 
 ---
 
-### Milestone 2.2: Move Crypto Domain DTOs ✅
-**Estimated:** 2 hours
+### Milestone 2.2: Move Crypto Domain DTOs ✅ COMPLETE
+**Estimated:** 2 hours | **Actual:** 1 hour
 
 #### Tasks:
-- [ ] Create `services/crypto/application/dtos/` (DTOs for use case inputs/outputs)
-- [ ] Move DTOs:
-  - [ ] `EncryptDataInput` (from `commands/crypto/encryption.rs:16`) → `services/crypto/application/dtos/encrypt_input.rs`
-  - [ ] `EncryptFilesMultiInput` → `services/crypto/application/dtos/encrypt_multi_input.rs`
-  - [ ] `EncryptFilesMultiResponse` → `services/crypto/application/dtos/encrypt_multi_response.rs`
-- [ ] Update `services/crypto/application/mod.rs` to export dtos
-- [ ] Backup originals to `docs/engineering/refactoring/backups/phase3/crypto/`
+- [x] Create `services/crypto/application/dtos/` (DTOs for use case inputs/outputs)
+- [x] Move DTOs:
+  - [x] `EncryptDataInput` (from `commands/crypto/encryption.rs:16`) → `services/crypto/application/dtos/encrypt_input.rs`
+  - [x] `EncryptFilesMultiInput` → `services/crypto/application/dtos/encrypt_multi_input.rs`
+  - [x] `EncryptFilesMultiResponse` → `services/crypto/application/dtos/encrypt_multi_response.rs`
+- [x] Update `services/crypto/application/mod.rs` to export dtos
+- [x] Backup originals to `docs/engineering/refactoring/backups/phase3/crypto/`
 
-**Files to Update:**
-- Services (6 files):
+**Files Updated:**
+- Services (6 files): ✅
   - `services/crypto/application/services/core_encryption_service.rs`
   - `services/crypto/application/services/archive_orchestration_service.rs`
   - `services/crypto/application/services/vault_encryption_service.rs`

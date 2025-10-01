@@ -3,9 +3,9 @@
 //! Handles validation of file inputs, paths, and constraints for crypto operations.
 //! Extracted from commands/crypto/encryption.rs for proper domain separation.
 
-use crate::commands::crypto::EncryptDataInput;
 use crate::constants::*;
 use crate::prelude::*;
+use crate::services::crypto::application::dtos::EncryptDataInput;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use std::path::Path;
 

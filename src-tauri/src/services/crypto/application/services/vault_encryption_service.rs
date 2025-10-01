@@ -4,9 +4,11 @@
 //! vault services, key registry, and multi-recipient encryption.
 
 use super::{ArchiveOrchestrationService, CoreEncryptionService, FileValidationService};
-use crate::commands::crypto::{EncryptFilesMultiInput, EncryptFilesMultiResponse};
 use crate::constants::*;
 use crate::prelude::*;
+use crate::services::crypto::application::dtos::{
+    EncryptFilesMultiInput, EncryptFilesMultiResponse,
+};
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::crypto::infrastructure as crypto;
 use crate::services::key_management::shared::{KeyEntry, KeyRegistryService};

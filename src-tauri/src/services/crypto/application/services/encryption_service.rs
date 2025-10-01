@@ -2,11 +2,11 @@ use super::{
     ArchiveOrchestrationService, CoreEncryptionService, FileValidationService, KeyRetrievalService,
     VaultEncryptionService,
 };
-use crate::commands::crypto::{
-    EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse,
-};
 use crate::constants::*;
 use crate::prelude::*;
+use crate::services::crypto::application::dtos::{
+    EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse,
+};
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use std::path::PathBuf;
 

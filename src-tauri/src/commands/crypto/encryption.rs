@@ -3,55 +3,13 @@
 //! This module provides Tauri commands that delegate to the crypto service layer
 //! for actual business logic implementation.
 
-use crate::commands::types::{
-    CommandError, CommandResponse, ErrorCode, ValidateInput, ValidationHelper,
-};
-use crate::constants::*;
+use crate::commands::types::{CommandError, CommandResponse, ErrorCode, ValidateInput};
 use crate::prelude::*;
 use crate::services::crypto::CryptoManager;
 use tauri::Window;
 
-/// Input for encryption command
-#[derive(Debug, Deserialize, specta::Type)]
-pub struct EncryptDataInput {
-    pub key_id: String,
-    pub file_paths: Vec<String>,
-    pub output_name: Option<String>,
-    pub output_path: Option<String>,
-}
-
-impl ValidateInput for EncryptDataInput {
-    fn validate(&self) -> Result<(), Box<CommandError>> {
-        ValidationHelper::validate_not_empty(&self.key_id, "Key ID")?;
-
-        if self.file_paths.is_empty() {
-            return Err(Box::new(
-                CommandError::operation(
-                    ErrorCode::MissingParameter,
-                    "At least one file must be selected",
-                )
-                .with_recovery_guidance("Please select one or more files to encrypt"),
-            ));
-        }
-
-        // Validate file count limit (from original validation)
-        if self.file_paths.len() > MAX_FILES_PER_OPERATION {
-            return Err(Box::new(
-                CommandError::operation(
-                    ErrorCode::TooManyFiles,
-                    format!(
-                        "Too many files selected: {} (maximum {})",
-                        self.file_paths.len(),
-                        MAX_FILES_PER_OPERATION
-                    ),
-                )
-                .with_recovery_guidance("Please select fewer files"),
-            ));
-        }
-
-        Ok(())
-    }
-}
+// Re-export DTOs from application layer for Tauri bindings
+pub use crate::services::crypto::application::dtos::EncryptDataInput;
 
 /// Encrypt files with progress streaming - delegates to service layer
 #[tauri::command]
@@ -77,40 +35,10 @@ pub async fn encrypt_files(input: EncryptDataInput, _window: Window) -> CommandR
 }
 
 /// Input for multi-key encryption command
-#[derive(Debug, Deserialize, specta::Type)]
-pub struct EncryptFilesMultiInput {
-    pub vault_id: String,
-    pub in_file_paths: Vec<String>,
-    pub out_encrypted_file_name: Option<String>,
-    pub out_encrypted_file_path: Option<String>,
-}
-
-impl ValidateInput for EncryptFilesMultiInput {
-    fn validate(&self) -> Result<(), Box<CommandError>> {
-        ValidationHelper::validate_not_empty(&self.vault_id, "Vault ID")?;
-
-        if self.in_file_paths.is_empty() {
-            return Err(Box::new(
-                CommandError::operation(
-                    ErrorCode::MissingParameter,
-                    "At least one file must be selected",
-                )
-                .with_recovery_guidance("Please select one or more files to encrypt"),
-            ));
-        }
-
-        Ok(())
-    }
-}
-
-/// Response from multi-key encryption command
-#[derive(Debug, Serialize, specta::Type)]
-pub struct EncryptFilesMultiResponse {
-    pub encrypted_file_path: String,
-    pub manifest_file_path: String,
-    pub file_exists_warning: bool,
-    pub keys_used: Vec<String>,
-}
+// Re-export multi-key encryption DTOs from application layer for Tauri bindings
+pub use crate::services::crypto::application::dtos::{
+    EncryptFilesMultiInput, EncryptFilesMultiResponse,
+};
 
 /// Encrypt files with multiple keys (vault) - delegates to service layer
 #[tauri::command]

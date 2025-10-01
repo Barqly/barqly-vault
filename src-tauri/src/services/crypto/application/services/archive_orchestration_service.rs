@@ -3,9 +3,9 @@
 //! Handles the file → archive → encrypt workflow including file selection,
 //! archive creation, and preparation for encryption operations.
 
-use crate::commands::crypto::EncryptDataInput;
 use crate::constants::*;
 use crate::prelude::*;
+use crate::services::crypto::application::dtos::EncryptDataInput;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::file::infrastructure::file_operations::{
     self as file_operations, ArchiveOperation, FileOpsConfig,

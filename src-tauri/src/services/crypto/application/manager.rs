@@ -4,7 +4,7 @@
 //! Coordinates encryption, decryption, and progress tracking services.
 
 use super::services::{DecryptionOrchestrationService, EncryptionService};
-use crate::commands::crypto::{
+use crate::services::crypto::application::dtos::{
     EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse,
 };
 use crate::services::crypto::domain::CryptoResult;
