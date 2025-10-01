@@ -1,7 +1,13 @@
 //! Device Registry Implementation
 //!
-//! This module provides a registry for managing multiple device types
-//! and demonstrates the extensibility pattern for future devices.
+//! **FUTURE USE:** Not currently used in production. Reserved for future device extensibility.
+//!
+//! This module provides a registry for managing multiple hardware device types,
+//! offering device-agnostic interfaces for Commands/UI when multiple devices are supported.
+//! Demonstrates the factory pattern for extensibility.
+//!
+//! Currently only YubiKey and passphrase are implemented. This registry will be used
+//! when adding support for smart cards, HSM, FIDO2, or other hardware devices.
 
 use super::traits::{DeviceCapability, DeviceFactory, DeviceInfo, DeviceResult};
 use std::collections::HashMap;
@@ -133,7 +139,9 @@ unsafe impl Sync for DeviceRegistry {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::key_management::shared::traits::{DeviceId, HardwareSecurityDevice};
+    use crate::services::key_management::shared::domain::traits::{
+        DeviceId, HardwareSecurityDevice,
+    };
     use async_trait::async_trait;
 
     // Mock device factory for testing

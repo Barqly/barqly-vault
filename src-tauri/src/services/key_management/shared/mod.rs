@@ -6,18 +6,14 @@
 pub mod application;
 pub mod domain;
 pub mod infrastructure;
-pub mod registry;
-pub mod traits;
 
-// Re-export key types for convenience
-pub use traits::{
+// Re-export domain types for convenience
+pub use domain::registry::{DeviceRegistry, RegistryStatistics};
+pub use domain::traits::{
     CryptoProvider, DeviceCapability, DeviceConfig, DeviceCredential, DeviceEvent,
     DeviceEventHandler, DeviceFactory, DeviceId, DeviceIdentity, DeviceInfo, DeviceInitConfig,
     DeviceResult, HardwareSecurityDevice, IdentityManager, PinPolicy, SigningProvider, TouchPolicy,
 };
-
-// Re-export registry types
-pub use registry::{DeviceRegistry, RegistryStatistics};
 
 // Re-export key registry infrastructure types
 pub use infrastructure::{

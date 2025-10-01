@@ -28,7 +28,7 @@
 
 ---
 
-## Phase 2: Move Domain Models to Domains
+## Phase 2: Move Domain Models to Domains ✅ COMPLETE
 
 ### Milestone 2.1: Move Vault Model ✅
 - [x] Backup src/models/vault.rs (git has it)
@@ -38,23 +38,23 @@
 - [x] Verify: `make validate-rust` passes (All 619 tests passing)
 - [x] Commit: "refactor: move Vault model to vault domain" (commit 36478b46)
 
-### Milestone 2.2: Move KeyReference to Key Management
-- [ ] Create `services/key_management/shared/domain/` directory
-- [ ] Create `services/key_management/shared/domain/models/` directory
-- [ ] Move `src/models/key_reference.rs` → `key_management/shared/domain/models/key_reference.rs`
-- [ ] Create `key_management/shared/domain/models/mod.rs`
-- [ ] Create `key_management/shared/domain/mod.rs`
-- [ ] Update key_management/shared/mod.rs to export domain models
-- [ ] Update all imports (~8 files)
-- [ ] Verify: `make validate-rust` passes
-- [ ] Commit: "refactor: move KeyReference to key_management shared domain"
+### Milestone 2.2: Move KeyReference to Key Management ✅
+- [x] Create `services/key_management/shared/domain/` directory
+- [x] Create `services/key_management/shared/domain/models/` directory
+- [x] Move `src/models/key_reference.rs` → `key_management/shared/domain/models/key_reference.rs`
+- [x] Create `key_management/shared/domain/models/mod.rs`
+- [x] Create `key_management/shared/domain/mod.rs`
+- [x] Update key_management/shared/mod.rs to export domain models
+- [x] Update all imports (3 commands, 3 services, 1 test)
+- [x] Verify: `make validate-rust` passes (All 619 tests passing)
+- [x] Commit: "refactor: move KeyReference to key_management shared domain" (commit 6ff2beaf)
 
-### Milestone 2.3: Delete src/models
-- [ ] Verify src/models/ is empty
-- [ ] Delete `src/models/` directory
-- [ ] Remove `pub mod models` from src/lib.rs
-- [ ] Verify: `make validate-rust` passes
-- [ ] Commit: "refactor: eliminate src/models - moved to domain layers"
+### Milestone 2.3: Delete src/models ✅
+- [x] Verify src/models/ is empty (only mod.rs with comment)
+- [x] Delete `src/models/` directory
+- [x] Remove `pub mod models` from src/lib.rs
+- [x] Verify: `make validate-rust` passes (All 619 tests passing)
+- [x] Commit: "refactor: eliminate src/models - moved to domain layers" (commit 9071866a)
 
 ---
 
@@ -73,12 +73,12 @@
 ## Success Criteria
 
 - [x] src/file_ops/ moved to services/file/infrastructure ✅
-- [ ] src/models/ deleted - all models in their domains
+- [x] src/models/ deleted - all models in their domains ✅
 - [x] services/file/infrastructure/file_repository.rs deleted (wrapper) ✅
-- [ ] key_management/shared properly organized (application/domain/infrastructure)
+- [ ] key_management/shared properly organized (application/domain/infrastructure) (Phase 3 remaining)
 - [x] All 619 tests passing ✅
 - [x] Zero duplication ✅
-- [ ] Clean DDD structure throughout (Phase 1 complete, Phases 2-3 remaining)
+- [ ] Clean DDD structure throughout (Phases 1-2 complete, Phase 3 remaining)
 
 ---
 

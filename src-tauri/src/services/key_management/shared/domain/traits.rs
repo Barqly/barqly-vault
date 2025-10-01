@@ -1,8 +1,13 @@
 //! Shared traits and abstractions for key management devices
 //!
-//! This module defines common interfaces that can be implemented by different
-//! hardware security devices (YubiKey, smartcard, etc.) to provide a unified
-//! key management experience.
+//! **FUTURE USE:** Not currently used in production. Reserved for future device extensibility.
+//!
+//! This module defines device-agnostic interfaces for Commands/UI when multiple hardware
+//! security devices are supported (YubiKey, smart cards, HSM, FIDO2, etc.).
+//! Provides unified key management experience across different device types.
+//!
+//! Currently only YubiKey and passphrase are implemented. These abstractions will be
+//! used when adding additional hardware device support.
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
