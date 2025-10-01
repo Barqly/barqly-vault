@@ -10,7 +10,6 @@ pub mod constants; // Centralized constants for the application
 // Crypto module moved to services/crypto/infrastructure for proper DDD architecture
 pub mod error; // Centralized error handling infrastructure
 pub mod logging; // Centralized logging and tracing infrastructure
-pub mod models; // Vault and key management models
 pub mod prelude;
 pub mod services; // Business logic layer (DDD) - renamed from key_management
 
