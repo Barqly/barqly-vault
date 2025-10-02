@@ -405,7 +405,7 @@ impl YubiKeyManager {
         info!("Initializing YubiKey hardware with auto-generated recovery code");
 
         // Import the PTY function for hardware initialization
-        use crate::services::key_management::yubikey::infrastructure::pty::ykman_operations::initialize_yubikey_with_recovery;
+        use crate::services::key_management::yubikey::infrastructure::pty::ykman_ops::initialize_yubikey_with_recovery;
 
         // Generate recovery code and initialize hardware
         let recovery_code = tokio::task::spawn_blocking({

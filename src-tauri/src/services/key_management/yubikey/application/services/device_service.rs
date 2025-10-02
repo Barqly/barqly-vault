@@ -296,7 +296,7 @@ impl DeviceService for YkmanDeviceService {
         debug!("Checking default PIN for YubiKey: {}", serial.redacted());
 
         // Use the actual ykman PTY implementation to test default PIN
-        use crate::services::key_management::yubikey::infrastructure::pty::ykman_operations::has_default_pin;
+        use crate::services::key_management::yubikey::infrastructure::pty::ykman_ops::has_default_pin;
 
         let result = tokio::task::spawn_blocking(move || {
             has_default_pin()
