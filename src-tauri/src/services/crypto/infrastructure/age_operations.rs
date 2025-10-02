@@ -456,7 +456,7 @@ pub fn decrypt_data_yubikey_cli(
     );
 
     // Use the existing PTY-based decryption function
-    crate::services::key_management::yubikey::infrastructure::pty::age_operations::decrypt_data_with_yubikey_pty(
+    crate::services::key_management::yubikey::infrastructure::pty::age_ops::decrypt_data_with_yubikey_pty(
         encrypted_data,
         serial,
         *slot,
