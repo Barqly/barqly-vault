@@ -27,24 +27,17 @@ impl StorageCache {
     }
 
     pub fn get_key_list(&self, cache_key: &str) -> Option<Vec<KeyInfo>> {
-        // Update metrics if available (ignore if mutex poisoned - offline app, extremely unlikely)
-        if let Ok(mut metrics) = self.metrics.lock() {
-            metrics.total_requests += 1;
-        }
+        let mut metrics = self.metrics.lock().unwrap();
+        metrics.total_requests += 1;
 
         let cache_key_owned = cache_key.to_string();
-        let result = self.key_list_cache.get(&cache_key_owned);
-
-        // Update hit/miss metrics if available
-        if let Ok(mut metrics) = self.metrics.lock() {
-            if result.is_some() {
-                metrics.key_list_hits += 1;
-            } else {
-                metrics.key_list_misses += 1;
-            }
+        if let Some(keys) = self.key_list_cache.get(&cache_key_owned) {
+            metrics.key_list_hits += 1;
+            Some(keys)
+        } else {
+            metrics.key_list_misses += 1;
+            None
         }
-
-        result
     }
 
     pub fn cache_key_list(&self, cache_key: String, keys: Vec<KeyInfo>) {
@@ -53,31 +46,22 @@ impl StorageCache {
 
     pub fn invalidate_key_list(&self) {
         self.key_list_cache.clear();
-        // Update metrics if available
-        if let Ok(mut metrics) = self.metrics.lock() {
-            metrics.cache_invalidations += 1;
-        }
+        let mut metrics = self.metrics.lock().unwrap();
+        metrics.cache_invalidations += 1;
     }
 
     pub fn get_directory_exists(&self, path: &str) -> Option<bool> {
-        // Update metrics if available
-        if let Ok(mut metrics) = self.metrics.lock() {
-            metrics.total_requests += 1;
-        }
+        let mut metrics = self.metrics.lock().unwrap();
+        metrics.total_requests += 1;
 
         let path_owned = path.to_string();
-        let result = self.directory_cache.get(&path_owned);
-
-        // Update hit/miss metrics if available
-        if let Ok(mut metrics) = self.metrics.lock() {
-            if result.is_some() {
-                metrics.directory_hits += 1;
-            } else {
-                metrics.directory_misses += 1;
-            }
+        if let Some(exists) = self.directory_cache.get(&path_owned) {
+            metrics.directory_hits += 1;
+            Some(exists)
+        } else {
+            metrics.directory_misses += 1;
+            None
         }
-
-        result
     }
 
     pub fn cache_directory_exists(&self, path: String, exists: bool) {
@@ -87,24 +71,20 @@ impl StorageCache {
     pub fn invalidate_directory(&self, path: &str) {
         let path_owned = path.to_string();
         self.directory_cache.invalidate(&path_owned);
-        // Update metrics if available
-        if let Ok(mut metrics) = self.metrics.lock() {
-            metrics.cache_invalidations += 1;
-        }
+        let mut metrics = self.metrics.lock().unwrap();
+        metrics.cache_invalidations += 1;
     }
 
     pub fn get_metrics(&self) -> CacheMetrics {
-        // Return default metrics if mutex poisoned (extremely unlikely in offline desktop app)
-        self.metrics.lock().map(|m| m.clone()).unwrap_or_default()
+        let metrics = self.metrics.lock().unwrap();
+        metrics.clone()
     }
 
     pub fn clear_all(&self) {
         self.key_list_cache.clear();
         self.directory_cache.clear();
-        // Reset metrics if available
-        if let Ok(mut metrics) = self.metrics.lock() {
-            *metrics = CacheMetrics::default();
-        }
+        let mut metrics = self.metrics.lock().unwrap();
+        *metrics = CacheMetrics::default();
     }
 }
 
