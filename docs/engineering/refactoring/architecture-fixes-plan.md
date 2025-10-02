@@ -1,0 +1,423 @@
+# Backend Architecture Fixes - Phased Execution Plan
+
+**Date:** 2025-10-01
+**Reference:** backend-architecture-review-2025-10-01.md
+**Priority:** P0 - Critical for UI redesign readiness
+
+---
+
+## Phase 1: CRITICAL Issues (Must Fix Before UI Work) ⚠️
+
+**Timeline:** Week 1 (16-20 hours)
+**Goal:** Eliminate crash risks, data corruption risks, and resource leaks
+
+### Milestone 1.1: Remove Unsafe unwrap() Calls ✅
+**Estimated:** 4-6 hours
+
+#### Tasks:
+- [ ] Fix vault persistence unwraps in `vault/infrastructure/persistence/metadata.rs`
+  - [ ] Replace `serde_json::to_string_pretty().unwrap()` with proper error handling
+  - [ ] Replace `serde_json::from_str().unwrap()` with proper error handling
+  - [ ] Add SerializationError to VaultError enum
+- [ ] Fix caching mutex unwraps in `shared/infrastructure/caching/storage_cache.rs`
+  - [ ] Replace `cache.lock().unwrap()` with lock() + map_err pattern
+  - [ ] Handle poison errors gracefully
+  - [ ] Add CacheLockError type
+- [ ] Fix progress tracking unwraps in `shared/infrastructure/progress/global.rs`
+  - [ ] Replace `PROGRESS_TRACKER.lock().unwrap()` with proper error handling
+  - [ ] Return Option or Result instead of panicking
+- [ ] Audit entire codebase for remaining production unwraps
+  - [ ] Run: `rg "\.unwrap\(\)" src-tauri/src/ --type rust | grep -v "test" | grep -v "example"`
+  - [ ] Fix any remaining unwraps in non-test code
+- [ ] Add integration tests for error paths
+  - [ ] Test vault save failure scenarios
+  - [ ] Test mutex poison recovery
+  - [ ] Test JSON parse failures
+- [ ] Run `make validate-rust` to ensure all tests pass
+
+**Success Criteria:**
+- Zero unwrap() calls in production code paths (tests OK)
+- All error paths return Result types
+- Tests verify error handling works
+
+---
+
+### Milestone 1.2: Split Massive Files (>600 LOC) ✅
+**Estimated:** 8-10 hours
+
+#### Tasks:
+
+**File 1: age_plugin.rs (1,278 LOC → 6 files)**
+- [ ] Create `yubikey/infrastructure/age/` directory
+- [ ] Split into logical modules:
+  - [ ] `identity.rs` (~200 LOC) - Identity tag management
+  - [ ] `key_generation.rs` (~150 LOC) - Key generation operations
+  - [ ] `decryption.rs` (~200 LOC) - Decryption operations
+  - [ ] `encryption.rs` (~150 LOC) - Encryption operations
+  - [ ] `pty_bridge.rs` (~200 LOC) - PTY communication layer
+  - [ ] `mod.rs` (~100 LOC) - Public API facade
+- [ ] Update imports in dependent files
+- [ ] Move tests to respective modules
+- [ ] Run `make validate-rust`
+
+**File 2: yubikey/application/services/mod.rs (734 LOC → 3-4 files)**
+- [ ] Analyze current structure (list all services)
+- [ ] Split into separate service files:
+  - [ ] One file per service (device_service.rs already exists)
+  - [ ] Move re-exports to mod.rs
+- [ ] Run `make validate-rust`
+
+**File 3: pty/age_operations.rs (721 LOC → 3 files)**
+- [ ] Split into:
+  - [ ] `generation.rs` - Key generation PTY operations
+  - [ ] `decryption.rs` - Decryption PTY operations
+  - [ ] `identity.rs` - Identity management PTY operations
+- [ ] Run `make validate-rust`
+
+**File 4: pty/ykman_operations.rs (687 LOC → 3 files)**
+- [ ] Split into:
+  - [ ] `device_management.rs` - Device info, list, etc.
+  - [ ] `pin_operations.rs` - PIN setup, verify, change
+  - [ ] `piv_operations.rs` - PIV slot operations
+- [ ] Run `make validate-rust`
+
+**File 5: file/infrastructure/file_operations/validation.rs (624 LOC → 2 files)**
+- [ ] Split into:
+  - [ ] `path_validation.rs` - Path and name validation
+  - [ ] `size_validation.rs` - File size and count validation
+- [ ] Run `make validate-rust`
+
+**File 6: crypto/application/services/mod.rs (612 LOC → separate files)**
+- [ ] Ensure each service in its own file
+- [ ] Keep mod.rs < 100 LOC (just re-exports)
+- [ ] Run `make validate-rust`
+
+**Success Criteria:**
+- All files < 300 LOC
+- Each file has single, clear responsibility
+- Tests still pass (384 tests)
+- Imports updated correctly
+
+---
+
+### Milestone 1.3: Fix Thread Lifecycle Management ✅
+**Estimated:** 4 hours
+
+#### Tasks:
+- [ ] Fix caching cleanup thread in `shared/infrastructure/caching/mod.rs`
+  - [ ] Add shutdown signal (AtomicBool)
+  - [ ] Capture join handle
+  - [ ] Implement graceful shutdown method
+  - [ ] Add Drop trait to join threads on drop
+- [ ] Fix YubiKey PTY threads in `yubikey/infrastructure/pty/core.rs`
+  - [ ] Replace raw threads with Tokio tasks
+  - [ ] Add timeout and cancellation support
+  - [ ] Implement proper cleanup on error
+- [ ] Fix age operations threads in `yubikey/infrastructure/pty/age_operations.rs`
+  - [ ] Use Tokio async instead of threads where possible
+  - [ ] Manage thread lifecycles properly
+- [ ] Add shutdown tests
+  - [ ] Test graceful shutdown completes
+  - [ ] Test no threads leaked
+  - [ ] Test resources properly cleaned up
+- [ ] Run `make validate-rust`
+
+**Success Criteria:**
+- All threads managed with join handles or Tokio tasks
+- Graceful shutdown implemented
+- No thread leaks in tests
+- Resource cleanup verified
+
+---
+
+## Phase 2: HIGH Priority Issues (Should Fix Before UI)
+
+**Timeline:** Week 2 (50 hours)
+**Goal:** Address architectural issues and improve stability
+
+### Milestone 2.1: Introduce Domain Ports/Interfaces ✅
+**Estimated:** 6-8 hours
+
+#### Tasks:
+- [ ] Create `vault/domain/ports/` directory
+- [ ] Define KeyProvider trait for key management abstraction
+- [ ] Define CryptoProvider trait for encryption abstraction
+- [ ] Update VaultManager to accept trait objects
+- [ ] Create adapter implementations in command layer
+- [ ] Update integration tests
+- [ ] Run `make validate-rust`
+
+---
+
+### Milestone 2.2: Add Critical Integration Tests ✅
+**Estimated:** 10-12 hours
+
+#### Tasks:
+- [ ] Test full vault lifecycle
+  - [ ] Create vault → add key → encrypt files → decrypt files → delete vault
+- [ ] Test YubiKey end-to-end flow
+  - [ ] Initialize YubiKey → register to vault → encrypt → decrypt
+- [ ] Test passphrase key flow
+  - [ ] Generate key → add to vault → encrypt → decrypt
+- [ ] Test multi-key encryption
+  - [ ] Encrypt with 2 passphrase + 1 YubiKey → decrypt with any key
+- [ ] Test error recovery
+  - [ ] Failed encryption → retry
+  - [ ] Invalid key → proper error
+  - [ ] Corrupted vault → detection and recovery
+- [ ] Run `make validate-rust`
+
+---
+
+### Milestone 2.3: Standardize Error Handling ✅
+**Estimated:** 6 hours
+
+#### Tasks:
+- [ ] Create `error/domain_error.rs` trait
+- [ ] Implement DomainError for all domain error types
+- [ ] Add consistent user messages
+- [ ] Add recovery guidance
+- [ ] Update error conversions
+- [ ] Run `make validate-rust`
+
+---
+
+### Milestone 2.4: Enhance Manager Pattern ✅
+**Estimated:** 8 hours
+
+#### Tasks:
+- [ ] Update VaultManager for proper orchestration
+- [ ] Update CryptoManager for service composition
+- [ ] Update FileManager for transaction boundaries
+- [ ] Update KeyManager for business rule enforcement
+- [ ] Add event emission
+- [ ] Run `make validate-rust`
+
+---
+
+### Milestone 2.5: Restructure Shared Infrastructure ✅
+**Estimated:** 4 hours
+
+#### Tasks:
+- [ ] Create infrastructure sub-domains (io/, ipc/, events/)
+- [ ] Move components to appropriate locations
+- [ ] Update imports
+- [ ] Run `make validate-rust`
+
+---
+
+### Milestone 2.6: Complete or Remove All TODOs ✅
+**Estimated:** 6-8 hours
+
+#### Tasks:
+- [ ] Audit all 25 TODO comments
+- [ ] Complete critical TODOs (error handling, timestamps)
+- [ ] Remove or convert to issues (future work items)
+- [ ] Verify no incomplete features in production
+- [ ] Run `make validate-rust`
+
+---
+
+### Milestone 2.7: Implement Atomic File Operations ✅
+**Estimated:** 4 hours
+
+#### Tasks:
+- [ ] Create atomic write helper in `shared/infrastructure/io/`
+- [ ] Update vault metadata persistence
+- [ ] Update key registry persistence
+- [ ] Add tests for atomicity (simulate crash)
+- [ ] Run `make validate-rust`
+
+---
+
+### Milestone 2.8: Add Domain Validation Layer ✅
+**Estimated:** 6 hours
+
+#### Tasks:
+- [ ] Create value objects for Vault domain (VaultName, VaultId)
+- [ ] Create value objects for Key domain (KeyLabel, etc.)
+- [ ] Implement validation in constructors
+- [ ] Update domain models to use value objects
+- [ ] Add validation tests
+- [ ] Run `make validate-rust`
+
+---
+
+## Phase 3: MEDIUM Priority Issues (During UI Work)
+
+**Timeline:** Weeks 3-4 (40 hours)
+**Goal:** Improve code quality and maintainability
+
+### Milestone 3.1: Refactor Remaining Large Files (300-600 LOC) ✅
+- [ ] Split 15 files in 300-600 LOC range as features are touched
+- **Estimated:** 15-20 hours
+
+### Milestone 3.2: Document and Improve Caching Strategy ✅
+- [ ] Document when to use cache
+- [ ] Add metrics collection
+- [ ] Define invalidation rules
+- **Estimated:** 4 hours
+
+### Milestone 3.3: Simplify Progress Tracking ✅
+- [ ] Evaluate if debouncer is necessary
+- [ ] Consider using Tauri events directly
+- [ ] Simplify progress types
+- **Estimated:** 3 hours
+
+### Milestone 3.4: Consolidate Type System ✅
+- [ ] Audit for duplicate types
+- [ ] Document DTO vs Domain Entity guidelines
+- [ ] Remove duplicates
+- **Estimated:** 4 hours
+
+### Milestone 3.5: Standardize Logging ✅
+- [ ] Create logging guidelines
+- [ ] Audit sensitive data logging
+- [ ] Implement structured logging consistently
+- **Estimated:** 3 hours
+
+### Milestone 3.6: Refactor Path Management ✅
+- [ ] Split path_management into logical modules
+- [ ] Centralize validation
+- [ ] Document platform differences
+- **Estimated:** 3 hours
+
+### Milestone 3.7: Improve Test Infrastructure ✅
+- [ ] Create test data builders
+- [ ] Extract common test utilities
+- [ ] Implement proper fixtures
+- **Estimated:** 4 hours
+
+### Milestone 3.8: Fix Async/Sync Boundaries ✅
+- [ ] Use tokio::fs for async file operations
+- [ ] Mark CPU-bound operations as sync
+- [ ] Document async boundaries
+- **Estimated:** 4 hours
+
+---
+
+## Phase 4: LOW Priority Issues (Post UI)
+
+**Timeline:** Ongoing (15 hours)
+**Goal:** Polish and optimization
+
+### Milestone 4.1: Code Quality Improvements ✅
+- [ ] Optimize import statements
+- [ ] Remove dead code
+- [ ] Extract magic numbers
+- **Estimated:** 6 hours
+
+### Milestone 4.2: Monitoring and Metrics ✅
+- [ ] Add test coverage reporting
+- [ ] Implement performance monitoring
+- [ ] Add benchmarks
+- **Estimated:** 7 hours
+
+### Milestone 4.3: Documentation and Polish ✅
+- [ ] Add rustdoc to all public APIs
+- [ ] Fix formatting inconsistencies
+- [ ] Document architecture decisions
+- **Estimated:** 2 hours
+
+---
+
+## Success Criteria
+
+### Phase 1 (CRITICAL)
+- [ ] Zero unwrap() in production code
+- [ ] All files < 600 LOC (ideally < 300 LOC)
+- [ ] All threads managed with join handles
+- [ ] All 384 tests passing
+- [ ] No resource leaks detected
+
+### Phase 2 (HIGH)
+- [ ] Cross-domain communication through ports
+- [ ] Integration tests for all critical paths
+- [ ] Consistent error handling across domains
+- [ ] Zero TODO comments in production code
+- [ ] Atomic file operations implemented
+- [ ] Domain validation enforced
+
+### Phase 3 (MEDIUM)
+- [ ] All files < 300 LOC
+- [ ] Caching strategy documented
+- [ ] Progress tracking simplified
+- [ ] Type system consolidated
+- [ ] Logging standardized
+
+### Phase 4 (LOW)
+- [ ] Code quality metrics met
+- [ ] Performance monitoring active
+- [ ] Documentation complete
+
+---
+
+## Rollback Plan
+
+Each milestone:
+1. Backup affected files to `docs/engineering/refactoring/backups/arch-fixes-{phase}/`
+2. Commit after each milestone
+3. If tests fail, restore from backup
+4. Document issues encountered
+
+---
+
+## Code Impact Estimate
+
+**Phase 1 (CRITICAL):**
+- **Files to Create:** ~20 (split large files)
+- **Files to Modify:** ~30 (remove unwraps, fix threads)
+- **LOC to Refactor:** ~4,000
+- **Net LOC Change:** +500 (proper structure)
+- **Timeline:** 16-20 hours
+
+**Phase 2 (HIGH):**
+- **Files to Create:** ~15 (ports, tests)
+- **Files to Modify:** ~50 (managers, errors, TODOs)
+- **LOC to Refactor:** ~3,000
+- **Timeline:** 50 hours
+
+**Phase 3 (MEDIUM):**
+- **Files to Modify:** ~40
+- **Timeline:** 40 hours
+
+**Phase 4 (LOW):**
+- **Files to Modify:** ~25
+- **Timeline:** 15 hours
+
+**Total Estimated Effort:** 120-140 hours
+
+---
+
+## Validation After Each Phase
+
+```bash
+# After every milestone
+make validate-rust
+
+# After Phase 1
+make validate        # Full validation
+make app            # Manual UI testing
+
+# Architecture validation
+rg "\.unwrap\(\)" src-tauri/src/ --type rust | grep -v test | wc -l
+# Should return: 0
+
+# File size validation
+find src-tauri/src -name "*.rs" -type f -exec wc -l {} \; | awk '$1 > 300' | wc -l
+# Should be minimal (only complex algorithms)
+```
+
+---
+
+## Notes
+
+- **Incremental:** Commit after each milestone
+- **Testing:** Run `make validate-rust` after every task
+- **Backup:** Create backups before major refactoring
+- **Documentation:** Update this plan with actual time spent
+- **Context:** Working app, refactoring for stability and maintainability
+
+---
+
+**Ready for Phase 1 execution** ✅
