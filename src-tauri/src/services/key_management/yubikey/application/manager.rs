@@ -169,32 +169,72 @@ impl YubiKeyManager {
             };
 
             // For registry entry, we need to get created_at and last_used from the shared registry
-            let (slot, label, firmware_version, created_at, last_used) =
-                if let Some((key_id, _yubikey_device)) = &registry_entry {
-                    use crate::services::key_management::shared::infrastructure::registry_persistence::KeyRegistry;
-                    use chrono::Utc;
+            let (slot, label, firmware_version, created_at, last_used) = if let Some((
+                key_id,
+                _yubikey_device,
+            )) = &registry_entry
+            {
+                use crate::services::key_management::shared::infrastructure::registry_persistence::KeyRegistry;
+                use chrono::Utc;
 
-                    // Load the registry to get timestamps
-                    match KeyRegistry::load() {
-                        Ok(registry) => {
-                            if let Some((_, entry)) = registry.keys.iter().find(|(k, _)| k.as_str() == key_id.as_str()) {
-                                use crate::services::key_management::shared::KeyEntry;
-                                match entry {
-                                    KeyEntry::Yubikey { firmware_version, created_at, last_used, .. } => {
-                                        (Some(1), Some(key_id.clone()), firmware_version.clone(), created_at.clone(), last_used.clone())
-                                    }
-                                    _ => (Some(1), Some(key_id.clone()), device.firmware_version.clone(), Utc::now(), None)
-                                }
-                            } else {
-                                (Some(1), Some(key_id.clone()), device.firmware_version.clone(), Utc::now(), None)
+                // Load the registry to get timestamps
+                match KeyRegistry::load() {
+                    Ok(registry) => {
+                        if let Some((_, entry)) = registry
+                            .keys
+                            .iter()
+                            .find(|(k, _)| k.as_str() == key_id.as_str())
+                        {
+                            use crate::services::key_management::shared::KeyEntry;
+                            match entry {
+                                KeyEntry::Yubikey {
+                                    firmware_version,
+                                    created_at,
+                                    last_used,
+                                    ..
+                                } => (
+                                    Some(1),
+                                    Some(key_id.clone()),
+                                    firmware_version.clone(),
+                                    *created_at,
+                                    *last_used,
+                                ),
+                                _ => (
+                                    Some(1),
+                                    Some(key_id.clone()),
+                                    device.firmware_version.clone(),
+                                    Utc::now(),
+                                    None,
+                                ),
                             }
+                        } else {
+                            (
+                                Some(1),
+                                Some(key_id.clone()),
+                                device.firmware_version.clone(),
+                                Utc::now(),
+                                None,
+                            )
                         }
-                        Err(_) => (Some(1), Some(key_id.clone()), device.firmware_version.clone(), Utc::now(), None)
                     }
-                } else {
-                    use chrono::Utc;
-                    (None, None, device.firmware_version.clone(), Utc::now(), None)
-                };
+                    Err(_) => (
+                        Some(1),
+                        Some(key_id.clone()),
+                        device.firmware_version.clone(),
+                        Utc::now(),
+                        None,
+                    ),
+                }
+            } else {
+                use chrono::Utc;
+                (
+                    None,
+                    None,
+                    device.firmware_version.clone(),
+                    Utc::now(),
+                    None,
+                )
+            };
 
             let yubikey_info = YubiKeyStateInfo {
                 serial: serial.value().to_string(),

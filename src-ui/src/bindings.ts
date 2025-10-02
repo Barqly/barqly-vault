@@ -575,6 +575,14 @@ vault_id: string | null;
  */
 state: KeyState; 
 /**
+ * When this key was created
+ */
+created_at: string; 
+/**
+ * Last time this key was used
+ */
+last_used: string | null; 
+/**
  * Additional metadata for YubiKey keys
  */
 yubikey_info: YubiKeyInfo | null }
@@ -891,7 +899,7 @@ export type YubiKeyState =
  * - Action needed: Recover manifest entry or re-register
  */
 "orphaned"
-export type YubiKeyStateInfo = { serial: string; state: YubiKeyState; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus; firmware_version: string | null }
+export type YubiKeyStateInfo = { serial: string; state: YubiKeyState; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus; firmware_version: string | null; created_at: string; last_used: string | null }
 /**
  * Result from YubiKey operations
  */
