@@ -3,7 +3,6 @@
 //! Centralizes management of all encryption keys (passphrase and YubiKey) in a single registry.
 //! This replaces the previous scattered approach of individual .meta files and separate manifests.
 
-use crate::services::shared::infrastructure::io::atomic_write_sync;
 use crate::services::shared::infrastructure::path_management::get_keys_dir;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -151,9 +150,7 @@ impl KeyRegistry {
 
         // Pretty print for readability
         let json = serde_json::to_string_pretty(self)?;
-
-        // Atomic write to prevent corruption if process crashes mid-write
-        atomic_write_sync(&path, json.as_bytes())?;
+        fs::write(&path, json)?;
 
         // Set restrictive permissions on Unix
         #[cfg(unix)]

@@ -5,6 +5,7 @@
 
 pub mod caching;
 pub mod error;
+pub mod io;
 pub mod path_management;
 pub mod progress;
 
@@ -19,6 +20,9 @@ pub use path_management::{
 
 // Re-export error handling
 pub use error::ErrorHandler;
+
+// Re-export I/O utilities
+pub use io::{atomic_write, atomic_write_sync};
 
 // Re-export progress tracking
 pub use progress::{

@@ -3,7 +3,6 @@
 //! Handles saving and loading vaults from the file system.
 
 use crate::prelude::*;
-use crate::services::shared::infrastructure::io::atomic_write;
 use crate::services::shared::infrastructure::path_management::{
     get_vault_manifest_path, get_vaults_directory, validate_vault_name,
 };
@@ -54,8 +53,10 @@ pub async fn save_vault(vault: &Vault) -> Result<(), Box<dyn std::error::Error +
     let path = get_vault_path_by_name(&vault.name)?;
     let json = serde_json::to_string_pretty(vault)?;
 
-    // Atomic write with sync_all() for durability
-    atomic_write(&path, json.as_bytes()).await?;
+    // Write atomically using a temp file
+    let temp_path = path.with_extension("tmp");
+    async_fs::write(&temp_path, json).await?;
+    async_fs::rename(temp_path, path).await?;
 
     Ok(())
 }
