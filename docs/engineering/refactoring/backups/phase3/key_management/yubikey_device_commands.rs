@@ -18,11 +18,38 @@ use crate::services::key_management::yubikey::{
 };
 use tauri;
 
-// Re-export domain types
-pub use crate::services::key_management::yubikey::domain::models::{
-    state::{PinStatus, YubiKeyState},
-    yubikey_state_info::YubiKeyStateInfo,
-};
+// Type definitions for YubiKey device operations
+#[derive(Debug, serde::Serialize, specta::Type)]
+pub enum PinStatus {
+    #[serde(rename = "default")]
+    Default,
+    #[serde(rename = "set")]
+    Set,
+}
+
+#[derive(Debug, PartialEq, serde::Serialize, specta::Type)]
+pub enum YubiKeyState {
+    #[serde(rename = "new")]
+    New,
+    #[serde(rename = "reused")]
+    Reused,
+    #[serde(rename = "registered")]
+    Registered,
+    #[serde(rename = "orphaned")]
+    Orphaned,
+}
+
+#[derive(Debug, serde::Serialize, specta::Type)]
+pub struct YubiKeyStateInfo {
+    pub serial: String,
+    pub state: YubiKeyState,
+    pub slot: Option<u8>,
+    pub recipient: Option<String>,
+    pub identity_tag: Option<String>,
+    pub label: Option<String>,
+    pub pin_status: PinStatus,
+    pub firmware_version: Option<String>,
+}
 
 #[derive(Debug, serde::Serialize, specta::Type)]
 pub struct StreamlinedYubiKeyInitResult {

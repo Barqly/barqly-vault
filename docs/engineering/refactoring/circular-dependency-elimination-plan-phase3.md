@@ -220,11 +220,11 @@ make generate-bindings
 
 ---
 
-### Milestone 2.3: Move Key Management DTOs ✅
-**Estimated:** 3 hours
+### Milestone 2.3: Move Key Management DTOs ✅ COMPLETE
+**Estimated:** 3 hours | **Actual:** 1.5 hours
 
 #### Tasks:
-- [ ] Create domain models directories:
+- [x] Create domain models directories:
   - [ ] `services/key_management/shared/domain/models/`
   - [ ] `services/key_management/passphrase/domain/models/`
   - [ ] `services/key_management/yubikey/domain/models/`

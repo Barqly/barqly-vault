@@ -3,17 +3,121 @@
 //! Aggregates keys from multiple subsystems (passphrase, YubiKey) into a unified view.
 //! Provides filtering and coordination logic for cross-subsystem key operations.
 
-use crate::commands::key_management::unified_keys::{
-    KeyInfo, KeyListFilter, convert_available_yubikey_to_unified, convert_passphrase_to_unified,
-    convert_yubikey_to_unified,
-};
-use crate::commands::passphrase::PassphraseKeyInfo;
 use crate::prelude::*;
+use crate::services::key_management::passphrase::domain::models::passphrase_key_info::PassphraseKeyInfo;
 use crate::services::key_management::shared::KeyEntry;
 use crate::services::key_management::shared::application::services::KeyRegistryService;
+use crate::services::key_management::shared::domain::models::key_reference::{
+    KeyInfo, KeyListFilter, YubiKeyInfo,
+};
+use crate::services::key_management::shared::domain::models::{KeyState, KeyType};
 use crate::services::key_management::yubikey::YubiKeyManager;
+use crate::services::key_management::yubikey::domain::models::{
+    available_yubikey::AvailableYubiKey,
+    state::{PinStatus, YubiKeyState},
+    yubikey_state_info::YubiKeyStateInfo,
+};
 use crate::services::vault::VaultManager;
 use std::collections::HashSet;
+
+// Conversion functions to transform Layer 2 types to unified types
+
+/// Convert PassphraseKeyInfo to unified KeyInfo
+fn convert_passphrase_to_unified(
+    passphrase_key: PassphraseKeyInfo,
+    vault_id: Option<String>,
+) -> KeyInfo {
+    let key_id = passphrase_key.id.clone();
+    KeyInfo {
+        id: passphrase_key.id,
+        label: passphrase_key.label,
+        key_type: KeyType::Passphrase { key_id },
+        recipient: passphrase_key.public_key, // Real public key from registry!
+        is_available: passphrase_key.is_available,
+        vault_id,
+        state: if passphrase_key.is_available {
+            KeyState::Active
+        } else {
+            KeyState::Registered
+        },
+        yubikey_info: None,
+    }
+}
+
+/// Convert YubiKeyStateInfo to unified KeyInfo
+fn convert_yubikey_to_unified(yubikey_key: YubiKeyStateInfo, vault_id: Option<String>) -> KeyInfo {
+    let is_available = match yubikey_key.state {
+        YubiKeyState::Registered => true,
+        YubiKeyState::Orphaned => true,
+        YubiKeyState::Reused => true,
+        YubiKeyState::New => false,
+    };
+
+    KeyInfo {
+        id: format!("yubikey_{}", yubikey_key.serial), // Generate consistent ID
+        label: yubikey_key
+            .label
+            .unwrap_or_else(|| format!("YubiKey-{}", yubikey_key.serial)),
+        key_type: KeyType::Yubikey {
+            serial: yubikey_key.serial.clone(),
+            firmware_version: yubikey_key.firmware_version.clone(), // Real firmware version from registry/device
+        },
+        recipient: yubikey_key
+            .recipient
+            .unwrap_or_else(|| "unknown".to_string()), // Real recipient from registry!
+        is_available,
+        vault_id,
+        state: match yubikey_key.state {
+            YubiKeyState::Registered => KeyState::Active,
+            YubiKeyState::Orphaned => KeyState::Orphaned,
+            YubiKeyState::Reused => KeyState::Registered,
+            YubiKeyState::New => KeyState::Orphaned,
+        },
+        yubikey_info: Some(YubiKeyInfo {
+            slot: yubikey_key.slot,
+            identity_tag: yubikey_key.identity_tag,
+            pin_status: yubikey_key.pin_status,
+            yubikey_state: yubikey_key.state,
+        }),
+    }
+}
+
+/// Convert AvailableYubiKey to unified KeyInfo
+fn convert_available_yubikey_to_unified(
+    available_key: AvailableYubiKey,
+    vault_id: Option<String>,
+) -> KeyInfo {
+    KeyInfo {
+        id: format!("available_yubikey_{}", available_key.serial),
+        label: available_key
+            .label
+            .unwrap_or_else(|| format!("YubiKey-{}", available_key.serial)),
+        key_type: KeyType::Yubikey {
+            serial: available_key.serial.clone(),
+            firmware_version: None,
+        },
+        recipient: available_key
+            .recipient
+            .unwrap_or_else(|| "pending".to_string()),
+        is_available: true,
+        vault_id,
+        state: match available_key.state.as_str() {
+            "new" => KeyState::Orphaned,
+            "orphaned" => KeyState::Orphaned,
+            _ => KeyState::Orphaned,
+        },
+        yubikey_info: Some(YubiKeyInfo {
+            slot: available_key.slot,
+            identity_tag: available_key.identity_tag,
+            pin_status: PinStatus::Custom, // Simplified for available keys
+            yubikey_state: match available_key.state.as_str() {
+                "new" => YubiKeyState::New,
+                "orphaned" => YubiKeyState::Orphaned,
+                _ => YubiKeyState::Orphaned,
+            },
+        }),
+    }
+}
 
 /// Service for unified key listing across all key types
 #[derive(Debug)]
@@ -276,20 +380,19 @@ impl UnifiedKeyListService {
                                         .unwrap_or(false);
 
                                     // Build AvailableYubiKey
-                                    let available_yubikey =
-                                        crate::commands::yubikey::vault_commands::AvailableYubiKey {
-                                            serial: serial_str,
-                                            state: if has_identity {
-                                                "orphaned".to_string()
-                                            } else {
-                                                "new".to_string()
-                                            },
-                                            slot: None,
-                                            recipient: None,
-                                            identity_tag: None,
-                                            label: None,
-                                            pin_status: "unknown".to_string(),
-                                        };
+                                    let available_yubikey = AvailableYubiKey {
+                                        serial: serial_str,
+                                        state: if has_identity {
+                                            "orphaned".to_string()
+                                        } else {
+                                            "new".to_string()
+                                        },
+                                        slot: None,
+                                        recipient: None,
+                                        identity_tag: None,
+                                        label: None,
+                                        pin_status: "unknown".to_string(),
+                                    };
 
                                     // Convert to unified format and add
                                     available_keys.push(convert_available_yubikey_to_unified(
@@ -358,9 +461,9 @@ impl UnifiedKeyListService {
                             // Only include if yubikey is in a "connected" state
                             if matches!(
                                 yubikey.state,
-                                crate::commands::yubikey::device_commands::YubiKeyState::Registered
-                                    | crate::commands::yubikey::device_commands::YubiKeyState::Orphaned
-                                    | crate::commands::yubikey::device_commands::YubiKeyState::Reused
+                                YubiKeyState::Registered
+                                    | YubiKeyState::Orphaned
+                                    | YubiKeyState::Reused
                             ) {
                                 connected_keys.push(convert_yubikey_to_unified(yubikey, None));
                             }

@@ -1,6 +1,8 @@
 use super::services::{KeyManagementError, KeyRegistryService, UnifiedKeyListService};
-use crate::commands::key_management::unified_keys::{KeyInfo, KeyListFilter};
 use crate::services::key_management::shared::KeyEntry;
+use crate::services::key_management::shared::domain::models::key_reference::{
+    KeyInfo, KeyListFilter,
+};
 
 pub type Result<T> = std::result::Result<T, KeyManagementError>;
 
@@ -54,10 +56,10 @@ impl KeyManager {
         &self,
         vault_id: &str,
     ) -> std::result::Result<
-        Vec<crate::commands::passphrase::PassphraseKeyInfo>,
+        Vec<crate::services::key_management::passphrase::domain::models::passphrase_key_info::PassphraseKeyInfo>,
         Box<dyn std::error::Error>,
-    > {
-        use crate::commands::passphrase::PassphraseKeyInfo;
+    >{
+        use crate::services::key_management::passphrase::domain::models::passphrase_key_info::PassphraseKeyInfo;
         use crate::services::vault::VaultManager;
 
         let vault_manager = VaultManager::new();
@@ -94,10 +96,10 @@ impl KeyManager {
         &self,
         vault_id: &str,
     ) -> std::result::Result<
-        Vec<crate::commands::passphrase::PassphraseKeyInfo>,
+        Vec<crate::services::key_management::passphrase::domain::models::passphrase_key_info::PassphraseKeyInfo>,
         Box<dyn std::error::Error>,
-    > {
-        use crate::commands::passphrase::PassphraseKeyInfo;
+    >{
+        use crate::services::key_management::passphrase::domain::models::passphrase_key_info::PassphraseKeyInfo;
         use crate::services::vault::VaultManager;
 
         let vault_manager = VaultManager::new();

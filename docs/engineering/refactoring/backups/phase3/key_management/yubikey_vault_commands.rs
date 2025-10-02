@@ -170,8 +170,16 @@ pub struct YubiKeyVaultResult {
 }
 
 /// Available YubiKey for vault registration - matches frontend YubiKeyStateInfo
-// Re-export domain type
-pub use crate::services::key_management::yubikey::domain::models::available_yubikey::AvailableYubiKey;
+#[derive(Debug, Serialize, specta::Type)]
+pub struct AvailableYubiKey {
+    pub serial: String,
+    pub state: String, // "new", "orphaned", "registered", "reused"
+    pub slot: Option<u8>,
+    pub recipient: Option<String>,
+    pub identity_tag: Option<String>,
+    pub label: Option<String>,
+    pub pin_status: String, // For now, simplified
+}
 
 /// Initialize a new YubiKey and add it to a vault
 /// Delegates YubiKey operations to YubiKeyManager, handles vault integration

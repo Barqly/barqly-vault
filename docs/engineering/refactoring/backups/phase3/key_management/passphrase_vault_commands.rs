@@ -2,10 +2,8 @@ use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::services::key_management::passphrase::PassphraseManager;
 
 use crate::services::key_management::shared::domain::models::KeyReference;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-
-// Re-export domain type
-pub use crate::services::key_management::passphrase::domain::models::passphrase_key_info::PassphraseKeyInfo;
 
 #[derive(Debug, Deserialize, specta::Type)]
 pub struct AddPassphraseKeyRequest {
@@ -18,6 +16,16 @@ pub struct AddPassphraseKeyRequest {
 pub struct AddPassphraseKeyResponse {
     pub key_reference: KeyReference,
     pub public_key: String,
+}
+
+#[derive(Debug, Serialize, specta::Type)]
+pub struct PassphraseKeyInfo {
+    pub id: String,
+    pub label: String,
+    pub public_key: String,
+    pub created_at: DateTime<Utc>,
+    pub last_used: Option<DateTime<Utc>>,
+    pub is_available: bool,
 }
 
 #[derive(Debug, Serialize, specta::Type)]

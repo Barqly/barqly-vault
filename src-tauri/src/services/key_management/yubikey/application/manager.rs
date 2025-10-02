@@ -106,9 +106,10 @@ impl YubiKeyManager {
     /// - Registry data
     pub async fn list_yubikeys_with_state(
         &self,
-    ) -> YubiKeyResult<Vec<crate::commands::yubikey::device_commands::YubiKeyStateInfo>> {
-        use crate::commands::yubikey::device_commands::{
-            PinStatus, YubiKeyState, YubiKeyStateInfo,
+    ) -> YubiKeyResult<Vec<crate::services::key_management::yubikey::domain::models::yubikey_state_info::YubiKeyStateInfo>>{
+        use crate::services::key_management::yubikey::domain::models::{
+            state::{PinStatus, YubiKeyState},
+            yubikey_state_info::YubiKeyStateInfo,
         };
 
         debug!("Listing YubiKeys with state detection");
@@ -164,7 +165,7 @@ impl YubiKeyManager {
             let pin_status = if self.has_default_pin(serial).await.unwrap_or(false) {
                 PinStatus::Default
             } else {
-                PinStatus::Set
+                PinStatus::Custom
             };
 
             let (slot, label, firmware_version) =

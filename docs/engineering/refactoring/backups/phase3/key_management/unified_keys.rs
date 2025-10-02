@@ -10,23 +10,71 @@
 //! - Simplified frontend integration with unified data structures
 
 use crate::commands::command_types::{CommandError, ErrorCode};
+use crate::commands::passphrase::PassphraseKeyInfo;
+use crate::commands::yubikey::device_commands::{PinStatus, YubiKeyState, YubiKeyStateInfo};
+use crate::commands::yubikey::vault_commands::AvailableYubiKey;
 use crate::prelude::*;
 use crate::services::key_management::shared::domain::models::KeyState;
 use crate::services::key_management::shared::{KeyEntry, KeyManager};
 use crate::services::vault;
 use serde::{Deserialize, Serialize};
 
-// Re-export domain types for commands
-pub use crate::services::key_management::passphrase::domain::models::passphrase_key_info::PassphraseKeyInfo;
-pub use crate::services::key_management::shared::domain::models::KeyType;
-pub use crate::services::key_management::shared::domain::models::key_reference::{
-    KeyInfo, KeyListFilter, YubiKeyInfo,
-};
-pub use crate::services::key_management::yubikey::domain::models::{
-    available_yubikey::AvailableYubiKey,
-    state::{PinStatus, YubiKeyState},
-    yubikey_state_info::YubiKeyStateInfo,
-};
+/// Filter options for key listing operations
+#[derive(Debug, Deserialize, Serialize, specta::Type)]
+#[serde(tag = "type", content = "value")]
+pub enum KeyListFilter {
+    /// All registered keys across all vaults
+    All,
+    /// Keys registered to a specific vault
+    ForVault(String),
+    /// Keys NOT in a specific vault but available to add
+    AvailableForVault(String),
+    /// Only currently connected/available keys (for decryption UI)
+    ConnectedOnly,
+}
+
+/// Key type classification for unified API
+#[derive(Debug, Serialize, specta::Type)]
+#[serde(tag = "type", content = "data")]
+pub enum KeyType {
+    /// Passphrase-based key
+    Passphrase { key_id: String },
+    /// YubiKey hardware token
+    YubiKey {
+        serial: String,
+        firmware_version: Option<String>,
+    },
+}
+
+/// Unified key information structure
+#[derive(Debug, Serialize, specta::Type)]
+pub struct KeyInfo {
+    /// Unique identifier for this key
+    pub id: String,
+    /// User-friendly label
+    pub label: String,
+    /// Type-specific information
+    pub key_type: KeyType,
+    /// Age recipient string for encryption
+    pub recipient: String,
+    /// Whether key is currently available (green vs blue in UI)
+    pub is_available: bool,
+    /// Which vault this key belongs to (if any)
+    pub vault_id: Option<String>,
+    /// Current state in relation to vaults
+    pub state: KeyState,
+    /// Additional metadata for YubiKey keys
+    pub yubikey_info: Option<YubiKeyInfo>,
+}
+
+/// YubiKey-specific information for unified API
+#[derive(Debug, Serialize, specta::Type)]
+pub struct YubiKeyInfo {
+    pub slot: Option<u8>,
+    pub identity_tag: Option<String>,
+    pub pin_status: PinStatus,
+    pub yubikey_state: YubiKeyState,
+}
 
 // Conversion functions to transform Layer 2 types to unified types
 
@@ -69,7 +117,7 @@ pub fn convert_yubikey_to_unified(
         label: yubikey_key
             .label
             .unwrap_or_else(|| format!("YubiKey-{}", yubikey_key.serial)),
-        key_type: KeyType::Yubikey {
+        key_type: KeyType::YubiKey {
             serial: yubikey_key.serial.clone(),
             firmware_version: yubikey_key.firmware_version.clone(), // Real firmware version from registry/device
         },
@@ -103,7 +151,7 @@ pub fn convert_available_yubikey_to_unified(
         label: available_key
             .label
             .unwrap_or_else(|| format!("YubiKey-{}", available_key.serial)),
-        key_type: KeyType::Yubikey {
+        key_type: KeyType::YubiKey {
             serial: available_key.serial.clone(),
             firmware_version: None,
         },
@@ -120,7 +168,7 @@ pub fn convert_available_yubikey_to_unified(
         yubikey_info: Some(YubiKeyInfo {
             slot: available_key.slot,
             identity_tag: available_key.identity_tag,
-            pin_status: PinStatus::Custom, // Simplified for available keys
+            pin_status: PinStatus::Set, // Simplified for available keys
             yubikey_state: match available_key.state.as_str() {
                 "new" => YubiKeyState::New,
                 "orphaned" => YubiKeyState::Orphaned,
@@ -184,7 +232,7 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
                         KeyType::Passphrase { key_id } => {
                             crate::services::key_management::shared::domain::models::KeyType::Passphrase { key_id }
                         }
-                        KeyType::Yubikey {
+                        KeyType::YubiKey {
                             serial,
                             firmware_version,
                         } => crate::services::key_management::shared::domain::models::KeyType::Yubikey {

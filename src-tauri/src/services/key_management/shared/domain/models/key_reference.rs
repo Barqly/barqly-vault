@@ -51,6 +51,50 @@ pub enum KeyType {
     },
 }
 
+/// Filter options for key listing operations
+#[derive(Debug, Deserialize, Serialize, specta::Type)]
+#[serde(tag = "type", content = "value")]
+pub enum KeyListFilter {
+    /// All registered keys across all vaults
+    All,
+    /// Keys registered to a specific vault
+    ForVault(String),
+    /// Keys NOT in a specific vault but available to add
+    AvailableForVault(String),
+    /// Only currently connected/available keys (for decryption UI)
+    ConnectedOnly,
+}
+
+/// Unified key information structure
+#[derive(Debug, Serialize, specta::Type)]
+pub struct KeyInfo {
+    /// Unique identifier for this key
+    pub id: String,
+    /// User-friendly label
+    pub label: String,
+    /// Type-specific information
+    pub key_type: KeyType,
+    /// Age recipient string for encryption
+    pub recipient: String,
+    /// Whether key is currently available (green vs blue in UI)
+    pub is_available: bool,
+    /// Which vault this key belongs to (if any)
+    pub vault_id: Option<String>,
+    /// Current state in relation to vaults
+    pub state: KeyState,
+    /// Additional metadata for YubiKey keys
+    pub yubikey_info: Option<YubiKeyInfo>,
+}
+
+/// YubiKey-specific information for unified API
+#[derive(Debug, Serialize, specta::Type)]
+pub struct YubiKeyInfo {
+    pub slot: Option<u8>,
+    pub identity_tag: Option<String>,
+    pub pin_status: crate::services::key_management::yubikey::domain::models::PinStatus,
+    pub yubikey_state: crate::services::key_management::yubikey::domain::models::YubiKeyState,
+}
+
 /// State of a key in relation to the vault
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, specta::Type)]
 #[serde(rename_all = "snake_case")]
