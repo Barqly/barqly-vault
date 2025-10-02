@@ -645,11 +645,23 @@ export type KeyReference =
 /**
  * Passphrase-based key
  */
-{ type: "passphrase"; key_id: string } | 
+{ type: "Passphrase"; data: { 
+/**
+ * Reference to the stored key file
+ */
+key_id: string } } | 
 /**
  * YubiKey hardware token
  */
-{ type: "yubikey"; serial: string; firmware_version?: string | null }) & { 
+{ type: "YubiKey"; data: { 
+/**
+ * Serial number of the YubiKey
+ */
+serial: string; 
+/**
+ * Firmware version for compatibility tracking
+ */
+firmware_version?: string | null } }) & { 
 /**
  * Unique identifier for this key reference
  */
@@ -693,11 +705,23 @@ export type KeyType =
 /**
  * Passphrase-based key
  */
-{ type: "passphrase"; key_id: string } | 
+{ type: "Passphrase"; data: { 
+/**
+ * Reference to the stored key file
+ */
+key_id: string } } | 
 /**
  * YubiKey hardware token
  */
-{ type: "yubikey"; serial: string; firmware_version?: string | null }
+{ type: "YubiKey"; data: { 
+/**
+ * Serial number of the YubiKey
+ */
+serial: string; 
+/**
+ * Firmware version for compatibility tracking
+ */
+firmware_version?: string | null } }
 /**
  * Response containing list of vaults
  */
