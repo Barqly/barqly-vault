@@ -113,13 +113,13 @@ impl YubiIdentityProviderFactory {
 
     /// Create an age-plugin-yubikey based provider
     pub fn create_age_plugin_provider() -> YubiKeyResult<Box<dyn YubiIdentityProvider>> {
-        use super::super::age_plugin::AgePluginProvider;
+        use super::super::age::AgePluginProvider;
         Ok(Box::new(AgePluginProvider::new()?))
     }
 
     /// Create a PTY-based age-plugin-yubikey provider (recommended for interactive operations)
     pub fn create_pty_provider() -> YubiKeyResult<Box<dyn YubiIdentityProvider>> {
-        use super::super::age_plugin::AgePluginPtyProvider;
+        use super::super::age::AgePluginPtyProvider;
         Ok(Box::new(AgePluginPtyProvider::new()?))
     }
 

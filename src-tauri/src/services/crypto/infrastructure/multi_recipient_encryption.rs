@@ -334,7 +334,7 @@ impl MultiRecipientCrypto {
         pin: Option<&str>,
     ) -> Result<DecryptionResult> {
         // Get the plugin path from DDD infrastructure
-        let plugin_path = crate::services::key_management::yubikey::infrastructure::age_plugin::AgePluginProvider::find_plugin_binary()
+        let plugin_path = crate::services::key_management::yubikey::infrastructure::age::AgePluginProvider::find_plugin_binary()
             .map_err(|e| CryptoError::DecryptionFailed(format!("Plugin error: {e}")))?;
 
         // Set up environment for age decryption

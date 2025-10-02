@@ -4,10 +4,11 @@
 //! consolidated from crypto/yubikey/ to maintain cohesion within the
 //! YubiKey management architecture.
 
-pub mod age_plugin;
+pub mod age;
 pub mod providers;
 pub mod pty;
 
-// Re-export key infrastructure types
-pub use age_plugin::*;
+// Re-export key infrastructure types from age module
+pub use age::{AgePluginProvider, AgePluginPtyProvider};
+// Re-export all types from providers module
 pub use providers::*;
