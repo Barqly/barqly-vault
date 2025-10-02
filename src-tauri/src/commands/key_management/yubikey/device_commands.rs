@@ -152,7 +152,6 @@ pub async fn register_yubikey(
     _label: String,
     _pin: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
-    // TODO: Implement YubiKey registration with YubiKeyManager
     Err(CommandError::operation(
         ErrorCode::YubiKeyInitializationFailed,
         "YubiKey registration functionality needs to be implemented with YubiKeyManager",

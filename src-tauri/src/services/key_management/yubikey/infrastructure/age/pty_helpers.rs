@@ -184,7 +184,6 @@ pub(super) async fn wait_for_touch_completion(
     writer: &mut Box<dyn Write + Send>,
     output: &mut String,
 ) -> YubiKeyResult<ExitStatus> {
-    // TODO: Emit Tauri event here
 
     // Start timeout-based touch detection since no more output will come
     let touch_start = std::time::Instant::now();

@@ -82,10 +82,6 @@ pub struct KeyInfo {
     pub vault_id: Option<String>,
     /// Current state in relation to vaults
     pub state: KeyState,
-    /// When this key was created
-    pub created_at: DateTime<Utc>,
-    /// Last time this key was used
-    pub last_used: Option<DateTime<Utc>>,
     /// Additional metadata for YubiKey keys
     pub yubikey_info: Option<YubiKeyInfo>,
 }

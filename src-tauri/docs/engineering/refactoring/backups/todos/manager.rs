@@ -168,32 +168,15 @@ impl YubiKeyManager {
                 PinStatus::Custom
             };
 
-            // For registry entry, we need to get created_at and last_used from the shared registry
-            let (slot, label, firmware_version, created_at, last_used) =
-                if let Some((key_id, _yubikey_device)) = &registry_entry {
-                    use crate::services::key_management::shared::infrastructure::registry_persistence::KeyRegistry;
-                    use chrono::Utc;
-
-                    // Load the registry to get timestamps
-                    match KeyRegistry::load() {
-                        Ok(registry) => {
-                            if let Some((_, entry)) = registry.keys.iter().find(|(k, _)| k.as_str() == key_id.as_str()) {
-                                use crate::services::key_management::shared::KeyEntry;
-                                match entry {
-                                    KeyEntry::Yubikey { firmware_version, created_at, last_used, .. } => {
-                                        (Some(1), Some(key_id.clone()), firmware_version.clone(), created_at.clone(), last_used.clone())
-                                    }
-                                    _ => (Some(1), Some(key_id.clone()), device.firmware_version.clone(), Utc::now(), None)
-                                }
-                            } else {
-                                (Some(1), Some(key_id.clone()), device.firmware_version.clone(), Utc::now(), None)
-                            }
-                        }
-                        Err(_) => (Some(1), Some(key_id.clone()), device.firmware_version.clone(), Utc::now(), None)
-                    }
+            let (slot, label, firmware_version) =
+                if let Some((key_id, yubikey_device)) = &registry_entry {
+                    (
+                        Some(1),
+                        Some(key_id.clone()),
+                        yubikey_device.firmware_version.clone(),
+                    )
                 } else {
-                    use chrono::Utc;
-                    (None, None, device.firmware_version.clone(), Utc::now(), None)
+                    (None, None, device.firmware_version.clone())
                 };
 
             let yubikey_info = YubiKeyStateInfo {
@@ -205,8 +188,6 @@ impl YubiKeyManager {
                 label,
                 pin_status,
                 firmware_version,
-                created_at,
-                last_used,
             };
 
             info!(
@@ -619,5 +600,6 @@ mod tests {
         assert!(serial.redacted().contains("***"));
     }
 
+    // TODO: Add integration tests with mock services
     // These will be added after we validate the design with real command integration
 }

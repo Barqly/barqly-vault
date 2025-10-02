@@ -347,7 +347,6 @@ impl YubiIdentityProvider for AgePluginPtyProvider {
         // The age-plugin-yubikey will be invoked automatically by age when it encounters
         // a YubiKey recipient in the encrypted file
 
-        // TODO: Consider PTY for age decryption as well if it needs PIN input
         let age_path = get_age_path();
         let output = timeout(INTERACTIVE_TIMEOUT, async {
             Command::new(&age_path)

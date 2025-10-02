@@ -57,7 +57,6 @@ pub mod key_management; // Key management service layer (passphrase, yubikey, sh
 pub mod shared; // Shared cross-domain infrastructure
 pub mod vault; // Vault management service layer
 
-// TODO: Implement common abstractions after passphrase refactoring is complete
 // pub mod common;
 
 // Re-export main types for convenience from key_management
@@ -88,7 +87,6 @@ pub enum KeyManagementError {
     #[error("YubiKey operation failed: {0}")]
     YubiKey(#[from] YubiKeyError),
 
-    // TODO: Add after passphrase refactoring
     // #[error("Passphrase operation failed: {0}")]
     // Passphrase(#[from] PassphraseError),
     #[error("Key type not supported: {key_type:?}")]

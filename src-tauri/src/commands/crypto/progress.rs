@@ -105,7 +105,6 @@ pub async fn get_encryption_status(
         "Getting encryption status"
     );
 
-    // TODO: Implement actual status tracking
     // For now, return a placeholder response indicating the operation is completed
     // In a real implementation, this would query a status store or progress tracker
 

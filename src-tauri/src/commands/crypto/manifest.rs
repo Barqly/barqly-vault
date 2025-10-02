@@ -101,7 +101,7 @@ pub async fn verify_manifest(
                 } else {
                     "Manifest verification failed".to_string()
                 },
-                file_count: 0, // TODO: Get from manager if needed
+                file_count: 0,
                 total_size: 0,
             })
         }

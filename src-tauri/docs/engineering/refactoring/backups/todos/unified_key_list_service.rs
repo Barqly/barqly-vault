@@ -40,8 +40,6 @@ fn convert_passphrase_to_unified(
         } else {
             KeyState::Registered
         },
-        created_at: passphrase_key.created_at,
-        last_used: passphrase_key.last_used,
         yubikey_info: None,
     }
 }
@@ -75,8 +73,6 @@ fn convert_yubikey_to_unified(yubikey_key: YubiKeyStateInfo, vault_id: Option<St
             YubiKeyState::Reused => KeyState::Registered,
             YubiKeyState::New => KeyState::Orphaned,
         },
-        created_at: yubikey_key.created_at,
-        last_used: yubikey_key.last_used,
         yubikey_info: Some(YubiKeyInfo {
             slot: yubikey_key.slot,
             identity_tag: yubikey_key.identity_tag,
@@ -91,8 +87,6 @@ fn convert_available_yubikey_to_unified(
     available_key: AvailableYubiKey,
     vault_id: Option<String>,
 ) -> KeyInfo {
-    use chrono::Utc;
-
     KeyInfo {
         id: format!("available_yubikey_{}", available_key.serial),
         label: available_key
@@ -112,8 +106,6 @@ fn convert_available_yubikey_to_unified(
             "orphaned" => KeyState::Orphaned,
             _ => KeyState::Orphaned,
         },
-        created_at: Utc::now(), // Not yet registered, use current time
-        last_used: None,
         yubikey_info: Some(YubiKeyInfo {
             slot: available_key.slot,
             identity_tag: available_key.identity_tag,

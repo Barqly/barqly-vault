@@ -109,7 +109,6 @@ impl ServiceFactory {
 
         // Services don't implement the Service trait yet, but when they do,
         // this is where we would initialize them
-        // TODO: Implement Service trait for all service implementations
         // self.device_service.initialize().await?;
         // self.identity_service.initialize().await?;
         // self.registry_service.initialize().await?;
@@ -127,7 +126,6 @@ impl ServiceFactory {
 
         let mut health_status = std::collections::HashMap::new();
 
-        // TODO: Implement Service trait for all service implementations
         // health_status.insert("device".to_string(), self.device_service.health_check().await?);
         // health_status.insert("identity".to_string(), self.identity_service.health_check().await?);
         // health_status.insert("registry".to_string(), self.registry_service.health_check().await?);
@@ -147,7 +145,6 @@ impl ServiceFactory {
     pub async fn shutdown_all_services(&self) -> YubiKeyResult<()> {
         debug!("Shutting down all services in ServiceFactory");
 
-        // TODO: Implement Service trait for all service implementations
         // self.device_service.shutdown().await?;
         // self.identity_service.shutdown().await?;
         // self.registry_service.shutdown().await?;
@@ -165,7 +162,6 @@ impl ServiceFactory {
 
         let mut metrics = std::collections::HashMap::new();
 
-        // TODO: Implement Service trait for all service implementations
         // metrics.insert("device".to_string(), self.device_service.get_metrics().await?);
         // metrics.insert("identity".to_string(), self.identity_service.get_metrics().await?);
         // metrics.insert("registry".to_string(), self.registry_service.get_metrics().await?);

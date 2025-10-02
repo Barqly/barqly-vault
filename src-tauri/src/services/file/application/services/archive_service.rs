@@ -169,7 +169,6 @@ impl ArchiveService {
 
     /// Handle directory selection with exact logic from commands/file/selection.rs
     pub async fn select_directory(&self, _title: Option<String>) -> FileResult<String> {
-        // TODO: Implement proper dialog integration with tauri-plugin-dialog
         // For now, return an error that the frontend can handle gracefully
 
         info!("Directory selection dialog requested - pending implementation");

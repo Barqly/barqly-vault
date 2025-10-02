@@ -1,7 +1,6 @@
 //! YubiKey state information DTO
 
 use super::{PinStatus, YubiKeyState};
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, serde::Serialize, specta::Type)]
 pub struct YubiKeyStateInfo {
@@ -13,6 +12,4 @@ pub struct YubiKeyStateInfo {
     pub label: Option<String>,
     pub pin_status: PinStatus,
     pub firmware_version: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub last_used: Option<DateTime<Utc>>,
 }

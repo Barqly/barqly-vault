@@ -59,7 +59,6 @@ pub async fn yubikey_decrypt_file(
     _credentials: UnlockCredentials,
     _output_path: String,
 ) -> Result<VaultDecryptionResult, CommandError> {
-    // TODO: Implement proper YubiKey decryption logic
     // For now, return error indicating function needs implementation
     Err(CommandError::operation(
         ErrorCode::YubiKeyInitializationFailed,

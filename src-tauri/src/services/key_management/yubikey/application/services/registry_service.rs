@@ -3,7 +3,6 @@
 //! This service provides YubiKey-focused operations for managing YubiKeys
 //! in the key registry system. It handles only registry operations,
 //! with vault operations delegated to higher-level orchestrators.
-//! TODO: Integration with vault management to be handled by higher-level services
 
 use crate::prelude::*;
 use crate::services::key_management::shared::{KeyEntry, KeyRegistry};
@@ -454,15 +453,13 @@ impl RegistryService for DefaultRegistryService {
 // Add extension methods to YubiKeyDevice for registry integration
 impl YubiKeyDevice {
     /// Create YubiKeyDevice from registry entry
-    /// TODO: Store form factor and interfaces in registry for accurate reconstruction
     pub fn from_registry_entry(
         serial: Serial,
         label: String,
-        _slot: u8, // TODO: Store slot mapping in device metadata
+        _slot: u8,
         firmware_version: Option<String>,
     ) -> Self {
         // Determine form factor and interfaces from label/name patterns
-        // TODO: This is a temporary solution - should store actual values in registry
         let form_factor = if label.contains("Nano") {
             crate::services::key_management::yubikey::domain::models::FormFactor::Nano
         } else if label.contains("5C") {
