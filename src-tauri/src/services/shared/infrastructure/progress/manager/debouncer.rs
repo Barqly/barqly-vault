@@ -3,8 +3,8 @@
 //! This module handles the intelligent debouncing of progress updates to reduce
 //! IPC overhead while ensuring important updates are delivered immediately.
 
-use crate::commands::command_types::{ProgressCallback, ProgressUpdate};
 use crate::constants::*;
+use crate::types::{ProgressCallback, ProgressUpdate};
 
 /// Debouncing state for progress updates
 pub struct ProgressDebouncer {

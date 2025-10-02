@@ -12,6 +12,7 @@ pub mod error; // Centralized error handling infrastructure
 pub mod logging; // Centralized logging and tracing infrastructure
 pub mod prelude;
 pub mod services; // Business logic layer (DDD) - renamed from key_management
+pub mod types; // Shared interface types for Tauri bridge (used by commands and services)
 
 use commands::{
     create_manifest,

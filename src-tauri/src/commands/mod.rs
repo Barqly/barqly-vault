@@ -4,7 +4,6 @@
 //! and the core Rust modules. All commands include proper validation,
 //! error handling, and security checks.
 
-pub mod command_types;
 pub mod crypto;
 pub mod file;
 pub mod vault;
@@ -12,12 +11,12 @@ pub mod vault;
 // Key management commands - organized by domain
 pub mod key_management;
 
-// Re-export command types for backward compatibility
-// TODO: Remove this alias after updating all imports
-pub use command_types as types;
+// Re-export types from root types module for backward compatibility
+pub use crate::types as command_types;
+pub use crate::types;
 
-// Re-export all commands for Tauri handler
-pub use command_types::*;
+// Re-export all types for Tauri handler
+pub use crate::types::*;
 pub use crypto::*;
 pub use file::*;
 pub use vault::*;

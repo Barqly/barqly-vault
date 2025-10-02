@@ -3,8 +3,8 @@
 //! This module provides helper functions for calculating progress metrics,
 //! ETAs, and formatting progress information.
 
-use crate::commands::command_types::{ProgressDetails, ProgressUpdate};
 use crate::constants::PROGRESS_PERCENTAGE_MULTIPLIER;
+use crate::types::{ProgressDetails, ProgressUpdate};
 
 /// Calculate estimated time remaining based on progress
 pub fn calculate_eta(

@@ -3,7 +3,7 @@
 //! Provides centralized progress state management that can be queried
 //! by progress commands and updated by service operations.
 
-use crate::commands::command_types::ProgressUpdate;
+use crate::types::ProgressUpdate;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::sync::atomic::AtomicBool;

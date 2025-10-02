@@ -7,7 +7,7 @@ mod utils;
 
 use self::debouncer::ProgressDebouncer;
 use self::utils::{create_progress_update, progress_to_fraction, progress_to_percentage};
-use crate::commands::command_types::{ProgressCallback, ProgressDetails, ProgressUpdate};
+use crate::types::{ProgressCallback, ProgressDetails, ProgressUpdate};
 
 /// Progress manager for tracking and reporting operation progress with debouncing
 pub struct ProgressManager {

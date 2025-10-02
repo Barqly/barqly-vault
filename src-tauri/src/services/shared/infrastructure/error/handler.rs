@@ -2,8 +2,8 @@
 //!
 //! This module provides the ErrorHandler for consistent error handling and logging.
 
-use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::prelude::*;
+use crate::types::{CommandError, ErrorCode};
 
 /// Standardized error handling with structured tracing
 pub struct ErrorHandler {}

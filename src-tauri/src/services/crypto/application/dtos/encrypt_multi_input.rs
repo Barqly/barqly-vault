@@ -1,6 +1,6 @@
 //! Multi-key encryption input DTO
 
-use crate::commands::types::{CommandError, ErrorCode, ValidateInput, ValidationHelper};
+use crate::types::{CommandError, ErrorCode, ValidateInput, ValidationHelper};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, specta::Type)]

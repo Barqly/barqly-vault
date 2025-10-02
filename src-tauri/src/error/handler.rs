@@ -3,8 +3,8 @@
 //! Centralized error handling with structured logging, recovery mechanisms,
 //! and standardized error conversion across all domains.
 
-use crate::commands::types::{CommandError, ErrorCode};
 use crate::prelude::*;
+use crate::types::{CommandError, ErrorCode};
 
 /// Centralized error handler for consistent error processing across domains
 #[derive(Debug)]

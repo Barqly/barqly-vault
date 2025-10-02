@@ -1,7 +1,7 @@
 //! Encryption input DTO
 
-use crate::commands::types::{CommandError, ErrorCode, ValidateInput, ValidationHelper};
 use crate::constants::MAX_FILES_PER_OPERATION;
+use crate::types::{CommandError, ErrorCode, ValidateInput, ValidationHelper};
 use serde::Deserialize;
 
 /// Input for encryption command
