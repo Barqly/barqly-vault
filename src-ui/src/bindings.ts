@@ -463,9 +463,6 @@ export type DeleteVaultResponse = { success: boolean; message: string }
  * Input for encryption command
  */
 export type EncryptDataInput = { key_id: string; file_paths: string[]; output_name: string | null; output_path: string | null }
-/**
- * Input for multi-key encryption command
- */
 export type EncryptFilesMultiInput = { vault_id: string; in_file_paths: string[]; out_encrypted_file_name: string | null; out_encrypted_file_path: string | null }
 /**
  * Response from multi-key encryption command
@@ -690,17 +687,17 @@ export type KeyState =
  */
 "orphaned"
 /**
- * Key type classification for unified API
+ * Type of key with type-specific data
  */
 export type KeyType = 
 /**
  * Passphrase-based key
  */
-{ type: "Passphrase"; data: { key_id: string } } | 
+{ type: "passphrase"; key_id: string } | 
 /**
  * YubiKey hardware token
  */
-{ type: "YubiKey"; data: { serial: string; firmware_version: string | null } }
+{ type: "yubikey"; serial: string; firmware_version?: string | null }
 /**
  * Response containing list of vaults
  */
@@ -711,7 +708,10 @@ export type ListVaultsResponse = { vaults: VaultSummary[] }
 export type Manifest = { version: string; created_at: string; files: FileInfo[]; total_size: number; file_count: number }
 export type PassphraseStrength = "weak" | "fair" | "good" | "strong"
 export type PassphraseValidationResult = { is_valid: boolean; strength: PassphraseStrength; feedback: string[]; score: number }
-export type PinStatus = "default" | "set"
+/**
+ * PIN status for YubiKey
+ */
+export type PinStatus = "default" | "custom" | "blocked" | "unknown"
 /**
  * Operation-specific progress details for different command types
  * 
@@ -827,7 +827,46 @@ export type YubiKeyOperationType = "Detection" | "Initialization" | "Authenticat
  * Phases of YubiKey operations
  */
 export type YubiKeyPhase = "Starting" | { InProgress: { percentage: number | null } } | "WaitingForPin" | "WaitingForTouch" | "Completing" | "Completed" | { Failed: { error: string } }
-export type YubiKeyState = "new" | "reused" | "registered" | "orphaned"
+/**
+ * YubiKey state - the single source of truth
+ * 
+ * This replaces the duplicate YubiKeyState enums found in:
+ * - commands/yubikey_commands/streamlined.rs:24
+ * - crypto/yubikey/age_plugin.rs:33
+ */
+export type YubiKeyState = 
+/**
+ * Brand new YubiKey with default PIN (123456)
+ * - PIN: Default (123456)
+ * - Age identity: None
+ * - Manifest entry: None
+ * - Action needed: Initialize with custom PIN and generate age identity
+ */
+"new" | 
+/**
+ * YubiKey with custom PIN but no age identity registered
+ * - PIN: Custom (changed from default)
+ * - Age identity: None
+ * - Manifest entry: None
+ * - Action needed: Generate age identity for Barqly
+ */
+"reused" | 
+/**
+ * YubiKey with age identity already registered and ready to use
+ * - PIN: Custom
+ * - Age identity: Present and valid
+ * - Manifest entry: Present and valid
+ * - Action needed: None (ready for operations)
+ */
+"registered" | 
+/**
+ * YubiKey has age identity but no manifest entry (needs recovery)
+ * - PIN: Custom
+ * - Age identity: Present
+ * - Manifest entry: Missing or invalid
+ * - Action needed: Recover manifest entry or re-register
+ */
+"orphaned"
 export type YubiKeyStateInfo = { serial: string; state: YubiKeyState; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus; firmware_version: string | null }
 /**
  * Result from YubiKey operations

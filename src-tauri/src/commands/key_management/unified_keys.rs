@@ -69,7 +69,7 @@ pub fn convert_yubikey_to_unified(
         label: yubikey_key
             .label
             .unwrap_or_else(|| format!("YubiKey-{}", yubikey_key.serial)),
-        key_type: KeyType::Yubikey {
+        key_type: KeyType::YubiKey {
             serial: yubikey_key.serial.clone(),
             firmware_version: yubikey_key.firmware_version.clone(), // Real firmware version from registry/device
         },
@@ -103,7 +103,7 @@ pub fn convert_available_yubikey_to_unified(
         label: available_key
             .label
             .unwrap_or_else(|| format!("YubiKey-{}", available_key.serial)),
-        key_type: KeyType::Yubikey {
+        key_type: KeyType::YubiKey {
             serial: available_key.serial.clone(),
             firmware_version: None,
         },
@@ -184,10 +184,10 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
                         KeyType::Passphrase { key_id } => {
                             crate::services::key_management::shared::domain::models::KeyType::Passphrase { key_id }
                         }
-                        KeyType::Yubikey {
+                        KeyType::YubiKey {
                             serial,
                             firmware_version,
-                        } => crate::services::key_management::shared::domain::models::KeyType::Yubikey {
+                        } => crate::services::key_management::shared::domain::models::KeyType::YubiKey {
                             serial,
                             firmware_version,
                         },

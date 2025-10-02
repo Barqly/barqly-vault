@@ -101,7 +101,7 @@ async fn register_yubikey_in_vault(
         id: key_registry_id,
         label: params.label,
         state: params.key_state,
-        key_type: KeyType::Yubikey {
+        key_type: KeyType::YubiKey {
             serial: params.serial,
             firmware_version: params.device.firmware_version.clone(),
         },

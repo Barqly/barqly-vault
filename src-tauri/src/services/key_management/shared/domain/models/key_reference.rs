@@ -32,7 +32,7 @@ pub struct KeyReference {
 
 /// Type of key with type-specific data
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
-#[serde(tag = "type", rename_all = "snake_case")]
+#[serde(tag = "type", content = "data")]
 pub enum KeyType {
     /// Passphrase-based key
     Passphrase {
@@ -41,7 +41,7 @@ pub enum KeyType {
     },
 
     /// YubiKey hardware token
-    Yubikey {
+    YubiKey {
         /// Serial number of the YubiKey
         serial: String,
 
@@ -139,7 +139,7 @@ impl KeyReference {
                 firmware_version,
                 ..
             } => (
-                KeyType::Yubikey {
+                KeyType::YubiKey {
                     serial: serial.clone(),
                     firmware_version: firmware_version.clone(),
                 },
@@ -166,13 +166,13 @@ impl KeyReference {
 
     /// Check if this is a YubiKey
     pub fn is_yubikey(&self) -> bool {
-        matches!(self.key_type, KeyType::Yubikey { .. })
+        matches!(self.key_type, KeyType::YubiKey { .. })
     }
 
     /// Get YubiKey serial if this is a YubiKey reference
     pub fn yubikey_serial(&self) -> Option<&str> {
         match &self.key_type {
-            KeyType::Yubikey { serial, .. } => Some(serial),
+            KeyType::YubiKey { serial, .. } => Some(serial),
             _ => None,
         }
     }
