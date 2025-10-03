@@ -136,6 +136,7 @@ pub fn run_age_plugin_yubikey(
         error!(error = %e, "Failed to spawn age-plugin-yubikey");
         PtyError::PtyOperation(format!("Failed to spawn command: {e}"))
     })?;
+    debug!("PTY command spawned successfully");
 
     let (tx, rx) = mpsc::channel::<PtyState>();
 
@@ -220,6 +221,7 @@ pub fn run_age_plugin_yubikey(
                     writeln!(writer, "{}", pin.unwrap())?;
                     writer.flush()?;
                     pin_sent = true;
+                    debug!("PIN successfully sent after 'Generating key' message");
                 }
                 PtyState::WaitingForPin if pin.is_some() && !pin_sent => {
                     info!(
@@ -231,6 +233,7 @@ pub fn run_age_plugin_yubikey(
                     writeln!(writer, "{}", pin.unwrap())?;
                     writer.flush()?;
                     pin_sent = true;
+                    debug!("PIN successfully sent to age-plugin-yubikey");
                 }
                 PtyState::WaitingForTouch => {
                     info!("Touch your YubiKey now...");
@@ -348,6 +351,7 @@ fn run_ykman_pty(args: Vec<String>, pin: Option<&str>) -> Result<String> {
             thread::sleep(PIN_INJECT_DELAY);
             writeln!(writer, "{}", pin.unwrap())?;
             writer.flush()?;
+            debug!("PIN injected successfully");
         }
     }
 
