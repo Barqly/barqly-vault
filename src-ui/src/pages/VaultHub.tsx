@@ -5,7 +5,7 @@ import { useVault } from '../contexts/VaultContext';
 import { useVaultHubWorkflow } from '../hooks/useVaultHubWorkflow';
 import { logger } from '../lib/logger';
 import { isPassphraseKey, isYubiKey } from '../lib/key-types';
-import { commands } from '../bindings';
+import { commands, type KeyReference } from '../bindings';
 import UniversalHeader from '../components/common/UniversalHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
@@ -57,9 +57,23 @@ const VaultHub: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [vaultToDelete, setVaultToDelete] = useState<{ id: string; name: string } | null>(null);
 
+  // Key cache: stores keys per vault for instant display (no async lag)
+  const [keyCache, setKeyCache] = useState<Map<string, KeyReference[]>>(new Map());
+
   useEffect(() => {
     refreshVaults();
   }, []);
+
+  // Cache keys whenever they're loaded for current vault
+  useEffect(() => {
+    if (currentVault && vaultKeys !== null && vaultKeys !== undefined) {
+      setKeyCache((prev) => {
+        const newCache = new Map(prev);
+        newCache.set(currentVault.id, vaultKeys);
+        return newCache;
+      });
+    }
+  }, [currentVault?.id, vaultKeys]);
 
   const handleVaultSelect = (vaultId: string) => {
     setCurrentVault(vaultId);
@@ -203,9 +217,10 @@ const VaultHub: React.FC = () => {
                 const isSelected = vault.id === currentVault?.id;
                 // Use key_count from VaultSummary (sync, no async call needed)
                 const keyCount = vault.key_count;
-                // Only show key type badges for selected vault (uses async vaultKeys context)
-                const hasPassphrase = isSelected && vaultKeys?.some(isPassphraseKey);
-                const hasYubikey = isSelected && vaultKeys?.some(isYubiKey);
+                // Use cached keys for badge display (instant, no flickering)
+                const cachedKeys = keyCache.get(vault.id) || [];
+                const hasPassphrase = cachedKeys.some(isPassphraseKey);
+                const hasYubikey = cachedKeys.some(isYubiKey);
 
                 return (
                   <div
