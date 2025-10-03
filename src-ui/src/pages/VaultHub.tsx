@@ -1,13 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Vault, Trash2, Settings, Key, Shield } from 'lucide-react';
 import { useVault } from '../contexts/VaultContext';
 import { useVaultHubWorkflow } from '../hooks/useVaultHubWorkflow';
 import { logger } from '../lib/logger';
 import { isPassphraseKey, isYubiKey } from '../lib/key-types';
+import { commands } from '../bindings';
 import UniversalHeader from '../components/common/UniversalHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import { ErrorMessage } from '../components/ui/error-message';
+import DeleteVaultDialog from '../components/vault/DeleteVaultDialog';
 
 /**
  * VaultHub - Main landing page for managing vaults
@@ -26,6 +29,7 @@ import { ErrorMessage } from '../components/ui/error-message';
  * - Inline form instead of modal dialog
  */
 const VaultHub: React.FC = () => {
+  const navigate = useNavigate();
   const { currentVault, setCurrentVault, vaultKeys } = useVault();
   const {
     // Form state
@@ -49,6 +53,10 @@ const VaultHub: React.FC = () => {
     refreshVaults,
   } = useVaultHubWorkflow();
 
+  // Delete dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [vaultToDelete, setVaultToDelete] = useState<{ id: string; name: string } | null>(null);
+
   useEffect(() => {
     refreshVaults();
   }, []);
@@ -57,18 +65,44 @@ const VaultHub: React.FC = () => {
     setCurrentVault(vaultId);
   };
 
-  const handleDeleteVault = async (vaultId: string) => {
-    if (!confirm('Are you sure you want to delete this vault? This action cannot be undone.')) {
-      return;
-    }
+  const handleManageKeys = (vaultId: string) => {
+    // Set the vault as current, then navigate to manage keys
+    setCurrentVault(vaultId);
+    navigate('/manage-keys');
+  };
 
+  const handleDeleteClick = (vaultId: string, vaultName: string) => {
+    setVaultToDelete({ id: vaultId, name: vaultName });
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async (vaultId: string) => {
     try {
-      // TODO: Implement vault deletion
-      logger.warn('VaultHub', 'Vault deletion not yet implemented', { vaultId });
-      alert('Vault deletion will be available in the next update');
+      logger.info('VaultHub', 'Deleting vault', { vaultId });
+
+      const result = await commands.deleteVault({ vault_id: vaultId, force: true });
+
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Failed to delete vault');
+      }
+
+      logger.info('VaultHub', 'Vault deleted successfully', { vaultId });
+
+      // Close dialog
+      setShowDeleteDialog(false);
+      setVaultToDelete(null);
+
+      // Refresh vaults list
+      await refreshVaults();
     } catch (error) {
       logger.error('VaultHub', 'Failed to delete vault', error as Error);
+      throw error; // Let dialog handle the error state
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteDialog(false);
+    setVaultToDelete(null);
   };
 
   return (
@@ -198,7 +232,7 @@ const VaultHub: React.FC = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteVault(vault.id);
+                          handleDeleteClick(vault.id, vault.name);
                         }}
                         className="text-gray-400 hover:text-red-600 transition-colors"
                         aria-label="Delete vault"
@@ -242,14 +276,12 @@ const VaultHub: React.FC = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Navigate to manage keys for this vault
-                          handleVaultSelect(vault.id);
-                          // TODO: Navigate to ManageKeys page
+                          handleManageKeys(vault.id);
                         }}
                         className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
                       >
                         <Settings className="h-4 w-4" />
-                        Manage Keys
+                        {keyCount === 0 ? 'Add Keys' : 'Manage Keys'}
                       </button>
                     </div>
                   </div>
@@ -262,6 +294,17 @@ const VaultHub: React.FC = () => {
           <CollapsibleHelp triggerText="How Vault Hub Works" context="vault-hub" />
         </div>
       </AppPrimaryContainer>
+
+      {/* Delete Vault Dialog */}
+      {vaultToDelete && (
+        <DeleteVaultDialog
+          isOpen={showDeleteDialog}
+          vaultName={vaultToDelete.name}
+          vaultId={vaultToDelete.id}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
+      )}
     </div>
   );
 };
