@@ -204,7 +204,6 @@ impl RegistryService for DefaultRegistryService {
         // Save registry
         self.save_registry(&registry).await?;
 
-        info!("Successfully added YubiKey entry with key_id: {}", key_id);
         Ok(key_id)
     }
 
@@ -339,7 +338,6 @@ impl RegistryService for DefaultRegistryService {
         // Save registry
         self.save_registry(&registry).await?;
 
-        info!("Successfully updated YubiKey label");
         Ok(())
     }
 
@@ -354,7 +352,6 @@ impl RegistryService for DefaultRegistryService {
 
         self.save_registry(&registry).await?;
 
-        debug!("Successfully marked YubiKey as used");
         Ok(())
     }
 
@@ -371,7 +368,6 @@ impl RegistryService for DefaultRegistryService {
         // Save registry
         self.save_registry(&registry).await?;
 
-        info!("Successfully removed YubiKey from registry");
         Ok(())
     }
 

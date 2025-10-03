@@ -49,7 +49,6 @@ pub fn get_vaults_directory() -> Result<PathBuf, StorageError> {
             error!(error = %e, "Failed to create vaults directory");
             StorageError::DirectoryCreationFailed(vaults_dir.clone())
         })?;
-        debug!("Successfully created vaults directory");
     }
 
     Ok(vaults_dir)

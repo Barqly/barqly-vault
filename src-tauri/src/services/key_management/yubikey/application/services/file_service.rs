@@ -346,7 +346,6 @@ impl FileService for DefaultFileService {
             )));
         }
 
-        debug!("Successfully cleaned up all temporary resources");
         Ok(())
     }
 }

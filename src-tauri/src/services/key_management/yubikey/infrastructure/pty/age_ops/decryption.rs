@@ -155,6 +155,5 @@ pub fn decrypt_with_age_pty(
         ));
     }
 
-    info!("Successfully decrypted file");
     Ok(())
 }

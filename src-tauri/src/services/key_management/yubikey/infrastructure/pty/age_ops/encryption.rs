@@ -34,6 +34,5 @@ pub fn encrypt_for_yubikey(input_file: &Path, output_file: &Path, recipient: &st
         ));
     }
 
-    info!("Successfully encrypted file for YubiKey");
     Ok(())
 }

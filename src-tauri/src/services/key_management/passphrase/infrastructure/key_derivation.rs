@@ -65,8 +65,6 @@ pub fn decrypt_private_key(encrypted_key: &[u8], passphrase: SecretString) -> Re
         CryptoError::DecryptionFailed(e.to_string())
     })?;
 
-    debug!("Successfully created age decryptor, attempting passphrase validation");
-
     let mut decrypted = Vec::new();
 
     let identity = age::scrypt::Identity::new(passphrase.clone());
