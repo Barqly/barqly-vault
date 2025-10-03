@@ -65,6 +65,7 @@ impl Drop for PrivateKey {
 fn parse_recipient(recipient_str: &str) -> Result<Box<dyn age::Recipient + Send>> {
     // Try x25519 parsing first (for passphrase-based keys)
     if let Ok(x25519_recipient) = age::x25519::Recipient::from_str(recipient_str) {
+        debug!("Successfully parsed as x25519 recipient");
         return Ok(Box::new(x25519_recipient));
     }
 
@@ -104,6 +105,8 @@ pub fn encrypt_data(data: &[u8], recipient: &PublicKey) -> Result<Vec<u8>> {
     // Parse recipient using helper function that handles both x25519 and plugin recipients
     let recipient_key = parse_recipient(recipient.as_str())?;
 
+    debug!("Successfully parsed recipient public key");
+
     // Create a writer to collect encrypted bytes
     let mut encrypted = Vec::new();
 
@@ -113,6 +116,8 @@ pub fn encrypt_data(data: &[u8], recipient: &PublicKey) -> Result<Vec<u8>> {
         recipients.iter().map(|r| r.as_ref() as &dyn age::Recipient),
     )
     .expect("at least one recipient");
+
+    debug!("Age encryptor created successfully");
 
     // Create writer (use armor(false) for binary output)
     let mut writer = encryptor.wrap_output(&mut encrypted).map_err(|e| {
@@ -134,6 +139,8 @@ pub fn encrypt_data(data: &[u8], recipient: &PublicKey) -> Result<Vec<u8>> {
         );
         CryptoError::IoError(e)
     })?;
+
+    debug!("Data written to encryption stream successfully");
 
     // Finish encryption
     writer.finish().map_err(|e| {
@@ -200,6 +207,8 @@ pub fn decrypt_data(encrypted_data: &[u8], private_key: &PrivateKey) -> Result<V
         CryptoError::InvalidKeyFormat(e.to_string())
     })?;
 
+    debug!("Successfully parsed private key for decryption");
+
     // Create age::Decryptor
     let decryptor = age::Decryptor::new(encrypted_data).map_err(|e| {
         error!(
@@ -209,6 +218,8 @@ pub fn decrypt_data(encrypted_data: &[u8], private_key: &PrivateKey) -> Result<V
         );
         CryptoError::DecryptionFailed(e.to_string())
     })?;
+
+    debug!("Age decryptor created successfully");
 
     let mut decrypted = Vec::new();
 
@@ -224,6 +235,8 @@ pub fn decrypt_data(encrypted_data: &[u8], private_key: &PrivateKey) -> Result<V
             );
             CryptoError::DecryptionFailed(e.to_string())
         })?;
+
+    debug!("Age decryption stream created successfully");
 
     // Read decrypted data
     std::io::copy(&mut reader, &mut decrypted).map_err(|e| {
@@ -328,6 +341,8 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
             CryptoError::EncryptionFailed(format!("Failed to start age CLI: {e}"))
         })?;
 
+    debug!("Age CLI process spawned successfully");
+
     // Write data to stdin
     if let Some(mut stdin) = child.stdin.take() {
         trace!("Writing data to age CLI stdin");
@@ -342,6 +357,7 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
 
         // Close stdin to signal end of input
         drop(stdin);
+        debug!("Data written to age CLI stdin and closed");
     } else {
         error!("Failed to get stdin handle for age CLI process");
         return Err(CryptoError::EncryptionFailed(
@@ -527,6 +543,8 @@ pub fn decrypt_data_cli(encrypted_data: &[u8]) -> Result<Vec<u8>> {
             CryptoError::DecryptionFailed(format!("Failed to start age CLI: {e}"))
         })?;
 
+    debug!("Age CLI decryption process spawned successfully");
+
     // Write encrypted data to stdin
     if let Some(mut stdin) = child.stdin.take() {
         trace!("Writing encrypted data to age CLI stdin");
@@ -541,6 +559,7 @@ pub fn decrypt_data_cli(encrypted_data: &[u8]) -> Result<Vec<u8>> {
 
         // Close stdin to signal end of input
         drop(stdin);
+        debug!("Encrypted data written to age CLI stdin and closed");
     } else {
         error!("Failed to get stdin handle for age CLI decryption process");
         return Err(CryptoError::DecryptionFailed(

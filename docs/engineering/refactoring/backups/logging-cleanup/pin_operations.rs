@@ -136,6 +136,7 @@ pub fn initialize_yubikey(new_pin: &str, new_puk: &str) -> Result<()> {
     );
 
     // Proceed with initialization (YubiKey should be in factory default state)
+    info!("Starting YubiKey initialization from default state");
 
     // Step 1: Change PIN from default
     info!("Step 1: Changing PIN from default...");
@@ -176,6 +177,7 @@ pub fn initialize_yubikey_with_recovery(new_pin: &str) -> Result<String> {
     });
 
     // Initialize with PIN and recovery code as PUK
+    info!("Starting YubiKey initialization sequence...");
     match initialize_yubikey(new_pin, &recovery_code) {
         Ok(_) => {
             info!("YubiKey initialized with recovery code successfully");

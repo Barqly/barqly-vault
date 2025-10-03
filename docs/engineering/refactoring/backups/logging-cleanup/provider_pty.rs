@@ -111,6 +111,7 @@ impl AgePluginPtyProvider {
 
         // Add comprehensive debug logging for touch detection
         log_sensitive!(dev_only: {
+            debug!("Starting interactive PTY read loop");
         });
 
         // Determine touch policy from args for touch detection

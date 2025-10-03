@@ -18,8 +18,6 @@ pub(super) fn run_age_decryption_pty(
     use std::thread;
     use std::time::Instant;
 
-    info!("Starting age CLI decryption with PTY");
-
     let age_path = get_age_path();
     debug!(age_path = %age_path.display(), "Using age binary");
 

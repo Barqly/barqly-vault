@@ -40,6 +40,7 @@ pub fn generate_age_identity_pty(
         pin_length = pin.len(),
         "PIN will be provided"
     );
+    info!("Starting PTY-based age identity generation...");
 
     let output = match run_age_plugin_yubikey(args, Some(pin), true) {
         Ok(output) => {
