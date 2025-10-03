@@ -201,8 +201,9 @@ const VaultHub: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {vaults.map((vault) => {
                 const isSelected = vault.id === currentVault?.id;
-                // Since vault is selected, we can check the keys from vaultKeys context
-                const keyCount = isSelected ? vaultKeys?.length || 0 : 0;
+                // Use key_count from VaultSummary (sync, no async call needed)
+                const keyCount = vault.key_count;
+                // Only show key type badges for selected vault (uses async vaultKeys context)
                 const hasPassphrase = isSelected && vaultKeys?.some(isPassphraseKey);
                 const hasYubikey = isSelected && vaultKeys?.some(isYubiKey);
 
