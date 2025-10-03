@@ -53,7 +53,10 @@ export const encryptionStateUpdates = {
     progress: null,
   }),
 
-  updateProgress: (prev: FileEncryptionState, progress: GetProgressResponse): FileEncryptionState => ({
+  updateProgress: (
+    prev: FileEncryptionState,
+    progress: GetProgressResponse,
+  ): FileEncryptionState => ({
     ...prev,
     progress,
   }),

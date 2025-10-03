@@ -64,7 +64,7 @@ export function useKeySelection(
         }
 
         // Filter for active keys only (for decryption dropdown)
-        const activeKeys = menuResult.data.keys.filter(key => key.state === 'active');
+        const activeKeys = menuResult.data.keys.filter((key) => key.state === 'active');
 
         // Convert KeyMenuInfo to KeyReference for backward compatibility
         const keyRefs: KeyReference[] = activeKeys.map((keyMenuInfo: KeyMenuInfo) => {
@@ -73,7 +73,7 @@ export function useKeySelection(
             label: keyMenuInfo.label, // Now uses proper labels!
             state: keyMenuInfo.state as any,
             created_at: keyMenuInfo.created_at,
-            last_used: null
+            last_used: null,
           };
 
           if (keyMenuInfo.key_type === 'passphrase') {

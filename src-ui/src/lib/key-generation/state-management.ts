@@ -47,7 +47,10 @@ export const keyGenerationStateUpdates = {
     progress: null,
   }),
 
-  updateProgress: (prev: KeyGenerationState, progress: GetProgressResponse): KeyGenerationState => ({
+  updateProgress: (
+    prev: KeyGenerationState,
+    progress: GetProgressResponse,
+  ): KeyGenerationState => ({
     ...prev,
     progress,
   }),

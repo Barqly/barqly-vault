@@ -63,7 +63,7 @@ export const executeKeyGenerationWithProgress = async (
 
   if (!validationResult.is_valid) {
     const error: CommandError = {
-      code: "WEAK_PASSPHRASE" as ErrorCode,
+      code: 'WEAK_PASSPHRASE' as ErrorCode,
       message: 'Passphrase is too weak',
       details: null,
       recovery_guidance: validationResult.message || 'Please use a stronger passphrase',

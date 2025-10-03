@@ -115,7 +115,10 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       });
 
       // Convert KeyMenuInfo to KeyReference for backward compatibility
-      console.log('🔍 VaultContext: Starting key conversion, keys count:', menuResponse.keys.length);
+      console.log(
+        '🔍 VaultContext: Starting key conversion, keys count:',
+        menuResponse.keys.length,
+      );
 
       const keyRefs = menuResponse.keys.map((keyMenuInfo: KeyMenuInfo, index: number) => {
         console.log(`🔍 VaultContext: Processing key ${index}:`, keyMenuInfo);
@@ -125,7 +128,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           label: keyMenuInfo.label, // Now uses actual label from registry!
           state: keyMenuInfo.state as KeyState,
           created_at: keyMenuInfo.created_at,
-          last_used: null
+          last_used: null,
         };
 
         console.log(`🔍 VaultContext: Base ref for key ${index}:`, baseRef);
@@ -141,7 +144,10 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           };
         } else {
           console.log(`🔍 VaultContext: Creating YubiKey reference for key ${index}`);
-          console.log(`🔍 VaultContext: Metadata type check for key ${index}:`, keyMenuInfo.metadata);
+          console.log(
+            `🔍 VaultContext: Metadata type check for key ${index}:`,
+            keyMenuInfo.metadata,
+          );
 
           // Properly handle discriminated union by checking property existence
           if ('serial' in keyMenuInfo.metadata) {
@@ -153,7 +159,10 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               firmware_version: keyMenuInfo.metadata.firmware_version || null,
             };
           } else {
-            console.warn(`⚠️ VaultContext: Unexpected metadata type for key ${index}:`, keyMenuInfo.metadata);
+            console.warn(
+              `⚠️ VaultContext: Unexpected metadata type for key ${index}:`,
+              keyMenuInfo.metadata,
+            );
             return {
               ...baseRef,
               type: 'yubikey' as const,

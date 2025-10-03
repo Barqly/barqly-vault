@@ -72,7 +72,10 @@ export const decryptionStateUpdates = {
   /**
    * Update progress
    */
-  updateProgress: (prev: FileDecryptionState, progress: GetProgressResponse): FileDecryptionState => ({
+  updateProgress: (
+    prev: FileDecryptionState,
+    progress: GetProgressResponse,
+  ): FileDecryptionState => ({
     ...prev,
     progress,
   }),

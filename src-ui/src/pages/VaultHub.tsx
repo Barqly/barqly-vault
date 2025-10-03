@@ -1,22 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Vault, Trash2, Settings, Key, Shield, AlertCircle } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Vault, Trash2, Settings, Key, Shield } from 'lucide-react';
 import { useVault } from '../contexts/VaultContext';
-import { CreateVaultDialog } from '../components/vault/CreateVaultDialog';
+import { useVaultHubWorkflow } from '../hooks/useVaultHubWorkflow';
 import { logger } from '../lib/logger';
 import { isPassphraseKey, isYubiKey } from '../lib/key-types';
+import UniversalHeader from '../components/common/UniversalHeader';
+import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
+import CollapsibleHelp from '../components/ui/CollapsibleHelp';
+import { ErrorMessage } from '../components/ui/error-message';
 
 /**
  * VaultHub - Main landing page for managing vaults
  *
  * This is the primary interface where users:
- * - Create new vaults
+ * - Create new vaults (inline form)
  * - Select active vault
  * - Delete vaults
  * - View vault details and status
+ *
+ * Refactored to match EncryptPage/DecryptPage architecture:
+ * - UniversalHeader for consistency
+ * - AppPrimaryContainer for layout
+ * - useVaultHubWorkflow for centralized state
+ * - CollapsibleHelp for educational content
+ * - Inline form instead of modal dialog
  */
 const VaultHub: React.FC = () => {
-  const { vaults, currentVault, setCurrentVault, refreshVaults, vaultKeys } = useVault();
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const { currentVault, setCurrentVault, vaultKeys } = useVault();
+  const {
+    // Form state
+    name,
+    description,
+    isSubmitting,
+    error,
+
+    // Vault data
+    vaults,
+    isLoading,
+
+    // Form setters
+    setName,
+    setDescription,
+
+    // Handlers
+    handleSubmit,
+    handleClear,
+    clearError,
+    refreshVaults,
+  } = useVaultHubWorkflow();
 
   useEffect(() => {
     refreshVaults();
@@ -41,164 +72,196 @@ const VaultHub: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-          <Shield className="h-8 w-8 text-blue-600" />
-          Vault Hub
-        </h1>
-        <p className="text-gray-600">
-          Manage your encrypted vaults. Each vault can have multiple keys for secure access.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* Unified App Header */}
+      <UniversalHeader title="Vault Hub" icon={Shield} skipNavTarget="#main-content" />
 
-      {/* Info Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
-        <div className="flex gap-3">
-          <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-800">
-            <p className="font-semibold mb-1">Vault-Centric Architecture</p>
-            <p>
-              Vaults are your primary containers for encrypted data. You can attach multiple keys
-              (passphrase or YubiKey) to each vault, allowing flexible access control and backup
-              options.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Main content */}
+      <AppPrimaryContainer id="main-content">
+        <div className="mt-6 space-y-6">
+          {/* Error display */}
+          {error && (
+            <ErrorMessage
+              error={{ code: 'INTERNAL_ERROR', message: error, user_actionable: true }}
+              showRecoveryGuidance={false}
+              onClose={clearError}
+            />
+          )}
 
-      {/* Create New Vault Button */}
-      <div className="mb-8">
-        <button
-          onClick={() => setShowCreateDialog(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          Create New Vault
-        </button>
-      </div>
-
-      {/* Vaults Grid */}
-      {vaults.length === 0 ? (
-        <div className="bg-gray-50 rounded-lg p-12 text-center">
-          <Vault className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">No Vaults Yet</h3>
-          <p className="text-gray-600 mb-6">
-            Create your first vault to start encrypting and protecting your data
-          </p>
-          <button
-            onClick={() => setShowCreateDialog(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            Create First Vault
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {vaults.map((vault) => {
-            const isSelected = vault.id === currentVault?.id;
-            // Since vault is selected, we can check the keys from vaultKeys context
-            const keyCount = isSelected ? vaultKeys?.length || 0 : 0;
-            const hasPassphrase = isSelected && vaultKeys?.some(isPassphraseKey);
-            const hasYubikey = isSelected && vaultKeys?.some(isYubiKey);
-
-            return (
-              <div
-                key={vault.id}
-                className={`border rounded-lg p-6 cursor-pointer transition-all ${
-                  isSelected
-                    ? 'border-blue-500 bg-blue-50 shadow-lg'
-                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
-                }`}
-                onClick={() => handleVaultSelect(vault.id)}
-              >
-                {/* Vault Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <Vault
-                      className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
-                    />
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
-                      {isSelected && (
-                        <span className="text-xs text-blue-600 font-medium">Active</span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteVault(vault.id);
-                    }}
-                    className="text-gray-400 hover:text-red-600 transition-colors"
-                    aria-label="Delete vault"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-
-                {/* Vault Details */}
-                {vault.description && (
-                  <p className="text-sm text-gray-600 mb-3">{vault.description}</p>
-                )}
-
-                {/* Key Status */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Keys:</span>
-                    <span className="font-medium text-gray-700">{keyCount}</span>
-                  </div>
-
-                  {keyCount > 0 && (
-                    <div className="flex gap-2">
-                      {hasPassphrase && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-                          <Key className="h-3 w-3" />
-                          Passphrase
-                        </div>
-                      )}
-                      {hasYubikey && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
-                          <Shield className="h-3 w-3" />
-                          YubiKey
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Vault Actions */}
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Navigate to manage keys for this vault
-                      handleVaultSelect(vault.id);
-                      // TODO: Navigate to ManageKeys page
-                    }}
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Manage Keys
-                  </button>
-                </div>
+          {/* Inline Create Vault Form */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="vault-name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Vault Name *
+                </label>
+                <input
+                  id="vault-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                  placeholder="e.g., Personal Documents"
+                  autoFocus
+                />
               </div>
-            );
-          })}
-        </div>
-      )}
 
-      {/* Create Vault Dialog */}
-      <CreateVaultDialog
-        isOpen={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
-        onSuccess={() => {
-          setShowCreateDialog(false);
-          refreshVaults();
-        }}
-      />
+              <div>
+                <label
+                  htmlFor="vault-description"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Description (optional)
+                </label>
+                <textarea
+                  id="vault-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 resize-none"
+                  placeholder="Brief description of what this vault is for..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Buttons: Clear (left) / Create Vault (right) */}
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  Clear
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !name.trim()}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Creating...' : 'Create Vault'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Vaults Grid */}
+          {isLoading && vaults.length === 0 ? (
+            <div className="bg-gray-50 rounded-lg p-12 text-center">
+              <p className="text-gray-600">Loading vaults...</p>
+            </div>
+          ) : vaults.length === 0 ? (
+            <div className="bg-gray-50 rounded-lg p-12 text-center">
+              <Vault className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">No Vaults Yet</h3>
+              <p className="text-gray-600">
+                Create your first vault using the form above to start encrypting and protecting your
+                data
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {vaults.map((vault) => {
+                const isSelected = vault.id === currentVault?.id;
+                // Since vault is selected, we can check the keys from vaultKeys context
+                const keyCount = isSelected ? vaultKeys?.length || 0 : 0;
+                const hasPassphrase = isSelected && vaultKeys?.some(isPassphraseKey);
+                const hasYubikey = isSelected && vaultKeys?.some(isYubiKey);
+
+                return (
+                  <div
+                    key={vault.id}
+                    className={`border rounded-lg p-6 cursor-pointer transition-all ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-50 shadow-lg'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                    }`}
+                    onClick={() => handleVaultSelect(vault.id)}
+                  >
+                    {/* Vault Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Vault
+                          className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
+                        />
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
+                          {isSelected && (
+                            <span className="text-xs text-blue-600 font-medium">Active</span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteVault(vault.id);
+                        }}
+                        className="text-gray-400 hover:text-red-600 transition-colors"
+                        aria-label="Delete vault"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* Vault Details */}
+                    {vault.description && (
+                      <p className="text-sm text-gray-600 mb-3">{vault.description}</p>
+                    )}
+
+                    {/* Key Status */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500">Keys:</span>
+                        <span className="font-medium text-gray-700">{keyCount}</span>
+                      </div>
+
+                      {keyCount > 0 && (
+                        <div className="flex gap-2">
+                          {hasPassphrase && (
+                            <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                              <Key className="h-3 w-3" />
+                              Passphrase
+                            </div>
+                          )}
+                          {hasYubikey && (
+                            <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                              <Shield className="h-3 w-3" />
+                              YubiKey
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Vault Actions */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Navigate to manage keys for this vault
+                          handleVaultSelect(vault.id);
+                          // TODO: Navigate to ManageKeys page
+                        }}
+                        className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                      >
+                        <Settings className="h-4 w-4" />
+                        Manage Keys
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Help section */}
+          <CollapsibleHelp triggerText="How Vault Hub Works" context="vault-hub" />
+        </div>
+      </AppPrimaryContainer>
     </div>
   );
 };

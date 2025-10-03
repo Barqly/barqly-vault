@@ -5,7 +5,7 @@ interface CollapsibleHelpProps {
   /** Custom trigger text */
   triggerText?: string;
   /** Context type to determine content */
-  context?: 'setup' | 'encrypt' | 'decrypt';
+  context?: 'setup' | 'encrypt' | 'decrypt' | 'vault-hub';
 }
 
 const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
@@ -77,12 +77,32 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     },
   ];
 
+  const vaultHubSteps = [
+    {
+      number: '1',
+      title: 'Create Vaults',
+      description: 'Organize documents into secure containers.',
+    },
+    {
+      number: '2',
+      title: 'Attach Keys',
+      description: 'Add passphrase or YubiKey for access.',
+    },
+    {
+      number: '3',
+      title: 'Encrypt & Decrypt',
+      description: 'Use vaults to protect your files.',
+    },
+  ];
+
   const getStepsAndTitle = () => {
     switch (actualContext) {
       case 'setup':
         return { steps: setupSteps, title: 'How Setup Works' };
       case 'decrypt':
         return { steps: decryptSteps, title: 'How Decryption Works' };
+      case 'vault-hub':
+        return { steps: vaultHubSteps, title: 'How Vault Hub Works' };
       case 'encrypt':
       default:
         return { steps: encryptSteps, title: 'How Encryption Works' };
