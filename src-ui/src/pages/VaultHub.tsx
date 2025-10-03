@@ -5,7 +5,7 @@ import { useVault } from '../contexts/VaultContext';
 import { useVaultHubWorkflow } from '../hooks/useVaultHubWorkflow';
 import { logger } from '../lib/logger';
 import { isPassphraseKey, isYubiKey } from '../lib/key-types';
-import { commands, type KeyReference } from '../bindings';
+import { commands } from '../bindings';
 import UniversalHeader from '../components/common/UniversalHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
@@ -30,7 +30,7 @@ import DeleteVaultDialog from '../components/vault/DeleteVaultDialog';
  */
 const VaultHub: React.FC = () => {
   const navigate = useNavigate();
-  const { currentVault, setCurrentVault, vaultKeys } = useVault();
+  const { currentVault, setCurrentVault, keyCache } = useVault();
   const {
     // Form state
     name,
@@ -57,23 +57,9 @@ const VaultHub: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [vaultToDelete, setVaultToDelete] = useState<{ id: string; name: string } | null>(null);
 
-  // Key cache: stores keys per vault for instant display (no async lag)
-  const [keyCache, setKeyCache] = useState<Map<string, KeyReference[]>>(new Map());
-
   useEffect(() => {
     refreshVaults();
   }, []);
-
-  // Cache keys whenever they're loaded for current vault
-  useEffect(() => {
-    if (currentVault && vaultKeys !== null && vaultKeys !== undefined) {
-      setKeyCache((prev) => {
-        const newCache = new Map(prev);
-        newCache.set(currentVault.id, vaultKeys);
-        return newCache;
-      });
-    }
-  }, [currentVault?.id, vaultKeys]);
 
   const handleVaultSelect = (vaultId: string) => {
     setCurrentVault(vaultId);
@@ -129,11 +115,7 @@ const VaultHub: React.FC = () => {
         <div className="mt-6 space-y-6">
           {/* Error display */}
           {error && (
-            <ErrorMessage
-              error={{ code: 'INTERNAL_ERROR', message: error, user_actionable: true }}
-              showRecoveryGuidance={false}
-              onClose={clearError}
-            />
+            <ErrorMessage error={error} showRecoveryGuidance={false} onClose={clearError} />
           )}
 
           {/* Inline Create Vault Form */}

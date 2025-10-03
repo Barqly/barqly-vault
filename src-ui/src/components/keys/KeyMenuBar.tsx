@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { CompactPassphraseCard } from './CompactPassphraseCard';
 import { CompactYubiKeyCard } from './CompactYubiKeyCard';
 import { useVault } from '../../contexts/VaultContext';
-import { KeyState } from '../../bindings';
+import { KeyState, type KeyReference } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
 
 interface KeyMenuBarProps {
@@ -15,20 +15,21 @@ interface KeyMenuBarProps {
  * Shows 1 passphrase + 3 YubiKey slots in a single row
  */
 export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className = '' }) => {
-  const { currentVault, vaultKeys, isLoadingKeys } = useVault();
+  const { currentVault, getCurrentVaultKeys, keyCache, isLoadingKeys } = useVault();
 
-  // Process keys from vault using type guards
+  // Process keys from cache using type guards (instant, no async wait)
   const { passphraseKey, yubiKeys } = useMemo(() => {
-    console.log('KeyMenuBar: Processing vaultKeys', vaultKeys);
+    const currentKeys = getCurrentVaultKeys() as any as KeyReference[];
+    console.log('KeyMenuBar: Processing keys from cache', currentKeys);
 
-    const passphrase = vaultKeys.find(isPassphraseKey);
-    const yubis = vaultKeys.filter(isYubiKey);
+    const passphrase = currentKeys.find(isPassphraseKey);
+    const yubis = currentKeys.filter(isYubiKey);
 
     console.log('KeyMenuBar: Found passphrase key?', !!passphrase, passphrase);
     console.log('KeyMenuBar: Found YubiKeys:', yubis.length);
 
     return { passphraseKey: passphrase, yubiKeys: yubis };
-  }, [vaultKeys]);
+  }, [currentVault?.id, keyCache, getCurrentVaultKeys]);
 
   const handlePassphraseClick = () => {
     onKeySelect?.('passphrase');
