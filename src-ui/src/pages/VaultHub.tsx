@@ -365,36 +365,16 @@ const VaultHub: React.FC = () => {
                         </div>
 
                         {/* Description (Read-Only) */}
-                        <div className="space-y-3">
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
-                            <div className="min-h-[96px] max-h-[96px] overflow-y-auto">
-                              {vault.description ? (
-                                <p className="text-sm text-gray-600">{vault.description}</p>
-                              ) : (
-                                <p className="text-sm text-gray-400 italic">
-                                  No description provided
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Metadata */}
-                          <div className="pt-3 border-t border-gray-200 space-y-2">
-                            <div className="flex justify-between text-xs text-gray-500">
-                              <span>Created:</span>
-                              <span>
-                                {new Date(vault.created_at).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                })}
-                              </span>
-                            </div>
-                            <div className="flex justify-between text-xs text-gray-500">
-                              <span>Vault ID:</span>
-                              <span className="font-mono">{vault.id.slice(0, 8)}...</span>
-                            </div>
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Description:</h4>
+                          <div className="min-h-[120px] max-h-[120px] overflow-y-auto">
+                            {vault.description ? (
+                              <p className="text-sm text-gray-600">{vault.description}</p>
+                            ) : (
+                              <p className="text-sm text-gray-400 italic">
+                                No description provided
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>
