@@ -212,6 +212,60 @@ const VaultHub: React.FC = () => {
                 const hasPassphrase = cachedKeys.some(isPassphraseKey);
                 const hasYubikey = cachedKeys.some(isYubiKey);
 
+                // Shared header component (used on both front and back)
+                const cardHeader = (
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Vault
+                        className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
+                      />
+                      <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFlipCard(vault.id);
+                        }}
+                        className="text-gray-400 hover:text-blue-600 transition-colors"
+                        aria-label="Flip card"
+                      >
+                        <RotateCw className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(vault.id, vault.name);
+                        }}
+                        className="text-gray-400 hover:text-red-600 transition-colors"
+                        aria-label="Delete vault"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+
+                // Shared footer component (used on both front and back)
+                const cardFooter = (
+                  <div
+                    className={`mt-3 pt-3 border-t ${
+                      isSelected ? 'border-blue-200' : 'border-gray-100'
+                    }`}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleManageKeys(vault.id);
+                      }}
+                      className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      <Settings className="h-4 w-4" />
+                      {keyCount === 0 ? 'Add Keys' : 'Manage Keys'}
+                    </button>
+                  </div>
+                );
+
                 return (
                   <div key={vault.id} className="perspective-1000">
                     <div
@@ -229,37 +283,7 @@ const VaultHub: React.FC = () => {
                         }`}
                         onClick={() => !isFlipped && handleVaultSelect(vault.id)}
                       >
-                        {/* Vault Header */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <Vault
-                              className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
-                            />
-                            <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleFlipCard(vault.id);
-                              }}
-                              className="text-gray-400 hover:text-blue-600 transition-colors"
-                              aria-label="Flip card"
-                            >
-                              <RotateCw className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClick(vault.id, vault.name);
-                              }}
-                              className="text-gray-400 hover:text-red-600 transition-colors"
-                              aria-label="Delete vault"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
+                        {cardHeader}
 
                         {/* Key Status */}
                         <div className="space-y-2">
@@ -289,23 +313,7 @@ const VaultHub: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Vault Actions */}
-                        <div
-                          className={`mt-4 pt-4 border-t ${
-                            isSelected ? 'border-blue-200' : 'border-gray-100'
-                          }`}
-                        >
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleManageKeys(vault.id);
-                            }}
-                            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                          >
-                            <Settings className="h-4 w-4" />
-                            {keyCount === 0 ? 'Add Keys' : 'Manage Keys'}
-                          </button>
-                        </div>
+                        {cardFooter}
                       </div>
 
                       {/* BACK FACE */}
@@ -317,37 +325,7 @@ const VaultHub: React.FC = () => {
                         }`}
                         style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}
                       >
-                        {/* Vault Header (matches front) */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <Vault
-                              className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
-                            />
-                            <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleFlipCard(vault.id);
-                              }}
-                              className="text-gray-400 hover:text-blue-600 transition-colors"
-                              aria-label="Flip card back"
-                            >
-                              <RotateCw className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClick(vault.id, vault.name);
-                              }}
-                              className="text-gray-400 hover:text-red-600 transition-colors"
-                              aria-label="Delete vault"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
+                        {cardHeader}
 
                         {/* Description (Read-Only) */}
                         <div className="mb-3">
@@ -361,23 +339,7 @@ const VaultHub: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Footer - Persistent on back face */}
-                        <div
-                          className={`mt-4 pt-4 border-t ${
-                            isSelected ? 'border-blue-200' : 'border-gray-100'
-                          }`}
-                        >
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleManageKeys(vault.id);
-                            }}
-                            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                          >
-                            <Settings className="h-4 w-4" />
-                            {keyCount === 0 ? 'Add Keys' : 'Manage Keys'}
-                          </button>
-                        </div>
+                        {cardFooter}
                       </div>
                     </div>
                   </div>
