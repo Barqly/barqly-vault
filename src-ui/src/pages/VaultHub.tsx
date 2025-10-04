@@ -214,7 +214,7 @@ const VaultHub: React.FC = () => {
 
                 // Shared header component (used on both front and back)
                 const cardHeader = (
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <Vault
                         className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
@@ -328,13 +328,13 @@ const VaultHub: React.FC = () => {
                         {cardHeader}
 
                         {/* Description (Read-Only) */}
-                        <div className="mb-3">
+                        <div className="mb-0">
                           <h4 className="text-sm font-medium text-gray-700 mb-2">Description:</h4>
-                          <div className="min-h-[40px] max-h-[40px] overflow-y-auto text-sm text-gray-600">
+                          <div className="min-h-[32px] max-h-[32px] overflow-y-auto text-sm text-gray-600 leading-tight">
                             {vault.description ? (
-                              <p>{vault.description}</p>
+                              <p className="m-0 p-0">{vault.description}</p>
                             ) : (
-                              <p className="text-gray-400 italic">No description provided</p>
+                              <p className="text-gray-400 italic m-0 p-0">No description provided</p>
                             )}
                           </div>
                         </div>
