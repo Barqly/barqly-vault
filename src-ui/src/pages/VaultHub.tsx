@@ -230,20 +230,12 @@ const VaultHub: React.FC = () => {
                         onClick={() => !isFlipped && handleVaultSelect(vault.id)}
                       >
                         {/* Vault Header */}
-                        <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
                             <Vault
                               className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
                             />
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
-                              {/* Fixed height for "Active" badge - maintains card symmetry */}
-                              <div className="min-h-[20px]">
-                                {isSelected && (
-                                  <span className="text-xs text-blue-600 font-medium">Active</span>
-                                )}
-                              </div>
-                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
                           </div>
                           <div className="flex gap-2">
                             <button
@@ -325,20 +317,13 @@ const VaultHub: React.FC = () => {
                         }`}
                         style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}
                       >
-                        {/* Vault Header (same as front) */}
-                        <div className="flex items-start justify-between mb-4">
+                        {/* Vault Header (matches front) */}
+                        <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
                             <Vault
                               className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
                             />
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
-                              <div className="min-h-[20px]">
-                                {isSelected && (
-                                  <span className="text-xs text-blue-600 font-medium">Active</span>
-                                )}
-                              </div>
-                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
                           </div>
                           <div className="flex gap-2">
                             <button
@@ -365,17 +350,33 @@ const VaultHub: React.FC = () => {
                         </div>
 
                         {/* Description (Read-Only) */}
-                        <div>
+                        <div className="mb-3">
                           <h4 className="text-sm font-medium text-gray-700 mb-2">Description:</h4>
-                          <div className="min-h-[120px] max-h-[120px] overflow-y-auto">
+                          <div className="min-h-[40px] max-h-[40px] overflow-y-auto text-sm text-gray-600">
                             {vault.description ? (
-                              <p className="text-sm text-gray-600">{vault.description}</p>
+                              <p>{vault.description}</p>
                             ) : (
-                              <p className="text-sm text-gray-400 italic">
-                                No description provided
-                              </p>
+                              <p className="text-gray-400 italic">No description provided</p>
                             )}
                           </div>
+                        </div>
+
+                        {/* Footer - Persistent on back face */}
+                        <div
+                          className={`mt-4 pt-4 border-t ${
+                            isSelected ? 'border-blue-200' : 'border-gray-100'
+                          }`}
+                        >
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleManageKeys(vault.id);
+                            }}
+                            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                          >
+                            <Settings className="h-4 w-4" />
+                            {keyCount === 0 ? 'Add Keys' : 'Manage Keys'}
+                          </button>
                         </div>
                       </div>
                     </div>
