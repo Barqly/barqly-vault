@@ -149,6 +149,7 @@ const VaultHub: React.FC = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={isSubmitting}
+                  maxLength={50}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
                   placeholder="e.g., Personal Documents"
                   autoFocus
@@ -162,14 +163,15 @@ const VaultHub: React.FC = () => {
                 >
                   Description (optional)
                 </label>
-                <textarea
+                <input
                   id="vault-description"
+                  type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   disabled={isSubmitting}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 resize-none"
+                  maxLength={70}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
                   placeholder="Brief description of what this vault is for..."
-                  rows={3}
                 />
               </div>
 
