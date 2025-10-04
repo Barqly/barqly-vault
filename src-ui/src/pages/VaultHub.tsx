@@ -222,9 +222,12 @@ const VaultHub: React.FC = () => {
                         />
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
-                          {isSelected && (
-                            <span className="text-xs text-blue-600 font-medium">Active</span>
-                          )}
+                          {/* Fixed height for "Active" badge - maintains card symmetry */}
+                          <div className="min-h-[20px]">
+                            {isSelected && (
+                              <span className="text-xs text-blue-600 font-medium">Active</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <button
@@ -239,10 +242,14 @@ const VaultHub: React.FC = () => {
                       </button>
                     </div>
 
-                    {/* Vault Details */}
-                    {vault.description && (
-                      <p className="text-sm text-gray-600 mb-3">{vault.description}</p>
-                    )}
+                    {/* Vault Details - fixed height with ellipsis overflow */}
+                    <div className="min-h-[48px] mb-3">
+                      {vault.description ? (
+                        <p className="text-sm text-gray-600 line-clamp-2">{vault.description}</p>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">No description</p>
+                      )}
+                    </div>
 
                     {/* Key Status */}
                     <div className="space-y-2">
@@ -251,26 +258,33 @@ const VaultHub: React.FC = () => {
                         <span className="font-medium text-gray-700">{keyCount}</span>
                       </div>
 
-                      {keyCount > 0 && (
-                        <div className="flex gap-2">
-                          {hasPassphrase && (
-                            <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-                              <Key className="h-3 w-3" />
-                              Passphrase
-                            </div>
-                          )}
-                          {hasYubikey && (
-                            <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
-                              <Shield className="h-3 w-3" />
-                              YubiKey
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {/* Fixed height badge container for symmetric card layout */}
+                      <div className="flex gap-2 min-h-[28px]">
+                        {keyCount > 0 && (
+                          <>
+                            {hasPassphrase && (
+                              <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                                <Key className="h-3 w-3" />
+                                Passphrase
+                              </div>
+                            )}
+                            {hasYubikey && (
+                              <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                                <Shield className="h-3 w-3" />
+                                YubiKey
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     {/* Vault Actions */}
-                    <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div
+                      className={`mt-4 pt-4 border-t ${
+                        isSelected ? 'border-blue-200' : 'border-gray-100'
+                      }`}
+                    >
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
