@@ -225,6 +225,7 @@ const VaultHub: React.FC = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleVaultSelect(vault.id);
                           handleFlipCard(vault.id);
                         }}
                         className="text-gray-400 hover:text-blue-600 transition-colors"
@@ -281,7 +282,7 @@ const VaultHub: React.FC = () => {
                             ? 'border-blue-500 bg-blue-50 shadow-lg'
                             : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                         }`}
-                        onClick={() => !isFlipped && handleVaultSelect(vault.id)}
+                        onClick={() => handleVaultSelect(vault.id)}
                       >
                         {cardHeader}
 
@@ -318,12 +319,13 @@ const VaultHub: React.FC = () => {
 
                       {/* BACK FACE */}
                       <div
-                        className={`absolute inset-0 backface-hidden rotate-y-180 border rounded-lg p-6 ${
+                        className={`absolute inset-0 backface-hidden rotate-y-180 border rounded-lg p-6 cursor-pointer transition-all ${
                           isSelected
                             ? 'border-blue-500 bg-blue-50 shadow-lg'
-                            : 'border-gray-200 bg-white'
+                            : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                         }`}
                         style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}
+                        onClick={() => handleVaultSelect(vault.id)}
                       >
                         {cardHeader}
 
