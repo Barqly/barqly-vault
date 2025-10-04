@@ -57,15 +57,23 @@ const VaultHub: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [vaultToDelete, setVaultToDelete] = useState<{ id: string; name: string } | null>(null);
 
-  // Flip card state - tracks which vault is flipped
-  const [flippedVault, setFlippedVault] = useState<string | null>(null);
+  // Flip card state - tracks which vaults are flipped (allow multiple)
+  const [flippedVaults, setFlippedVaults] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     refreshVaults();
   }, []);
 
   const handleFlipCard = (vaultId: string) => {
-    setFlippedVault((prev) => (prev === vaultId ? null : vaultId));
+    setFlippedVaults((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(vaultId)) {
+        newSet.delete(vaultId); // Unflip if already flipped
+      } else {
+        newSet.add(vaultId); // Flip if not flipped
+      }
+      return newSet;
+    });
   };
 
   const handleVaultSelect = (vaultId: string) => {
@@ -204,7 +212,7 @@ const VaultHub: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {vaults.map((vault) => {
                 const isSelected = vault.id === currentVault?.id;
-                const isFlipped = flippedVault === vault.id;
+                const isFlipped = flippedVaults.has(vault.id);
                 // Use key_count from VaultSummary (sync, no async call needed)
                 const keyCount = vault.key_count;
                 // Use cached keys for badge display (instant, no flickering)
