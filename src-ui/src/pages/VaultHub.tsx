@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Vault, Trash2, Settings, Key, Shield } from 'lucide-react';
+import { Vault, Trash2, Settings, Key, Shield, RotateCw } from 'lucide-react';
 import { useVault } from '../contexts/VaultContext';
 import { useVaultHubWorkflow } from '../hooks/useVaultHubWorkflow';
 import { logger } from '../lib/logger';
@@ -57,9 +57,16 @@ const VaultHub: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [vaultToDelete, setVaultToDelete] = useState<{ id: string; name: string } | null>(null);
 
+  // Flip card state - tracks which vault is flipped
+  const [flippedVault, setFlippedVault] = useState<string | null>(null);
+
   useEffect(() => {
     refreshVaults();
   }, []);
+
+  const handleFlipCard = (vaultId: string) => {
+    setFlippedVault((prev) => (prev === vaultId ? null : vaultId));
+  };
 
   const handleVaultSelect = (vaultId: string) => {
     setCurrentVault(vaultId);
@@ -197,6 +204,7 @@ const VaultHub: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {vaults.map((vault) => {
                 const isSelected = vault.id === currentVault?.id;
+                const isFlipped = flippedVault === vault.id;
                 // Use key_count from VaultSummary (sync, no async call needed)
                 const keyCount = vault.key_count;
                 // Use cached keys for badge display (instant, no flickering)
@@ -205,96 +213,191 @@ const VaultHub: React.FC = () => {
                 const hasYubikey = cachedKeys.some(isYubiKey);
 
                 return (
-                  <div
-                    key={vault.id}
-                    className={`border rounded-lg p-6 cursor-pointer transition-all ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-50 shadow-lg'
-                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
-                    }`}
-                    onClick={() => handleVaultSelect(vault.id)}
-                  >
-                    {/* Vault Header */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <Vault
-                          className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
-                        />
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
-                          {/* Fixed height for "Active" badge - maintains card symmetry */}
-                          <div className="min-h-[20px]">
-                            {isSelected && (
-                              <span className="text-xs text-blue-600 font-medium">Active</span>
+                  <div key={vault.id} className="perspective-1000">
+                    <div
+                      className={`relative preserve-3d transition-transform duration-500 ${
+                        isFlipped ? 'rotate-y-180' : ''
+                      }`}
+                      style={{ transformStyle: 'preserve-3d' }}
+                    >
+                      {/* FRONT FACE */}
+                      <div
+                        className={`backface-hidden border rounded-lg p-6 cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50 shadow-lg'
+                            : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                        }`}
+                        onClick={() => !isFlipped && handleVaultSelect(vault.id)}
+                      >
+                        {/* Vault Header */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <Vault
+                              className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
+                            />
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
+                              {/* Fixed height for "Active" badge - maintains card symmetry */}
+                              <div className="min-h-[20px]">
+                                {isSelected && (
+                                  <span className="text-xs text-blue-600 font-medium">Active</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleFlipCard(vault.id);
+                              }}
+                              className="text-gray-400 hover:text-blue-600 transition-colors"
+                              aria-label="Flip card"
+                            >
+                              <RotateCw className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(vault.id, vault.name);
+                              }}
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                              aria-label="Delete vault"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Key Status */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-500">Keys:</span>
+                            <span className="font-medium text-gray-700">{keyCount}</span>
+                          </div>
+
+                          {/* Fixed height badge container for symmetric card layout */}
+                          <div className="flex gap-2 min-h-[28px]">
+                            {keyCount > 0 && (
+                              <>
+                                {hasPassphrase && (
+                                  <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                                    <Key className="h-3 w-3" />
+                                    Passphrase
+                                  </div>
+                                )}
+                                {hasYubikey && (
+                                  <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                                    <Shield className="h-3 w-3" />
+                                    YubiKey
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
+
+                        {/* Vault Actions */}
+                        <div
+                          className={`mt-4 pt-4 border-t ${
+                            isSelected ? 'border-blue-200' : 'border-gray-100'
+                          }`}
+                        >
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleManageKeys(vault.id);
+                            }}
+                            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                          >
+                            <Settings className="h-4 w-4" />
+                            {keyCount === 0 ? 'Add Keys' : 'Manage Keys'}
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick(vault.id, vault.name);
-                        }}
-                        className="text-gray-400 hover:text-red-600 transition-colors"
-                        aria-label="Delete vault"
+
+                      {/* BACK FACE */}
+                      <div
+                        className={`absolute inset-0 backface-hidden rotate-y-180 border rounded-lg p-6 ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50 shadow-lg'
+                            : 'border-gray-200 bg-white'
+                        }`}
+                        style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    {/* Vault Details - fixed height with ellipsis overflow */}
-                    <div className="min-h-[48px] mb-3">
-                      {vault.description ? (
-                        <p className="text-sm text-gray-600 line-clamp-2">{vault.description}</p>
-                      ) : (
-                        <p className="text-sm text-gray-400 italic">No description</p>
-                      )}
-                    </div>
-
-                    {/* Key Status */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">Keys:</span>
-                        <span className="font-medium text-gray-700">{keyCount}</span>
-                      </div>
-
-                      {/* Fixed height badge container for symmetric card layout */}
-                      <div className="flex gap-2 min-h-[28px]">
-                        {keyCount > 0 && (
-                          <>
-                            {hasPassphrase && (
-                              <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-                                <Key className="h-3 w-3" />
-                                Passphrase
+                        {/* Vault Header (same as front) */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <Vault
+                              className={`h-8 w-8 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
+                            />
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900">{vault.name}</h3>
+                              <div className="min-h-[20px]">
+                                {isSelected && (
+                                  <span className="text-xs text-blue-600 font-medium">Active</span>
+                                )}
                               </div>
-                            )}
-                            {hasYubikey && (
-                              <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
-                                <Shield className="h-3 w-3" />
-                                YubiKey
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleFlipCard(vault.id);
+                              }}
+                              className="text-gray-400 hover:text-blue-600 transition-colors"
+                              aria-label="Flip card back"
+                            >
+                              <RotateCw className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(vault.id, vault.name);
+                              }}
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                              aria-label="Delete vault"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
 
-                    {/* Vault Actions */}
-                    <div
-                      className={`mt-4 pt-4 border-t ${
-                        isSelected ? 'border-blue-200' : 'border-gray-100'
-                      }`}
-                    >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleManageKeys(vault.id);
-                        }}
-                        className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                      >
-                        <Settings className="h-4 w-4" />
-                        {keyCount === 0 ? 'Add Keys' : 'Manage Keys'}
-                      </button>
+                        {/* Description (Read-Only) */}
+                        <div className="space-y-3">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
+                            <div className="min-h-[96px] max-h-[96px] overflow-y-auto">
+                              {vault.description ? (
+                                <p className="text-sm text-gray-600">{vault.description}</p>
+                              ) : (
+                                <p className="text-sm text-gray-400 italic">
+                                  No description provided
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Metadata */}
+                          <div className="pt-3 border-t border-gray-200 space-y-2">
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>Created:</span>
+                              <span>
+                                {new Date(vault.created_at).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>Vault ID:</span>
+                              <span className="font-mono">{vault.id.slice(0, 8)}...</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
