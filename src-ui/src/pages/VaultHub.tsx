@@ -154,6 +154,9 @@ const VaultHub: React.FC = () => {
                   placeholder="e.g., Personal Documents"
                   autoFocus
                 />
+                {name.length >= 50 && (
+                  <p className="text-xs text-red-600 mt-1">Maximum 50 characters</p>
+                )}
               </div>
 
               <div>
@@ -173,6 +176,9 @@ const VaultHub: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
                   placeholder="Brief description of what this vault is for..."
                 />
+                {description.length >= 70 && (
+                  <p className="text-xs text-red-600 mt-1">Maximum 70 characters</p>
+                )}
               </div>
 
               {/* Buttons: Clear (left) / Create Vault (right) */}
