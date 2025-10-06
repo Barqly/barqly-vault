@@ -87,23 +87,23 @@
 
 ## Phase 2: Version Control & Conflict Resolution (P0 - Critical)
 
-### Milestone 4: Version Comparison Logic
-- [ ] Create version comparison service
-  - [ ] Compare bundle.version vs local.version
-  - [ ] Compare bundle.last_encrypted_at vs local.last_encrypted_at
-  - [ ] Implement tiebreaker logic (timestamp)
-  - [ ] Add logging for version conflicts
-- [ ] Implement "newer wins" resolution
-  - [ ] Bundle newer → backup local, replace with bundle
-  - [ ] Bundle older → keep local, warn user
-  - [ ] Same version → use timestamp
-  - [ ] Add user-facing warning messages
-- [ ] Add version comparison tests
-  - [ ] Bundle newer scenario
-  - [ ] Bundle older scenario
-  - [ ] Same version scenario
-  - [ ] Missing local manifest scenario
-  - [ ] Corrupted version field handling
+### Milestone 4: Version Comparison Logic ✅ COMPLETE
+- [x] Create version comparison service
+  - [x] Compare bundle.version vs local.version
+  - [x] Compare bundle.last_encrypted_at vs local.last_encrypted_at
+  - [x] Implement tiebreaker logic (timestamp)
+  - [x] Add logging for version conflicts
+- [x] Implement "newer wins" resolution
+  - [x] Bundle newer → backup local, replace with bundle
+  - [x] Bundle older → keep local, warn user
+  - [x] Same version → use timestamp tiebreaker
+  - [x] Add user-facing warning messages via get_conflict_message()
+- [x] Add version comparison tests
+  - [x] Bundle newer scenario
+  - [x] Bundle older scenario
+  - [x] Same version scenario
+  - [x] Missing local manifest scenario
+  - [x] All scenarios with backup verification
 
 ### Milestone 5: Manifest Backup System
 - [ ] Implement backup before overwrite
