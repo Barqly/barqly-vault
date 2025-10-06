@@ -52,6 +52,17 @@ impl CryptoManager {
         // Detect if single folder or multiple files
         let (selection_type, base_path) = Self::detect_selection_type(&input.in_file_paths);
 
+        // Check if output file would exist (before encryption)
+        let vaults_dir =
+            crate::services::shared::infrastructure::get_vaults_directory().map_err(|e| {
+                CryptoError::InvalidInput(format!("Failed to get vaults directory: {}", e))
+            })?;
+        let sanitized =
+            crate::services::shared::infrastructure::sanitize_vault_name(&vault.name)
+                .map_err(|e| CryptoError::InvalidInput(format!("Invalid vault name: {}", e)))?;
+        let encrypted_path = vaults_dir.join(format!("{}.age", sanitized.sanitized));
+        let file_exists_warning = encrypted_path.exists();
+
         let vault_input = VaultBundleEncryptionInput {
             vault_id: input.vault_id.clone(),
             vault_name: vault.name.clone(),
@@ -71,9 +82,9 @@ impl CryptoManager {
 
         // Convert back to expected response
         Ok(EncryptFilesMultiResponse {
-            encrypted_file_path: result.encrypted_file_path.clone(),
+            encrypted_file_path: result.encrypted_file_path,
             manifest_file_path: result.manifest_path,
-            file_exists_warning: std::path::Path::new(&result.encrypted_file_path).exists(),
+            file_exists_warning,
             keys_used: result.keys_used,
         })
     }

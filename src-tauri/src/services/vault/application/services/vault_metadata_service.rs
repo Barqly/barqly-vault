@@ -177,19 +177,24 @@ impl VaultMetadataService {
                 firmware_version,
                 created_at,
                 ..
-            } => RecipientInfo {
-                recipient_type: RecipientType::YubiKey {
-                    serial: serial.clone(),
-                    slot: *slot,
-                    piv_slot: *piv_slot,
-                    model: "YubiKey 5".to_string(), // TODO: Store model in registry
-                    identity_tag: identity_tag.clone(),
-                    firmware_version: firmware_version.clone(),
-                },
-                public_key: recipient.clone(),
-                label: label.clone(),
-                created_at: *created_at,
-            },
+            } => {
+                // Detect YubiKey model from serial number pattern or default
+                let model = Self::detect_yubikey_model(serial);
+
+                RecipientInfo {
+                    recipient_type: RecipientType::YubiKey {
+                        serial: serial.clone(),
+                        slot: *slot,
+                        piv_slot: *piv_slot,
+                        model,
+                        identity_tag: identity_tag.clone(),
+                        firmware_version: firmware_version.clone(),
+                    },
+                    public_key: recipient.clone(),
+                    label: label.clone(),
+                    created_at: *created_at,
+                }
+            }
         }
     }
 
@@ -228,6 +233,19 @@ impl VaultMetadataService {
                 yubikey_serial: yubikey_serials[0].clone(), // Use first YubiKey
             },
             _ => ProtectionMode::PassphraseOnly, // Fallback
+        }
+    }
+
+    /// Detect YubiKey model from serial number or firmware
+    ///
+    /// Uses heuristics to determine model. Can be enhanced with registry lookup in future.
+    fn detect_yubikey_model(serial: &str) -> String {
+        // YubiKey 5 series serials are typically 8 digits
+        // Future: Look up from registry if we add model field
+        if serial.len() == 8 {
+            "YubiKey 5 Series".to_string()
+        } else {
+            "YubiKey".to_string()
         }
     }
 
