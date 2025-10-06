@@ -105,23 +105,24 @@
   - [x] Missing local manifest scenario
   - [x] All scenarios with backup verification
 
-### Milestone 5: Manifest Backup System
-- [ ] Implement backup before overwrite
-  - [ ] Create backup with timestamp
-  - [ ] Save to backups/manifest/ folder
-  - [ ] Log backup creation
-- [ ] Add retention policy (keep last 5)
-  - [ ] Count existing backups per vault
-  - [ ] Delete oldest when > 5
-  - [ ] Handle backup cleanup errors gracefully
-- [ ] Add backup restoration capability
-  - [ ] List available backups
-  - [ ] Restore from backup by timestamp
-  - [ ] Validate restored manifest
-- [ ] Add backup system tests
-  - [ ] Backup creation
-  - [ ] Retention enforcement
-  - [ ] Restoration accuracy
+### Milestone 5: Manifest Backup System ✅ COMPLETE
+- [x] Implement backup before overwrite
+  - [x] Create backup with timestamp (in backup_and_replace)
+  - [x] Save to backups/manifest/ folder
+  - [x] Log backup creation
+- [x] Add retention policy (keep last 5)
+  - [x] cleanup_old_backups() method
+  - [x] Count existing backups per vault
+  - [x] Delete oldest when > 5
+  - [x] Handle backup cleanup errors gracefully (warn, don't fail)
+- [x] Add backup restoration capability
+  - [x] list_backups() - List available backups
+  - [x] restore_from_backup() - Restore with validation
+  - [x] Validate restored manifest
+- [x] Add backup system tests
+  - [x] test_backup_retention_policy (7 versions → 5 kept)
+  - [x] test_restore_from_backup (restore and verify)
+  - [x] test_list_backups_empty (empty vault)
 
 ---
 

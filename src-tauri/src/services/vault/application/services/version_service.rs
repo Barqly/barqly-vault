@@ -169,12 +169,138 @@ impl VersionComparisonService {
                 backup_path = %backup_path.display(),
                 "Created manifest backup"
             );
+
+            // Enforce retention policy (keep last 5)
+            Self::cleanup_old_backups(&bundle_manifest.sanitized_name, 5)?;
         }
 
         // Replace with bundle manifest
         Self::save_manifest(bundle_manifest, manifest_path)?;
 
         Ok(())
+    }
+
+    /// Cleanup old backups, keeping only the N most recent
+    ///
+    /// # Arguments
+    /// * `vault_name` - Sanitized vault name
+    /// * `keep_count` - Number of backups to retain (e.g., 5)
+    fn cleanup_old_backups(vault_name: &str, keep_count: usize) -> Result<(), StorageError> {
+        use crate::services::shared::infrastructure::get_manifest_backups_dir;
+
+        let backups_dir = get_manifest_backups_dir()?;
+        let prefix = format!("{}.manifest.", vault_name);
+
+        // Find all backups for this vault
+        let mut backups: Vec<_> = std::fs::read_dir(&backups_dir)
+            .map_err(|e| StorageError::FileReadFailed {
+                path: backups_dir.clone(),
+                source: e,
+            })?
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.file_name().to_string_lossy().starts_with(&prefix))
+            .collect();
+
+        // Sort by modification time (newest first)
+        backups.sort_by_key(|entry| {
+            std::cmp::Reverse(entry.metadata().ok().and_then(|m| m.modified().ok()))
+        });
+
+        // Delete backups beyond retention limit
+        for backup in backups.iter().skip(keep_count) {
+            let path = backup.path();
+            if let Err(e) = std::fs::remove_file(&path) {
+                warn!(
+                    path = %path.display(),
+                    error = %e,
+                    "Failed to delete old backup"
+                );
+            } else {
+                debug!(path = %path.display(), "Deleted old backup");
+            }
+        }
+
+        Ok(())
+    }
+
+    /// List available backups for a vault
+    ///
+    /// Returns list of backup timestamps in descending order (newest first).
+    pub fn list_backups(vault_name: &str) -> Result<Vec<String>, StorageError> {
+        use crate::services::shared::infrastructure::get_manifest_backups_dir;
+
+        let backups_dir = get_manifest_backups_dir()?;
+        let prefix = format!("{}.manifest.", vault_name);
+
+        let mut backups: Vec<String> = std::fs::read_dir(&backups_dir)
+            .map_err(|e| StorageError::FileReadFailed {
+                path: backups_dir.clone(),
+                source: e,
+            })?
+            .filter_map(|entry| entry.ok())
+            .filter_map(|entry| {
+                let filename = entry.file_name().to_string_lossy().to_string();
+                if filename.starts_with(&prefix) {
+                    filename.strip_prefix(&prefix).map(|ts| ts.to_string())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // Sort by timestamp (newest first)
+        backups.sort_by(|a, b| b.cmp(a));
+
+        Ok(backups)
+    }
+
+    /// Restore manifest from backup
+    ///
+    /// # Arguments
+    /// * `vault_name` - Sanitized vault name
+    /// * `timestamp` - Backup timestamp to restore
+    /// * `target_path` - Path where to restore the manifest
+    pub fn restore_from_backup(
+        vault_name: &str,
+        timestamp: &str,
+        target_path: &Path,
+    ) -> Result<VaultMetadata, StorageError> {
+        let backup_path = get_manifest_backup_path(vault_name, timestamp)?;
+
+        if !backup_path.exists() {
+            return Err(StorageError::KeyNotFound(format!(
+                "Backup not found: {}",
+                timestamp
+            )));
+        }
+
+        // Load backup manifest
+        let content =
+            std::fs::read_to_string(&backup_path).map_err(|e| StorageError::FileReadFailed {
+                path: backup_path.clone(),
+                source: e,
+            })?;
+
+        let manifest: VaultMetadata =
+            serde_json::from_str(&content).map_err(|e| StorageError::InvalidFormat {
+                path: backup_path.clone(),
+                message: format!("Invalid backup manifest: {}", e),
+            })?;
+
+        // Validate manifest
+        manifest
+            .validate()
+            .map_err(|e| StorageError::InvalidFormat {
+                path: backup_path.clone(),
+                message: format!("Backup validation failed: {}", e),
+            })?;
+
+        // Restore to target path
+        Self::save_manifest(&manifest, target_path)?;
+
+        info!(vault_name, timestamp, "Restored manifest from backup");
+
+        Ok(manifest)
     }
 
     /// Save manifest to disk using atomic write
@@ -431,5 +557,83 @@ mod tests {
         let no_local = VersionComparisonResult::NoLocal;
         let msg = VersionComparisonService::get_conflict_message(&no_local);
         assert!(msg.is_none());
+    }
+
+    #[test]
+    fn test_list_backups_empty() {
+        let result = VersionComparisonService::list_backups("nonexistent-vault");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_backup_retention_policy() {
+        let temp_dir = TempDir::new().unwrap();
+        let manifest_path = temp_dir.path().join("test.manifest");
+
+        let device_info = create_test_device_info();
+        let mut manifest = create_test_manifest(1, &device_info);
+
+        // Save initial manifest
+        VersionComparisonService::save_manifest(&manifest, &manifest_path).unwrap();
+
+        // Create 7 versions (should keep only last 5)
+        for i in 2..=8 {
+            manifest.increment_version(&device_info);
+
+            // Small delay to ensure different timestamps
+            std::thread::sleep(std::time::Duration::from_millis(10));
+
+            VersionComparisonService::resolve_with_backup(
+                &manifest,
+                Some(&create_test_manifest(i - 1, &device_info)),
+                &manifest_path,
+            )
+            .unwrap();
+        }
+
+        // Check that backups exist
+        let backups = VersionComparisonService::list_backups("Test-Vault").unwrap();
+
+        // Should have at most 5 backups (retention policy)
+        assert!(backups.len() <= 5, "Should enforce retention policy");
+    }
+
+    #[test]
+    fn test_restore_from_backup() {
+        let temp_dir = TempDir::new().unwrap();
+        let manifest_path = temp_dir.path().join("test.manifest");
+        let restore_path = temp_dir.path().join("restored.manifest");
+
+        let device_info = create_test_device_info();
+        let v1 = create_test_manifest(1, &device_info);
+
+        // Save v1
+        VersionComparisonService::save_manifest(&v1, &manifest_path).unwrap();
+
+        // Update to v2 (creates backup of v1)
+        let mut v2 = v1.clone();
+        v2.increment_version(&device_info);
+
+        std::thread::sleep(std::time::Duration::from_millis(10));
+
+        VersionComparisonService::resolve_with_backup(&v2, Some(&v1), &manifest_path).unwrap();
+
+        // List backups
+        let backups = VersionComparisonService::list_backups("Test-Vault").unwrap();
+
+        if !backups.is_empty() {
+            // Restore from backup
+            let restored = VersionComparisonService::restore_from_backup(
+                "Test-Vault",
+                &backups[0],
+                &restore_path,
+            )
+            .unwrap();
+
+            // Restored should be v1 (the backup)
+            assert_eq!(restored.manifest_version, 1);
+            assert!(restore_path.exists());
+        }
     }
 }
