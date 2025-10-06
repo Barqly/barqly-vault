@@ -30,6 +30,7 @@ pub enum VersionComparisonResult {
 }
 
 /// Version comparison service
+#[derive(Debug)]
 pub struct VersionComparisonService;
 
 impl VersionComparisonService {

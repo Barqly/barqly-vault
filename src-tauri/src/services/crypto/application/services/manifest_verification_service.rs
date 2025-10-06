@@ -72,56 +72,6 @@ impl ManifestVerificationService {
             true
         }
     }
-
-    /// Restore external manifest if it exists alongside the encrypted file
-    #[instrument(skip(self))]
-    pub fn restore_external_manifest(
-        &self,
-        encrypted_file_path: &str,
-        output_path: &Path,
-    ) -> Option<bool> {
-        let encrypted_path = Path::new(encrypted_file_path);
-        let external_manifest_path =
-            file_operations::generate_external_manifest_path(encrypted_path);
-
-        debug!(
-            encrypted_file_path = %encrypted_file_path,
-            external_manifest_path = %external_manifest_path.display(),
-            "Checking for external manifest"
-        );
-
-        // Check if external manifest exists
-        if !external_manifest_path.exists() {
-            info!("No external manifest found, skipping restoration");
-            return None;
-        }
-
-        // Try to copy the external manifest to the output directory
-        let output_manifest_path = output_path.join(
-            external_manifest_path
-                .file_name()
-                .unwrap_or_else(|| std::ffi::OsStr::new("vault.manifest")),
-        );
-
-        match std::fs::copy(&external_manifest_path, &output_manifest_path) {
-            Ok(_) => {
-                info!(
-                    from = %external_manifest_path.display(),
-                    to = %output_manifest_path.display(),
-                    "External manifest restored successfully"
-                );
-                Some(true)
-            }
-            Err(e) => {
-                warn!(
-                    error = %e,
-                    from = %external_manifest_path.display(),
-                    "Failed to restore external manifest"
-                );
-                Some(false)
-            }
-        }
-    }
 }
 
 impl Default for ManifestVerificationService {
