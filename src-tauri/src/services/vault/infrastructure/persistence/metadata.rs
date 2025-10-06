@@ -28,11 +28,11 @@ pub struct VaultMetadata {
     pub selection_type: SelectionType,
     pub base_path: Option<String>, // Null for files-only selection
 
-    // Legacy fields (kept for backward compatibility)
+    // Protection and encryption metadata
     pub version: String, // "1.0" - schema version
     pub protection_mode: ProtectionMode,
     pub encryption_method: String, // "age"
-    pub backward_compatible: bool, // true for hybrid/passphrase modes
+    pub backward_compatible: bool, // true if vault can be decrypted without YubiKey
 
     // Encryption recipients
     pub recipients: Vec<RecipientInfo>,
@@ -393,11 +393,10 @@ impl RecipientInfo {
     /// Check if this recipient can unlock the vault
     pub fn is_available(&self) -> bool {
         match &self.recipient_type {
-            RecipientType::Passphrase { .. } => true, // Passphrases are always "available"
+            RecipientType::Passphrase { .. } => true, // Passphrases are always available
             RecipientType::YubiKey { serial, .. } => {
-                // For now, assume YubiKey is available (deprecated detection always returned true anyway)
-                // This will be properly implemented when device detection is needed
-                let _ = serial; // Acknowledge the parameter
+                // Always return true - actual device detection happens during decryption
+                let _ = serial;
                 true
             }
         }

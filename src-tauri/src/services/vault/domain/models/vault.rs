@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 /// A vault that contains encrypted data and references to its keys
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct Vault {
-    /// Schema version for backward compatibility
+    /// Manifest schema version
     pub manifest_version: String,
 
     /// App version that created/last updated this vault
