@@ -9,28 +9,28 @@
 
 ## Phase 1: Foundation & Schema (P0 - Critical)
 
-### Milestone 1: Device Identity & Label Sanitization ✅
-- [ ] Create device UUID generation service
-  - [ ] Generate UUID v4 on first launch
-  - [ ] Read system hostname for machine_label
-  - [ ] Create `device.json` in non-sync location
-  - [ ] Add persistence layer for device identity
-- [ ] Enhance label sanitization in `user_vaults.rs`
-  - [ ] Add emoji removal logic
-  - [ ] Add invalid character replacement (→ hyphens)
-  - [ ] Add multiple hyphen collapse
-  - [ ] Add leading/trailing hyphen trim
-  - [ ] Add 200 char limit enforcement
-  - [ ] Add reserved name checking (Windows: CON, PRN, etc.)
-  - [ ] Add leading dot prevention
-  - [ ] Return both sanitized and display label
-  - [ ] Update all callers to use new signature
-- [ ] Add tests for sanitization edge cases
-  - [ ] Unicode/emoji handling
-  - [ ] Path traversal attempts
-  - [ ] Reserved names
-  - [ ] Length limits
-  - [ ] Cross-platform compatibility
+### Milestone 1: Device Identity & Label Sanitization ✅ COMPLETE
+- [x] Create device UUID generation service
+  - [x] Generate UUID v4 on first launch
+  - [x] Read system hostname for machine_label
+  - [x] Create `device.json` in non-sync location
+  - [x] Add persistence layer for device identity
+- [x] Enhance label sanitization in `user_vaults.rs`
+  - [x] Add emoji removal logic
+  - [x] Add invalid character replacement (→ hyphens)
+  - [x] Add multiple hyphen collapse
+  - [x] Add leading/trailing hyphen trim
+  - [x] Add 200 char limit enforcement
+  - [x] Add reserved name checking (Windows: CON, PRN, etc.)
+  - [x] Add leading dot prevention
+  - [x] Return both sanitized and display label
+  - [x] Update all callers to use new signature (backward compatible API maintained)
+- [x] Add tests for sanitization edge cases
+  - [x] Unicode/emoji handling
+  - [x] Path traversal attempts
+  - [x] Reserved names
+  - [x] Length limits
+  - [x] Cross-platform compatibility
 
 ### Milestone 2: Manifest Schema Updates
 - [ ] Update `VaultMetadata` struct in `metadata.rs`

@@ -49,6 +49,28 @@ pub enum StorageError {
     /// Invalid vault name provided
     #[error("Invalid vault name: {0}")]
     InvalidVaultName(String),
+
+    /// File read operation failed
+    #[error("Failed to read file {path}: {source}")]
+    FileReadFailed {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    /// File write operation failed
+    #[error("Failed to write file {path}: {source}")]
+    FileWriteFailed {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    /// Invalid file format
+    #[error("Invalid file format at {path}: {message}")]
+    InvalidFormat { path: PathBuf, message: String },
+
+    /// Serialization failed
+    #[error("Serialization failed: {message}")]
+    SerializationFailed { message: String },
 }
 
 impl StorageError {

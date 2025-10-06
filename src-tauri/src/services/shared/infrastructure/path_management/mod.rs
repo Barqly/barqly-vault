@@ -14,8 +14,8 @@ mod validation;
 pub use directories::{get_app_dir, get_config_dir, get_keys_dir, get_logs_dir};
 pub use key_paths::{get_key_file_path, get_key_metadata_path};
 pub use user_vaults::{
-    get_recovery_directory, get_vault_file_path, get_vault_manifest_path, get_vault_recovery_path,
-    get_vaults_directory, validate_vault_name,
+    SanitizedVaultName, get_recovery_directory, get_vault_file_path, get_vault_manifest_path,
+    get_vault_recovery_path, get_vaults_directory, sanitize_vault_name, validate_vault_name,
 };
 pub use validation::is_safe_path;
 
