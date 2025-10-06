@@ -86,6 +86,7 @@ async fn register_yubikey_in_vault(
     use crate::services::vault::infrastructure::persistence::metadata::{RecipientInfo, RecipientType};
 
     let recipient = RecipientInfo {
+        key_id: key_registry_id.clone(),
         recipient_type: RecipientType::YubiKey {
             serial: params.serial.clone(),
             slot: 1,
@@ -126,7 +127,7 @@ async fn register_yubikey_in_vault(
 /// Helper to check for duplicate YubiKey in vault
 fn check_duplicate_yubikey_in_vault(
     vault: &crate::services::vault::infrastructure::persistence::metadata::VaultMetadata,
-    registry: &KeyRegistry,
+    _registry: &KeyRegistry,
     serial: &str,
 ) -> Result<(), Box<CommandError>> {
     use crate::services::vault::infrastructure::persistence::metadata::RecipientType;

@@ -83,6 +83,7 @@ impl VaultIntegrationService {
 
         // Add as recipient to the metadata
         let recipient = RecipientInfo::new_passphrase(
+            key_id.clone(),
             public_key,
             label,
             format!("{}.agekey.enc", key_id), // key filename

@@ -126,7 +126,7 @@ impl VaultMetadataService {
         let mut recipients = Vec::new();
         for key_id in vault_keys {
             if let Ok(registry_entry) = self.key_registry.get_key(key_id) {
-                let recipient = Self::registry_entry_to_recipient(&registry_entry);
+                let recipient = Self::registry_entry_to_recipient(key_id, &registry_entry);
                 recipients.push(recipient);
             } else {
                 warn!(key_id, "Key not found in registry, skipping");
@@ -157,7 +157,7 @@ impl VaultMetadataService {
     }
 
     /// Convert KeyEntry to RecipientInfo
-    fn registry_entry_to_recipient(entry: &KeyEntry) -> RecipientInfo {
+    fn registry_entry_to_recipient(key_id: &str, entry: &KeyEntry) -> RecipientInfo {
         match entry {
             KeyEntry::Passphrase {
                 label,
@@ -166,6 +166,7 @@ impl VaultMetadataService {
                 created_at,
                 ..
             } => RecipientInfo {
+                key_id: key_id.to_string(),
                 recipient_type: RecipientType::Passphrase {
                     key_filename: key_filename.clone(),
                 },
@@ -188,6 +189,7 @@ impl VaultMetadataService {
                 let model = Self::detect_yubikey_model(serial);
 
                 RecipientInfo {
+                    key_id: key_id.to_string(),
                     recipient_type: RecipientType::YubiKey {
                         serial: serial.clone(),
                         slot: *slot,
@@ -308,7 +310,7 @@ mod tests {
             key_filename: "test-key.agekey.enc".to_string(),
         };
 
-        let recipient = VaultMetadataService::registry_entry_to_recipient(&entry);
+        let recipient = VaultMetadataService::registry_entry_to_recipient("test-key-id", &entry);
 
         assert_eq!(recipient.label, "test-key");
         assert_eq!(recipient.public_key, "age1test123");
@@ -333,7 +335,7 @@ mod tests {
             recovery_code_hash: "hash123".to_string(),
         };
 
-        let recipient = VaultMetadataService::registry_entry_to_recipient(&entry);
+        let recipient = VaultMetadataService::registry_entry_to_recipient("test-key-id", &entry);
 
         assert_eq!(recipient.label, "YubiKey-12345");
         match recipient.recipient_type {

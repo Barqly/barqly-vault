@@ -200,19 +200,8 @@ impl BootstrapService {
         &self,
         recipient: &crate::services::vault::infrastructure::persistence::metadata::RecipientInfo,
     ) -> String {
-        match &recipient.recipient_type {
-            RecipientType::Passphrase { key_filename } => {
-                // For passphrase, use key_filename without extension as ID
-                key_filename
-                    .strip_suffix(".agekey.enc")
-                    .unwrap_or(key_filename)
-                    .to_string()
-            }
-            RecipientType::YubiKey { serial, slot, .. } => {
-                // For YubiKey, generate keyref based on serial + slot
-                format!("keyref_{}{}", serial, slot)
-            }
-        }
+        // Now that RecipientInfo has key_id field, we can use it directly
+        recipient.key_id.clone()
     }
 
     /// Convert RecipientInfo to KeyEntry for registry
@@ -289,6 +278,7 @@ mod tests {
 
         let service = BootstrapService::new();
         let recipient = RecipientInfo::new_passphrase(
+            "my-key".to_string(),
             "age1test".to_string(),
             "my-key".to_string(),
             "my-key.agekey.enc".to_string(),
@@ -304,6 +294,7 @@ mod tests {
 
         let service = BootstrapService::new();
         let recipient = RecipientInfo::new_yubikey(
+            "keyref_123451".to_string(),
             "age1yubikey".to_string(),
             "YubiKey-12345".to_string(),
             "12345".to_string(),
@@ -324,6 +315,7 @@ mod tests {
 
         let service = BootstrapService::new();
         let recipient = RecipientInfo::new_passphrase(
+            "test-key".to_string(),
             "age1test".to_string(),
             "test-key".to_string(),
             "test-key.agekey.enc".to_string(),

@@ -80,9 +80,10 @@ pub struct IntegrityInfo {
 }
 
 /// Information about a recipient (passphrase or YubiKey)
-/// Matches KeyRegistry KeyEntry structure for denormalization
+/// Links to KeyRegistry via key_id for lookups
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecipientInfo {
+    pub key_id: String, // Registry key ID (e.g., "mbp1001-nauman", "keyref_313104201")
     pub recipient_type: RecipientType,
     pub public_key: String, // age-compatible recipient string (age1...)
     pub label: String,
@@ -318,26 +319,11 @@ impl VaultMetadata {
         }
     }
 
-    /// Get key IDs from recipients
+    /// Get key IDs from recipients (registry references)
     pub fn get_key_ids(&self) -> Vec<String> {
         self.recipients
             .iter()
-            .map(|r| match &r.recipient_type {
-                RecipientType::Passphrase { key_filename } => key_filename.clone(),
-                RecipientType::YubiKey {
-                    serial,
-                    slot,
-                    identity_tag,
-                    ..
-                } => {
-                    // Generate key ID from identity tag or fallback to serial-slot
-                    if !identity_tag.is_empty() {
-                        format!("keyref_{}", &identity_tag[identity_tag.len().saturating_sub(15)..])
-                    } else {
-                        format!("yubikey-{}-slot{}", serial, slot)
-                    }
-                }
-            })
+            .map(|r| r.key_id.clone())
             .collect()
     }
 
@@ -384,8 +370,9 @@ impl std::error::Error for MetadataValidationError {}
 
 impl RecipientInfo {
     /// Create a new passphrase recipient
-    pub fn new_passphrase(public_key: String, label: String, key_filename: String) -> Self {
+    pub fn new_passphrase(key_id: String, public_key: String, label: String, key_filename: String) -> Self {
         Self {
+            key_id,
             recipient_type: RecipientType::Passphrase { key_filename },
             public_key,
             label,
@@ -396,6 +383,7 @@ impl RecipientInfo {
     /// Create a new YubiKey recipient (R2 enhanced with all metadata)
     #[allow(clippy::too_many_arguments)]
     pub fn new_yubikey(
+        key_id: String,
         public_key: String,
         label: String,
         serial: String,
@@ -406,6 +394,7 @@ impl RecipientInfo {
         firmware_version: Option<String>,
     ) -> Self {
         Self {
+            key_id,
             recipient_type: RecipientType::YubiKey {
                 serial,
                 slot,
@@ -521,6 +510,7 @@ mod tests {
     #[test]
     fn test_passphrase_only_metadata() {
         let recipient = RecipientInfo::new_passphrase(
+            "test-key".to_string(),
             "age1test123".to_string(),
             "test-key".to_string(),
             "test-key.agekey.enc".to_string(),
@@ -541,6 +531,7 @@ mod tests {
     #[test]
     fn test_yubikey_only_metadata() {
         let recipient = RecipientInfo::new_yubikey(
+            "keyref_123456781".to_string(),
             "age1yubikey123".to_string(),
             "my-yubikey".to_string(),
             "12345678".to_string(),
@@ -568,12 +559,14 @@ mod tests {
     #[test]
     fn test_hybrid_mode_metadata() {
         let passphrase_recipient = RecipientInfo::new_passphrase(
+            "backup-key".to_string(),
             "age1test123".to_string(),
             "backup-key".to_string(),
             "backup-key.agekey.enc".to_string(),
         );
 
         let yubikey_recipient = RecipientInfo::new_yubikey(
+            "keyref_876543211".to_string(),
             "age1yubikey456".to_string(),
             "primary-yubikey".to_string(),
             "87654321".to_string(),
@@ -618,6 +611,7 @@ mod tests {
         let metadata_path = temp_dir.path().join("metadata.json");
 
         let recipient = RecipientInfo::new_passphrase(
+            "test-key".to_string(),
             "age1test123".to_string(),
             "test-key".to_string(),
             "test-key.agekey.enc".to_string(),

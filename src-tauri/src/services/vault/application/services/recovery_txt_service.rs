@@ -202,6 +202,7 @@ mod tests {
         };
 
         let recipient = RecipientInfo::new_passphrase(
+            "my-backup-key".to_string(),
             "age1test123".to_string(),
             "my-backup-key".to_string(),
             "my-backup-key.agekey.enc".to_string(),
@@ -256,6 +257,7 @@ mod tests {
         };
 
         let recipient = RecipientInfo::new_yubikey(
+            "keyref_313104201".to_string(),
             "age1yubikey123".to_string(),
             "YubiKey-31310420".to_string(),
             "31310420".to_string(),
@@ -312,12 +314,14 @@ mod tests {
         };
 
         let passphrase = RecipientInfo::new_passphrase(
+            "backup-key".to_string(),
             "age1pass".to_string(),
             "backup-key".to_string(),
             "backup-key.agekey.enc".to_string(),
         );
 
         let yubikey = RecipientInfo::new_yubikey(
+            "keyref_123451".to_string(),
             "age1yubikey".to_string(),
             "YubiKey-12345".to_string(),
             "12345".to_string(),

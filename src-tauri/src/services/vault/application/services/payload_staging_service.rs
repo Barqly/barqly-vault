@@ -198,6 +198,7 @@ mod tests {
         };
 
         let recipient = RecipientInfo::new_passphrase(
+            "test-key".to_string(),
             "age1test".to_string(),
             "test-key".to_string(),
             "test-key.agekey.enc".to_string(),

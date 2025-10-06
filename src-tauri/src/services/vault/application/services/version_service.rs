@@ -385,6 +385,7 @@ mod tests {
 
     fn create_test_manifest(_version: u32, device_info: &DeviceInfo) -> VaultMetadata {
         let recipient = RecipientInfo::new_passphrase(
+            "test-key".to_string(),
             "age1test123".to_string(),
             "test-key".to_string(),
             "test-key.agekey.enc".to_string(),

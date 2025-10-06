@@ -197,7 +197,7 @@ mod tests {
     use crate::services::key_management::yubikey::domain::models::ProtectionMode;
     use crate::services::shared::infrastructure::DeviceInfo;
     use crate::services::vault::infrastructure::persistence::metadata::{
-        RecipientInfo, RecipientType, SelectionType, VaultFileEntry,
+        RecipientInfo, SelectionType,
     };
     use chrono::Utc;
 
@@ -257,6 +257,7 @@ mod tests {
 
         // Create a test vault metadata with filesystem-safe name
         let recipient = RecipientInfo::new_passphrase(
+            "key_1".to_string(),
             "age1test123".to_string(),
             "Main Password".to_string(),
             "key_1.agekey.enc".to_string(),
