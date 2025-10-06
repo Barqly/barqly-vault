@@ -282,11 +282,15 @@ Current exceptions (acceptable):
 
 ### **TODO Markers Added:**
 
-**File:** `services/crypto/application/services/encryption_service.rs`
+**File:** `services/crypto/application/manager.rs`
 ```rust
-// TODO(MILESTONE-7): Wire up VaultBundleEncryptionService from vault domain
-// Current: encrypt_files_multi() returns error
-// Target: Use VaultBundleEncryptionService.orchestrate_vault_encryption()
+// TODO: Detect selection_type and base_path from input
+// Current: Hardcoded SelectionType::Files, base_path None
+// Should analyze input.in_file_paths to detect folder vs files
+
+// TODO: Check if file exists
+// Current: file_exists_warning always false
+// Should check if encrypted_path already exists before encryption
 ```
 
 **File:** `services/crypto/infrastructure/multi_recipient_encryption.rs`
@@ -404,31 +408,29 @@ MAX_FILES_PER_OPERATION: 1000
 
 ## Commands Integration Status
 
-### **Current State:**
-- Commands still use old EncryptionService/CryptoManager
-- VaultBundleEncryptionService created but NOT wired to commands
+### **Current State:** ✅ COMPLETE
+- Commands use CryptoManager (unchanged)
+- CryptoManager wired to VaultBundleEncryptionService
 - DecryptionOrchestrationService updated and working
+- EncryptionService::encrypt_files_multi() removed (was placeholder error)
 
-### **Required Wiring (Future Work):**
+### **Implementation:**
 
-**Option A:** Update existing encrypt_files_multi command
+**CryptoManager.encrypt_files_multi():**
 ```rust
-// commands/crypto/encryption.rs
-pub async fn encrypt_files_multi(input: EncryptFilesMultiInput) -> CommandResponse {
-    // OLD: CryptoManager.encrypt_files_multi()
-    // NEW: VaultBundleEncryptionService.orchestrate_vault_encryption()
-}
+// Loads vault to get name
+// Converts EncryptFilesMultiInput → VaultBundleEncryptionInput
+// Calls VaultBundleEncryptionService.orchestrate_vault_encryption()
+// Converts VaultBundleEncryptionResult → EncryptFilesMultiResponse
 ```
 
-**Option B:** Create new command
-```rust
-// commands/vault/encryption.rs (new)
-pub async fn encrypt_vault_bundle(input: VaultBundleEncryptionInput) -> CommandResponse {
-    VaultBundleEncryptionService.orchestrate_vault_encryption()
-}
-```
+**No Command Changes Required:**
+- Command signature unchanged
+- DTO structure unchanged
+- TypeScript bindings unchanged
+- UI integration works as-is
 
-**Recommendation:** Option A (update existing command for seamless transition)
+**Result:** Seamless transition, no breaking changes
 
 ---
 

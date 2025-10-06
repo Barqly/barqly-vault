@@ -36,6 +36,7 @@ When splitting files:
 - Though we release R1, few weeks back, we do not have any users. We do not need to complicate our codebase by retaining the old code/classes for backward compatibility. Remove the old code if you have left due to backward compatibility. Its a major source of tech debt and confusion.
 - Very important for naming of files: I do not want to have R1, R2, V1, V2 etc in the namoing of the
  files...thats a very bad way to pollute the code base. So, name classes/files appropriately.
+- It is ok to mark something as TODO in the code while you are working on something and we need to revisit it later. But any TODO is a TECH DEBT. IF you add any TODO for later, make sure to add it in the plan tasks for that milestone/phase to make sure it is fixed right after immedately!
  
 **Refactoring ≠ Rewriting.** Separate concerns.
 

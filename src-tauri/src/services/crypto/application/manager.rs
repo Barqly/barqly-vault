@@ -9,11 +9,16 @@ use crate::services::crypto::application::dtos::{
 };
 use crate::services::crypto::domain::CryptoResult;
 use crate::services::shared::infrastructure::progress::ProgressManager;
+use crate::services::vault::application::services::{
+    VaultBundleEncryptionInput, VaultBundleEncryptionService,
+};
+use crate::services::vault::infrastructure::persistence::metadata::SelectionType;
 use std::path::Path;
 
 pub struct CryptoManager {
     encryption_service: EncryptionService,
     decryption_orchestration: DecryptionOrchestrationService,
+    vault_bundle_encryption: VaultBundleEncryptionService,
 }
 
 impl CryptoManager {
@@ -21,6 +26,7 @@ impl CryptoManager {
         Self {
             encryption_service: EncryptionService::new(),
             decryption_orchestration: DecryptionOrchestrationService::new(),
+            vault_bundle_encryption: VaultBundleEncryptionService::new(),
         }
     }
 
@@ -29,12 +35,45 @@ impl CryptoManager {
         self.encryption_service.encrypt_files(input).await
     }
 
-    /// Encrypt files with multiple keys (vault)
+    /// Encrypt files with multiple keys (vault) - uses VaultBundleEncryptionService
     pub async fn encrypt_files_multi(
         &self,
         input: EncryptFilesMultiInput,
     ) -> CryptoResult<EncryptFilesMultiResponse> {
-        self.encryption_service.encrypt_files_multi(input).await
+        use crate::services::crypto::domain::CryptoError;
+        use crate::services::vault;
+
+        // Load vault to get name
+        let vault = vault::load_vault(&input.vault_id)
+            .await
+            .map_err(|e| CryptoError::InvalidInput(format!("Vault not found: {}", e)))?;
+
+        // Convert to VaultBundleEncryptionInput
+        // TODO: Detect selection_type and base_path from input
+        let vault_input = VaultBundleEncryptionInput {
+            vault_id: input.vault_id.clone(),
+            vault_name: vault.name.clone(),
+            file_paths: input.in_file_paths.clone(),
+            selection_type: SelectionType::Files,
+            base_path: None,
+        };
+
+        // Use VaultBundleEncryptionService
+        let result = self
+            .vault_bundle_encryption
+            .orchestrate_vault_encryption(vault_input)
+            .await
+            .map_err(|e| {
+                CryptoError::EncryptionFailed(format!("Vault encryption failed: {}", e))
+            })?;
+
+        // Convert back to expected response
+        Ok(EncryptFilesMultiResponse {
+            encrypted_file_path: result.encrypted_file_path,
+            manifest_file_path: result.manifest_path,
+            file_exists_warning: false, // TODO: Check if file exists
+            keys_used: result.keys_used,
+        })
     }
 
     /// Decrypt data using DecryptionOrchestrationService
