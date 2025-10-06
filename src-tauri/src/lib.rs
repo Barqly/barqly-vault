@@ -49,6 +49,29 @@ use commands::{
 };
 
 use crate::prelude::*;
+use services::vault::application::services::BootstrapService;
+
+/// Run bootstrap initialization
+///
+/// Syncs key registry from vault manifests and ensures device identity exists.
+fn run_bootstrap() -> Result<(), Box<dyn std::error::Error>> {
+    use tokio::runtime::Runtime;
+
+    let rt = Runtime::new()?;
+    rt.block_on(async {
+        let bootstrap = BootstrapService::new();
+        let result = bootstrap.bootstrap().await?;
+
+        info!(
+            manifests_found = result.manifests_found,
+            keys_added = result.keys_added,
+            keys_total = result.keys_after,
+            "Bootstrap completed"
+        );
+
+        Ok(())
+    })
+}
 
 /// Generate TypeScript bindings for all Tauri commands
 /// This is called by the generate-bindings binary and the build hooks
@@ -125,6 +148,11 @@ pub fn run_app() {
 
     // Use tracing for application started message
     info!("Barqly Vault application started");
+
+    // Run bootstrap to sync registry from vault manifests
+    if let Err(e) = run_bootstrap() {
+        warn!(error = %e, "Bootstrap failed, continuing with startup");
+    }
 
     // Build the regular Tauri handler with ALL commands for now (during migration)
     tauri::Builder::default()

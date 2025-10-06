@@ -1,3 +1,4 @@
+mod bootstrap_service;
 mod payload_staging_service;
 mod recovery_txt_service;
 mod vault_bundle_encryption_service;
@@ -5,6 +6,7 @@ mod vault_metadata_service;
 pub mod vault_service;
 mod version_service;
 
+pub use bootstrap_service::{BootstrapResult, BootstrapService};
 pub use payload_staging_service::PayloadStagingService;
 pub use recovery_txt_service::RecoveryTxtService;
 pub use vault_bundle_encryption_service::{
