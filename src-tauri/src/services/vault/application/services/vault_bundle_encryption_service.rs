@@ -1,0 +1,276 @@
+//! Vault Bundle Encryption Service
+//!
+//! Orchestrates complete vault encryption with manifest-in-bundle architecture.
+//! Proper domain separation: vault operations in vault domain.
+
+use crate::prelude::*;
+use crate::services::crypto::infrastructure as crypto;
+use crate::services::file::infrastructure::file_operations::FileSelection;
+use crate::services::key_management::shared::{KeyEntry, KeyRegistryService};
+use crate::services::shared::infrastructure::{DeviceInfo, get_vaults_directory};
+use crate::services::vault;
+use crate::services::vault::application::services::{PayloadStagingService, VaultMetadataService};
+use crate::services::vault::domain::VaultError;
+use crate::services::vault::infrastructure::persistence::metadata::{
+    SelectionType, VaultFileEntry,
+};
+use std::path::{Path, PathBuf};
+
+type Result<T> = std::result::Result<T, VaultError>;
+
+/// Input for vault bundle encryption
+#[derive(Debug, Clone)]
+pub struct VaultBundleEncryptionInput {
+    pub vault_id: String,
+    pub vault_name: String,
+    pub file_paths: Vec<String>,
+    pub selection_type: SelectionType,
+    pub base_path: Option<String>,
+}
+
+/// Result of vault bundle encryption
+#[derive(Debug, Clone)]
+pub struct VaultBundleEncryptionResult {
+    pub encrypted_file_path: String,
+    pub manifest_path: String,
+    pub manifest_version: u32,
+    pub keys_used: Vec<String>,
+}
+
+/// Vault bundle encryption service
+#[derive(Debug)]
+pub struct VaultBundleEncryptionService {
+    metadata_service: VaultMetadataService,
+    payload_staging: PayloadStagingService,
+    key_registry: KeyRegistryService,
+}
+
+impl VaultBundleEncryptionService {
+    pub fn new() -> Self {
+        Self {
+            metadata_service: VaultMetadataService::new(),
+            payload_staging: PayloadStagingService::new(),
+            key_registry: KeyRegistryService::new(),
+        }
+    }
+
+    /// Orchestrate complete vault bundle encryption
+    ///
+    /// Flow: Load vault → Build/update manifest → Create payload → Encrypt → Save manifest
+    pub async fn orchestrate_vault_encryption(
+        &self,
+        input: VaultBundleEncryptionInput,
+    ) -> Result<VaultBundleEncryptionResult> {
+        info!(
+            vault = %input.vault_name,
+            file_count = input.file_paths.len(),
+            "Starting vault bundle encryption"
+        );
+
+        // Step 1: Load device info
+        let device_info = DeviceInfo::load_or_create("2.0.0").map_err(|e| {
+            VaultError::OperationFailed(format!("Failed to load device info: {}", e))
+        })?;
+
+        // Step 2: Load vault
+        let vault = vault::load_vault(&input.vault_id)
+            .await
+            .map_err(|e| VaultError::NotFound(format!("Vault '{}': {}", input.vault_id, e)))?;
+
+        if vault.keys.is_empty() {
+            return Err(VaultError::InvalidOperation(
+                "Vault has no keys for encryption".to_string(),
+            ));
+        }
+
+        // Step 3: Build file entries with hashes
+        let file_entries = self.build_file_entries(&input.file_paths)?;
+
+        // Step 4: Build or update VaultMetadata
+        let mut vault_metadata = self
+            .metadata_service
+            .build_from_vault_and_registry(
+                &input.vault_id,
+                &input.vault_name,
+                &vault.keys,
+                &device_info,
+                file_entries,
+                input.selection_type,
+                input.base_path,
+            )
+            .map_err(|e| VaultError::OperationFailed(format!("Failed to build manifest: {}", e)))?;
+
+        // If manifest exists, increment version; else it's v1 (new)
+        if let Ok(existing) =
+            self.metadata_service
+                .load_or_create(&input.vault_id, &input.vault_name, &device_info)
+            && existing.manifest_version > 0
+        {
+            vault_metadata.manifest_version = existing.manifest_version;
+            vault_metadata.increment_version(&device_info);
+        }
+
+        info!(
+            vault = %vault_metadata.label,
+            version = vault_metadata.manifest_version,
+            "Built VaultMetadata"
+        );
+
+        // Step 5: Determine output path
+        let vaults_dir = get_vaults_directory().map_err(|e| {
+            VaultError::StorageError(format!("Failed to get vaults directory: {}", e))
+        })?;
+        let output_path = vaults_dir.join(format!("{}.tar.gz", vault_metadata.sanitized_name));
+        let encrypted_path = vaults_dir.join(format!("{}.age", vault_metadata.sanitized_name));
+
+        // Step 6: Create complete payload (user files + manifest + .enc + RECOVERY.txt)
+        let file_selection = self.create_file_selection(&input.file_paths)?;
+
+        let _archive_operation = self
+            .payload_staging
+            .create_vault_payload(&file_selection, &vault_metadata, &output_path)
+            .map_err(|e| VaultError::OperationFailed(format!("Failed to create payload: {}", e)))?;
+
+        info!("Created complete vault payload with manifest");
+
+        // Step 7: Read archive for encryption
+        let archive_data = std::fs::read(&output_path)
+            .map_err(|e| VaultError::OperationFailed(format!("Failed to read archive: {}", e)))?;
+
+        // Step 8: Collect public keys from vault
+        let (public_keys, keys_used) = self.collect_vault_public_keys(&vault.keys)?;
+
+        if public_keys.is_empty() {
+            return Err(VaultError::InvalidOperation(
+                "No valid public keys found".to_string(),
+            ));
+        }
+
+        // Step 9: Encrypt with all recipients (multi-recipient age)
+        let encrypted_data = crypto::encrypt_data_multi_recipient(&archive_data, &public_keys)
+            .map_err(|e| VaultError::OperationFailed(format!("Encryption failed: {}", e)))?;
+
+        // Step 10: Write encrypted file
+        std::fs::write(&encrypted_path, encrypted_data).map_err(|e| {
+            VaultError::OperationFailed(format!("Failed to write encrypted file: {}", e))
+        })?;
+
+        info!(
+            encrypted_path = %encrypted_path.display(),
+            size = archive_data.len(),
+            "Encrypted vault bundle"
+        );
+
+        // Step 11: Save VaultMetadata to non-sync storage
+        self.metadata_service
+            .save_manifest(&vault_metadata)
+            .map_err(|e| VaultError::StorageError(format!("Failed to save manifest: {}", e)))?;
+
+        // Step 12: Cleanup temporary archive file
+        let _ = std::fs::remove_file(&output_path);
+
+        info!(
+            vault = %vault_metadata.label,
+            version = vault_metadata.manifest_version,
+            keys_count = keys_used.len(),
+            "Vault bundle encryption completed"
+        );
+
+        Ok(VaultBundleEncryptionResult {
+            encrypted_file_path: encrypted_path.to_string_lossy().to_string(),
+            manifest_path: format!("non-sync vaults/{}.manifest", vault_metadata.sanitized_name),
+            manifest_version: vault_metadata.manifest_version,
+            keys_used,
+        })
+    }
+
+    /// Build file entries with SHA256 hashes
+    fn build_file_entries(&self, file_paths: &[String]) -> Result<Vec<VaultFileEntry>> {
+        use crate::services::file::infrastructure::file_operations::utils::calculate_file_hash;
+
+        let mut entries = Vec::new();
+
+        for path_str in file_paths {
+            let path = Path::new(path_str);
+            if !path.exists() {
+                warn!(path = %path_str, "File not found, skipping");
+                continue;
+            }
+
+            let metadata = std::fs::metadata(path).map_err(|e| {
+                VaultError::OperationFailed(format!("Failed to read file metadata: {}", e))
+            })?;
+
+            let hash = calculate_file_hash(path).map_err(|e| {
+                VaultError::OperationFailed(format!("Failed to calculate file hash: {}", e))
+            })?;
+
+            let relative_path = path
+                .file_name()
+                .ok_or_else(|| VaultError::InvalidOperation("Invalid file path".to_string()))?
+                .to_string_lossy()
+                .to_string();
+
+            entries.push(VaultFileEntry {
+                path: relative_path,
+                size: metadata.len(),
+                sha256: hash,
+            });
+        }
+
+        Ok(entries)
+    }
+
+    /// Create FileSelection from paths
+    fn create_file_selection(&self, file_paths: &[String]) -> Result<FileSelection> {
+        let path_bufs: Vec<PathBuf> = file_paths.iter().map(PathBuf::from).collect();
+        Ok(FileSelection::from_paths(&path_bufs))
+    }
+
+    /// Collect public keys from vault keys using registry
+    fn collect_vault_public_keys(
+        &self,
+        vault_keys: &[String],
+    ) -> Result<(Vec<crypto::PublicKey>, Vec<String>)> {
+        let mut public_keys = Vec::new();
+        let mut keys_used = Vec::new();
+
+        for key_id in vault_keys {
+            match self.key_registry.get_key(key_id) {
+                Ok(KeyEntry::Passphrase {
+                    label, public_key, ..
+                }) => {
+                    public_keys.push(crypto::PublicKey::from(public_key.clone()));
+                    keys_used.push(label.clone());
+                }
+                Ok(KeyEntry::Yubikey {
+                    label, recipient, ..
+                }) => {
+                    public_keys.push(crypto::PublicKey::from(recipient.clone()));
+                    keys_used.push(label.clone());
+                }
+                Err(_) => {
+                    warn!(key_id, "Key not found in registry, skipping");
+                }
+            }
+        }
+
+        Ok((public_keys, keys_used))
+    }
+}
+
+impl Default for VaultBundleEncryptionService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_vault_bundle_encryption_service_creation() {
+        let _service = VaultBundleEncryptionService::new();
+    }
+}

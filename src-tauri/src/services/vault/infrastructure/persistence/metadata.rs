@@ -109,9 +109,9 @@ pub enum RecipientType {
 }
 
 impl VaultMetadata {
-    /// Create new R2 metadata with full schema
+    /// Create new vault metadata with full schema
     #[allow(clippy::too_many_arguments)]
-    pub fn new_r2(
+    pub fn new(
         vault_id: String,
         label: String,
         sanitized_name: String,
@@ -152,49 +152,6 @@ impl VaultMetadata {
             backward_compatible,
             recipients,
             files,
-            file_count,
-            total_size,
-            checksum,
-            integrity: None,
-        }
-    }
-
-    /// Create new metadata (legacy, for backward compatibility)
-    /// Use `new_r2()` for new code
-    pub fn new(
-        protection_mode: ProtectionMode,
-        recipients: Vec<RecipientInfo>,
-        file_count: usize,
-        total_size: u64,
-        checksum: String,
-    ) -> Self {
-        let backward_compatible = matches!(
-            protection_mode,
-            ProtectionMode::PassphraseOnly | ProtectionMode::Hybrid { .. }
-        );
-
-        let now = Utc::now();
-
-        Self {
-            schema: "barqly.vault.manifest/1".to_string(),
-            vault_id: format!("vault-{}", uuid::Uuid::new_v4()),
-            label: "Legacy Vault".to_string(),
-            sanitized_name: "Legacy-Vault".to_string(),
-            manifest_version: 1,
-            created_at: now,
-            last_encrypted_at: now,
-            last_encrypted_by: LastEncryptedBy {
-                machine_id: "unknown".to_string(),
-                machine_label: "unknown".to_string(),
-            },
-            selection_type: SelectionType::Files,
-            base_path: None,
-            version: "1.0".to_string(),
-            protection_mode,
-            encryption_method: "age".to_string(),
-            backward_compatible,
-            recipients,
-            files: vec![],
             file_count,
             total_size,
             checksum,
@@ -480,7 +437,41 @@ impl MetadataStorage {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::services::shared::infrastructure::DeviceInfo;
     use tempfile::TempDir;
+
+    fn create_test_device_info() -> DeviceInfo {
+        DeviceInfo {
+            machine_id: "test-machine-123".to_string(),
+            machine_label: "test-laptop".to_string(),
+            created_at: chrono::Utc::now(),
+            app_version: "2.0.0".to_string(),
+        }
+    }
+
+    fn create_test_metadata(
+        vault_id: &str,
+        vault_name: &str,
+        recipients: Vec<RecipientInfo>,
+        protection_mode: ProtectionMode,
+    ) -> VaultMetadata {
+        let device_info = create_test_device_info();
+
+        VaultMetadata::new(
+            vault_id.to_string(),
+            vault_name.to_string(),
+            vault_name.replace(' ', "-"),
+            &device_info,
+            SelectionType::Files,
+            None,
+            protection_mode,
+            recipients,
+            vec![],
+            0,
+            0,
+            String::new(),
+        )
+    }
 
     #[test]
     fn test_passphrase_only_metadata() {
@@ -490,12 +481,11 @@ mod tests {
             "test-key.agekey.enc".to_string(),
         );
 
-        let metadata = VaultMetadata::new(
-            ProtectionMode::PassphraseOnly,
+        let metadata = create_test_metadata(
+            "vault-001",
+            "Test Vault",
             vec![recipient],
-            5,
-            1024,
-            "checksum123".to_string(),
+            ProtectionMode::PassphraseOnly,
         );
 
         assert_eq!(metadata.version, "1.0");
@@ -516,14 +506,13 @@ mod tests {
             Some("5.7.1".to_string()),
         );
 
-        let metadata = VaultMetadata::new(
+        let metadata = create_test_metadata(
+            "vault-002",
+            "YubiKey Vault",
+            vec![recipient],
             ProtectionMode::YubiKeyOnly {
                 serial: "12345678".to_string(),
             },
-            vec![recipient],
-            3,
-            512,
-            "checksum456".to_string(),
         );
 
         assert_eq!(metadata.version, "1.0");
@@ -550,14 +539,13 @@ mod tests {
             Some("5.7.1".to_string()),
         );
 
-        let metadata = VaultMetadata::new(
+        let metadata = create_test_metadata(
+            "vault-003",
+            "Hybrid Vault",
+            vec![passphrase_recipient, yubikey_recipient],
             ProtectionMode::Hybrid {
                 yubikey_serial: "87654321".to_string(),
             },
-            vec![passphrase_recipient, yubikey_recipient],
-            10,
-            2048,
-            "checksum789".to_string(),
         );
 
         assert_eq!(metadata.version, "1.0");
@@ -569,12 +557,11 @@ mod tests {
     #[test]
     fn test_metadata_validation_failure() {
         // Create metadata with no recipients (should fail validation)
-        let metadata = VaultMetadata::new(
-            ProtectionMode::PassphraseOnly,
+        let metadata = create_test_metadata(
+            "vault-004",
+            "Empty Vault",
             vec![], // Empty recipients
-            0,
-            0,
-            "test".to_string(),
+            ProtectionMode::PassphraseOnly,
         );
 
         assert!(metadata.validate().is_err());
@@ -591,12 +578,11 @@ mod tests {
             "test-key.agekey.enc".to_string(),
         );
 
-        let original_metadata = VaultMetadata::new(
-            ProtectionMode::PassphraseOnly,
+        let original_metadata = create_test_metadata(
+            "vault-005",
+            "Storage Test",
             vec![recipient],
-            1,
-            100,
-            "test-checksum".to_string(),
+            ProtectionMode::PassphraseOnly,
         );
 
         // Save metadata
@@ -615,43 +601,31 @@ mod tests {
 
     #[test]
     fn test_manifest_version_increment() {
-        let device_info = MachineDeviceInfo {
-            machine_id: "test-machine".to_string(),
-            machine_label: "test".to_string(),
-            created_at: Utc::now(),
-            app_version: "2.0.0".to_string(),
-        };
+        let device_info = create_test_device_info();
 
-        let mut metadata = VaultMetadata::new(
-            ProtectionMode::PassphraseOnly,
+        let mut metadata = create_test_metadata(
+            "vault-006",
+            "Version Test",
             vec![],
-            0,
-            0,
-            "test".to_string(),
+            ProtectionMode::PassphraseOnly,
         );
 
         assert_eq!(metadata.manifest_version, 1);
 
         metadata.increment_version(&device_info);
         assert_eq!(metadata.manifest_version, 2);
-        assert_eq!(metadata.last_encrypted_by.machine_id, "test-machine");
+        assert_eq!(metadata.last_encrypted_by.machine_id, "test-machine-123");
     }
 
     #[test]
     fn test_version_comparison() {
-        let device_info = MachineDeviceInfo {
-            machine_id: "test-machine".to_string(),
-            machine_label: "test".to_string(),
-            created_at: Utc::now(),
-            app_version: "2.0.0".to_string(),
-        };
+        let device_info = create_test_device_info();
 
-        let metadata_v1 = VaultMetadata::new(
-            ProtectionMode::PassphraseOnly,
+        let metadata_v1 = create_test_metadata(
+            "vault-007",
+            "Comparison Test",
             vec![],
-            0,
-            0,
-            "test".to_string(),
+            ProtectionMode::PassphraseOnly,
         );
 
         let mut metadata_v2 = metadata_v1.clone();

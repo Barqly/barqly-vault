@@ -33,7 +33,10 @@ When splitting files:
 - Keep all edge case handling
 - Preserve error messages exactly
 - Don't "improve" logic during refactoring
-
+- Though we release R1, few weeks back, we do not have any users. We do not need to complicate our codebase by retaining the old code/classes for backward compatibility. Remove the old code if you have left due to backward compatibility. Its a major source of tech debt and confusion.
+- Very important for naming of files: I do not want to have R1, R2, V1, V2 etc in the namoing of the
+ files...thats a very bad way to pollute the code base. So, name classes/files appropriately.
+ 
 **Refactoring ≠ Rewriting.** Separate concerns.
 
 ### 5. Minimal Import Changes

@@ -203,7 +203,7 @@ mod tests {
             "test-key.agekey.enc".to_string(),
         );
 
-        let metadata = VaultMetadata::new_r2(
+        let metadata = VaultMetadata::new(
             "test-vault".to_string(),
             "Test Vault".to_string(),
             "Test-Vault".to_string(),

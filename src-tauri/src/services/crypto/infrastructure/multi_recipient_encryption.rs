@@ -74,11 +74,27 @@ impl MultiRecipientCrypto {
         // Perform multi-recipient encryption using age
         let encrypted_data = Self::encrypt_with_age_recipients(&data, age_recipients)?;
 
-        // Create vault metadata
+        // TODO(CLEANUP): This function creates metadata but isn't used in R2 flow
+        // Consider removing or updating to use VaultMetadataService
+        use crate::services::shared::infrastructure::DeviceInfo;
+        use crate::services::vault::infrastructure::persistence::metadata::SelectionType;
+
+        let device_info = DeviceInfo::load_or_create("2.0.0").map_err(|e| {
+            CryptoError::EncryptionFailed(format!("Failed to load device info: {}", e))
+        })?;
+
+        // Create vault metadata with full signature
         let metadata = VaultMetadata::new(
+            "temp-vault".to_string(),
+            "Temporary Vault".to_string(),
+            "Temporary-Vault".to_string(),
+            &device_info,
+            SelectionType::Files,
+            None,
             protection_mode,
             recipients,
-            1, // Single data blob
+            vec![],
+            1,
             data.len() as u64,
             Self::calculate_checksum(&data)?,
         );
@@ -435,21 +451,43 @@ mod tests {
         assert!(!MultiRecipientCrypto::verify_integrity(b"different data", &checksum).unwrap());
     }
 
-    #[test]
-    fn test_available_methods_detection() {
+    fn create_test_metadata() -> VaultMetadata {
+        use crate::services::key_management::yubikey::domain::models::ProtectionMode;
+        use crate::services::shared::infrastructure::DeviceInfo;
+        use crate::services::vault::infrastructure::persistence::metadata::SelectionType;
+
+        let device_info = DeviceInfo {
+            machine_id: "test".to_string(),
+            machine_label: "test".to_string(),
+            created_at: chrono::Utc::now(),
+            app_version: "2.0.0".to_string(),
+        };
+
         let passphrase_recipient = RecipientInfo::new_passphrase(
             "age1test123".to_string(),
             "test-key".to_string(),
             "test-key.agekey.enc".to_string(),
         );
 
-        let metadata = VaultMetadata::new(
+        VaultMetadata::new(
+            "test-vault".to_string(),
+            "Test Vault".to_string(),
+            "Test-Vault".to_string(),
+            &device_info,
+            SelectionType::Files,
+            None,
             ProtectionMode::PassphraseOnly,
             vec![passphrase_recipient],
-            1,
-            100,
-            "test-checksum".to_string(),
-        );
+            vec![],
+            0,
+            0,
+            String::new(),
+        )
+    }
+
+    #[test]
+    fn test_available_methods_detection() {
+        let metadata = create_test_metadata();
 
         let available = MultiRecipientCrypto::determine_available_methods(&metadata).unwrap();
         assert!(available.contains(&UnlockMethod::Passphrase));
@@ -458,19 +496,7 @@ mod tests {
 
     #[test]
     fn test_method_selection() {
-        let passphrase_recipient = RecipientInfo::new_passphrase(
-            "age1test123".to_string(),
-            "test-key".to_string(),
-            "test-key.agekey.enc".to_string(),
-        );
-
-        let metadata = VaultMetadata::new(
-            ProtectionMode::PassphraseOnly,
-            vec![passphrase_recipient],
-            1,
-            100,
-            "test-checksum".to_string(),
-        );
+        let metadata = create_test_metadata();
 
         let available = vec![UnlockMethod::Passphrase];
         let selected =

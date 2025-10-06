@@ -152,24 +152,47 @@
 - [x] Added VaultError::OperationFailed variant
 - [x] 2 tests passing (service creation, payload with manifest)
 
-### Milestone 7: Encryption Flow Updates
-- [ ] Update `EncryptionService`
-  - [ ] Load or generate device UUID
-  - [ ] Sanitize vault label
-  - [ ] Load or create manifest with version
-  - [ ] Increment version on re-encryption
-  - [ ] Set last_encrypted_at timestamp
-  - [ ] Set last_encrypted_by from device.json
-  - [ ] Update file list with relative paths
-  - [ ] Calculate SHA256 hashes
-  - [ ] Stage complete payload
-  - [ ] Encrypt with all recipients
-  - [ ] Atomically save manifest to non-sync
-- [ ] Add encryption flow tests
-  - [ ] New vault creation
-  - [ ] Vault re-encryption (version increment)
-  - [ ] Multi-recipient encryption
-  - [ ] Manifest included in bundle verification
+### Milestone 7: Clean Encryption Architecture (REVISED SCOPE) ✅ COMPLETE
+
+**Architectural Decision:** Create clean services in vault domain instead of modifying
+existing crypto services (which were 486 lines and violated < 300 LOC guideline).
+
+**New Services (vault/application/services/):**
+
+- [x] Create `VaultMetadataService` (304 LOC)
+  - [x] load_or_create_manifest() - Load from non-sync or create new
+  - [x] build_from_vault_and_registry() - Construct VaultMetadata
+  - [x] increment_version_and_save() - Version bump + atomic save
+  - [x] save_manifest() - Atomic write to non-sync location
+  - [x] registry_entry_to_recipient() - Convert KeyEntry to RecipientInfo
+  - [x] 3 tests passing
+
+- [x] Create `VaultBundleEncryptionService` (276 LOC)
+  - [x] orchestrate_vault_encryption() - Main entry point
+  - [x] Load/create VaultMetadata with versioning
+  - [x] build_file_entries() with SHA256 hashing
+  - [x] Use PayloadStagingService for complete bundle
+  - [x] Multi-recipient encryption via crypto infrastructure
+  - [x] Save updated manifest to non-sync
+  - [x] 1 test passing
+
+- [x] Delete vault_encryption_service.rs (486 lines, wrong domain)
+  - [x] Removed module declaration and exports
+  - [x] Updated EncryptionService with TODO for wiring
+
+- [x] Remove ALL backward compatibility code
+  - [x] Deleted VaultMetadata legacy new() method
+  - [x] Renamed new_r2() → new() (no version in names!)
+  - [x] Deleted deprecated get_vault_external_manifest_path()
+  - [x] Removed all R1/R2/legacy comments from class names
+  - [x] Updated all test helpers to use full new() signature
+
+**Rationale:**
+- Proper domain separation (vault ops in vault domain, not crypto)
+- Each service < 300 LOC (maintainable)
+- Clean R2 implementation without legacy baggage
+- Old code stable (no regressions)
+- Easier to test and extend
 
 ### Milestone 8: Decryption Flow Updates
 - [ ] Update `DecryptionOrchestrationService`

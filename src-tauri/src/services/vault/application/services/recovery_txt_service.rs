@@ -207,7 +207,7 @@ mod tests {
             "my-backup-key.agekey.enc".to_string(),
         );
 
-        let metadata = VaultMetadata::new_r2(
+        let metadata = VaultMetadata::new(
             "vault-001".to_string(),
             "Test Vault".to_string(),
             "Test-Vault".to_string(),
@@ -265,7 +265,7 @@ mod tests {
             Some("5.7.1".to_string()),
         );
 
-        let metadata = VaultMetadata::new_r2(
+        let metadata = VaultMetadata::new(
             "vault-002".to_string(),
             "Bitcoin Wallet".to_string(),
             "Bitcoin-Wallet".to_string(),
@@ -326,7 +326,7 @@ mod tests {
             None,
         );
 
-        let metadata = VaultMetadata::new_r2(
+        let metadata = VaultMetadata::new(
             "vault-003".to_string(),
             "Hybrid Vault".to_string(),
             "Hybrid-Vault".to_string(),

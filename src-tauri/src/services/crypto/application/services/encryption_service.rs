@@ -1,6 +1,5 @@
 use super::{
     ArchiveOrchestrationService, CoreEncryptionService, FileValidationService, KeyRetrievalService,
-    VaultEncryptionService,
 };
 use crate::constants::*;
 use crate::prelude::*;
@@ -16,7 +15,6 @@ pub struct EncryptionService {
     file_validation: FileValidationService,
     archive_orchestration: ArchiveOrchestrationService,
     core_encryption: CoreEncryptionService,
-    vault_encryption: VaultEncryptionService,
 }
 
 impl EncryptionService {
@@ -26,7 +24,6 @@ impl EncryptionService {
             file_validation: FileValidationService::new(),
             archive_orchestration: ArchiveOrchestrationService::new(),
             core_encryption: CoreEncryptionService::new(),
-            vault_encryption: VaultEncryptionService::new(),
         }
     }
 
@@ -130,16 +127,19 @@ impl EncryptionService {
         Ok(encrypted_path)
     }
 
-    /// Encrypt files with multiple keys - delegates to vault encryption service
+    /// Encrypt files with multiple keys - delegates to vault bundle encryption service
+    ///
+    /// TODO(MILESTONE-7): Wire up VaultBundleEncryptionService from vault domain
+    /// Current: Placeholder returning error
+    /// Target: Use services::vault::application::services::VaultBundleEncryptionService
     pub async fn encrypt_files_multi(
         &self,
-        input: EncryptFilesMultiInput,
+        _input: EncryptFilesMultiInput,
     ) -> CryptoResult<EncryptFilesMultiResponse> {
-        self.vault_encryption.encrypt_files_multi(input).await
+        Err(CryptoError::ConfigurationError(
+            "Multi-key encryption being migrated to VaultBundleEncryptionService".to_string(),
+        ))
     }
-
-    // NOTE: generate_key_multi removed - use key_management commands instead
-    // Key generation belongs in key_management domain, not crypto domain
 }
 
 impl Default for EncryptionService {

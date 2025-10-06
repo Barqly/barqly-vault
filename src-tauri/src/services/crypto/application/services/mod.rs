@@ -8,7 +8,7 @@ pub mod key_retrieval_decryption_service;
 pub mod key_retrieval_service;
 pub mod manifest_verification_service;
 pub mod passphrase_decryption_service;
-pub mod vault_encryption_service;
+// vault_encryption_service removed - use VaultBundleEncryptionService in vault domain instead
 pub mod yubikey_decryption_service;
 
 pub use archive_extraction_service::ArchiveExtractionService;
@@ -23,5 +23,5 @@ pub use key_retrieval_decryption_service::KeyRetrievalDecryptionService;
 pub use key_retrieval_service::KeyRetrievalService;
 pub use manifest_verification_service::ManifestVerificationService;
 pub use passphrase_decryption_service::PassphraseDecryptionService;
-pub use vault_encryption_service::VaultEncryptionService;
+// VaultEncryptionService removed - use VaultBundleEncryptionService in vault domain instead
 pub use yubikey_decryption_service::YubiKeyDecryptionService;

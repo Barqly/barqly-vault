@@ -389,7 +389,7 @@ mod tests {
             "test-key.agekey.enc".to_string(),
         );
 
-        VaultMetadata::new_r2(
+        VaultMetadata::new(
             "test-vault-001".to_string(),
             "Test Vault".to_string(),
             "Test-Vault".to_string(),

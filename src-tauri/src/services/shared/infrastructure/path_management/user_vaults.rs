@@ -104,20 +104,6 @@ pub fn get_vault_manifest_path(vault_name: &str) -> Result<PathBuf, StorageError
     Ok(vaults_manifest_dir.join(format!("{vault_name}.manifest")))
 }
 
-/// Get the path for a vault's external manifest (DEPRECATED - R1 only)
-///
-/// Legacy function for R1 manifests stored in syncable location.
-/// New code should use `get_vault_manifest_path()` for non-sync storage.
-///
-/// # Returns
-/// Path to external manifest: `~/Documents/Barqly-Vaults/Vault-001.manifest`
-#[deprecated(note = "Use get_vault_manifest_path() for non-sync storage")]
-#[allow(dead_code)]
-pub fn get_vault_external_manifest_path(vault_name: &str) -> Result<PathBuf, StorageError> {
-    let vaults_dir = get_vaults_directory()?;
-    Ok(vaults_dir.join(format!("{vault_name}.manifest")))
-}
-
 /// Get the recovery path for a specific vault
 ///
 /// # Arguments
