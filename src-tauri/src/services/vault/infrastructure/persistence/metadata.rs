@@ -4,46 +4,163 @@
 //! multiple recipients including both passphrase and YubiKey protection modes.
 
 use crate::services::key_management::yubikey::domain::models::ProtectionMode;
+use crate::services::shared::infrastructure::DeviceInfo as MachineDeviceInfo;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-/// Vault metadata supporting multiple protection modes
+/// Vault metadata supporting multiple protection modes (R2 enhanced schema)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VaultMetadata {
-    pub version: String, // "1.0"
-    pub protection_mode: ProtectionMode,
+    // R2 Schema version tracking
+    pub schema: String, // "barqly.vault.manifest/1"
+    pub vault_id: String,
+    pub label: String,          // Display name (user-entered)
+    pub sanitized_name: String, // Filesystem-safe name
+
+    // Version control for conflict resolution
+    pub manifest_version: u32, // Increments on each encryption
     pub created_at: DateTime<Utc>,
-    pub recipients: Vec<RecipientInfo>,
+    pub last_encrypted_at: DateTime<Utc>,
+    pub last_encrypted_by: LastEncryptedBy,
+
+    // File selection metadata
+    pub selection_type: SelectionType,
+    pub base_path: Option<String>, // Null for files-only selection
+
+    // Legacy fields (kept for backward compatibility)
+    pub version: String, // "1.0" - schema version
+    pub protection_mode: ProtectionMode,
     pub encryption_method: String, // "age"
     pub backward_compatible: bool, // true for hybrid/passphrase modes
+
+    // Encryption recipients
+    pub recipients: Vec<RecipientInfo>,
+
+    // File contents
+    pub files: Vec<VaultFileEntry>,
     pub file_count: usize,
     pub total_size: u64,
     pub checksum: String,
+
+    // Optional integrity verification
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub integrity: Option<IntegrityInfo>,
+}
+
+/// Machine information for tracking vault operations across devices
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct LastEncryptedBy {
+    pub machine_id: String,
+    pub machine_label: String,
+}
+
+/// Type of file selection (folder vs individual files)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum SelectionType {
+    Folder,
+    Files,
+}
+
+/// File entry in the vault with integrity information
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct VaultFileEntry {
+    pub path: String, // Relative path from base_path
+    pub size: u64,
+    pub sha256: String, // File hash for verification
+}
+
+/// Optional integrity verification hashes
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct IntegrityInfo {
+    pub files_hash: String,    // SHA256 of concatenated file hashes
+    pub manifest_hash: String, // SHA256 of manifest (excluding this field)
 }
 
 /// Information about a recipient (passphrase or YubiKey)
+/// Matches KeyRegistry KeyEntry structure for denormalization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecipientInfo {
     pub recipient_type: RecipientType,
-    pub public_key: String, // age-compatible recipient string
+    pub public_key: String, // age-compatible recipient string (age1...)
     pub label: String,
     pub created_at: DateTime<Utc>,
 }
 
 /// Type of recipient for multi-recipient encryption
+/// Enhanced to match KeyRegistry structure exactly
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum RecipientType {
-    Passphrase,
+    #[serde(rename = "passphrase")]
+    Passphrase {
+        key_filename: String, // Matches registry: relative to keys directory
+    },
+    #[serde(rename = "yubikey")]
     YubiKey {
         serial: String,
-        slot: u8,
-        model: String,
+        slot: u8,                         // age-plugin slot (1-20)
+        piv_slot: u8,                     // PIV slot (82-95)
+        model: String,                    // YubiKey model
+        identity_tag: String,             // AGE-PLUGIN-YUBIKEY-...
+        firmware_version: Option<String>, // e.g. "5.7.1"
     },
 }
 
 impl VaultMetadata {
-    /// Create new current metadata for a vault
+    /// Create new R2 metadata with full schema
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_r2(
+        vault_id: String,
+        label: String,
+        sanitized_name: String,
+        device_info: &MachineDeviceInfo,
+        selection_type: SelectionType,
+        base_path: Option<String>,
+        protection_mode: ProtectionMode,
+        recipients: Vec<RecipientInfo>,
+        files: Vec<VaultFileEntry>,
+        file_count: usize,
+        total_size: u64,
+        checksum: String,
+    ) -> Self {
+        let backward_compatible = matches!(
+            protection_mode,
+            ProtectionMode::PassphraseOnly | ProtectionMode::Hybrid { .. }
+        );
+
+        let now = Utc::now();
+
+        Self {
+            schema: "barqly.vault.manifest/1".to_string(),
+            vault_id,
+            label,
+            sanitized_name,
+            manifest_version: 1,
+            created_at: now,
+            last_encrypted_at: now,
+            last_encrypted_by: LastEncryptedBy {
+                machine_id: device_info.machine_id.clone(),
+                machine_label: device_info.machine_label.clone(),
+            },
+            selection_type,
+            base_path,
+            version: "1.0".to_string(),
+            protection_mode,
+            encryption_method: "age".to_string(),
+            backward_compatible,
+            recipients,
+            files,
+            file_count,
+            total_size,
+            checksum,
+            integrity: None,
+        }
+    }
+
+    /// Create new metadata (legacy, for backward compatibility)
+    /// Use `new_r2()` for new code
     pub fn new(
         protection_mode: ProtectionMode,
         recipients: Vec<RecipientInfo>,
@@ -56,17 +173,53 @@ impl VaultMetadata {
             ProtectionMode::PassphraseOnly | ProtectionMode::Hybrid { .. }
         );
 
+        let now = Utc::now();
+
         Self {
+            schema: "barqly.vault.manifest/1".to_string(),
+            vault_id: format!("vault-{}", uuid::Uuid::new_v4()),
+            label: "Legacy Vault".to_string(),
+            sanitized_name: "Legacy-Vault".to_string(),
+            manifest_version: 1,
+            created_at: now,
+            last_encrypted_at: now,
+            last_encrypted_by: LastEncryptedBy {
+                machine_id: "unknown".to_string(),
+                machine_label: "unknown".to_string(),
+            },
+            selection_type: SelectionType::Files,
+            base_path: None,
             version: "1.0".to_string(),
             protection_mode,
-            created_at: Utc::now(),
-            recipients,
             encryption_method: "age".to_string(),
             backward_compatible,
+            recipients,
+            files: vec![],
             file_count,
             total_size,
             checksum,
+            integrity: None,
         }
+    }
+
+    /// Increment manifest version (for re-encryption)
+    pub fn increment_version(&mut self, device_info: &MachineDeviceInfo) {
+        self.manifest_version += 1;
+        self.last_encrypted_at = Utc::now();
+        self.last_encrypted_by = LastEncryptedBy {
+            machine_id: device_info.machine_id.clone(),
+            machine_label: device_info.machine_label.clone(),
+        };
+    }
+
+    /// Compare versions with another manifest
+    /// Returns: (is_newer, is_same_version)
+    pub fn compare_version(&self, other: &VaultMetadata) -> (bool, bool) {
+        let is_newer = self.manifest_version > other.manifest_version
+            || (self.manifest_version == other.manifest_version
+                && self.last_encrypted_at > other.last_encrypted_at);
+        let is_same = self.manifest_version == other.manifest_version;
+        (is_newer, is_same)
     }
 
     /// Get recipients of a specific type
@@ -76,7 +229,7 @@ impl VaultMetadata {
             .filter(|r| {
                 matches!(
                     (&r.recipient_type, recipient_type),
-                    (RecipientType::Passphrase, "passphrase")
+                    (RecipientType::Passphrase { .. }, "passphrase")
                         | (RecipientType::YubiKey { .. }, "yubikey")
                 )
             })
@@ -155,7 +308,7 @@ impl VaultMetadata {
                 if !self
                     .recipients
                     .iter()
-                    .any(|r| matches!(r.recipient_type, RecipientType::Passphrase))
+                    .any(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }))
                 {
                     return Err(MetadataValidationError::ProtectionModeMismatch);
                 }
@@ -172,7 +325,7 @@ impl VaultMetadata {
                 let has_passphrase = self
                     .recipients
                     .iter()
-                    .any(|r| matches!(r.recipient_type, RecipientType::Passphrase));
+                    .any(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }));
                 let has_yubikey = self.recipients.iter().any(|r| match &r.recipient_type {
                     RecipientType::YubiKey { serial: s, .. } => s == yubikey_serial,
                     _ => false,
@@ -229,28 +382,35 @@ impl std::error::Error for MetadataValidationError {}
 
 impl RecipientInfo {
     /// Create a new passphrase recipient
-    pub fn new_passphrase(public_key: String, label: String) -> Self {
+    pub fn new_passphrase(public_key: String, label: String, key_filename: String) -> Self {
         Self {
-            recipient_type: RecipientType::Passphrase,
+            recipient_type: RecipientType::Passphrase { key_filename },
             public_key,
             label,
             created_at: Utc::now(),
         }
     }
 
-    /// Create a new YubiKey recipient
+    /// Create a new YubiKey recipient (R2 enhanced with all metadata)
+    #[allow(clippy::too_many_arguments)]
     pub fn new_yubikey(
         public_key: String,
         label: String,
         serial: String,
         slot: u8,
+        piv_slot: u8,
         model: String,
+        identity_tag: String,
+        firmware_version: Option<String>,
     ) -> Self {
         Self {
             recipient_type: RecipientType::YubiKey {
                 serial,
                 slot,
+                piv_slot,
                 model,
+                identity_tag,
+                firmware_version,
             },
             public_key,
             label,
@@ -261,11 +421,12 @@ impl RecipientInfo {
     /// Get a human-readable description of this recipient
     pub fn get_description(&self) -> String {
         match &self.recipient_type {
-            RecipientType::Passphrase => format!("Passphrase: {}", self.label),
+            RecipientType::Passphrase { .. } => format!("Passphrase: {}", self.label),
             RecipientType::YubiKey {
                 serial,
                 slot,
                 model,
+                ..
             } => {
                 format!("YubiKey {model}: {serial} (slot {slot})")
             }
@@ -275,7 +436,7 @@ impl RecipientInfo {
     /// Check if this recipient can unlock the vault
     pub fn is_available(&self) -> bool {
         match &self.recipient_type {
-            RecipientType::Passphrase => true, // Passphrases are always "available"
+            RecipientType::Passphrase { .. } => true, // Passphrases are always "available"
             RecipientType::YubiKey { serial, .. } => {
                 // For now, assume YubiKey is available (deprecated detection always returned true anyway)
                 // This will be properly implemented when device detection is needed
@@ -323,8 +484,11 @@ mod tests {
 
     #[test]
     fn test_passphrase_only_metadata() {
-        let recipient =
-            RecipientInfo::new_passphrase("age1test123".to_string(), "test-key".to_string());
+        let recipient = RecipientInfo::new_passphrase(
+            "age1test123".to_string(),
+            "test-key".to_string(),
+            "test-key.agekey.enc".to_string(),
+        );
 
         let metadata = VaultMetadata::new(
             ProtectionMode::PassphraseOnly,
@@ -345,8 +509,11 @@ mod tests {
             "age1yubikey123".to_string(),
             "my-yubikey".to_string(),
             "12345678".to_string(),
-            0x82,
+            1,    // slot
+            0x82, // piv_slot
             "YubiKey 5 Series".to_string(),
+            "AGE-PLUGIN-YUBIKEY-TEST123".to_string(),
+            Some("5.7.1".to_string()),
         );
 
         let metadata = VaultMetadata::new(
@@ -366,15 +533,21 @@ mod tests {
 
     #[test]
     fn test_hybrid_mode_metadata() {
-        let passphrase_recipient =
-            RecipientInfo::new_passphrase("age1test123".to_string(), "backup-key".to_string());
+        let passphrase_recipient = RecipientInfo::new_passphrase(
+            "age1test123".to_string(),
+            "backup-key".to_string(),
+            "backup-key.agekey.enc".to_string(),
+        );
 
         let yubikey_recipient = RecipientInfo::new_yubikey(
             "age1yubikey456".to_string(),
             "primary-yubikey".to_string(),
             "87654321".to_string(),
-            0x83,
+            1,    // slot
+            0x83, // piv_slot
             "YubiKey 5 Series".to_string(),
+            "AGE-PLUGIN-YUBIKEY-TEST456".to_string(),
+            Some("5.7.1".to_string()),
         );
 
         let metadata = VaultMetadata::new(
@@ -395,17 +568,14 @@ mod tests {
 
     #[test]
     fn test_metadata_validation_failure() {
-        let metadata = VaultMetadata {
-            version: "1.0".to_string(), // Invalid version
-            protection_mode: ProtectionMode::PassphraseOnly,
-            created_at: Utc::now(),
-            recipients: vec![],
-            encryption_method: "age".to_string(),
-            backward_compatible: true,
-            file_count: 0,
-            total_size: 0,
-            checksum: "test".to_string(),
-        };
+        // Create metadata with no recipients (should fail validation)
+        let metadata = VaultMetadata::new(
+            ProtectionMode::PassphraseOnly,
+            vec![], // Empty recipients
+            0,
+            0,
+            "test".to_string(),
+        );
 
         assert!(metadata.validate().is_err());
     }
@@ -415,8 +585,11 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let metadata_path = temp_dir.path().join("metadata.json");
 
-        let recipient =
-            RecipientInfo::new_passphrase("age1test123".to_string(), "test-key".to_string());
+        let recipient = RecipientInfo::new_passphrase(
+            "age1test123".to_string(),
+            "test-key".to_string(),
+            "test-key.agekey.enc".to_string(),
+        );
 
         let original_metadata = VaultMetadata::new(
             ProtectionMode::PassphraseOnly,
@@ -438,5 +611,59 @@ mod tests {
             loaded_metadata.recipients.len()
         );
         assert!(MetadataStorage::is_valid_metadata(&metadata_path));
+    }
+
+    #[test]
+    fn test_manifest_version_increment() {
+        let device_info = MachineDeviceInfo {
+            machine_id: "test-machine".to_string(),
+            machine_label: "test".to_string(),
+            created_at: Utc::now(),
+            app_version: "2.0.0".to_string(),
+        };
+
+        let mut metadata = VaultMetadata::new(
+            ProtectionMode::PassphraseOnly,
+            vec![],
+            0,
+            0,
+            "test".to_string(),
+        );
+
+        assert_eq!(metadata.manifest_version, 1);
+
+        metadata.increment_version(&device_info);
+        assert_eq!(metadata.manifest_version, 2);
+        assert_eq!(metadata.last_encrypted_by.machine_id, "test-machine");
+    }
+
+    #[test]
+    fn test_version_comparison() {
+        let device_info = MachineDeviceInfo {
+            machine_id: "test-machine".to_string(),
+            machine_label: "test".to_string(),
+            created_at: Utc::now(),
+            app_version: "2.0.0".to_string(),
+        };
+
+        let metadata_v1 = VaultMetadata::new(
+            ProtectionMode::PassphraseOnly,
+            vec![],
+            0,
+            0,
+            "test".to_string(),
+        );
+
+        let mut metadata_v2 = metadata_v1.clone();
+        metadata_v2.increment_version(&device_info);
+
+        // v2 should be newer than v1
+        let (is_newer, is_same) = metadata_v2.compare_version(&metadata_v1);
+        assert!(is_newer);
+        assert!(!is_same);
+
+        // v1 should not be newer than v2
+        let (is_newer, _) = metadata_v1.compare_version(&metadata_v2);
+        assert!(!is_newer);
     }
 }

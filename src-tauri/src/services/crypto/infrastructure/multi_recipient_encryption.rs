@@ -112,7 +112,7 @@ impl MultiRecipientCrypto {
     /// Create age recipient from recipient info
     fn create_age_recipient(recipient_info: &RecipientInfo) -> Result<Box<dyn Recipient + Send>> {
         match &recipient_info.recipient_type {
-            RecipientType::Passphrase => {
+            RecipientType::Passphrase { .. } => {
                 // For passphrase recipients, we use the public key directly
                 let recipient = age::x25519::Recipient::from_str(&recipient_info.public_key)
                     .map_err(|e| {
@@ -276,7 +276,9 @@ impl MultiRecipientCrypto {
         let recipient = metadata
             .recipients
             .iter()
-            .find(|r| matches!(r.recipient_type, RecipientType::Passphrase) && r.label == key_label)
+            .find(|r| {
+                matches!(r.recipient_type, RecipientType::Passphrase { .. }) && r.label == key_label
+            })
             .ok_or_else(|| {
                 CryptoError::DecryptionFailed(format!(
                     "Passphrase recipient '{key_label}' not found"
@@ -435,8 +437,11 @@ mod tests {
 
     #[test]
     fn test_available_methods_detection() {
-        let passphrase_recipient =
-            RecipientInfo::new_passphrase("age1test123".to_string(), "test-key".to_string());
+        let passphrase_recipient = RecipientInfo::new_passphrase(
+            "age1test123".to_string(),
+            "test-key".to_string(),
+            "test-key.agekey.enc".to_string(),
+        );
 
         let metadata = VaultMetadata::new(
             ProtectionMode::PassphraseOnly,
@@ -453,8 +458,11 @@ mod tests {
 
     #[test]
     fn test_method_selection() {
-        let passphrase_recipient =
-            RecipientInfo::new_passphrase("age1test123".to_string(), "test-key".to_string());
+        let passphrase_recipient = RecipientInfo::new_passphrase(
+            "age1test123".to_string(),
+            "test-key".to_string(),
+            "test-key.agekey.enc".to_string(),
+        );
 
         let metadata = VaultMetadata::new(
             ProtectionMode::PassphraseOnly,

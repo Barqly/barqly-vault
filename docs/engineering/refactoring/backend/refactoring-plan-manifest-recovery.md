@@ -32,31 +32,39 @@
   - [x] Length limits
   - [x] Cross-platform compatibility
 
-### Milestone 2: Manifest Schema Updates
-- [ ] Update `VaultMetadata` struct in `metadata.rs`
-  - [ ] Add `schema: String` field
-  - [ ] Add `label: String` field (display name)
-  - [ ] Add `sanitized_name: String` field
-  - [ ] Add `version: u32` field
-  - [ ] Add `last_encrypted_at: DateTime<Utc>` field
-  - [ ] Add `last_encrypted_by` struct with machine_id and machine_label
-  - [ ] Add `selection_type: SelectionType` enum (folder | files)
-  - [ ] Add `base_path: Option<String>` field
-  - [ ] Add optional `integrity` struct for hashes
-- [ ] Update `RecipientInfo` struct
-  - [ ] Verify piv_slot exists for YubiKey
-  - [ ] Verify identity_tag exists for YubiKey
-  - [ ] Verify firmware_version exists for YubiKey
-  - [ ] Add created_at timestamp
-  - [ ] Ensure structure matches registry exactly
-- [ ] Add manifest versioning logic
-  - [ ] Increment version on each encryption
-  - [ ] Initialize version = 1 for new vaults
-  - [ ] Add version comparison helpers
-- [ ] Add serialization/deserialization tests
-  - [ ] Schema version validation
-  - [ ] Backward compatibility checks
-  - [ ] Forward compatibility warnings
+### Milestone 2: Manifest Schema Updates ✅ COMPLETE
+- [x] Update `VaultMetadata` struct in `metadata.rs`
+  - [x] Add `schema: String` field
+  - [x] Add `label: String` field (display name)
+  - [x] Add `sanitized_name: String` field
+  - [x] Add `manifest_version: u32` field
+  - [x] Add `last_encrypted_at: DateTime<Utc>` field
+  - [x] Add `last_encrypted_by` struct with machine_id and machine_label
+  - [x] Add `selection_type: SelectionType` enum (folder | files)
+  - [x] Add `base_path: Option<String>` field
+  - [x] Add `VaultFileEntry` struct for file listings
+  - [x] Add `files: Vec<VaultFileEntry>` field
+  - [x] Add optional `integrity` struct for hashes
+  - [x] Preserve legacy `version: String` field for compatibility
+- [x] Update `RecipientInfo` struct
+  - [x] Add `key_filename` to Passphrase variant
+  - [x] Add `piv_slot` to YubiKey variant
+  - [x] Add `identity_tag` to YubiKey variant
+  - [x] Add `firmware_version` to YubiKey variant
+  - [x] Verify created_at timestamp exists
+  - [x] Structure matches registry KeyEntry exactly
+- [x] Add manifest versioning logic
+  - [x] `increment_version()` method
+  - [x] `compare_version()` helper
+  - [x] Initialize version = 1 for new vaults
+  - [x] `new_r2()` constructor with all fields
+  - [x] Legacy `new()` preserved for backward compatibility
+- [x] Add serialization/deserialization tests
+  - [x] Version increment test
+  - [x] Version comparison test
+  - [x] Schema validation test
+  - [x] Backward compatibility (legacy new() works)
+  - [x] All existing tests updated and passing
 
 ### Milestone 3: Manifest Storage Location Migration
 - [ ] Create new vaults directory structure
