@@ -49,13 +49,15 @@ impl CryptoManager {
             .map_err(|e| CryptoError::InvalidInput(format!("Vault not found: {}", e)))?;
 
         // Convert to VaultBundleEncryptionInput
-        // TODO: Detect selection_type and base_path from input
+        // Detect if single folder or multiple files
+        let (selection_type, base_path) = Self::detect_selection_type(&input.in_file_paths);
+
         let vault_input = VaultBundleEncryptionInput {
             vault_id: input.vault_id.clone(),
             vault_name: vault.name.clone(),
             file_paths: input.in_file_paths.clone(),
-            selection_type: SelectionType::Files,
-            base_path: None,
+            selection_type,
+            base_path,
         };
 
         // Use VaultBundleEncryptionService
@@ -69,11 +71,28 @@ impl CryptoManager {
 
         // Convert back to expected response
         Ok(EncryptFilesMultiResponse {
-            encrypted_file_path: result.encrypted_file_path,
+            encrypted_file_path: result.encrypted_file_path.clone(),
             manifest_file_path: result.manifest_path,
-            file_exists_warning: false, // TODO: Check if file exists
+            file_exists_warning: std::path::Path::new(&result.encrypted_file_path).exists(),
             keys_used: result.keys_used,
         })
+    }
+
+    /// Detect selection type from file paths
+    ///
+    /// Returns: (SelectionType, base_path)
+    fn detect_selection_type(file_paths: &[String]) -> (SelectionType, Option<String>) {
+        if file_paths.len() == 1 {
+            let path = std::path::Path::new(&file_paths[0]);
+            if path.is_dir() {
+                // Single folder selected
+                let base_path = path.file_name().map(|n| n.to_string_lossy().to_string());
+                return (SelectionType::Folder, base_path);
+            }
+        }
+
+        // Multiple files or single file
+        (SelectionType::Files, None)
     }
 
     /// Decrypt data using DecryptionOrchestrationService

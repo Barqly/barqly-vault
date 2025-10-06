@@ -5,7 +5,7 @@
 use crate::prelude::*;
 use crate::services::shared::infrastructure::io::atomic_write;
 use crate::services::shared::infrastructure::path_management::{
-    get_vault_manifest_path, get_vaults_directory, validate_vault_name,
+    get_vault_manifest_path, get_vaults_directory, sanitize_vault_name,
 };
 use crate::services::vault::domain::models::Vault;
 use std::path::PathBuf;
@@ -23,9 +23,9 @@ fn get_vaults_dir() -> Result<PathBuf, Box<dyn std::error::Error + Send + Sync>>
 fn get_vault_path_by_name(
     vault_name: &str,
 ) -> Result<PathBuf, Box<dyn std::error::Error + Send + Sync>> {
-    // Validate vault name first
-    validate_vault_name(vault_name)?;
-    let path = get_vault_manifest_path(vault_name)?;
+    // Sanitize vault name
+    let sanitized = sanitize_vault_name(vault_name)?;
+    let path = get_vault_manifest_path(&sanitized.sanitized)?;
     Ok(path)
 }
 

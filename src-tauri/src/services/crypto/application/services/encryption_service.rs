@@ -3,9 +3,7 @@ use super::{
 };
 use crate::constants::*;
 use crate::prelude::*;
-use crate::services::crypto::application::dtos::{
-    EncryptDataInput, EncryptFilesMultiInput, EncryptFilesMultiResponse,
-};
+use crate::services::crypto::application::dtos::EncryptDataInput;
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use std::path::PathBuf;
 
@@ -125,20 +123,6 @@ impl EncryptionService {
         );
 
         Ok(encrypted_path)
-    }
-
-    /// Encrypt files with multiple keys - delegates to vault bundle encryption service
-    ///
-    /// TODO(MILESTONE-7): Wire up VaultBundleEncryptionService from vault domain
-    /// Current: Placeholder returning error
-    /// Target: Use services::vault::application::services::VaultBundleEncryptionService
-    pub async fn encrypt_files_multi(
-        &self,
-        _input: EncryptFilesMultiInput,
-    ) -> CryptoResult<EncryptFilesMultiResponse> {
-        Err(CryptoError::ConfigurationError(
-            "Multi-key encryption being migrated to VaultBundleEncryptionService".to_string(),
-        ))
     }
 }
 

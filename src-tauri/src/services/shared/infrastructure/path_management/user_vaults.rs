@@ -280,56 +280,6 @@ fn check_reserved_names(name: &str) -> Result<(), StorageError> {
     Ok(())
 }
 
-/// Validate a vault name for filesystem compatibility (legacy)
-///
-/// This function is kept for backward compatibility. New code should use
-/// `sanitize_vault_name()` instead.
-///
-/// # Rules
-/// - Must not be empty
-/// - Max 255 characters
-/// - Only alphanumeric, spaces, hyphens, and underscores
-/// - No leading/trailing spaces
-///
-/// # Arguments
-/// * `name` - The vault name to validate
-///
-/// # Returns
-/// - `Ok(())` if the name is valid
-/// - `Err(StorageError)` with details if invalid
-pub fn validate_vault_name(name: &str) -> Result<(), StorageError> {
-    let trimmed = name.trim();
-
-    if trimmed.is_empty() {
-        return Err(StorageError::InvalidVaultName(
-            "Vault name cannot be empty".to_string(),
-        ));
-    }
-
-    if trimmed.len() > 255 {
-        return Err(StorageError::InvalidVaultName(format!(
-            "Vault name too long (max 255 characters, got {})",
-            trimmed.len()
-        )));
-    }
-
-    // Check for valid characters: alphanumeric, spaces, hyphens, underscores
-    let valid_chars = trimmed
-        .chars()
-        .all(|c| c.is_alphanumeric() || c == ' ' || c == '-' || c == '_');
-
-    if !valid_chars {
-        return Err(StorageError::InvalidVaultName(
-            "Vault name can only contain letters, numbers, spaces, hyphens, and underscores"
-                .to_string(),
-        ));
-    }
-
-    check_reserved_names(trimmed)?;
-
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -459,43 +409,5 @@ mod tests {
         // Family photos
         let result = sanitize_vault_name("Family Photos 📸 Summer").unwrap();
         assert_eq!(result.sanitized, "Family-Photos-Summer");
-    }
-
-    // ===== Legacy Validation Tests =====
-
-    #[test]
-    fn test_validate_vault_name() {
-        // Valid names
-        assert!(validate_vault_name("Family Documents").is_ok());
-        assert!(validate_vault_name("Bitcoin-Keys-2024").is_ok());
-        assert!(validate_vault_name("Tax_Records_2024").is_ok());
-        assert!(validate_vault_name("Project 123").is_ok());
-
-        // Invalid names
-        assert!(validate_vault_name("").is_err());
-        assert!(validate_vault_name("   ").is_err());
-        assert!(validate_vault_name("Family/Documents").is_err());
-        assert!(validate_vault_name("Family\\Documents").is_err());
-        assert!(validate_vault_name("Family:Documents").is_err());
-        assert!(validate_vault_name("Family*Documents").is_err());
-
-        // Too long name
-        let long_name = "a".repeat(256);
-        assert!(validate_vault_name(&long_name).is_err());
-
-        // Trimmed spaces
-        assert!(validate_vault_name("  Family Documents  ").is_ok());
-        assert!(validate_vault_name("Family Documents").is_ok());
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_windows_reserved_names_legacy() {
-        assert!(validate_vault_name("CON").is_err());
-        assert!(validate_vault_name("con").is_err());
-        assert!(validate_vault_name("PRN").is_err());
-        assert!(validate_vault_name("AUX").is_err());
-        assert!(validate_vault_name("COM1").is_err());
-        assert!(validate_vault_name("LPT1").is_err());
     }
 }
