@@ -29,24 +29,6 @@ fn get_vault_path_by_name(
     Ok(path)
 }
 
-/// Get the path for a specific vault file by ID (for backwards compatibility)
-/// This will look up the vault to find its name
-#[allow(dead_code)]
-fn get_vault_path(vault_id: &str) -> Result<PathBuf, Box<dyn std::error::Error + Send + Sync>> {
-    // For backwards compatibility, try to find existing vault by ID
-    let vaults_dir = get_vaults_dir()?;
-
-    // First check if there's a legacy vault with this ID
-    let legacy_path = vaults_dir.join(format!("{vault_id}.json"));
-    if legacy_path.exists() {
-        return Ok(legacy_path);
-    }
-
-    // Otherwise, we need to find the vault by its ID to get its name
-    // This is a temporary workaround - eventually all calls should use vault name
-    Err(format!("Vault with ID {vault_id} not found").into())
-}
-
 /// Save a vault to disk
 /// Now saves to ~/Documents/Barqly-Vaults/ using the vault name as the filename
 pub async fn save_vault(vault: &Vault) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -76,15 +58,13 @@ pub async fn load_vault_by_name(
     Ok(vault)
 }
 
-/// Load a vault from disk by ID (for backwards compatibility)
+/// Load a vault from disk by ID
 pub async fn load_vault(vault_id: &str) -> Result<Vault, Box<dyn std::error::Error + Send + Sync>> {
-    // First, try to find the vault in the list to get its name
     let vaults = list_vaults().await?;
     if let Some(vault) = vaults.iter().find(|v| v.id == vault_id) {
         return load_vault_by_name(&vault.name).await;
     }
 
-    // If not found, return error
     Err(format!("Vault with ID {vault_id} not found").into())
 }
 
@@ -102,7 +82,7 @@ pub async fn vault_exists_by_name(vault_name: &str) -> bool {
     }
 }
 
-/// Check if a vault exists by ID (for backwards compatibility)
+/// Check if a vault exists by ID
 pub async fn vault_exists(vault_id: &str) -> bool {
     // Try to find vault in list
     if let Ok(vaults) = list_vaults().await {
@@ -136,7 +116,7 @@ pub async fn delete_vault_by_name(
     Ok(())
 }
 
-/// Delete a vault by ID (for backwards compatibility)
+/// Delete a vault by ID
 pub async fn delete_vault(vault_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Find the vault to get its name
     let vaults = list_vaults().await?;
@@ -182,18 +162,16 @@ pub async fn list_vaults() -> Result<Vec<Vault>, Box<dyn std::error::Error + Sen
                     }
                 }
             }
-            // Also check for legacy .json files during transition period
+            // Also check for .json vault files
             else if path.extension().and_then(|s| s.to_str()) == Some("json")
                 && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
             {
-                // Skip temp files
-                if !stem.ends_with(".tmp") {
-                    // Try to load as legacy vault
-                    if let Ok(content) = async_fs::read_to_string(&path).await
-                        && let Ok(vault) = serde_json::from_str::<Vault>(&content)
-                    {
-                        vaults.push(vault);
-                    }
+                // Skip temp files, load vault
+                if !stem.ends_with(".tmp")
+                    && let Ok(content) = async_fs::read_to_string(&path).await
+                    && let Ok(vault) = serde_json::from_str::<Vault>(&content)
+                {
+                    vaults.push(vault);
                 }
             }
         }
