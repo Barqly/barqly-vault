@@ -7,6 +7,7 @@ pub enum VaultError {
     KeyLimitExceeded(String),
     KeyNotFound(String),
     InvalidOperation(String),
+    OperationFailed(String),
 }
 
 impl std::fmt::Display for VaultError {
@@ -19,6 +20,7 @@ impl std::fmt::Display for VaultError {
             Self::KeyLimitExceeded(vault) => write!(f, "Key limit exceeded for vault '{}'", vault),
             Self::KeyNotFound(key) => write!(f, "Key '{}' not found in vault", key),
             Self::InvalidOperation(msg) => write!(f, "Invalid operation: {}", msg),
+            Self::OperationFailed(msg) => write!(f, "Operation failed: {}", msg),
         }
     }
 }

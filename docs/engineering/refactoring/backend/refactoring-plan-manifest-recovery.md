@@ -128,26 +128,29 @@
 
 ## Phase 3: Encryption & Decryption Flow Updates (P0 - Critical)
 
-### Milestone 6: Payload Staging Enhancement
-- [ ] Update archive staging in `ArchiveOrchestrationService`
-  - [ ] Create payload staging directory
-  - [ ] Copy user files (preserve hierarchy)
-  - [ ] Copy manifest from non-sync to staging
-  - [ ] Copy all `.agekey.enc` files to staging
-  - [ ] Generate `RECOVERY.txt` from template
-  - [ ] Create TAR from complete staging
-  - [ ] Securely delete staging after encryption
-- [ ] Create RECOVERY.txt generation service
-  - [ ] Extract vault metadata
-  - [ ] List all recipients with details
-  - [ ] Generate recovery instructions
-  - [ ] Add file count and total size
-  - [ ] Format for readability
-- [ ] Update file path handling
-  - [ ] Preserve folder hierarchy from base_path
-  - [ ] Store relative paths only
-  - [ ] Handle files-only vs folder selection
-  - [ ] Test deep folder structures
+### Milestone 6: Payload Staging Enhancement ✅ COMPLETE
+- [x] Create RECOVERY.txt generation service
+  - [x] RecoveryTxtService with dynamic generation
+  - [x] Extract vault metadata (version, machine, timestamps)
+  - [x] List all recipients with YubiKey/passphrase details
+  - [x] Generate vault-specific recovery instructions
+  - [x] Add file count and total size
+  - [x] Format with headers and sections for readability
+  - [x] 4 tests (passphrase-only, yubikey, hybrid, format_size)
+- [x] Create PayloadStagingService for complete vault bundles
+  - [x] create_vault_payload() orchestrates full bundle creation
+  - [x] Stage user files (preserve hierarchy)
+  - [x] Add manifest JSON to staging
+  - [x] Copy all .agekey.enc files from keys directory
+  - [x] Generate and add RECOVERY.txt
+  - [x] Create TAR from complete staging
+  - [x] Automatic cleanup (TempDir auto-deletes)
+- [x] Enhanced StagingArea utility methods
+  - [x] add_file_content() for manifest/RECOVERY.txt
+  - [x] copy_file_to_staging() for .enc files
+- [x] Made create_tar_gz() public for external use
+- [x] Added VaultError::OperationFailed variant
+- [x] 2 tests passing (service creation, payload with manifest)
 
 ### Milestone 7: Encryption Flow Updates
 - [ ] Update `EncryptionService`

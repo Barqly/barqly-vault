@@ -218,6 +218,50 @@ impl StagingArea {
         })
     }
 
+    /// Add a file to staging with specific content (for manifest, RECOVERY.txt, etc.)
+    ///
+    /// # Arguments
+    /// * `filename` - Name of the file to create in staging
+    /// * `content` - File content as bytes
+    pub fn add_file_content(&mut self, filename: &str, content: &[u8]) -> Result<PathBuf> {
+        let dest_path = self.staging_path.join(filename);
+
+        fs::write(&dest_path, content).map_err(|e| FileOpsError::IoError {
+            message: format!("Failed to write file to staging: {}", e),
+            source: e,
+        })?;
+
+        info!("Added file to staging: {}", filename);
+        Ok(dest_path)
+    }
+
+    /// Copy an existing file into staging
+    ///
+    /// # Arguments
+    /// * `source` - Source file path
+    /// * `dest_name` - Destination filename in staging
+    pub fn copy_file_to_staging(&mut self, source: &Path, dest_name: &str) -> Result<PathBuf> {
+        if !source.exists() {
+            return Err(FileOpsError::FileNotFound {
+                path: source.to_path_buf(),
+            });
+        }
+
+        let dest_path = self.staging_path.join(dest_name);
+
+        fs::copy(source, &dest_path).map_err(|e| FileOpsError::IoError {
+            message: format!("Failed to copy file to staging: {}", e),
+            source: e,
+        })?;
+
+        info!(
+            "Copied file to staging: {} -> {}",
+            source.display(),
+            dest_name
+        );
+        Ok(dest_path)
+    }
+
     /// Clean up the staging area
     pub fn cleanup(&mut self) -> Result<()> {
         if self.cleaned {

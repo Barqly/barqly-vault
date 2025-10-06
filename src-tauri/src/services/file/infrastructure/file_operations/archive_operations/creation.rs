@@ -166,7 +166,7 @@ pub fn create_archive_with_file_info(
 }
 
 /// Create TAR.GZ archive from staging area
-pub(super) fn create_tar_gz(
+pub fn create_tar_gz(
     staging: &StagingArea,
     output_path: &Path,
     config: &FileOpsConfig,
