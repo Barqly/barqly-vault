@@ -110,26 +110,31 @@ pub async fn get_key_menu_data(
         }
     };
 
+    use crate::services::vault::infrastructure::persistence::metadata::RecipientType;
+
     let mut key_menu_items = Vec::new();
     let mut yubikey_index = 1u8; // YubiKeys start at display index 1
 
-    // Process keys in vault manifest order
-    for key_id in &vault.keys {
-        if let Some(registry_entry) = registry.get_key(key_id) {
-            match registry_entry {
-                KeyEntry::Passphrase {
+    // Process recipients in vault metadata
+    for recipient in &vault.recipients {
+        match &recipient.recipient_type {
+            RecipientType::Passphrase { key_filename } => {
+                // Try to find key in registry by filename pattern (remove .agekey.enc)
+                let key_id = key_filename.trim_end_matches(".agekey.enc");
+
+                if let Some(KeyEntry::Passphrase {
                     label,
                     created_at,
                     public_key,
                     key_filename,
                     ..
-                } => {
+                }) = registry.get_key(key_id) {
                     // Passphrase always gets display index 0
                     key_menu_items.push(KeyMenuInfo {
                         display_index: 0,
                         key_type: "passphrase".to_string(),
                         label: label.clone(),
-                        internal_id: key_id.clone(),
+                        internal_id: key_id.to_string(),
                         state: "active".to_string(), // Passphrase keys are always active when in vault
                         created_at: created_at.to_rfc3339(),
                         metadata: KeyMenuMetadata::Passphrase {
@@ -138,24 +143,24 @@ pub async fn get_key_menu_data(
                         },
                     });
                 }
-                KeyEntry::Yubikey {
+            }
+            RecipientType::YubiKey { serial, slot, piv_slot, identity_tag, firmware_version, .. } => {
+                // Try to find YubiKey in registry by serial and slot
+                let key_id = format!("yubikey-{}-slot{}", serial, slot);
+
+                if let Some(KeyEntry::Yubikey {
                     label,
                     created_at,
-                    serial,
-                    slot,
-                    piv_slot,
                     recipient,
-                    identity_tag,
-                    firmware_version,
                     ..
-                } => {
+                }) = registry.get_key(&key_id) {
                     // YubiKeys get sequential display indexes 1, 2, 3
                     if yubikey_index <= 3 {
                         key_menu_items.push(KeyMenuInfo {
                             display_index: yubikey_index,
                             key_type: "yubikey".to_string(),
-                            label: label.clone(), // Use actual label from registry!
-                            internal_id: key_id.clone(),
+                            label: label.clone(),
+                            internal_id: key_id.to_string(),
                             state: yubikey_states
                                 .get(serial)
                                 .unwrap_or(&"registered".to_string())
@@ -172,14 +177,32 @@ pub async fn get_key_menu_data(
                         });
                         yubikey_index += 1;
                     }
+                } else {
+                    // If not found by key_id, create entry from recipient data
+                    if yubikey_index <= 3 {
+                        key_menu_items.push(KeyMenuInfo {
+                            display_index: yubikey_index,
+                            key_type: "yubikey".to_string(),
+                            label: recipient.label.clone(),
+                            internal_id: format!("yubikey-{}-slot{}", serial, slot),
+                            state: yubikey_states
+                                .get(serial)
+                                .unwrap_or(&"registered".to_string())
+                                .clone(),
+                            created_at: recipient.created_at.to_rfc3339(),
+                            metadata: KeyMenuMetadata::YubiKey {
+                                serial: serial.clone(),
+                                slot: *slot,
+                                piv_slot: *piv_slot,
+                                recipient: recipient.public_key.clone(),
+                                identity_tag: identity_tag.clone(),
+                                firmware_version: firmware_version.clone().unwrap_or_default(),
+                            },
+                        });
+                        yubikey_index += 1;
+                    }
                 }
             }
-        } else {
-            warn!(
-                key_id = %key_id,
-                vault_id = %input.vault_id,
-                "Key ID in vault not found in registry - skipping"
-            );
         }
     }
 

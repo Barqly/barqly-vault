@@ -5,6 +5,7 @@
 
 use crate::services::key_management::yubikey::domain::models::ProtectionMode;
 use crate::services::shared::infrastructure::DeviceInfo as MachineDeviceInfo;
+use crate::services::vault::domain::models::VaultSummary;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -15,8 +16,9 @@ pub struct VaultMetadata {
     // R2 Schema version tracking
     pub schema: String, // "barqly.vault.manifest/1"
     pub vault_id: String,
-    pub label: String,          // Display name (user-entered)
-    pub sanitized_name: String, // Filesystem-safe name
+    pub label: String,               // Display name (user-entered)
+    pub description: Option<String>, // Optional vault description
+    pub sanitized_name: String,      // Filesystem-safe name
 
     // Version control for conflict resolution
     pub manifest_version: u32, // Increments on each encryption
@@ -113,6 +115,7 @@ impl VaultMetadata {
     pub fn new(
         vault_id: String,
         label: String,
+        description: Option<String>,
         sanitized_name: String,
         device_info: &MachineDeviceInfo,
         selection_type: SelectionType,
@@ -130,6 +133,7 @@ impl VaultMetadata {
             schema: "barqly.vault.manifest/1".to_string(),
             vault_id,
             label,
+            description,
             sanitized_name,
             manifest_version: 1,
             created_at: now,
@@ -302,6 +306,50 @@ impl VaultMetadata {
 
         Ok(())
     }
+
+    /// Convert to VaultSummary for UI display
+    pub fn to_summary(&self) -> VaultSummary {
+        VaultSummary {
+            id: self.vault_id.clone(),
+            name: self.label.clone(),
+            description: self.description.clone(),
+            created_at: self.created_at,
+            key_count: self.recipients.len(),
+        }
+    }
+
+    /// Get key IDs from recipients
+    pub fn get_key_ids(&self) -> Vec<String> {
+        self.recipients
+            .iter()
+            .map(|r| match &r.recipient_type {
+                RecipientType::Passphrase { key_filename } => key_filename.clone(),
+                RecipientType::YubiKey {
+                    serial,
+                    slot,
+                    identity_tag,
+                    ..
+                } => {
+                    // Generate key ID from identity tag or fallback to serial-slot
+                    if !identity_tag.is_empty() {
+                        format!("keyref_{}", &identity_tag[identity_tag.len().saturating_sub(15)..])
+                    } else {
+                        format!("yubikey-{}-slot{}", serial, slot)
+                    }
+                }
+            })
+            .collect()
+    }
+
+    /// Check if vault has any keys
+    pub fn has_keys(&self) -> bool {
+        !self.recipients.is_empty()
+    }
+
+    /// Get the number of keys in this vault
+    pub fn key_count(&self) -> usize {
+        self.recipients.len()
+    }
 }
 
 /// Metadata validation errors
@@ -456,6 +504,7 @@ mod tests {
         VaultMetadata::new(
             vault_id.to_string(),
             vault_name.to_string(),
+            Some(format!("Test vault: {}", vault_name)),
             vault_name.replace(' ', "-"),
             &device_info,
             SelectionType::Files,

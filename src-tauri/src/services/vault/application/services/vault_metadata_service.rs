@@ -31,10 +31,12 @@ impl VaultMetadataService {
     ///
     /// # Arguments
     /// * `vault_name` - Sanitized vault name (filesystem-safe)
+    /// * `description` - Optional vault description
     pub fn load_or_create(
         &self,
         vault_id: &str,
         vault_name: &str,
+        description: Option<String>,
         device_info: &DeviceInfo,
     ) -> Result<VaultMetadata, StorageError> {
         let manifest_path = get_vault_manifest_path(vault_name)?;
@@ -43,7 +45,7 @@ impl VaultMetadataService {
             self.load_manifest(&manifest_path)
         } else {
             info!(vault_name, "Creating new manifest");
-            self.create_new_manifest(vault_id, vault_name, device_info)
+            self.create_new_manifest(vault_id, vault_name, description, device_info)
         }
     }
 
@@ -81,6 +83,7 @@ impl VaultMetadataService {
         &self,
         vault_id: &str,
         vault_name: &str,
+        description: Option<String>,
         device_info: &DeviceInfo,
     ) -> Result<VaultMetadata, StorageError> {
         let sanitized = sanitize_vault_name(vault_name)?;
@@ -88,6 +91,7 @@ impl VaultMetadataService {
         Ok(VaultMetadata::new(
             vault_id.to_string(),
             vault_name.to_string(),
+            description,
             sanitized.sanitized,
             device_info,
             SelectionType::Files,
@@ -109,6 +113,7 @@ impl VaultMetadataService {
         &self,
         vault_id: &str,
         vault_name: &str,
+        description: Option<String>,
         vault_keys: &[String],
         device_info: &DeviceInfo,
         file_entries: Vec<VaultFileEntry>,
@@ -137,6 +142,7 @@ impl VaultMetadataService {
         Ok(VaultMetadata::new(
             vault_id.to_string(),
             vault_name.to_string(),
+            description,
             sanitized.sanitized,
             device_info,
             selection_type,

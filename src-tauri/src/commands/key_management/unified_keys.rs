@@ -368,8 +368,8 @@ pub async fn update_key_label(
         })
     })?;
 
-    // Update vault timestamp
-    let mut vault = vault::load_vault(&input.vault_id).await.map_err(|e| {
+    // Update vault metadata version
+    let mut metadata = vault::load_vault(&input.vault_id).await.map_err(|e| {
         Box::new(CommandError {
             code: ErrorCode::VaultNotFound,
             message: format!("Vault not found: {}", e),
@@ -381,8 +381,22 @@ pub async fn update_key_label(
         })
     })?;
 
-    vault.updated_at = chrono::Utc::now();
-    vault::save_vault(&vault).await.map_err(|e| {
+    // Use DeviceInfo to update version tracking
+    use crate::services::shared::infrastructure::DeviceInfo;
+    let device_info = DeviceInfo::load_or_create("2.0.0").map_err(|e| {
+        Box::new(CommandError {
+            code: ErrorCode::InternalError,
+            message: format!("Failed to load device info: {}", e),
+            details: None,
+            recovery_guidance: None,
+            user_actionable: false,
+            trace_id: None,
+            span_id: None,
+        })
+    })?;
+
+    metadata.increment_version(&device_info);
+    vault::save_vault(&metadata).await.map_err(|e| {
         Box::new(CommandError {
             code: ErrorCode::InternalError,
             message: format!("Failed to save vault: {}", e),

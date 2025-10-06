@@ -393,6 +393,7 @@ mod tests {
         VaultMetadata::new(
             "test-vault-001".to_string(),
             "Test Vault".to_string(),
+            None,
             "Test-Vault".to_string(),
             device_info,
             SelectionType::Files,

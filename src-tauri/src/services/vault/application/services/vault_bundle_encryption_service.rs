@@ -77,7 +77,7 @@ impl VaultBundleEncryptionService {
             .await
             .map_err(|e| VaultError::NotFound(format!("Vault '{}': {}", input.vault_id, e)))?;
 
-        if vault.keys.is_empty() {
+        if vault.recipients.is_empty() {
             return Err(VaultError::InvalidOperation(
                 "Vault has no keys for encryption".to_string(),
             ));
@@ -92,7 +92,8 @@ impl VaultBundleEncryptionService {
             .build_from_vault_and_registry(
                 &input.vault_id,
                 &input.vault_name,
-                &vault.keys,
+                vault.description.clone(),
+                &vault.get_key_ids(),
                 &device_info,
                 file_entries,
                 input.selection_type,
@@ -101,10 +102,12 @@ impl VaultBundleEncryptionService {
             .map_err(|e| VaultError::OperationFailed(format!("Failed to build manifest: {}", e)))?;
 
         // If manifest exists, increment version; else it's v1 (new)
-        if let Ok(existing) =
-            self.metadata_service
-                .load_or_create(&input.vault_id, &input.vault_name, &device_info)
-            && existing.manifest_version > 0
+        if let Ok(existing) = self.metadata_service.load_or_create(
+            &input.vault_id,
+            &input.vault_name,
+            vault.description.clone(),
+            &device_info,
+        ) && existing.manifest_version > 0
         {
             vault_metadata.manifest_version = existing.manifest_version;
             vault_metadata.increment_version(&device_info);
@@ -138,7 +141,7 @@ impl VaultBundleEncryptionService {
             .map_err(|e| VaultError::OperationFailed(format!("Failed to read archive: {}", e)))?;
 
         // Step 8: Collect public keys from vault
-        let (public_keys, keys_used) = self.collect_vault_public_keys(&vault.keys)?;
+        let (public_keys, keys_used) = self.collect_vault_public_keys(&vault.get_key_ids())?;
 
         if public_keys.is_empty() {
             return Err(VaultError::InvalidOperation(

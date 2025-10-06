@@ -206,6 +206,7 @@ mod tests {
         let metadata = VaultMetadata::new(
             "test-vault".to_string(),
             "Test Vault".to_string(),
+            None, // No description
             "Test-Vault".to_string(),
             &device_info,
             SelectionType::Files,

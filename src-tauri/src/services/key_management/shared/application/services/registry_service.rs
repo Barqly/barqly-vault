@@ -199,34 +199,39 @@ impl KeyRegistryService {
     // NEW LIFECYCLE OPERATIONS
     //
 
-    /// Detach a key from a vault (removes from vault.keys array, keeps key in registry)
+    /// Detach a key from a vault (removes recipient from metadata, keeps key in registry)
     #[instrument(skip(self))]
     pub async fn detach_key_from_vault(&self, key_id: &str, vault_id: &str) -> Result<()> {
         info!(key_id = %key_id, vault_id = %vault_id, "Detaching key from vault");
 
         // Verify key exists
-        let _key_entry = self.get_key(key_id)?;
+        let key_entry = self.get_key(key_id)?;
 
-        // Load vault
-        let mut vault = vault::load_vault(vault_id).await.map_err(|e| {
+        // Load vault metadata
+        let mut metadata = vault::load_vault(vault_id).await.map_err(|e| {
             error!(vault_id = %vault_id, error = %e, "Failed to load vault");
             KeyManagementError::VaultNotFound(vault_id.to_string())
         })?;
 
-        // Remove key from vault's keys array
-        if let Some(pos) = vault.keys.iter().position(|k| k == key_id) {
-            vault.keys.remove(pos);
-            debug!(key_id = %key_id, vault_id = %vault_id, "Key removed from vault keys array");
+        // Get the label from the key entry
+        let key_label = match &key_entry {
+            crate::services::key_management::shared::KeyEntry::Passphrase { label, .. } => label.clone(),
+            crate::services::key_management::shared::KeyEntry::Yubikey { label, .. } => label.clone(),
+        };
+
+        // Remove recipient by label
+        if metadata.remove_recipient(&key_label).is_some() {
+            debug!(key_id = %key_id, vault_id = %vault_id, "Recipient removed from vault metadata");
         } else {
-            warn!(key_id = %key_id, vault_id = %vault_id, "Key not found in vault");
+            warn!(key_id = %key_id, vault_id = %vault_id, "Recipient not found in vault");
             return Err(KeyManagementError::InvalidOperation(format!(
                 "Key '{}' is not attached to vault '{}'",
                 key_id, vault_id
             )));
         }
 
-        // Save updated vault
-        vault::save_vault(&vault).await.map_err(|e| {
+        // Save updated vault metadata
+        vault::save_vault(&metadata).await.map_err(|e| {
             error!(vault_id = %vault_id, error = %e, "Failed to save vault after detaching key");
             KeyManagementError::StorageError(e.to_string())
         })?;
@@ -240,17 +245,24 @@ impl KeyRegistryService {
     pub async fn is_key_used_by_vaults(&self, key_id: &str) -> Result<Vec<String>> {
         debug!(key_id = %key_id, "Checking vault usage for key");
 
+        // Get key entry to find label
+        let key_entry = self.get_key(key_id)?;
+        let key_label = match &key_entry {
+            crate::services::key_management::shared::KeyEntry::Passphrase { label, .. } => label.clone(),
+            crate::services::key_management::shared::KeyEntry::Yubikey { label, .. } => label.clone(),
+        };
+
         // List all vaults
         let vaults = vault::list_vaults().await.map_err(|e| {
             error!(error = %e, "Failed to list vaults");
             KeyManagementError::StorageError(e.to_string())
         })?;
 
-        // Check each vault for this key
+        // Check each vault for this key (by label in recipients)
         let mut using_vaults = Vec::new();
-        for vault in vaults {
-            if vault.keys.contains(&key_id.to_string()) {
-                using_vaults.push(vault.id.clone());
+        for metadata in vaults {
+            if metadata.recipients.iter().any(|r| r.label == key_label) {
+                using_vaults.push(metadata.vault_id.clone());
             }
         }
 

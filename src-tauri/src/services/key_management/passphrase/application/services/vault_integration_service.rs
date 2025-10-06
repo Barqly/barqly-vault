@@ -1,7 +1,7 @@
 use crate::services::key_management::passphrase::infrastructure::StorageError;
-use crate::services::key_management::shared::KeyRegistry;
 use crate::services::key_management::shared::domain::models::{KeyReference, KeyState, KeyType};
 use crate::services::vault;
+use crate::services::vault::infrastructure::persistence::metadata::{RecipientInfo, RecipientType};
 use chrono::Utc;
 
 pub type Result<T> = std::result::Result<T, VaultIntegrationError>;
@@ -43,22 +43,13 @@ impl VaultIntegrationService {
     }
 
     pub async fn validate_vault_has_passphrase_key(&self, vault_id: &str) -> Result<bool> {
-        let vault = vault::get_vault(vault_id)
+        let metadata = vault::get_vault(vault_id)
             .await
             .map_err(|e| VaultIntegrationError::VaultNotFound(e.to_string()))?;
 
-        let registry =
-            KeyRegistry::load().map_err(|e| StorageError::RegistryLoadFailed(e.to_string()))?;
-
-        let has_passphrase = vault.keys.iter().any(|key_id| {
-            if let Some(entry) = registry.get_key(key_id) {
-                matches!(
-                    entry,
-                    crate::services::key_management::shared::KeyEntry::Passphrase { .. }
-                )
-            } else {
-                false
-            }
+        // Check if any recipient is a passphrase type
+        let has_passphrase = metadata.recipients.iter().any(|recipient| {
+            matches!(recipient.recipient_type, RecipientType::Passphrase { .. })
         });
 
         Ok(has_passphrase)
@@ -69,9 +60,9 @@ impl VaultIntegrationService {
         vault_id: &str,
         key_id: String,
         label: String,
-        _public_key: String,
+        public_key: String,
     ) -> Result<KeyReference> {
-        let mut vault = vault::get_vault(vault_id)
+        let mut metadata = vault::get_vault(vault_id)
             .await
             .map_err(|e| VaultIntegrationError::VaultNotFound(e.to_string()))?;
 
@@ -84,17 +75,22 @@ impl VaultIntegrationService {
             key_type: KeyType::Passphrase {
                 key_id: label.clone(),
             },
-            label,
+            label: label.clone(),
             state: KeyState::Active,
             created_at: Utc::now(),
             last_used: None,
         };
 
-        vault
-            .add_key_id(key_id)
-            .map_err(VaultIntegrationError::VaultOperationFailed)?;
+        // Add as recipient to the metadata
+        let recipient = RecipientInfo::new_passphrase(
+            public_key,
+            label,
+            format!("{}.agekey.enc", key_id), // key filename
+        );
 
-        vault::save_vault(&vault)
+        metadata.add_recipient(recipient);
+
+        vault::save_vault(&metadata)
             .await
             .map_err(|e| VaultIntegrationError::VaultOperationFailed(e.to_string()))?;
 

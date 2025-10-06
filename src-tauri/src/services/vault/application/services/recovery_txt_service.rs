@@ -210,6 +210,7 @@ mod tests {
         let metadata = VaultMetadata::new(
             "vault-001".to_string(),
             "Test Vault".to_string(),
+            None,
             "Test-Vault".to_string(),
             &device_info,
             SelectionType::Files,
@@ -268,6 +269,7 @@ mod tests {
         let metadata = VaultMetadata::new(
             "vault-002".to_string(),
             "Bitcoin Wallet".to_string(),
+            None,
             "Bitcoin-Wallet".to_string(),
             &device_info,
             SelectionType::Folder,
@@ -329,6 +331,7 @@ mod tests {
         let metadata = VaultMetadata::new(
             "vault-003".to_string(),
             "Hybrid Vault".to_string(),
+            None,
             "Hybrid-Vault".to_string(),
             &device_info,
             SelectionType::Files,

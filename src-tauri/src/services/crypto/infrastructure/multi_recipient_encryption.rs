@@ -87,6 +87,7 @@ impl MultiRecipientCrypto {
         let metadata = VaultMetadata::new(
             "temp-vault".to_string(),
             "Temporary Vault".to_string(),
+            None, // No description for temp vault
             "Temporary-Vault".to_string(),
             &device_info,
             SelectionType::Files,
@@ -472,6 +473,7 @@ mod tests {
         VaultMetadata::new(
             "test-vault".to_string(),
             "Test Vault".to_string(),
+            None, // No description
             "Test-Vault".to_string(),
             &device_info,
             SelectionType::Files,

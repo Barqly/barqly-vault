@@ -1,6 +1,7 @@
 use super::services::VaultService;
 use crate::services::vault::domain::VaultResult;
-use crate::services::vault::domain::models::{Vault, VaultSummary};
+use crate::services::vault::domain::models::VaultSummary;
+use crate::services::vault::infrastructure::persistence::metadata::VaultMetadata;
 
 pub struct VaultManager {
     vault_service: VaultService,
@@ -27,8 +28,8 @@ impl VaultManager {
         self.vault_service.list_vaults().await
     }
 
-    /// Get vault by ID
-    pub async fn get_vault(&self, vault_id: &str) -> VaultResult<Vault> {
+    /// Get vault metadata by ID
+    pub async fn get_vault(&self, vault_id: &str) -> VaultResult<VaultMetadata> {
         self.vault_service.get_vault(vault_id).await
     }
 

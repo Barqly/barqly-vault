@@ -231,7 +231,7 @@ impl UnifiedKeyListService {
         // Get passphrase keys for vault
         match self.registry_service.load_registry() {
             Ok(registry) => {
-                for key_id in &vault.keys {
+                for key_id in &vault.get_key_ids() {
                     if let Some(KeyEntry::Passphrase {
                         label,
                         created_at,
@@ -269,7 +269,7 @@ impl UnifiedKeyListService {
                         // Get vault yubikey serials from registry
                         if let Ok(registry) = self.registry_service.load_registry() {
                             let vault_yubikey_serials: HashSet<String> = vault
-                                .keys
+                                .get_key_ids()
                                 .iter()
                                 .filter_map(|key_id| {
                                     if let Some(KeyEntry::Yubikey { serial, .. }) =
@@ -316,7 +316,7 @@ impl UnifiedKeyListService {
         // Get vault and registry to determine which keys are already in vault
         match VaultManager::new().get_vault(&vault_id).await {
             Ok(vault) => {
-                let vault_key_ids: HashSet<String> = vault.keys.iter().cloned().collect();
+                let vault_key_ids: HashSet<String> = vault.get_key_ids().into_iter().collect();
 
                 // Get available passphrase keys (not in vault)
                 match self.registry_service.load_registry() {
@@ -352,7 +352,7 @@ impl UnifiedKeyListService {
                 // Get available YubiKeys (not in vault)
                 // Collect YubiKey serials already in this vault
                 let vault_yubikey_serials: HashSet<String> = vault
-                    .keys
+                    .get_key_ids()
                     .iter()
                     .filter_map(|key_id| {
                         if let Ok(registry) = self.registry_service.load_registry() {

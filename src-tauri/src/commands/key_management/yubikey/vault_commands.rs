@@ -49,7 +49,7 @@ async fn create_yubikey_manager() -> Result<YubiKeyManager, Box<CommandError>> {
 /// Helper to validate vault exists and load it
 async fn load_vault(
     vault_id: &str,
-) -> Result<crate::services::vault::domain::models::Vault, Box<CommandError>> {
+) -> Result<crate::services::vault::infrastructure::persistence::metadata::VaultMetadata, Box<CommandError>> {
     vault::get_vault(vault_id).await.map_err(|e| {
         Box::new(
             CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
@@ -60,7 +60,7 @@ async fn load_vault(
 
 /// Helper to add YubiKey entry to registry and vault
 async fn register_yubikey_in_vault(
-    mut vault: crate::services::vault::domain::models::Vault,
+    mut vault: crate::services::vault::infrastructure::persistence::metadata::VaultMetadata,
     mut registry: KeyRegistry,
     params: RegisterYubiKeyParams,
 ) -> Result<(KeyReference, String), Box<CommandError>> {
@@ -82,13 +82,24 @@ async fn register_yubikey_in_vault(
         )
     })?;
 
-    // Add key ID to vault
-    vault.add_key_id(key_registry_id.clone()).map_err(|e| {
-        Box::new(
-            CommandError::operation(ErrorCode::InvalidInput, e)
-                .with_recovery_guidance("Failed to add key to vault"),
-        )
-    })?;
+    // Add YubiKey recipient to vault metadata
+    use crate::services::vault::infrastructure::persistence::metadata::{RecipientInfo, RecipientType};
+
+    let recipient = RecipientInfo {
+        recipient_type: RecipientType::YubiKey {
+            serial: params.serial.clone(),
+            slot: 1,
+            piv_slot: 82,
+            model: params.device.form_factor.to_string(),
+            identity_tag: params.identity.identity_tag().to_string(),
+            firmware_version: params.device.firmware_version.clone(),
+        },
+        public_key: params.identity.to_recipient().to_string(),
+        label: params.label.clone(),
+        created_at: Utc::now(),
+    };
+
+    vault.add_recipient(recipient);
 
     vault::save_vault(&vault).await.map_err(|e| {
         Box::new(
@@ -114,16 +125,14 @@ async fn register_yubikey_in_vault(
 
 /// Helper to check for duplicate YubiKey in vault
 fn check_duplicate_yubikey_in_vault(
-    vault: &crate::services::vault::domain::models::Vault,
+    vault: &crate::services::vault::infrastructure::persistence::metadata::VaultMetadata,
     registry: &KeyRegistry,
     serial: &str,
 ) -> Result<(), Box<CommandError>> {
-    if vault.keys.iter().any(|key_id| {
-        matches!(
-            registry.get_key(key_id),
-            Some(crate::services::key_management::shared::KeyEntry::Yubikey { serial: existing_serial, .. })
-            if existing_serial == serial
-        )
+    use crate::services::vault::infrastructure::persistence::metadata::RecipientType;
+
+    if vault.recipients.iter().any(|recipient| {
+        matches!(&recipient.recipient_type, RecipientType::YubiKey { serial: existing_serial, .. } if existing_serial == serial)
     }) {
         return Err(Box::new(
             CommandError::operation(

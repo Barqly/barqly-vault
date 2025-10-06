@@ -61,30 +61,37 @@ impl KeyManager {
     >{
         use crate::services::key_management::passphrase::domain::models::passphrase_key_info::PassphraseKeyInfo;
         use crate::services::vault::VaultManager;
+        use crate::services::vault::infrastructure::persistence::metadata::RecipientType;
 
         let vault_manager = VaultManager::new();
-        let vault = vault_manager.get_vault(vault_id).await?;
+        let metadata = vault_manager.get_vault(vault_id).await?;
         let registry = self.registry_service.load_registry()?;
 
         let mut passphrase_keys = Vec::new();
 
-        for key_id in &vault.keys {
-            if let Some(crate::services::key_management::shared::KeyEntry::Passphrase {
-                label,
-                created_at,
-                last_used,
-                public_key,
-                ..
-            }) = registry.get_key(key_id)
-            {
-                passphrase_keys.push(PassphraseKeyInfo {
-                    id: key_id.clone(),
-                    label: label.clone(),
-                    public_key: public_key.clone(),
-                    created_at: *created_at,
-                    last_used: *last_used,
-                    is_available: true,
-                });
+        // Get passphrase recipients from metadata
+        for recipient in &metadata.recipients {
+            if let RecipientType::Passphrase { key_filename } = &recipient.recipient_type {
+                // Try to find key in registry by filename pattern (remove .agekey.enc)
+                let key_id = key_filename.trim_end_matches(".agekey.enc");
+
+                if let Some(crate::services::key_management::shared::KeyEntry::Passphrase {
+                    label,
+                    created_at,
+                    last_used,
+                    public_key,
+                    ..
+                }) = registry.get_key(key_id)
+                {
+                    passphrase_keys.push(PassphraseKeyInfo {
+                        id: key_id.to_string(),
+                        label: label.clone(),
+                        public_key: public_key.clone(),
+                        created_at: *created_at,
+                        last_used: *last_used,
+                        is_available: true,
+                    });
+                }
             }
         }
 
@@ -103,10 +110,16 @@ impl KeyManager {
         use crate::services::vault::VaultManager;
 
         let vault_manager = VaultManager::new();
-        let vault = vault_manager.get_vault(vault_id).await?;
+        let metadata = vault_manager.get_vault(vault_id).await?;
         let registry = self.registry_service.load_registry()?;
 
-        let vault_key_ids: std::collections::HashSet<String> = vault.keys.iter().cloned().collect();
+        // Get labels of all recipients already in vault
+        let vault_key_labels: std::collections::HashSet<String> = metadata
+            .recipients
+            .iter()
+            .map(|r| r.label.clone())
+            .collect();
+
         let mut available_keys = Vec::new();
 
         for (key_id, entry) in registry.keys.iter() {
@@ -117,7 +130,7 @@ impl KeyManager {
                 public_key,
                 ..
             } = entry
-                && !vault_key_ids.contains(key_id)
+                && !vault_key_labels.contains(label)
             {
                 available_keys.push(PassphraseKeyInfo {
                     id: key_id.clone(),

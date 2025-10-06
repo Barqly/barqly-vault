@@ -1,5 +1,5 @@
 use crate::services::vault;
-use crate::services::vault::domain::models::Vault;
+use crate::services::vault::infrastructure::persistence::metadata::VaultMetadata;
 use crate::services::vault::domain::{VaultError, VaultResult};
 
 #[derive(Debug)]
@@ -10,29 +10,29 @@ impl VaultRepository {
         Self
     }
 
-    /// Save vault to storage
-    pub async fn save_vault(&self, vault: &Vault) -> VaultResult<()> {
-        vault::save_vault(vault)
+    /// Save vault metadata to storage
+    pub async fn save_vault(&self, metadata: &VaultMetadata) -> VaultResult<()> {
+        vault::save_vault(metadata)
             .await
             .map_err(|e| VaultError::StorageError(e.to_string()))
     }
 
-    /// Load vault from storage
-    pub async fn get_vault(&self, vault_id: &str) -> VaultResult<Vault> {
+    /// Load vault metadata from storage
+    pub async fn get_vault(&self, vault_id: &str) -> VaultResult<VaultMetadata> {
         vault::get_vault(vault_id)
             .await
             .map_err(|e| VaultError::NotFound(e.to_string()))
     }
 
-    /// Load vault by name
-    pub async fn load_vault(&self, vault_id: &str) -> VaultResult<Vault> {
+    /// Load vault metadata by ID
+    pub async fn load_vault(&self, vault_id: &str) -> VaultResult<VaultMetadata> {
         vault::load_vault(vault_id)
             .await
             .map_err(|e| VaultError::NotFound(e.to_string()))
     }
 
-    /// List all vaults
-    pub async fn list_vaults(&self) -> VaultResult<Vec<Vault>> {
+    /// List all vault metadata
+    pub async fn list_vaults(&self) -> VaultResult<Vec<VaultMetadata>> {
         vault::list_vaults()
             .await
             .map_err(|e| VaultError::StorageError(e.to_string()))

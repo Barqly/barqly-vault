@@ -64,37 +64,52 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [currentVault?.id, keyCache]);
 
   const refreshVaults = async () => {
+    console.log('🔍 VaultContext: refreshVaults called');
     setIsLoading(true);
     setError(null);
 
     try {
       // Get all vaults
+      console.log('🔍 VaultContext: Calling listVaults...');
       const vaultsResult = await commands.listVaults();
+      console.log('🔍 VaultContext: listVaults response', vaultsResult);
+
       if (vaultsResult.status === 'error') {
+        console.error('🚨 VaultContext: listVaults returned error', vaultsResult.error);
         throw new Error(vaultsResult.error.message || 'Failed to list vaults');
       }
       const vaultsResponse = vaultsResult.data;
+      console.log('🔍 VaultContext: Vaults loaded', vaultsResponse.vaults);
       setVaults(vaultsResponse.vaults);
 
       // Get current vault
+      console.log('🔍 VaultContext: Calling getCurrentVault...');
       const currentResult = await commands.getCurrentVault();
+      console.log('🔍 VaultContext: getCurrentVault response', currentResult);
+
       if (currentResult.status === 'error') {
+        console.error('🚨 VaultContext: getCurrentVault returned error', currentResult.error);
         throw new Error(currentResult.error.message || 'Failed to get current vault');
       }
       const currentResponse = currentResult.data;
 
       if (currentResponse.vault) {
+        console.log('🔍 VaultContext: Setting current vault from backend', currentResponse.vault);
         setCurrentVaultState(currentResponse.vault);
       } else if (vaultsResponse.vaults.length > 0) {
+        console.log('🔍 VaultContext: No current vault, setting first one', vaultsResponse.vaults[0]);
         // If no current vault but vaults exist, set the first one
         setCurrentVaultState(vaultsResponse.vaults[0]);
         // Persist to backend in background
         const request: SetCurrentVaultRequest = { vault_id: vaultsResponse.vaults[0].id };
         commands.setCurrentVault(request).catch((err) => {
+          console.error('🚨 VaultContext: Failed to persist initial vault selection', err);
           logger.error('VaultContext', 'Failed to persist initial vault selection', err);
         });
       }
+      console.log('✅ VaultContext: refreshVaults completed successfully');
     } catch (err: any) {
+      console.error('🚨 VaultContext: Error in refreshVaults', err);
       logger.error('VaultContext', 'Failed to refresh vaults', err);
       setError(err.message || 'Failed to load vaults');
     } finally {
@@ -218,16 +233,26 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [currentVault?.id, refreshKeysForVault]);
 
   const createVault = async (name: string, description?: string | null) => {
+    console.log('🔍 VaultContext: createVault called', { name, description });
     setError(null);
 
     try {
       const request: CreateVaultRequest = { name, description: description ?? null };
+      console.log('🔍 VaultContext: Calling backend createVault', request);
+
       const result = await commands.createVault(request);
+      console.log('🔍 VaultContext: Backend response received', result);
+
       if (result.status === 'error') {
+        console.error('🚨 VaultContext: Backend returned error', result.error);
         throw new Error(result.error.message || 'Failed to create vault');
       }
+
+      console.log('✅ VaultContext: Vault created successfully, refreshing vaults...');
       await refreshVaults();
+      console.log('✅ VaultContext: Vaults refreshed successfully');
     } catch (err: any) {
+      console.error('🚨 VaultContext: Error in createVault', err);
       logger.error('VaultContext', 'Failed to create vault', err);
       setError(err.message || 'Failed to create vault');
       throw err;
