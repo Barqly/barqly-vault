@@ -86,6 +86,36 @@ pub fn get_config_dir() -> Result<PathBuf, StorageError> {
     Ok(config_dir)
 }
 
+/// Get the vaults manifest directory (non-sync storage)
+///
+/// Returns: `~/Library/Application Support/com.barqly.vault/vaults/`
+pub fn get_vaults_manifest_dir() -> Result<PathBuf, StorageError> {
+    let app_dir = get_app_dir()?;
+    let vaults_dir = app_dir.join("vaults");
+    ensure_dir_exists(&vaults_dir)?;
+    Ok(vaults_dir)
+}
+
+/// Get the backups directory (non-sync storage)
+///
+/// Returns: `~/Library/Application Support/com.barqly.vault/backups/`
+pub fn get_backups_dir() -> Result<PathBuf, StorageError> {
+    let app_dir = get_app_dir()?;
+    let backups_dir = app_dir.join("backups");
+    ensure_dir_exists(&backups_dir)?;
+    Ok(backups_dir)
+}
+
+/// Get the manifest backups directory (non-sync storage)
+///
+/// Returns: `~/Library/Application Support/com.barqly.vault/backups/manifest/`
+pub fn get_manifest_backups_dir() -> Result<PathBuf, StorageError> {
+    let backups_dir = get_backups_dir()?;
+    let manifest_backups = backups_dir.join("manifest");
+    ensure_dir_exists(&manifest_backups)?;
+    Ok(manifest_backups)
+}
+
 /// Ensure a directory exists with proper permissions
 ///
 /// Creates the directory if it doesn't exist and sets appropriate permissions.

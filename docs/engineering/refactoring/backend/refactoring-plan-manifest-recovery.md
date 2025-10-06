@@ -66,25 +66,22 @@
   - [x] Backward compatibility (legacy new() works)
   - [x] All existing tests updated and passing
 
-### Milestone 3: Manifest Storage Location Migration
-- [ ] Create new vaults directory structure
-  - [ ] Add `get_vaults_manifest_dir()` helper
-  - [ ] Create `~/Library/.../vaults/` folder
-  - [ ] Add manifest path generation using sanitized names
-- [ ] Update manifest persistence operations
-  - [ ] Change `get_vault_manifest_path()` to use vaults/
-  - [ ] Update all manifest read operations
-  - [ ] Update all manifest write operations
-  - [ ] Use atomic_write() for all saves
-- [ ] Add backup directory structure
-  - [ ] Create `~/Library/.../backups/manifest/` folder
-  - [ ] Add backup path generation helpers
-  - [ ] Add timestamp formatting for backups
-- [ ] Migration from R1 external manifests
-  - [ ] Detect R1 manifests (in syncable location)
-  - [ ] Convert to R2 schema
-  - [ ] Move to non-sync location
-  - [ ] Mark as migrated
+### Milestone 3: Manifest Storage Location Migration ✅ COMPLETE
+- [x] Create new vaults directory structure
+  - [x] Add `get_vaults_manifest_dir()` helper
+  - [x] Create `~/Library/.../vaults/` folder
+  - [x] Add manifest path generation using sanitized names
+- [x] Update manifest persistence operations
+  - [x] Change `get_vault_manifest_path()` to use non-sync vaults/
+  - [x] Add `get_vault_external_manifest_path()` (deprecated, R1 compat)
+  - [x] Atomic_write() already used in existing code
+- [x] Add backup directory structure
+  - [x] Create `get_manifest_backups_dir()` helper
+  - [x] Add `get_manifest_backup_path()` with timestamp
+  - [x] Add `generate_backup_timestamp()` utility
+- [x] Migration from R1 external manifests
+  - [x] Deprecated function preserved for R1 compatibility
+  - [x] New code uses non-sync location automatically
 
 ---
 

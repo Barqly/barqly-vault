@@ -18,9 +18,10 @@ pub use device_identity::DeviceInfo;
 
 // Re-export path management
 pub use path_management::{
-    SanitizedVaultName, get_app_dir, get_config_dir, get_key_file_path, get_key_metadata_path,
-    get_keys_dir, get_logs_dir, get_vault_manifest_path, get_vaults_directory, sanitize_vault_name,
-    validate_vault_name,
+    SanitizedVaultName, generate_backup_timestamp, get_app_dir, get_backups_dir, get_config_dir,
+    get_key_file_path, get_key_metadata_path, get_keys_dir, get_logs_dir, get_manifest_backup_path,
+    get_manifest_backups_dir, get_vault_manifest_path, get_vaults_directory,
+    get_vaults_manifest_dir, sanitize_vault_name, validate_vault_name,
 };
 
 // Re-export error handling

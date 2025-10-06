@@ -10,6 +10,8 @@ use directories::UserDirs;
 use std::path::PathBuf;
 use std::sync::Once;
 
+use super::directories::{get_manifest_backups_dir, get_vaults_manifest_dir};
+
 /// Get the user's Documents directory
 fn get_documents_dir() -> Result<PathBuf, StorageError> {
     let user_dirs = UserDirs::new()
@@ -88,14 +90,30 @@ pub fn get_vault_file_path(vault_name: &str) -> Result<PathBuf, StorageError> {
     Ok(vaults_dir.join(format!("{vault_name}.age")))
 }
 
-/// Get the path for a vault's manifest file
+/// Get the path for a vault's manifest file (NON-SYNC location - R2)
+///
+/// Returns manifest path in non-sync storage for security and version control.
 ///
 /// # Arguments
-/// * `vault_name` - The user-friendly vault name (e.g., "Family Documents")
+/// * `vault_name` - The sanitized vault name (filesystem-safe)
 ///
 /// # Returns
-/// Path to the `.manifest` file (e.g., `~/Documents/Barqly-Vaults/Family Documents.manifest`)
+/// Path to manifest in non-sync: `~/Library/.../vaults/Vault-001.manifest`
 pub fn get_vault_manifest_path(vault_name: &str) -> Result<PathBuf, StorageError> {
+    let vaults_manifest_dir = get_vaults_manifest_dir()?;
+    Ok(vaults_manifest_dir.join(format!("{vault_name}.manifest")))
+}
+
+/// Get the path for a vault's external manifest (DEPRECATED - R1 only)
+///
+/// Legacy function for R1 manifests stored in syncable location.
+/// New code should use `get_vault_manifest_path()` for non-sync storage.
+///
+/// # Returns
+/// Path to external manifest: `~/Documents/Barqly-Vaults/Vault-001.manifest`
+#[deprecated(note = "Use get_vault_manifest_path() for non-sync storage")]
+#[allow(dead_code)]
+pub fn get_vault_external_manifest_path(vault_name: &str) -> Result<PathBuf, StorageError> {
     let vaults_dir = get_vaults_directory()?;
     Ok(vaults_dir.join(format!("{vault_name}.manifest")))
 }
@@ -117,6 +135,28 @@ pub fn get_vault_recovery_path(vault_name: &str) -> Result<PathBuf, StorageError
     }
 
     Ok(vault_recovery)
+}
+
+/// Get backup path for a vault manifest
+///
+/// Returns path with timestamp: `~/Library/.../backups/manifest/Vault-001.manifest.<timestamp>`
+///
+/// # Arguments
+/// * `vault_name` - The sanitized vault name
+/// * `timestamp` - Timestamp string (e.g., "2025-10-05_163000")
+pub fn get_manifest_backup_path(
+    vault_name: &str,
+    timestamp: &str,
+) -> Result<PathBuf, StorageError> {
+    let backups_dir = get_manifest_backups_dir()?;
+    Ok(backups_dir.join(format!("{vault_name}.manifest.{timestamp}")))
+}
+
+/// Generate timestamp string for backup filenames
+///
+/// Returns: "2025-10-05_163000" format
+pub fn generate_backup_timestamp() -> String {
+    chrono::Utc::now().format("%Y-%m-%d_%H%M%S").to_string()
 }
 
 /// Sanitized vault name containing both filesystem-safe and display versions
