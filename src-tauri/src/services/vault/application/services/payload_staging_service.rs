@@ -16,6 +16,7 @@ use std::path::Path;
 type Result<T> = std::result::Result<T, VaultError>;
 
 /// Service for creating vault payloads with all required files
+#[derive(Debug)]
 pub struct PayloadStagingService {
     recovery_service: RecoveryTxtService,
 }

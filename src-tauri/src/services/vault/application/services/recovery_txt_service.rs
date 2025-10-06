@@ -5,6 +5,7 @@
 use crate::services::vault::infrastructure::persistence::metadata::{RecipientType, VaultMetadata};
 
 /// Service for generating RECOVERY.txt files
+#[derive(Debug)]
 pub struct RecoveryTxtService;
 
 impl RecoveryTxtService {

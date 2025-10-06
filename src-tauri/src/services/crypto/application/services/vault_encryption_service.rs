@@ -12,11 +12,15 @@ use crate::services::crypto::application::dtos::{
 use crate::services::crypto::domain::{CryptoError, CryptoResult};
 use crate::services::crypto::infrastructure as crypto;
 use crate::services::key_management::shared::{KeyEntry, KeyRegistryService};
+use crate::services::shared::infrastructure::DeviceInfo;
 use crate::services::shared::infrastructure::path_management;
 use crate::services::shared::infrastructure::progress::ProgressManager;
 use crate::services::vault;
-use crate::services::vault::application::services::VaultService;
+use crate::services::vault::application::services::{PayloadStagingService, VaultService};
 use crate::services::vault::domain::models::{ArchiveContent, EncryptedArchive};
+use crate::services::vault::infrastructure::persistence::metadata::{
+    RecipientInfo, RecipientType, SelectionType, VaultFileEntry, VaultMetadata,
+};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
@@ -27,6 +31,7 @@ pub struct VaultEncryptionService {
     archive_orchestration: ArchiveOrchestrationService,
     core_encryption: CoreEncryptionService,
     key_registry_service: KeyRegistryService,
+    payload_staging: PayloadStagingService,
 }
 
 impl VaultEncryptionService {
@@ -37,6 +42,7 @@ impl VaultEncryptionService {
             archive_orchestration: ArchiveOrchestrationService::new(),
             core_encryption: CoreEncryptionService::new(),
             key_registry_service: KeyRegistryService::new(),
+            payload_staging: PayloadStagingService::new(),
         }
     }
 
@@ -56,6 +62,12 @@ impl VaultEncryptionService {
             operation_id = %operation_id,
             "Starting multi-key encryption operation"
         );
+
+        // R2: Load device info for manifest tracking
+        let _device_info = DeviceInfo::load_or_create("2.0.0").map_err(|e| {
+            CryptoError::ConfigurationError(format!("Failed to load device info: {}", e))
+        })?;
+        // TODO: Use device_info when wiring up VaultMetadata creation in next step
 
         // Step 1: Load vault using existing vault service
         progress_manager.set_progress(PROGRESS_ENCRYPT_KEY_RETRIEVAL, "Loading vault and keys...");
@@ -320,6 +332,92 @@ impl VaultEncryptionService {
             .map_err(|e| CryptoError::ConfigurationError(format!("Failed to save vault: {}", e)))?;
 
         Ok(())
+    }
+
+    /// Build R2 VaultMetadata from vault and registry entries
+    ///
+    /// Creates complete VaultMetadata with recipients, file listings, and version tracking.
+    #[allow(dead_code)] // Will be used in next commit when encryption flow is fully updated
+    fn build_vault_metadata_r2(
+        &self,
+        vault: &crate::services::vault::domain::models::Vault,
+        device_info: &DeviceInfo,
+        file_entries: Vec<VaultFileEntry>,
+        selection_type: SelectionType,
+        base_path: Option<String>,
+    ) -> CryptoResult<VaultMetadata> {
+        use crate::services::key_management::yubikey::domain::models::ProtectionMode;
+        use crate::services::shared::infrastructure::sanitize_vault_name;
+
+        // Sanitize vault name for filesystem
+        let sanitized = sanitize_vault_name(&vault.name)
+            .map_err(|e| CryptoError::InvalidInput(format!("Invalid vault name: {}", e)))?;
+
+        // Build recipient list from vault keys
+        let mut recipients = Vec::new();
+        for key_id in &vault.keys {
+            if let Ok(registry_entry) = self.key_registry_service.get_key(key_id) {
+                let recipient = match registry_entry {
+                    KeyEntry::Passphrase {
+                        label,
+                        public_key,
+                        key_filename,
+                        created_at,
+                        ..
+                    } => RecipientInfo {
+                        recipient_type: RecipientType::Passphrase { key_filename },
+                        public_key,
+                        label,
+                        created_at,
+                    },
+                    KeyEntry::Yubikey {
+                        label,
+                        recipient,
+                        serial,
+                        slot,
+                        piv_slot,
+                        identity_tag,
+                        firmware_version,
+                        created_at,
+                        ..
+                    } => RecipientInfo {
+                        recipient_type: RecipientType::YubiKey {
+                            serial,
+                            slot,
+                            piv_slot,
+                            model: "YubiKey 5".to_string(), // TODO: Get from registry if available
+                            identity_tag,
+                            firmware_version,
+                        },
+                        public_key: recipient,
+                        label,
+                        created_at,
+                    },
+                };
+                recipients.push(recipient);
+            }
+        }
+
+        let file_count = file_entries.len();
+        let total_size: u64 = file_entries.iter().map(|f| f.size).sum();
+
+        // TODO: Determine protection mode from recipients
+        let protection_mode = ProtectionMode::PassphraseOnly;
+
+        Ok(VaultMetadata::new_r2(
+            vault.id.clone(),
+            vault.name.clone(),
+            sanitized.sanitized,
+            device_info,
+            selection_type,
+            base_path,
+            protection_mode,
+            recipients,
+            file_entries,
+            file_count,
+            total_size,
+            String::new(), // checksum calculated separately
+        ))
     }
 
     /// Sanitize filename for cross-platform compatibility (extracted from backup)
