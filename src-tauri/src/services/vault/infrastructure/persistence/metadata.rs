@@ -32,7 +32,6 @@ pub struct VaultMetadata {
     pub version: String, // "1.0" - schema version
     pub protection_mode: ProtectionMode,
     pub encryption_method: String, // "age"
-    pub backward_compatible: bool, // true if vault can be decrypted without YubiKey
 
     // Encryption recipients
     pub recipients: Vec<RecipientInfo>,
@@ -125,11 +124,6 @@ impl VaultMetadata {
         total_size: u64,
         checksum: String,
     ) -> Self {
-        let backward_compatible = matches!(
-            protection_mode,
-            ProtectionMode::PassphraseOnly | ProtectionMode::Hybrid { .. }
-        );
-
         let now = Utc::now();
 
         Self {
@@ -149,7 +143,6 @@ impl VaultMetadata {
             version: "1.0".to_string(),
             protection_mode,
             encryption_method: "age".to_string(),
-            backward_compatible,
             recipients,
             files,
             file_count,
@@ -239,10 +232,14 @@ impl VaultMetadata {
     /// Update protection mode (used when migrating vaults)
     pub fn update_protection_mode(&mut self, mode: ProtectionMode) {
         self.protection_mode = mode;
-        self.backward_compatible = matches!(
+    }
+
+    /// Check if vault has passphrase fallback (can decrypt without YubiKey)
+    pub fn has_passphrase_fallback(&self) -> bool {
+        matches!(
             self.protection_mode,
             ProtectionMode::PassphraseOnly | ProtectionMode::Hybrid { .. }
-        );
+        )
     }
 
     /// Validate metadata consistency
@@ -488,7 +485,7 @@ mod tests {
         );
 
         assert_eq!(metadata.version, "1.0");
-        assert!(metadata.backward_compatible);
+        assert!(metadata.has_passphrase_fallback());
         assert!(metadata.validate().is_ok());
     }
 
@@ -515,7 +512,7 @@ mod tests {
         );
 
         assert_eq!(metadata.version, "1.0");
-        assert!(!metadata.backward_compatible);
+        assert!(!metadata.has_passphrase_fallback());
         assert!(metadata.validate().is_ok());
     }
 
@@ -548,7 +545,7 @@ mod tests {
         );
 
         assert_eq!(metadata.version, "1.0");
-        assert!(metadata.backward_compatible);
+        assert!(metadata.has_passphrase_fallback());
         assert!(metadata.validate().is_ok());
         assert_eq!(metadata.recipients.len(), 2);
     }
