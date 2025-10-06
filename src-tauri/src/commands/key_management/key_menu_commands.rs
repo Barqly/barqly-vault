@@ -118,9 +118,9 @@ pub async fn get_key_menu_data(
     // Process recipients in vault metadata
     for recipient in &vault.recipients {
         match &recipient.recipient_type {
-            RecipientType::Passphrase { key_filename } => {
-                // Try to find key in registry by filename pattern (remove .agekey.enc)
-                let key_id = key_filename.trim_end_matches(".agekey.enc");
+            RecipientType::Passphrase { .. } => {
+                // Use the key_id from recipient (registry reference)
+                let key_id = &recipient.key_id;
 
                 if let Some(KeyEntry::Passphrase {
                     label,
@@ -145,15 +145,15 @@ pub async fn get_key_menu_data(
                 }
             }
             RecipientType::YubiKey { serial, slot, piv_slot, identity_tag, firmware_version, .. } => {
-                // Try to find YubiKey in registry by serial and slot
-                let key_id = format!("yubikey-{}-slot{}", serial, slot);
+                // Use the key_id from recipient (registry reference)
+                let key_id = &recipient.key_id;
 
                 if let Some(KeyEntry::Yubikey {
                     label,
                     created_at,
-                    recipient,
+                    recipient: public_key,
                     ..
-                }) = registry.get_key(&key_id) {
+                }) = registry.get_key(key_id) {
                     // YubiKeys get sequential display indexes 1, 2, 3
                     if yubikey_index <= 3 {
                         key_menu_items.push(KeyMenuInfo {
@@ -170,7 +170,7 @@ pub async fn get_key_menu_data(
                                 serial: serial.clone(),
                                 slot: *slot,
                                 piv_slot: *piv_slot,
-                                recipient: recipient.clone(),
+                                recipient: public_key.clone(),
                                 identity_tag: identity_tag.clone(),
                                 firmware_version: firmware_version.clone().unwrap_or_default(),
                             },
@@ -184,7 +184,7 @@ pub async fn get_key_menu_data(
                             display_index: yubikey_index,
                             key_type: "yubikey".to_string(),
                             label: recipient.label.clone(),
-                            internal_id: format!("yubikey-{}-slot{}", serial, slot),
+                            internal_id: key_id.to_string(), // Use real key_id, not fake
                             state: yubikey_states
                                 .get(serial)
                                 .unwrap_or(&"registered".to_string())
