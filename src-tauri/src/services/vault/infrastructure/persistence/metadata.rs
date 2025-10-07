@@ -31,7 +31,8 @@ pub struct VaultMetadata {
 
     // File selection metadata
     pub selection_type: SelectionType,
-    pub base_path: Option<String>, // Null for files-only selection
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_path: Option<String>, // Omitted for files-only selection
 
     // Protection and encryption metadata
     pub version: String, // "1.0" - schema version
