@@ -5,7 +5,6 @@
 use crate::error::StorageError;
 use crate::prelude::*;
 use crate::services::key_management::shared::{KeyEntry, KeyRegistryService};
-use crate::services::key_management::yubikey::domain::models::ProtectionMode;
 use crate::services::shared::infrastructure::{
     DeviceInfo, atomic_write_sync, get_vault_manifest_path, sanitize_vault_name,
 };
@@ -96,7 +95,6 @@ impl VaultMetadataService {
             device_info,
             SelectionType::Files,
             None,
-            ProtectionMode::PassphraseOnly,
             vec![],
             vec![],
             0,
@@ -135,9 +133,6 @@ impl VaultMetadataService {
         let file_count = file_entries.len();
         let total_size: u64 = file_entries.iter().map(|f| f.size).sum();
 
-        // Determine protection mode from recipients
-        let protection_mode = Self::determine_protection_mode(&recipients);
-
         Ok(VaultMetadata::new(
             vault_id.to_string(),
             sanitized.display, // Preserve user's original input
@@ -146,7 +141,6 @@ impl VaultMetadataService {
             device_info,
             selection_type,
             base_path,
-            protection_mode,
             recipients,
             file_entries,
             file_count,
@@ -212,33 +206,6 @@ impl VaultMetadataService {
         self.save_manifest(manifest)
     }
 
-    /// Determine protection mode from recipients
-    ///
-    /// Analyzes recipient list to determine: PassphraseOnly, YubiKeyOnly, or Hybrid
-    fn determine_protection_mode(recipients: &[RecipientInfo]) -> ProtectionMode {
-        let has_passphrase = recipients
-            .iter()
-            .any(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }));
-
-        let yubikey_serials: Vec<String> = recipients
-            .iter()
-            .filter_map(|r| match &r.recipient_type {
-                RecipientType::YubiKey { serial, .. } => Some(serial.clone()),
-                _ => None,
-            })
-            .collect();
-
-        match (has_passphrase, yubikey_serials.len()) {
-            (true, 0) => ProtectionMode::PassphraseOnly,
-            (false, 1) => ProtectionMode::YubiKeyOnly {
-                serial: yubikey_serials[0].clone(),
-            },
-            (true, count) if count > 0 => ProtectionMode::Hybrid {
-                yubikey_serial: yubikey_serials[0].clone(), // Use first YubiKey
-            },
-            _ => ProtectionMode::PassphraseOnly, // Fallback
-        }
-    }
 
     /// Save manifest to non-sync storage (atomic write)
     pub fn save_manifest(&self, manifest: &VaultMetadata) -> Result<(), StorageError> {

@@ -26,12 +26,20 @@ impl RecoveryTxtService {
         content.push_str(&format!("Vault: {}\n", metadata.label));
         content.push_str(&format!(
             "Encrypted: {} UTC\n",
-            metadata.last_encrypted_at.format("%Y-%m-%d %H:%M:%S")
+            metadata.last_encrypted_at
+                .unwrap_or(metadata.created_at)
+                .format("%Y-%m-%d %H:%M:%S")
         ));
         content.push_str(&format!("Version: {}\n", metadata.manifest_version));
+
+        let (machine_label, machine_id) = metadata.last_encrypted_by
+            .as_ref()
+            .map(|e| (e.machine_label.as_str(), e.machine_id.as_str()))
+            .unwrap_or(("unknown", "unknown"));
+
         content.push_str(&format!(
             "Machine: {} ({})\n\n",
-            metadata.last_encrypted_by.machine_label, metadata.last_encrypted_by.machine_id
+            machine_label, machine_id
         ));
 
         // Required keys section
@@ -216,7 +224,6 @@ mod tests {
             &device_info,
             SelectionType::Files,
             None,
-            ProtectionMode::PassphraseOnly,
             vec![recipient],
             vec![
                 VaultFileEntry {
@@ -275,9 +282,6 @@ mod tests {
             &device_info,
             SelectionType::Folder,
             Some("wallet".to_string()),
-            ProtectionMode::YubiKeyOnly {
-                serial: "31310420".to_string(),
-            },
             vec![recipient],
             vec![],
             0,
@@ -338,9 +342,6 @@ mod tests {
             &device_info,
             SelectionType::Files,
             None,
-            ProtectionMode::Hybrid {
-                yubikey_serial: "12345".to_string(),
-            },
             vec![passphrase, yubikey],
             vec![],
             0,

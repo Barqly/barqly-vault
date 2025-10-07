@@ -88,7 +88,7 @@ impl VersionComparisonService {
                 info!(
                     vault = %bundle_manifest.label,
                     version = bundle_manifest.manifest_version,
-                    machine = %bundle_manifest.last_encrypted_by.machine_label,
+                    machine = %bundle_manifest.last_encrypted_by.as_ref().map(|e| e.machine_label.as_str()).unwrap_or("unknown"),
                     "First recovery - creating local manifest"
                 );
                 Self::save_manifest(bundle_manifest, manifest_path)?;
@@ -103,7 +103,7 @@ impl VersionComparisonService {
                     vault = %bundle_manifest.label,
                     bundle_version,
                     local_version,
-                    machine = %bundle_manifest.last_encrypted_by.machine_label,
+                    machine = %bundle_manifest.last_encrypted_by.as_ref().map(|e| e.machine_label.as_str()).unwrap_or("unknown"),
                     "Bundle newer - backing up local and replacing"
                 );
                 Self::backup_and_replace(bundle_manifest, manifest_path)?;
@@ -118,7 +118,7 @@ impl VersionComparisonService {
                     info!(
                         vault = %bundle_manifest.label,
                         version,
-                        bundle_time = %bundle_manifest.last_encrypted_at,
+                        bundle_time = ?bundle_manifest.last_encrypted_at,
                         "Same version but bundle has newer timestamp - replacing"
                     );
                     Self::backup_and_replace(bundle_manifest, manifest_path)?;
@@ -399,7 +399,6 @@ mod tests {
             device_info,
             SelectionType::Files,
             None,
-            ProtectionMode::PassphraseOnly,
             vec![recipient],
             vec![],
             0,

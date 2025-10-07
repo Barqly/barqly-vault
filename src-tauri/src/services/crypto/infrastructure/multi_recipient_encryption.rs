@@ -61,7 +61,6 @@ impl MultiRecipientCrypto {
         let mut recipients_used = Vec::new();
 
         let data = params.data.clone();
-        let protection_mode = params.protection_mode.clone();
         let recipients = params.recipients.clone();
 
         // Convert each recipient to age format
@@ -92,7 +91,6 @@ impl MultiRecipientCrypto {
             &device_info,
             SelectionType::Files,
             None,
-            protection_mode,
             recipients,
             vec![],
             1,
@@ -214,7 +212,7 @@ impl MultiRecipientCrypto {
         }
 
         // Auto-select based on protection mode and availability
-        match &metadata.protection_mode {
+        match metadata.protection_mode() {
             ProtectionMode::PassphraseOnly => {
                 if available_methods.contains(&UnlockMethod::Passphrase) {
                     Ok(UnlockMethod::Passphrase)
@@ -478,7 +476,6 @@ mod tests {
             &device_info,
             SelectionType::Files,
             None,
-            ProtectionMode::PassphraseOnly,
             vec![passphrase_recipient],
             vec![],
             0,

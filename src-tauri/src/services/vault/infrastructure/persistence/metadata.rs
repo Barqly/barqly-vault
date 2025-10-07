@@ -24,8 +24,10 @@ pub struct VaultMetadata {
     // Version control for conflict resolution
     pub manifest_version: u32, // Increments on each encryption
     pub created_at: DateTime<Utc>,
-    pub last_encrypted_at: DateTime<Utc>,
-    pub last_encrypted_by: LastEncryptedBy,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_encrypted_at: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_encrypted_by: Option<LastEncryptedBy>,
 
     // File selection metadata
     pub selection_type: SelectionType,
@@ -33,7 +35,6 @@ pub struct VaultMetadata {
 
     // Protection and encryption metadata
     pub version: String, // "1.0" - schema version
-    pub protection_mode: ProtectionMode,
     pub encryption_method: String, // "age"
 
     // Encryption recipients
@@ -121,7 +122,6 @@ impl VaultMetadata {
         device_info: &MachineDeviceInfo,
         selection_type: SelectionType,
         base_path: Option<String>,
-        protection_mode: ProtectionMode,
         recipients: Vec<RecipientInfo>,
         files: Vec<VaultFileEntry>,
         file_count: usize,
@@ -137,15 +137,11 @@ impl VaultMetadata {
             sanitized_name,
             manifest_version: 1,
             created_at: now,
-            last_encrypted_at: now,
-            last_encrypted_by: LastEncryptedBy {
-                machine_id: device_info.machine_id.clone(),
-                machine_label: device_info.machine_label.clone(),
-            },
+            last_encrypted_at: None, // Set during first encryption
+            last_encrypted_by: None, // Set during first encryption
             selection_type,
             base_path,
             version: "1.0".to_string(),
-            protection_mode,
             encryption_method: "age".to_string(),
             recipients,
             files,
@@ -158,19 +154,22 @@ impl VaultMetadata {
     /// Increment manifest version (for re-encryption)
     pub fn increment_version(&mut self, device_info: &MachineDeviceInfo) {
         self.manifest_version += 1;
-        self.last_encrypted_at = Utc::now();
-        self.last_encrypted_by = LastEncryptedBy {
+        self.last_encrypted_at = Some(Utc::now());
+        self.last_encrypted_by = Some(LastEncryptedBy {
             machine_id: device_info.machine_id.clone(),
             machine_label: device_info.machine_label.clone(),
-        };
+        });
     }
 
     /// Compare versions with another manifest
     /// Returns: (is_newer, is_same_version)
     pub fn compare_version(&self, other: &VaultMetadata) -> (bool, bool) {
+        let self_time = self.last_encrypted_at.unwrap_or(self.created_at);
+        let other_time = other.last_encrypted_at.unwrap_or(other.created_at);
+
         let is_newer = self.manifest_version > other.manifest_version
             || (self.manifest_version == other.manifest_version
-                && self.last_encrypted_at > other.last_encrypted_at);
+                && self_time > other_time);
         let is_same = self.manifest_version == other.manifest_version;
         (is_newer, is_same)
     }
@@ -200,9 +199,29 @@ impl VaultMetadata {
             .collect()
     }
 
+    /// Derive protection mode from recipients
+    pub fn protection_mode(&self) -> ProtectionMode {
+        let has_passphrase = self.recipients.iter().any(|r| {
+            matches!(r.recipient_type, RecipientType::Passphrase { .. })
+        });
+
+        let yubikey_serial = self.recipients.iter().find_map(|r| {
+            match &r.recipient_type {
+                RecipientType::YubiKey { serial, .. } => Some(serial.clone()),
+                _ => None,
+            }
+        });
+
+        match (has_passphrase, yubikey_serial) {
+            (false, Some(serial)) => ProtectionMode::YubiKeyOnly { serial },
+            (true, Some(serial)) => ProtectionMode::Hybrid { yubikey_serial: serial },
+            _ => ProtectionMode::PassphraseOnly,
+        }
+    }
+
     /// Check if the vault requires a specific YubiKey
     pub fn requires_yubikey(&self, serial: &str) -> bool {
-        match &self.protection_mode {
+        match self.protection_mode() {
             ProtectionMode::YubiKeyOnly {
                 serial: required_serial,
             } => required_serial == serial,
@@ -232,15 +251,10 @@ impl VaultMetadata {
             .map(|pos| self.recipients.remove(pos))
     }
 
-    /// Update protection mode (used when migrating vaults)
-    pub fn update_protection_mode(&mut self, mode: ProtectionMode) {
-        self.protection_mode = mode;
-    }
-
     /// Check if vault has passphrase fallback (can decrypt without YubiKey)
     pub fn has_passphrase_fallback(&self) -> bool {
         matches!(
-            self.protection_mode,
+            self.protection_mode(),
             ProtectionMode::PassphraseOnly | ProtectionMode::Hybrid { .. }
         )
     }
@@ -260,7 +274,7 @@ impl VaultMetadata {
         }
 
         // Validate protection mode consistency
-        match &self.protection_mode {
+        match self.protection_mode() {
             ProtectionMode::PassphraseOnly => {
                 if !self
                     .recipients
@@ -272,7 +286,7 @@ impl VaultMetadata {
             }
             ProtectionMode::YubiKeyOnly { serial } => {
                 if !self.recipients.iter().any(|r| match &r.recipient_type {
-                    RecipientType::YubiKey { serial: s, .. } => s == serial,
+                    RecipientType::YubiKey { serial: s, .. } => s == &serial,
                     _ => false,
                 }) {
                     return Err(MetadataValidationError::ProtectionModeMismatch);
@@ -284,7 +298,7 @@ impl VaultMetadata {
                     .iter()
                     .any(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }));
                 let has_yubikey = self.recipients.iter().any(|r| match &r.recipient_type {
-                    RecipientType::YubiKey { serial: s, .. } => s == yubikey_serial,
+                    RecipientType::YubiKey { serial: s, .. } => s == &yubikey_serial,
                     _ => false,
                 });
 
@@ -486,7 +500,6 @@ mod tests {
         vault_id: &str,
         vault_name: &str,
         recipients: Vec<RecipientInfo>,
-        protection_mode: ProtectionMode,
     ) -> VaultMetadata {
         let device_info = create_test_device_info();
 
@@ -498,7 +511,6 @@ mod tests {
             &device_info,
             SelectionType::Files,
             None,
-            protection_mode,
             recipients,
             vec![],
             0,
@@ -519,7 +531,6 @@ mod tests {
             "vault-001",
             "Test Vault",
             vec![recipient],
-            ProtectionMode::PassphraseOnly,
         );
 
         assert_eq!(metadata.version, "1.0");
@@ -545,9 +556,6 @@ mod tests {
             "vault-002",
             "YubiKey Vault",
             vec![recipient],
-            ProtectionMode::YubiKeyOnly {
-                serial: "12345678".to_string(),
-            },
         );
 
         assert_eq!(metadata.version, "1.0");
@@ -580,9 +588,6 @@ mod tests {
             "vault-003",
             "Hybrid Vault",
             vec![passphrase_recipient, yubikey_recipient],
-            ProtectionMode::Hybrid {
-                yubikey_serial: "87654321".to_string(),
-            },
         );
 
         assert_eq!(metadata.version, "1.0");
@@ -598,8 +603,7 @@ mod tests {
             "vault-004",
             "Empty Vault",
             vec![], // Empty recipients
-            ProtectionMode::PassphraseOnly,
-        );
+);
 
         assert!(metadata.validate().is_err());
     }
@@ -620,8 +624,7 @@ mod tests {
             "vault-005",
             "Storage Test",
             vec![recipient],
-            ProtectionMode::PassphraseOnly,
-        );
+);
 
         // Save metadata
         MetadataStorage::save_metadata(&original_metadata, &metadata_path).unwrap();
@@ -645,14 +648,13 @@ mod tests {
             "vault-006",
             "Version Test",
             vec![],
-            ProtectionMode::PassphraseOnly,
-        );
+);
 
         assert_eq!(metadata.manifest_version, 1);
 
         metadata.increment_version(&device_info);
         assert_eq!(metadata.manifest_version, 2);
-        assert_eq!(metadata.last_encrypted_by.machine_id, "test-machine-123");
+        assert_eq!(metadata.last_encrypted_by.as_ref().unwrap().machine_id, "test-machine-123");
     }
 
     #[test]
@@ -663,8 +665,7 @@ mod tests {
             "vault-007",
             "Comparison Test",
             vec![],
-            ProtectionMode::PassphraseOnly,
-        );
+);
 
         let mut metadata_v2 = metadata_v1.clone();
         metadata_v2.increment_version(&device_info);

@@ -212,7 +212,6 @@ mod tests {
             &device_info,
             SelectionType::Files,
             None,
-            ProtectionMode::PassphraseOnly,
             vec![recipient],
             vec![],
             1,
