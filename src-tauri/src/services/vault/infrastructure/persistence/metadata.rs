@@ -35,8 +35,7 @@ pub struct VaultMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub base_path: Option<String>, // Omitted for files-only selection
 
-    // Protection and encryption metadata
-    pub version: String, // "1.0" - schema version
+    // Encryption metadata
     pub encryption_method: String, // "age"
 
     // Encryption recipients
@@ -143,7 +142,6 @@ impl VaultMetadata {
             last_encrypted_by: None, // Set during first encryption
             selection_type,
             base_path,
-            version: "1.0".to_string(),
             encryption_method: "age".to_string(),
             recipients,
             files,
@@ -263,10 +261,10 @@ impl VaultMetadata {
 
     /// Validate metadata consistency
     pub fn validate(&self) -> Result<(), MetadataValidationError> {
-        // Check version
-        if self.version != "1.0" {
+        // Check schema version
+        if !self.schema.starts_with("barqly.vault.manifest/") {
             return Err(MetadataValidationError::InvalidVersion(
-                self.version.clone(),
+                self.schema.clone(),
             ));
         }
 
@@ -475,9 +473,9 @@ impl MetadataStorage {
     pub fn is_valid_metadata(path: &PathBuf) -> bool {
         if let Ok(content) = std::fs::read_to_string(path)
             && let Ok(value) = serde_json::from_str::<serde_json::Value>(&content)
-            && let Some(version) = value.get("version").and_then(|v| v.as_str())
+            && let Some(schema) = value.get("schema").and_then(|v| v.as_str())
         {
-            return version == "1.0";
+            return schema.starts_with("barqly.vault.manifest/");
         }
         false
     }
@@ -535,7 +533,7 @@ mod tests {
             vec![recipient],
         );
 
-        assert_eq!(metadata.version, "1.0");
+        assert_eq!(metadata.schema, "barqly.vault.manifest/1");
         assert!(metadata.has_passphrase_fallback());
         assert!(metadata.validate().is_ok());
     }
@@ -560,7 +558,7 @@ mod tests {
             vec![recipient],
         );
 
-        assert_eq!(metadata.version, "1.0");
+        assert_eq!(metadata.schema, "barqly.vault.manifest/1");
         assert!(!metadata.has_passphrase_fallback());
         assert!(metadata.validate().is_ok());
     }
@@ -592,7 +590,7 @@ mod tests {
             vec![passphrase_recipient, yubikey_recipient],
         );
 
-        assert_eq!(metadata.version, "1.0");
+        assert_eq!(metadata.schema, "barqly.vault.manifest/1");
         assert!(metadata.has_passphrase_fallback());
         assert!(metadata.validate().is_ok());
         assert_eq!(metadata.recipients.len(), 2);
@@ -634,7 +632,7 @@ mod tests {
         // Load metadata
         let loaded_metadata = MetadataStorage::load_metadata(&metadata_path).unwrap();
 
-        assert_eq!(original_metadata.version, loaded_metadata.version);
+        assert_eq!(original_metadata.schema, loaded_metadata.schema);
         assert_eq!(
             original_metadata.recipients.len(),
             loaded_metadata.recipients.len()

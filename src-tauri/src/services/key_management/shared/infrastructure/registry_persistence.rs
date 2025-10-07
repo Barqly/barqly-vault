@@ -106,7 +106,7 @@ impl KeyEntry {
 /// Central registry for all encryption keys
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeyRegistry {
-    pub version: String,
+    pub schema: String, // "barqly.vault.registry/1"
     /// Map of key_id -> KeyEntry
     pub keys: HashMap<String, KeyEntry>,
 }
@@ -121,7 +121,7 @@ impl KeyRegistry {
     /// Create a new empty registry
     pub fn new() -> Self {
         Self {
-            version: "2.0".to_string(),
+            schema: "barqly.vault.registry/1".to_string(),
             keys: HashMap::new(),
         }
     }
@@ -401,7 +401,7 @@ mod tests {
     #[test]
     fn test_key_registry_creation() {
         let registry = KeyRegistry::new();
-        assert_eq!(registry.version, "2.0");
+        assert_eq!(registry.schema, "barqly.vault.registry/1");
         assert!(registry.keys.is_empty());
     }
 
