@@ -49,21 +49,21 @@ impl VersionComparisonService {
             return VersionComparisonResult::NoLocal;
         };
 
-        if bundle_manifest.manifest_version > local.manifest_version {
+        if bundle_manifest.encryption_revision > local.encryption_revision {
             VersionComparisonResult::BundleNewer {
-                bundle_version: bundle_manifest.manifest_version,
-                local_version: local.manifest_version,
+                bundle_version: bundle_manifest.encryption_revision,
+                local_version: local.encryption_revision,
             }
-        } else if bundle_manifest.manifest_version < local.manifest_version {
+        } else if bundle_manifest.encryption_revision < local.encryption_revision {
             VersionComparisonResult::BundleOlder {
-                bundle_version: bundle_manifest.manifest_version,
-                local_version: local.manifest_version,
+                bundle_version: bundle_manifest.encryption_revision,
+                local_version: local.encryption_revision,
             }
         } else {
             // Same version - use timestamp tiebreaker
             let bundle_newer = bundle_manifest.last_encrypted_at > local.last_encrypted_at;
             VersionComparisonResult::SameVersion {
-                version: bundle_manifest.manifest_version,
+                version: bundle_manifest.encryption_revision,
                 bundle_newer,
             }
         }
@@ -87,7 +87,7 @@ impl VersionComparisonService {
             VersionComparisonResult::NoLocal => {
                 info!(
                     vault = %bundle_manifest.label,
-                    version = bundle_manifest.manifest_version,
+                    version = bundle_manifest.encryption_revision,
                     machine = %bundle_manifest.last_encrypted_by.as_ref().map(|e| e.machine_label.as_str()).unwrap_or("unknown"),
                     "First recovery - creating local manifest"
                 );
@@ -534,7 +534,7 @@ mod tests {
         // Load and verify local was preserved
         let content = std::fs::read_to_string(&manifest_path).unwrap();
         let loaded: VaultMetadata = serde_json::from_str(&content).unwrap();
-        assert_eq!(loaded.manifest_version, 2);
+        assert_eq!(loaded.encryption_revision, 2);
     }
 
     #[test]
@@ -633,7 +633,7 @@ mod tests {
             .unwrap();
 
             // Restored should be v1 (the backup)
-            assert_eq!(restored.manifest_version, 1);
+            assert_eq!(restored.encryption_revision, 1);
             assert!(restore_path.exists());
         }
     }

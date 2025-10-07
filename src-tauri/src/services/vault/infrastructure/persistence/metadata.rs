@@ -22,7 +22,7 @@ pub struct VaultMetadata {
     pub sanitized_name: String, // Filesystem-safe name
 
     // Version control for conflict resolution
-    pub manifest_version: u32, // Increments on each encryption
+    pub encryption_revision: u32, // Increments on each encryption
     pub created_at: DateTime<Utc>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_encrypted_at: Option<DateTime<Utc>>,
@@ -136,7 +136,7 @@ impl VaultMetadata {
             label,
             description,
             sanitized_name,
-            manifest_version: 1,
+            encryption_revision: 1,
             created_at: now,
             last_encrypted_at: None, // Set during first encryption
             last_encrypted_by: None, // Set during first encryption
@@ -154,7 +154,7 @@ impl VaultMetadata {
 
     /// Increment manifest version (for re-encryption)
     pub fn increment_version(&mut self, device_info: &MachineDeviceInfo) {
-        self.manifest_version += 1;
+        self.encryption_revision += 1;
         self.last_encrypted_at = Some(Utc::now());
         self.last_encrypted_by = Some(LastEncryptedBy {
             machine_id: device_info.machine_id.clone(),
@@ -168,10 +168,10 @@ impl VaultMetadata {
         let self_time = self.last_encrypted_at.unwrap_or(self.created_at);
         let other_time = other.last_encrypted_at.unwrap_or(other.created_at);
 
-        let is_newer = self.manifest_version > other.manifest_version
-            || (self.manifest_version == other.manifest_version
+        let is_newer = self.encryption_revision > other.encryption_revision
+            || (self.encryption_revision == other.encryption_revision
                 && self_time > other_time);
-        let is_same = self.manifest_version == other.manifest_version;
+        let is_same = self.encryption_revision == other.encryption_revision;
         (is_newer, is_same)
     }
 
@@ -642,7 +642,7 @@ mod tests {
     }
 
     #[test]
-    fn test_manifest_version_increment() {
+    fn test_encryption_revision_increment() {
         let device_info = create_test_device_info();
 
         let mut metadata = create_test_metadata(
@@ -651,10 +651,10 @@ mod tests {
             vec![],
 );
 
-        assert_eq!(metadata.manifest_version, 1);
+        assert_eq!(metadata.encryption_revision, 1);
 
         metadata.increment_version(&device_info);
-        assert_eq!(metadata.manifest_version, 2);
+        assert_eq!(metadata.encryption_revision, 2);
         assert_eq!(metadata.last_encrypted_by.as_ref().unwrap().machine_id, "test-machine-123");
     }
 

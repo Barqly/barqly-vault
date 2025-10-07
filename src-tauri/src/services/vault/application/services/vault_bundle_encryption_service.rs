@@ -33,7 +33,7 @@ pub struct VaultBundleEncryptionInput {
 pub struct VaultBundleEncryptionResult {
     pub encrypted_file_path: String,
     pub manifest_path: String,
-    pub manifest_version: u32,
+    pub encryption_revision: u32,
     pub keys_used: Vec<String>,
 }
 
@@ -111,15 +111,15 @@ impl VaultBundleEncryptionService {
             &input.vault_name,
             vault.description.clone(),
             &device_info,
-        ) && existing.manifest_version > 0
+        ) && existing.encryption_revision > 0
         {
-            vault_metadata.manifest_version = existing.manifest_version;
+            vault_metadata.encryption_revision = existing.encryption_revision;
             vault_metadata.increment_version(&device_info);
         }
 
         info!(
             vault = %vault_metadata.label,
-            version = vault_metadata.manifest_version,
+            version = vault_metadata.encryption_revision,
             "Built VaultMetadata"
         );
 
@@ -186,7 +186,7 @@ impl VaultBundleEncryptionService {
 
         info!(
             vault = %vault_metadata.label,
-            version = vault_metadata.manifest_version,
+            version = vault_metadata.encryption_revision,
             keys_count = keys_used.len(),
             "Vault bundle encryption completed"
         );
@@ -194,7 +194,7 @@ impl VaultBundleEncryptionService {
         Ok(VaultBundleEncryptionResult {
             encrypted_file_path: encrypted_path.to_string_lossy().to_string(),
             manifest_path: format!("non-sync vaults/{}.manifest", vault_metadata.sanitized_name),
-            manifest_version: vault_metadata.manifest_version,
+            encryption_revision: vault_metadata.encryption_revision,
             keys_used,
         })
     }

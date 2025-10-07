@@ -30,7 +30,7 @@ impl RecoveryTxtService {
                 .unwrap_or(metadata.created_at)
                 .format("%Y-%m-%d %H:%M:%S")
         ));
-        content.push_str(&format!("Version: {}\n", metadata.manifest_version));
+        content.push_str(&format!("Version: {}\n", metadata.encryption_revision));
 
         let (machine_label, machine_id) = metadata.last_encrypted_by
             .as_ref()

@@ -158,7 +158,7 @@ impl DecryptionOrchestrationService {
         // Step 5: Process vault manifest from extracted files
         progress_manager.set_progress(PROGRESS_DECRYPT_CLEANUP, "Processing vault manifest...");
 
-        let (manifest_updated, manifest_version) =
+        let (manifest_updated, encryption_revision) =
             self.process_vault_manifest(&extracted_files, input.output_dir)?;
 
         // Step 6: Restore .agekey.enc files from bundle to keys directory
@@ -181,7 +181,7 @@ impl DecryptionOrchestrationService {
         info!(
             manifest_verified = manifest_verified,
             manifest_updated = manifest_updated,
-            manifest_version = ?manifest_version,
+            encryption_revision = ?encryption_revision,
             enc_files_restored = enc_files_restored,
             "Decryption orchestration completed successfully"
         );
@@ -198,7 +198,7 @@ impl DecryptionOrchestrationService {
     /// Reads manifest from bundle, compares with local, and handles version conflicts.
     ///
     /// # Returns
-    /// (manifest_was_updated, manifest_version)
+    /// (manifest_was_updated, encryption_revision)
     fn process_vault_manifest(
         &self,
         extracted_files: &[file_operations::FileInfo],
@@ -229,7 +229,7 @@ impl DecryptionOrchestrationService {
 
         info!(
             vault = %bundle_manifest.label,
-            version = bundle_manifest.manifest_version,
+            version = bundle_manifest.encryption_revision,
             "Found vault manifest in bundle"
         );
 
@@ -269,7 +269,7 @@ impl DecryptionOrchestrationService {
             info!(message = %msg, "Version comparison result");
         }
 
-        Ok((was_updated, Some(bundle_manifest.manifest_version)))
+        Ok((was_updated, Some(bundle_manifest.encryption_revision)))
     }
 
     /// Restore .agekey.enc files from bundle to keys directory

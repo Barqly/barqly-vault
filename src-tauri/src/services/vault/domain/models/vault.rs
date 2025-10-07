@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct Vault {
     /// Manifest schema version (increments with each encryption)
-    pub manifest_version: u32,
+    pub encryption_revision: u32,
 
     /// App version that created/last updated this vault
     pub app_version: String,
@@ -85,7 +85,7 @@ impl Vault {
     pub fn new(name: String, description: Option<String>) -> Self {
         let now = Utc::now();
         Self {
-            manifest_version: 1,
+            encryption_revision: 1,
             app_version: env!("CARGO_PKG_VERSION").to_string(),
             id: generate_vault_id(),
             name,
