@@ -3,9 +3,12 @@
  */
 
 import { ValidationResult } from './form-validation';
+import { validateLabel } from '../sanitization';
 
 /**
  * Validate key label format and constraints
+ *
+ * Uses shared sanitization logic that mirrors backend rules.
  *
  * @param label - The key label to validate
  * @returns ValidationResult with validation status
@@ -25,18 +28,19 @@ export function validateKeyLabel(label: string): ValidationResult {
     };
   }
 
-  if (label.length > 50) {
+  if (label.length > 200) {
     return {
       isValid: false,
-      error: 'Key label must be less than 50 characters',
+      error: 'Key label must be less than 200 characters',
     };
   }
 
-  if (!/^[a-zA-Z0-9\s\-_]+$/.test(label)) {
+  // Use shared sanitization validation
+  const error = validateLabel(label);
+  if (error) {
     return {
       isValid: false,
-      error:
-        'Key label contains invalid characters (only letters, numbers, spaces, hyphens, and underscores allowed)',
+      error,
     };
   }
 
