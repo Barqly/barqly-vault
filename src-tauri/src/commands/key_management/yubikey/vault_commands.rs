@@ -346,16 +346,9 @@ pub async fn register_yubikey_for_vault(
         ));
     }
 
-    // Get existing identity
-    let pin = Pin::new(input.pin.clone()).map_err(|e| {
-        Box::new(
-            CommandError::validation(format!("Invalid PIN format: {e}"))
-                .with_recovery_guidance("Ensure PIN is valid"),
-        )
-    })?;
-
+    // Get existing identity (no PIN needed - just reads metadata)
     let identity = manager
-        .generate_identity(&serial, &pin, 1u8) // Get existing identity from slot 1
+        .get_existing_identity(&serial)
         .await
         .map_err(|e| {
             Box::new(
@@ -363,7 +356,16 @@ pub async fn register_yubikey_for_vault(
                     ErrorCode::YubiKeyInitializationFailed,
                     format!("Failed to get YubiKey identity: {e}"),
                 )
-                .with_recovery_guidance("Check YubiKey state and PIN"),
+                .with_recovery_guidance("Check YubiKey state"),
+            )
+        })?
+        .ok_or_else(|| {
+            Box::new(
+                CommandError::operation(
+                    ErrorCode::YubiKeyInitializationFailed,
+                    "YubiKey identity not found despite has_identity check",
+                )
+                .with_recovery_guidance("Try reinitializing the YubiKey"),
             )
         })?;
 
