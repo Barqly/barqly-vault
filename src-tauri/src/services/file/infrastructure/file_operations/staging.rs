@@ -144,7 +144,14 @@ impl StagingArea {
             .filter_map(|e| e.ok())
         {
             if entry.file_type().is_file() {
-                let relative_path = entry.path().strip_prefix(folder).map_err(|e| {
+                let file_path = entry.path();
+
+                // Skip system/hidden files using same logic as collect_files_with_metadata
+                if super::utils::should_exclude_file(file_path) {
+                    continue;
+                }
+
+                let relative_path = file_path.strip_prefix(folder).map_err(|e| {
                     FileOpsError::CrossPlatformPathError {
                         message: format!("Failed to get relative path: {e}"),
                     }

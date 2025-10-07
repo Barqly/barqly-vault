@@ -75,10 +75,54 @@ pub struct CollectedFile {
     pub sha256: String,
 }
 
+/// Check if file should be excluded from encryption
+///
+/// Excludes system files, hidden files, and version control metadata.
+pub fn should_exclude_file(path: &Path) -> bool {
+    let file_name = match path.file_name() {
+        Some(name) => name.to_string_lossy(),
+        None => return true, // Invalid path
+    };
+
+    // System files (cross-platform)
+    const EXCLUDED_FILES: &[&str] = &[
+        ".DS_Store",      // macOS Finder metadata
+        "Thumbs.db",      // Windows thumbnail cache
+        "desktop.ini",    // Windows folder settings
+        ".Spotlight-V100", // macOS Spotlight
+        ".Trashes",       // macOS trash
+        ".fseventsd",     // macOS file events
+        ".TemporaryItems", // macOS temp
+        "$RECYCLE.BIN",   // Windows recycle bin
+        "System Volume Information", // Windows system
+    ];
+
+    // Exclude exact matches
+    if EXCLUDED_FILES.contains(&file_name.as_ref()) {
+        return true;
+    }
+
+    // Exclude hidden files (starting with .)
+    if file_name.starts_with('.') {
+        return true;
+    }
+
+    // Exclude version control directories
+    if let Some(parent) = path.parent() {
+        let parent_name = parent.file_name().map(|n| n.to_string_lossy());
+        if matches!(parent_name.as_deref(), Some(".git") | Some(".svn") | Some(".hg")) {
+            return true;
+        }
+    }
+
+    false
+}
+
 /// Collect all files from selection with metadata (handles files and folders)
 ///
 /// This is the canonical method for collecting file metadata with hashes.
 /// Used by manifest generation and draft vault file management.
+/// Automatically excludes system files and hidden files.
 ///
 /// # Arguments
 /// * `file_paths` - Input file/folder paths from user
@@ -113,6 +157,12 @@ pub fn collect_files_with_metadata(
             {
                 if entry.file_type().is_file() {
                     let file_path = entry.path();
+
+                    // Skip system/hidden files
+                    if should_exclude_file(file_path) {
+                        tracing::debug!(path = %file_path.display(), "Skipping system/hidden file");
+                        continue;
+                    }
 
                     // Calculate relative path from folder root
                     let relative_path = file_path
