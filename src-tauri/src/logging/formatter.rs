@@ -102,8 +102,8 @@ where
     ) -> fmt::Result {
         let metadata = event.metadata();
 
-        // 1. Timestamp in RFC3339 format
-        let now = chrono::Utc::now();
+        // 1. Timestamp in RFC3339 format with local timezone
+        let now = chrono::Local::now();
         write!(writer, "{}", now.to_rfc3339())?;
 
         // 2. Separator and Level
