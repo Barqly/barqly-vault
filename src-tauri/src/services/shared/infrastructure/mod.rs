@@ -28,7 +28,7 @@ pub use path_management::{
 pub use error::ErrorHandler;
 
 // Re-export I/O utilities
-pub use io::{atomic_write, atomic_write_sync};
+pub use io::{atomic_write, atomic_write_sync, SecureTempFile};
 
 // Re-export progress tracking
 pub use progress::{

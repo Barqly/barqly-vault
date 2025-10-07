@@ -83,8 +83,12 @@ impl VaultBundleEncryptionService {
             ));
         }
 
-        // Step 3: Build file entries with hashes
-        let file_entries = self.build_file_entries(&input.file_paths)?;
+        // Step 3: Build file entries with hashes (handles folders recursively)
+        let file_entries = self.build_file_entries(
+            &input.file_paths,
+            input.selection_type.clone(),
+            input.base_path.as_deref(),
+        )?;
 
         // Step 4: Build or update VaultMetadata
         let mut vault_metadata = self
@@ -119,11 +123,17 @@ impl VaultBundleEncryptionService {
             "Built VaultMetadata"
         );
 
-        // Step 5: Determine output path
+        // Step 5: Determine output paths - TAR in secure temp, .age in Barqly-Vaults
+        use crate::services::shared::infrastructure::io::SecureTempFile;
+
+        let secure_tar = SecureTempFile::new().map_err(|e| {
+            VaultError::OperationFailed(format!("Failed to create secure temp file: {}", e))
+        })?;
+        let output_path = secure_tar.path().to_path_buf();
+
         let vaults_dir = get_vaults_directory().map_err(|e| {
             VaultError::StorageError(format!("Failed to get vaults directory: {}", e))
         })?;
-        let output_path = vaults_dir.join(format!("{}.tar.gz", vault_metadata.sanitized_name));
         let encrypted_path = vaults_dir.join(format!("{}.age", vault_metadata.sanitized_name));
 
         // Step 6: Create complete payload (user files + manifest + .enc + RECOVERY.txt)
@@ -169,8 +179,10 @@ impl VaultBundleEncryptionService {
             .save_manifest(&vault_metadata)
             .map_err(|e| VaultError::StorageError(format!("Failed to save manifest: {}", e)))?;
 
-        // Step 12: Cleanup temporary archive file
-        let _ = std::fs::remove_file(&output_path);
+        // Step 12: Securely delete temporary TAR file (overwrite + unlink)
+        secure_tar.secure_delete().map_err(|e| {
+            VaultError::OperationFailed(format!("Failed to securely delete temp TAR: {}", e))
+        })?;
 
         info!(
             vault = %vault_metadata.label,
@@ -187,39 +199,38 @@ impl VaultBundleEncryptionService {
         })
     }
 
-    /// Build file entries with SHA256 hashes
-    fn build_file_entries(&self, file_paths: &[String]) -> Result<Vec<VaultFileEntry>> {
-        use crate::services::file::infrastructure::file_operations::utils::calculate_file_hash;
+    /// Build file entries with SHA256 hashes (handles files and folders)
+    fn build_file_entries(
+        &self,
+        file_paths: &[String],
+        selection_type: SelectionType,
+        base_path: Option<&str>,
+    ) -> Result<Vec<VaultFileEntry>> {
+        use crate::services::file::infrastructure::file_operations::{
+            collect_files_with_metadata, SelectionType as FileSelectionType,
+        };
 
-        let mut entries = Vec::new();
+        // Convert metadata::SelectionType to file_operations::SelectionType
+        let file_selection_type = match selection_type {
+            SelectionType::Files => FileSelectionType::Files,
+            SelectionType::Folder => FileSelectionType::Folder,
+        };
 
-        for path_str in file_paths {
-            let path = Path::new(path_str);
-            if !path.exists() {
-                warn!(path = %path_str, "File not found, skipping");
-                continue;
-            }
-
-            let metadata = std::fs::metadata(path).map_err(|e| {
-                VaultError::OperationFailed(format!("Failed to read file metadata: {}", e))
+        // Use reusable file collection utility
+        let collected_files =
+            collect_files_with_metadata(file_paths, file_selection_type, base_path).map_err(|e| {
+                VaultError::OperationFailed(format!("Failed to collect files: {}", e))
             })?;
 
-            let hash = calculate_file_hash(path).map_err(|e| {
-                VaultError::OperationFailed(format!("Failed to calculate file hash: {}", e))
-            })?;
-
-            let relative_path = path
-                .file_name()
-                .ok_or_else(|| VaultError::InvalidOperation("Invalid file path".to_string()))?
-                .to_string_lossy()
-                .to_string();
-
-            entries.push(VaultFileEntry {
-                path: relative_path,
-                size: metadata.len(),
-                sha256: hash,
-            });
-        }
+        // Convert to VaultFileEntry
+        let entries = collected_files
+            .into_iter()
+            .map(|cf| VaultFileEntry {
+                path: cf.relative_path,
+                size: cf.size,
+                sha256: cf.sha256,
+            })
+            .collect();
 
         Ok(entries)
     }
