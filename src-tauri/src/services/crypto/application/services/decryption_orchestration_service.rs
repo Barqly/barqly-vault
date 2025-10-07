@@ -228,13 +228,13 @@ impl DecryptionOrchestrationService {
             .map_err(|e| CryptoError::InvalidInput(format!("Failed to parse manifest: {}", e)))?;
 
         info!(
-            vault = %bundle_manifest.label,
-            version = bundle_manifest.encryption_revision,
+            vault = %bundle_manifest.label(),
+            version = bundle_manifest.encryption_revision(),
             "Found vault manifest in bundle"
         );
 
         // Get path to local manifest in non-sync storage
-        let local_manifest_path = get_vault_manifest_path(&bundle_manifest.sanitized_name)
+        let local_manifest_path = get_vault_manifest_path(&bundle_manifest.vault.sanitized_name)
             .map_err(|e| CryptoError::InvalidInput(format!("Invalid vault name: {}", e)))?;
 
         // Load local manifest if exists
@@ -269,7 +269,7 @@ impl DecryptionOrchestrationService {
             info!(message = %msg, "Version comparison result");
         }
 
-        Ok((was_updated, Some(bundle_manifest.encryption_revision)))
+        Ok((was_updated, Some(bundle_manifest.encryption_revision())))
     }
 
     /// Restore .agekey.enc files from bundle to keys directory

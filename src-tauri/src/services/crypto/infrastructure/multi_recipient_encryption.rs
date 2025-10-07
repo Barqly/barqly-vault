@@ -76,7 +76,6 @@ impl MultiRecipientCrypto {
         // TODO(CLEANUP): This function creates metadata but isn't used in R2 flow
         // Consider removing or updating to use VaultMetadataService
         use crate::services::shared::infrastructure::DeviceInfo;
-        use crate::services::vault::infrastructure::persistence::metadata::SelectionType;
 
         let device_info = DeviceInfo::load_or_create("2.0.0").map_err(|e| {
             CryptoError::EncryptionFailed(format!("Failed to load device info: {}", e))
@@ -89,7 +88,6 @@ impl MultiRecipientCrypto {
             None, // No description for temp vault
             "Temporary-Vault".to_string(),
             &device_info,
-            Some(SelectionType::Files),
             None,
             recipients,
             vec![],
@@ -288,7 +286,7 @@ impl MultiRecipientCrypto {
     ) -> Result<DecryptionResult> {
         // Find the passphrase recipient
         let recipient = metadata
-            .recipients
+            .recipients()
             .iter()
             .find(|r| {
                 matches!(r.recipient_type, RecipientType::Passphrase { .. }) && r.label == key_label
@@ -326,7 +324,7 @@ impl MultiRecipientCrypto {
     ) -> Result<DecryptionResult> {
         // Find the YubiKey recipient
         let recipient = metadata
-            .recipients
+            .recipients()
             .iter()
             .find(|r| match &r.recipient_type {
                 RecipientType::YubiKey { serial: s, .. } => s == serial,
@@ -451,7 +449,6 @@ mod tests {
 
     fn create_test_metadata() -> VaultMetadata {
         use crate::services::shared::infrastructure::DeviceInfo;
-        use crate::services::vault::infrastructure::persistence::metadata::SelectionType;
 
         let device_info = DeviceInfo {
             machine_id: "test".to_string(),
@@ -473,8 +470,7 @@ mod tests {
             None, // No description
             "Test-Vault".to_string(),
             &device_info,
-            Some(SelectionType::Files),
-            None,
+            None, // source_root
             vec![passphrase_recipient],
             vec![],
             0,

@@ -44,7 +44,7 @@ impl PayloadStagingService {
         output_path: &Path,
     ) -> Result<ArchiveOperation> {
         info!(
-            vault = %vault_metadata.label,
+            vault = %vault_metadata.label(),
             "Creating complete vault payload"
         );
 
@@ -65,7 +65,7 @@ impl PayloadStagingService {
             VaultError::OperationFailed(format!("Failed to serialize manifest: {}", e))
         })?;
 
-        let manifest_filename = format!("{}.manifest", vault_metadata.sanitized_name);
+        let manifest_filename = format!("{}.manifest", vault_metadata.vault.sanitized_name);
         staging
             .add_file_content(&manifest_filename, manifest_json.as_bytes())
             .map_err(|e| {
@@ -133,7 +133,7 @@ impl PayloadStagingService {
 
         let mut added_count = 0;
 
-        for recipient in &vault_metadata.recipients {
+        for recipient in vault_metadata.recipients() {
             if let RecipientType::Passphrase { key_filename } = &recipient.recipient_type {
                 let key_path = keys_dir.join(key_filename);
 
@@ -168,9 +168,7 @@ mod tests {
     use super::*;
 
     use crate::services::shared::infrastructure::DeviceInfo;
-    use crate::services::vault::infrastructure::persistence::metadata::{
-        RecipientInfo, SelectionType,
-    };
+    use crate::services::vault::infrastructure::persistence::metadata::RecipientInfo;
     use tempfile::TempDir;
 
     #[test]
@@ -210,8 +208,7 @@ mod tests {
             None, // No description
             "Test-Vault".to_string(),
             &device_info,
-            Some(SelectionType::Files),
-            None,
+            None, // source_root
             vec![recipient],
             vec![],
             1,

@@ -109,9 +109,9 @@ impl BootstrapService {
                     Ok(content) => match serde_json::from_str::<VaultMetadata>(&content) {
                         Ok(manifest) => {
                             debug!(
-                                vault = %manifest.label,
-                                version = manifest.encryption_revision,
-                                recipients = manifest.recipients.len(),
+                                vault = %manifest.label(),
+                                version = manifest.encryption_revision(),
+                                recipients = manifest.recipients().len(),
                                 "Loaded vault manifest"
                             );
                             manifests.push(manifest);
@@ -155,7 +155,7 @@ impl BootstrapService {
         for manifest in manifests {
             manifests_processed += 1;
 
-            for recipient in &manifest.recipients {
+            for recipient in manifest.recipients() {
                 // Generate key ID for this recipient
                 let key_id = self.generate_key_id_from_recipient(recipient);
 
@@ -169,7 +169,7 @@ impl BootstrapService {
                 if registry.keys.contains_key(&key_id) {
                     debug!(
                         key_id = %key_id,
-                        vault = %manifest.label,
+                        vault = %manifest.label(),
                         "Key already in registry, skipping"
                     );
                     continue;
@@ -183,7 +183,7 @@ impl BootstrapService {
                 info!(
                     key_id = %key_id,
                     label = %recipient.label,
-                    vault = %manifest.label,
+                    vault = %manifest.label(),
                     "Added key from manifest to registry"
                 );
             }

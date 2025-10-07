@@ -12,7 +12,6 @@ use crate::services::shared::infrastructure::progress::ProgressManager;
 use crate::services::vault::application::services::{
     VaultBundleEncryptionInput, VaultBundleEncryptionService,
 };
-use crate::services::vault::infrastructure::persistence::metadata::SelectionType;
 use std::path::Path;
 
 pub struct CryptoManager {
@@ -50,24 +49,23 @@ impl CryptoManager {
 
         // Convert to VaultBundleEncryptionInput
         // Detect if single folder or multiple files
-        let (selection_type, base_path) = Self::detect_selection_type(&input.in_file_paths);
+        let source_root = Self::detect_source_root(&input.in_file_paths);
 
         // Check if output file would exist (before encryption)
         let vaults_dir =
             crate::services::shared::infrastructure::get_vaults_directory().map_err(|e| {
                 CryptoError::InvalidInput(format!("Failed to get vaults directory: {}", e))
             })?;
-        let sanitized = crate::services::shared::infrastructure::sanitize_vault_name(&vault.label)
+        let sanitized = crate::services::shared::infrastructure::sanitize_vault_name(vault.label())
             .map_err(|e| CryptoError::InvalidInput(format!("Invalid vault name: {}", e)))?;
         let encrypted_path = vaults_dir.join(format!("{}.age", sanitized.sanitized));
         let file_exists_warning = encrypted_path.exists();
 
         let vault_input = VaultBundleEncryptionInput {
             vault_id: input.vault_id.clone(),
-            vault_name: vault.label.clone(),
+            vault_name: vault.label().to_string(),
             file_paths: input.in_file_paths.clone(),
-            selection_type,
-            base_path,
+            source_root,
         };
 
         // Use VaultBundleEncryptionService
@@ -91,18 +89,19 @@ impl CryptoManager {
     /// Detect selection type from file paths
     ///
     /// Returns: (SelectionType, base_path)
-    fn detect_selection_type(file_paths: &[String]) -> (SelectionType, Option<String>) {
+    /// Detect source_root from file paths
+    /// Returns Some(folder_name) if single folder, None otherwise
+    fn detect_source_root(file_paths: &[String]) -> Option<String> {
         if file_paths.len() == 1 {
             let path = std::path::Path::new(&file_paths[0]);
             if path.is_dir() {
-                // Single folder selected
-                let base_path = path.file_name().map(|n| n.to_string_lossy().to_string());
-                return (SelectionType::Folder, base_path);
+                // Single folder selected - return folder name as source_root
+                return path.file_name().map(|n| n.to_string_lossy().to_string());
             }
         }
 
-        // Multiple files or single file
-        (SelectionType::Files, None)
+        // Multiple files or single file - no source_root
+        None
     }
 
     /// Decrypt data using DecryptionOrchestrationService

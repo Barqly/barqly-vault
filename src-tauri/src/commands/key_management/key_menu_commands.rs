@@ -116,7 +116,7 @@ pub async fn get_key_menu_data(
     let mut yubikey_index = 1u8; // YubiKeys start at display index 1
 
     // Process recipients in vault metadata
-    for recipient in &vault.recipients {
+    for recipient in vault.recipients() {
         match &recipient.recipient_type {
             RecipientType::Passphrase { .. } => {
                 // Use the key_id from recipient (registry reference)
@@ -171,7 +171,7 @@ pub async fn get_key_menu_data(
                             label: label.clone(),
                             internal_id: key_id.to_string(),
                             state: yubikey_states
-                                .get(serial)
+                                .get(serial.as_str())
                                 .unwrap_or(&"registered".to_string())
                                 .clone(),
                             created_at: created_at.to_rfc3339(),
@@ -195,7 +195,7 @@ pub async fn get_key_menu_data(
                             label: recipient.label.clone(),
                             internal_id: key_id.to_string(), // Use real key_id, not fake
                             state: yubikey_states
-                                .get(serial)
+                                .get(serial.as_str())
                                 .unwrap_or(&"registered".to_string())
                                 .clone(),
                             created_at: recipient.created_at.to_rfc3339(),

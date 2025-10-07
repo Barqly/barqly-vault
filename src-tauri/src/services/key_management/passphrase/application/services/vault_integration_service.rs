@@ -49,7 +49,7 @@ impl VaultIntegrationService {
 
         // Check if any recipient is a passphrase type
         let has_passphrase = metadata
-            .recipients
+            .recipients()
             .iter()
             .any(|recipient| matches!(recipient.recipient_type, RecipientType::Passphrase { .. }));
 

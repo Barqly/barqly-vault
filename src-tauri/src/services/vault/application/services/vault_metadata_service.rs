@@ -9,7 +9,7 @@ use crate::services::shared::infrastructure::{
     DeviceInfo, atomic_write_sync, get_vault_manifest_path, sanitize_vault_name,
 };
 use crate::services::vault::infrastructure::persistence::metadata::{
-    RecipientInfo, RecipientType, SelectionType, VaultFileEntry, VaultMetadata,
+    RecipientInfo, RecipientType, VaultFileEntry, VaultMetadata,
 };
 use std::path::Path;
 
@@ -69,8 +69,8 @@ impl VaultMetadataService {
             })?;
 
         debug!(
-            vault = %manifest.label,
-            version = manifest.encryption_revision,
+            vault = %manifest.label(),
+            version = manifest.encryption_revision(),
             "Loaded manifest from non-sync storage"
         );
 
@@ -93,8 +93,7 @@ impl VaultMetadataService {
             description,
             sanitized.sanitized,
             device_info,
-            None, // No selection until first encryption
-            None,
+            None, // source_root - set during first encryption
             vec![],
             vec![],
             0,
@@ -114,8 +113,7 @@ impl VaultMetadataService {
         vault_keys: &[String],
         device_info: &DeviceInfo,
         file_entries: Vec<VaultFileEntry>,
-        selection_type: SelectionType,
-        base_path: Option<String>,
+        source_root: Option<String>,
     ) -> Result<VaultMetadata, StorageError> {
         let sanitized = sanitize_vault_name(vault_name)?;
 
@@ -139,8 +137,7 @@ impl VaultMetadataService {
             description,
             sanitized.sanitized,
             device_info,
-            Some(selection_type), // Set during encryption
-            base_path,
+            source_root,
             recipients,
             file_entries,
             file_count,
@@ -208,7 +205,7 @@ impl VaultMetadataService {
 
     /// Save manifest to non-sync storage (atomic write)
     pub fn save_manifest(&self, manifest: &VaultMetadata) -> Result<(), StorageError> {
-        let manifest_path = get_vault_manifest_path(&manifest.sanitized_name)?;
+        let manifest_path = get_vault_manifest_path(&manifest.vault.sanitized_name)?;
 
         let json = serde_json::to_string_pretty(manifest).map_err(|e| {
             StorageError::SerializationFailed {
@@ -224,8 +221,8 @@ impl VaultMetadataService {
         })?;
 
         debug!(
-            vault = %manifest.label,
-            version = manifest.encryption_revision,
+            vault = %manifest.label(),
+            version = manifest.encryption_revision(),
             path = %manifest_path.display(),
             "Saved manifest to non-sync storage"
         );

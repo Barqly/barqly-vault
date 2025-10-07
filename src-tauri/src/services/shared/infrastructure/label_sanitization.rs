@@ -128,7 +128,7 @@ fn collapse_separators(s: &str) -> String {
 }
 
 /// Check if name is a Windows reserved name
-fn check_reserved_names(name: &str) -> Result<(), StorageError> {
+fn check_reserved_names(_name: &str) -> Result<(), StorageError> {
     #[cfg(target_os = "windows")]
     {
         let reserved = [
@@ -136,9 +136,9 @@ fn check_reserved_names(name: &str) -> Result<(), StorageError> {
             "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
         ];
 
-        if reserved.contains(&name.to_uppercase().as_str()) {
+        if reserved.contains(&_name.to_uppercase().as_str()) {
             return Err(StorageError::InvalidVaultName(format!(
-                "'{name}' is a reserved name on Windows"
+                "'{_name}' is a reserved name on Windows"
             )));
         }
     }

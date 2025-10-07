@@ -11,9 +11,7 @@ use crate::services::shared::infrastructure::{DeviceInfo, get_vaults_directory};
 use crate::services::vault;
 use crate::services::vault::application::services::{PayloadStagingService, VaultMetadataService};
 use crate::services::vault::domain::VaultError;
-use crate::services::vault::infrastructure::persistence::metadata::{
-    SelectionType, VaultFileEntry,
-};
+use crate::services::vault::infrastructure::persistence::metadata::VaultFileEntry;
 use std::path::PathBuf;
 
 type Result<T> = std::result::Result<T, VaultError>;
@@ -24,8 +22,7 @@ pub struct VaultBundleEncryptionInput {
     pub vault_id: String,
     pub vault_name: String,
     pub file_paths: Vec<String>,
-    pub selection_type: SelectionType,
-    pub base_path: Option<String>,
+    pub source_root: Option<String>, // Folder name if folder selection, None if files
 }
 
 /// Result of vault bundle encryption
@@ -77,18 +74,15 @@ impl VaultBundleEncryptionService {
             .await
             .map_err(|e| VaultError::NotFound(format!("Vault '{}': {}", input.vault_id, e)))?;
 
-        if vault.recipients.is_empty() {
+        if vault.recipients().is_empty() {
             return Err(VaultError::InvalidOperation(
                 "Vault has no keys for encryption".to_string(),
             ));
         }
 
         // Step 3: Build file entries with hashes (handles folders recursively)
-        let file_entries = self.build_file_entries(
-            &input.file_paths,
-            input.selection_type.clone(),
-            input.base_path.as_deref(),
-        )?;
+        let file_entries =
+            self.build_file_entries(&input.file_paths, input.source_root.as_deref())?;
 
         // Step 4: Build or update VaultMetadata
         let mut vault_metadata = self
@@ -96,12 +90,11 @@ impl VaultBundleEncryptionService {
             .build_from_vault_and_registry(
                 &input.vault_id,
                 &input.vault_name,
-                vault.description.clone(),
+                vault.vault.description.clone(),
                 &vault.get_key_ids(),
                 &device_info,
                 file_entries,
-                input.selection_type,
-                input.base_path,
+                input.source_root,
             )
             .map_err(|e| VaultError::OperationFailed(format!("Failed to build manifest: {}", e)))?;
 
@@ -109,17 +102,17 @@ impl VaultBundleEncryptionService {
         if let Ok(existing) = self.metadata_service.load_or_create(
             &input.vault_id,
             &input.vault_name,
-            vault.description.clone(),
+            vault.vault.description.clone(),
             &device_info,
-        ) && existing.encryption_revision > 0
+        ) && existing.encryption_revision() > 0
         {
-            vault_metadata.encryption_revision = existing.encryption_revision;
+            vault_metadata.versioning.revision = existing.encryption_revision();
             vault_metadata.increment_version(&device_info);
         }
 
         info!(
-            vault = %vault_metadata.label,
-            version = vault_metadata.encryption_revision,
+            vault = %vault_metadata.label(),
+            version = vault_metadata.encryption_revision(),
             "Built VaultMetadata"
         );
 
@@ -134,7 +127,8 @@ impl VaultBundleEncryptionService {
         let vaults_dir = get_vaults_directory().map_err(|e| {
             VaultError::StorageError(format!("Failed to get vaults directory: {}", e))
         })?;
-        let encrypted_path = vaults_dir.join(format!("{}.age", vault_metadata.sanitized_name));
+        let encrypted_path =
+            vaults_dir.join(format!("{}.age", vault_metadata.vault.sanitized_name));
 
         // Step 6: Create complete payload (user files + manifest + .enc + RECOVERY.txt)
         let file_selection = self.create_file_selection(&input.file_paths)?;
@@ -185,16 +179,19 @@ impl VaultBundleEncryptionService {
         })?;
 
         info!(
-            vault = %vault_metadata.label,
-            version = vault_metadata.encryption_revision,
+            vault = %vault_metadata.label(),
+            version = vault_metadata.encryption_revision(),
             keys_count = keys_used.len(),
             "Vault bundle encryption completed"
         );
 
         Ok(VaultBundleEncryptionResult {
             encrypted_file_path: encrypted_path.to_string_lossy().to_string(),
-            manifest_path: format!("non-sync vaults/{}.manifest", vault_metadata.sanitized_name),
-            encryption_revision: vault_metadata.encryption_revision,
+            manifest_path: format!(
+                "non-sync vaults/{}.manifest",
+                vault_metadata.vault.sanitized_name
+            ),
+            encryption_revision: vault_metadata.encryption_revision(),
             keys_used,
         })
     }
@@ -203,22 +200,22 @@ impl VaultBundleEncryptionService {
     fn build_file_entries(
         &self,
         file_paths: &[String],
-        selection_type: SelectionType,
-        base_path: Option<&str>,
+        source_root: Option<&str>,
     ) -> Result<Vec<VaultFileEntry>> {
         use crate::services::file::infrastructure::file_operations::{
             SelectionType as FileSelectionType, collect_files_with_metadata,
         };
 
-        // Convert metadata::SelectionType to file_operations::SelectionType
-        let file_selection_type = match selection_type {
-            SelectionType::Files => FileSelectionType::Files,
-            SelectionType::Folder => FileSelectionType::Folder,
+        // Infer selection type from source_root presence
+        let file_selection_type = if source_root.is_some() {
+            FileSelectionType::Folder
+        } else {
+            FileSelectionType::Files
         };
 
         // Use reusable file collection utility
         let collected_files =
-            collect_files_with_metadata(file_paths, file_selection_type, base_path).map_err(
+            collect_files_with_metadata(file_paths, file_selection_type, source_root).map_err(
                 |e| VaultError::OperationFailed(format!("Failed to collect files: {}", e)),
             )?;
 

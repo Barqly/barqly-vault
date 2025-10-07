@@ -10,43 +10,14 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-/// Vault metadata supporting multiple protection modes (R2 enhanced schema)
+/// Vault metadata supporting multiple protection modes (Schema v2 - Nested structure)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VaultMetadata {
-    // R2 Schema version tracking
-    pub schema: String, // "barqly.vault.manifest/1"
-    pub vault_id: String,
-    pub label: String, // Display name (user-entered)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>, // Optional vault description
-    pub sanitized_name: String, // Filesystem-safe name
-
-    // Version control for conflict resolution
-    pub encryption_revision: u32, // Increments on each encryption
-    pub created_at: DateTime<Utc>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub last_encrypted_at: Option<DateTime<Utc>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub last_encrypted_by: Option<LastEncryptedBy>,
-
-    // File selection metadata (set during first encryption)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub selection_type: Option<SelectionType>, // Omitted until files selected
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub base_path: Option<String>, // Omitted for files-only selection
-
-    // Encryption metadata
-    pub encryption_method: String, // "age"
-
-    // Encryption recipients
-    pub recipients: Vec<RecipientInfo>,
-
-    // File contents
-    pub files: Vec<VaultFileEntry>,
-    pub file_count: usize,
-    pub total_size: u64,
-
-    // Optional integrity verification
+    pub schema: String, // "barqly.vault.manifest/2"
+    pub vault: VaultInfo,
+    pub versioning: Versioning,
+    pub encryption: EncryptionConfig,
+    pub content: ContentInfo,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub integrity: Option<IntegrityInfo>,
 }
@@ -56,6 +27,55 @@ pub struct VaultMetadata {
 pub struct LastEncryptedBy {
     pub machine_id: String,
     pub machine_label: String,
+}
+
+/// Vault identification and naming information (Schema v2)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VaultInfo {
+    pub id: String,
+    pub label: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    pub sanitized_name: String,
+}
+
+/// Version tracking and encryption history (Schema v2)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Versioning {
+    pub revision: u32, // Was encryption_revision
+    pub created_at: DateTime<Utc>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_encrypted: Option<EncryptionInfo>,
+}
+
+/// Encryption timestamp and device information (Schema v2)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EncryptionInfo {
+    pub at: DateTime<Utc>,
+    pub by: LastEncryptedBy,
+}
+
+/// Encryption configuration (Schema v2)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EncryptionConfig {
+    pub method: String,
+    pub recipients: Vec<RecipientInfo>,
+}
+
+/// Content and file information (Schema v2)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContentInfo {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_root: Option<String>, // Was base_path
+    pub files: Vec<VaultFileEntry>,
+    pub stats: ContentStats,
+}
+
+/// Content statistics (Schema v2)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContentStats {
+    pub count: usize,     // Was file_count
+    pub total_bytes: u64, // Was total_size
 }
 
 /// Type of file selection (folder vs individual files)
@@ -113,7 +133,7 @@ pub enum RecipientType {
 }
 
 impl VaultMetadata {
-    /// Create new vault metadata with full schema
+    /// Create new vault metadata with full schema (v2 nested structure)
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         vault_id: String,
@@ -121,8 +141,7 @@ impl VaultMetadata {
         description: Option<String>,
         sanitized_name: String,
         _device_info: &MachineDeviceInfo,
-        selection_type: Option<SelectionType>,
-        base_path: Option<String>,
+        source_root: Option<String>,
         recipients: Vec<RecipientInfo>,
         files: Vec<VaultFileEntry>,
         file_count: usize,
@@ -131,51 +150,111 @@ impl VaultMetadata {
         let now = Utc::now();
 
         Self {
-            schema: "barqly.vault.manifest/1".to_string(),
-            vault_id,
-            label,
-            description,
-            sanitized_name,
-            encryption_revision: 1,
-            created_at: now,
-            last_encrypted_at: None, // Set during first encryption
-            last_encrypted_by: None, // Set during first encryption
-            selection_type,
-            base_path,
-            encryption_method: "age".to_string(),
-            recipients,
-            files,
-            file_count,
-            total_size,
+            schema: "barqly.vault.manifest/2".to_string(),
+            vault: VaultInfo {
+                id: vault_id,
+                label,
+                description,
+                sanitized_name,
+            },
+            versioning: Versioning {
+                revision: 1,
+                created_at: now,
+                last_encrypted: None, // Set during first encryption
+            },
+            encryption: EncryptionConfig {
+                method: "age".to_string(),
+                recipients,
+            },
+            content: ContentInfo {
+                source_root,
+                files,
+                stats: ContentStats {
+                    count: file_count,
+                    total_bytes: total_size,
+                },
+            },
             integrity: None,
         }
     }
 
+    // Helper methods for backward compatibility (minimize changes to calling code)
+    pub fn vault_id(&self) -> &str {
+        &self.vault.id
+    }
+
+    pub fn label(&self) -> &str {
+        &self.vault.label
+    }
+
+    pub fn encryption_revision(&self) -> u32 {
+        self.versioning.revision
+    }
+
+    pub fn source_root(&self) -> Option<&str> {
+        self.content.source_root.as_deref()
+    }
+
+    pub fn file_count(&self) -> usize {
+        self.content.stats.count
+    }
+
+    pub fn total_size(&self) -> u64 {
+        self.content.stats.total_bytes
+    }
+
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.versioning.created_at
+    }
+
+    pub fn last_encrypted_at(&self) -> Option<DateTime<Utc>> {
+        self.versioning.last_encrypted.as_ref().map(|e| e.at)
+    }
+
+    pub fn last_encrypted_by(&self) -> Option<&LastEncryptedBy> {
+        self.versioning.last_encrypted.as_ref().map(|e| &e.by)
+    }
+
+    pub fn recipients(&self) -> &Vec<RecipientInfo> {
+        &self.encryption.recipients
+    }
+
+    pub fn recipients_mut(&mut self) -> &mut Vec<RecipientInfo> {
+        &mut self.encryption.recipients
+    }
+
     /// Increment manifest version (for re-encryption)
     pub fn increment_version(&mut self, device_info: &MachineDeviceInfo) {
-        self.encryption_revision += 1;
-        self.last_encrypted_at = Some(Utc::now());
-        self.last_encrypted_by = Some(LastEncryptedBy {
-            machine_id: device_info.machine_id.clone(),
-            machine_label: device_info.machine_label.clone(),
+        self.versioning.revision += 1;
+        self.versioning.last_encrypted = Some(EncryptionInfo {
+            at: Utc::now(),
+            by: LastEncryptedBy {
+                machine_id: device_info.machine_id.clone(),
+                machine_label: device_info.machine_label.clone(),
+            },
         });
     }
 
     /// Compare versions with another manifest
     /// Returns: (is_newer, is_same_version)
     pub fn compare_version(&self, other: &VaultMetadata) -> (bool, bool) {
-        let self_time = self.last_encrypted_at.unwrap_or(self.created_at);
-        let other_time = other.last_encrypted_at.unwrap_or(other.created_at);
+        let self_time = self
+            .last_encrypted_at()
+            .unwrap_or(self.versioning.created_at);
+        let other_time = other
+            .last_encrypted_at()
+            .unwrap_or(other.versioning.created_at);
 
-        let is_newer = self.encryption_revision > other.encryption_revision
-            || (self.encryption_revision == other.encryption_revision && self_time > other_time);
-        let is_same = self.encryption_revision == other.encryption_revision;
+        let is_newer = self.versioning.revision > other.versioning.revision
+            || (self.versioning.revision == other.versioning.revision && self_time > other_time);
+        let is_same = self.versioning.revision == other.versioning.revision;
         (is_newer, is_same)
     }
 
     /// Get recipients of a specific type
     pub fn get_recipients_by_type(&self, recipient_type: &str) -> Vec<&RecipientInfo> {
-        self.recipients
+        self.encryption
+            .recipients
             .iter()
             .filter(|r| {
                 matches!(
@@ -189,7 +268,8 @@ impl VaultMetadata {
 
     /// Get YubiKey recipients for a specific serial number
     pub fn get_yubikey_recipients_for_serial(&self, serial: &str) -> Vec<&RecipientInfo> {
-        self.recipients
+        self.encryption
+            .recipients
             .iter()
             .filter(|r| match &r.recipient_type {
                 RecipientType::YubiKey { serial: s, .. } => s == serial,
@@ -201,17 +281,19 @@ impl VaultMetadata {
     /// Derive protection mode from recipients
     pub fn protection_mode(&self) -> ProtectionMode {
         let has_passphrase = self
+            .encryption
             .recipients
             .iter()
             .any(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }));
 
-        let yubikey_serial = self
-            .recipients
-            .iter()
-            .find_map(|r| match &r.recipient_type {
-                RecipientType::YubiKey { serial, .. } => Some(serial.clone()),
-                _ => None,
-            });
+        let yubikey_serial =
+            self.encryption
+                .recipients
+                .iter()
+                .find_map(|r| match &r.recipient_type {
+                    RecipientType::YubiKey { serial, .. } => Some(serial.clone()),
+                    _ => None,
+                });
 
         match (has_passphrase, yubikey_serial) {
             (false, Some(serial)) => ProtectionMode::YubiKeyOnly { serial },
@@ -235,7 +317,8 @@ impl VaultMetadata {
 
     /// Get all age recipients for encryption
     pub fn get_age_recipients(&self) -> Vec<String> {
-        self.recipients
+        self.encryption
+            .recipients
             .iter()
             .map(|r| r.public_key.clone())
             .collect()
@@ -243,15 +326,16 @@ impl VaultMetadata {
 
     /// Add a new recipient to the vault metadata
     pub fn add_recipient(&mut self, recipient: RecipientInfo) {
-        self.recipients.push(recipient);
+        self.encryption.recipients.push(recipient);
     }
 
     /// Remove a recipient by label
     pub fn remove_recipient(&mut self, label: &str) -> Option<RecipientInfo> {
-        self.recipients
+        self.encryption
+            .recipients
             .iter()
             .position(|r| r.label == label)
-            .map(|pos| self.recipients.remove(pos))
+            .map(|pos| self.encryption.recipients.remove(pos))
     }
 
     /// Check if vault has passphrase fallback (can decrypt without YubiKey)
@@ -270,7 +354,7 @@ impl VaultMetadata {
         }
 
         // Check recipients exist
-        if self.recipients.is_empty() {
+        if self.encryption.recipients.is_empty() {
             return Err(MetadataValidationError::NoRecipients);
         }
 
@@ -278,6 +362,7 @@ impl VaultMetadata {
         match self.protection_mode() {
             ProtectionMode::PassphraseOnly => {
                 if !self
+                    .encryption
                     .recipients
                     .iter()
                     .any(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }))
@@ -286,22 +371,32 @@ impl VaultMetadata {
                 }
             }
             ProtectionMode::YubiKeyOnly { serial } => {
-                if !self.recipients.iter().any(|r| match &r.recipient_type {
-                    RecipientType::YubiKey { serial: s, .. } => s == &serial,
-                    _ => false,
-                }) {
+                if !self
+                    .encryption
+                    .recipients
+                    .iter()
+                    .any(|r| match &r.recipient_type {
+                        RecipientType::YubiKey { serial: s, .. } => s == &serial,
+                        _ => false,
+                    })
+                {
                     return Err(MetadataValidationError::ProtectionModeMismatch);
                 }
             }
             ProtectionMode::Hybrid { yubikey_serial } => {
                 let has_passphrase = self
+                    .encryption
                     .recipients
                     .iter()
                     .any(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }));
-                let has_yubikey = self.recipients.iter().any(|r| match &r.recipient_type {
-                    RecipientType::YubiKey { serial: s, .. } => s == &yubikey_serial,
-                    _ => false,
-                });
+                let has_yubikey =
+                    self.encryption
+                        .recipients
+                        .iter()
+                        .any(|r| match &r.recipient_type {
+                            RecipientType::YubiKey { serial: s, .. } => s == &yubikey_serial,
+                            _ => false,
+                        });
 
                 if !has_passphrase || !has_yubikey {
                     return Err(MetadataValidationError::ProtectionModeMismatch);
@@ -310,7 +405,7 @@ impl VaultMetadata {
         }
 
         // Validate age recipients format
-        for recipient in &self.recipients {
+        for recipient in &self.encryption.recipients {
             if !recipient.public_key.starts_with("age1") {
                 return Err(MetadataValidationError::InvalidRecipientFormat(
                     recipient.label.clone(),
@@ -324,27 +419,31 @@ impl VaultMetadata {
     /// Convert to VaultSummary for UI display
     pub fn to_summary(&self) -> VaultSummary {
         VaultSummary {
-            id: self.vault_id.clone(),
-            name: self.label.clone(),
-            description: self.description.clone(),
-            created_at: self.created_at,
-            key_count: self.recipients.len(),
+            id: self.vault.id.clone(),
+            name: self.vault.label.clone(),
+            description: self.vault.description.clone(),
+            created_at: self.versioning.created_at,
+            key_count: self.encryption.recipients.len(),
         }
     }
 
     /// Get key IDs from recipients (registry references)
     pub fn get_key_ids(&self) -> Vec<String> {
-        self.recipients.iter().map(|r| r.key_id.clone()).collect()
+        self.encryption
+            .recipients
+            .iter()
+            .map(|r| r.key_id.clone())
+            .collect()
     }
 
     /// Check if vault has any keys
     pub fn has_keys(&self) -> bool {
-        !self.recipients.is_empty()
+        !self.encryption.recipients.is_empty()
     }
 
     /// Get the number of keys in this vault
     pub fn key_count(&self) -> usize {
-        self.recipients.len()
+        self.encryption.recipients.len()
     }
 }
 
@@ -510,8 +609,7 @@ mod tests {
             Some(format!("Test vault: {}", vault_name)),
             vault_name.replace(' ', "-"),
             &device_info,
-            Some(SelectionType::Files),
-            None,
+            None, // source_root
             recipients,
             vec![],
             0,
@@ -530,7 +628,7 @@ mod tests {
 
         let metadata = create_test_metadata("vault-001", "Test Vault", vec![recipient]);
 
-        assert_eq!(metadata.schema, "barqly.vault.manifest/1");
+        assert_eq!(metadata.schema, "barqly.vault.manifest/2");
         assert!(metadata.has_passphrase_fallback());
         assert!(metadata.validate().is_ok());
     }
@@ -551,7 +649,7 @@ mod tests {
 
         let metadata = create_test_metadata("vault-002", "YubiKey Vault", vec![recipient]);
 
-        assert_eq!(metadata.schema, "barqly.vault.manifest/1");
+        assert_eq!(metadata.schema, "barqly.vault.manifest/2");
         assert!(!metadata.has_passphrase_fallback());
         assert!(metadata.validate().is_ok());
     }
@@ -583,10 +681,10 @@ mod tests {
             vec![passphrase_recipient, yubikey_recipient],
         );
 
-        assert_eq!(metadata.schema, "barqly.vault.manifest/1");
+        assert_eq!(metadata.schema, "barqly.vault.manifest/2");
         assert!(metadata.has_passphrase_fallback());
         assert!(metadata.validate().is_ok());
-        assert_eq!(metadata.recipients.len(), 2);
+        assert_eq!(metadata.recipients().len(), 2);
     }
 
     #[test]
@@ -623,8 +721,8 @@ mod tests {
 
         assert_eq!(original_metadata.schema, loaded_metadata.schema);
         assert_eq!(
-            original_metadata.recipients.len(),
-            loaded_metadata.recipients.len()
+            original_metadata.recipients().len(),
+            loaded_metadata.recipients().len()
         );
         assert!(MetadataStorage::is_valid_metadata(&metadata_path));
     }
@@ -635,12 +733,12 @@ mod tests {
 
         let mut metadata = create_test_metadata("vault-006", "Version Test", vec![]);
 
-        assert_eq!(metadata.encryption_revision, 1);
+        assert_eq!(metadata.encryption_revision(), 1);
 
         metadata.increment_version(&device_info);
-        assert_eq!(metadata.encryption_revision, 2);
+        assert_eq!(metadata.encryption_revision(), 2);
         assert_eq!(
-            metadata.last_encrypted_by.as_ref().unwrap().machine_id,
+            metadata.last_encrypted_by().unwrap().machine_id,
             "test-machine-123"
         );
     }

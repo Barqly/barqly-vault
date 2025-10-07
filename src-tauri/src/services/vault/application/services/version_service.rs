@@ -49,21 +49,21 @@ impl VersionComparisonService {
             return VersionComparisonResult::NoLocal;
         };
 
-        if bundle_manifest.encryption_revision > local.encryption_revision {
+        if bundle_manifest.encryption_revision() > local.encryption_revision() {
             VersionComparisonResult::BundleNewer {
-                bundle_version: bundle_manifest.encryption_revision,
-                local_version: local.encryption_revision,
+                bundle_version: bundle_manifest.encryption_revision(),
+                local_version: local.encryption_revision(),
             }
-        } else if bundle_manifest.encryption_revision < local.encryption_revision {
+        } else if bundle_manifest.encryption_revision() < local.encryption_revision() {
             VersionComparisonResult::BundleOlder {
-                bundle_version: bundle_manifest.encryption_revision,
-                local_version: local.encryption_revision,
+                bundle_version: bundle_manifest.encryption_revision(),
+                local_version: local.encryption_revision(),
             }
         } else {
             // Same version - use timestamp tiebreaker
-            let bundle_newer = bundle_manifest.last_encrypted_at > local.last_encrypted_at;
+            let bundle_newer = bundle_manifest.last_encrypted_at() > local.last_encrypted_at();
             VersionComparisonResult::SameVersion {
-                version: bundle_manifest.encryption_revision,
+                version: bundle_manifest.encryption_revision(),
                 bundle_newer,
             }
         }
@@ -86,9 +86,9 @@ impl VersionComparisonService {
         match comparison {
             VersionComparisonResult::NoLocal => {
                 info!(
-                    vault = %bundle_manifest.label,
-                    version = bundle_manifest.encryption_revision,
-                    machine = %bundle_manifest.last_encrypted_by.as_ref().map(|e| e.machine_label.as_str()).unwrap_or("unknown"),
+                    vault = %bundle_manifest.label(),
+                    version = bundle_manifest.encryption_revision(),
+                    machine = %bundle_manifest.last_encrypted_by().map(|e| e.machine_label.as_str()).unwrap_or("unknown"),
                     "First recovery - creating local manifest"
                 );
                 Self::save_manifest(bundle_manifest, manifest_path)?;
@@ -100,10 +100,10 @@ impl VersionComparisonService {
                 local_version,
             } => {
                 info!(
-                    vault = %bundle_manifest.label,
+                    vault = %bundle_manifest.label(),
                     bundle_version,
                     local_version,
-                    machine = %bundle_manifest.last_encrypted_by.as_ref().map(|e| e.machine_label.as_str()).unwrap_or("unknown"),
+                    machine = %bundle_manifest.last_encrypted_by().map(|e| e.machine_label.as_str()).unwrap_or("unknown"),
                     "Bundle newer - backing up local and replacing"
                 );
                 Self::backup_and_replace(bundle_manifest, manifest_path)?;
@@ -116,16 +116,16 @@ impl VersionComparisonService {
             } => {
                 if bundle_newer {
                     info!(
-                        vault = %bundle_manifest.label,
+                        vault = %bundle_manifest.label(),
                         version,
-                        bundle_time = ?bundle_manifest.last_encrypted_at,
+                        bundle_time = ?bundle_manifest.last_encrypted_at(),
                         "Same version but bundle has newer timestamp - replacing"
                     );
                     Self::backup_and_replace(bundle_manifest, manifest_path)?;
                     Ok(true)
                 } else {
                     info!(
-                        vault = %bundle_manifest.label,
+                        vault = %bundle_manifest.label(),
                         version,
                         "Same version but local is newer - keeping local"
                     );
@@ -138,7 +138,7 @@ impl VersionComparisonService {
                 local_version,
             } => {
                 warn!(
-                    vault = %bundle_manifest.label,
+                    vault = %bundle_manifest.label(),
                     bundle_version,
                     local_version,
                     "Decrypting older version - keeping local manifest"
@@ -157,7 +157,7 @@ impl VersionComparisonService {
         if manifest_path.exists() {
             let timestamp = generate_backup_timestamp();
             let backup_path =
-                get_manifest_backup_path(&bundle_manifest.sanitized_name, &timestamp)?;
+                get_manifest_backup_path(&bundle_manifest.vault.sanitized_name, &timestamp)?;
 
             std::fs::copy(manifest_path, &backup_path).map_err(|e| {
                 StorageError::FileWriteFailed {
@@ -172,7 +172,7 @@ impl VersionComparisonService {
             );
 
             // Enforce retention policy (keep last 5)
-            Self::cleanup_old_backups(&bundle_manifest.sanitized_name, 5)?;
+            Self::cleanup_old_backups(&bundle_manifest.vault.sanitized_name, 5)?;
         }
 
         // Replace with bundle manifest
@@ -369,9 +369,7 @@ mod tests {
     use super::*;
 
     use crate::services::shared::infrastructure::DeviceInfo;
-    use crate::services::vault::infrastructure::persistence::metadata::{
-        RecipientInfo, SelectionType,
-    };
+    use crate::services::vault::infrastructure::persistence::metadata::RecipientInfo;
     use tempfile::TempDir;
 
     fn create_test_device_info() -> DeviceInfo {
@@ -397,8 +395,7 @@ mod tests {
             None,
             "Test-Vault".to_string(),
             device_info,
-            Some(SelectionType::Files),
-            None,
+            None, // source_root
             vec![recipient],
             vec![],
             0,
@@ -406,7 +403,7 @@ mod tests {
         );
 
         // Set the version to match the requested version
-        metadata.encryption_revision = version;
+        metadata.versioning.revision = version;
 
         metadata
     }
@@ -539,7 +536,7 @@ mod tests {
         // Load and verify local was preserved
         let content = std::fs::read_to_string(&manifest_path).unwrap();
         let loaded: VaultMetadata = serde_json::from_str(&content).unwrap();
-        assert_eq!(loaded.encryption_revision, 2);
+        assert_eq!(loaded.encryption_revision(), 2);
     }
 
     #[test]
@@ -638,7 +635,7 @@ mod tests {
             .unwrap();
 
             // Restored should be v1 (the backup)
-            assert_eq!(restored.encryption_revision, 1);
+            assert_eq!(restored.encryption_revision(), 1);
             assert!(restore_path.exists());
         }
     }

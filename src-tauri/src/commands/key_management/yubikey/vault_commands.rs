@@ -148,7 +148,7 @@ fn check_duplicate_yubikey_in_vault(
 ) -> Result<(), Box<CommandError>> {
     use crate::services::vault::infrastructure::persistence::metadata::RecipientType;
 
-    if vault.recipients.iter().any(|recipient| {
+    if vault.recipients().iter().any(|recipient| {
         matches!(&recipient.recipient_type, RecipientType::YubiKey { serial: existing_serial, .. } if existing_serial == serial)
     }) {
         return Err(Box::new(

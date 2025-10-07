@@ -23,19 +23,18 @@ impl RecoveryTxtService {
         content.push_str("═══════════════════════════════════════════════\n\n");
 
         // Vault info
-        content.push_str(&format!("Vault: {}\n", metadata.label));
+        content.push_str(&format!("Vault: {}\n", metadata.label()));
         content.push_str(&format!(
             "Encrypted: {} UTC\n",
             metadata
-                .last_encrypted_at
-                .unwrap_or(metadata.created_at)
+                .last_encrypted_at()
+                .unwrap_or(metadata.created_at())
                 .format("%Y-%m-%d %H:%M:%S")
         ));
-        content.push_str(&format!("Version: {}\n", metadata.encryption_revision));
+        content.push_str(&format!("Version: {}\n", metadata.encryption_revision()));
 
         let (machine_label, machine_id) = metadata
-            .last_encrypted_by
-            .as_ref()
+            .last_encrypted_by()
             .map(|e| (e.machine_label.as_str(), e.machine_id.as_str()))
             .unwrap_or(("unknown", "unknown"));
 
@@ -47,7 +46,7 @@ impl RecoveryTxtService {
         content.push_str("───────────────────────────────────────────────\n\n");
 
         // List all recipients
-        for recipient in &metadata.recipients {
+        for recipient in metadata.recipients() {
             match &recipient.recipient_type {
                 RecipientType::YubiKey {
                     serial,
@@ -83,14 +82,14 @@ impl RecoveryTxtService {
 
         // Check if we have YubiKey recipients
         let has_yubikey = metadata
-            .recipients
+            .recipients()
             .iter()
             .any(|r| matches!(r.recipient_type, RecipientType::YubiKey { .. }));
 
         if has_yubikey {
             content.push_str("2. OPTION A - YubiKey Recovery:\n");
             if let Some(yubikey_recipient) = metadata
-                .recipients
+                .recipients()
                 .iter()
                 .find(|r| matches!(r.recipient_type, RecipientType::YubiKey { .. }))
                 && let RecipientType::YubiKey { serial, .. } = &yubikey_recipient.recipient_type
@@ -104,7 +103,7 @@ impl RecoveryTxtService {
 
         // Check if we have passphrase recipients
         let has_passphrase = metadata
-            .recipients
+            .recipients()
             .iter()
             .any(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }));
 
@@ -114,7 +113,7 @@ impl RecoveryTxtService {
             content.push_str("   - Open Barqly Vault\n");
 
             if let Some(passphrase_recipient) = metadata
-                .recipients
+                .recipients()
                 .iter()
                 .find(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }))
                 && let RecipientType::Passphrase { key_filename } =
@@ -133,23 +132,23 @@ impl RecoveryTxtService {
         content.push_str("═══════════════════════════════════════════════\n");
         content.push_str(&format!(
             "CONTENTS ({} files, {} total)\n",
-            metadata.file_count,
-            Self::format_size(metadata.total_size)
+            metadata.file_count(),
+            Self::format_size(metadata.total_size())
         ));
         content.push_str("═══════════════════════════════════════════════\n\n");
 
         // List files (limit to first 20 for readability)
         let file_limit = 20;
-        for (i, file_entry) in metadata.files.iter().take(file_limit).enumerate() {
+        for (i, file_entry) in metadata.content.files.iter().take(file_limit).enumerate() {
             content.push_str(&format!(
                 "- {} ({})\n",
                 file_entry.path,
                 Self::format_size(file_entry.size)
             ));
-            if i == file_limit - 1 && metadata.files.len() > file_limit {
+            if i == file_limit - 1 && metadata.content.files.len() > file_limit {
                 content.push_str(&format!(
                     "... and {} more files\n",
-                    metadata.files.len() - file_limit
+                    metadata.content.files.len() - file_limit
                 ));
             }
         }
@@ -196,7 +195,7 @@ mod tests {
 
     use crate::services::shared::infrastructure::DeviceInfo;
     use crate::services::vault::infrastructure::persistence::metadata::{
-        RecipientInfo, SelectionType, VaultFileEntry,
+        RecipientInfo, VaultFileEntry,
     };
 
     #[test]
@@ -221,8 +220,7 @@ mod tests {
             None,
             "Test-Vault".to_string(),
             &device_info,
-            Some(SelectionType::Files),
-            None,
+            None, // source_root
             vec![recipient],
             vec![
                 VaultFileEntry {
@@ -279,8 +277,7 @@ mod tests {
             None,
             "Bitcoin-Wallet".to_string(),
             &device_info,
-            Some(SelectionType::Folder),
-            Some("wallet".to_string()),
+            Some("wallet".to_string()), // source_root
             vec![recipient],
             vec![],
             0,
@@ -339,8 +336,7 @@ mod tests {
             None,
             "Hybrid-Vault".to_string(),
             &device_info,
-            Some(SelectionType::Files),
-            None,
+            None, // source_root
             vec![passphrase, yubikey],
             vec![],
             0,

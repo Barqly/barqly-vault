@@ -185,11 +185,11 @@ pub async fn delete_vault(input: DeleteVaultRequest) -> CommandResponse<DeleteVa
     };
 
     // Check if vault has recipients and force flag is not set
-    if !vault.recipients.is_empty() && !input.force {
+    if !vault.recipients().is_empty() && !input.force {
         return Err(Box::new(CommandError {
             code: ErrorCode::InvalidInput,
             message: "Vault has associated keys".to_string(),
-            details: Some(format!("Vault has {} key(s)", vault.recipients.len())),
+            details: Some(format!("Vault has {} key(s)", vault.recipients().len())),
             recovery_guidance: Some("Remove all keys first or use force=true".to_string()),
             user_actionable: true,
             trace_id: None,
@@ -202,7 +202,7 @@ pub async fn delete_vault(input: DeleteVaultRequest) -> CommandResponse<DeleteVa
     match manager.delete_vault(&input.vault_id, input.force).await {
         Ok(_) => Ok(DeleteVaultResponse {
             success: true,
-            message: format!("Vault '{}' deleted successfully", vault.label),
+            message: format!("Vault '{}' deleted successfully", vault.label()),
         }),
         Err(e) => Err(Box::new(CommandError {
             code: ErrorCode::StorageFailed,

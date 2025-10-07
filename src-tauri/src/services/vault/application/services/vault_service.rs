@@ -70,7 +70,7 @@ impl VaultService {
         let metadata = self.repository.get_vault(vault_id).await?;
 
         // Business rule: Don't delete vaults with recipients unless forced
-        if !force && !metadata.recipients.is_empty() {
+        if !force && !metadata.recipients().is_empty() {
             return Err(VaultError::InvalidOperation(
                 "Cannot delete vault with keys. Use force=true to override".to_string(),
             ));

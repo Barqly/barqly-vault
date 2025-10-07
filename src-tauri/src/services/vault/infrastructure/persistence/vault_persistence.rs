@@ -35,7 +35,7 @@ pub async fn save_vault(
     metadata: &VaultMetadata,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Use sanitized name for the filename
-    let path = get_vault_path_by_name(&metadata.sanitized_name)?;
+    let path = get_vault_path_by_name(&metadata.vault.sanitized_name)?;
     let json = serde_json::to_string_pretty(metadata)?;
 
     // Atomic write with sync_all() for durability
@@ -65,8 +65,8 @@ pub async fn load_vault(
     vault_id: &str,
 ) -> Result<VaultMetadata, Box<dyn std::error::Error + Send + Sync>> {
     let vaults = list_vaults().await?;
-    if let Some(metadata) = vaults.iter().find(|v| v.vault_id == vault_id) {
-        return load_vault_by_name(&metadata.sanitized_name).await;
+    if let Some(metadata) = vaults.iter().find(|v| v.vault_id() == vault_id) {
+        return load_vault_by_name(&metadata.vault.sanitized_name).await;
     }
 
     Err(format!("Vault with ID {vault_id} not found").into())
@@ -92,7 +92,7 @@ pub async fn vault_exists_by_name(vault_name: &str) -> bool {
 pub async fn vault_exists(vault_id: &str) -> bool {
     // Try to find vault in list
     if let Ok(vaults) = list_vaults().await {
-        vaults.iter().any(|v| v.vault_id == vault_id)
+        vaults.iter().any(|v| v.vault_id() == vault_id)
     } else {
         false
     }
@@ -126,8 +126,8 @@ pub async fn delete_vault_by_name(
 pub async fn delete_vault(vault_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Find the vault to get its name
     let vaults = list_vaults().await?;
-    if let Some(metadata) = vaults.iter().find(|v| v.vault_id == vault_id) {
-        return delete_vault_by_name(&metadata.sanitized_name).await;
+    if let Some(metadata) = vaults.iter().find(|v| v.vault_id() == vault_id) {
+        return delete_vault_by_name(&metadata.vault.sanitized_name).await;
     }
 
     Err(format!("Vault with ID {vault_id} not found").into())
@@ -184,7 +184,7 @@ pub async fn list_vaults() -> Result<Vec<VaultMetadata>, Box<dyn std::error::Err
     }
 
     // Sort by creation date
-    vaults.sort_by(|a, b| a.created_at.cmp(&b.created_at));
+    vaults.sort_by_key(|a| a.created_at());
 
     Ok(vaults)
 }
@@ -202,9 +202,7 @@ mod tests {
     use super::*;
 
     use crate::services::shared::infrastructure::DeviceInfo;
-    use crate::services::vault::infrastructure::persistence::metadata::{
-        RecipientInfo, SelectionType,
-    };
+    use crate::services::vault::infrastructure::persistence::metadata::RecipientInfo;
     use chrono::Utc;
 
     #[tokio::test]
@@ -221,7 +219,7 @@ mod tests {
             metadata: &VaultMetadata,
             base_dir: &Path,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            let path = base_dir.join(format!("{}.manifest", metadata.sanitized_name));
+            let path = base_dir.join(format!("{}.manifest", metadata.vault.sanitized_name));
             let json = serde_json::to_string_pretty(metadata)?;
             tokio::fs::write(path, json).await?;
             Ok(())
@@ -275,7 +273,6 @@ mod tests {
             Some("Description".to_string()),
             "test-vault-persistence".to_string(),
             &device_info,
-            Some(SelectionType::Files),
             None,
             vec![recipient],
             vec![],
@@ -287,21 +284,21 @@ mod tests {
         temp_save_vault(&metadata, temp_path).await.unwrap();
 
         // Load it back by name
-        let loaded = temp_load_vault_by_name(&metadata.sanitized_name, temp_path)
+        let loaded = temp_load_vault_by_name(&metadata.vault.sanitized_name, temp_path)
             .await
             .unwrap();
 
         // Verify
-        assert_eq!(loaded.vault_id, metadata.vault_id);
-        assert_eq!(loaded.label, metadata.label);
-        assert_eq!(loaded.recipients.len(), 1);
-        assert_eq!(loaded.recipients[0].label, "Main Password");
+        assert_eq!(loaded.vault_id(), metadata.vault_id());
+        assert_eq!(loaded.label(), metadata.label());
+        assert_eq!(loaded.recipients().len(), 1);
+        assert_eq!(loaded.recipients()[0].label, "Main Password");
 
         // Clean up
-        temp_delete_vault_by_name(&metadata.sanitized_name, temp_path)
+        temp_delete_vault_by_name(&metadata.vault.sanitized_name, temp_path)
             .await
             .unwrap();
-        assert!(!temp_vault_exists_by_name(&metadata.sanitized_name, temp_path).await);
+        assert!(!temp_vault_exists_by_name(&metadata.vault.sanitized_name, temp_path).await);
     }
 
     #[tokio::test]
@@ -318,7 +315,7 @@ mod tests {
             metadata: &VaultMetadata,
             base_dir: &Path,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            let path = base_dir.join(format!("{}.manifest", metadata.sanitized_name));
+            let path = base_dir.join(format!("{}.manifest", metadata.vault.sanitized_name));
             let json = serde_json::to_string_pretty(metadata)?;
             tokio::fs::write(path, json).await?;
             Ok(())
@@ -370,7 +367,6 @@ mod tests {
             None,
             "test-vault-list-1".to_string(),
             &device_info,
-            Some(SelectionType::Files),
             None,
             vec![],
             vec![],
@@ -384,7 +380,6 @@ mod tests {
             None,
             "test-vault-list-2".to_string(),
             &device_info,
-            Some(SelectionType::Files),
             None,
             vec![],
             vec![],
@@ -400,15 +395,15 @@ mod tests {
         assert_eq!(vaults.len(), 2);
 
         // Verify both vaults are present
-        let vault_names: Vec<String> = vaults.iter().map(|v| v.label.clone()).collect();
+        let vault_names: Vec<String> = vaults.iter().map(|v| v.label().to_string()).collect();
         assert!(vault_names.contains(&"test-vault-list-1".to_string()));
         assert!(vault_names.contains(&"test-vault-list-2".to_string()));
 
         // Clean up by name
-        temp_delete_vault_by_name(&metadata1.sanitized_name, temp_path)
+        temp_delete_vault_by_name(&metadata1.vault.sanitized_name, temp_path)
             .await
             .unwrap();
-        temp_delete_vault_by_name(&metadata2.sanitized_name, temp_path)
+        temp_delete_vault_by_name(&metadata2.vault.sanitized_name, temp_path)
             .await
             .unwrap();
     }

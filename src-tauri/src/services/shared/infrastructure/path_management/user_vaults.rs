@@ -192,6 +192,7 @@ pub fn sanitize_vault_name(name: &str) -> Result<SanitizedVaultName, StorageErro
 }
 
 /// Collapse multiple consecutive hyphens and spaces into single hyphens
+#[allow(dead_code)]
 fn collapse_separators(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
     let mut last_was_separator = false;
@@ -214,7 +215,8 @@ fn collapse_separators(s: &str) -> String {
 }
 
 /// Check if name is a Windows reserved name
-fn check_reserved_names(name: &str) -> Result<(), StorageError> {
+#[allow(dead_code)]
+fn check_reserved_names(_name: &str) -> Result<(), StorageError> {
     #[cfg(target_os = "windows")]
     {
         let reserved = [
@@ -222,7 +224,7 @@ fn check_reserved_names(name: &str) -> Result<(), StorageError> {
             "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
         ];
 
-        let upper_name = name.to_uppercase();
+        let upper_name = _name.to_uppercase();
         if reserved.iter().any(|&r| upper_name == r) {
             return Err(StorageError::InvalidVaultName(
                 "Vault name is a reserved system name".to_string(),
@@ -230,7 +232,7 @@ fn check_reserved_names(name: &str) -> Result<(), StorageError> {
         }
     }
 
-    let _ = name; // Suppress unused warning on non-Windows
+    let _ = _name; // Suppress unused warning on non-Windows
     Ok(())
 }
 

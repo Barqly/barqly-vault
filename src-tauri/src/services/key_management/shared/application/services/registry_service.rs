@@ -269,8 +269,8 @@ impl KeyRegistryService {
         // Check each vault for this key (by label in recipients)
         let mut using_vaults = Vec::new();
         for metadata in vaults {
-            if metadata.recipients.iter().any(|r| r.label == key_label) {
-                using_vaults.push(metadata.vault_id.clone());
+            if metadata.recipients().iter().any(|r| r.label == key_label) {
+                using_vaults.push(metadata.vault_id().to_string());
             }
         }
 

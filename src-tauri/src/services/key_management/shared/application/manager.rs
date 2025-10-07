@@ -70,7 +70,7 @@ impl KeyManager {
         let mut passphrase_keys = Vec::new();
 
         // Get passphrase recipients from metadata
-        for recipient in &metadata.recipients {
+        for recipient in metadata.recipients() {
             if let RecipientType::Passphrase { key_filename } = &recipient.recipient_type {
                 // Try to find key in registry by filename pattern (remove .agekey.enc)
                 let key_id = key_filename.trim_end_matches(".agekey.enc");
@@ -115,7 +115,7 @@ impl KeyManager {
 
         // Get labels of all recipients already in vault
         let vault_key_labels: std::collections::HashSet<String> = metadata
-            .recipients
+            .recipients()
             .iter()
             .map(|r| r.label.clone())
             .collect();
