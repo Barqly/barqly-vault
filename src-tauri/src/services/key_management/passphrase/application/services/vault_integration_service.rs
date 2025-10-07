@@ -48,9 +48,10 @@ impl VaultIntegrationService {
             .map_err(|e| VaultIntegrationError::VaultNotFound(e.to_string()))?;
 
         // Check if any recipient is a passphrase type
-        let has_passphrase = metadata.recipients.iter().any(|recipient| {
-            matches!(recipient.recipient_type, RecipientType::Passphrase { .. })
-        });
+        let has_passphrase = metadata
+            .recipients
+            .iter()
+            .any(|recipient| matches!(recipient.recipient_type, RecipientType::Passphrase { .. }));
 
         Ok(has_passphrase)
     }

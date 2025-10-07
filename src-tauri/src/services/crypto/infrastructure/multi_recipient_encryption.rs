@@ -97,7 +97,6 @@ impl MultiRecipientCrypto {
             vec![],
             1,
             data.len() as u64,
-            Self::calculate_checksum(&data)?,
         );
 
         Ok(EncryptionResult {
@@ -484,7 +483,6 @@ mod tests {
             vec![],
             0,
             0,
-            String::new(),
         )
     }
 

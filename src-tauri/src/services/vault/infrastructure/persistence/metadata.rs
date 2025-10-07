@@ -16,9 +16,10 @@ pub struct VaultMetadata {
     // R2 Schema version tracking
     pub schema: String, // "barqly.vault.manifest/1"
     pub vault_id: String,
-    pub label: String,               // Display name (user-entered)
+    pub label: String, // Display name (user-entered)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>, // Optional vault description
-    pub sanitized_name: String,      // Filesystem-safe name
+    pub sanitized_name: String, // Filesystem-safe name
 
     // Version control for conflict resolution
     pub manifest_version: u32, // Increments on each encryption
@@ -42,7 +43,6 @@ pub struct VaultMetadata {
     pub files: Vec<VaultFileEntry>,
     pub file_count: usize,
     pub total_size: u64,
-    pub checksum: String,
 
     // Optional integrity verification
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -126,7 +126,6 @@ impl VaultMetadata {
         files: Vec<VaultFileEntry>,
         file_count: usize,
         total_size: u64,
-        checksum: String,
     ) -> Self {
         let now = Utc::now();
 
@@ -152,7 +151,6 @@ impl VaultMetadata {
             files,
             file_count,
             total_size,
-            checksum,
             integrity: None,
         }
     }
@@ -321,10 +319,7 @@ impl VaultMetadata {
 
     /// Get key IDs from recipients (registry references)
     pub fn get_key_ids(&self) -> Vec<String> {
-        self.recipients
-            .iter()
-            .map(|r| r.key_id.clone())
-            .collect()
+        self.recipients.iter().map(|r| r.key_id.clone()).collect()
     }
 
     /// Check if vault has any keys
@@ -370,7 +365,12 @@ impl std::error::Error for MetadataValidationError {}
 
 impl RecipientInfo {
     /// Create a new passphrase recipient
-    pub fn new_passphrase(key_id: String, public_key: String, label: String, key_filename: String) -> Self {
+    pub fn new_passphrase(
+        key_id: String,
+        public_key: String,
+        label: String,
+        key_filename: String,
+    ) -> Self {
         Self {
             key_id,
             recipient_type: RecipientType::Passphrase { key_filename },
@@ -503,7 +503,6 @@ mod tests {
             vec![],
             0,
             0,
-            String::new(),
         )
     }
 

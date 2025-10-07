@@ -49,7 +49,10 @@ async fn create_yubikey_manager() -> Result<YubiKeyManager, Box<CommandError>> {
 /// Helper to validate vault exists and load it
 async fn load_vault(
     vault_id: &str,
-) -> Result<crate::services::vault::infrastructure::persistence::metadata::VaultMetadata, Box<CommandError>> {
+) -> Result<
+    crate::services::vault::infrastructure::persistence::metadata::VaultMetadata,
+    Box<CommandError>,
+> {
     vault::get_vault(vault_id).await.map_err(|e| {
         Box::new(
             CommandError::operation(ErrorCode::VaultNotFound, e.to_string())
@@ -71,6 +74,7 @@ async fn register_yubikey_in_vault(
         82u8, // PIV slot 82 (first retired slot)
         params.identity.to_recipient().to_string(),
         params.identity.identity_tag().to_string(),
+        params.device.name.clone(), // Use actual device name as model
         params.device.firmware_version.clone(),
         params.recovery_code_hash.clone(),
     );
@@ -83,7 +87,9 @@ async fn register_yubikey_in_vault(
     })?;
 
     // Add YubiKey recipient to vault metadata
-    use crate::services::vault::infrastructure::persistence::metadata::{RecipientInfo, RecipientType};
+    use crate::services::vault::infrastructure::persistence::metadata::{
+        RecipientInfo, RecipientType,
+    };
 
     let recipient = RecipientInfo {
         key_id: key_registry_id.clone(),
@@ -91,7 +97,7 @@ async fn register_yubikey_in_vault(
             serial: params.serial.clone(),
             slot: 1,
             piv_slot: 82,
-            model: params.device.form_factor.to_string(),
+            model: params.device.name.clone(), // Use actual device name as model
             identity_tag: params.identity.identity_tag().to_string(),
             firmware_version: params.device.firmware_version.clone(),
         },

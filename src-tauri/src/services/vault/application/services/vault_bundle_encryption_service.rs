@@ -14,7 +14,7 @@ use crate::services::vault::domain::VaultError;
 use crate::services::vault::infrastructure::persistence::metadata::{
     SelectionType, VaultFileEntry,
 };
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 type Result<T> = std::result::Result<T, VaultError>;
 
@@ -207,7 +207,7 @@ impl VaultBundleEncryptionService {
         base_path: Option<&str>,
     ) -> Result<Vec<VaultFileEntry>> {
         use crate::services::file::infrastructure::file_operations::{
-            collect_files_with_metadata, SelectionType as FileSelectionType,
+            SelectionType as FileSelectionType, collect_files_with_metadata,
         };
 
         // Convert metadata::SelectionType to file_operations::SelectionType
@@ -218,9 +218,9 @@ impl VaultBundleEncryptionService {
 
         // Use reusable file collection utility
         let collected_files =
-            collect_files_with_metadata(file_paths, file_selection_type, base_path).map_err(|e| {
-                VaultError::OperationFailed(format!("Failed to collect files: {}", e))
-            })?;
+            collect_files_with_metadata(file_paths, file_selection_type, base_path).map_err(
+                |e| VaultError::OperationFailed(format!("Failed to collect files: {}", e)),
+            )?;
 
         // Convert to VaultFileEntry
         let entries = collected_files

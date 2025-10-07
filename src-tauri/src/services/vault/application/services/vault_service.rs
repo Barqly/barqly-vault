@@ -1,9 +1,9 @@
+use crate::services::shared::infrastructure::DeviceInfo;
+use crate::services::vault::application::services::VaultMetadataService;
 use crate::services::vault::domain::models::VaultSummary;
-use crate::services::vault::infrastructure::persistence::metadata::VaultMetadata;
 use crate::services::vault::domain::{VaultError, VaultResult, VaultRules};
 use crate::services::vault::infrastructure::VaultRepository;
-use crate::services::vault::application::services::VaultMetadataService;
-use crate::services::shared::infrastructure::DeviceInfo;
+use crate::services::vault::infrastructure::persistence::metadata::VaultMetadata;
 
 #[derive(Debug)]
 pub struct VaultService {
@@ -41,8 +41,12 @@ impl VaultService {
         let vault_id = Self::generate_vault_id();
 
         // Use VaultMetadataService to create manifest with defaults
-        let metadata = self.metadata_service.load_or_create(&vault_id, &name, description, &device_info)
-            .map_err(|e| VaultError::StorageError(format!("Failed to create vault metadata: {}", e)))?;
+        let metadata = self
+            .metadata_service
+            .load_or_create(&vault_id, &name, description, &device_info)
+            .map_err(|e| {
+                VaultError::StorageError(format!("Failed to create vault metadata: {}", e))
+            })?;
 
         // Save via repository
         self.repository.save_vault(&metadata).await?;

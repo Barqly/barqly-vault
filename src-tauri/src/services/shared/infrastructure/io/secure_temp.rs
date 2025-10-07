@@ -4,7 +4,7 @@
 //! secure deletion (overwrite before unlink).
 
 use crate::error::StorageError;
-use std::fs::{File, OpenOptions};
+use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile::NamedTempFile;

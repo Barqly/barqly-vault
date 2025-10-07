@@ -197,6 +197,7 @@ impl RegistryService for DefaultRegistryService {
             piv_slot,
             identity.to_recipient(),
             identity.identity_tag().to_string(),
+            device.name.clone(), // Use device name as model
             device.firmware_version.clone(),
             recovery_code_hash,
         );
@@ -312,6 +313,7 @@ impl RegistryService for DefaultRegistryService {
                 piv_slot,
                 recipient,
                 identity_tag,
+                model,
                 firmware_version,
                 recovery_code_hash,
                 ..
@@ -324,6 +326,7 @@ impl RegistryService for DefaultRegistryService {
                 piv_slot,
                 recipient,
                 identity_tag,
+                model,
                 firmware_version,
                 recovery_code_hash,
             },

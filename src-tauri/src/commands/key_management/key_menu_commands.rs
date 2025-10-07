@@ -128,7 +128,8 @@ pub async fn get_key_menu_data(
                     public_key,
                     key_filename,
                     ..
-                }) = registry.get_key(key_id) {
+                }) = registry.get_key(key_id)
+                {
                     // Passphrase always gets display index 0
                     key_menu_items.push(KeyMenuInfo {
                         display_index: 0,
@@ -144,7 +145,14 @@ pub async fn get_key_menu_data(
                     });
                 }
             }
-            RecipientType::YubiKey { serial, slot, piv_slot, identity_tag, firmware_version, .. } => {
+            RecipientType::YubiKey {
+                serial,
+                slot,
+                piv_slot,
+                identity_tag,
+                firmware_version,
+                ..
+            } => {
                 // Use the key_id from recipient (registry reference)
                 let key_id = &recipient.key_id;
 
@@ -153,7 +161,8 @@ pub async fn get_key_menu_data(
                     created_at,
                     recipient: public_key,
                     ..
-                }) = registry.get_key(key_id) {
+                }) = registry.get_key(key_id)
+                {
                     // YubiKeys get sequential display indexes 1, 2, 3
                     if yubikey_index <= 3 {
                         key_menu_items.push(KeyMenuInfo {

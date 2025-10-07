@@ -232,7 +232,6 @@ mod tests {
             ],
             2,
             3072,
-            "checksum".to_string(),
         );
 
         let service = RecoveryTxtService::new();
@@ -283,7 +282,6 @@ mod tests {
             vec![],
             0,
             0,
-            "checksum".to_string(),
         );
 
         let service = RecoveryTxtService::new();
@@ -347,7 +345,6 @@ mod tests {
             vec![],
             0,
             0,
-            "checksum".to_string(),
         );
 
         let service = RecoveryTxtService::new();

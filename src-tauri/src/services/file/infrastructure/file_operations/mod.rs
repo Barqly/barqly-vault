@@ -41,7 +41,7 @@ pub use external_manifest::{
 };
 pub use selection::{FileSelection, SelectionType};
 pub use staging::StagingArea;
-pub use utils::{read_archive_with_size_check, collect_files_with_metadata, CollectedFile};
+pub use utils::{CollectedFile, collect_files_with_metadata, read_archive_with_size_check};
 pub use validation::{
     contains_traversal_attempt, validate_and_create_output_directory, validate_file_size,
     validate_paths,

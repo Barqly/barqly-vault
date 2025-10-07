@@ -31,7 +31,9 @@ fn get_vault_path_by_name(
 
 /// Save vault metadata to disk
 /// Saves to non-sync location: ~/Library/.../vaults/ using the sanitized name as the filename
-pub async fn save_vault(metadata: &VaultMetadata) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn save_vault(
+    metadata: &VaultMetadata,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Use sanitized name for the filename
     let path = get_vault_path_by_name(&metadata.sanitized_name)?;
     let json = serde_json::to_string_pretty(metadata)?;
@@ -59,7 +61,9 @@ pub async fn load_vault_by_name(
 }
 
 /// Load vault metadata from disk by ID
-pub async fn load_vault(vault_id: &str) -> Result<VaultMetadata, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn load_vault(
+    vault_id: &str,
+) -> Result<VaultMetadata, Box<dyn std::error::Error + Send + Sync>> {
     let vaults = list_vaults().await?;
     if let Some(metadata) = vaults.iter().find(|v| v.vault_id == vault_id) {
         return load_vault_by_name(&metadata.sanitized_name).await;
@@ -69,7 +73,9 @@ pub async fn load_vault(vault_id: &str) -> Result<VaultMetadata, Box<dyn std::er
 }
 
 /// Get vault metadata by ID (alias for load_vault for consistency)
-pub async fn get_vault(vault_id: &str) -> Result<VaultMetadata, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn get_vault(
+    vault_id: &str,
+) -> Result<VaultMetadata, Box<dyn std::error::Error + Send + Sync>> {
     load_vault(vault_id).await
 }
 
@@ -184,8 +190,8 @@ pub async fn list_vaults() -> Result<Vec<VaultMetadata>, Box<dyn std::error::Err
 }
 
 /// Get the current active vault (deprecated - UI should track this)
-pub async fn get_current_vault() -> Result<Option<VaultMetadata>, Box<dyn std::error::Error + Send + Sync>>
-{
+pub async fn get_current_vault()
+-> Result<Option<VaultMetadata>, Box<dyn std::error::Error + Send + Sync>> {
     // Deprecated - UI should track the current vault
     // Return None for compatibility
     Ok(None)
@@ -276,7 +282,6 @@ mod tests {
             vec![],
             0,
             0,
-            String::new(),
         );
 
         // Save the vault using temp directory
@@ -373,7 +378,6 @@ mod tests {
             vec![],
             0,
             0,
-            String::new(),
         );
 
         let metadata2 = VaultMetadata::new(
@@ -389,7 +393,6 @@ mod tests {
             vec![],
             0,
             0,
-            String::new(),
         );
 
         temp_save_vault(&metadata1, temp_path).await.unwrap();

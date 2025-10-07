@@ -1,6 +1,6 @@
 use crate::services::vault;
-use crate::services::vault::infrastructure::persistence::metadata::VaultMetadata;
 use crate::services::vault::domain::{VaultError, VaultResult};
+use crate::services::vault::infrastructure::persistence::metadata::VaultMetadata;
 
 #[derive(Debug)]
 pub struct VaultRepository;

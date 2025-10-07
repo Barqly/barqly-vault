@@ -215,8 +215,12 @@ impl KeyRegistryService {
 
         // Get the label from the key entry
         let key_label = match &key_entry {
-            crate::services::key_management::shared::KeyEntry::Passphrase { label, .. } => label.clone(),
-            crate::services::key_management::shared::KeyEntry::Yubikey { label, .. } => label.clone(),
+            crate::services::key_management::shared::KeyEntry::Passphrase { label, .. } => {
+                label.clone()
+            }
+            crate::services::key_management::shared::KeyEntry::Yubikey { label, .. } => {
+                label.clone()
+            }
         };
 
         // Remove recipient by label
@@ -248,8 +252,12 @@ impl KeyRegistryService {
         // Get key entry to find label
         let key_entry = self.get_key(key_id)?;
         let key_label = match &key_entry {
-            crate::services::key_management::shared::KeyEntry::Passphrase { label, .. } => label.clone(),
-            crate::services::key_management::shared::KeyEntry::Yubikey { label, .. } => label.clone(),
+            crate::services::key_management::shared::KeyEntry::Passphrase { label, .. } => {
+                label.clone()
+            }
+            crate::services::key_management::shared::KeyEntry::Yubikey { label, .. } => {
+                label.clone()
+            }
         };
 
         // List all vaults

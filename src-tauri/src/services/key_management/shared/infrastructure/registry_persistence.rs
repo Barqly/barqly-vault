@@ -36,6 +36,7 @@ pub enum KeyEntry {
         piv_slot: u8,         // PIV slot mapping (82-95)
         recipient: String,    // age1yubikey...
         identity_tag: String, // AGE-PLUGIN-YUBIKEY-...
+        model: String,        // Full YubiKey model name (e.g., "YubiKey 5C Nano")
         firmware_version: Option<String>,
         recovery_code_hash: String, // SHA256 hash for verification
     },
@@ -211,6 +212,7 @@ impl KeyRegistry {
         piv_slot: u8,
         recipient: String,
         identity_tag: String,
+        model: String,
         firmware_version: Option<String>,
         recovery_code_hash: String,
     ) -> String {
@@ -224,6 +226,7 @@ impl KeyRegistry {
             piv_slot,
             recipient,
             identity_tag,
+            model,
             firmware_version,
             recovery_code_hash,
         };
@@ -384,6 +387,7 @@ mod tests {
             piv_slot: 82,
             recipient: "age1yubikey...".to_string(),
             identity_tag: "AGE-PLUGIN-YUBIKEY-...".to_string(),
+            model: "YubiKey 5C Nano".to_string(),
             firmware_version: None,
             recovery_code_hash: "abcd1234...".to_string(),
         };

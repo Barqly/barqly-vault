@@ -176,8 +176,16 @@ impl YkmanDeviceService {
         if name_parts.is_empty() {
             "YubiKey".to_string()
         } else {
-            name_parts.join(" ")
+            let full_name = name_parts.join(" ");
+            // Remove firmware version in parentheses like "(5.7.4)"
+            self.remove_firmware_from_device_name(&full_name)
         }
+    }
+
+    /// Remove firmware version from device name
+    fn remove_firmware_from_device_name(&self, name: &str) -> String {
+        // Remove firmware version in parentheses like "(5.7.4)"
+        name.split('(').next().unwrap_or(name).trim().to_string()
     }
 
     /// Extract interfaces from ykman output

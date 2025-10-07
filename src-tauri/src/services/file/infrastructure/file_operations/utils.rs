@@ -8,7 +8,7 @@ use crate::constants::IO_BUFFER_SIZE;
 use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io::Read;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// Calculate SHA-256 hash of a file
 pub fn calculate_file_hash(path: &Path) -> Result<String> {
@@ -86,14 +86,14 @@ pub fn should_exclude_file(path: &Path) -> bool {
 
     // System files (cross-platform)
     const EXCLUDED_FILES: &[&str] = &[
-        ".DS_Store",      // macOS Finder metadata
-        "Thumbs.db",      // Windows thumbnail cache
-        "desktop.ini",    // Windows folder settings
-        ".Spotlight-V100", // macOS Spotlight
-        ".Trashes",       // macOS trash
-        ".fseventsd",     // macOS file events
-        ".TemporaryItems", // macOS temp
-        "$RECYCLE.BIN",   // Windows recycle bin
+        ".DS_Store",                 // macOS Finder metadata
+        "Thumbs.db",                 // Windows thumbnail cache
+        "desktop.ini",               // Windows folder settings
+        ".Spotlight-V100",           // macOS Spotlight
+        ".Trashes",                  // macOS trash
+        ".fseventsd",                // macOS file events
+        ".TemporaryItems",           // macOS temp
+        "$RECYCLE.BIN",              // Windows recycle bin
         "System Volume Information", // Windows system
     ];
 
@@ -110,7 +110,10 @@ pub fn should_exclude_file(path: &Path) -> bool {
     // Exclude version control directories
     if let Some(parent) = path.parent() {
         let parent_name = parent.file_name().map(|n| n.to_string_lossy());
-        if matches!(parent_name.as_deref(), Some(".git") | Some(".svn") | Some(".hg")) {
+        if matches!(
+            parent_name.as_deref(),
+            Some(".git") | Some(".svn") | Some(".hg")
+        ) {
             return true;
         }
     }
@@ -134,7 +137,7 @@ pub fn should_exclude_file(path: &Path) -> bool {
 pub fn collect_files_with_metadata(
     file_paths: &[String],
     selection_type: SelectionType,
-    base_path: Option<&str>,
+    _base_path: Option<&str>,
 ) -> Result<Vec<CollectedFile>> {
     let mut collected = Vec::new();
 
@@ -173,10 +176,11 @@ pub fn collect_files_with_metadata(
                         .to_string_lossy()
                         .to_string();
 
-                    let metadata = std::fs::metadata(file_path).map_err(|e| FileOpsError::IoError {
-                        message: format!("Failed to read metadata: {}", e),
-                        source: e,
-                    })?;
+                    let metadata =
+                        std::fs::metadata(file_path).map_err(|e| FileOpsError::IoError {
+                            message: format!("Failed to read metadata: {}", e),
+                            source: e,
+                        })?;
 
                     let hash = calculate_file_hash(file_path)?;
 

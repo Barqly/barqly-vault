@@ -57,9 +57,8 @@ impl CryptoManager {
             crate::services::shared::infrastructure::get_vaults_directory().map_err(|e| {
                 CryptoError::InvalidInput(format!("Failed to get vaults directory: {}", e))
             })?;
-        let sanitized =
-            crate::services::shared::infrastructure::sanitize_vault_name(&vault.label)
-                .map_err(|e| CryptoError::InvalidInput(format!("Invalid vault name: {}", e)))?;
+        let sanitized = crate::services::shared::infrastructure::sanitize_vault_name(&vault.label)
+            .map_err(|e| CryptoError::InvalidInput(format!("Invalid vault name: {}", e)))?;
         let encrypted_path = vaults_dir.join(format!("{}.age", sanitized.sanitized));
         let file_exists_warning = encrypted_path.exists();
 

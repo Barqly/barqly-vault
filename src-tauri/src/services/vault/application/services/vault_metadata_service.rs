@@ -90,7 +90,7 @@ impl VaultMetadataService {
 
         Ok(VaultMetadata::new(
             vault_id.to_string(),
-            vault_name.to_string(),
+            sanitized.display, // Preserve user's original input
             description,
             sanitized.sanitized,
             device_info,
@@ -101,7 +101,6 @@ impl VaultMetadataService {
             vec![],
             0,
             0,
-            String::new(),
         ))
     }
 
@@ -141,7 +140,7 @@ impl VaultMetadataService {
 
         Ok(VaultMetadata::new(
             vault_id.to_string(),
-            vault_name.to_string(),
+            sanitized.display, // Preserve user's original input
             description,
             sanitized.sanitized,
             device_info,
@@ -152,7 +151,6 @@ impl VaultMetadataService {
             file_entries,
             file_count,
             total_size,
-            String::new(), // Checksum calculated separately
         ))
     }
 
@@ -181,20 +179,18 @@ impl VaultMetadataService {
                 slot,
                 piv_slot,
                 identity_tag,
+                model,
                 firmware_version,
                 created_at,
                 ..
             } => {
-                // Detect YubiKey model from serial number pattern or default
-                let model = Self::detect_yubikey_model(serial);
-
                 RecipientInfo {
                     key_id: key_id.to_string(),
                     recipient_type: RecipientType::YubiKey {
                         serial: serial.clone(),
                         slot: *slot,
                         piv_slot: *piv_slot,
-                        model,
+                        model: model.clone(), // Use model from registry
                         identity_tag: identity_tag.clone(),
                         firmware_version: firmware_version.clone(),
                     },
@@ -241,19 +237,6 @@ impl VaultMetadataService {
                 yubikey_serial: yubikey_serials[0].clone(), // Use first YubiKey
             },
             _ => ProtectionMode::PassphraseOnly, // Fallback
-        }
-    }
-
-    /// Detect YubiKey model from serial number or firmware
-    ///
-    /// Uses heuristics to determine model. Can be enhanced with registry lookup in future.
-    fn detect_yubikey_model(serial: &str) -> String {
-        // YubiKey 5 series serials are typically 8 digits
-        // Future: Look up from registry if we add model field
-        if serial.len() == 8 {
-            "YubiKey 5 Series".to_string()
-        } else {
-            "YubiKey".to_string()
         }
     }
 
@@ -331,6 +314,7 @@ mod tests {
             piv_slot: 0x82,
             recipient: "age1yubikey123".to_string(),
             identity_tag: "AGE-PLUGIN-TEST".to_string(),
+            model: "YubiKey 5C Nano".to_string(),
             firmware_version: Some("5.7.1".to_string()),
             recovery_code_hash: "hash123".to_string(),
         };
@@ -343,11 +327,13 @@ mod tests {
                 serial,
                 piv_slot,
                 identity_tag,
+                model,
                 ..
             } => {
                 assert_eq!(serial, "12345");
                 assert_eq!(piv_slot, 0x82);
                 assert_eq!(identity_tag, "AGE-PLUGIN-TEST");
+                assert_eq!(model, "YubiKey 5C Nano");
             }
             _ => panic!("Expected YubiKey recipient"),
         }

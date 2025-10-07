@@ -222,6 +222,7 @@ impl BootstrapService {
                 slot,
                 piv_slot,
                 identity_tag,
+                model,
                 firmware_version,
                 ..
             } => KeyEntry::Yubikey {
@@ -233,6 +234,7 @@ impl BootstrapService {
                 piv_slot: *piv_slot,
                 recipient: recipient.public_key.clone(),
                 identity_tag: identity_tag.clone(),
+                model: model.clone(),
                 firmware_version: firmware_version.clone(),
                 recovery_code_hash: String::new(), // Not available from manifest
             },

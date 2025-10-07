@@ -404,7 +404,6 @@ mod tests {
             vec![],
             0,
             0,
-            "test-checksum".to_string(),
         )
     }
 

@@ -217,7 +217,6 @@ mod tests {
             vec![],
             1,
             12,
-            "checksum".to_string(),
         );
 
         let service = PayloadStagingService::new();
