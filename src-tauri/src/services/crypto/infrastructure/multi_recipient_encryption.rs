@@ -450,7 +450,6 @@ mod tests {
     }
 
     fn create_test_metadata() -> VaultMetadata {
-        
         use crate::services::shared::infrastructure::DeviceInfo;
         use crate::services::vault::infrastructure::persistence::metadata::SelectionType;
 

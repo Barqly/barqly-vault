@@ -1,6 +1,7 @@
 use crate::services::key_management::passphrase::infrastructure::{
     PassphraseKeyRepository, StorageError, encrypt_private_key, generate_keypair,
 };
+use crate::services::shared::infrastructure::sanitize_label;
 use crate::services::vault::VaultMetadata;
 use age::secrecy::SecretString;
 use std::path::PathBuf;
@@ -59,27 +60,32 @@ impl GenerationService {
     pub fn generate_passphrase_key(&self, label: &str, passphrase: &str) -> Result<GeneratedKey> {
         let keypair = generate_keypair()?;
 
+        // Sanitize label for use as key_id
+        let sanitized = sanitize_label(label).map_err(|e| {
+            GenerationError::KeyGenerationFailed(format!("Failed to sanitize label: {}", e))
+        })?;
+
         let encrypted_key = encrypt_private_key(
             &keypair.private_key,
             SecretString::from(passphrase.to_string()),
         )?;
 
         let saved_path = PassphraseKeyRepository::save_encrypted_key(
-            label,
+            &sanitized.sanitized,
             &encrypted_key,
             Some(&keypair.public_key.to_string()),
         )?;
 
         PassphraseKeyRepository::register_key(
-            label.to_string(),
-            label.to_string(),
+            sanitized.sanitized.clone(), // key_id - sanitized
+            label.to_string(),           // label - original display label
             keypair.public_key.to_string(),
-            label.to_string(),
+            format!("{}.agekey.enc", sanitized.sanitized), // filename - sanitized with .agekey.enc extension
         )?;
 
         Ok(GeneratedKey {
             public_key: keypair.public_key.to_string(),
-            key_id: label.to_string(),
+            key_id: sanitized.sanitized, // Use sanitized label as key_id
             saved_path,
         })
     }
@@ -92,13 +98,18 @@ impl GenerationService {
     ) -> Result<GeneratedKey> {
         let keypair = generate_keypair()?;
 
+        // Sanitize label for use as key_id
+        let sanitized = sanitize_label(label).map_err(|e| {
+            GenerationError::KeyGenerationFailed(format!("Failed to sanitize label: {}", e))
+        })?;
+
         let encrypted_key = encrypt_private_key(
             &keypair.private_key,
             SecretString::from(passphrase.to_string()),
         )?;
 
         let saved_path = crate::services::key_management::shared::save_encrypted_key_with_metadata(
-            label,
+            &sanitized.sanitized,
             &encrypted_key,
             Some(&keypair.public_key.to_string()),
             metadata,
@@ -106,15 +117,15 @@ impl GenerationService {
         .map_err(|e| StorageError::KeySaveFailed(e.to_string()))?;
 
         PassphraseKeyRepository::register_key(
-            label.to_string(),
-            label.to_string(),
+            sanitized.sanitized.clone(), // key_id - sanitized
+            label.to_string(),           // label - original display label
             keypair.public_key.to_string(),
-            label.to_string(),
+            format!("{}.agekey.enc", sanitized.sanitized), // filename - sanitized with .agekey.enc extension
         )?;
 
         Ok(GeneratedKey {
             public_key: keypair.public_key.to_string(),
-            key_id: label.to_string(),
+            key_id: sanitized.sanitized, // Use sanitized label as key_id
             saved_path,
         })
     }

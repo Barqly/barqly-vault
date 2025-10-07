@@ -367,7 +367,7 @@ impl Default for VersionComparisonService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     use crate::services::shared::infrastructure::DeviceInfo;
     use crate::services::vault::infrastructure::persistence::metadata::{
         RecipientInfo, SelectionType,

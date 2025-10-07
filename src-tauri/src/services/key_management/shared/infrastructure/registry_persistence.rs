@@ -206,6 +206,7 @@ impl KeyRegistry {
     #[allow(clippy::too_many_arguments)]
     pub fn add_yubikey_entry(
         &mut self,
+        key_id: String, // Accept key_id as parameter instead of generating it
         label: String,
         serial: String,
         slot: u8,
@@ -216,7 +217,6 @@ impl KeyRegistry {
         firmware_version: Option<String>,
         recovery_code_hash: String,
     ) -> String {
-        let key_id = generate_key_id();
         let entry = KeyEntry::Yubikey {
             label,
             created_at: chrono::Utc::now(),
@@ -332,14 +332,6 @@ impl KeyRegistry {
     }
 }
 
-/// Generate a unique key reference ID
-pub fn generate_key_id() -> String {
-    use rand::Rng;
-    let mut rng = rand::thread_rng();
-    let random_bytes: Vec<u8> = (0..8).map(|_| rng.r#gen()).collect();
-    format!("keyref_{}", bs58::encode(random_bytes).into_string())
-}
-
 /// Generate a Base58 recovery code for YubiKey setup
 pub fn generate_recovery_code() -> String {
     use rand::Rng;
@@ -449,15 +441,5 @@ mod tests {
         // Should now have last_used timestamp
         let key = registry.get_key("keyref_test1").unwrap();
         assert!(key.last_used().is_some());
-    }
-
-    #[test]
-    fn test_key_id_generation() {
-        let id1 = generate_key_id();
-        let id2 = generate_key_id();
-
-        assert!(id1.starts_with("keyref_"));
-        assert!(id2.starts_with("keyref_"));
-        assert_ne!(id1, id2);
     }
 }

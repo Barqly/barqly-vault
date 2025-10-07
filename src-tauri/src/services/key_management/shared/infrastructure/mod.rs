@@ -6,7 +6,7 @@ pub mod key_storage;
 pub mod registry_persistence;
 
 // Re-export key types for backward compatibility and convenience
-pub use registry_persistence::{KeyEntry, KeyRegistry, generate_key_id, generate_recovery_code};
+pub use registry_persistence::{KeyEntry, KeyRegistry, generate_recovery_code};
 
 // Re-export key storage functions (replacing storage::key_store)
 pub use key_storage::{

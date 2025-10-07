@@ -26,21 +26,20 @@ impl RecoveryTxtService {
         content.push_str(&format!("Vault: {}\n", metadata.label));
         content.push_str(&format!(
             "Encrypted: {} UTC\n",
-            metadata.last_encrypted_at
+            metadata
+                .last_encrypted_at
                 .unwrap_or(metadata.created_at)
                 .format("%Y-%m-%d %H:%M:%S")
         ));
         content.push_str(&format!("Version: {}\n", metadata.encryption_revision));
 
-        let (machine_label, machine_id) = metadata.last_encrypted_by
+        let (machine_label, machine_id) = metadata
+            .last_encrypted_by
             .as_ref()
             .map(|e| (e.machine_label.as_str(), e.machine_id.as_str()))
             .unwrap_or(("unknown", "unknown"));
 
-        content.push_str(&format!(
-            "Machine: {} ({})\n\n",
-            machine_label, machine_id
-        ));
+        content.push_str(&format!("Machine: {} ({})\n\n", machine_label, machine_id));
 
         // Required keys section
         content.push_str("───────────────────────────────────────────────\n");
@@ -194,7 +193,7 @@ impl Default for RecoveryTxtService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     use crate::services::shared::infrastructure::DeviceInfo;
     use crate::services::vault::infrastructure::persistence::metadata::{
         RecipientInfo, SelectionType, VaultFileEntry,

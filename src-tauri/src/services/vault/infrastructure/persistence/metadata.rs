@@ -168,8 +168,7 @@ impl VaultMetadata {
         let other_time = other.last_encrypted_at.unwrap_or(other.created_at);
 
         let is_newer = self.encryption_revision > other.encryption_revision
-            || (self.encryption_revision == other.encryption_revision
-                && self_time > other_time);
+            || (self.encryption_revision == other.encryption_revision && self_time > other_time);
         let is_same = self.encryption_revision == other.encryption_revision;
         (is_newer, is_same)
     }
@@ -201,20 +200,24 @@ impl VaultMetadata {
 
     /// Derive protection mode from recipients
     pub fn protection_mode(&self) -> ProtectionMode {
-        let has_passphrase = self.recipients.iter().any(|r| {
-            matches!(r.recipient_type, RecipientType::Passphrase { .. })
-        });
+        let has_passphrase = self
+            .recipients
+            .iter()
+            .any(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }));
 
-        let yubikey_serial = self.recipients.iter().find_map(|r| {
-            match &r.recipient_type {
+        let yubikey_serial = self
+            .recipients
+            .iter()
+            .find_map(|r| match &r.recipient_type {
                 RecipientType::YubiKey { serial, .. } => Some(serial.clone()),
                 _ => None,
-            }
-        });
+            });
 
         match (has_passphrase, yubikey_serial) {
             (false, Some(serial)) => ProtectionMode::YubiKeyOnly { serial },
-            (true, Some(serial)) => ProtectionMode::Hybrid { yubikey_serial: serial },
+            (true, Some(serial)) => ProtectionMode::Hybrid {
+                yubikey_serial: serial,
+            },
             _ => ProtectionMode::PassphraseOnly,
         }
     }
@@ -263,9 +266,7 @@ impl VaultMetadata {
     pub fn validate(&self) -> Result<(), MetadataValidationError> {
         // Check schema version
         if !self.schema.starts_with("barqly.vault.manifest/") {
-            return Err(MetadataValidationError::InvalidVersion(
-                self.schema.clone(),
-            ));
+            return Err(MetadataValidationError::InvalidVersion(self.schema.clone()));
         }
 
         // Check recipients exist
@@ -527,11 +528,7 @@ mod tests {
             "test-key.agekey.enc".to_string(),
         );
 
-        let metadata = create_test_metadata(
-            "vault-001",
-            "Test Vault",
-            vec![recipient],
-        );
+        let metadata = create_test_metadata("vault-001", "Test Vault", vec![recipient]);
 
         assert_eq!(metadata.schema, "barqly.vault.manifest/1");
         assert!(metadata.has_passphrase_fallback());
@@ -552,11 +549,7 @@ mod tests {
             Some("5.7.1".to_string()),
         );
 
-        let metadata = create_test_metadata(
-            "vault-002",
-            "YubiKey Vault",
-            vec![recipient],
-        );
+        let metadata = create_test_metadata("vault-002", "YubiKey Vault", vec![recipient]);
 
         assert_eq!(metadata.schema, "barqly.vault.manifest/1");
         assert!(!metadata.has_passphrase_fallback());
@@ -603,7 +596,7 @@ mod tests {
             "vault-004",
             "Empty Vault",
             vec![], // Empty recipients
-);
+        );
 
         assert!(metadata.validate().is_err());
     }
@@ -620,11 +613,7 @@ mod tests {
             "test-key.agekey.enc".to_string(),
         );
 
-        let original_metadata = create_test_metadata(
-            "vault-005",
-            "Storage Test",
-            vec![recipient],
-);
+        let original_metadata = create_test_metadata("vault-005", "Storage Test", vec![recipient]);
 
         // Save metadata
         MetadataStorage::save_metadata(&original_metadata, &metadata_path).unwrap();
@@ -644,28 +633,23 @@ mod tests {
     fn test_encryption_revision_increment() {
         let device_info = create_test_device_info();
 
-        let mut metadata = create_test_metadata(
-            "vault-006",
-            "Version Test",
-            vec![],
-);
+        let mut metadata = create_test_metadata("vault-006", "Version Test", vec![]);
 
         assert_eq!(metadata.encryption_revision, 1);
 
         metadata.increment_version(&device_info);
         assert_eq!(metadata.encryption_revision, 2);
-        assert_eq!(metadata.last_encrypted_by.as_ref().unwrap().machine_id, "test-machine-123");
+        assert_eq!(
+            metadata.last_encrypted_by.as_ref().unwrap().machine_id,
+            "test-machine-123"
+        );
     }
 
     #[test]
     fn test_version_comparison() {
         let device_info = create_test_device_info();
 
-        let metadata_v1 = create_test_metadata(
-            "vault-007",
-            "Comparison Test",
-            vec![],
-);
+        let metadata_v1 = create_test_metadata("vault-007", "Comparison Test", vec![]);
 
         let mut metadata_v2 = metadata_v1.clone();
         metadata_v2.increment_version(&device_info);

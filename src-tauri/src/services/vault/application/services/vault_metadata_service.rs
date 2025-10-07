@@ -206,7 +206,6 @@ impl VaultMetadataService {
         self.save_manifest(manifest)
     }
 
-
     /// Save manifest to non-sync storage (atomic write)
     pub fn save_manifest(&self, manifest: &VaultMetadata) -> Result<(), StorageError> {
         let manifest_path = get_vault_manifest_path(&manifest.sanitized_name)?;

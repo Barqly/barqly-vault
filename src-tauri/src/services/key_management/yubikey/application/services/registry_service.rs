@@ -10,6 +10,7 @@ use crate::services::key_management::yubikey::{
     domain::errors::{YubiKeyError, YubiKeyResult},
     domain::models::{Serial, YubiKeyDevice, YubiKeyIdentity},
 };
+use crate::services::shared::infrastructure::sanitize_label;
 use async_trait::async_trait;
 
 /// Registry service trait for key registry operations
@@ -186,12 +187,17 @@ impl RegistryService for DefaultRegistryService {
         let final_label =
             label.unwrap_or_else(|| self.generate_yubikey_label(device, yubikey_count));
 
+        // Sanitize the label for use as key_id
+        let sanitized = sanitize_label(&final_label)
+            .map_err(|e| YubiKeyError::registry(format!("Failed to sanitize label: {}", e)))?;
+
         // Calculate PIV slot from user slot (82-95 range)
         let piv_slot = 82 + slot;
 
         // Add to registry
         let key_id = registry.add_yubikey_entry(
-            final_label,
+            sanitized.sanitized.clone(), // key_id - sanitized
+            final_label,                 // label - original display label
             device.serial().value().to_string(),
             slot,
             piv_slot,

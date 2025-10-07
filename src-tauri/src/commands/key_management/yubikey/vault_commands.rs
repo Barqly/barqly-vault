@@ -16,6 +16,7 @@ use crate::services::key_management::shared::KeyRegistry;
 use crate::services::key_management::shared::domain::models::{KeyReference, KeyState, KeyType};
 use crate::services::key_management::yubikey::YubiKeyManager;
 use crate::services::key_management::yubikey::domain::models::{Pin, Serial};
+use crate::services::shared::infrastructure::sanitize_label;
 use crate::services::vault;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -67,8 +68,17 @@ async fn register_yubikey_in_vault(
     mut registry: KeyRegistry,
     params: RegisterYubiKeyParams,
 ) -> Result<(KeyReference, String), Box<CommandError>> {
+    // Sanitize the label for use as key_id
+    let sanitized = sanitize_label(&params.label).map_err(|e| {
+        Box::new(
+            CommandError::validation(format!("Failed to sanitize label: {e}"))
+                .with_recovery_guidance("Provide a valid label without special characters"),
+        )
+    })?;
+
     let key_registry_id = registry.add_yubikey_entry(
-        params.label.clone(),
+        sanitized.sanitized.clone(), // key_id - sanitized
+        params.label.clone(),        // label - original display label
         params.serial.clone(),
         1u8,  // YubiKey retired slot number (not UI display slot)
         82u8, // PIV slot 82 (first retired slot)
