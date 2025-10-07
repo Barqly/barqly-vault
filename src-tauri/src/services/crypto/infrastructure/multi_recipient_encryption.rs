@@ -89,7 +89,7 @@ impl MultiRecipientCrypto {
             None, // No description for temp vault
             "Temporary-Vault".to_string(),
             &device_info,
-            SelectionType::Files,
+            Some(SelectionType::Files),
             None,
             recipients,
             vec![],
@@ -450,7 +450,7 @@ mod tests {
     }
 
     fn create_test_metadata() -> VaultMetadata {
-        use crate::services::key_management::yubikey::domain::models::ProtectionMode;
+        
         use crate::services::shared::infrastructure::DeviceInfo;
         use crate::services::vault::infrastructure::persistence::metadata::SelectionType;
 
@@ -474,7 +474,7 @@ mod tests {
             None, // No description
             "Test-Vault".to_string(),
             &device_info,
-            SelectionType::Files,
+            Some(SelectionType::Files),
             None,
             vec![passphrase_recipient],
             vec![],

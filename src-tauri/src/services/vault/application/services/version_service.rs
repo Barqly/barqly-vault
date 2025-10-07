@@ -367,7 +367,7 @@ impl Default for VersionComparisonService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::key_management::yubikey::domain::models::ProtectionMode;
+    
     use crate::services::shared::infrastructure::DeviceInfo;
     use crate::services::vault::infrastructure::persistence::metadata::{
         RecipientInfo, SelectionType,
@@ -383,7 +383,7 @@ mod tests {
         }
     }
 
-    fn create_test_manifest(_version: u32, device_info: &DeviceInfo) -> VaultMetadata {
+    fn create_test_manifest(version: u32, device_info: &DeviceInfo) -> VaultMetadata {
         let recipient = RecipientInfo::new_passphrase(
             "test-key".to_string(),
             "age1test123".to_string(),
@@ -391,19 +391,24 @@ mod tests {
             "test-key.agekey.enc".to_string(),
         );
 
-        VaultMetadata::new(
+        let mut metadata = VaultMetadata::new(
             "test-vault-001".to_string(),
             "Test Vault".to_string(),
             None,
             "Test-Vault".to_string(),
             device_info,
-            SelectionType::Files,
+            Some(SelectionType::Files),
             None,
             vec![recipient],
             vec![],
             0,
             0,
-        )
+        );
+
+        // Set the version to match the requested version
+        metadata.encryption_revision = version;
+
+        metadata
     }
 
     #[test]

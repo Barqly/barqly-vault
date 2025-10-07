@@ -166,7 +166,7 @@ impl Default for PayloadStagingService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::key_management::yubikey::domain::models::ProtectionMode;
+    
     use crate::services::shared::infrastructure::DeviceInfo;
     use crate::services::vault::infrastructure::persistence::metadata::{
         RecipientInfo, SelectionType,
@@ -210,7 +210,7 @@ mod tests {
             None, // No description
             "Test-Vault".to_string(),
             &device_info,
-            SelectionType::Files,
+            Some(SelectionType::Files),
             None,
             vec![recipient],
             vec![],

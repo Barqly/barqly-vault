@@ -200,7 +200,7 @@ pub async fn get_current_vault()
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::key_management::yubikey::domain::models::ProtectionMode;
+    
     use crate::services::shared::infrastructure::DeviceInfo;
     use crate::services::vault::infrastructure::persistence::metadata::{
         RecipientInfo, SelectionType,
@@ -275,7 +275,7 @@ mod tests {
             Some("Description".to_string()),
             "test-vault-persistence".to_string(),
             &device_info,
-            SelectionType::Files,
+            Some(SelectionType::Files),
             None,
             vec![recipient],
             vec![],
@@ -370,7 +370,7 @@ mod tests {
             None,
             "test-vault-list-1".to_string(),
             &device_info,
-            SelectionType::Files,
+            Some(SelectionType::Files),
             None,
             vec![],
             vec![],
@@ -384,7 +384,7 @@ mod tests {
             None,
             "test-vault-list-2".to_string(),
             &device_info,
-            SelectionType::Files,
+            Some(SelectionType::Files),
             None,
             vec![],
             vec![],

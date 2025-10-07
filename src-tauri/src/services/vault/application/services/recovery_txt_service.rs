@@ -194,7 +194,7 @@ impl Default for RecoveryTxtService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::key_management::yubikey::domain::models::ProtectionMode;
+    
     use crate::services::shared::infrastructure::DeviceInfo;
     use crate::services::vault::infrastructure::persistence::metadata::{
         RecipientInfo, SelectionType, VaultFileEntry,
@@ -222,7 +222,7 @@ mod tests {
             None,
             "Test-Vault".to_string(),
             &device_info,
-            SelectionType::Files,
+            Some(SelectionType::Files),
             None,
             vec![recipient],
             vec![
@@ -280,7 +280,7 @@ mod tests {
             None,
             "Bitcoin-Wallet".to_string(),
             &device_info,
-            SelectionType::Folder,
+            Some(SelectionType::Folder),
             Some("wallet".to_string()),
             vec![recipient],
             vec![],
@@ -340,7 +340,7 @@ mod tests {
             None,
             "Hybrid-Vault".to_string(),
             &device_info,
-            SelectionType::Files,
+            Some(SelectionType::Files),
             None,
             vec![passphrase, yubikey],
             vec![],

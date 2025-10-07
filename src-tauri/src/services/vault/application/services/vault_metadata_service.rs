@@ -93,7 +93,7 @@ impl VaultMetadataService {
             description,
             sanitized.sanitized,
             device_info,
-            SelectionType::Files,
+            None, // No selection until first encryption
             None,
             vec![],
             vec![],
@@ -139,7 +139,7 @@ impl VaultMetadataService {
             description,
             sanitized.sanitized,
             device_info,
-            selection_type,
+            Some(selection_type), // Set during encryption
             base_path,
             recipients,
             file_entries,

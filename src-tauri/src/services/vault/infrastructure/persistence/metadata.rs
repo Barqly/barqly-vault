@@ -29,8 +29,9 @@ pub struct VaultMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_encrypted_by: Option<LastEncryptedBy>,
 
-    // File selection metadata
-    pub selection_type: SelectionType,
+    // File selection metadata (set during first encryption)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selection_type: Option<SelectionType>, // Omitted until files selected
     #[serde(skip_serializing_if = "Option::is_none")]
     pub base_path: Option<String>, // Omitted for files-only selection
 
@@ -120,8 +121,8 @@ impl VaultMetadata {
         label: String,
         description: Option<String>,
         sanitized_name: String,
-        device_info: &MachineDeviceInfo,
-        selection_type: SelectionType,
+        _device_info: &MachineDeviceInfo,
+        selection_type: Option<SelectionType>,
         base_path: Option<String>,
         recipients: Vec<RecipientInfo>,
         files: Vec<VaultFileEntry>,
@@ -510,7 +511,7 @@ mod tests {
             Some(format!("Test vault: {}", vault_name)),
             vault_name.replace(' ', "-"),
             &device_info,
-            SelectionType::Files,
+            Some(SelectionType::Files),
             None,
             recipients,
             vec![],
