@@ -3,6 +3,7 @@ import { X, Key, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useVault } from '../../contexts/VaultContext';
 import { logger } from '../../lib/logger';
 import { commands, PassphraseValidationResult, AddPassphraseKeyRequest } from '../../bindings';
+import { validateLabel } from '../../lib/sanitization';
 
 interface PassphraseKeyDialogProps {
   isOpen: boolean;
@@ -54,23 +55,12 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
     return () => clearTimeout(timer);
   }, [passphrase]);
 
-  // Validate label for allowed characters
-  const validateLabel = (value: string): string | null => {
-    if (!value.trim()) return null; // Empty is handled elsewhere
-
-    // Allow letters, numbers, dashes, and underscores only
-    const validPattern = /^[a-zA-Z0-9_-]+$/;
-    if (!validPattern.test(value)) {
-      const invalidChars = value.split('').filter((c) => !/[a-zA-Z0-9_-]/.test(c));
-      return `Invalid characters: ${[...new Set(invalidChars)].join(', ')}`;
-    }
-    return null;
-  };
-
   const handleLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLabel(value);
-    setLabelError(validateLabel(value));
+    // Use shared validation - allows spaces, emojis, same as vault labels
+    const error = validateLabel(value);
+    setLabelError(error);
   };
 
   const validateForm = (): string | null => {
@@ -224,7 +214,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
               {labelError && <p className="text-xs text-red-600 mt-1">{labelError}</p>}
               {!labelError && label && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Allowed: letters, numbers, dashes (-), and underscores (_)
+                  Tip: Use descriptive names like "My Backup Key 2024"
                 </p>
               )}
             </div>
