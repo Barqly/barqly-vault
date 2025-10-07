@@ -7,6 +7,7 @@ pub mod caching;
 pub mod device_identity;
 pub mod error;
 pub mod io;
+pub mod label_sanitization;
 pub mod path_management;
 pub mod progress;
 
@@ -15,6 +16,9 @@ pub use caching::{CacheMetrics, StorageCache, get_cache};
 
 // Re-export device identity
 pub use device_identity::DeviceInfo;
+
+// Re-export label sanitization
+pub use label_sanitization::{SanitizedLabel, sanitize_label};
 
 // Re-export path management
 pub use path_management::{

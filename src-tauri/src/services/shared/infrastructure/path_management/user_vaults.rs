@@ -182,59 +182,13 @@ pub struct SanitizedVaultName {
 /// // display:   "My Family Photos! 🎉 / Test"
 /// ```
 pub fn sanitize_vault_name(name: &str) -> Result<SanitizedVaultName, StorageError> {
-    let display = name.to_string();
-    let trimmed = name.trim();
+    // Delegate to shared label sanitization
+    let result = super::super::label_sanitization::sanitize_label(name)?;
 
-    if trimmed.is_empty() {
-        return Err(StorageError::InvalidVaultName(
-            "Vault name cannot be empty".to_string(),
-        ));
-    }
-
-    // Step 1: Remove emojis and non-ASCII characters
-    let ascii_only: String = trimmed
-        .chars()
-        .filter(|c| c.is_ascii() || c.is_ascii_whitespace())
-        .collect();
-
-    // Step 2: Replace invalid filesystem characters with hyphens
-    let invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|'];
-    let replaced: String = ascii_only
-        .chars()
-        .map(|c| if invalid_chars.contains(&c) { '-' } else { c })
-        .collect();
-
-    // Step 3: Collapse multiple hyphens and spaces
-    let collapsed = collapse_separators(&replaced);
-
-    // Step 4: Trim leading/trailing hyphens and spaces
-    let trimmed_result = collapsed.trim_matches(|c: char| c == '-' || c.is_whitespace());
-
-    // Check if empty after sanitization
-    if trimmed_result.is_empty() {
-        return Err(StorageError::InvalidVaultName(
-            "Vault name contains only invalid characters".to_string(),
-        ));
-    }
-
-    // Step 5: Enforce max 200 characters
-    let sanitized = if trimmed_result.len() > 200 {
-        trimmed_result[..200].to_string()
-    } else {
-        trimmed_result.to_string()
-    };
-
-    // Step 6: Prevent leading dot (Unix hidden files)
-    let sanitized = if let Some(stripped) = sanitized.strip_prefix('.') {
-        format!("vault-{}", stripped)
-    } else {
-        sanitized
-    };
-
-    // Step 7: Check for Windows reserved names
-    check_reserved_names(&sanitized)?;
-
-    Ok(SanitizedVaultName { sanitized, display })
+    Ok(SanitizedVaultName {
+        sanitized: result.sanitized,
+        display: result.display,
+    })
 }
 
 /// Collapse multiple consecutive hyphens and spaces into single hyphens
