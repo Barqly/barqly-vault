@@ -42,7 +42,8 @@ pub struct VaultInfo {
 /// Version tracking and encryption history (Schema v2)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Versioning {
-    pub revision: u32, // Was encryption_revision
+    #[serde(rename = "encryption_revision")]
+    pub revision: u32, // Serialized as "encryption_revision" in JSON
     pub created_at: DateTime<Utc>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_encrypted: Option<EncryptionInfo>,
