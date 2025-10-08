@@ -7,7 +7,7 @@ use super::{update_key_metadata_access_time, validate_key_file};
 use crate::error::StorageError;
 use crate::services::shared::infrastructure::caching::get_cache;
 use crate::services::shared::infrastructure::path_management::{
-    get_key_file_path, get_key_metadata_path,
+    get_key_file_path, get_key_metadata_path, get_keys_dir,
 };
 use rand::Rng;
 use std::fs;
@@ -70,10 +70,10 @@ pub fn save_encrypted_key(
     Ok(key_path)
 }
 
-/// Load an encrypted key by label
+/// Load an encrypted key by filename
 ///
 /// # Arguments
-/// * `label` - The label of the key to load
+/// * `filename` - The key filename including extension (e.g., "MBP2024-Nauman.agekey.enc")
 ///
 /// # Returns
 /// The encrypted key bytes
@@ -84,18 +84,18 @@ pub fn save_encrypted_key(
 /// - Updates last accessed time in metadata
 ///
 /// # Errors
-/// - `StorageError::InvalidLabel` if the label is unsafe
 /// - `StorageError::KeyNotFound` if the key doesn't exist
 /// - `StorageError::IoError` if file operations fail
 /// - `StorageError::FileCorruption` if the file appears corrupted
-pub fn load_encrypted_key(label: &str) -> Result<Vec<u8>, StorageError> {
-    debug_assert!(!label.is_empty(), "Key label cannot be empty");
+pub fn load_encrypted_key(filename: &str) -> Result<Vec<u8>, StorageError> {
+    debug_assert!(!filename.is_empty(), "Key filename cannot be empty");
 
-    let key_path = get_key_file_path(label)?;
+    let keys_dir = get_keys_dir()?;
+    let key_path = keys_dir.join(filename);
 
     // Check if key file exists
     if !key_path.exists() {
-        return Err(StorageError::KeyNotFound(label.to_string()));
+        return Err(StorageError::KeyNotFound(filename.to_string()));
     }
 
     // Validate file permissions and integrity
@@ -104,8 +104,10 @@ pub fn load_encrypted_key(label: &str) -> Result<Vec<u8>, StorageError> {
     // Read the encrypted key
     let encrypted_key = fs::read(&key_path).map_err(StorageError::IoError)?;
 
-    // Update last accessed time in metadata
-    update_key_metadata_access_time(label)?;
+    // Update last accessed time in metadata (requires label without extension)
+    if let Some(label) = filename.strip_suffix(".agekey.enc") {
+        let _ = update_key_metadata_access_time(label); // Best effort, don't fail if metadata update fails
+    }
 
     Ok(encrypted_key)
 }
