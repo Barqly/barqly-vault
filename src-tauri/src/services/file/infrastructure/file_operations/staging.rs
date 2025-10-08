@@ -238,6 +238,27 @@ impl StagingArea {
             source: e,
         })?;
 
+        // Get file metadata to add to staged_files
+        let metadata = fs::metadata(&dest_path).map_err(|e| FileOpsError::IoError {
+            message: format!("Failed to get file metadata: {}", e),
+            source: e,
+        })?;
+
+        let file_info = FileInfo {
+            path: dest_path.clone(),
+            size: metadata.len(),
+            modified: chrono::DateTime::from(
+                metadata
+                    .modified()
+                    .unwrap_or_else(|_| std::time::SystemTime::now()),
+            ),
+            hash: calculate_file_hash(&dest_path)?,
+            #[cfg(unix)]
+            permissions: metadata.permissions().mode(),
+        };
+
+        self.staged_files.push(file_info);
+
         info!("Added file to staging: {}", filename);
         Ok(dest_path)
     }
@@ -260,6 +281,27 @@ impl StagingArea {
             message: format!("Failed to copy file to staging: {}", e),
             source: e,
         })?;
+
+        // Get file metadata to add to staged_files
+        let metadata = fs::metadata(&dest_path).map_err(|e| FileOpsError::IoError {
+            message: format!("Failed to get file metadata: {}", e),
+            source: e,
+        })?;
+
+        let file_info = FileInfo {
+            path: dest_path.clone(),
+            size: metadata.len(),
+            modified: chrono::DateTime::from(
+                metadata
+                    .modified()
+                    .unwrap_or_else(|_| std::time::SystemTime::now()),
+            ),
+            hash: calculate_file_hash(&dest_path)?,
+            #[cfg(unix)]
+            permissions: metadata.permissions().mode(),
+        };
+
+        self.staged_files.push(file_info);
 
         info!(
             "Copied file to staging: {} -> {}",
