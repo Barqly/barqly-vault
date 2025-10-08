@@ -110,7 +110,7 @@ impl BootstrapService {
                         Ok(manifest) => {
                             debug!(
                                 vault = %manifest.label(),
-                                version = manifest.encryption_revision(),
+                                revision = manifest.versioning.revision,
                                 recipients = manifest.recipients().len(),
                                 "Loaded vault manifest"
                             );

@@ -117,7 +117,7 @@ impl VersionComparisonService {
                 if bundle_newer {
                     info!(
                         vault = %bundle_manifest.label(),
-                        version,
+                        revision = version,
                         bundle_time = ?bundle_manifest.last_encrypted_at(),
                         "Same version but bundle has newer timestamp - replacing"
                     );
@@ -126,7 +126,7 @@ impl VersionComparisonService {
                 } else {
                     info!(
                         vault = %bundle_manifest.label(),
-                        version,
+                        revision = version,
                         "Same version but local is newer - keeping local"
                     );
                     Ok(false)

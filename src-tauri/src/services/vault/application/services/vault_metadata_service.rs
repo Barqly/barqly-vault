@@ -70,7 +70,7 @@ impl VaultMetadataService {
 
         debug!(
             vault = %manifest.label(),
-            version = manifest.encryption_revision(),
+            revision = manifest.versioning.revision,
             "Loaded manifest from non-sync storage"
         );
 
@@ -222,7 +222,7 @@ impl VaultMetadataService {
 
         debug!(
             vault = %manifest.label(),
-            version = manifest.encryption_revision(),
+            revision = manifest.versioning.revision,
             path = %manifest_path.display(),
             "Saved manifest to non-sync storage"
         );

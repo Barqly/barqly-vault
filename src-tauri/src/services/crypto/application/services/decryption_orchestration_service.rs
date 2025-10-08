@@ -229,7 +229,7 @@ impl DecryptionOrchestrationService {
 
         info!(
             vault = %bundle_manifest.label(),
-            version = bundle_manifest.encryption_revision(),
+            revision = bundle_manifest.versioning.revision,
             "Found vault manifest in bundle"
         );
 
