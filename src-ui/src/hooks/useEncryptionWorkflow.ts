@@ -14,6 +14,15 @@ interface EncryptionResult {
   encryptedSize: number;
   duration: number;
   keyUsed: string;
+  recoveryItemsIncluded: string[]; // Track what recovery items were included
+}
+
+interface BundleContents {
+  userFiles: { count: number; totalSize: number };
+  manifest: boolean;
+  passphraseKeys: number;
+  recoveryGuide: boolean;
+  totalSize: number;
 }
 
 /**
@@ -21,7 +30,7 @@ interface EncryptionResult {
  * Mirrors useDecryptionWorkflow architecture exactly for consistency
  */
 export const useEncryptionWorkflow = () => {
-  const { currentVault } = useVault();
+  const { currentVault, getCurrentVaultKeys } = useVault();
   const fileEncryptionHook = useFileEncryption();
   const {
     selectFiles,
@@ -46,6 +55,7 @@ export const useEncryptionWorkflow = () => {
   const [startTime, setStartTime] = useState<number>(0);
   const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
   const [pendingOverwriteFile, setPendingOverwriteFile] = useState<string>('');
+  const [bundleContents, setBundleContents] = useState<BundleContents | null>(null);
 
   // Track previous selectedFiles to distinguish between initial selection and navigation
   const [prevSelectedFiles, setPrevSelectedFiles] = useState<{
@@ -62,6 +72,25 @@ export const useEncryptionWorkflow = () => {
     setPrevSelectedFiles(selectedFiles);
   }, [selectedFiles, prevSelectedFiles, currentStep]);
 
+  // Calculate bundle contents when files are selected or vault keys change
+  useEffect(() => {
+    if (selectedFiles && currentVault) {
+      const keys = getCurrentVaultKeys();
+      const passphraseKeyCount = keys.filter(key => key.key_type === 'Passphrase').length;
+
+      setBundleContents({
+        userFiles: {
+          count: selectedFiles.file_count,
+          totalSize: selectedFiles.total_size,
+        },
+        manifest: true, // Always included by backend
+        passphraseKeys: passphraseKeyCount,
+        recoveryGuide: true, // Always included by backend
+        totalSize: selectedFiles.total_size, // Will be updated after encryption
+      });
+    }
+  }, [selectedFiles, currentVault, getCurrentVaultKeys]);
+
   // Check if user can navigate to a specific step
   const canNavigateToStep = useCallback(
     (step: number) => {
@@ -69,7 +98,9 @@ export const useEncryptionWorkflow = () => {
         case 1:
           return true; // Can always go back to step 1
         case 2:
-          return !!selectedFiles; // Can go to step 2 if files are selected (no key needed for multi-key encryption)
+          return !!selectedFiles; // Can go to step 2 if files are selected
+        case 3:
+          return !!selectedFiles; // Can go to step 3 if files are selected
         default:
           return false;
       }
@@ -164,6 +195,16 @@ export const useEncryptionWorkflow = () => {
       const response = result.data;
 
       const duration = Math.round((Date.now() - startTime) / 1000);
+
+      // Build list of recovery items included
+      const recoveryItemsIncluded: string[] = ['Vault manifest'];
+      const keys = getCurrentVaultKeys();
+      const passphraseKeyCount = keys.filter(key => key.key_type === 'Passphrase').length;
+      if (passphraseKeyCount > 0) {
+        recoveryItemsIncluded.push(`${passphraseKeyCount} passphrase key${passphraseKeyCount > 1 ? 's' : ''} (.enc)`);
+      }
+      recoveryItemsIncluded.push('RECOVERY.txt guide');
+
       setEncryptionResult({
         outputPath: response.encrypted_file_path,
         fileName: response.encrypted_file_path.split('/').pop() || 'encrypted-file.age',
@@ -172,6 +213,7 @@ export const useEncryptionWorkflow = () => {
         encryptedSize: Math.round(selectedFiles.total_size * 0.75),
         duration,
         keyUsed: response.keys_used.join(', '),
+        recoveryItemsIncluded,
       });
 
       // Check if there's an overwrite warning
@@ -287,6 +329,7 @@ export const useEncryptionWorkflow = () => {
     encryptionResult,
     showOverwriteDialog,
     pendingOverwriteFile,
+    bundleContents, // Recovery bundle contents
 
     // From useFileEncryption
     isLoading,

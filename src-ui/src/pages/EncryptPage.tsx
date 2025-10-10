@@ -17,7 +17,8 @@ import OverwriteConfirmationDialog from '../components/ui/OverwriteConfirmationD
 
 const ENCRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Files', description: 'Choose what to encrypt' },
-  { id: 2, label: 'Encrypt Vault', description: 'Set output and start' },
+  { id: 2, label: 'Review Bundle', description: 'Check recovery items' },
+  { id: 3, label: 'Encrypt Vault', description: 'Set output and start' },
 ];
 
 /**
@@ -36,6 +37,7 @@ const EncryptPage: React.FC = () => {
     isEncrypting,
     showOverwriteDialog,
     pendingOverwriteFile,
+    bundleContents,
 
     // From useFileEncryption
     isLoading,
@@ -132,7 +134,7 @@ const EncryptPage: React.FC = () => {
           <AnimatedTransition show={!success && !isEncrypting} duration={300}>
             {!success && !isEncrypting && (
               <>
-                {/* Progressive Card System - Step 1 */}
+                {/* Progressive Card System - Steps 1 and 2 */}
                 <ProgressiveEncryptionCards
                   currentStep={currentStep}
                   selectedFiles={selectedFiles}
@@ -151,10 +153,13 @@ const EncryptPage: React.FC = () => {
                   }}
                   onKeyChange={handleKeyChange}
                   onStepChange={handleStepNavigation}
+                  outputPath={outputPath}
+                  archiveName={archiveName}
+                  bundleContents={bundleContents}
                 />
 
-                {/* Ready to encrypt panel - Step 2 */}
-                {currentStep === 2 && selectedFiles && (
+                {/* Ready to encrypt panel - Step 3 */}
+                {currentStep === 3 && selectedFiles && (
                   <EncryptionReadyPanel
                     outputPath={outputPath}
                     archiveName={archiveName}
@@ -164,8 +169,8 @@ const EncryptPage: React.FC = () => {
                     onArchiveNameChange={setArchiveName}
                     onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
                     onEncrypt={handleEncryption}
-                    onPrevious={() => handleStepNavigation(1)}
-                    autoFocus={currentStep === 2}
+                    onPrevious={() => handleStepNavigation(2)}
+                    autoFocus={currentStep === 3}
                   />
                 )}
 

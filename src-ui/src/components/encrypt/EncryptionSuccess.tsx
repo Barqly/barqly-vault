@@ -16,6 +16,7 @@ interface EncryptionSuccessProps {
   fileName: string;
   fileCount: number;
   encryptedSize: number;
+  recoveryItemsIncluded?: string[]; // New prop for recovery items
   onEncryptMore: () => void;
   onNavigateToDecrypt?: () => void;
   onViewGuide?: () => void;
@@ -26,6 +27,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
   fileName,
   fileCount,
   encryptedSize,
+  recoveryItemsIncluded,
   onEncryptMore,
   onNavigateToDecrypt,
   onViewGuide,
@@ -70,6 +72,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
       console.error('Failed to copy path:', error);
     }
   };
+
 
   return (
     <div
@@ -168,11 +171,31 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
             </p>
           </div>
 
+          {/* Recovery Items Included - new section */}
+          {recoveryItemsIncluded && recoveryItemsIncluded.length > 0 && (
+            <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-800">
+                  Recovery items included:
+                </span>
+              </div>
+              <ul className="space-y-1 ml-6">
+                {recoveryItemsIncluded.map((item, index) => (
+                  <li key={index} className="text-xs text-green-700 flex items-center gap-1">
+                    <span className="text-green-600">•</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Fixed action buttons at bottom */}
           <div className="flex justify-between items-center pt-3 border-t border-slate-200 bg-white sticky bottom-0">
             <button
               onClick={onEncryptMore}
-              className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
               tabIndex={2}
             >
               <RotateCcw className="w-4 h-4" />

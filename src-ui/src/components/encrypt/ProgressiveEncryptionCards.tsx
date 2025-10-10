@@ -1,6 +1,9 @@
 import React, { useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
+import RecoveryInfoPanel from './RecoveryInfoPanel';
+import EncryptionSummary from './EncryptionSummary';
+import { useVault } from '../../contexts/VaultContext';
 
 interface ProgressiveEncryptionCardsProps {
   currentStep: number;
@@ -12,6 +15,15 @@ interface ProgressiveEncryptionCardsProps {
   onFileError: (error: Error) => void;
   onKeyChange: (keyId: string) => void;
   onStepChange: (step: number) => void;
+  outputPath?: string;
+  archiveName?: string;
+  bundleContents?: {
+    userFiles: { count: number; totalSize: number };
+    manifest: boolean;
+    passphraseKeys: number;
+    recoveryGuide: boolean;
+    totalSize: number;
+  } | null;
 }
 
 /**
@@ -29,7 +41,11 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   onFileError,
   onKeyChange: _onKeyChange,
   onStepChange,
+  outputPath,
+  archiveName,
+  bundleContents,
 }) => {
+  const { currentVault, getCurrentVaultKeys } = useVault();
   const continueButtonRef = useRef<HTMLButtonElement>(null);
   const canGoToPreviousStep = currentStep > 1;
 
@@ -37,7 +53,9 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   const canContinue = (() => {
     switch (currentStep) {
       case 1:
-        return !!selectedFiles; // Can continue from step 1 if files are selected (no key selection needed)
+        return !!selectedFiles; // Can continue from step 1 if files are selected
+      case 2:
+        return true; // Can always continue from step 2 (review is just informational)
       default:
         return false;
     }
@@ -81,13 +99,46 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
           </div>
         );
 
+      case 2:
+        // Step 2 shows recovery info and summary
+        if (!selectedFiles || !currentVault || !bundleContents) {
+          return null;
+        }
+
+        const keys = getCurrentVaultKeys();
+        const fileName = archiveName ? `${archiveName}.age` : 'Auto-generated filename';
+
+        return (
+          <div className="space-y-4">
+            {/* Encryption Summary */}
+            <EncryptionSummary
+              vaultName={currentVault.label}
+              fileCount={selectedFiles.file_count}
+              totalSize={selectedFiles.total_size}
+              recipientCount={keys.length}
+              outputFileName={fileName}
+              outputPath={outputPath || '~/Documents/Barqly-Vaults'}
+              hasRecoveryItems={true}
+            />
+
+            {/* Recovery Info Panel */}
+            <RecoveryInfoPanel
+              fileCount={selectedFiles.file_count}
+              totalSize={selectedFiles.total_size}
+              hasPassphraseKeys={bundleContents.passphraseKeys > 0}
+              passphraseKeyCount={bundleContents.passphraseKeys}
+              vaultName={currentVault.label}
+            />
+          </div>
+        );
+
       default:
         return null;
     }
   };
 
-  // Don't render if we're beyond step 2 (step 3 is handled by EncryptionReadyPanel)
-  if (currentStep > 2) {
+  // Don't render if we're at step 3 or beyond (step 3 is handled by EncryptionReadyPanel)
+  if (currentStep >= 3) {
     return null;
   }
 
@@ -95,7 +146,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
       {/* Card Content */}
       <div className="p-6">
-        <div className="min-h-[200px] max-h-[350px] mb-6">{renderStepContent()}</div>
+        <div className={`${currentStep === 2 ? 'min-h-[400px]' : 'min-h-[200px] max-h-[350px]'} mb-6`}>{renderStepContent()}</div>
 
         {/* Navigation Buttons */}
         <div className="flex items-center justify-between pt-4 border-t border-slate-100">
