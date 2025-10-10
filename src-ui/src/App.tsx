@@ -19,18 +19,17 @@ function App(): ReactElement {
         <VaultProvider>
           <Suspense fallback={<LoadingSpinner centered showText text="Loading page..." />}>
             <Routes>
-              {/* Redirect root to Vault Hub (new default) */}
-              <Route path="/" element={<Navigate to="/vault-hub" replace />} />
-
-              {/* Main routes with updated paths */}
+              {/* Vault Hub as default route */}
               <Route
-                path="/vault-hub"
+                path="/"
                 element={
                   <MainLayout>
                     <VaultHub />
                   </MainLayout>
                 }
               />
+
+              {/* Main routes */}
               <Route
                 path="/keys"
                 element={
@@ -65,6 +64,7 @@ function App(): ReactElement {
               />
 
               {/* Fallback for old routes */}
+              <Route path="/vault-hub" element={<Navigate to="/" replace />} />
               <Route path="/manage-keys" element={<Navigate to="/keys" replace />} />
             </Routes>
           </Suspense>
