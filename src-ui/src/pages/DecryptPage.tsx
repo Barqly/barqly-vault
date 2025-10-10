@@ -8,6 +8,7 @@ import UniversalHeader from '../components/common/UniversalHeader';
 import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
 import ProgressiveDecryptionCards from '../components/decrypt/ProgressiveDecryptionCards';
 import DecryptionReadyPanel from '../components/decrypt/DecryptionReadyPanel';
+import ManifestRestoration from '../components/decrypt/ManifestRestoration';
 import DecryptProgress from '../components/decrypt/DecryptProgress';
 import DecryptSuccess from '../components/decrypt/DecryptSuccess';
 import AnimatedTransition from '../components/ui/AnimatedTransition';
@@ -34,6 +35,23 @@ const DecryptPage: React.FC = () => {
     showAdvancedOptions,
     setShowAdvancedOptions,
 
+    // Vault recognition state
+    isKnownVault,
+    detectedVaultName,
+    detectedVaultId,
+
+    // Key discovery state
+    isDiscoveringKeys,
+    availableKeys,
+    suggestedKeys,
+    keyAttempts,
+
+    // Recovery state
+    isRecoveryMode,
+    willRestoreManifest,
+    willRestoreKeys,
+    recoveredItems,
+
     // From useFileDecryption
     isLoading,
     error,
@@ -57,6 +75,10 @@ const DecryptPage: React.FC = () => {
 
     // Navigation handlers
     handleStepNavigation,
+
+    // Setters
+    setAvailableKeys,
+    setIsDiscoveringKeys,
   } = useDecryptionWorkflow();
 
   return (
@@ -84,7 +106,15 @@ const DecryptPage: React.FC = () => {
 
           {/* Success display with animation */}
           <AnimatedTransition show={!!success} duration={400}>
-            {success && <DecryptSuccess result={success} onDecryptAnother={handleDecryptAnother} />}
+            {success && (
+              <DecryptSuccess
+                result={success}
+                onDecryptAnother={handleDecryptAnother}
+                isRecoveryMode={isRecoveryMode}
+                recoveredItems={recoveredItems}
+                vaultName={detectedVaultName}
+              />
+            )}
           </AnimatedTransition>
 
           {/* Progress display - show immediately when decrypting starts */}
@@ -137,20 +167,48 @@ const DecryptPage: React.FC = () => {
                   }}
                   onClearError={clearError}
                   onStepChange={handleStepNavigation}
+                  // Recovery props
+                  isKnownVault={isKnownVault}
+                  detectedVaultName={detectedVaultName}
+                  isRecoveryMode={isRecoveryMode}
+                  availableKeysForDiscovery={availableKeys}
+                  suggestedKeys={suggestedKeys}
+                  keyAttempts={keyAttempts}
+                  willRestoreManifest={willRestoreManifest}
+                  onImportKey={() => {
+                    // TODO: Implement key import dialog
+                    console.log('Import key requested');
+                  }}
+                  onDetectYubiKey={() => {
+                    // TODO: Implement YubiKey detection
+                    console.log('Detect YubiKey requested');
+                  }}
+                  onConfirmRestoration={handleDecryption}
                 />
 
-                {/* Ready to decrypt panel - Step 3 */}
+                {/* Ready to decrypt panel or Manifest Restoration - Step 3 */}
                 {currentStep === 3 && selectedFile && selectedKeyId && passphrase && outputPath && (
-                  <DecryptionReadyPanel
-                    outputPath={outputPath}
-                    showAdvancedOptions={showAdvancedOptions}
-                    isLoading={isLoading}
-                    onPathChange={setOutputPath}
-                    onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                    onDecrypt={handleDecryption}
-                    onPrevious={() => handleStepNavigation(2)}
-                    autoFocus={currentStep === 3}
-                  />
+                  <>
+                    {isRecoveryMode && willRestoreManifest ? (
+                      <ManifestRestoration
+                        vaultName={detectedVaultName}
+                        keyCount={1}
+                        onConfirm={handleDecryption}
+                        onSkip={handleDecryption}
+                      />
+                    ) : (
+                      <DecryptionReadyPanel
+                        outputPath={outputPath}
+                        showAdvancedOptions={showAdvancedOptions}
+                        isLoading={isLoading}
+                        onPathChange={setOutputPath}
+                        onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                        onDecrypt={handleDecryption}
+                        onPrevious={() => handleStepNavigation(2)}
+                        autoFocus={currentStep === 3}
+                      />
+                    )}
+                  </>
                 )}
 
                 {/* Help section */}

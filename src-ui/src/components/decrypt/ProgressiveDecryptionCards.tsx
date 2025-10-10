@@ -4,6 +4,9 @@ import FileDropZone from '../common/FileDropZone';
 import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
 import PassphraseInput from '../forms/PassphraseInput';
 import { KeyReference } from '../../bindings';
+import VaultRecognition from './VaultRecognition';
+import KeyDiscovery from './KeyDiscovery';
+import ManifestRestoration from './ManifestRestoration';
 
 interface ProgressiveDecryptionCardsProps {
   currentStep: number;
@@ -19,6 +22,17 @@ interface ProgressiveDecryptionCardsProps {
   onPassphraseError: (error: { code: string; message: string; user_actionable: boolean }) => void;
   onClearError: () => void;
   onStepChange: (step: number) => void;
+  // New props for recovery
+  isKnownVault?: boolean | null;
+  detectedVaultName?: string | null;
+  isRecoveryMode?: boolean;
+  availableKeysForDiscovery?: KeyReference[];
+  suggestedKeys?: KeyReference[];
+  keyAttempts?: Map<string, boolean>;
+  willRestoreManifest?: boolean;
+  onImportKey?: () => void;
+  onDetectYubiKey?: () => void;
+  onConfirmRestoration?: () => void;
 }
 
 /**
@@ -39,6 +53,17 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   onPassphraseError,
   onClearError,
   onStepChange,
+  // Recovery props
+  isKnownVault = null,
+  detectedVaultName = null,
+  isRecoveryMode = false,
+  availableKeysForDiscovery = [],
+  suggestedKeys = [],
+  keyAttempts = new Map(),
+  willRestoreManifest = false,
+  onImportKey = () => {},
+  onDetectYubiKey,
+  onConfirmRestoration = () => {},
 }) => {
   const canGoToPreviousStep = currentStep > 1;
   const continueButtonRef = useRef<HTMLButtonElement>(null);
@@ -173,10 +198,60 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               icon="decrypt"
               autoFocus={currentStep === 1}
             />
+
+            {/* Show vault recognition after file selection */}
+            {selectedFile && isKnownVault !== null && (
+              <VaultRecognition
+                file={selectedFile}
+                isKnown={isKnownVault}
+                vaultName={detectedVaultName}
+                onContinue={() => onStepChange(2)}
+              />
+            )}
           </div>
         );
 
       case 2:
+        // In recovery mode, show key discovery instead of normal selection
+        if (isRecoveryMode) {
+          return (
+            <div className="space-y-4">
+              <KeyDiscovery
+                availableKeys={availableKeysForDiscovery}
+                suggestedKeys={suggestedKeys}
+                keyAttempts={keyAttempts}
+                onKeySelected={onKeyChange}
+                onImportKey={onImportKey}
+                onDetectYubiKey={onDetectYubiKey}
+              />
+
+              {selectedKeyId && (
+                <div>
+                  <PassphraseInput
+                    value={passphrase}
+                    onChange={onPassphraseChange}
+                    label={selectedKey?.type === 'yubikey' ? 'PIN' : 'Passphrase'}
+                    placeholder={
+                      selectedKey?.type === 'yubikey'
+                        ? 'Enter your YubiKey PIN'
+                        : 'Enter your key passphrase'
+                    }
+                    showStrength={false}
+                    autoFocus={false}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && canContinue) {
+                        e.preventDefault();
+                        handleContinue();
+                      }
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // Normal key selection for known vaults
         return (
           <div className="space-y-4">
             <div>

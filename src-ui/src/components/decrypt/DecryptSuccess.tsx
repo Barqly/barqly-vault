@@ -1,20 +1,37 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle, FolderOpen, Copy, FileText, HardDrive } from 'lucide-react';
+import { CheckCircle, FolderOpen, Copy, FileText, HardDrive, Archive, Home } from 'lucide-react';
 import { DecryptionResult } from '../../bindings';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
+import { useNavigate } from 'react-router-dom';
+
+interface RecoveredItems {
+  manifest?: any;
+  keys?: string[];
+  files?: string[];
+}
 
 interface DecryptSuccessProps {
   result: DecryptionResult;
   onDecryptAnother?: () => void;
+  isRecoveryMode?: boolean;
+  recoveredItems?: RecoveredItems | null;
+  vaultName?: string | null;
 }
 
-const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnother }) => {
+const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
+  result,
+  onDecryptAnother,
+  isRecoveryMode = false,
+  recoveredItems = null,
+  vaultName = null,
+}) => {
   const [showConfetti, setShowConfetti] = useState(true);
   const [copiedPath, setCopiedPath] = useState(false);
   const [isContentReady, setIsContentReady] = useState(false);
   const decryptMoreButtonRef = useRef<HTMLButtonElement>(null);
   const responsiveStyles = useSuccessPanelSizing();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Subtle animation duration
@@ -107,6 +124,41 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
         style={{ maxHeight: responsiveStyles['--success-panel-content-height'] }}
       >
         <div className="p-4 space-y-4">
+          {/* Recovery information (if in recovery mode) */}
+          {isRecoveryMode && recoveredItems && (
+            <div className="bg-green-50 rounded-lg border border-green-200 p-4 mb-4">
+              <div className="flex items-center gap-2 text-green-800 font-medium mb-3">
+                <Archive className="w-5 h-5" />
+                Vault Recovery Complete
+              </div>
+              <div className="space-y-2">
+                {recoveredItems.files && (
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>{recoveredItems.files.length} files extracted</span>
+                  </div>
+                )}
+                {recoveredItems.manifest && (
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Vault manifest restored</span>
+                  </div>
+                )}
+                {recoveredItems.keys && recoveredItems.keys.length > 0 && (
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Passphrase key imported</span>
+                  </div>
+                )}
+              </div>
+              {vaultName && (
+                <p className="text-sm text-green-700 mt-3 pt-3 border-t border-green-200">
+                  The <span className="font-medium">{vaultName}</span> vault is now available in your Vault Hub
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Summary strip (chips) */}
           <div className="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-2">
             <div className="flex items-center gap-4">
@@ -164,6 +216,16 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({ result, onDecryptAnothe
 
           {/* Final CTA */}
           <div className="flex justify-center gap-3 pt-6 border-t border-slate-200 bg-white sticky bottom-0">
+            {isRecoveryMode && (
+              <button
+                onClick={() => navigate('/')}
+                className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                tabIndex={2}
+              >
+                <Home className="w-4 h-4" />
+                Open Vault Hub
+              </button>
+            )}
             {onDecryptAnother && (
               <button
                 ref={decryptMoreButtonRef}

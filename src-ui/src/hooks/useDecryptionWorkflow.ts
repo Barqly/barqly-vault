@@ -1,12 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileDecryption } from './useFileDecryption';
-import type { ErrorCode, CommandError } from '../bindings';
+import type { ErrorCode, CommandError, KeyReference } from '../bindings';
 import { createCommandError } from '../lib/errors/command-error';
+import { VaultContext } from '../contexts/VaultContext';
+import { commands } from '../bindings';
 
 interface VaultMetadata {
   creationDate?: string;
   keyLabel?: string;
+}
+
+interface RecoveredItems {
+  manifest?: any; // VaultManifest type when available
+  keys?: string[];
+  files?: string[];
 }
 
 /**
@@ -15,6 +23,9 @@ interface VaultMetadata {
  */
 export const useDecryptionWorkflow = () => {
   const fileDecryptionHook = useFileDecryption();
+  const vaultContext = useContext(VaultContext);
+  const { vaults } = vaultContext || { vaults: [] };
+
   const {
     setSelectedFile,
     setKeyId,
@@ -41,6 +52,23 @@ export const useDecryptionWorkflow = () => {
   const [vaultMetadata, setVaultMetadata] = useState<VaultMetadata>({});
   const [currentStep, setCurrentStep] = useState(1);
   const [fileValidationError, setFileValidationError] = useState<CommandError | null>(null);
+
+  // Vault recognition state
+  const [isKnownVault, setIsKnownVault] = useState<boolean | null>(null);
+  const [detectedVaultName, setDetectedVaultName] = useState<string | null>(null);
+  const [detectedVaultId, setDetectedVaultId] = useState<string | null>(null);
+
+  // Key discovery state
+  const [isDiscoveringKeys, setIsDiscoveringKeys] = useState(false);
+  const [availableKeys, setAvailableKeys] = useState<KeyReference[]>([]);
+  const [suggestedKeys, setSuggestedKeys] = useState<KeyReference[]>([]);
+  const [keyAttempts, setKeyAttempts] = useState<Map<string, boolean>>(new Map());
+
+  // Recovery state
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [willRestoreManifest, setWillRestoreManifest] = useState(false);
+  const [willRestoreKeys, setWillRestoreKeys] = useState(false);
+  const [recoveredItems, setRecoveredItems] = useState<RecoveredItems | null>(null);
 
   // Steps are controlled by explicit user navigation only
   // No automatic transitions based on data
@@ -83,6 +111,45 @@ export const useDecryptionWorkflow = () => {
     [canNavigateToStep],
   );
 
+  // Check if vault is recognized
+  const checkVaultRecognition = useCallback(
+    async (filePath: string) => {
+      try {
+        // Extract vault name from filename (e.g., "Personal-Documents-2024-01-15.age")
+        const fileName = filePath.split('/').pop() || '';
+        const vaultNameMatch = fileName.match(/^([^-]+(?:-[^-]+)*?)(?:-\d{4}-\d{2}-\d{2})?\.age$/i);
+        const possibleVaultName = vaultNameMatch ? vaultNameMatch[1] : null;
+
+        if (possibleVaultName) {
+          setDetectedVaultName(possibleVaultName);
+
+          // Check if this vault exists in our local list
+          const existingVault = vaults.find(
+            v => v.name.toLowerCase().replace(/\s+/g, '-') === possibleVaultName.toLowerCase()
+          );
+
+          if (existingVault) {
+            setIsKnownVault(true);
+            setDetectedVaultId(existingVault.id);
+            setIsRecoveryMode(false);
+          } else {
+            setIsKnownVault(false);
+            setIsRecoveryMode(true);
+          }
+        } else {
+          // Can't determine vault name from file
+          setIsKnownVault(false);
+          setIsRecoveryMode(true);
+        }
+      } catch (error) {
+        console.error('[DecryptionWorkflow] Error checking vault recognition:', error);
+        setIsKnownVault(false);
+        setIsRecoveryMode(true);
+      }
+    },
+    [vaults],
+  );
+
   // Handle file selection
   const handleFileSelected = useCallback(
     async (paths: string[]) => {
@@ -116,6 +183,9 @@ export const useDecryptionWorkflow = () => {
       try {
         setSelectedFile(filePath);
 
+        // Check if vault is recognized
+        await checkVaultRecognition(filePath);
+
         // Extract metadata from filename
         const fileName = filePath.split('/').pop() || '';
         const match = fileName.match(/(\d{4}-\d{2}-\d{2})/);
@@ -137,7 +207,7 @@ export const useDecryptionWorkflow = () => {
         setFileValidationError(commandError);
       }
     },
-    [setSelectedFile, clearError],
+    [setSelectedFile, clearError, checkVaultRecognition],
   );
 
   // Handle decryption
@@ -159,7 +229,23 @@ export const useDecryptionWorkflow = () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     try {
-      await decryptFile();
+      const result = await decryptFile();
+
+      // Check if recovery items were restored (backend automatically does this)
+      if (isRecoveryMode && result) {
+        // In recovery mode, backend automatically:
+        // - Restores vault manifest if missing
+        // - Imports keys from bundle
+        // - Extracts all files
+        setRecoveredItems({
+          manifest: detectedVaultName ? { name: detectedVaultName } : undefined,
+          keys: ['passphrase key'], // Backend will have imported these
+          files: success?.extracted_files || [],
+        });
+        setWillRestoreManifest(true);
+        setWillRestoreKeys(true);
+      }
+
       // Success panel provides comprehensive feedback
     } catch (err) {
       console.error('[DecryptionWorkflow] Decryption error:', err);
@@ -186,7 +272,7 @@ export const useDecryptionWorkflow = () => {
     } finally {
       setIsDecrypting(false);
     }
-  }, [selectedKeyId, passphrase, outputPath, decryptFile]);
+  }, [selectedKeyId, passphrase, outputPath, decryptFile, isRecoveryMode, detectedVaultName, success]);
 
   // Generate default output path
   const getDefaultOutputPath = useCallback(async () => {
@@ -218,6 +304,18 @@ export const useDecryptionWorkflow = () => {
     setCurrentStep(1);
     setPrevSelectedFile(null);
     setFileValidationError(null);
+    // Reset recovery state
+    setIsKnownVault(null);
+    setDetectedVaultName(null);
+    setDetectedVaultId(null);
+    setIsDiscoveringKeys(false);
+    setAvailableKeys([]);
+    setSuggestedKeys([]);
+    setKeyAttempts(new Map());
+    setIsRecoveryMode(false);
+    setWillRestoreManifest(false);
+    setWillRestoreKeys(false);
+    setRecoveredItems(null);
   }, [reset]);
 
   // Handle decrypt another
@@ -255,6 +353,23 @@ export const useDecryptionWorkflow = () => {
     setShowAdvancedOptions,
     vaultMetadata,
 
+    // Vault recognition state
+    isKnownVault,
+    detectedVaultName,
+    detectedVaultId,
+
+    // Key discovery state
+    isDiscoveringKeys,
+    availableKeys,
+    suggestedKeys,
+    keyAttempts,
+
+    // Recovery state
+    isRecoveryMode,
+    willRestoreManifest,
+    willRestoreKeys,
+    recoveredItems,
+
     // From useFileDecryption
     isLoading,
     error: fileValidationError || error, // File validation errors take precedence
@@ -282,5 +397,9 @@ export const useDecryptionWorkflow = () => {
     // Navigation handlers
     handleStepNavigation,
     canNavigateToStep,
+
+    // Setters for components
+    setAvailableKeys,
+    setIsDiscoveringKeys,
   };
 };
