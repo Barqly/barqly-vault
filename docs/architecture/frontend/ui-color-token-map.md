@@ -8,23 +8,39 @@
 
 ```css
 :root {
-  /* Brand blues */
+  /* Brand colors (from public-docs/index.html) */
+  --bitcoin-orange: #ff8a00; /* Brand accent, special highlights */
+  --brand-gray: #565555; /* Secondary brand color */
+
+  /* Primary blues */
+  --primary-blue: #2563EB; /* Primary accent, CTAs, active states */
   --bv-blue-600: #2563EB; /* tailwind blue-600: primary accent, CTAs, active */
   --bv-blue-700: #1D4ED8; /* hover/active border */
   --bv-blue-800: #1E3A8A; /* long-form text in blue panels */
+  --link-color: #2563EB; /* Links */
+  --link-hover-color: #1D4ED8; /* Link hover */
 
   /* Slate neutrals */
+  --dark-gray: #1E293B; /* Main headings, dark backgrounds */
   --bv-slate-900: #0F172A; /* rare: top-level titles only if needed */
   --bv-slate-800: #1E293B; /* main headings (preferred) */
   --bv-slate-700: #334155; /* standard body text on white */
+  --medium-gray: #64748B; /* Inactive labels, secondary text */
   --bv-slate-500: #64748B; /* inactive labels, secondary text */
   --bv-slate-400: #94A3B8; /* icons/placeholder/inactive iconography */
   --bv-slate-200: #E2E8F0; /* borders, dividers */
+  --border-color: rgba(226, 232, 240, 0.5); /* Subtle borders */
   --bv-slate-100: #F1F5F9; /* light fills */
+  --light-gray: #F8FAFC; /* Background tints */
+  --white: #FFFFFF; /* Pure white */
 
   /* Tints */
   --bv-blue-50:  #EFF6FF;   /* help box background */
   --bv-blue-50-40: rgba(239,246,255,0.4); /* optional softer tint */
+
+  /* Shadows */
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06); /* Card elevation */
+  --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.15); /* Orange hover glow */
 
   /* Focus ring */
   --bv-focus: #93C5FD; /* blue-300 */
