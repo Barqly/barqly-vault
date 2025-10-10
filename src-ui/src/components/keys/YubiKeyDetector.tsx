@@ -27,21 +27,23 @@ export const YubiKeyDetector: React.FC<YubiKeyDetectorProps> = ({
 
     const detectYubiKey = async () => {
       try {
-        // TODO: Replace with actual detectYubikey command when available
-        // For now, simulate detection
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Use actual backend command to detect YubiKey
+        const { commands } = await import('../../lib/bindings');
+        const result = await commands.detectYubikey();
 
         if (!mounted) return;
 
-        // Simulated YubiKey detection
-        const mockKey: YubiKeyInfo = {
-          serial: '15903715',
-          slot: 1,
-          identity: 'age1yubikey1qwt50d05nh5vutpdzmlg5wn80xq5negm4uj9ghv0pkvrhq39ysf5yw3rd3t',
-        };
-
-        setDetectedKey(mockKey);
-        setIsDetecting(false);
+        if (result && result.serial) {
+          setDetectedKey({
+            serial: result.serial,
+            slot: result.slot || 1,
+            identity: result.identity || result.public_key || 'Unknown',
+          });
+          setIsDetecting(false);
+        } else {
+          setError('No YubiKey detected. Please insert your YubiKey and try again.');
+          setIsDetecting(false);
+        }
       } catch (err) {
         if (!mounted) return;
         logger.error('YubiKeyDetector', 'Failed to detect YubiKey', err as Error);
