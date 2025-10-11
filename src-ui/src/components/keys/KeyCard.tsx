@@ -38,7 +38,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   };
 
   // Get vault names for display
-  const attachedVaultNames = vaultAttachments.map(id => vaultNames.get(id) || id);
+  const attachedVaultNames = vaultAttachments.map((id) => vaultNames.get(id) || id);
 
   return (
     <div
@@ -58,9 +58,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               ${isPassphrase ? 'bg-green-100' : 'bg-purple-100'}
             `}
           >
-            <Key
-              className={`h-5 w-5 ${isPassphrase ? 'text-green-700' : 'text-purple-700'}`}
-            />
+            <Key className={`h-5 w-5 ${isPassphrase ? 'text-green-700' : 'text-purple-700'}`} />
           </div>
           <div>
             <h3 className="font-semibold text-slate-800">{keyRef.label}</h3>
@@ -68,9 +66,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               <span
                 className={`
                   inline-flex px-2 py-0.5 text-xs font-medium rounded-full
-                  ${isPassphrase
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-purple-100 text-purple-800'}
+                  ${isPassphrase ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}
                 `}
               >
                 {isPassphrase ? 'Passphrase' : 'YubiKey'}
@@ -112,17 +108,13 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           <div className="text-sm">
             <span className="text-slate-500">Attached to:</span>{' '}
             <span className="font-medium text-slate-700">
-              {attachedVaultNames.length === 0
-                ? 'No vaults'
-                : attachedVaultNames.join(', ')}
+              {attachedVaultNames.length === 0 ? 'No vaults' : attachedVaultNames.join(', ')}
             </span>
           </div>
         )}
 
         {isYubiKey && keyRef.type === 'YubiKey' && (
-          <div className="text-sm text-slate-500">
-            Serial: {keyRef.data.serial}
-          </div>
+          <div className="text-sm text-slate-500">Serial: {keyRef.data.serial}</div>
         )}
       </div>
 

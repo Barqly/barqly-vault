@@ -32,7 +32,7 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
   onDescriptionChange,
   onSubmit,
   onCancel,
-  onClear
+  onClear,
 }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,10 +69,7 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
 
         {/* Name Field */}
         <div>
-          <label
-            htmlFor="vault-name"
-            className="block text-sm font-medium text-slate-700 mb-1.5"
-          >
+          <label htmlFor="vault-name" className="block text-sm font-medium text-slate-700 mb-1.5">
             Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -86,9 +83,7 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
             className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
             placeholder="e.g., Personal Documents"
           />
-          <p className="mt-1 text-xs text-slate-500">
-            {name.length}/50 characters
-          </p>
+          <p className="mt-1 text-xs text-slate-500">{name.length}/50 characters</p>
         </div>
 
         {/* Description Field */}
@@ -109,9 +104,7 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
             className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500 resize-none"
             placeholder="Brief description of what this vault contains..."
           />
-          <p className="mt-1 text-xs text-slate-500">
-            {description.length}/200 characters
-          </p>
+          <p className="mt-1 text-xs text-slate-500">{description.length}/200 characters</p>
         </div>
 
         {/* Action Buttons */}

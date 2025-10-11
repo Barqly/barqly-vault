@@ -124,11 +124,7 @@ const VaultHub: React.FC = () => {
         <div className="space-y-6">
           {/* Error display */}
           {error && (
-            <ErrorMessage
-              error={error}
-              showRecoveryGuidance={false}
-              onClose={clearError}
-            />
+            <ErrorMessage error={error} showRecoveryGuidance={false} onClose={clearError} />
           )}
 
           {/* Inline Create Form or Create Button */}
@@ -199,19 +195,24 @@ const VaultHub: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-6 text-sm text-slate-600">
                     <div>
-                      <span className="font-medium text-slate-800">{vaults.length}</span>
-                      {' '}vault{vaults.length !== 1 ? 's' : ''}
+                      <span className="font-medium text-slate-800">{vaults.length}</span> vault
+                      {vaults.length !== 1 ? 's' : ''}
                     </div>
                     <div>
                       <span className="font-medium text-slate-800">
                         {Array.from(keyCache.values()).reduce((acc, keys) => acc + keys.length, 0)}
-                      </span>
-                      {' '}total key{Array.from(keyCache.values()).reduce((acc, keys) => acc + keys.length, 0) !== 1 ? 's' : ''}
+                      </span>{' '}
+                      total key
+                      {Array.from(keyCache.values()).reduce((acc, keys) => acc + keys.length, 0) !==
+                      1
+                        ? 's'
+                        : ''}
                     </div>
                   </div>
                   {currentVault && (
                     <div className="text-sm text-slate-500">
-                      Active: <span className="font-medium text-slate-700">{currentVault.name}</span>
+                      Active:{' '}
+                      <span className="font-medium text-slate-700">{currentVault.name}</span>
                     </div>
                   )}
                 </div>
@@ -220,10 +221,7 @@ const VaultHub: React.FC = () => {
           )}
 
           {/* Help section */}
-          <CollapsibleHelp
-            triggerText="Understanding Vaults"
-            context="vault-management"
-          />
+          <CollapsibleHelp triggerText="Understanding Vaults" context="vault-management" />
         </div>
       </AppPrimaryContainer>
 

@@ -153,7 +153,8 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
               </div>
               {vaultName && (
                 <p className="text-sm text-green-700 mt-3 pt-3 border-t border-green-200">
-                  The <span className="font-medium">{vaultName}</span> vault is now available in your Vault Hub
+                  The <span className="font-medium">{vaultName}</span> vault is now available in
+                  your Vault Hub
                 </p>
               )}
             </div>

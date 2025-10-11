@@ -34,7 +34,7 @@ export const useVaultHubWorkflow = () => {
 
   // Vault deletion state
   const [isDeletingVault, setIsDeletingVault] = useState(false);
-  const [vaultToDelete, setVaultToDelete] = useState<{id: string; name: string} | null>(null);
+  const [vaultToDelete, setVaultToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // Drag & drop key attachment state (for future implementation)
   const [isDraggingKey, setIsDraggingKey] = useState(false);
@@ -146,7 +146,7 @@ export const useVaultHubWorkflow = () => {
 
   // Toggle expanded details for a vault
   const toggleVaultDetails = useCallback((vaultId: string) => {
-    setExpandedVaults(prev => {
+    setExpandedVaults((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(vaultId)) {
         newSet.delete(vaultId);
@@ -158,9 +158,12 @@ export const useVaultHubWorkflow = () => {
   }, []);
 
   // Check if vault details are expanded
-  const isVaultExpanded = useCallback((vaultId: string) => {
-    return expandedVaults.has(vaultId);
-  }, [expandedVaults]);
+  const isVaultExpanded = useCallback(
+    (vaultId: string) => {
+      return expandedVaults.has(vaultId);
+    },
+    [expandedVaults],
+  );
 
   // Drag & drop handlers (for future implementation)
   const startKeyDrag = useCallback((keyId: string) => {

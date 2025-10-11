@@ -8,10 +8,7 @@ interface KeyImportDialogProps {
   onClose: () => void;
 }
 
-export const KeyImportDialog: React.FC<KeyImportDialogProps> = ({
-  onImport,
-  onClose,
-}) => {
+export const KeyImportDialog: React.FC<KeyImportDialogProps> = ({ onImport, onClose }) => {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,11 +18,13 @@ export const KeyImportDialog: React.FC<KeyImportDialogProps> = ({
     try {
       const selected = await open({
         multiple: false,
-        filters: [{
-          name: 'Encrypted Key Files',
-          extensions: ['enc']
-        }],
-        title: 'Select Encrypted Key File'
+        filters: [
+          {
+            name: 'Encrypted Key Files',
+            extensions: ['enc'],
+          },
+        ],
+        title: 'Select Encrypted Key File',
       });
 
       if (selected) {
@@ -62,10 +61,7 @@ export const KeyImportDialog: React.FC<KeyImportDialogProps> = ({
     <div className="bg-white rounded-lg border border-slate-200 p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-800">Import Encrypted Key</h3>
-        <button
-          onClick={onClose}
-          className="p-1 hover:bg-slate-100 rounded-full transition-colors"
-        >
+        <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
           <X className="h-5 w-5 text-slate-400" />
         </button>
       </div>
@@ -75,9 +71,11 @@ export const KeyImportDialog: React.FC<KeyImportDialogProps> = ({
         className={`
           relative rounded-lg border-2 border-dashed p-8
           transition-colors cursor-pointer
-          ${dragActive
-            ? 'border-blue-400 bg-blue-50'
-            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}
+          ${
+            dragActive
+              ? 'border-blue-400 bg-blue-50'
+              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+          }
         `}
         onClick={handleFileSelect}
         onDragEnter={(e) => {
@@ -105,12 +103,8 @@ export const KeyImportDialog: React.FC<KeyImportDialogProps> = ({
         <div className="flex flex-col items-center justify-center space-y-3">
           <Upload className="h-10 w-10 text-slate-400" />
           <div className="text-center">
-            <p className="text-sm font-medium text-slate-700">
-              Click to select .enc file
-            </p>
-            <p className="text-xs text-slate-500 mt-1">
-              or drag and drop
-            </p>
+            <p className="text-sm font-medium text-slate-700">Click to select .enc file</p>
+            <p className="text-xs text-slate-500 mt-1">or drag and drop</p>
           </div>
         </div>
       </div>

@@ -125,7 +125,7 @@ export const useDecryptionWorkflow = () => {
 
           // Check if this vault exists in our local list
           const existingVault = vaults.find(
-            v => v.name.toLowerCase().replace(/\s+/g, '-') === possibleVaultName.toLowerCase()
+            (v) => v.name.toLowerCase().replace(/\s+/g, '-') === possibleVaultName.toLowerCase(),
           );
 
           if (existingVault) {
@@ -272,7 +272,15 @@ export const useDecryptionWorkflow = () => {
     } finally {
       setIsDecrypting(false);
     }
-  }, [selectedKeyId, passphrase, outputPath, decryptFile, isRecoveryMode, detectedVaultName, success]);
+  }, [
+    selectedKeyId,
+    passphrase,
+    outputPath,
+    decryptFile,
+    isRecoveryMode,
+    detectedVaultName,
+    success,
+  ]);
 
   // Generate default output path
   const getDefaultOutputPath = useCallback(async () => {

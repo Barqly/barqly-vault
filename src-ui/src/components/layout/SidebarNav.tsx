@@ -59,9 +59,7 @@ const SidebarNav: React.FC = () => {
         {!sidebarCollapsed && (
           <h1 className="text-lg font-semibold text-slate-800">Barqly Vault</h1>
         )}
-        {sidebarCollapsed && (
-          <span className="text-lg font-bold text-blue-600">B</span>
-        )}
+        {sidebarCollapsed && <span className="text-lg font-bold text-blue-600">B</span>}
       </div>
 
       {/* Navigation Items */}
@@ -79,9 +77,10 @@ const SidebarNav: React.FC = () => {
                   className={`
                     flex items-center gap-3 px-3 py-3 rounded-lg
                     transition-all duration-150
-                    ${isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                    ${
+                      isActive
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                     }
                   `}
                   title={sidebarCollapsed ? item.label : undefined}
@@ -95,18 +94,13 @@ const SidebarNav: React.FC = () => {
 
                   {!sidebarCollapsed && (
                     <>
-                      <span className="flex-1 font-medium text-sm">
-                        {item.label}
-                      </span>
+                      <span className="flex-1 font-medium text-sm">{item.label}</span>
 
                       {item.badge && badgeCount > 0 && (
                         <span
                           className={`
                             text-xs px-2 py-0.5 rounded-full
-                            ${isActive
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-slate-200 text-slate-600'
-                            }
+                            ${isActive ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'}
                           `}
                         >
                           {badgeCount}
@@ -152,9 +146,7 @@ const SidebarNav: React.FC = () => {
           ) : (
             <>
               <ChevronLeft className="w-5 h-5 mr-3" />
-              {!sidebarCollapsed && (
-                <span className="text-sm font-medium">Collapse</span>
-              )}
+              {!sidebarCollapsed && <span className="text-sm font-medium">Collapse</span>}
             </>
           )}
         </button>

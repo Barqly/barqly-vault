@@ -43,9 +43,7 @@ const VaultRecognition: React.FC<VaultRecognitionProps> = ({
         <div className="flex items-start gap-4">
           <CheckCircle className="w-6 h-6 text-green-600 mt-0.5" />
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">
-              Vault Recognized
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-2">Vault Recognized</h3>
             {vaultName && (
               <p className="text-slate-700 mb-3">
                 Vault: <span className="font-medium">{vaultName}</span>
@@ -82,9 +80,7 @@ const VaultRecognition: React.FC<VaultRecognitionProps> = ({
                 <Archive className="w-4 h-4" />
                 <span>File: {fileName}</span>
               </div>
-              <div className="text-sm text-slate-600">
-                Size: {fileSize}
-              </div>
+              <div className="text-sm text-slate-600">Size: {fileSize}</div>
             </div>
 
             <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">

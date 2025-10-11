@@ -23,9 +23,7 @@ const VaultEmptyState: React.FC<VaultEmptyStateProps> = ({ onCreateClick }) => {
       </div>
 
       {/* Title */}
-      <h3 className="text-xl font-semibold text-slate-800 mb-2">
-        No vaults yet
-      </h3>
+      <h3 className="text-xl font-semibold text-slate-800 mb-2">No vaults yet</h3>
 
       {/* Description */}
       <p className="text-center text-slate-500 max-w-sm mb-8">

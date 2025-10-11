@@ -3,9 +3,6 @@
 //! Centralizes management of all encryption keys (passphrase and YubiKey) in a single registry.
 //! This replaces the previous scattered approach of individual .meta files and separate manifests.
 
-use crate::services::key_management::shared::domain::models::key_lifecycle::{
-    KeyLifecycleStatus, StatusHistoryEntry,
-};
 use crate::services::shared::infrastructure::io::atomic_write_sync;
 use crate::services::shared::infrastructure::path_management::get_keys_dir;
 use chrono::{DateTime, Utc};
@@ -27,14 +24,6 @@ pub enum KeyEntry {
         last_used: Option<DateTime<Utc>>,
         public_key: String,
         key_filename: String, // Relative to keys directory
-
-        // NEW FIELDS for NIST lifecycle
-        #[serde(default = "default_lifecycle_status")]
-        lifecycle_status: KeyLifecycleStatus,
-        #[serde(default)]
-        status_history: Vec<StatusHistoryEntry>,
-        #[serde(default)]
-        vault_associations: Vec<String>, // List of vault IDs this key is attached to
     },
     /// YubiKey hardware token
     #[serde(rename = "yubikey")]
@@ -50,20 +39,7 @@ pub enum KeyEntry {
         model: String,        // Full YubiKey model name (e.g., "YubiKey 5C Nano")
         firmware_version: Option<String>,
         recovery_code_hash: String, // SHA256 hash for verification
-
-        // NEW FIELDS for NIST lifecycle
-        #[serde(default = "default_lifecycle_status")]
-        lifecycle_status: KeyLifecycleStatus,
-        #[serde(default)]
-        status_history: Vec<StatusHistoryEntry>,
-        #[serde(default)]
-        vault_associations: Vec<String>, // List of vault IDs this key is attached to
     },
-}
-
-// Default function for lifecycle_status to ensure backward compatibility
-fn default_lifecycle_status() -> KeyLifecycleStatus {
-    KeyLifecycleStatus::PreActivation
 }
 
 impl KeyEntry {
@@ -125,122 +101,6 @@ impl KeyEntry {
             _ => None,
         }
     }
-
-    /// Get the lifecycle status of this key
-    pub fn lifecycle_status(&self) -> KeyLifecycleStatus {
-        match self {
-            KeyEntry::Passphrase {
-                lifecycle_status, ..
-            } => *lifecycle_status,
-            KeyEntry::Yubikey {
-                lifecycle_status, ..
-            } => *lifecycle_status,
-        }
-    }
-
-    /// Set the lifecycle status of this key
-    pub fn set_lifecycle_status(
-        &mut self,
-        status: KeyLifecycleStatus,
-        reason: String,
-        changed_by: String,
-    ) -> Result<(), String> {
-        let current_status = self.lifecycle_status();
-
-        // Validate transition
-        if !current_status.can_transition_to(status) {
-            return Err(format!(
-                "Invalid transition from {:?} to {:?}",
-                current_status, status
-            ));
-        }
-
-        // Create history entry
-        let history_entry = StatusHistoryEntry::new(status, reason, changed_by);
-
-        // Update the status and history
-        match self {
-            KeyEntry::Passphrase {
-                lifecycle_status,
-                status_history,
-                ..
-            } => {
-                *lifecycle_status = status;
-                status_history.push(history_entry);
-            }
-            KeyEntry::Yubikey {
-                lifecycle_status,
-                status_history,
-                ..
-            } => {
-                *lifecycle_status = status;
-                status_history.push(history_entry);
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Get the status history of this key
-    pub fn status_history(&self) -> &[StatusHistoryEntry] {
-        match self {
-            KeyEntry::Passphrase { status_history, .. } => status_history,
-            KeyEntry::Yubikey { status_history, .. } => status_history,
-        }
-    }
-
-    /// Get vault associations for this key
-    pub fn vault_associations(&self) -> &[String] {
-        match self {
-            KeyEntry::Passphrase {
-                vault_associations, ..
-            } => vault_associations,
-            KeyEntry::Yubikey {
-                vault_associations, ..
-            } => vault_associations,
-        }
-    }
-
-    /// Add a vault association
-    pub fn add_vault_association(&mut self, vault_id: String) {
-        match self {
-            KeyEntry::Passphrase {
-                vault_associations, ..
-            } => {
-                if !vault_associations.contains(&vault_id) {
-                    vault_associations.push(vault_id);
-                }
-            }
-            KeyEntry::Yubikey {
-                vault_associations, ..
-            } => {
-                if !vault_associations.contains(&vault_id) {
-                    vault_associations.push(vault_id);
-                }
-            }
-        }
-    }
-
-    /// Remove a vault association
-    pub fn remove_vault_association(&mut self, vault_id: &str) {
-        match self {
-            KeyEntry::Passphrase {
-                vault_associations, ..
-            } => {
-                vault_associations.retain(|id| id != vault_id);
-            }
-            KeyEntry::Yubikey {
-                vault_associations, ..
-            } => {
-                vault_associations.retain(|id| id != vault_id);
-            }
-        }
-    }
-
-    /// Check if key has any usage history (for migration purposes)
-    pub fn has_usage_history(&self) -> bool {
-        self.last_used().is_some() || !self.vault_associations().is_empty()
-    }
 }
 
 /// Central registry for all encryption keys
@@ -261,7 +121,7 @@ impl KeyRegistry {
     /// Create a new empty registry
     pub fn new() -> Self {
         Self {
-            schema: "barqly.vault.registry/2".to_string(), // Bumped for NIST lifecycle
+            schema: "barqly.vault.registry/1".to_string(),
             keys: HashMap::new(),
         }
     }
@@ -276,18 +136,10 @@ impl KeyRegistry {
         }
 
         let content = fs::read_to_string(&path)?;
-        let mut registry: Self = serde_json::from_str(&content)?;
-
-        // Migrate from v1 to v2 if needed
-        if registry.schema == "barqly.vault.registry/1" {
-            info!("Migrating registry from v1 to v2 (adding NIST lifecycle)");
-            registry.migrate_to_v2()?;
-            registry.schema = "barqly.vault.registry/2".to_string();
-        }
+        let registry: Self = serde_json::from_str(&content)?;
 
         debug!(
             key_count = registry.keys.len(),
-            schema = %registry.schema,
             "Loaded key registry from disk"
         );
 
@@ -377,13 +229,6 @@ impl KeyRegistry {
             model,
             firmware_version,
             recovery_code_hash,
-            lifecycle_status: KeyLifecycleStatus::PreActivation, // New keys start in PreActivation
-            status_history: vec![StatusHistoryEntry::new(
-                KeyLifecycleStatus::PreActivation,
-                "YubiKey registered",
-                "system",
-            )],
-            vault_associations: vec![],
         };
 
         self.keys.insert(key_id.clone(), entry);
@@ -485,70 +330,6 @@ impl KeyRegistry {
 
         Ok(registry)
     }
-
-    /// Migrate registry from v1 to v2 (add NIST lifecycle fields)
-    fn migrate_to_v2(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        for (key_id, entry) in self.keys.iter_mut() {
-            // The lifecycle_status will already be set to default (PreActivation) by serde
-            // We need to determine the correct status based on the key's history
-            let has_history = entry.has_usage_history();
-
-            // Determine appropriate initial status
-            let initial_status = if !entry.vault_associations().is_empty() {
-                // Key is currently attached to vaults
-                KeyLifecycleStatus::Active
-            } else if has_history {
-                // Key was used before but not currently attached
-                KeyLifecycleStatus::Suspended
-            } else {
-                // Brand new key never used
-                KeyLifecycleStatus::PreActivation
-            };
-
-            // Set the initial status without validation (migration is special)
-            match entry {
-                KeyEntry::Passphrase {
-                    lifecycle_status,
-                    status_history,
-                    ..
-                } => {
-                    *lifecycle_status = initial_status;
-                    // Add initial history entry
-                    status_history.push(StatusHistoryEntry::new(
-                        initial_status,
-                        "Migrated from registry v1",
-                        "system",
-                    ));
-                }
-                KeyEntry::Yubikey {
-                    lifecycle_status,
-                    status_history,
-                    ..
-                } => {
-                    *lifecycle_status = initial_status;
-                    // Add initial history entry
-                    status_history.push(StatusHistoryEntry::new(
-                        initial_status,
-                        "Migrated from registry v1",
-                        "system",
-                    ));
-                }
-            }
-
-            debug!(
-                key_id = %key_id,
-                status = ?initial_status,
-                "Migrated key to NIST lifecycle status"
-            );
-        }
-
-        info!(
-            key_count = self.keys.len(),
-            "Successfully migrated all keys to v2 with NIST lifecycle"
-        );
-
-        Ok(())
-    }
 }
 
 /// Generate a Base58 recovery code for YubiKey setup
@@ -583,13 +364,6 @@ mod tests {
             last_used: None,
             public_key: "age1test123...".to_string(),
             key_filename: "test.agekey.enc".to_string(),
-            lifecycle_status: KeyLifecycleStatus::Active,
-            status_history: vec![StatusHistoryEntry::new(
-                KeyLifecycleStatus::Active,
-                "Test key created",
-                "test",
-            )],
-            vault_associations: vec![],
         };
         registry
             .register_key("keyref_test1".to_string(), passphrase_entry)
@@ -608,13 +382,6 @@ mod tests {
             model: "YubiKey 5C Nano".to_string(),
             firmware_version: None,
             recovery_code_hash: "abcd1234...".to_string(),
-            lifecycle_status: KeyLifecycleStatus::Active,
-            status_history: vec![StatusHistoryEntry::new(
-                KeyLifecycleStatus::Active,
-                "Test key created",
-                "test",
-            )],
-            vault_associations: vec![],
         };
         registry
             .register_key("keyref_test2".to_string(), yubikey_entry)
@@ -626,7 +393,7 @@ mod tests {
     #[test]
     fn test_key_registry_creation() {
         let registry = KeyRegistry::new();
-        assert_eq!(registry.schema, "barqly.vault.registry/2");
+        assert_eq!(registry.schema, "barqly.vault.registry/1");
         assert!(registry.keys.is_empty());
     }
 

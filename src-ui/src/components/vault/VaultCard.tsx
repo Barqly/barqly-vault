@@ -1,5 +1,15 @@
 import React from 'react';
-import { Archive, Key, Shield, Lock, Plus, MoreVertical, Clock, HardDrive, Files } from 'lucide-react';
+import {
+  Archive,
+  Key,
+  Shield,
+  Lock,
+  Plus,
+  MoreVertical,
+  Clock,
+  HardDrive,
+  Files,
+} from 'lucide-react';
 import { VaultSummary, KeyReference } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
 
@@ -34,7 +44,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   onEncrypt,
   onManageKeys,
   onDelete,
-  onKeyDrop
+  onKeyDrop,
 }) => {
   // Calculate key statistics
   const passphraseKeys = keys.filter(isPassphraseKey);
@@ -78,9 +88,10 @@ const VaultCard: React.FC<VaultCardProps> = ({
     <div
       className={`
         relative bg-white rounded-lg border-2 transition-all cursor-pointer
-        ${isActive
-          ? 'border-blue-600 bg-blue-50 shadow-lg'
-          : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
+        ${
+          isActive
+            ? 'border-blue-600 bg-blue-50 shadow-lg'
+            : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
         }
         ${isDropTarget ? 'border-blue-400 border-dashed bg-blue-50' : ''}
       `}
@@ -93,10 +104,12 @@ const VaultCard: React.FC<VaultCardProps> = ({
         <div className="flex items-start justify-between">
           {/* Vault Icon and Info */}
           <div className="flex gap-3">
-            <div className={`
+            <div
+              className={`
               p-3 rounded-lg
               ${isActive ? 'bg-blue-100' : 'bg-slate-100'}
-            `}>
+            `}
+            >
               <Archive className={`h-8 w-8 ${isActive ? 'text-blue-600' : 'text-slate-600'}`} />
             </div>
             <div className="flex-1">
@@ -128,9 +141,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           {passphraseKeys.length > 0 && (
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-green-100 rounded-full">
               <Key className="h-3.5 w-3.5 text-green-700" />
-              <span className="text-xs font-medium text-green-700">
-                {passphraseKeys.length}
-              </span>
+              <span className="text-xs font-medium text-green-700">{passphraseKeys.length}</span>
             </div>
           )}
 
@@ -138,9 +149,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           {yubiKeys.length > 0 && (
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-100 rounded-full">
               <Shield className="h-3.5 w-3.5 text-purple-700" />
-              <span className="text-xs font-medium text-purple-700">
-                {yubiKeys.length}
-              </span>
+              <span className="text-xs font-medium text-purple-700">{yubiKeys.length}</span>
             </div>
           )}
 
@@ -160,9 +169,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           )}
 
           {/* Show remaining slots indicator */}
-          {keys.length === 0 && (
-            <span className="text-xs text-slate-400">No keys configured</span>
-          )}
+          {keys.length === 0 && <span className="text-xs text-slate-400">No keys configured</span>}
         </div>
       </div>
 
@@ -223,9 +230,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
       {/* Active Indicator */}
       {isActive && (
         <div className="absolute top-0 right-0 mt-2 mr-2">
-          <div className="px-2 py-1 bg-blue-600 text-white text-xs font-medium rounded">
-            Active
-          </div>
+          <div className="px-2 py-1 bg-blue-600 text-white text-xs font-medium rounded">Active</div>
         </div>
       )}
     </div>

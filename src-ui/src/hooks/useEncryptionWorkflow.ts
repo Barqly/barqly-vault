@@ -76,7 +76,7 @@ export const useEncryptionWorkflow = () => {
   useEffect(() => {
     if (selectedFiles && currentVault) {
       const keys = getCurrentVaultKeys();
-      const passphraseKeyCount = keys.filter(key => key.key_type === 'Passphrase').length;
+      const passphraseKeyCount = keys.filter((key) => key.key_type === 'Passphrase').length;
 
       setBundleContents({
         userFiles: {
@@ -199,9 +199,11 @@ export const useEncryptionWorkflow = () => {
       // Build list of recovery items included
       const recoveryItemsIncluded: string[] = ['Vault manifest'];
       const keys = getCurrentVaultKeys();
-      const passphraseKeyCount = keys.filter(key => key.key_type === 'Passphrase').length;
+      const passphraseKeyCount = keys.filter((key) => key.key_type === 'Passphrase').length;
       if (passphraseKeyCount > 0) {
-        recoveryItemsIncluded.push(`${passphraseKeyCount} passphrase key${passphraseKeyCount > 1 ? 's' : ''} (.enc)`);
+        recoveryItemsIncluded.push(
+          `${passphraseKeyCount} passphrase key${passphraseKeyCount > 1 ? 's' : ''} (.enc)`,
+        );
       }
       recoveryItemsIncluded.push('RECOVERY.txt guide');
 

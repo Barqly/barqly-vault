@@ -39,7 +39,7 @@ const ManageKeysPage: React.FC = () => {
   // Build vault name map for display
   const vaultNameMap = React.useMemo(() => {
     const map = new Map<string, string>();
-    vaults.forEach(vault => {
+    vaults.forEach((vault) => {
       map.set(vault.id, vault.name);
     });
     return map;
@@ -69,55 +69,72 @@ const ManageKeysPage: React.FC = () => {
     await refreshAllKeys();
   }, [refreshAllKeys, setIsCreatingKey]);
 
-  const handleKeyImport = useCallback(async (filePath: string) => {
-    try {
-      // TODO: Implement actual import when backend command is available
-      logger.info('ManageKeysPage', 'Importing key file', { filePath });
-      await refreshAllKeys();
-    } catch (err) {
-      logger.error('ManageKeysPage', 'Failed to import key', err as Error);
-      throw err;
-    }
-  }, [refreshAllKeys]);
+  const handleKeyImport = useCallback(
+    async (filePath: string) => {
+      try {
+        // TODO: Implement actual import when backend command is available
+        logger.info('ManageKeysPage', 'Importing key file', { filePath });
+        await refreshAllKeys();
+      } catch (err) {
+        logger.error('ManageKeysPage', 'Failed to import key', err as Error);
+        throw err;
+      }
+    },
+    [refreshAllKeys],
+  );
 
-  const handleYubiKeyAdd = useCallback(async (yubikey: any) => {
-    try {
-      // TODO: Implement actual YubiKey addition when backend command is available
-      logger.info('ManageKeysPage', 'Adding YubiKey to registry', yubikey);
-      await refreshAllKeys();
-    } catch (err) {
-      logger.error('ManageKeysPage', 'Failed to add YubiKey', err as Error);
-      throw err;
-    }
-  }, [refreshAllKeys]);
+  const handleYubiKeyAdd = useCallback(
+    async (yubikey: any) => {
+      try {
+        // TODO: Implement actual YubiKey addition when backend command is available
+        logger.info('ManageKeysPage', 'Adding YubiKey to registry', yubikey);
+        await refreshAllKeys();
+      } catch (err) {
+        logger.error('ManageKeysPage', 'Failed to add YubiKey', err as Error);
+        throw err;
+      }
+    },
+    [refreshAllKeys],
+  );
 
-  const handleAttachKey = useCallback(async (keyId: string) => {
-    if (!currentVault) {
-      alert('Please select a vault first');
-      return;
-    }
-    try {
-      // TODO: Implement attach key to vault
-      logger.info('ManageKeysPage', 'Attaching key to vault', { keyId, vaultId: currentVault.id });
-      await refreshKeysForVault(currentVault.id);
-      await refreshAllKeys();
-    } catch (err) {
-      logger.error('ManageKeysPage', 'Failed to attach key', err as Error);
-    }
-  }, [currentVault, refreshKeysForVault, refreshAllKeys]);
+  const handleAttachKey = useCallback(
+    async (keyId: string) => {
+      if (!currentVault) {
+        alert('Please select a vault first');
+        return;
+      }
+      try {
+        // TODO: Implement attach key to vault
+        logger.info('ManageKeysPage', 'Attaching key to vault', {
+          keyId,
+          vaultId: currentVault.id,
+        });
+        await refreshKeysForVault(currentVault.id);
+        await refreshAllKeys();
+      } catch (err) {
+        logger.error('ManageKeysPage', 'Failed to attach key', err as Error);
+      }
+    },
+    [currentVault, refreshKeysForVault, refreshAllKeys],
+  );
 
-  const handleDeleteKey = useCallback(async (keyId: string) => {
-    if (!confirm('Are you sure you want to delete this orphan key? This action cannot be undone.')) {
-      return;
-    }
-    try {
-      // TODO: Implement delete orphan key when backend command is available
-      logger.info('ManageKeysPage', 'Deleting orphan key', { keyId });
-      await refreshAllKeys();
-    } catch (err) {
-      logger.error('ManageKeysPage', 'Failed to delete key', err as Error);
-    }
-  }, [refreshAllKeys]);
+  const handleDeleteKey = useCallback(
+    async (keyId: string) => {
+      if (
+        !confirm('Are you sure you want to delete this orphan key? This action cannot be undone.')
+      ) {
+        return;
+      }
+      try {
+        // TODO: Implement delete orphan key when backend command is available
+        logger.info('ManageKeysPage', 'Deleting orphan key', { keyId });
+        await refreshAllKeys();
+      } catch (err) {
+        logger.error('ManageKeysPage', 'Failed to delete key', err as Error);
+      }
+    },
+    [refreshAllKeys],
+  );
 
   const handleExportKey = useCallback(async (keyId: string) => {
     try {
@@ -213,9 +230,11 @@ const ManageKeysPage: React.FC = () => {
                 onClick={() => setKeyViewMode('cards')}
                 className={`
                   p-2 transition-colors
-                  ${keyViewMode === 'cards'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-slate-600 hover:bg-slate-50'}
+                  ${
+                    keyViewMode === 'cards'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }
                 `}
               >
                 <Grid3x3 className="h-4 w-4" />
@@ -224,9 +243,11 @@ const ManageKeysPage: React.FC = () => {
                 onClick={() => setKeyViewMode('table')}
                 className={`
                   p-2 transition-colors
-                  ${keyViewMode === 'table'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-slate-600 hover:bg-slate-50'}
+                  ${
+                    keyViewMode === 'table'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }
                 `}
               >
                 <List className="h-4 w-4" />
@@ -266,7 +287,7 @@ const ManageKeysPage: React.FC = () => {
                 </p>
               </div>
             ) : (
-              allKeys.map(key => {
+              allKeys.map((key) => {
                 const attachments = getKeyVaultAttachments(key.id);
                 const isOrphan = attachments.length === 0;
 
@@ -303,10 +324,7 @@ const ManageKeysPage: React.FC = () => {
 
         {isImporting && (
           <div className="mt-6">
-            <KeyImportDialog
-              onImport={handleKeyImport}
-              onClose={() => setIsImporting(false)}
-            />
+            <KeyImportDialog onImport={handleKeyImport} onClose={() => setIsImporting(false)} />
           </div>
         )}
 

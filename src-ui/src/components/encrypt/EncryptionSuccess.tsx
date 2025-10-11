@@ -73,7 +73,6 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
     }
   };
 
-
   return (
     <div
       className="relative bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden"
@@ -176,9 +175,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
             <div className="bg-green-50 rounded-lg p-3 border border-green-200">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800">
-                  Recovery items included:
-                </span>
+                <span className="text-sm font-medium text-green-800">Recovery items included:</span>
               </div>
               <ul className="space-y-1 ml-6">
                 {recoveryItemsIncluded.map((item, index) => (

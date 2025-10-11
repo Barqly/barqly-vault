@@ -22,9 +22,7 @@ const ManifestRestoration: React.FC<ManifestRestorationProps> = ({
     <div className="bg-white rounded-lg border border-slate-200 p-6">
       <div className="flex items-center gap-3 mb-4">
         <Archive className="w-6 h-6 text-blue-600" />
-        <h3 className="text-lg font-semibold text-slate-800">
-          Vault Restoration
-        </h3>
+        <h3 className="text-lg font-semibold text-slate-800">Vault Restoration</h3>
       </div>
 
       <div className="bg-slate-50 rounded-lg p-4 mb-6">
@@ -41,7 +39,9 @@ const ManifestRestoration: React.FC<ManifestRestorationProps> = ({
           )}
           <div className="flex items-center gap-2 text-sm">
             <span className="text-slate-600">Recipients:</span>
-            <span className="font-medium text-slate-800">{keyCount} {keyCount === 1 ? 'key' : 'keys'}</span>
+            <span className="font-medium text-slate-800">
+              {keyCount} {keyCount === 1 ? 'key' : 'keys'}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="text-slate-600">Version:</span>
@@ -84,9 +84,7 @@ const ManifestRestoration: React.FC<ManifestRestorationProps> = ({
             <Check className="w-3 h-3 text-green-600" />
           </div>
           <div className="flex-1">
-            <span className="text-sm font-medium text-slate-800">
-              Files will be extracted
-            </span>
+            <span className="text-sm font-medium text-slate-800">Files will be extracted</span>
             <p className="text-xs text-slate-600 mt-0.5">
               All encrypted files will be decrypted to the selected location
             </p>

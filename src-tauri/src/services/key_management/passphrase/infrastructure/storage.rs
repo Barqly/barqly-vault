@@ -1,3 +1,6 @@
+use crate::services::key_management::shared::domain::models::key_lifecycle::{
+    KeyLifecycleStatus, StatusHistoryEntry,
+};
 use crate::services::key_management::shared::infrastructure::{
     KeyEntry, KeyRegistry, load_encrypted_key, save_encrypted_key,
 };
@@ -62,6 +65,13 @@ impl PassphraseKeyRepository {
             last_used: None,
             public_key,
             key_filename,
+            lifecycle_status: KeyLifecycleStatus::PreActivation, // New keys start in PreActivation
+            status_history: vec![StatusHistoryEntry::new(
+                KeyLifecycleStatus::PreActivation,
+                "Passphrase key created",
+                "system",
+            )],
+            vault_associations: vec![],
         };
 
         registry

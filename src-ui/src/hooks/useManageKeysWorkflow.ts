@@ -25,15 +25,18 @@ export const useManageKeysWorkflow = () => {
   }, [keyCache]);
 
   // Get vault attachments for a key
-  const getKeyVaultAttachments = useCallback((keyId: string) => {
-    const attachments: string[] = [];
-    keyCache.forEach((keys, vaultId) => {
-      if (keys.some(k => k.id === keyId)) {
-        attachments.push(vaultId);
-      }
-    });
-    return attachments;
-  }, [keyCache]);
+  const getKeyVaultAttachments = useCallback(
+    (keyId: string) => {
+      const attachments: string[] = [];
+      keyCache.forEach((keys, vaultId) => {
+        if (keys.some((k) => k.id === keyId)) {
+          attachments.push(vaultId);
+        }
+      });
+      return attachments;
+    },
+    [keyCache],
+  );
 
   // Filter and search keys
   const filteredKeys = useMemo(() => {
@@ -41,11 +44,11 @@ export const useManageKeysWorkflow = () => {
 
     // Apply filter
     if (filterType === 'passphrase') {
-      keys = keys.filter(k => k.type === 'Passphrase');
+      keys = keys.filter((k) => k.type === 'Passphrase');
     } else if (filterType === 'yubikey') {
-      keys = keys.filter(k => k.type === 'YubiKey');
+      keys = keys.filter((k) => k.type === 'YubiKey');
     } else if (filterType === 'orphan') {
-      keys = keys.filter(k => {
+      keys = keys.filter((k) => {
         const attachments = getKeyVaultAttachments(k.id);
         return attachments.length === 0;
       });
@@ -54,14 +57,13 @@ export const useManageKeysWorkflow = () => {
     // Apply search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      keys = keys.filter(k =>
-        k.label.toLowerCase().includes(query) ||
-        k.id.toLowerCase().includes(query)
+      keys = keys.filter(
+        (k) => k.label.toLowerCase().includes(query) || k.id.toLowerCase().includes(query),
       );
     }
 
     // Remove duplicates (keys can be in multiple vaults)
-    const uniqueKeys = Array.from(new Map(keys.map(k => [k.id, k])).values());
+    const uniqueKeys = Array.from(new Map(keys.map((k) => [k.id, k])).values());
 
     return uniqueKeys;
   }, [allKeys, filterType, searchQuery, getKeyVaultAttachments]);
@@ -69,7 +71,7 @@ export const useManageKeysWorkflow = () => {
   // Refresh all keys across all vaults
   const refreshAllKeys = useCallback(async () => {
     try {
-      const promises = vaults.map(vault => refreshKeysForVault(vault.id));
+      const promises = vaults.map((vault) => refreshKeysForVault(vault.id));
       await Promise.all(promises);
     } catch (err) {
       logger.error('ManageKeysWorkflow', 'Failed to refresh all keys', err as Error);
@@ -79,7 +81,7 @@ export const useManageKeysWorkflow = () => {
 
   // Toggle key selection
   const toggleKeySelection = useCallback((keyId: string) => {
-    setSelectedKeys(prev => {
+    setSelectedKeys((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(keyId)) {
         newSet.delete(keyId);

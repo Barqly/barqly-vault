@@ -352,7 +352,9 @@ const VaultHub: React.FC = () => {
                             {vault.description ? (
                               <p className="m-0 p-0">{vault.description}</p>
                             ) : (
-                              <p className="text-gray-400 italic m-0 p-0">No description provided</p>
+                              <p className="text-gray-400 italic m-0 p-0">
+                                No description provided
+                              </p>
                             )}
                           </div>
                         </div>

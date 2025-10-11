@@ -55,9 +55,7 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
           <div className="flex items-start gap-2">
             <Check className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <div className="text-sm font-medium text-slate-800">
-                Your Files
-              </div>
+              <div className="text-sm font-medium text-slate-800">Your Files</div>
               <div className="text-xs text-slate-500">
                 {fileCount} {fileCount === 1 ? 'item' : 'items'}, {formatFileSize(totalSize)}
               </div>
@@ -68,12 +66,8 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
           <div className="flex items-start gap-2">
             <Check className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <div className="text-sm font-medium text-slate-800">
-                Vault Manifest
-              </div>
-              <div className="text-xs text-slate-500">
-                Configuration for "{vaultName}" vault
-              </div>
+              <div className="text-sm font-medium text-slate-800">Vault Manifest</div>
+              <div className="text-xs text-slate-500">Configuration for "{vaultName}" vault</div>
             </div>
           </div>
 
@@ -82,11 +76,10 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
             <div className="flex items-start gap-2">
               <Check className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <div className="text-sm font-medium text-slate-800">
-                  Passphrase Keys
-                </div>
+                <div className="text-sm font-medium text-slate-800">Passphrase Keys</div>
                 <div className="text-xs text-slate-500">
-                  {passphraseKeyCount} .enc {passphraseKeyCount === 1 ? 'file' : 'files'} for recovery
+                  {passphraseKeyCount} .enc {passphraseKeyCount === 1 ? 'file' : 'files'} for
+                  recovery
                 </div>
               </div>
             </div>
@@ -96,12 +89,8 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
           <div className="flex items-start gap-2">
             <Check className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <div className="text-sm font-medium text-slate-800">
-                RECOVERY.txt
-              </div>
-              <div className="text-xs text-slate-500">
-                Step-by-step recovery instructions
-              </div>
+              <div className="text-sm font-medium text-slate-800">RECOVERY.txt</div>
+              <div className="text-xs text-slate-500">Step-by-step recovery instructions</div>
             </div>
           </div>
         </div>
@@ -111,11 +100,10 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
           <div className="flex items-start gap-2">
             <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <div className="text-sm font-medium text-blue-800 mb-1">
-                Recovery Ready
-              </div>
+              <div className="text-sm font-medium text-blue-800 mb-1">Recovery Ready</div>
               <p className="text-xs text-blue-700 leading-relaxed">
-                This bundle can be decrypted on any device with your key. All necessary recovery information is included automatically.
+                This bundle can be decrypted on any device with your key. All necessary recovery
+                information is included automatically.
               </p>
             </div>
           </div>

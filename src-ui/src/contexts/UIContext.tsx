@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 type ViewMode = 'cards' | 'table';
@@ -38,7 +45,9 @@ const defaultPreferences: UIPreferences = {
 };
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [sidebarCollapsed, setSidebarCollapsedState] = useState(defaultPreferences.sidebarCollapsed);
+  const [sidebarCollapsed, setSidebarCollapsedState] = useState(
+    defaultPreferences.sidebarCollapsed,
+  );
   const [theme, setThemeState] = useState<Theme>(defaultPreferences.theme);
   const [keyViewMode, setKeyViewModeState] = useState<ViewMode>(defaultPreferences.keyViewMode);
 

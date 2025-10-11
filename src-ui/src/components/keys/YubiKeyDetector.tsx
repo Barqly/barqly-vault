@@ -13,10 +13,7 @@ interface YubiKeyDetectorProps {
   onCancel: () => void;
 }
 
-export const YubiKeyDetector: React.FC<YubiKeyDetectorProps> = ({
-  onAddToRegistry,
-  onCancel,
-}) => {
+export const YubiKeyDetector: React.FC<YubiKeyDetectorProps> = ({ onAddToRegistry, onCancel }) => {
   const [isDetecting, setIsDetecting] = useState(true);
   const [detectedKey, setDetectedKey] = useState<YubiKeyInfo | null>(null);
   const [error, setError] = useState<string | null>(null);

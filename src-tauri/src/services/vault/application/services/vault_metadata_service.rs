@@ -4,6 +4,8 @@
 
 use crate::error::StorageError;
 use crate::prelude::*;
+#[cfg(test)]
+use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
 use crate::services::key_management::shared::{KeyEntry, KeyRegistryService};
 use crate::services::shared::infrastructure::{
     DeviceInfo, atomic_write_sync, get_vault_manifest_path, sanitize_vault_name,
@@ -254,6 +256,9 @@ mod tests {
             last_used: None,
             public_key: "age1test123".to_string(),
             key_filename: "test-key.agekey.enc".to_string(),
+            lifecycle_status: KeyLifecycleStatus::Active,
+            status_history: vec![],
+            vault_associations: vec![],
         };
 
         let recipient = VaultMetadataService::registry_entry_to_recipient("test-key-id", &entry);
@@ -280,6 +285,9 @@ mod tests {
             model: "YubiKey 5C Nano".to_string(),
             firmware_version: Some("5.7.1".to_string()),
             recovery_code_hash: "hash123".to_string(),
+            lifecycle_status: KeyLifecycleStatus::Active,
+            status_history: vec![],
+            vault_associations: vec![],
         };
 
         let recipient = VaultMetadataService::registry_entry_to_recipient("test-key-id", &entry);

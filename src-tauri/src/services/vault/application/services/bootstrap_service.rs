@@ -5,6 +5,9 @@
 
 use crate::error::StorageError;
 use crate::prelude::*;
+use crate::services::key_management::shared::domain::models::key_lifecycle::{
+    KeyLifecycleStatus, StatusHistoryEntry,
+};
 use crate::services::key_management::shared::{KeyEntry, KeyRegistry};
 use crate::services::shared::infrastructure::{DeviceInfo, get_vaults_manifest_dir};
 use crate::services::vault::infrastructure::persistence::metadata::{RecipientType, VaultMetadata};
@@ -216,6 +219,13 @@ impl BootstrapService {
                 last_used: None,
                 public_key: recipient.public_key.clone(),
                 key_filename: key_filename.clone(),
+                lifecycle_status: KeyLifecycleStatus::Active, // From manifest means it's active
+                status_history: vec![StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Active,
+                    "Imported from vault manifest",
+                    "system",
+                )],
+                vault_associations: vec![], // Will be populated by higher level
             },
             RecipientType::YubiKey {
                 serial,
@@ -237,6 +247,13 @@ impl BootstrapService {
                 model: model.clone(),
                 firmware_version: firmware_version.clone(),
                 recovery_code_hash: String::new(), // Not available from manifest
+                lifecycle_status: KeyLifecycleStatus::Active, // From manifest means it's active
+                status_history: vec![StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Active,
+                    "Imported from vault manifest",
+                    "system",
+                )],
+                vault_associations: vec![], // Will be populated by higher level
             },
         }
     }

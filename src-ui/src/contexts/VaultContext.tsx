@@ -97,7 +97,10 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         console.log('🔍 VaultContext: Setting current vault from backend', currentResponse.vault);
         setCurrentVaultState(currentResponse.vault);
       } else if (vaultsResponse.vaults.length > 0) {
-        console.log('🔍 VaultContext: No current vault, setting first one', vaultsResponse.vaults[0]);
+        console.log(
+          '🔍 VaultContext: No current vault, setting first one',
+          vaultsResponse.vaults[0],
+        );
         // If no current vault but vaults exist, set the first one
         setCurrentVaultState(vaultsResponse.vaults[0]);
         // Persist to backend in background

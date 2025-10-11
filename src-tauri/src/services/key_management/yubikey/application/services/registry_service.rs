@@ -322,6 +322,9 @@ impl RegistryService for DefaultRegistryService {
                 model,
                 firmware_version,
                 recovery_code_hash,
+                lifecycle_status,
+                status_history,
+                vault_associations,
                 ..
             } => KeyEntry::Yubikey {
                 label: new_label,
@@ -335,6 +338,9 @@ impl RegistryService for DefaultRegistryService {
                 model,
                 firmware_version,
                 recovery_code_hash,
+                lifecycle_status,
+                status_history,
+                vault_associations,
             },
             _ => return Err(YubiKeyError::registry("Not a YubiKey entry".to_string())),
         };

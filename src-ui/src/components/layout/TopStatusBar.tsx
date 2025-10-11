@@ -31,14 +31,8 @@ const TopStatusBar: React.FC = () => {
       {/* Left: App Title */}
       <div className="flex items-center gap-3">
         <Shield className="w-5 h-5 text-blue-600" />
-        <h1 className="text-lg font-semibold text-slate-800">
-          Barqly Vault
-        </h1>
-        {currentVault && (
-          <span className="text-sm text-slate-500">
-            - {currentVault.name}
-          </span>
-        )}
+        <h1 className="text-lg font-semibold text-slate-800">Barqly Vault</h1>
+        {currentVault && <span className="text-sm text-slate-500">- {currentVault.name}</span>}
       </div>
 
       {/* Right: Status Indicators */}
