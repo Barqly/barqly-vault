@@ -7,7 +7,9 @@
 //! - passphrase/: Passphrase key commands (generation, validation, vault integration)
 //! - yubikey/: YubiKey commands (device management, crypto operations, vault integration)
 //! - unified_keys.rs: Cross-key-type operations and unified APIs
+//! - attach_key.rs: Universal key attachment to vaults (R2 API)
 
+pub mod attach_key;
 pub mod key_menu_commands;
 pub mod passphrase;
 pub mod unified_keys;
@@ -36,3 +38,5 @@ pub use key_menu_commands::{
 pub use unified_keys::{
     KeyInfo, KeyListFilter, KeyType, YubiKeyInfo, list_unified_keys, test_unified_keys,
 };
+
+pub use attach_key::{AttachKeyToVaultRequest, AttachKeyToVaultResponse, attach_key_to_vault};

@@ -85,6 +85,10 @@ pub enum ErrorCode {
     VaultAlreadyExists,
     VaultKeyLimitExceeded,
 
+    // Key Management Errors
+    KeyAlreadyExists,
+    InvalidKeyState,
+
     // Plugin Errors
     PluginNotFound,
     PluginVersionMismatch,
@@ -100,4 +104,5 @@ pub enum ErrorCode {
     InternalError,
     UnexpectedError,
     ConfigurationError,
+    UnknownError,
 }

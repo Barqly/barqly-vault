@@ -244,5 +244,19 @@ pub fn get_recovery_guidance(code: &ErrorCode) -> (Option<String>, bool) {
             Some("Vault key limit exceeded. Each vault can have 1 passphrase and up to 3 YubiKeys".to_string()),
             true,
         ),
+
+        // Key Management errors
+        ErrorCode::KeyAlreadyExists => (
+            Some("This key is already attached to the vault. Choose a different key".to_string()),
+            true,
+        ),
+        ErrorCode::InvalidKeyState => (
+            Some("Key is in a state that doesn't allow this operation. Check key lifecycle status".to_string()),
+            true,
+        ),
+        ErrorCode::UnknownError => (
+            Some("An unknown error occurred. Please try again or contact support".to_string()),
+            false,
+        ),
     }
 }

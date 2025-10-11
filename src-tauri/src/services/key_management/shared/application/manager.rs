@@ -1,5 +1,6 @@
 use super::services::{KeyManagementError, KeyRegistryService, UnifiedKeyListService};
 use crate::services::key_management::shared::KeyEntry;
+use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
 use crate::services::key_management::shared::domain::models::key_reference::{
     KeyInfo, KeyListFilter,
 };
@@ -151,6 +152,132 @@ impl KeyManager {
         &self,
     ) -> Result<crate::services::key_management::shared::infrastructure::KeyRegistry> {
         self.registry_service.load_registry()
+    }
+
+    /// Attach an orphaned key to a vault (universal for all key types)
+    ///
+    /// This method:
+    /// 1. Validates the key exists and is attachable
+    /// 2. Checks vault key limits (max 4 keys)
+    /// 3. Updates key status to Active
+    /// 4. Updates vault manifest with new key
+    /// 5. Updates key registry with vault association
+    pub async fn attach_orphaned_key(
+        &self,
+        key_id: &str,
+        vault_id: &str,
+    ) -> std::result::Result<(), Box<dyn std::error::Error>> {
+        use crate::services::vault::VaultManager;
+        use crate::services::vault::infrastructure::persistence::metadata::{
+            RecipientInfo, RecipientType,
+        };
+
+        // Load registry and get the key
+        let mut registry = self.registry_service.load_registry()?;
+        let mut key_entry = registry
+            .get_key(key_id)
+            .ok_or_else(|| format!("Key '{}' not found in registry", key_id))?
+            .clone();
+
+        // Check if key can be attached (PreActivation or Active states)
+        let lifecycle_status = key_entry.lifecycle_status();
+        if !lifecycle_status.can_attach_to_vault() {
+            return Err(format!(
+                "Key '{}' cannot be attached in its current state: {:?}",
+                key_id, lifecycle_status
+            )
+            .into());
+        }
+
+        // Load vault and check limits
+        let vault_manager = VaultManager::new();
+        let mut metadata = vault_manager.get_vault(vault_id).await?;
+
+        // Check vault key limit (max 4 keys)
+        if metadata.key_count() >= 4 {
+            return Err(format!(
+                "Vault '{}' already has the maximum number of keys (4)",
+                vault_id
+            )
+            .into());
+        }
+
+        // Check if key is already attached to this vault
+        if key_entry
+            .vault_associations()
+            .contains(&vault_id.to_string())
+        {
+            return Err(format!(
+                "Key '{}' is already attached to vault '{}'",
+                key_id, vault_id
+            )
+            .into());
+        }
+
+        // Create recipient info based on key type
+        let recipient = match &key_entry {
+            KeyEntry::Passphrase {
+                label,
+                public_key,
+                key_filename,
+                created_at,
+                ..
+            } => RecipientInfo {
+                key_id: key_id.to_string(),
+                recipient_type: RecipientType::Passphrase {
+                    key_filename: key_filename.clone(),
+                },
+                public_key: public_key.clone(),
+                label: label.clone(),
+                created_at: *created_at,
+            },
+            KeyEntry::Yubikey {
+                label,
+                recipient,
+                serial,
+                slot,
+                piv_slot,
+                identity_tag,
+                model,
+                firmware_version,
+                created_at,
+                ..
+            } => RecipientInfo {
+                key_id: key_id.to_string(),
+                recipient_type: RecipientType::YubiKey {
+                    serial: serial.clone(),
+                    slot: *slot,
+                    piv_slot: *piv_slot,
+                    model: model.clone(),
+                    identity_tag: identity_tag.clone(),
+                    firmware_version: firmware_version.clone(),
+                },
+                public_key: recipient.clone(),
+                label: label.clone(),
+                created_at: *created_at,
+            },
+        };
+
+        // Add recipient to vault metadata
+        metadata.add_recipient(recipient);
+
+        // Update key status to Active and add vault association
+        key_entry.set_lifecycle_status(
+            KeyLifecycleStatus::Active,
+            format!("Attached to vault '{}'", vault_id),
+            "system".to_string(),
+        )?;
+        key_entry.add_vault_association(vault_id.to_string());
+
+        // Save updated registry
+        registry.update_key(key_id, key_entry)?;
+        registry.save().map_err(|e| e.to_string())?;
+
+        // Save updated vault metadata
+        let service = crate::services::vault::application::services::VaultMetadataService::new();
+        service.save_manifest(&metadata)?;
+
+        Ok(())
     }
 }
 
