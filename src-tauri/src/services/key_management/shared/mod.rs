@@ -26,4 +26,5 @@ pub use infrastructure::{
 pub use application::{KeyManagementError, KeyManager, KeyRegistryService, UnifiedKeyListService};
 
 // Re-export domain types
-pub use domain::models::{KeyReference, KeyState, KeyType};
+pub use domain::models::key_lifecycle::KeyLifecycleStatus;
+pub use domain::models::{KeyReference, KeyType};

@@ -13,7 +13,8 @@
 use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
 use crate::prelude::*;
 use crate::services::key_management::shared::KeyRegistry;
-use crate::services::key_management::shared::domain::models::{KeyReference, KeyState, KeyType};
+use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
+use crate::services::key_management::shared::domain::models::{KeyReference, KeyType};
 use crate::services::key_management::yubikey::YubiKeyManager;
 use crate::services::key_management::yubikey::domain::models::{Pin, Serial};
 use crate::services::shared::infrastructure::sanitize_label;
@@ -31,7 +32,7 @@ struct RegisterYubiKeyParams {
     identity: crate::services::key_management::yubikey::domain::models::YubiKeyIdentity,
     device: crate::services::key_management::yubikey::domain::models::YubiKeyDevice,
     recovery_code_hash: String,
-    key_state: KeyState,
+    lifecycle_status: KeyLifecycleStatus,
 }
 
 /// Helper to initialize YubiKeyManager with proper error handling
@@ -128,7 +129,7 @@ async fn register_yubikey_in_vault(
     let key_reference = KeyReference {
         id: key_registry_id,
         label: params.label,
-        state: params.key_state,
+        lifecycle_status: params.lifecycle_status,
         key_type: KeyType::YubiKey {
             serial: params.serial,
             firmware_version: params.device.firmware_version.clone(),
@@ -277,7 +278,7 @@ pub async fn init_yubikey_for_vault(
             identity,
             device,
             recovery_code_hash,
-            key_state: KeyState::Active,
+            lifecycle_status: KeyLifecycleStatus::Active,
         },
     )
     .await?;
@@ -396,7 +397,7 @@ pub async fn register_yubikey_for_vault(
             identity,
             device,
             recovery_code_hash: recovery_placeholder,
-            key_state: KeyState::Registered,
+            lifecycle_status: KeyLifecycleStatus::Active, // Registered was confusing - it means active
         },
     )
     .await?;

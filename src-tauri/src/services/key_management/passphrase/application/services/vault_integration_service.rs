@@ -1,5 +1,6 @@
 use crate::services::key_management::passphrase::infrastructure::StorageError;
-use crate::services::key_management::shared::domain::models::{KeyReference, KeyState, KeyType};
+use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
+use crate::services::key_management::shared::domain::models::{KeyReference, KeyType};
 use crate::services::vault;
 use crate::services::vault::infrastructure::persistence::metadata::{RecipientInfo, RecipientType};
 use chrono::Utc;
@@ -77,7 +78,7 @@ impl VaultIntegrationService {
                 key_id: label.clone(),
             },
             label: label.clone(),
-            state: KeyState::Active,
+            lifecycle_status: KeyLifecycleStatus::Active,
             created_at: Utc::now(),
             last_used: None,
         };

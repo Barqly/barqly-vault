@@ -308,7 +308,7 @@ impl KeyImportService {
                     }
                 },
                 label: sanitized_label.clone(),
-                state: crate::services::key_management::shared::domain::models::key_reference::KeyState::Orphaned,
+                lifecycle_status: KeyLifecycleStatus::PreActivation,
                 created_at: key_metadata.created_at,
                 last_used: None,
             };
@@ -435,9 +435,9 @@ impl KeyImportService {
             key_id.clone(),
             &key_entry,
             if attached_to_vault {
-                crate::services::key_management::shared::domain::models::key_reference::KeyState::Active
+                KeyLifecycleStatus::Active
             } else {
-                crate::services::key_management::shared::domain::models::key_reference::KeyState::Orphaned
+                KeyLifecycleStatus::PreActivation
             },
         );
 

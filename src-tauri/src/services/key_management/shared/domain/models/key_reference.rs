@@ -4,6 +4,7 @@
 //! and frontend. They represent a "view" of keys from the registry combined
 //! with vault-specific state information.
 
+use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -20,8 +21,8 @@ pub struct KeyReference {
     /// User-friendly label
     pub label: String,
 
-    /// Current state of the key
-    pub state: KeyState,
+    /// Current lifecycle status of the key
+    pub lifecycle_status: KeyLifecycleStatus,
 
     /// When this key was added to the vault
     pub created_at: DateTime<Utc>,
@@ -80,8 +81,8 @@ pub struct KeyInfo {
     pub is_available: bool,
     /// Which vault this key belongs to (if any)
     pub vault_id: Option<String>,
-    /// Current state in relation to vaults
-    pub state: KeyState,
+    /// Current lifecycle status
+    pub lifecycle_status: KeyLifecycleStatus,
     /// When this key was created
     pub created_at: DateTime<Utc>,
     /// Last time this key was used
@@ -99,26 +100,12 @@ pub struct YubiKeyInfo {
     pub yubikey_state: crate::services::key_management::yubikey::domain::models::YubiKeyState,
 }
 
-/// State of a key in relation to the vault
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, specta::Type)]
-#[serde(rename_all = "snake_case")]
-pub enum KeyState {
-    /// Key is available and can be used
-    Active,
-
-    /// Key is registered but not currently available (e.g., YubiKey not inserted)
-    Registered,
-
-    /// Key exists but is not associated with any vault
-    Orphaned,
-}
-
 impl KeyReference {
     /// Create a KeyReference from a key registry entry
     pub fn from_registry_entry(
         key_id: String,
         entry: &crate::services::key_management::shared::KeyEntry,
-        state: KeyState,
+        lifecycle_status: KeyLifecycleStatus,
     ) -> Self {
         let (key_type, label, created_at, last_used) = match entry {
             crate::services::key_management::shared::KeyEntry::Passphrase {
@@ -157,7 +144,7 @@ impl KeyReference {
             id: key_id,
             key_type,
             label,
-            state,
+            lifecycle_status,
             created_at,
             last_used,
         }

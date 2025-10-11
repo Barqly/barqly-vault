@@ -11,7 +11,7 @@
 
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::prelude::*;
-use crate::services::key_management::shared::domain::models::KeyState;
+use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
 use crate::services::key_management::shared::{KeyEntry, KeyManager};
 use crate::services::vault;
 use serde::{Deserialize, Serialize};
@@ -43,11 +43,7 @@ pub fn convert_passphrase_to_unified(
         recipient: passphrase_key.public_key, // Real public key from registry!
         is_available: passphrase_key.is_available,
         vault_id,
-        state: if passphrase_key.is_available {
-            KeyState::Active
-        } else {
-            KeyState::Registered
-        },
+        lifecycle_status: KeyLifecycleStatus::Active, // Passphrase keys are always active when in registry
         created_at: passphrase_key.created_at,
         last_used: passphrase_key.last_used,
         yubikey_info: None,
@@ -80,11 +76,11 @@ pub fn convert_yubikey_to_unified(
             .unwrap_or_else(|| "unknown".to_string()), // Real recipient from registry!
         is_available,
         vault_id,
-        state: match yubikey_key.state {
-            YubiKeyState::Registered => KeyState::Active,
-            YubiKeyState::Orphaned => KeyState::Orphaned,
-            YubiKeyState::Reused => KeyState::Registered,
-            YubiKeyState::New => KeyState::Orphaned,
+        lifecycle_status: match yubikey_key.state {
+            YubiKeyState::Registered => KeyLifecycleStatus::Active,
+            YubiKeyState::Orphaned => KeyLifecycleStatus::Suspended, // Was used before
+            YubiKeyState::Reused => KeyLifecycleStatus::PreActivation,
+            YubiKeyState::New => KeyLifecycleStatus::PreActivation,
         },
         created_at: yubikey_key.created_at,
         last_used: yubikey_key.last_used,
@@ -118,10 +114,10 @@ pub fn convert_available_yubikey_to_unified(
             .unwrap_or_else(|| "pending".to_string()),
         is_available: true,
         vault_id,
-        state: match available_key.state.as_str() {
-            "new" => KeyState::Orphaned,
-            "orphaned" => KeyState::Orphaned,
-            _ => KeyState::Orphaned,
+        lifecycle_status: match available_key.state.as_str() {
+            "new" => KeyLifecycleStatus::PreActivation,
+            "orphaned" => KeyLifecycleStatus::Suspended,
+            _ => KeyLifecycleStatus::PreActivation,
         },
         created_at: Utc::now(), // Not yet registered, use current time
         last_used: None,
@@ -201,11 +197,7 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
                         },
                     },
                     label: key_info.label,
-                    state: match key_info.state {
-                        crate::services::key_management::shared::domain::models::KeyState::Active => crate::services::key_management::shared::domain::models::KeyState::Active,
-                        crate::services::key_management::shared::domain::models::KeyState::Registered => crate::services::key_management::shared::domain::models::KeyState::Registered,
-                        crate::services::key_management::shared::domain::models::KeyState::Orphaned => crate::services::key_management::shared::domain::models::KeyState::Orphaned,
-                    },
+                    lifecycle_status: key_info.lifecycle_status,
                     created_at: key_info.created_at,
                     last_used: key_info.last_used,
                 })
