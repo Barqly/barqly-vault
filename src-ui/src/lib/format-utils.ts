@@ -126,6 +126,7 @@ export const formatFileCount = (count: number): string => {
 
 /**
  * Get vault status badge configuration
+ * Maps backend vault status to user-friendly UI labels
  * @param status - Vault status from backend
  * @returns Badge configuration with label, color, and description
  */
@@ -150,22 +151,23 @@ export const getVaultStatusBadge = (status: string) => {
         description: 'Ready to use',
       };
     case 'orphaned':
+      // Backend uses "orphaned" but UI shows "No Keys" (more user-friendly)
       return {
         label: 'No Keys',
         color: 'red',
         bgClass: 'bg-red-100',
         textClass: 'text-red-700',
         borderClass: 'border-red-300',
-        description: 'No keys attached',
+        description: 'No keys attached to vault',
       };
     case 'incomplete':
       return {
-        label: 'Incomplete',
+        label: 'Setup Needed',
         color: 'yellow',
         bgClass: 'bg-yellow-100',
         textClass: 'text-yellow-700',
         borderClass: 'border-yellow-300',
-        description: 'Setup needed',
+        description: 'Vault configuration incomplete',
       };
     default:
       return {
@@ -175,6 +177,103 @@ export const getVaultStatusBadge = (status: string) => {
         textClass: 'text-gray-700',
         borderClass: 'border-gray-300',
         description: 'Status unknown',
+      };
+  }
+};
+
+/**
+ * Get key lifecycle status badge configuration
+ * Maps NIST-aligned key lifecycle states to UI badges
+ * Reference: docs/architecture/key-lifecycle-management.md
+ *
+ * @param status - Key lifecycle status from backend
+ * @returns Badge configuration with label, color, icon, and user message
+ */
+export const getKeyLifecycleStatusBadge = (status: string) => {
+  switch (status) {
+    case 'pre_activation':
+      return {
+        label: 'New',
+        color: 'gray',
+        bgClass: 'bg-gray-100',
+        textClass: 'text-gray-700',
+        icon: '○',
+        userMessage: 'Ready to use - attach to a vault',
+        description: 'Key generated but never used',
+      };
+    case 'active':
+      return {
+        label: 'Active',
+        color: 'green',
+        bgClass: 'bg-green-100',
+        textClass: 'text-green-700',
+        icon: '●',
+        userMessage: 'Available for encryption',
+        description: 'Currently attached to vault(s)',
+      };
+    case 'suspended':
+      return {
+        label: 'Suspended',
+        color: 'yellow',
+        bgClass: 'bg-yellow-100',
+        textClass: 'text-yellow-700',
+        icon: '⏸',
+        userMessage: 'Temporarily disabled',
+        description: 'Key is temporarily unavailable',
+      };
+    case 'deactivated':
+      return {
+        label: 'Deactivated',
+        color: 'red',
+        bgClass: 'bg-red-100',
+        textClass: 'text-red-700',
+        icon: '⊘',
+        userMessage: 'Permanently disabled - deletion pending',
+        description: '30-day retention before destruction',
+      };
+    case 'compromised':
+      return {
+        label: 'Compromised',
+        color: 'red',
+        bgClass: 'bg-red-100',
+        textClass: 'text-red-700',
+        icon: '⚠',
+        userMessage: 'Security issue - do not use',
+        description: 'Security breach detected',
+      };
+    // Legacy backend states (will be migrated to NIST states)
+    case 'registered':
+      // Backend: "registered" → Maps to "active" in NIST model
+      return {
+        label: 'Active',
+        color: 'green',
+        bgClass: 'bg-green-100',
+        textClass: 'text-green-700',
+        icon: '●',
+        userMessage: 'Available for encryption',
+        description: 'Key is registered and ready',
+      };
+    case 'orphaned':
+      // Backend: "orphaned" → Maps to "Not Attached" in UI (pending backend migration)
+      // Per NIST: should be "pre_activation" if never used, or "suspended" if was active
+      return {
+        label: 'Not Attached',
+        color: 'gray',
+        bgClass: 'bg-gray-100',
+        textClass: 'text-gray-600',
+        icon: '○',
+        userMessage: 'Not attached to any vault',
+        description: 'Key exists but not associated with vaults',
+      };
+    default:
+      return {
+        label: 'Unknown',
+        color: 'gray',
+        bgClass: 'bg-gray-100',
+        textClass: 'text-gray-700',
+        icon: '?',
+        userMessage: 'Status unknown',
+        description: 'Unexpected key status',
       };
   }
 };
