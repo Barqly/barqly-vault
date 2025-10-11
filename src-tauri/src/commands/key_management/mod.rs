@@ -8,8 +8,10 @@
 //! - yubikey/: YubiKey commands (device management, crypto operations, vault integration)
 //! - unified_keys.rs: Cross-key-type operations and unified APIs
 //! - attach_key.rs: Universal key attachment to vaults (R2 API)
+//! - import_key.rs: Import external .enc key files (R2 API Phase 4)
 
 pub mod attach_key;
+pub mod import_key;
 pub mod key_menu_commands;
 pub mod passphrase;
 pub mod unified_keys;
@@ -40,3 +42,7 @@ pub use unified_keys::{
 };
 
 pub use attach_key::{AttachKeyToVaultRequest, AttachKeyToVaultResponse, attach_key_to_vault};
+
+pub use import_key::{
+    ImportKeyFileRequest, ImportKeyFileResponse, KeyMetadata, ValidationStatus, import_key_file,
+};

@@ -268,6 +268,34 @@ async deleteVault(input: DeleteVaultRequest) : Promise<Result<DeleteVaultRespons
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Get statistics for a specific vault
+ * 
+ * This command aggregates vault statistics from the manifest and key registry.
+ * It provides real-time data about vault usage, key status, and encryption history.
+ */
+async getVaultStatistics(request: GetVaultStatisticsRequest) : Promise<Result<GetVaultStatisticsResponse, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_vault_statistics", { request }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get statistics for all vaults
+ * 
+ * This command retrieves aggregated statistics across all vaults in the system.
+ * It provides a comprehensive overview of vault usage and key management.
+ */
+async getAllVaultStatistics(request: GetAllVaultStatisticsRequest) : Promise<Result<GetAllVaultStatisticsResponse, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_all_vault_statistics", { request }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async addPassphraseKeyToVault(input: AddPassphraseKeyRequest) : Promise<Result<AddPassphraseKeyResponse, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("add_passphrase_key_to_vault", { input }) };
@@ -303,6 +331,42 @@ async initYubikeyForVault(input: YubiKeyInitForVaultParams) : Promise<Result<Yub
 async registerYubikeyForVault(input: RegisterYubiKeyForVaultParams) : Promise<Result<YubiKeyVaultResult, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("register_yubikey_for_vault", { input }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Attach an orphaned key to a vault
+ * 
+ * This command allows attaching any orphaned key (passphrase or YubiKey) to a vault.
+ * It validates the key state, checks vault limits, and updates both registry and manifest.
+ */
+async attachKeyToVault(request: AttachKeyToVaultRequest) : Promise<Result<AttachKeyToVaultResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("attach_key_to_vault", { request }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Import an external .enc key file into the registry
+ * 
+ * This command allows importing backup or external key files into the vault system.
+ * It supports both passphrase-protected keys and YubiKey metadata files.
+ * 
+ * Features:
+ * - Validates age encryption format
+ * - Checks for duplicate keys by comparing public keys
+ * - Sanitizes labels to prevent injection attacks
+ * - Supports dry-run validation mode
+ * - Can immediately attach imported keys to vaults
+ * - Creates audit trail for security compliance
+ */
+async importKeyFile(request: ImportKeyFileRequest) : Promise<Result<ImportKeyFileResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("import_key_file", { request }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -383,6 +447,22 @@ async yubikeyDecryptFile(encryptedFile: string, unlockMethod: UnlockMethod | nul
 
 export type AddPassphraseKeyRequest = { vault_id: string; label: string; passphrase: string }
 export type AddPassphraseKeyResponse = { key_reference: KeyReference; public_key: string }
+/**
+ * Request to attach a key to a vault
+ */
+export type AttachKeyToVaultRequest = { 
+/**
+ * The key ID to attach
+ */
+key_id: string; 
+/**
+ * The vault ID to attach to
+ */
+vault_id: string }
+/**
+ * Response from key attachment
+ */
+export type AttachKeyToVaultResponse = { success: boolean; message: string; key_id: string; vault_id: string }
 /**
  * Unified error type for all commands with comprehensive error information
  * 
@@ -495,7 +575,7 @@ export type EncryptionStatusResponse = { operation_id: string; status: Encryptio
  * }
  * ```
  */
-export type ErrorCode = "INVALID_INPUT" | "MISSING_PARAMETER" | "INVALID_PATH" | "INVALID_KEY_LABEL" | "WEAK_PASSPHRASE" | "INVALID_FILE_FORMAT" | "FILE_TOO_LARGE" | "TOO_MANY_FILES" | "PERMISSION_DENIED" | "PATH_NOT_ALLOWED" | "INSUFFICIENT_PERMISSIONS" | "READ_ONLY_FILE_SYSTEM" | "KEY_NOT_FOUND" | "FILE_NOT_FOUND" | "DIRECTORY_NOT_FOUND" | "OPERATION_NOT_FOUND" | "ENCRYPTION_FAILED" | "DECRYPTION_FAILED" | "STORAGE_FAILED" | "ARCHIVE_CORRUPTED" | "MANIFEST_INVALID" | "INTEGRITY_CHECK_FAILED" | "CONCURRENT_OPERATION" | "DISK_SPACE_INSUFFICIENT" | "MEMORY_INSUFFICIENT" | "FILE_SYSTEM_ERROR" | "NETWORK_ERROR" | "INVALID_KEY" | "WRONG_PASSPHRASE" | "TAMPERED_DATA" | "UNAUTHORIZED_ACCESS" | "YUBI_KEY_ERROR" | "YUBI_KEY_NOT_FOUND" | "YUBI_KEY_PIN_REQUIRED" | "YUBI_KEY_PIN_BLOCKED" | "YUBI_KEY_TOUCH_REQUIRED" | "YUBI_KEY_TOUCH_TIMEOUT" | "WRONG_YUBI_KEY" | "YUBI_KEY_SLOT_IN_USE" | "YUBI_KEY_INITIALIZATION_FAILED" | "YUBI_KEY_COMMUNICATION_ERROR" | "VAULT_NOT_FOUND" | "VAULT_ALREADY_EXISTS" | "VAULT_KEY_LIMIT_EXCEEDED" | "PLUGIN_NOT_FOUND" | "PLUGIN_VERSION_MISMATCH" | "PLUGIN_EXECUTION_FAILED" | "PLUGIN_DEPLOYMENT_FAILED" | "NO_UNLOCK_METHOD_AVAILABLE" | "RECIPIENT_MISMATCH" | "MULTI_RECIPIENT_SETUP_FAILED" | "INTERNAL_ERROR" | "UNEXPECTED_ERROR" | "CONFIGURATION_ERROR"
+export type ErrorCode = "INVALID_INPUT" | "MISSING_PARAMETER" | "INVALID_PATH" | "INVALID_KEY_LABEL" | "WEAK_PASSPHRASE" | "INVALID_FILE_FORMAT" | "FILE_TOO_LARGE" | "TOO_MANY_FILES" | "PERMISSION_DENIED" | "PATH_NOT_ALLOWED" | "INSUFFICIENT_PERMISSIONS" | "READ_ONLY_FILE_SYSTEM" | "KEY_NOT_FOUND" | "FILE_NOT_FOUND" | "DIRECTORY_NOT_FOUND" | "OPERATION_NOT_FOUND" | "ENCRYPTION_FAILED" | "DECRYPTION_FAILED" | "STORAGE_FAILED" | "ARCHIVE_CORRUPTED" | "MANIFEST_INVALID" | "INTEGRITY_CHECK_FAILED" | "CONCURRENT_OPERATION" | "DISK_SPACE_INSUFFICIENT" | "MEMORY_INSUFFICIENT" | "FILE_SYSTEM_ERROR" | "NETWORK_ERROR" | "INVALID_KEY" | "WRONG_PASSPHRASE" | "TAMPERED_DATA" | "UNAUTHORIZED_ACCESS" | "YUBI_KEY_ERROR" | "YUBI_KEY_NOT_FOUND" | "YUBI_KEY_PIN_REQUIRED" | "YUBI_KEY_PIN_BLOCKED" | "YUBI_KEY_TOUCH_REQUIRED" | "YUBI_KEY_TOUCH_TIMEOUT" | "WRONG_YUBI_KEY" | "YUBI_KEY_SLOT_IN_USE" | "YUBI_KEY_INITIALIZATION_FAILED" | "YUBI_KEY_COMMUNICATION_ERROR" | "VAULT_NOT_FOUND" | "VAULT_ALREADY_EXISTS" | "VAULT_KEY_LIMIT_EXCEEDED" | "KEY_ALREADY_EXISTS" | "INVALID_KEY_STATE" | "PLUGIN_NOT_FOUND" | "PLUGIN_VERSION_MISMATCH" | "PLUGIN_EXECUTION_FAILED" | "PLUGIN_DEPLOYMENT_FAILED" | "NO_UNLOCK_METHOD_AVAILABLE" | "RECIPIENT_MISMATCH" | "MULTI_RECIPIENT_SETUP_FAILED" | "INTERNAL_ERROR" | "UNEXPECTED_ERROR" | "CONFIGURATION_ERROR" | "UNKNOWN_ERROR"
 /**
  * File information
  */
@@ -506,6 +586,18 @@ export type FileInfo = { path: string; name: string; size: number; is_file: bool
 export type FileSelection = { paths: string[]; total_size: number; file_count: number; selection_type: string }
 export type GenerateKeyInput = { label: string; passphrase: string }
 export type GenerateKeyResponse = { public_key: string; key_id: string; saved_path: string }
+/**
+ * Request for getting all vault statistics (can be empty)
+ */
+export type GetAllVaultStatisticsRequest = { 
+/**
+ * Optional filter by vault status
+ */
+status_filter: string | null }
+/**
+ * Response containing global vault statistics
+ */
+export type GetAllVaultStatisticsResponse = { success: boolean; statistics: GlobalVaultStatistics | null; error: string | null }
 /**
  * Response containing current vault
  */
@@ -542,6 +634,66 @@ include_all: boolean | null }
  * Response containing vault keys
  */
 export type GetVaultKeysResponse = { vault_id: string; keys: KeyReference[] }
+/**
+ * Request for getting single vault statistics
+ */
+export type GetVaultStatisticsRequest = { 
+/**
+ * The sanitized vault name (filesystem-safe)
+ */
+vault_name: string }
+/**
+ * Response containing vault statistics
+ */
+export type GetVaultStatisticsResponse = { success: boolean; statistics: VaultStatistics | null; error: string | null }
+/**
+ * Summary statistics across all vaults
+ */
+export type GlobalVaultStatistics = { total_vaults: number; active_vaults: number; new_vaults: number; orphaned_vaults: number; total_encryptions: number; total_files: number; total_size_bytes: number; vault_statistics: VaultStatistics[] }
+/**
+ * Request to import a key file
+ */
+export type ImportKeyFileRequest = { 
+/**
+ * Path to the .enc file to import
+ */
+file_path: string; 
+/**
+ * Passphrase for encrypted .enc files (optional)
+ */
+passphrase: string | null; 
+/**
+ * Override the label extracted from file name (optional)
+ */
+override_label: string | null; 
+/**
+ * Immediately attach to a vault after import (optional)
+ */
+attach_to_vault: string | null; 
+/**
+ * Only validate without actually importing (dry-run mode)
+ */
+validate_only: boolean }
+/**
+ * Response from key import
+ */
+export type ImportKeyFileResponse = { 
+/**
+ * The imported or validated key reference
+ */
+key_reference: KeyReference; 
+/**
+ * Validation status information
+ */
+validation_status: ValidationStatus; 
+/**
+ * Any warnings encountered during import
+ */
+import_warnings: string[] }
+/**
+ * Detailed information about a key
+ */
+export type KeyDetail = { key_id: string; label: string; key_type: string; lifecycle_status: KeyLifecycleStatus; created_at: string; last_used: string | null; is_available: boolean }
 /**
  * Unified key information structure
  */
@@ -586,6 +738,34 @@ last_used: string | null;
  * Additional metadata for YubiKey keys
  */
 yubikey_info: YubiKeyInfo | null }
+/**
+ * NIST-aligned lifecycle states for encryption keys
+ */
+export type KeyLifecycleStatus = 
+/**
+ * Key generated but never used
+ */
+"pre_activation" | 
+/**
+ * Currently attached to vault(s) and available for operations
+ */
+"active" | 
+/**
+ * Temporarily disabled but can be reactivated
+ */
+"suspended" | 
+/**
+ * Permanently disabled, cannot be reactivated
+ */
+"deactivated" | 
+/**
+ * Cryptographically destroyed, only metadata remains
+ */
+"destroyed" | 
+/**
+ * Security breach detected, immediate deactivation required
+ */
+"compromised"
 /**
  * Filter options for key listing operations
  */
@@ -642,6 +822,10 @@ metadata: KeyMenuMetadata }
  * Type-specific metadata for different key types
  */
 export type KeyMenuMetadata = { type: "Passphrase"; public_key: string; key_filename: string } | { type: "YubiKey"; serial: string; slot: number; piv_slot: number; recipient: string; identity_tag: string; firmware_version: string }
+/**
+ * Simplified key metadata for frontend
+ */
+export type KeyMetadata = { label: string; created_at: string; public_key: string }
 /**
  * Reference to a key that can unlock a vault (for frontend communication)
  */
@@ -706,6 +890,10 @@ export type KeyState =
  * Key exists but is not associated with any vault
  */
 "orphaned"
+/**
+ * Key statistics for a vault
+ */
+export type KeyStatistics = { total_keys: number; active_keys: number; orphaned_keys: number; passphrase_keys: number; yubikey_keys: number; key_details: KeyDetail[] }
 /**
  * Type of key with type-specific data
  */
@@ -828,7 +1016,47 @@ export type UpdateKeyLabelRequest = { vault_id: string; key_id: string; new_labe
 export type UpdateKeyLabelResponse = { success: boolean }
 export type ValidatePassphraseInput = { passphrase: string }
 export type ValidatePassphraseResponse = { is_valid: boolean; message: string }
+/**
+ * Validation status for imported keys
+ */
+export type ValidationStatus = { 
+/**
+ * Whether the key file is valid
+ */
+is_valid: boolean; 
+/**
+ * Whether this key already exists in the registry
+ */
+is_duplicate: boolean; 
+/**
+ * Original metadata from the key file
+ */
+original_metadata: KeyMetadata | null }
 export type VaultDecryptionResult = { method_used: UnlockMethod; recipient_used: string; files_extracted: string[]; output_path: string; decryption_time: string }
+/**
+ * Statistics for a single vault
+ */
+export type VaultStatistics = { vault_id: string; vault_name: string; description: string | null; status: VaultStatus; encryption_count: number; created_at: string; last_encrypted_at: string | null; last_encrypted_by: string | null; file_count: number; total_size_bytes: number; key_statistics: KeyStatistics; archive_exists: boolean; manifest_exists: boolean }
+/**
+ * Vault status based on encryption history
+ */
+export type VaultStatus = 
+/**
+ * Never encrypted (encryption_count = 0)
+ */
+"new" | 
+/**
+ * Has been encrypted at least once
+ */
+"active" | 
+/**
+ * Archive exists but manifest is missing or corrupted
+ */
+"orphaned" | 
+/**
+ * Manifest exists but archive is missing
+ */
+"incomplete"
 /**
  * Summary information about a vault (for listing)
  */

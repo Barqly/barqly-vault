@@ -27,6 +27,7 @@ use commands::{
     get_progress,
     key_management::{
         attach_key::attach_key_to_vault,
+        import_key::import_key_file,
         passphrase::{
             add_passphrase_key_to_vault, generate_key, validate_passphrase,
             validate_passphrase_strength, validate_vault_passphrase_key, verify_key_passphrase,
@@ -122,6 +123,7 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         init_yubikey_for_vault,
         register_yubikey_for_vault,
         attach_key_to_vault,
+        import_key_file,
         // Streamlined YubiKey commands
         list_yubikeys,
         init_yubikey,
@@ -204,6 +206,7 @@ pub fn run_app() {
             init_yubikey_for_vault,
             register_yubikey_for_vault,
             attach_key_to_vault,
+            import_key_file,
             // Streamlined YubiKey commands
             list_yubikeys,
             init_yubikey,
