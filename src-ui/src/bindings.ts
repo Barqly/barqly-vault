@@ -723,9 +723,9 @@ is_available: boolean;
  */
 vault_id: string | null; 
 /**
- * Current state in relation to vaults
+ * Current lifecycle status
  */
-state: KeyState; 
+lifecycle_status: KeyLifecycleStatus; 
 /**
  * When this key was created
  */
@@ -863,9 +863,9 @@ id: string;
  */
 label: string; 
 /**
- * Current state of the key
+ * Current lifecycle status of the key
  */
-state: KeyState; 
+lifecycle_status: KeyLifecycleStatus; 
 /**
  * When this key was added to the vault
  */
@@ -874,22 +874,6 @@ created_at: string;
  * Last time this key was used
  */
 last_used: string | null }
-/**
- * State of a key in relation to the vault
- */
-export type KeyState = 
-/**
- * Key is available and can be used
- */
-"active" | 
-/**
- * Key is registered but not currently available (e.g., YubiKey not inserted)
- */
-"registered" | 
-/**
- * Key exists but is not associated with any vault
- */
-"orphaned"
 /**
  * Key statistics for a vault
  */
