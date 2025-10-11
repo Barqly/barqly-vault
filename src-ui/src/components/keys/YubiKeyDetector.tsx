@@ -27,17 +27,19 @@ export const YubiKeyDetector: React.FC<YubiKeyDetectorProps> = ({
 
     const detectYubiKey = async () => {
       try {
-        // Use actual backend command to detect YubiKey
-        const { commands } = await import('../../lib/bindings');
-        const result = await commands.detectYubikey();
+        // Use actual backend command to list YubiKeys
+        const { commands } = await import('../../bindings');
+        const result = await commands.listYubikeys();
 
         if (!mounted) return;
 
-        if (result && result.serial) {
+        if (result.status === 'ok' && result.data && result.data.length > 0) {
+          // Get the first detected YubiKey
+          const yubikey = result.data[0];
           setDetectedKey({
-            serial: result.serial,
-            slot: result.slot || 1,
-            identity: result.identity || result.public_key || 'Unknown',
+            serial: yubikey.serial,
+            slot: yubikey.slot || 1,
+            identity: yubikey.identity_tag || yubikey.recipient || 'Unknown',
           });
           setIsDetecting(false);
         } else {
