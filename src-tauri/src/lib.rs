@@ -44,7 +44,10 @@ use commands::{
     // File commands
     select_files,
     // Vault commands
-    vault::{create_vault, delete_vault, get_current_vault, list_vaults, set_current_vault},
+    vault::{
+        create_vault, delete_vault, get_all_vault_statistics, get_current_vault,
+        get_vault_statistics, list_vaults, set_current_vault,
+    },
     verify_manifest,
 };
 
@@ -110,6 +113,8 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         get_current_vault,
         set_current_vault,
         delete_vault,
+        get_vault_statistics,
+        get_all_vault_statistics,
         // Passphrase/YubiKey vault integration
         add_passphrase_key_to_vault,
         validate_vault_passphrase_key,
@@ -189,6 +194,8 @@ pub fn run_app() {
             get_current_vault,
             set_current_vault,
             delete_vault,
+            get_vault_statistics,
+            get_all_vault_statistics,
             // Passphrase/YubiKey vault integration
             add_passphrase_key_to_vault,
             validate_vault_passphrase_key,
