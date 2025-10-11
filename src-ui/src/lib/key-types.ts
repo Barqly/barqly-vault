@@ -8,35 +8,35 @@
 import { KeyReference } from '../bindings';
 
 // Type narrowing for specific key types
-export type PassphraseKeyReference = Extract<KeyReference, { type: 'passphrase' }>;
-export type YubiKeyReference = Extract<KeyReference, { type: 'yubikey' }>;
+export type PassphraseKeyReference = Extract<KeyReference, { type: 'Passphrase' }>;
+export type YubiKeyReference = Extract<KeyReference, { type: 'YubiKey' }>;
 
 /**
  * Type guard to check if a KeyReference is a passphrase key
  */
 export function isPassphraseKey(key: KeyReference): key is PassphraseKeyReference {
-  return key.type === 'passphrase';
+  return key.type === 'Passphrase';
 }
 
 /**
  * Type guard to check if a KeyReference is a YubiKey
  */
 export function isYubiKey(key: KeyReference): key is YubiKeyReference {
-  return key.type === 'yubikey';
+  return key.type === 'YubiKey';
 }
 
 /**
  * Get the serial number for a YubiKey, or undefined for other key types
  */
 export function getYubiKeySerial(key: KeyReference): string | undefined {
-  return isYubiKey(key) ? key.serial : undefined;
+  return isYubiKey(key) ? key.data.serial : undefined;
 }
 
 /**
  * Get the key ID for a passphrase key, or undefined for other key types
  */
 export function getPassphraseKeyId(key: KeyReference): string | undefined {
-  return isPassphraseKey(key) ? key.key_id : undefined;
+  return isPassphraseKey(key) ? key.data.key_id : undefined;
 }
 
 /**
@@ -44,9 +44,9 @@ export function getPassphraseKeyId(key: KeyReference): string | undefined {
  */
 export function getKeyTypeDisplay(key: KeyReference): string {
   switch (key.type) {
-    case 'passphrase':
+    case 'Passphrase':
       return 'Passphrase';
-    case 'yubikey':
+    case 'YubiKey':
       return 'YubiKey';
     default:
       return 'Unknown';

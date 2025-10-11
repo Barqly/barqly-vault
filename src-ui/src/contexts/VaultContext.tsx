@@ -13,10 +13,9 @@ import {
   CreateVaultRequest,
   SetCurrentVaultRequest,
   RemoveKeyFromVaultRequest,
-  GetVaultKeysRequest,
   GetKeyMenuDataRequest,
   KeyMenuInfo,
-  KeyState,
+  VaultStatistics,
 } from '../bindings';
 import { logger } from '../lib/logger';
 
@@ -30,9 +29,14 @@ interface VaultContextType {
   keyCache: Map<string, KeyReference[]>;
   getCurrentVaultKeys: () => KeyReference[];
 
+  // NEW: Statistics cache
+  statisticsCache: Map<string, VaultStatistics>;
+  getVaultStatistics: (vaultId: string) => VaultStatistics | null;
+
   // Loading states
   isLoading: boolean;
   isLoadingKeys: boolean;
+  isLoadingStatistics: boolean;
 
   // Error state
   error: string | null;
@@ -44,6 +48,8 @@ interface VaultContextType {
   refreshKeys: () => Promise<void>; // DEPRECATED: Use refreshKeysForVault
   refreshKeysForVault: (vaultId: string) => Promise<void>;
   removeKeyFromVault: (keyId: string) => Promise<void>;
+  refreshAllStatistics: () => Promise<void>; // NEW: Batch refresh all statistics
+  refreshVaultStatistics: (vaultName: string) => Promise<void>; // NEW: Refresh single vault statistics
 }
 
 const VaultContext = createContext<VaultContextType | undefined>(undefined);
@@ -53,8 +59,10 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [vaults, setVaults] = useState<VaultSummary[]>([]);
   const [vaultKeys, setVaultKeys] = useState<KeyReference[]>([]); // DEPRECATED - use keyCache
   const [keyCache, setKeyCache] = useState<Map<string, KeyReference[]>>(new Map());
+  const [statisticsCache, setStatisticsCache] = useState<Map<string, VaultStatistics>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
+  const [isLoadingStatistics, setIsLoadingStatistics] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Get keys for current vault from cache (instant, no async)
@@ -62,6 +70,95 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (!currentVault) return [];
     return keyCache.get(currentVault.id) || [];
   }, [currentVault?.id, keyCache]);
+
+  // Get statistics for a vault from cache (instant, no async)
+  const getVaultStatistics = useCallback(
+    (vaultId: string): VaultStatistics | null => {
+      return statisticsCache.get(vaultId) || null;
+    },
+    [statisticsCache],
+  );
+
+  // Refresh all vault statistics using batch API
+  const refreshAllStatistics = useCallback(async () => {
+    setIsLoadingStatistics(true);
+    setError(null);
+
+    try {
+      logger.info('VaultContext', 'Fetching statistics for all vaults');
+
+      const result = await commands.getAllVaultStatistics({
+        status_filter: null, // Get all vaults
+      });
+
+      if (result.status === 'error') {
+        throw new Error(result.error || 'Failed to get vault statistics');
+      }
+
+      if (result.data.success && result.data.statistics) {
+        const stats = result.data.statistics;
+
+        // Update cache with all vault statistics
+        const newCache = new Map<string, VaultStatistics>();
+        stats.vault_statistics.forEach((vaultStats) => {
+          newCache.set(vaultStats.vault_id, vaultStats);
+        });
+
+        setStatisticsCache(newCache);
+
+        logger.info('VaultContext', 'Statistics cached for all vaults', {
+          vaultCount: stats.vault_statistics.length,
+          totalFiles: stats.total_files,
+          totalSize: stats.total_size_bytes,
+        });
+      }
+    } catch (err: any) {
+      logger.error('VaultContext', 'Failed to refresh all statistics', err);
+      setError(err.message || 'Failed to load statistics');
+    } finally {
+      setIsLoadingStatistics(false);
+    }
+  }, []);
+
+  // Refresh statistics for a single vault
+  const refreshVaultStatistics = useCallback(async (vaultName: string) => {
+    setIsLoadingStatistics(true);
+    setError(null);
+
+    try {
+      logger.info('VaultContext', 'Fetching statistics for vault', { vaultName });
+
+      const result = await commands.getVaultStatistics({
+        vault_name: vaultName,
+      });
+
+      if (result.status === 'error') {
+        throw new Error(result.error || 'Failed to get vault statistics');
+      }
+
+      if (result.data.success && result.data.statistics) {
+        const vaultStats = result.data.statistics;
+
+        // Update cache with this vault's statistics
+        setStatisticsCache((prev) => {
+          const newCache = new Map(prev);
+          newCache.set(vaultStats.vault_id, vaultStats);
+          return newCache;
+        });
+
+        logger.info('VaultContext', 'Statistics cached for vault', {
+          vaultId: vaultStats.vault_id,
+          status: vaultStats.status,
+          fileCount: vaultStats.file_count,
+        });
+      }
+    } catch (err: any) {
+      logger.error('VaultContext', 'Failed to refresh vault statistics', err);
+      setError(err.message || 'Failed to load statistics');
+    } finally {
+      setIsLoadingStatistics(false);
+    }
+  }, []);
 
   const refreshVaults = async () => {
     console.log('🔍 VaultContext: refreshVaults called');
@@ -173,8 +270,10 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           console.log(`🔍 VaultContext: Creating passphrase key reference for key ${index}`);
           return {
             ...baseRef,
-            type: 'passphrase' as const,
-            key_id: keyMenuInfo.internal_id,
+            type: 'Passphrase' as const,
+            data: {
+              key_id: keyMenuInfo.internal_id,
+            },
           };
         } else {
           console.log(`🔍 VaultContext: Creating YubiKey reference for key ${index}`);
@@ -188,9 +287,11 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             console.log(`✅ VaultContext: YubiKey metadata detected for key ${index}`);
             return {
               ...baseRef,
-              type: 'yubikey' as const,
-              serial: keyMenuInfo.metadata.serial,
-              firmware_version: keyMenuInfo.metadata.firmware_version || null,
+              type: 'YubiKey' as const,
+              data: {
+                serial: keyMenuInfo.metadata.serial,
+                firmware_version: keyMenuInfo.metadata.firmware_version || null,
+              },
             };
           } else {
             console.warn(
@@ -199,9 +300,11 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             );
             return {
               ...baseRef,
-              type: 'yubikey' as const,
-              serial: '',
-              firmware_version: null,
+              type: 'YubiKey' as const,
+              data: {
+                serial: '',
+                firmware_version: null,
+              },
             };
           }
         }
@@ -340,9 +443,9 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     refreshVaults();
   }, []);
 
-  // NEW: Initial cache population - load keys for all vaults on mount
+  // NEW: Initial cache population - load keys and statistics for all vaults on mount
   useEffect(() => {
-    const loadAllVaultKeys = async () => {
+    const loadAllVaultData = async () => {
       if (vaults.length === 0) return;
 
       logger.info('VaultContext', 'Populating cache for all vaults', {
@@ -361,13 +464,20 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       await Promise.all(loadPromises);
 
+      // Load statistics for all vaults in one batch call
+      try {
+        await refreshAllStatistics();
+      } catch (err) {
+        logger.error('VaultContext', 'Failed to load statistics for all vaults', err as Error);
+      }
+
       logger.info('VaultContext', 'Cache population complete', {
         cachedVaultCount: vaults.length,
       });
     };
 
-    loadAllVaultKeys();
-  }, [vaults.length]); // Only run when vault count changes
+    loadAllVaultData();
+  }, [vaults.length, refreshAllStatistics]); // Only run when vault count changes
 
   // Update vaultKeys when currentVault changes (read from cache)
   useEffect(() => {
@@ -387,8 +497,11 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         vaultKeys, // DEPRECATED - use getCurrentVaultKeys() instead
         keyCache,
         getCurrentVaultKeys,
+        statisticsCache,
+        getVaultStatistics,
         isLoading,
         isLoadingKeys,
+        isLoadingStatistics,
         error,
         createVault,
         setCurrentVault, // Now synchronous!
@@ -396,6 +509,8 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         refreshKeys, // DEPRECATED - use refreshKeysForVault
         refreshKeysForVault,
         removeKeyFromVault,
+        refreshAllStatistics,
+        refreshVaultStatistics,
       }}
     >
       {children}

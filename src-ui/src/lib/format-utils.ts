@@ -2,6 +2,8 @@
  * Formatting utilities for consistent display across the application
  */
 
+import { formatDistanceToNow } from 'date-fns';
+
 /**
  * Format bytes into human-readable file size
  * @param bytes - Size in bytes
@@ -86,4 +88,93 @@ export const truncateText = (text: string, maxLength: number): string => {
  */
 export const formatPercentage = (value: number, decimals: number = 0): string => {
   return `${(value * 100).toFixed(decimals)}%`;
+};
+
+/**
+ * Format bytes to human-readable size (alias for formatFileSize for consistency)
+ * @param bytes - Number of bytes
+ * @returns Formatted string like "125 MB", "2.3 GB", etc.
+ */
+export const formatBytes = formatFileSize;
+
+/**
+ * Format date to relative time
+ * @param date - ISO date string or null
+ * @returns Formatted string like "2 hours ago" or "Never"
+ */
+export const formatLastEncrypted = (date: string | null): string => {
+  if (!date) return 'Never';
+
+  try {
+    return formatDistanceToNow(new Date(date), { addSuffix: true });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Unknown';
+  }
+};
+
+/**
+ * Format file count for display
+ * @param count - Number of files
+ * @returns Formatted string like "42 files", "1 file", "No files"
+ */
+export const formatFileCount = (count: number): string => {
+  if (count === 0) return 'No files';
+  if (count === 1) return '1 file';
+  return `${count} files`;
+};
+
+/**
+ * Get vault status badge configuration
+ * @param status - Vault status from backend
+ * @returns Badge configuration with label, color, and description
+ */
+export const getVaultStatusBadge = (status: string) => {
+  switch (status) {
+    case 'new':
+      return {
+        label: 'New',
+        color: 'gray',
+        bgClass: 'bg-gray-100',
+        textClass: 'text-gray-700',
+        borderClass: 'border-gray-300',
+        description: 'Never encrypted',
+      };
+    case 'active':
+      return {
+        label: 'Active',
+        color: 'green',
+        bgClass: 'bg-green-100',
+        textClass: 'text-green-700',
+        borderClass: 'border-green-300',
+        description: 'Ready to use',
+      };
+    case 'orphaned':
+      return {
+        label: 'No Keys',
+        color: 'red',
+        bgClass: 'bg-red-100',
+        textClass: 'text-red-700',
+        borderClass: 'border-red-300',
+        description: 'No keys attached',
+      };
+    case 'incomplete':
+      return {
+        label: 'Incomplete',
+        color: 'yellow',
+        bgClass: 'bg-yellow-100',
+        textClass: 'text-yellow-700',
+        borderClass: 'border-yellow-300',
+        description: 'Setup needed',
+      };
+    default:
+      return {
+        label: 'Unknown',
+        color: 'gray',
+        bgClass: 'bg-gray-100',
+        textClass: 'text-gray-700',
+        borderClass: 'border-gray-300',
+        description: 'Status unknown',
+      };
+  }
 };

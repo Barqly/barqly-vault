@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Archive,
   Key,
@@ -9,15 +9,23 @@ import {
   Clock,
   HardDrive,
   Files,
+  AlertCircle,
 } from 'lucide-react';
-import { VaultSummary, KeyReference } from '../../bindings';
+import { VaultSummary, KeyReference, VaultStatistics, commands } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
+import {
+  formatLastEncrypted,
+  formatBytes,
+  formatFileCount,
+  getVaultStatusBadge,
+} from '../../lib/format-utils';
 
 interface VaultCardProps {
   vault: VaultSummary;
   keys: KeyReference[];
   isActive: boolean;
   isDropTarget?: boolean;
+  statistics?: VaultStatistics | null; // Optional prop for cached statistics
   onSelect: () => void;
   onEncrypt: () => void;
   onManageKeys: () => void;
@@ -40,35 +48,62 @@ const VaultCard: React.FC<VaultCardProps> = ({
   keys,
   isActive,
   isDropTarget,
+  statistics: propStatistics, // Receive statistics as prop
   onSelect,
   onEncrypt,
   onManageKeys,
   onDelete,
   onKeyDrop,
 }) => {
+  const [localStatistics, setLocalStatistics] = useState<VaultStatistics | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Use prop statistics if provided, otherwise fetch locally
+  const statistics = propStatistics !== undefined ? propStatistics : localStatistics;
+
+  // Load vault statistics only if not provided as prop
+  useEffect(() => {
+    // If statistics are provided as prop, don't fetch
+    if (propStatistics !== undefined) {
+      return;
+    }
+
+    const loadStatistics = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Use vault.name (which is the sanitized filesystem-safe name) for the API
+        const result = await commands.getVaultStatistics({
+          vault_name: vault.name,
+        });
+
+        if (result.status === 'ok' && result.data.success && result.data.statistics) {
+          setLocalStatistics(result.data.statistics);
+        } else if (result.status === 'error') {
+          console.error('Failed to load vault statistics:', result.error);
+          setError('Failed to load statistics');
+        }
+      } catch (err) {
+        console.error('Error loading vault statistics:', err);
+        setError('Error loading statistics');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStatistics();
+  }, [vault.name, propStatistics]);
+
   // Calculate key statistics
   const passphraseKeys = keys.filter(isPassphraseKey);
   const yubiKeys = keys.filter(isYubiKey);
   const totalKeySlots = 4; // Max 4 keys per vault
   const emptySlots = Math.max(0, totalKeySlots - keys.length);
 
-  // Format last encrypted time (mock data for now)
-  const formatLastTime = () => {
-    // In future, this would come from vault metadata
-    return '2 hours ago';
-  };
-
-  // Format vault size (mock data for now)
-  const formatSize = () => {
-    // In future, this would come from vault statistics
-    return '125 MB';
-  };
-
-  // Format file count (mock data for now)
-  const formatFileCount = () => {
-    // In future, this would come from vault statistics
-    return '42 files';
-  };
+  // Get vault status badge configuration
+  const statusBadge = statistics ? getVaultStatusBadge(statistics.status) : null;
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -117,6 +152,23 @@ const VaultCard: React.FC<VaultCardProps> = ({
               <p className="text-sm text-slate-500 mt-0.5">
                 {vault.description || 'No description'}
               </p>
+              {/* Status Badge */}
+              {statusBadge && (
+                <div className="mt-2 inline-flex items-center gap-1">
+                  <span
+                    className={`
+                      inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                      ${statusBadge.bgClass} ${statusBadge.textClass}
+                    `}
+                    title={statusBadge.description}
+                  >
+                    {statusBadge.label}
+                  </span>
+                  {statistics?.status === 'orphaned' && (
+                    <AlertCircle className="h-3.5 w-3.5 text-red-600" />
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -175,34 +227,54 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
       {/* Metadata Section */}
       <div className="px-6 pb-4">
-        <div className="flex items-center gap-4 text-xs text-slate-500">
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>{formatLastTime()}</span>
+        {isLoading ? (
+          <div className="text-xs text-slate-400">Loading statistics...</div>
+        ) : error ? (
+          <div className="text-xs text-red-500">{error}</div>
+        ) : (
+          <div className="flex items-center gap-4 text-xs text-slate-500">
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>{formatLastEncrypted(statistics?.last_encrypted_at || null)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <HardDrive className="h-3 w-3" />
+              <span>{formatBytes(statistics?.total_size_bytes || 0)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Files className="h-3 w-3" />
+              <span>{formatFileCount(statistics?.file_count || 0)}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <HardDrive className="h-3 w-3" />
-            <span>{formatSize()}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Files className="h-3 w-3" />
-            <span>{formatFileCount()}</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Quick Actions */}
       <div className="border-t border-slate-200 px-4 py-3 flex items-center gap-2">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onEncrypt();
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-        >
-          <Lock className="h-3.5 w-3.5" />
-          Encrypt
-        </button>
+        {/* Show Encrypt button only if vault has keys (not orphaned) */}
+        {statistics?.status !== 'orphaned' && keys.length > 0 ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEncrypt();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+          >
+            <Lock className="h-3.5 w-3.5" />
+            Encrypt
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onManageKeys();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-md transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Keys
+          </button>
+        )}
 
         <button
           onClick={(e) => {
@@ -212,7 +284,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
         >
           <Key className="h-3.5 w-3.5" />
-          Keys
+          Manage
         </button>
 
         <button

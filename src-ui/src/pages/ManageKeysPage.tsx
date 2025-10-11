@@ -9,6 +9,7 @@ import { KeyImportDialog } from '../components/keys/KeyImportDialog';
 import { YubiKeyDetector } from '../components/keys/YubiKeyDetector';
 import { PassphraseKeyDialog } from '../components/keys/PassphraseKeyDialog';
 import { logger } from '../lib/logger';
+import { commands } from '../bindings';
 
 /**
  * Manage Keys Page - Central registry for all encryption keys
@@ -72,15 +73,146 @@ const ManageKeysPage: React.FC = () => {
   const handleKeyImport = useCallback(
     async (filePath: string) => {
       try {
-        // TODO: Implement actual import when backend command is available
-        logger.info('ManageKeysPage', 'Importing key file', { filePath });
-        await refreshAllKeys();
+        logger.info('ManageKeysPage', 'Starting key import', { filePath });
+
+        // Prompt for passphrase (keys are encrypted)
+        const passphrase = prompt('Enter the passphrase for this encrypted key file:');
+        if (!passphrase) {
+          logger.info('ManageKeysPage', 'Import cancelled - no passphrase provided');
+          return;
+        }
+
+        // First, validate the key file without importing (dry-run)
+        logger.info('ManageKeysPage', 'Validating key file...');
+        const validationResult = await commands.importKeyFile({
+          file_path: filePath,
+          passphrase: passphrase,
+          override_label: null,
+          attach_to_vault: null,
+          validate_only: true, // Dry-run mode
+        });
+
+        if (validationResult.status === 'error') {
+          const error = validationResult.error as any;
+          logger.error('ManageKeysPage', 'Key validation failed', error);
+
+          const errorMessage = error.recovery_guidance
+            ? `${error.message}\n\n${error.recovery_guidance}`
+            : error.message || 'Invalid key file';
+
+          alert(`Validation failed: ${errorMessage}`);
+          return;
+        }
+
+        if (validationResult.status === 'ok') {
+          const validation = validationResult.data.validation_status;
+
+          if (!validation.is_valid) {
+            alert('The key file is not valid. Please check the file and passphrase.');
+            return;
+          }
+
+          // Show original metadata if available
+          if (validation.original_metadata) {
+            const metadata = validation.original_metadata;
+            logger.info('ManageKeysPage', 'Key metadata', metadata);
+          }
+
+          // Check for duplicate
+          if (validation.is_duplicate) {
+            const proceed = confirm(
+              'This key already exists in the registry. Do you want to import it anyway?\n\n' +
+                'Note: This will create a duplicate entry.',
+            );
+            if (!proceed) {
+              logger.info('ManageKeysPage', 'Import cancelled - duplicate key');
+              return;
+            }
+          }
+
+          // Ask if user wants to override the label
+          let overrideLabel: string | null = null;
+          if (validation.original_metadata?.label) {
+            const customLabel = prompt(
+              `Original key label: "${validation.original_metadata.label}"\n\n` +
+                'Enter a new label (or leave blank to keep original):',
+            );
+            if (customLabel) {
+              overrideLabel = customLabel;
+            }
+          }
+
+          // Ask if user wants to attach to a vault immediately
+          let attachToVault: string | null = null;
+          if (vaults.length > 0) {
+            const attachNow = confirm('Would you like to attach this key to a vault immediately?');
+            if (attachNow) {
+              if (vaults.length === 1) {
+                attachToVault = vaults[0].id;
+              } else {
+                const vaultNames = vaults.map((v, i) => `${i + 1}. ${v.name}`).join('\n');
+                const selection = prompt(
+                  `Select a vault to attach this key to:\n\n${vaultNames}\n\nEnter the number (or leave blank to skip):`,
+                );
+                if (selection) {
+                  const index = parseInt(selection) - 1;
+                  if (index >= 0 && index < vaults.length) {
+                    attachToVault = vaults[index].id;
+                  }
+                }
+              }
+            }
+          }
+
+          // Now perform the actual import
+          logger.info('ManageKeysPage', 'Importing key...', {
+            overrideLabel,
+            attachToVault,
+          });
+
+          const importResult = await commands.importKeyFile({
+            file_path: filePath,
+            passphrase: passphrase,
+            override_label: overrideLabel,
+            attach_to_vault: attachToVault,
+            validate_only: false, // Actually import this time
+          });
+
+          if (importResult.status === 'ok') {
+            const keyRef = importResult.data.key_reference;
+            logger.info('ManageKeysPage', 'Key imported successfully', keyRef);
+
+            // Show any warnings
+            if (importResult.data.import_warnings.length > 0) {
+              const warnings = importResult.data.import_warnings.join('\n');
+              alert(`Key imported successfully!\n\nWarnings:\n${warnings}`);
+            } else {
+              alert(`Key imported successfully!\n\nLabel: ${keyRef.label}\nID: ${keyRef.id}`);
+            }
+
+            // Refresh the UI
+            await refreshAllKeys();
+            if (attachToVault) {
+              await refreshKeysForVault(attachToVault);
+            }
+          } else if (importResult.status === 'error') {
+            const error = importResult.error as any;
+            logger.error('ManageKeysPage', 'Import failed', error);
+
+            const errorMessage = error.recovery_guidance
+              ? `${error.message}\n\n${error.recovery_guidance}`
+              : error.message || 'Failed to import key';
+
+            alert(`Import failed: ${errorMessage}`);
+          }
+        }
       } catch (err) {
         logger.error('ManageKeysPage', 'Failed to import key', err as Error);
+        alert('An unexpected error occurred during key import');
         throw err;
       }
     },
-    [refreshAllKeys],
+    [refreshAllKeys, refreshKeysForVault, vaults],
   );
 
   const handleYubiKeyAdd = useCallback(
@@ -99,50 +231,104 @@ const ManageKeysPage: React.FC = () => {
 
   const handleAttachKey = useCallback(
     async (keyId: string) => {
-      if (!currentVault) {
-        alert('Please select a vault first');
+      // If no current vault or multiple vaults, show selection dialog
+      let targetVaultId: string | null = null;
+
+      if (!currentVault && vaults.length === 1) {
+        // Only one vault exists, use it
+        targetVaultId = vaults[0].id;
+      } else if (!currentVault && vaults.length > 1) {
+        // Multiple vaults, need user to select
+        // For now, use a simple prompt - in production, use a proper modal
+        const vaultNames = vaults.map((v, i) => `${i + 1}. ${v.name}`).join('\n');
+        const selection = prompt(
+          `Select a vault to attach this key to:\n\n${vaultNames}\n\nEnter the number:`,
+        );
+
+        if (!selection) return;
+
+        const index = parseInt(selection) - 1;
+        if (index >= 0 && index < vaults.length) {
+          targetVaultId = vaults[index].id;
+        } else {
+          alert('Invalid selection');
+          return;
+        }
+      } else if (currentVault) {
+        targetVaultId = currentVault.id;
+      } else {
+        alert('No vaults available. Please create a vault first.');
         return;
       }
+
       try {
-        // TODO: Implement attach key to vault
         logger.info('ManageKeysPage', 'Attaching key to vault', {
           keyId,
-          vaultId: currentVault.id,
+          vaultId: targetVaultId,
         });
-        await refreshKeysForVault(currentVault.id);
-        await refreshAllKeys();
+
+        const result = await commands.attachKeyToVault({
+          key_id: keyId,
+          vault_id: targetVaultId,
+        });
+
+        if (result.status === 'ok' && result.data.success) {
+          // Show success message
+          logger.info('ManageKeysPage', 'Key attached successfully', {
+            keyId: result.data.key_id,
+            vaultId: result.data.vault_id,
+          });
+
+          // Show any warnings if present
+          if (result.data.message) {
+            alert(`Success: ${result.data.message}`);
+          }
+
+          // Refresh the UI
+          if (targetVaultId) {
+            await refreshKeysForVault(targetVaultId);
+          }
+          await refreshAllKeys();
+        } else if (result.status === 'error') {
+          const error = result.error as any;
+          logger.error('ManageKeysPage', 'Failed to attach key', error);
+
+          // Show user-friendly error with recovery guidance
+          const errorMessage = error.recovery_guidance
+            ? `${error.message}\n\n${error.recovery_guidance}`
+            : error.message || 'Failed to attach key';
+
+          alert(errorMessage);
+        }
       } catch (err) {
         logger.error('ManageKeysPage', 'Failed to attach key', err as Error);
+        alert('An unexpected error occurred while attaching the key');
       }
     },
-    [currentVault, refreshKeysForVault, refreshAllKeys],
+    [currentVault, vaults, refreshKeysForVault, refreshAllKeys],
   );
 
-  const handleDeleteKey = useCallback(
-    async (keyId: string) => {
-      if (
-        !confirm('Are you sure you want to delete this orphan key? This action cannot be undone.')
-      ) {
-        return;
-      }
-      try {
-        // TODO: Implement delete orphan key when backend command is available
-        logger.info('ManageKeysPage', 'Deleting orphan key', { keyId });
-        await refreshAllKeys();
-      } catch (err) {
-        logger.error('ManageKeysPage', 'Failed to delete key', err as Error);
-      }
-    },
-    [refreshAllKeys],
-  );
+  // Note: Physical key deletion is not supported by design
+  // Keys can only be removed from vaults using removeKeyFromVault
+  // Orphaned keys remain in the registry for potential recovery
+  const handleDeleteKey = useCallback(async (keyId: string) => {
+    alert(
+      'Physical key deletion is not supported.\n\n' +
+        'Keys can be removed from vaults but remain in the registry for recovery purposes.\n' +
+        'Orphaned keys can be re-attached to vaults at any time.',
+    );
+    logger.info('ManageKeysPage', 'Delete requested but not supported', { keyId });
+  }, []);
 
+  // Note: Key export is handled by .enc files which are already created
+  // No separate export functionality is needed
   const handleExportKey = useCallback(async (keyId: string) => {
-    try {
-      // TODO: Implement key export when backend command is available
-      logger.info('ManageKeysPage', 'Exporting key', { keyId });
-    } catch (err) {
-      logger.error('ManageKeysPage', 'Failed to export key', err as Error);
-    }
+    alert(
+      'Key files are already stored as encrypted .enc files.\n\n' +
+        'You can find your key files in the Barqly vault directory.\n' +
+        'These files can be backed up and imported on other systems.',
+    );
+    logger.info('ManageKeysPage', 'Export info requested', { keyId });
   }, []);
 
   return (

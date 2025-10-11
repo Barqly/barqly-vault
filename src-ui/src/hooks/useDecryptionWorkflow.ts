@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useContext } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileDecryption } from './useFileDecryption';
 import type { ErrorCode, CommandError, KeyReference } from '../bindings';
 import { createCommandError } from '../lib/errors/command-error';
-import { VaultContext } from '../contexts/VaultContext';
+import { useVault } from '../contexts/VaultContext';
 import { commands } from '../bindings';
 
 interface VaultMetadata {
@@ -23,8 +23,7 @@ interface RecoveredItems {
  */
 export const useDecryptionWorkflow = () => {
   const fileDecryptionHook = useFileDecryption();
-  const vaultContext = useContext(VaultContext);
-  const { vaults } = vaultContext || { vaults: [] };
+  const { vaults } = useVault();
 
   const {
     setSelectedFile,

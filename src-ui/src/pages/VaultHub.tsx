@@ -25,7 +25,7 @@ import VaultEmptyState from '../components/vault/VaultEmptyState';
  */
 const VaultHub: React.FC = () => {
   const navigate = useNavigate();
-  const { keyCache, getCurrentVaultKeys, refreshKeysForVault } = useVault();
+  const { keyCache, refreshKeysForVault, getVaultStatistics } = useVault();
   const {
     // Form state
     name,
@@ -174,12 +174,15 @@ const VaultHub: React.FC = () => {
                   const isActive = vault.id === currentVault?.id;
                   // Get keys from cache for this vault (instant, no async)
                   const keys = keyCache.get(vault.id) || [];
+                  // Get statistics from cache for this vault (instant, no async)
+                  const statistics = getVaultStatistics(vault.id);
 
                   return (
                     <VaultCard
                       key={vault.id}
                       vault={vault}
                       keys={keys}
+                      statistics={statistics}
                       isActive={isActive}
                       onSelect={() => handleVaultSelect(vault.id)}
                       onEncrypt={() => handleQuickEncrypt(vault.id)}
