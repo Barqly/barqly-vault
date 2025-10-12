@@ -57,7 +57,11 @@ const SidebarNav: React.FC = () => {
       {/* Logo/Brand Area */}
       <div className="flex items-center h-16 px-4 border-b border-slate-200">
         {!sidebarCollapsed && (
-          <h1 className="text-lg font-semibold text-slate-800">Barqly Vault</h1>
+          <img
+            src="/barqly-vault-text-hdr.svg"
+            alt="Barqly Vault"
+            className="h-8"
+          />
         )}
         {sidebarCollapsed && <span className="text-lg font-bold text-blue-600">B</span>}
       </div>
