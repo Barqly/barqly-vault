@@ -11,7 +11,7 @@ const TopStatusBar: React.FC = () => {
           alt="Barqly Vault"
           className="h-8"
         />
-        <p className="text-xs text-slate-500 font-light whitespace-nowrap pl-0.5">
+        <p className="text-xs text-slate-500 font-light whitespace-nowrap pl-1">
           Secure backup for sensitive data & documents
         </p>
       </div>
