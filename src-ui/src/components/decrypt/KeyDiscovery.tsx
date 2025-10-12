@@ -48,7 +48,10 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
       return 'Suggested';
     }
     // Check lifecycle status for YubiKey availability
-    if (key.type === 'YubiKey' && (key.lifecycle_status === 'suspended' || key.lifecycle_status === 'deactivated')) {
+    if (
+      key.type === 'YubiKey' &&
+      (key.lifecycle_status === 'suspended' || key.lifecycle_status === 'deactivated')
+    ) {
       return 'Not available';
     }
     return 'Available';

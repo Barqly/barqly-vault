@@ -166,7 +166,10 @@ const VaultCard: React.FC<VaultCardProps> = ({
                   </span>
                   {/* Show warning icon for vaults without keys */}
                   {statistics?.status === 'orphaned' && (
-                    <AlertCircle className="h-3.5 w-3.5 text-red-600" title="This vault has no keys attached" />
+                    <AlertCircle
+                      className="h-3.5 w-3.5 text-red-600"
+                      title="This vault has no keys attached"
+                    />
                   )}
                 </div>
               )}

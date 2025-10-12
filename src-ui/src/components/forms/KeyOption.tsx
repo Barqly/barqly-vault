@@ -54,7 +54,9 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
             {keyData.lifecycle_status === 'suspended' && (
               <span className="text-yellow-600 font-medium">• Suspended</span>
             )}
-            {(keyData.lifecycle_status === 'deactivated' || keyData.lifecycle_status === 'destroyed' || keyData.lifecycle_status === 'compromised') && (
+            {(keyData.lifecycle_status === 'deactivated' ||
+              keyData.lifecycle_status === 'destroyed' ||
+              keyData.lifecycle_status === 'compromised') && (
               <span className="text-red-600 font-medium">• Unavailable</span>
             )}
           </div>
