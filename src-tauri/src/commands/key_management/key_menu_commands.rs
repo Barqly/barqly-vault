@@ -7,46 +7,12 @@ use crate::commands::key_management::yubikey::device_commands::list_yubikeys;
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::prelude::*;
 use crate::services::key_management::shared::KeyEntry;
+use crate::services::key_management::shared::domain::models::{
+    KeyReference, KeyType, key_lifecycle::KeyLifecycleStatus,
+};
 use crate::services::vault;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-/// Key menu data optimized for UI display
-#[derive(Debug, Serialize, specta::Type)]
-pub struct KeyMenuInfo {
-    /// UI display position (0=passphrase, 1-3=yubikeys)
-    pub display_index: u8,
-    /// Key type for UI logic
-    pub key_type: String,
-    /// User-friendly display label
-    pub label: String,
-    /// Internal key reference ID
-    pub internal_id: String,
-    /// Current key state
-    pub state: String,
-    /// Creation timestamp
-    pub created_at: String,
-    /// Type-specific metadata
-    pub metadata: KeyMenuMetadata,
-}
-
-/// Type-specific metadata for different key types
-#[derive(Debug, Serialize, specta::Type)]
-#[serde(tag = "type")]
-pub enum KeyMenuMetadata {
-    Passphrase {
-        public_key: String,
-        key_filename: String,
-    },
-    YubiKey {
-        serial: String,
-        slot: u8,
-        piv_slot: u8,
-        recipient: String,
-        identity_tag: String,
-        firmware_version: String,
-    },
-}
 
 /// Request for key menu data
 #[derive(Debug, Deserialize, specta::Type)]
@@ -58,7 +24,7 @@ pub struct GetKeyMenuDataRequest {
 #[derive(Debug, Serialize, specta::Type)]
 pub struct GetKeyMenuDataResponse {
     pub vault_id: String,
-    pub keys: Vec<KeyMenuInfo>,
+    pub keys: Vec<KeyReference>,
 }
 
 /// Get structured key menu data for UI display
@@ -113,7 +79,6 @@ pub async fn get_key_menu_data(
     use crate::services::vault::infrastructure::persistence::metadata::RecipientType;
 
     let mut key_menu_items = Vec::new();
-    let mut yubikey_index = 1u8; // YubiKeys start at display index 1
 
     // Process recipients in vault metadata
     for recipient in vault.recipients() {
@@ -123,33 +88,24 @@ pub async fn get_key_menu_data(
                 let key_id = &recipient.key_id;
 
                 if let Some(KeyEntry::Passphrase {
-                    label,
-                    created_at,
-                    public_key,
-                    key_filename,
-                    ..
+                    label, created_at, ..
                 }) = registry.get_key(key_id)
                 {
-                    // Passphrase always gets display index 0
-                    key_menu_items.push(KeyMenuInfo {
-                        display_index: 0,
-                        key_type: "passphrase".to_string(),
+                    // Build KeyReference for passphrase
+                    key_menu_items.push(KeyReference {
+                        id: key_id.to_string(),
                         label: label.clone(),
-                        internal_id: key_id.to_string(),
-                        state: "active".to_string(), // Passphrase keys are always active when in vault
-                        created_at: created_at.to_rfc3339(),
-                        metadata: KeyMenuMetadata::Passphrase {
-                            public_key: public_key.clone(),
-                            key_filename: key_filename.clone(),
+                        lifecycle_status: KeyLifecycleStatus::Active, // Passphrase keys are always active when in vault
+                        key_type: KeyType::Passphrase {
+                            key_id: key_id.to_string(),
                         },
+                        created_at: *created_at,
+                        last_used: None,
                     });
                 }
             }
             RecipientType::YubiKey {
                 serial,
-                slot,
-                piv_slot,
-                identity_tag,
                 firmware_version,
                 ..
             } => {
@@ -157,59 +113,55 @@ pub async fn get_key_menu_data(
                 let key_id = &recipient.key_id;
 
                 if let Some(KeyEntry::Yubikey {
-                    label,
-                    created_at,
-                    recipient: public_key,
-                    ..
+                    label, created_at, ..
                 }) = registry.get_key(key_id)
                 {
-                    // YubiKeys get sequential display indexes 1, 2, 3
-                    if yubikey_index <= 3 {
-                        key_menu_items.push(KeyMenuInfo {
-                            display_index: yubikey_index,
-                            key_type: "yubikey".to_string(),
-                            label: label.clone(),
-                            internal_id: key_id.to_string(),
-                            state: yubikey_states
-                                .get(serial.as_str())
-                                .unwrap_or(&"pre_activation".to_string())
-                                .clone(),
-                            created_at: created_at.to_rfc3339(),
-                            metadata: KeyMenuMetadata::YubiKey {
-                                serial: serial.clone(),
-                                slot: *slot,
-                                piv_slot: *piv_slot,
-                                recipient: public_key.clone(),
-                                identity_tag: identity_tag.clone(),
-                                firmware_version: firmware_version.clone().unwrap_or_default(),
-                            },
-                        });
-                        yubikey_index += 1;
-                    }
+                    // Map YubiKey state to KeyLifecycleStatus
+                    let lifecycle_status = match yubikey_states.get(serial.as_str()) {
+                        Some(state_str) => match state_str.as_str() {
+                            "active" => KeyLifecycleStatus::Active,
+                            "suspended" => KeyLifecycleStatus::Suspended,
+                            "pre_activation" => KeyLifecycleStatus::PreActivation,
+                            _ => KeyLifecycleStatus::PreActivation,
+                        },
+                        None => KeyLifecycleStatus::PreActivation,
+                    };
+
+                    // Build KeyReference for YubiKey
+                    key_menu_items.push(KeyReference {
+                        id: key_id.to_string(),
+                        label: label.clone(),
+                        lifecycle_status,
+                        key_type: KeyType::YubiKey {
+                            serial: serial.clone(),
+                            firmware_version: firmware_version.clone(),
+                        },
+                        created_at: *created_at,
+                        last_used: None,
+                    });
                 } else {
                     // If not found by key_id, create entry from recipient data
-                    if yubikey_index <= 3 {
-                        key_menu_items.push(KeyMenuInfo {
-                            display_index: yubikey_index,
-                            key_type: "yubikey".to_string(),
-                            label: recipient.label.clone(),
-                            internal_id: key_id.to_string(), // Use real key_id, not fake
-                            state: yubikey_states
-                                .get(serial.as_str())
-                                .unwrap_or(&"pre_activation".to_string())
-                                .clone(),
-                            created_at: recipient.created_at.to_rfc3339(),
-                            metadata: KeyMenuMetadata::YubiKey {
-                                serial: serial.clone(),
-                                slot: *slot,
-                                piv_slot: *piv_slot,
-                                recipient: recipient.public_key.clone(),
-                                identity_tag: identity_tag.clone(),
-                                firmware_version: firmware_version.clone().unwrap_or_default(),
-                            },
-                        });
-                        yubikey_index += 1;
-                    }
+                    let lifecycle_status = match yubikey_states.get(serial.as_str()) {
+                        Some(state_str) => match state_str.as_str() {
+                            "active" => KeyLifecycleStatus::Active,
+                            "suspended" => KeyLifecycleStatus::Suspended,
+                            "pre_activation" => KeyLifecycleStatus::PreActivation,
+                            _ => KeyLifecycleStatus::PreActivation,
+                        },
+                        None => KeyLifecycleStatus::PreActivation,
+                    };
+
+                    key_menu_items.push(KeyReference {
+                        id: key_id.to_string(),
+                        label: recipient.label.clone(),
+                        lifecycle_status,
+                        key_type: KeyType::YubiKey {
+                            serial: serial.clone(),
+                            firmware_version: firmware_version.clone(),
+                        },
+                        created_at: recipient.created_at,
+                        last_used: None,
+                    });
                 }
             }
         }

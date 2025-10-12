@@ -33,9 +33,7 @@ pub use yubikey::{
     yubikey_decrypt_file,
 };
 
-pub use key_menu_commands::{
-    GetKeyMenuDataRequest, GetKeyMenuDataResponse, KeyMenuInfo, KeyMenuMetadata, get_key_menu_data,
-};
+pub use key_menu_commands::{GetKeyMenuDataRequest, GetKeyMenuDataResponse, get_key_menu_data};
 
 pub use unified_keys::{
     KeyInfo, KeyListFilter, KeyType, YubiKeyInfo, list_unified_keys, test_unified_keys,

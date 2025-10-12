@@ -600,7 +600,7 @@ export type GetKeyMenuDataRequest = { vault_id: string }
 /**
  * Response with structured key menu data
  */
-export type GetKeyMenuDataResponse = { vault_id: string; keys: KeyMenuInfo[] }
+export type GetKeyMenuDataResponse = { vault_id: string; keys: KeyReference[] }
 /**
  * Input for progress status command
  */
@@ -773,42 +773,6 @@ export type KeyListFilter =
  * Only currently connected/available keys (for decryption UI)
  */
 { type: "ConnectedOnly" }
-/**
- * Key menu data optimized for UI display
- */
-export type KeyMenuInfo = { 
-/**
- * UI display position (0=passphrase, 1-3=yubikeys)
- */
-display_index: number; 
-/**
- * Key type for UI logic
- */
-key_type: string; 
-/**
- * User-friendly display label
- */
-label: string; 
-/**
- * Internal key reference ID
- */
-internal_id: string; 
-/**
- * Current key state
- */
-state: string; 
-/**
- * Creation timestamp
- */
-created_at: string; 
-/**
- * Type-specific metadata
- */
-metadata: KeyMenuMetadata }
-/**
- * Type-specific metadata for different key types
- */
-export type KeyMenuMetadata = { type: "Passphrase"; public_key: string; key_filename: string } | { type: "YubiKey"; serial: string; slot: number; piv_slot: number; recipient: string; identity_tag: string; firmware_version: string }
 /**
  * Simplified key metadata for frontend
  */
