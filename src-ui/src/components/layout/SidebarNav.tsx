@@ -15,7 +15,6 @@ interface NavItem {
 const SidebarNav: React.FC = () => {
   const location = useLocation();
   const { sidebarCollapsed, setSidebarCollapsed } = useUI();
-  const { vaults, getCurrentVaultKeys } = useVault();
 
   const navItems: NavItem[] = [
     {
@@ -23,14 +22,12 @@ const SidebarNav: React.FC = () => {
       label: 'Vault Hub',
       icon: Archive,
       path: '/',
-      badge: () => vaults.length,
     },
     {
       id: 'manage-keys',
       label: 'Manage Keys',
       icon: Key,
       path: '/keys',
-      badge: () => getCurrentVaultKeys().length,
     },
     {
       id: 'encrypt',
