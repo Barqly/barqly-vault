@@ -96,9 +96,9 @@ pub async fn get_key_menu_data(
                 .map(|yk| {
                     let state = match yk.state {
                         crate::commands::key_management::yubikey::device_commands::YubiKeyState::Registered => "active",
-                        crate::commands::key_management::yubikey::device_commands::YubiKeyState::Orphaned => "registered",
-                        crate::commands::key_management::yubikey::device_commands::YubiKeyState::Reused => "registered",
-                        crate::commands::key_management::yubikey::device_commands::YubiKeyState::New => "registered",
+                        crate::commands::key_management::yubikey::device_commands::YubiKeyState::Orphaned => "suspended",
+                        crate::commands::key_management::yubikey::device_commands::YubiKeyState::Reused => "pre_activation",
+                        crate::commands::key_management::yubikey::device_commands::YubiKeyState::New => "pre_activation",
                     };
                     (yk.serial, state.to_string())
                 })
@@ -172,7 +172,7 @@ pub async fn get_key_menu_data(
                             internal_id: key_id.to_string(),
                             state: yubikey_states
                                 .get(serial.as_str())
-                                .unwrap_or(&"registered".to_string())
+                                .unwrap_or(&"pre_activation".to_string())
                                 .clone(),
                             created_at: created_at.to_rfc3339(),
                             metadata: KeyMenuMetadata::YubiKey {
@@ -196,7 +196,7 @@ pub async fn get_key_menu_data(
                             internal_id: key_id.to_string(), // Use real key_id, not fake
                             state: yubikey_states
                                 .get(serial.as_str())
-                                .unwrap_or(&"registered".to_string())
+                                .unwrap_or(&"pre_activation".to_string())
                                 .clone(),
                             created_at: recipient.created_at.to_rfc3339(),
                             metadata: KeyMenuMetadata::YubiKey {
