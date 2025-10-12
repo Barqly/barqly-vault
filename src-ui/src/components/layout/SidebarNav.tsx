@@ -51,24 +51,6 @@ const SidebarNav: React.FC = () => {
         ${sidebarCollapsed ? 'w-16' : 'w-48'}
       `}
     >
-      {/* Logo/Brand Area */}
-      <div className="flex items-center justify-center h-16 border-b border-slate-200">
-        {!sidebarCollapsed && (
-          <img
-            src="/barqly-vault-text-hdr.svg"
-            alt="Barqly Vault"
-            className="h-8"
-          />
-        )}
-        {sidebarCollapsed && (
-          <img
-            src="/favicon.svg"
-            alt="Barqly Vault"
-            className="w-10 h-10"
-          />
-        )}
-      </div>
-
       {/* Navigation Items */}
       <nav className="flex-1 pt-4 pb-4 overflow-hidden">
         <ul className="space-y-1 px-2">

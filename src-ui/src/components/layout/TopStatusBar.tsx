@@ -3,10 +3,17 @@ import { Sparkles, Lock, Zap } from 'lucide-react';
 
 const TopStatusBar: React.FC = () => {
   return (
-    <header className="bg-white border-b border-slate-200 px-6 h-16 flex items-center justify-between">
-      {/* Left: Tagline */}
-      <div className="text-sm text-slate-500">
-        Secure backup and restore for sensitive data & documents
+    <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+      {/* Left: Logo + Tagline */}
+      <div className="flex flex-col gap-1 items-start">
+        <img
+          src="/barqly-vault-text-hdr.svg"
+          alt="Barqly Vault"
+          className="h-8"
+        />
+        <p className="text-xs text-slate-500 font-light whitespace-nowrap pl-0.5">
+          Secure backup for sensitive data & documents
+        </p>
       </div>
 
       {/* Right: Security Badges */}
