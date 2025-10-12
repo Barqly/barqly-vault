@@ -55,7 +55,6 @@ export function useKeySelection(
       setError('');
 
       try {
-        // Use new KeyMenuInfo API for consistent data
         const menuRequest: GetKeyMenuDataRequest = { vault_id: currentVault.id };
         const menuResult = await commands.getKeyMenuData(menuRequest);
 
@@ -63,7 +62,6 @@ export function useKeySelection(
           throw new Error(menuResult.error.message || 'Failed to load key menu data');
         }
 
-        // Backend now returns KeyReference directly - no transformation needed!
         // Filter for active keys only (for decryption dropdown)
         const activeKeys = menuResult.data.keys.filter((key) => key.lifecycle_status === 'active');
 
