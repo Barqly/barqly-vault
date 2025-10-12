@@ -44,17 +44,15 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
     return yubiKeys[displayIndex];
   };
 
-  // Map KeyLifecycleStatus to slot state for UI display
+  // Map NIST KeyLifecycleStatus to slot state for UI display
   const mapKeyLifecycleStatus = (
-    status: KeyLifecycleStatus | string,
+    status: KeyLifecycleStatus,
   ): 'active' | 'registered' | 'orphaned' | 'empty' => {
     switch (status) {
       case 'active':
         return 'active';
       case 'pre_activation':
         return 'registered'; // New keys ready to use
-      case 'registered':
-        return 'registered'; // Keys that are configured but may not be currently available
       case 'suspended':
         return 'orphaned'; // Temporarily disabled keys
       case 'deactivated':

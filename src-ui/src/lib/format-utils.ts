@@ -241,30 +241,6 @@ export const getKeyLifecycleStatusBadge = (status: string) => {
         userMessage: 'Security issue - do not use',
         description: 'Security breach detected',
       };
-    // Legacy backend states (will be migrated to NIST states)
-    case 'registered':
-      // Backend: "registered" → Maps to "active" in NIST model
-      return {
-        label: 'Active',
-        color: 'green',
-        bgClass: 'bg-green-100',
-        textClass: 'text-green-700',
-        icon: '●',
-        userMessage: 'Available for encryption',
-        description: 'Key is registered and ready',
-      };
-    case 'orphaned':
-      // Backend: "orphaned" → Maps to "Not Attached" in UI (pending backend migration)
-      // Per NIST: should be "pre_activation" if never used, or "suspended" if was active
-      return {
-        label: 'Not Attached',
-        color: 'gray',
-        bgClass: 'bg-gray-100',
-        textClass: 'text-gray-600',
-        icon: '○',
-        userMessage: 'Not attached to any vault',
-        description: 'Key exists but not associated with vaults',
-      };
     default:
       return {
         label: 'Unknown',
