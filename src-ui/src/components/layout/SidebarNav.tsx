@@ -48,7 +48,7 @@ const SidebarNav: React.FC = () => {
       className={`
         relative flex flex-col bg-white border-r border-slate-200 h-full
         transition-all duration-200 ease-out
-        ${sidebarCollapsed ? 'w-16' : 'w-60'}
+        ${sidebarCollapsed ? 'w-16' : 'w-48'}
       `}
     >
       {/* Logo/Brand Area */}
