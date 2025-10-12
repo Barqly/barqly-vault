@@ -14,7 +14,6 @@ import {
   SetCurrentVaultRequest,
   RemoveKeyFromVaultRequest,
   GetKeyMenuDataRequest,
-  KeyMenuInfo,
   VaultStatistics,
 } from '../bindings';
 import { logger } from '../lib/logger';
@@ -242,77 +241,13 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         keys: menuResponse.keys,
       });
 
-      // Convert KeyMenuInfo to KeyReference for backward compatibility
-      console.log(
-        '🔍 VaultContext: Starting key conversion, keys count:',
-        menuResponse.keys.length,
-      );
-
-      const keyRefs = menuResponse.keys.map((keyMenuInfo: KeyMenuInfo, index: number) => {
-        console.log(`🔍 VaultContext: Processing key ${index}:`, keyMenuInfo);
-
-        const baseRef = {
-          id: keyMenuInfo.internal_id,
-          label: keyMenuInfo.label, // Now uses actual label from registry!
-          lifecycle_status: keyMenuInfo.state as any, // Map from backend 'state' to frontend 'lifecycle_status'
-          created_at: keyMenuInfo.created_at,
-          last_used: null,
-        };
-
-        console.log(`🔍 VaultContext: Base ref for key ${index}:`, baseRef);
-        console.log(`🔍 VaultContext: Key type for key ${index}:`, keyMenuInfo.key_type);
-        console.log(`🔍 VaultContext: Metadata for key ${index}:`, keyMenuInfo.metadata);
-
-        if (keyMenuInfo.key_type === 'passphrase') {
-          console.log(`🔍 VaultContext: Creating passphrase key reference for key ${index}`);
-          return {
-            ...baseRef,
-            type: 'Passphrase' as const,
-            data: {
-              key_id: keyMenuInfo.internal_id,
-            },
-          };
-        } else {
-          console.log(`🔍 VaultContext: Creating YubiKey reference for key ${index}`);
-          console.log(
-            `🔍 VaultContext: Metadata type check for key ${index}:`,
-            keyMenuInfo.metadata,
-          );
-
-          // Properly handle discriminated union by checking property existence
-          if ('serial' in keyMenuInfo.metadata) {
-            console.log(`✅ VaultContext: YubiKey metadata detected for key ${index}`);
-            return {
-              ...baseRef,
-              type: 'YubiKey' as const,
-              data: {
-                serial: keyMenuInfo.metadata.serial,
-                firmware_version: keyMenuInfo.metadata.firmware_version || null,
-              },
-            };
-          } else {
-            console.warn(
-              `⚠️ VaultContext: Unexpected metadata type for key ${index}:`,
-              keyMenuInfo.metadata,
-            );
-            return {
-              ...baseRef,
-              type: 'YubiKey' as const,
-              data: {
-                serial: '',
-                firmware_version: null,
-              },
-            };
-          }
-        }
-      });
-
-      console.log('🔍 VaultContext: Final key references:', keyRefs);
+      // Backend now returns KeyReference directly - no transformation needed!
+      const keyRefs = menuResponse.keys;
 
       // Update cache
       setKeyCache((prev) => {
         const newCache = new Map(prev);
-        newCache.set(vaultId, keyRefs as any); // Type assertion for bindings mismatch
+        newCache.set(vaultId, keyRefs);
         return newCache;
       });
 

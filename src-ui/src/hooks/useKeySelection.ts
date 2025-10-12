@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import React from 'react';
-import { commands, KeyReference, GetKeyMenuDataRequest, KeyMenuInfo } from '../bindings';
+import { commands, KeyReference, GetKeyMenuDataRequest } from '../bindings';
 import { useVault } from '../contexts/VaultContext';
 
 export interface UseKeySelectionOptions {
@@ -63,53 +63,12 @@ export function useKeySelection(
           throw new Error(menuResult.error.message || 'Failed to load key menu data');
         }
 
+        // Backend now returns KeyReference directly - no transformation needed!
         // Filter for active keys only (for decryption dropdown)
-        const activeKeys = menuResult.data.keys.filter((key) => key.state === 'active');
+        const activeKeys = menuResult.data.keys.filter((key) => key.lifecycle_status === 'active');
 
-        // Convert KeyMenuInfo to KeyReference for backward compatibility
-        const keyRefs: KeyReference[] = activeKeys.map((keyMenuInfo: KeyMenuInfo) => {
-          const baseRef = {
-            id: keyMenuInfo.internal_id,
-            label: keyMenuInfo.label, // Now uses proper labels!
-            lifecycle_status: keyMenuInfo.state as any, // Map from backend 'state' to frontend 'lifecycle_status'
-            created_at: keyMenuInfo.created_at,
-            last_used: null,
-          };
-
-          if (keyMenuInfo.key_type === 'passphrase') {
-            return {
-              ...baseRef,
-              type: 'Passphrase' as const,
-              data: {
-                key_id: keyMenuInfo.internal_id,
-              },
-            };
-          } else {
-            // YubiKey type - properly handle discriminated union
-            if ('serial' in keyMenuInfo.metadata) {
-              return {
-                ...baseRef,
-                type: 'YubiKey' as const,
-                data: {
-                  serial: keyMenuInfo.metadata.serial,
-                  firmware_version: keyMenuInfo.metadata.firmware_version || null,
-                },
-              };
-            } else {
-              return {
-                ...baseRef,
-                type: 'YubiKey' as const,
-                data: {
-                  serial: '',
-                  firmware_version: null,
-                },
-              };
-            }
-          }
-        });
-
-        setKeys(keyRefs);
-        onKeysLoaded?.(keyRefs);
+        setKeys(activeKeys);
+        onKeysLoaded?.(activeKeys);
       } catch (err: any) {
         setError(err.message || 'Failed to load keys');
       } finally {
