@@ -23,12 +23,6 @@ export interface ProtectionModeSelectorContainerProps {
   onModeChange: (mode: ProtectionMode) => void;
   className?: string;
   showRecommendation?: boolean;
-
-  // Legacy props for backward compatibility (will be removed)
-  onYubiKeySelected?: (device: any) => void;
-  availableDevices?: any[];
-  isCheckingDevices?: boolean;
-  isLoading?: boolean;
 }
 
 /**
@@ -39,11 +33,6 @@ export const ProtectionModeSelectorContainer: React.FC<ProtectionModeSelectorCon
   onModeChange,
   className,
   showRecommendation,
-  // Legacy props ignored in new architecture
-  onYubiKeySelected: _onYubiKeySelected,
-  availableDevices: _availableDevices,
-  isCheckingDevices: _isCheckingDevices,
-  isLoading: _isLoading,
 }) => {
   const { state, context, actions } = useYubiKeyWorkflow();
 

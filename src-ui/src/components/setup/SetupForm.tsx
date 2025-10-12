@@ -7,7 +7,6 @@ interface SetupFormProps {
   keyLabel: string;
   passphrase: string;
   confirmPassphrase: string;
-  isFormValid: boolean; // Kept for backward compatibility
   isLoading: boolean;
   onKeyLabelChange: (value: string) => void;
   onPassphraseChange: (value: string) => void;
@@ -24,7 +23,6 @@ const SetupForm: React.FC<SetupFormProps> = ({
   keyLabel,
   passphrase,
   confirmPassphrase,
-  isFormValid: _isFormValid, // Prefix with _ to indicate intentionally unused
   isLoading,
   onKeyLabelChange,
   onPassphraseChange,
@@ -38,10 +36,8 @@ const SetupForm: React.FC<SetupFormProps> = ({
   const isStrongPassphrase = passphraseStrength.isStrong;
   const passphraseMatch = confirmPassphrase.length > 0 && passphrase === confirmPassphrase;
 
-  // Use validation from parent workflow (supports different protection modes)
-  // Fallback to local validation for backward compatibility
-  const localValidation = keyLabel.trim().length > 0 && isStrongPassphrase && passphraseMatch;
-  const isActuallyFormValid = _isFormValid !== undefined ? _isFormValid : localValidation;
+  // Form validation
+  const isFormValid = keyLabel.trim().length > 0 && isStrongPassphrase && passphraseMatch;
 
   const handleTooltipShow = () => {
     if (tooltipTimeoutId) {
@@ -63,7 +59,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isActuallyFormValid) {
+    if (isFormValid) {
       onSubmit();
     }
   };
@@ -72,7 +68,7 @@ const SetupForm: React.FC<SetupFormProps> = ({
     // Handle Enter key when Create Key button is focused
     if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'BUTTON') {
       const target = e.target as HTMLButtonElement;
-      if (target.type === 'submit' && isActuallyFormValid) {
+      if (target.type === 'submit' && isFormValid) {
         e.preventDefault();
         onSubmit();
       }
@@ -246,11 +242,11 @@ const SetupForm: React.FC<SetupFormProps> = ({
         <button
           type="submit"
           title="Create key (Enter)"
-          disabled={!isActuallyFormValid}
+          disabled={!isFormValid}
           tabIndex={5}
           onKeyDown={handleKeyDown}
           className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            !isActuallyFormValid
+            !isFormValid
               ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
               : 'bg-blue-600 text-white hover:bg-blue-700'
           }`}

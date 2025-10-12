@@ -23,9 +23,8 @@ interface VaultContextType {
   // Current vault state
   currentVault: VaultSummary | null;
   vaults: VaultSummary[];
-  vaultKeys: KeyReference[]; // DEPRECATED: Use getCurrentVaultKeys() instead
 
-  // NEW: Cache-first key access
+  // Cache-first key access
   keyCache: Map<string, KeyReference[]>;
   getCurrentVaultKeys: () => KeyReference[];
 
@@ -43,13 +42,12 @@ interface VaultContextType {
 
   // Actions
   createVault: (name: string, description?: string | null) => Promise<void>;
-  setCurrentVault: (vaultId: string) => void; // Now synchronous!
+  setCurrentVault: (vaultId: string) => void; // Synchronous vault switching
   refreshVaults: () => Promise<void>;
-  refreshKeys: () => Promise<void>; // DEPRECATED: Use refreshKeysForVault
   refreshKeysForVault: (vaultId: string) => Promise<void>;
   removeKeyFromVault: (keyId: string) => Promise<void>;
-  refreshAllStatistics: () => Promise<void>; // NEW: Batch refresh all statistics
-  refreshVaultStatistics: (vaultName: string) => Promise<void>; // NEW: Refresh single vault statistics
+  refreshAllStatistics: () => Promise<void>;
+  refreshVaultStatistics: (vaultName: string) => Promise<void>;
 }
 
 const VaultContext = createContext<VaultContextType | undefined>(undefined);
@@ -57,7 +55,6 @@ const VaultContext = createContext<VaultContextType | undefined>(undefined);
 export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentVault, setCurrentVaultState] = useState<VaultSummary | null>(null);
   const [vaults, setVaults] = useState<VaultSummary[]>([]);
-  const [vaultKeys, setVaultKeys] = useState<KeyReference[]>([]); // DEPRECATED - use keyCache
   const [keyCache, setKeyCache] = useState<Map<string, KeyReference[]>>(new Map());
   const [statisticsCache, setStatisticsCache] = useState<Map<string, VaultStatistics>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
@@ -312,13 +309,12 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       console.log('🔍 VaultContext: Final key references:', keyRefs);
 
-      // Update both cache and legacy vaultKeys state
+      // Update cache
       setKeyCache((prev) => {
         const newCache = new Map(prev);
         newCache.set(vaultId, keyRefs as any); // Type assertion for bindings mismatch
         return newCache;
       });
-      setVaultKeys(keyRefs as any); // For backward compatibility
 
       logger.info('VaultContext', 'Keys cached for vault', {
         vaultId,
@@ -331,12 +327,6 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setIsLoadingKeys(false);
     }
   }, []);
-
-  // DEPRECATED: Wrapper for backward compatibility
-  const refreshKeys = useCallback(async () => {
-    if (!currentVault) return;
-    await refreshKeysForVault(currentVault.id);
-  }, [currentVault?.id, refreshKeysForVault]);
 
   const createVault = async (name: string, description?: string | null) => {
     console.log('🔍 VaultContext: createVault called', { name, description });
@@ -401,13 +391,9 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         logger.error('VaultContext', 'Failed to set current vault', err as Error);
       });
 
-    // Update vaultKeys from cache for backward compatibility
-    const cachedKeys = keyCache.get(vaultId) || [];
-    setVaultKeys(cachedKeys);
-
     logger.info('VaultContext', 'Switched to vault (sync)', {
       vaultId,
-      cachedKeyCount: cachedKeys.length,
+      cachedKeyCount: (keyCache.get(vaultId) || []).length,
     });
   };
 
@@ -479,22 +465,12 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     loadAllVaultData();
   }, [vaults.length]); // Only run when vault count changes
 
-  // Update vaultKeys when currentVault changes (read from cache)
-  useEffect(() => {
-    if (currentVault) {
-      const cachedKeys = keyCache.get(currentVault.id) || [];
-      setVaultKeys(cachedKeys);
-    } else {
-      setVaultKeys([]);
-    }
-  }, [currentVault?.id, keyCache]);
 
   return (
     <VaultContext.Provider
       value={{
         currentVault,
         vaults,
-        vaultKeys, // DEPRECATED - use getCurrentVaultKeys() instead
         keyCache,
         getCurrentVaultKeys,
         statisticsCache,
@@ -504,9 +480,8 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         isLoadingStatistics,
         error,
         createVault,
-        setCurrentVault, // Now synchronous!
+        setCurrentVault,
         refreshVaults,
-        refreshKeys, // DEPRECATED - use refreshKeysForVault
         refreshKeysForVault,
         removeKeyFromVault,
         refreshAllStatistics,

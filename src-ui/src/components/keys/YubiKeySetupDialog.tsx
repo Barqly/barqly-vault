@@ -24,7 +24,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { currentVault, refreshKeys } = useVault();
+  const { currentVault, refreshKeysForVault } = useVault();
   const [yubikeys, setYubikeys] = useState<YubiKeyStateInfo[]>([]);
   const [selectedKey, setSelectedKey] = useState<YubiKeyStateInfo | null>(null);
   const [label, setLabel] = useState('');
@@ -163,7 +163,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
 
         // YubiKey successfully initialized for vault
         // Refresh keys to show the newly added YubiKey
-        await refreshKeys();
+        await refreshKeysForVault(currentVault.id);
       } else {
         // Register existing YubiKey (REUSED or ORPHANED)
         logger.info('YubiKeySetupDialog', 'Registering existing YubiKey', {
@@ -185,7 +185,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
       }
 
       // Refresh keys to show the newly added YubiKey
-      await refreshKeys();
+      await refreshKeysForVault(currentVault.id);
       handleSuccess();
     } catch (err: any) {
       logger.error('YubiKeySetupDialog', 'Failed to setup YubiKey', err);
@@ -553,7 +553,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                             }
 
                             // Refresh keys to show the newly added YubiKey
-                            await refreshKeys();
+                            await refreshKeysForVault(currentVault.id);
                             handleSuccess();
                           } catch (err: any) {
                             logger.error('YubiKeySetupDialog', 'Failed to register YubiKey', err);

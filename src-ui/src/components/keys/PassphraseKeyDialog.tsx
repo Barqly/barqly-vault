@@ -19,7 +19,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { currentVault, refreshKeys } = useVault();
+  const { currentVault, refreshKeysForVault } = useVault();
   const [label, setLabel] = useState('');
   const [passphrase, setPassphrase] = useState('');
   const [confirmPassphrase, setConfirmPassphrase] = useState('');
@@ -136,7 +136,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
       logger.info('PassphraseKeyDialog', 'Passphrase key created successfully', result);
 
       // Refresh the vault keys to show the new key
-      await refreshKeys();
+      await refreshKeysForVault(currentVault.id);
 
       // Clear form
       setLabel('');
