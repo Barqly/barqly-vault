@@ -52,7 +52,7 @@ const SidebarNav: React.FC = () => {
       `}
     >
       {/* Logo/Brand Area */}
-      <div className="flex items-center h-16 px-4 border-b border-slate-200">
+      <div className="flex items-center justify-center h-16 border-b border-slate-200">
         {!sidebarCollapsed && (
           <img
             src="/barqly-vault-text-hdr.svg"
@@ -60,11 +60,17 @@ const SidebarNav: React.FC = () => {
             className="h-8"
           />
         )}
-        {sidebarCollapsed && <span className="text-lg font-bold text-blue-600">B</span>}
+        {sidebarCollapsed && (
+          <img
+            src="/favicon.svg"
+            alt="Barqly Vault"
+            className="w-10 h-10"
+          />
+        )}
       </div>
 
       {/* Navigation Items */}
-      <nav className="flex-1 pt-4 pb-4">
+      <nav className="flex-1 pt-4 pb-4 overflow-hidden">
         <ul className="space-y-1 px-2">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -77,7 +83,7 @@ const SidebarNav: React.FC = () => {
                   to={item.path}
                   className={`
                     flex items-center gap-3 px-3 py-3 rounded-lg
-                    transition-all duration-150
+                    transition-colors duration-150
                     ${
                       isActive
                         ? 'bg-blue-50 text-blue-600'
@@ -95,7 +101,9 @@ const SidebarNav: React.FC = () => {
 
                   {!sidebarCollapsed && (
                     <>
-                      <span className="flex-1 font-medium text-sm">{item.label}</span>
+                      <span className="flex-1 font-medium text-sm whitespace-nowrap overflow-hidden">
+                        {item.label}
+                      </span>
 
                       {item.badge && badgeCount > 0 && (
                         <span
