@@ -30,7 +30,7 @@ pub use yubikey::{
     AvailableYubiKey, PinStatus, RegisterYubiKeyForVaultParams, StreamlinedYubiKeyInitResult,
     UnlockCredentials, YubiKeyInitForVaultParams, YubiKeyState, YubiKeyStateInfo, init_yubikey,
     init_yubikey_for_vault, list_yubikeys, register_yubikey, register_yubikey_for_vault,
-    yubikey_decrypt_file, yubikey_list_devices,
+    yubikey_decrypt_file,
 };
 
 pub use key_menu_commands::{

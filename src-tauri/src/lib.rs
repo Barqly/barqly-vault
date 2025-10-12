@@ -38,7 +38,7 @@ use commands::{
         },
         yubikey::{
             init_yubikey, init_yubikey_for_vault, list_yubikeys, register_yubikey,
-            register_yubikey_for_vault, yubikey_decrypt_file, yubikey_list_devices,
+            register_yubikey_for_vault, yubikey_decrypt_file,
         },
     },
     // Storage commands
@@ -128,7 +128,6 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         list_yubikeys,
         init_yubikey,
         register_yubikey,
-        yubikey_list_devices,
         // YubiKey crypto commands
         yubikey_decrypt_file,
     ]);
@@ -211,7 +210,6 @@ pub fn run_app() {
             list_yubikeys,
             init_yubikey,
             register_yubikey,
-            yubikey_list_devices,
             // YubiKey crypto commands
             yubikey_decrypt_file,
         ])

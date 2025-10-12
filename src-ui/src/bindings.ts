@@ -409,19 +409,6 @@ async registerYubikey(serial: string, label: string, pin: string) : Promise<Resu
 }
 },
 /**
- * List YubiKey devices (alias for list_yubikeys for decryption UI compatibility)
- * This provides the same data as list_yubikeys but with a different command name
- * for backward compatibility with the decryption workflow
- */
-async yubikeyListDevices() : Promise<Result<YubiKeyStateInfo[], CommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("yubikey_list_devices") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
  * Decrypt file using YubiKey with smart method selection
  * Currently uses existing implementation - will be migrated to YubiKeyManager in next iteration
  */

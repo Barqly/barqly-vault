@@ -8,7 +8,6 @@
 //! - list_yubikeys: List all YubiKeys with state detection
 //! - init_yubikey: Initialize new YubiKey device
 //! - register_yubikey: Register existing YubiKey device
-//! - yubikey_list_devices: Alias for compatibility
 
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::prelude::*;
@@ -156,14 +155,4 @@ pub async fn register_yubikey(
         ErrorCode::YubiKeyInitializationFailed,
         "YubiKey registration functionality needs to be implemented with YubiKeyManager",
     ))
-}
-
-/// List YubiKey devices (alias for list_yubikeys for decryption UI compatibility)
-/// This provides the same data as list_yubikeys but with a different command name
-/// for backward compatibility with the decryption workflow
-#[tauri::command]
-#[specta::specta]
-pub async fn yubikey_list_devices() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
-    info!("Listing YubiKey devices for decryption UI (delegating to list_yubikeys)");
-    list_yubikeys().await
 }
