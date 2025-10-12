@@ -113,7 +113,7 @@ const VaultHub: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Unified App Header */}
       <UniversalHeader
-        title="Vault Hub"
+        title={currentVault ? currentVault.name : "Create New Vault"}
         icon={Shield}
         description="Manage your encrypted vaults"
         skipNavTarget="#main-content"
@@ -191,34 +191,6 @@ const VaultHub: React.FC = () => {
                     />
                   );
                 })}
-              </div>
-
-              {/* Vault Statistics Summary */}
-              <div className="bg-white rounded-lg border border-slate-200 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-6 text-sm text-slate-600">
-                    <div>
-                      <span className="font-medium text-slate-800">{vaults.length}</span> vault
-                      {vaults.length !== 1 ? 's' : ''}
-                    </div>
-                    <div>
-                      <span className="font-medium text-slate-800">
-                        {Array.from(keyCache.values()).reduce((acc, keys) => acc + keys.length, 0)}
-                      </span>{' '}
-                      total key
-                      {Array.from(keyCache.values()).reduce((acc, keys) => acc + keys.length, 0) !==
-                      1
-                        ? 's'
-                        : ''}
-                    </div>
-                  </div>
-                  {currentVault && (
-                    <div className="text-sm text-slate-500">
-                      Active:{' '}
-                      <span className="font-medium text-slate-700">{currentVault.name}</span>
-                    </div>
-                  )}
-                </div>
               </div>
             </>
           )}
