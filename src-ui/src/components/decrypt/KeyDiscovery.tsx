@@ -47,8 +47,9 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
     if (suggestedKeys.some((k) => k.id === key.id)) {
       return 'Suggested';
     }
-    if (key.type === 'yubikey' && key.state === 'not_inserted') {
-      return 'Not inserted';
+    // Check lifecycle status for YubiKey availability
+    if (key.type === 'YubiKey' && (key.lifecycle_status === 'suspended' || key.lifecycle_status === 'deactivated')) {
+      return 'Not available';
     }
     return 'Available';
   };
@@ -98,7 +99,7 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        {key.type === 'yubikey' ? (
+                        {key.type === 'YubiKey' ? (
                           <span className="text-lg">🔐</span>
                         ) : (
                           <span className="text-lg">🔑</span>
@@ -107,7 +108,7 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
                         {getKeyStatusIcon(key.id)}
                       </div>
                       <div className="mt-1 text-sm text-slate-500">
-                        {key.type === 'passphrase'
+                        {key.type === 'Passphrase'
                           ? 'Passphrase'
                           : `YubiKey - Slot ${(key as any).slot || 1}`}
                         {key.created_at &&
@@ -121,7 +122,7 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
                             ? 'bg-red-100 text-red-700'
                             : status === 'Suggested'
                               ? 'bg-green-100 text-green-700'
-                              : status === 'Not inserted'
+                              : status === 'Not available'
                                 ? 'bg-amber-100 text-amber-700'
                                 : 'bg-slate-100 text-slate-600'
                         }`}

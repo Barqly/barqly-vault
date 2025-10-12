@@ -35,7 +35,7 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
       onKeyDown={handleKeyDown}
     >
       <div className="flex items-center gap-2">
-        {keyData.type === 'yubikey' ? (
+        {keyData.type === 'YubiKey' ? (
           <Usb className="h-4 w-4 text-green-600 flex-shrink-0" />
         ) : (
           <Key className="h-4 w-4 text-blue-600 flex-shrink-0" />
@@ -45,11 +45,17 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Calendar className="h-3 w-3" />
             <span>{formatDate(keyData.created_at)}</span>
-            {keyData.type === 'yubikey' && (
+            {keyData.type === 'YubiKey' && (
               <span className="text-green-600 font-medium">• YubiKey</span>
             )}
-            {keyData.state === 'registered' && (
+            {keyData.lifecycle_status === 'pre_activation' && (
               <span className="text-orange-600 font-medium">• Not Available</span>
+            )}
+            {keyData.lifecycle_status === 'suspended' && (
+              <span className="text-yellow-600 font-medium">• Suspended</span>
+            )}
+            {(keyData.lifecycle_status === 'deactivated' || keyData.lifecycle_status === 'destroyed' || keyData.lifecycle_status === 'compromised') && (
+              <span className="text-red-600 font-medium">• Unavailable</span>
             )}
           </div>
         </div>

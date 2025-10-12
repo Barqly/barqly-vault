@@ -71,7 +71,7 @@ export function useKeySelection(
           const baseRef = {
             id: keyMenuInfo.internal_id,
             label: keyMenuInfo.label, // Now uses proper labels!
-            state: keyMenuInfo.state as any,
+            lifecycle_status: keyMenuInfo.state as any, // Map from backend 'state' to frontend 'lifecycle_status'
             created_at: keyMenuInfo.created_at,
             last_used: null,
           };
@@ -79,24 +79,30 @@ export function useKeySelection(
           if (keyMenuInfo.key_type === 'passphrase') {
             return {
               ...baseRef,
-              type: 'passphrase' as const,
-              key_id: keyMenuInfo.internal_id,
+              type: 'Passphrase' as const,
+              data: {
+                key_id: keyMenuInfo.internal_id,
+              },
             };
           } else {
             // YubiKey type - properly handle discriminated union
             if ('serial' in keyMenuInfo.metadata) {
               return {
                 ...baseRef,
-                type: 'yubikey' as const,
-                serial: keyMenuInfo.metadata.serial,
-                firmware_version: keyMenuInfo.metadata.firmware_version || null,
+                type: 'YubiKey' as const,
+                data: {
+                  serial: keyMenuInfo.metadata.serial,
+                  firmware_version: keyMenuInfo.metadata.firmware_version || null,
+                },
               };
             } else {
               return {
                 ...baseRef,
-                type: 'yubikey' as const,
-                serial: '',
-                firmware_version: null,
+                type: 'YubiKey' as const,
+                data: {
+                  serial: '',
+                  firmware_version: null,
+                },
               };
             }
           }

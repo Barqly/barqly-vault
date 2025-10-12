@@ -257,7 +257,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const baseRef = {
           id: keyMenuInfo.internal_id,
           label: keyMenuInfo.label, // Now uses actual label from registry!
-          state: keyMenuInfo.state as any, // Type mismatch between bindings and runtime data
+          lifecycle_status: keyMenuInfo.state as any, // Map from backend 'state' to frontend 'lifecycle_status'
           created_at: keyMenuInfo.created_at,
           last_used: null,
         };

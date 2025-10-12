@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { CompactPassphraseCard } from './CompactPassphraseCard';
 import { CompactYubiKeyCard } from './CompactYubiKeyCard';
 import { useVault } from '../../contexts/VaultContext';
-import { KeyState, type KeyReference } from '../../bindings';
+import { KeyLifecycleStatus, type KeyReference } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
 
 interface KeyMenuBarProps {
@@ -44,15 +44,19 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
     return yubiKeys[displayIndex];
   };
 
-  // Map KeyState enum to slot state
-  const mapKeyState = (state: KeyState): 'active' | 'registered' | 'orphaned' | 'empty' => {
-    switch (state) {
+  // Map KeyLifecycleStatus to slot state for UI display
+  const mapKeyLifecycleStatus = (status: KeyLifecycleStatus): 'active' | 'registered' | 'orphaned' | 'empty' => {
+    switch (status) {
       case 'active':
         return 'active';
-      case 'registered':
-        return 'registered';
-      case 'orphaned':
-        return 'orphaned';
+      case 'pre_activation':
+        return 'registered'; // New keys ready to use
+      case 'suspended':
+        return 'orphaned'; // Temporarily disabled keys
+      case 'deactivated':
+      case 'destroyed':
+      case 'compromised':
+        return 'orphaned'; // Keys that can't be used
       default:
         return 'empty';
     }
@@ -93,8 +97,8 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
             index={0}
             vaultId={currentVault.id}
             onClick={() => handleYubiKeyClick(0)}
-            state={yubiKey ? mapKeyState(yubiKey.state) : 'empty'}
-            serial={yubiKey?.serial}
+            state={yubiKey ? mapKeyLifecycleStatus(yubiKey.lifecycle_status) : 'empty'}
+            serial={yubiKey?.type === 'YubiKey' ? yubiKey.data.serial : undefined}
             label={yubiKey?.label}
           />
         );
@@ -110,8 +114,8 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
             index={1}
             vaultId={currentVault.id}
             onClick={() => handleYubiKeyClick(1)}
-            state={yubiKey ? mapKeyState(yubiKey.state) : 'empty'}
-            serial={yubiKey?.serial}
+            state={yubiKey ? mapKeyLifecycleStatus(yubiKey.lifecycle_status) : 'empty'}
+            serial={yubiKey?.type === 'YubiKey' ? yubiKey.data.serial : undefined}
             label={yubiKey?.label}
           />
         );
@@ -127,8 +131,8 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
             index={2}
             vaultId={currentVault.id}
             onClick={() => handleYubiKeyClick(2)}
-            state={yubiKey ? mapKeyState(yubiKey.state) : 'empty'}
-            serial={yubiKey?.serial}
+            state={yubiKey ? mapKeyLifecycleStatus(yubiKey.lifecycle_status) : 'empty'}
+            serial={yubiKey?.type === 'YubiKey' ? yubiKey.data.serial : undefined}
             label={yubiKey?.label}
           />
         );
