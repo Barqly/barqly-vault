@@ -61,7 +61,7 @@ const YubiKeyDecryption: React.FC<YubiKeyDecryptionProps> = ({
   const loadAvailableDevices = async () => {
     setIsLoadingDevices(true);
     try {
-      const result = await commands.yubikeyListDevices();
+      const result = await commands.listYubikeys();
 
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to load YubiKey devices');
