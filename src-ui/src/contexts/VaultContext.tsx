@@ -477,7 +477,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     loadAllVaultData();
-  }, [vaults.length, refreshAllStatistics]); // Only run when vault count changes
+  }, [vaults.length]); // Only run when vault count changes
 
   // Update vaultKeys when currentVault changes (read from cache)
   useEffect(() => {

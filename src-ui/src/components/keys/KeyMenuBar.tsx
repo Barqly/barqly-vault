@@ -15,7 +15,7 @@ interface KeyMenuBarProps {
  * Shows 1 passphrase + 3 YubiKey slots in a single row
  */
 export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className = '' }) => {
-  const { currentVault, getCurrentVaultKeys, keyCache, isLoadingKeys } = useVault();
+  const { currentVault, getCurrentVaultKeys, keyCache } = useVault();
 
   // Process keys from cache using type guards (instant, no async wait)
   const { passphraseKey, yubiKeys } = useMemo(() => {
@@ -45,7 +45,9 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
   };
 
   // Map KeyLifecycleStatus to slot state for UI display
-  const mapKeyLifecycleStatus = (status: KeyLifecycleStatus): 'active' | 'registered' | 'orphaned' | 'empty' => {
+  const mapKeyLifecycleStatus = (
+    status: KeyLifecycleStatus,
+  ): 'active' | 'registered' | 'orphaned' | 'empty' => {
     switch (status) {
       case 'active':
         return 'active';
@@ -62,17 +64,8 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
     }
   };
 
-  if (isLoadingKeys) {
-    return (
-      <div className={`flex items-center gap-2 ${className}`}>
-        <div className="animate-pulse flex gap-2">
-          <div className="w-24 h-7 bg-slate-200 rounded-full"></div>
-          <div className="w-24 h-7 bg-slate-200 rounded-full"></div>
-        </div>
-      </div>
-    );
-  }
-
+  // CACHE-FIRST: Never show loading skeleton during navigation
+  // The cache already has the data - show it immediately!
   if (!currentVault) {
     return null; // Don't show key menu when no vault selected
   }
