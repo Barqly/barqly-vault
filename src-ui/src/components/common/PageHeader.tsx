@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { KeyMenuBar } from '../keys/KeyMenuBar';
 import { useVault } from '../../contexts/VaultContext';
@@ -40,6 +41,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   hasSelectedFiles = false,
 }) => {
   const { currentVault, vaults, setCurrentVault, keyCache } = useVault();
+  const navigate = useNavigate();
 
   // Filter to only vaults with keys, then sort alphabetically
   const vaultsWithKeys = useMemo(() => {
@@ -51,8 +53,34 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [vaults, keyCache]);
 
+  // Smart vault selection logic
+  useEffect(() => {
+    if (!showVaultSelector) return;
+
+    if (vaultsWithKeys.length === 1) {
+      // Single vault: auto-select it
+      const singleVault = vaultsWithKeys[0];
+      if (currentVault?.id !== singleVault.id) {
+        setCurrentVault(singleVault.id);
+        onVaultChange?.(singleVault.id);
+      }
+    } else if (vaultsWithKeys.length > 1) {
+      // Multiple vaults: clear selection to force user choice
+      if (currentVault) {
+        setCurrentVault('');
+        onVaultChange?.('');
+      }
+    }
+  }, [showVaultSelector, vaultsWithKeys.length]); // Only run when vault count changes
+
   const handleVaultChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newVaultId = event.target.value;
+
+    // Handle "Create Vault" option
+    if (newVaultId === 'create-vault') {
+      navigate('/vault-hub');
+      return;
+    }
 
     if (!newVaultId) return;
 
@@ -93,27 +121,52 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             {title}
           </h1>
 
-          {showVaultSelector && vaultsWithKeys.length > 0 && (
-            <select
-              className="px-3 py-1 border border-gray-300 rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={currentVault?.id || ''}
-              onChange={handleVaultChange}
-              style={{ height: '28px' }}
-            >
-              <option value="" disabled>
-                Select vault...
-              </option>
-              {vaultsWithKeys.map((vault) => {
-                const displayName =
-                  vault.name.length > 20 ? vault.name.substring(0, 20) + '...' : vault.name;
-
-                return (
-                  <option key={vault.id} value={vault.id} title={vault.name}>
-                    {displayName}
+          {showVaultSelector && (
+            <>
+              {vaultsWithKeys.length === 0 ? (
+                // No vaults with keys - show "Create Vault" button-like select
+                <select
+                  className="px-4 py-1 border border-gray-300 rounded-full bg-white text-sm font-medium text-blue-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value="create-vault"
+                  onChange={handleVaultChange}
+                  style={{ height: '28px' }}
+                >
+                  <option value="create-vault">+ Create Vault</option>
+                </select>
+              ) : vaultsWithKeys.length === 1 ? (
+                // Single vault - show as non-interactive label (auto-selected)
+                <div
+                  className="px-4 py-1 border border-gray-300 rounded-full bg-gray-50 text-sm text-gray-700"
+                  style={{ height: '28px', display: 'flex', alignItems: 'center' }}
+                >
+                  {vaultsWithKeys[0].name.length > 20
+                    ? vaultsWithKeys[0].name.substring(0, 20) + '...'
+                    : vaultsWithKeys[0].name}
+                </div>
+              ) : (
+                // Multiple vaults - show dropdown with "Select Vault..." placeholder
+                <select
+                  className="px-4 py-1 border border-gray-300 rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={currentVault?.id || ''}
+                  onChange={handleVaultChange}
+                  style={{ height: '28px' }}
+                >
+                  <option value="" disabled>
+                    Select Vault...
                   </option>
-                );
-              })}
-            </select>
+                  {vaultsWithKeys.map((vault) => {
+                    const displayName =
+                      vault.name.length > 20 ? vault.name.substring(0, 20) + '...' : vault.name;
+
+                    return (
+                      <option key={vault.id} value={vault.id} title={vault.name}>
+                        {displayName}
+                      </option>
+                    );
+                  })}
+                </select>
+              )}
+            </>
           )}
         </div>
 
