@@ -202,18 +202,8 @@ export const useDecryptionWorkflow = () => {
       try {
         setSelectedFile(filePath);
 
-        // Check if vault is recognized
+        // Check if vault is recognized (also populates creation date and keys)
         await checkVaultRecognition(filePath);
-
-        // Extract metadata from filename
-        const fileName = filePath.split('/').pop() || '';
-        const match = fileName.match(/(\d{4}-\d{2}-\d{2})/);
-        if (match) {
-          setVaultMetadata((prev) => ({
-            ...prev,
-            creationDate: match[1],
-          }));
-        }
 
         // Visual feedback from UI transition is sufficient
       } catch (error) {
