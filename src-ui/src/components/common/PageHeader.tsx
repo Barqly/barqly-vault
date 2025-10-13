@@ -117,7 +117,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
       <div className="px-6 h-16 flex items-center justify-between">
         {/* Left side: Title + Vault Selector */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <h1
             className="flex items-center gap-3 text-2xl font-semibold"
             style={{ color: '#565555' }}
@@ -132,18 +132,18 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               {vaultsWithKeys.length === 0 ? (
                 // No vaults with keys - show "Create Vault" button-like select
                 <select
-                  className="inline-flex items-center gap-2 px-4 py-1 border border-gray-300 rounded-full bg-white text-sm font-medium text-blue-600 cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-gray-300 rounded-full bg-white text-sm font-medium text-blue-600 cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value="create-vault"
                   onChange={handleVaultChange}
-                  style={{ height: '28px' }}
+                  style={{ height: '32px' }}
                 >
                   <option value="create-vault">+ Create Vault</option>
                 </select>
               ) : vaultsWithKeys.length === 1 ? (
                 // Single vault - show as non-interactive label (auto-selected, blue icon)
                 <div
-                  className="inline-flex items-center gap-2 px-4 py-1 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700"
-                  style={{ height: '28px' }}
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700"
+                  style={{ height: '32px' }}
                   title={vaultsWithKeys[0].name}
                 >
                   <Archive className="h-3.5 w-3.5 text-blue-600" />
@@ -162,7 +162,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                     }`}
                   />
                   <select
-                    className={`pl-8 pr-8 py-1 border rounded-full text-sm font-medium hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer ${
+                    className={`pl-8 pr-8 py-1.5 border rounded-full text-sm font-medium hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer ${
                       userSelectedVault && currentVault
                         ? 'border-blue-200 bg-blue-50 text-slate-700 hover:bg-blue-100'
                         : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
@@ -170,7 +170,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                     value={userSelectedVault && currentVault ? currentVault.id : ''}
                     onChange={handleVaultChange}
                     style={{
-                      height: '28px',
+                      height: '32px',
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                       backgroundRepeat: 'no-repeat',
                       backgroundPosition: 'right 0.5rem center',
