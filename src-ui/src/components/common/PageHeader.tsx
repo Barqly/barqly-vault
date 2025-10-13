@@ -115,7 +115,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         Skip to main content
       </a>
 
-      <div className="px-6 h-16 flex items-center justify-between">
+      <div className="px-2 h-16 flex items-center justify-between">
         {/* Left side: Title + Vault Selector */}
         <div className="flex items-center gap-6">
           <h1
