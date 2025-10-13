@@ -28,10 +28,10 @@ export const CompactYubiKeyCard: React.FC<CompactYubiKeySlotProps> = ({
   isInteractive = true, // Default to interactive for backward compatibility
   className = '',
 }) => {
-  // Fixed width slot with responsive styling
+  // Fixed width and height slot with responsive styling
   const getSlotStyles = () => {
     const baseStyles =
-      'w-32 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all duration-200';
+      'w-32 h-8 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all duration-200';
 
     if (!isInteractive && state === 'empty') {
       // Non-interactive empty slot (on non-Manage Keys pages)
@@ -135,7 +135,9 @@ export const CompactYubiKeyCard: React.FC<CompactYubiKeySlotProps> = ({
       {/* Icon with status indicator */}
       <div className="relative flex-shrink-0">
         {state === 'empty' && !isInteractive ? (
-          <Circle className="h-3.5 w-3.5 text-gray-400" />
+          <span className="text-base text-gray-400" role="img" aria-label="Empty">
+            ○
+          </span>
         ) : (
           <>
             <span
