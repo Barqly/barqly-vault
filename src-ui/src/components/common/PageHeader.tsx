@@ -140,13 +140,13 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                   <option value="create-vault">+ Create Vault</option>
                 </select>
               ) : vaultsWithKeys.length === 1 ? (
-                // Single vault - show as non-interactive label (auto-selected)
+                // Single vault - show as non-interactive label (auto-selected, blue icon)
                 <div
-                  className="inline-flex items-center gap-2 px-4 py-1 border border-slate-200 rounded-full bg-slate-50 text-sm text-slate-700"
+                  className="inline-flex items-center gap-2 px-4 py-1 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700"
                   style={{ height: '28px' }}
                   title={vaultsWithKeys[0].name}
                 >
-                  <Archive className="h-3.5 w-3.5 text-slate-600" />
+                  <Archive className="h-3.5 w-3.5 text-blue-600" />
                   <span className="font-medium">
                     {vaultsWithKeys[0].name.length > 20
                       ? vaultsWithKeys[0].name.substring(0, 20) + '...'
@@ -156,9 +156,17 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               ) : (
                 // Multiple vaults - show dropdown with "Select Vault..." placeholder
                 <div className="relative inline-flex items-center">
-                  <Archive className="absolute left-3 h-3.5 w-3.5 text-slate-600 pointer-events-none z-10" />
+                  <Archive
+                    className={`absolute left-3 h-3.5 w-3.5 pointer-events-none z-10 transition-colors ${
+                      userSelectedVault && currentVault ? 'text-blue-600' : 'text-slate-600'
+                    }`}
+                  />
                   <select
-                    className="pl-8 pr-8 py-1 border border-slate-200 rounded-full bg-slate-50 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+                    className={`pl-8 pr-8 py-1 border rounded-full text-sm font-medium hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer ${
+                      userSelectedVault && currentVault
+                        ? 'border-blue-200 bg-blue-50 text-slate-700 hover:bg-blue-100'
+                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                    }`}
                     value={userSelectedVault && currentVault ? currentVault.id : ''}
                     onChange={handleVaultChange}
                     style={{
