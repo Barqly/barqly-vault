@@ -151,21 +151,21 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 // No vault selected yet - show placeholder badge
                 <div
                   className="inline-flex items-center gap-2 px-4 py-1.5 border border-dashed border-gray-300 rounded-full bg-gray-50 text-sm text-gray-500"
-                  style={{ height: '32px', minWidth: '140px' }}
+                  style={{ height: '32px', width: '200px' }}
                   title="Select an encrypted vault file to continue"
                 >
-                  <Archive className="h-3.5 w-3.5 text-gray-400" />
+                  <Archive className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
                   <span className="font-medium">Select Vault...</span>
                 </div>
               ) : readonlyVaultVariant === 'recovery' ? (
                 // Recovery mode - yellow badge with warning icon
                 <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-yellow-200 rounded-full bg-yellow-50 text-sm text-slate-700"
-                  style={{ height: '32px', minWidth: '140px' }}
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-yellow-200 rounded-full bg-yellow-50 text-sm text-slate-700 whitespace-nowrap"
+                  style={{ height: '32px', width: '200px' }}
                   title="Vault manifest not found - recovery mode active"
                 >
-                  <AlertTriangle className="h-3.5 w-3.5 text-yellow-600" />
-                  <span className="font-medium">
+                  <AlertTriangle className="h-3.5 w-3.5 text-yellow-600 flex-shrink-0" />
+                  <span className="font-medium overflow-hidden text-ellipsis">
                     {readonlyVaultName.length > 20
                       ? readonlyVaultName.substring(0, 20) + '...'
                       : readonlyVaultName}
@@ -174,12 +174,12 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               ) : (
                 // Normal mode - blue badge with vault icon
                 <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700"
-                  style={{ height: '32px', minWidth: '140px' }}
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700 whitespace-nowrap"
+                  style={{ height: '32px', width: '200px' }}
                   title={readonlyVaultName}
                 >
-                  <Archive className="h-3.5 w-3.5 text-blue-600" />
-                  <span className="font-medium">
+                  <Archive className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                  <span className="font-medium overflow-hidden text-ellipsis">
                     {readonlyVaultName.length > 20
                       ? readonlyVaultName.substring(0, 20) + '...'
                       : readonlyVaultName}
@@ -196,19 +196,19 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                   className="inline-flex items-center gap-2 px-4 py-1.5 border border-gray-300 rounded-full bg-white text-sm font-medium text-blue-600 cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value="create-vault"
                   onChange={handleVaultChange}
-                  style={{ height: '32px' }}
+                  style={{ height: '32px', width: '200px' }}
                 >
                   <option value="create-vault">+ Create Vault</option>
                 </select>
               ) : vaultsWithKeys.length === 1 ? (
                 // Single vault - show as non-interactive label (auto-selected, blue icon)
                 <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700"
-                  style={{ height: '32px' }}
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700 whitespace-nowrap"
+                  style={{ height: '32px', width: '200px' }}
                   title={vaultsWithKeys[0].name}
                 >
-                  <Archive className="h-3.5 w-3.5 text-blue-600" />
-                  <span className="font-medium">
+                  <Archive className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                  <span className="font-medium overflow-hidden text-ellipsis">
                     {vaultsWithKeys[0].name.length > 20
                       ? vaultsWithKeys[0].name.substring(0, 20) + '...'
                       : vaultsWithKeys[0].name}
@@ -216,14 +216,14 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 </div>
               ) : (
                 // Multiple vaults - show dropdown with "Select Vault..." placeholder
-                <div className="relative inline-flex items-center">
+                <div className="relative inline-flex items-center" style={{ width: '200px' }}>
                   <Archive
-                    className={`absolute left-3 h-3.5 w-3.5 pointer-events-none z-10 transition-colors ${
+                    className={`absolute left-3 h-3.5 w-3.5 pointer-events-none z-10 transition-colors flex-shrink-0 ${
                       userSelectedVault && currentVault ? 'text-blue-600' : 'text-slate-600'
                     }`}
                   />
                   <select
-                    className={`pl-8 pr-8 py-1.5 border rounded-full text-sm font-medium hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer ${
+                    className={`w-full pl-8 pr-8 py-1.5 border rounded-full text-sm font-medium hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis ${
                       userSelectedVault && currentVault
                         ? 'border-blue-200 bg-blue-50 text-slate-700 hover:bg-blue-100'
                         : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'

@@ -85,7 +85,7 @@ const DecryptPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
       {/* Page Header with Vault Display - Full Width */}
       <PageHeader
-        title="Decrypt Your Vault"
+        title="Decrypt Vault"
         icon={Unlock}
         skipNavTarget="#main-content"
         showVaultSelector={true}
