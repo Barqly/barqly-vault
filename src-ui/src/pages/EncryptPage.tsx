@@ -84,7 +84,7 @@ const EncryptPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Unified App Header with Vault Selector */}
+      {/* Page Header with Vault Selector - Full Width */}
       <PageHeader
         title="Encrypt Vault"
         icon={Lock}
@@ -94,17 +94,19 @@ const EncryptPage: React.FC = () => {
         hasSelectedFiles={!!selectedFiles}
       />
 
-      {/* Progress Bar */}
-      <ProgressBar
-        steps={ENCRYPTION_STEPS}
-        currentStep={currentStep}
-        completedSteps={new Set(Array.from({ length: currentStep - 1 }, (_, i) => i + 1))}
-        onStepClick={undefined}
-        isClickable={false}
-        variant="compact"
-      />
+      {/* Progress Bar - Full Width */}
+      <div className="w-full">
+        <ProgressBar
+          steps={ENCRYPTION_STEPS}
+          currentStep={currentStep}
+          completedSteps={new Set(Array.from({ length: currentStep - 1 }, (_, i) => i + 1))}
+          onStepClick={undefined}
+          isClickable={false}
+          variant="compact"
+        />
+      </div>
 
-      {/* Main content */}
+      {/* Main content - Centered Container */}
       <AppPrimaryContainer id="main-content">
         <div className="mt-6 space-y-6">
           {/* Error display */}
