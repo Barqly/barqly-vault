@@ -52,7 +52,7 @@ const SidebarNav: React.FC = () => {
       `}
     >
       {/* Navigation Items */}
-      <nav className="flex-1 pt-4 pb-4 overflow-hidden">
+      <nav className="flex-1 pt-2.5 pb-4 overflow-hidden">
         <ul className="space-y-1 px-2">
           {navItems.map((item) => {
             const Icon = item.icon;
