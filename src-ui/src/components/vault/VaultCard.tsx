@@ -131,7 +131,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
         }
         ${isDropTarget ? 'border-blue-400 border-dashed bg-blue-50' : ''}
       `}
-      style={{ minHeight: '280px' }}
+      style={{ minHeight: '200px' }}
     >
       {/* Card Content - flippable */}
       <div
@@ -205,7 +205,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
             </div>
 
             {/* Metadata Section */}
-            <div className="px-6 pb-4">
+            <div className="px-6 pb-12">
               {isLoading ? (
                 <div className="text-xs text-slate-400">Loading statistics...</div>
               ) : error ? (
