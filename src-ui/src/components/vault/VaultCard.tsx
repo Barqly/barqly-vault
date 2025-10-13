@@ -12,11 +12,7 @@ import {
 } from 'lucide-react';
 import { VaultSummary, KeyReference, VaultStatistics, commands } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
-import {
-  formatLastEncrypted,
-  formatBytes,
-  formatFileCount,
-} from '../../lib/format-utils';
+import { formatLastEncrypted, formatBytes, formatFileCount } from '../../lib/format-utils';
 
 interface VaultCardProps {
   vault: VaultSummary;
@@ -100,9 +96,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const yubiKeys = keys.filter(isYubiKey);
 
   // Truncate vault name for display
-  const displayName = vault.name.length > 20
-    ? `${vault.name.substring(0, 20)}...`
-    : vault.name;
+  const displayName = vault.name.length > 20 ? `${vault.name.substring(0, 20)}...` : vault.name;
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();

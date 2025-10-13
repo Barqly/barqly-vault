@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEncryptionWorkflow } from '../hooks/useEncryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
-import type { ErrorCode, CommandError } from '../bindings';
+import type { CommandError } from '../bindings';
 import { Lock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import PageHeader from '../components/common/PageHeader';
@@ -59,6 +59,7 @@ const EncryptPage: React.FC = () => {
     handleEncryptAnother,
     handleKeyChange,
     handleFileValidationError,
+    handleVaultChange,
 
     // Navigation handlers
     handleStepNavigation,
@@ -83,8 +84,15 @@ const EncryptPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Unified App Header */}
-      <PageHeader title="Encrypt Your Vault" icon={Lock} skipNavTarget="#main-content" />
+      {/* Unified App Header with Vault Selector */}
+      <PageHeader
+        title="Encrypt Vault"
+        icon={Lock}
+        skipNavTarget="#main-content"
+        showVaultSelector={true}
+        onVaultChange={handleVaultChange}
+        hasSelectedFiles={!!selectedFiles}
+      />
 
       {/* Progress Bar */}
       <ProgressBar

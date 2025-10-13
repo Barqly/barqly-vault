@@ -319,6 +319,27 @@ export const useEncryptionWorkflow = () => {
     setFileValidationError(error);
   }, []);
 
+  // Handle vault change - clear selected files and reset workflow
+  const handleVaultChange = useCallback(
+    (vaultId: string) => {
+      // Clear selected files when vault changes
+      clearSelection();
+      setCurrentStep(1);
+      setPrevSelectedFiles(null);
+      setFileValidationError(null);
+      setBundleContents(null);
+
+      // Reset output settings so they can be regenerated for new vault
+      setOutputPath('');
+      setArchiveName('');
+
+      console.log('[EncryptionWorkflow] Vault changed, resetting workflow', {
+        newVaultId: vaultId,
+      });
+    },
+    [clearSelection],
+  );
+
   return {
     // State - simplified for multi-key encryption
     selectedFiles,
@@ -356,6 +377,7 @@ export const useEncryptionWorkflow = () => {
     handleEncryptAnother,
     handleKeyChange,
     handleFileValidationError,
+    handleVaultChange,
 
     // Navigation handlers
     handleStepNavigation,

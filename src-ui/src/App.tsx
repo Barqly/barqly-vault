@@ -27,7 +27,7 @@ function SmartLanding(): ReactElement {
       keyCacheSize: keyCache.size,
       keyCacheEntries: Array.from(keyCache.entries()).map(([id, keys]) => ({
         vaultId: id,
-        keyCount: keys.length
+        keyCount: keys.length,
       })),
     });
 
@@ -50,7 +50,9 @@ function SmartLanding(): ReactElement {
       console.log('🎯 SmartLanding: Has keys but no vaults → Navigating to /vault-hub');
       navigate('/vault-hub', { replace: true });
     } else {
-      console.log('🎯 SmartLanding: ✅ Setup complete (has vaults & keys) → Navigating to /encrypt');
+      console.log(
+        '🎯 SmartLanding: ✅ Setup complete (has vaults & keys) → Navigating to /encrypt',
+      );
       navigate('/encrypt', { replace: true });
     }
   }, [isInitialized, vaults, keyCache, navigate]); // Wait for initialization
