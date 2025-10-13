@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Key, Plus, Upload, Search, Grid3x3, List, RefreshCcw } from 'lucide-react';
 import { useVault } from '../contexts/VaultContext';
 import { useManageKeysWorkflow } from '../hooks/useManageKeysWorkflow';
-import UniversalHeader from '../components/common/UniversalHeader';
+import PageHeader from '../components/common/PageHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import { KeyCard } from '../components/keys/KeyCard';
 import { KeyImportDialog } from '../components/keys/KeyImportDialog';
@@ -333,7 +333,7 @@ const ManageKeysPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      <UniversalHeader title="Manage Keys" icon={Key} />
+      <PageHeader title="Manage Keys" icon={Key} />
 
       <AppPrimaryContainer>
         {/* Action Bar */}

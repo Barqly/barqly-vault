@@ -4,7 +4,7 @@ import { Shield, Plus } from 'lucide-react';
 import { useVault } from '../contexts/VaultContext';
 import { useVaultHubWorkflow } from '../hooks/useVaultHubWorkflow';
 import { logger } from '../lib/logger';
-import UniversalHeader from '../components/common/UniversalHeader';
+import PageHeader from '../components/common/PageHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import { ErrorMessage } from '../components/ui/error-message';
@@ -112,7 +112,7 @@ const VaultHub: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Unified App Header */}
-      <UniversalHeader
+      <PageHeader
         title={
           currentVault
             ? currentVault.name.length > 20

@@ -4,7 +4,7 @@ import { ErrorMessage } from '../components/ui/error-message';
 import type { ErrorCode, CommandError } from '../bindings';
 import { Unlock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
-import UniversalHeader from '../components/common/UniversalHeader';
+import PageHeader from '../components/common/PageHeader';
 import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
 import ProgressiveDecryptionCards from '../components/decrypt/ProgressiveDecryptionCards';
 import DecryptionReadyPanel from '../components/decrypt/DecryptionReadyPanel';
@@ -84,7 +84,7 @@ const DecryptPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Unified App Header */}
-      <UniversalHeader title="Decrypt Your Vault" icon={Unlock} skipNavTarget="#main-content" />
+      <PageHeader title="Decrypt Your Vault" icon={Unlock} skipNavTarget="#main-content" />
 
       {/* Progress Bar */}
       <ProgressBar

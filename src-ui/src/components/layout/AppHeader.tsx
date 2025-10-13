@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sparkles, Lock, Zap } from 'lucide-react';
 
-const TopStatusBar: React.FC = () => {
+const AppHeader: React.FC = () => {
   return (
     <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
       {/* Left: Logo + Tagline */}
@@ -31,4 +31,4 @@ const TopStatusBar: React.FC = () => {
   );
 };
 
-export default TopStatusBar;
+export default AppHeader;

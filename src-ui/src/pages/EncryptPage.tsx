@@ -5,7 +5,7 @@ import { ErrorMessage } from '../components/ui/error-message';
 import type { ErrorCode, CommandError } from '../bindings';
 import { Lock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
-import UniversalHeader from '../components/common/UniversalHeader';
+import PageHeader from '../components/common/PageHeader';
 import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
 import ProgressiveEncryptionCards from '../components/encrypt/ProgressiveEncryptionCards';
 import EncryptionReadyPanel from '../components/encrypt/EncryptionReadyPanel';
@@ -84,7 +84,7 @@ const EncryptPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Unified App Header */}
-      <UniversalHeader title="Encrypt Your Vault" icon={Lock} skipNavTarget="#main-content" />
+      <PageHeader title="Encrypt Your Vault" icon={Lock} skipNavTarget="#main-content" />
 
       {/* Progress Bar */}
       <ProgressBar

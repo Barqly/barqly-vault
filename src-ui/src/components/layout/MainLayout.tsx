@@ -1,6 +1,6 @@
 import React from 'react';
 import SidebarNav from './SidebarNav';
-import TopStatusBar from './TopStatusBar';
+import AppHeader from './AppHeader';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -10,7 +10,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Universal Header - Full Width Across Top */}
-      <TopStatusBar />
+      <AppHeader />
 
       {/* Main Layout: Sidebar + Content */}
       <div className="flex flex-1 min-h-0">

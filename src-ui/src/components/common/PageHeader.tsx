@@ -2,7 +2,7 @@ import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import { KeyMenuBar } from '../keys/KeyMenuBar';
 
-interface UniversalHeaderProps {
+interface PageHeaderProps {
   /** The title to display (e.g., "Create Your Vault Key", "Encrypt Your Vault") */
   title: string;
   /** The icon to display next to the title */
@@ -21,7 +21,7 @@ interface UniversalHeaderProps {
  * Unified header component used across all screens (Setup, Encrypt, Decrypt)
  * Now with interactive key menu instead of static badges
  */
-const UniversalHeader: React.FC<UniversalHeaderProps> = ({
+const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   titleTooltip,
   icon: Icon,
@@ -59,4 +59,4 @@ const UniversalHeader: React.FC<UniversalHeaderProps> = ({
   );
 };
 
-export default UniversalHeader;
+export default PageHeader;
