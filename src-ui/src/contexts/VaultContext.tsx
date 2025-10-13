@@ -400,7 +400,6 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     loadAllVaultData();
   }, [vaults.length]); // Only run when vault count changes
 
-
   return (
     <VaultContext.Provider
       value={{

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { CompactPassphraseCard } from './CompactPassphraseCard';
 import { CompactYubiKeyCard } from './CompactYubiKeyCard';
 import { useVault } from '../../contexts/VaultContext';
@@ -13,9 +14,14 @@ interface KeyMenuBarProps {
 /**
  * Compact horizontal key menu bar that replaces static badges in header
  * Shows 1 passphrase + 3 YubiKey slots in a single row
+ * Context-aware: interactive on Manage Keys page, visual-only on other pages
  */
 export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className = '' }) => {
   const { currentVault, getCurrentVaultKeys, keyCache } = useVault();
+  const location = useLocation();
+
+  // Determine if we're on the Manage Keys page for interactive behavior
+  const isManageKeysPage = location.pathname === '/keys';
 
   // Process keys from cache using type guards (instant, no async wait)
   const { passphraseKey, yubiKeys } = useMemo(() => {
@@ -31,12 +37,17 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
     return { passphraseKey: passphrase, yubiKeys: yubis };
   }, [currentVault?.id, keyCache, getCurrentVaultKeys]);
 
+  // Only allow click handlers on the Manage Keys page
   const handlePassphraseClick = () => {
-    onKeySelect?.('passphrase');
+    if (isManageKeysPage) {
+      onKeySelect?.('passphrase');
+    }
   };
 
   const handleYubiKeyClick = (index: number) => {
-    onKeySelect?.('yubikey', index);
+    if (isManageKeysPage) {
+      onKeySelect?.('yubikey', index);
+    }
   };
 
   // Helper to get YubiKey data for a specific display position
@@ -72,17 +83,18 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
 
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      {/* Passphrase Slot */}
+      {/* Passphrase Slot - fixed width */}
       <CompactPassphraseCard
         vaultId={currentVault.id}
         onClick={handlePassphraseClick}
         isConfigured={passphraseKey !== undefined}
         label={passphraseKey?.label}
+        isInteractive={isManageKeysPage}
       />
 
       <span className="text-slate-400 text-xs mx-1">|</span>
 
-      {/* YubiKey Slot 1 */}
+      {/* YubiKey Slot 1 - fixed width */}
       {(() => {
         const yubiKey = getYubiKeyForPosition(0);
         return (
@@ -93,13 +105,14 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
             state={yubiKey ? mapKeyLifecycleStatus(yubiKey.lifecycle_status) : 'empty'}
             serial={yubiKey?.type === 'YubiKey' ? yubiKey.data.serial : undefined}
             label={yubiKey?.label}
+            isInteractive={isManageKeysPage}
           />
         );
       })()}
 
       <span className="text-slate-400 text-xs mx-1">|</span>
 
-      {/* YubiKey Slot 2 */}
+      {/* YubiKey Slot 2 - fixed width */}
       {(() => {
         const yubiKey = getYubiKeyForPosition(1);
         return (
@@ -110,13 +123,14 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
             state={yubiKey ? mapKeyLifecycleStatus(yubiKey.lifecycle_status) : 'empty'}
             serial={yubiKey?.type === 'YubiKey' ? yubiKey.data.serial : undefined}
             label={yubiKey?.label}
+            isInteractive={isManageKeysPage}
           />
         );
       })()}
 
       <span className="text-slate-400 text-xs mx-1">|</span>
 
-      {/* YubiKey Slot 3 */}
+      {/* YubiKey Slot 3 - fixed width */}
       {(() => {
         const yubiKey = getYubiKeyForPosition(2);
         return (
@@ -127,6 +141,7 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ onKeySelect, className =
             state={yubiKey ? mapKeyLifecycleStatus(yubiKey.lifecycle_status) : 'empty'}
             serial={yubiKey?.type === 'YubiKey' ? yubiKey.data.serial : undefined}
             label={yubiKey?.label}
+            isInteractive={isManageKeysPage}
           />
         );
       })()}

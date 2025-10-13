@@ -6,11 +6,7 @@ const TopStatusBar: React.FC = () => {
     <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
       {/* Left: Logo + Tagline */}
       <div className="flex flex-col gap-1 items-start">
-        <img
-          src="/barqly-vault-text-hdr.svg"
-          alt="Barqly Vault"
-          className="h-8"
-        />
+        <img src="/barqly-vault-text-hdr.svg" alt="Barqly Vault" className="h-8" />
         <p className="text-xs text-slate-500 font-light whitespace-nowrap pl-1">
           Secure backup for sensitive data & documents
         </p>

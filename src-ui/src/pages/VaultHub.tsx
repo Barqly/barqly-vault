@@ -113,7 +113,7 @@ const VaultHub: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Unified App Header */}
       <UniversalHeader
-        title={currentVault ? currentVault.name : "Create New Vault"}
+        title={currentVault ? currentVault.name : 'Create New Vault'}
         icon={Shield}
         description="Manage your encrypted vaults"
         skipNavTarget="#main-content"
