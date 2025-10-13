@@ -147,26 +147,40 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {showVaultSelector && vaultSelectorMode === 'readonly' ? (
             // READONLY MODE (Decrypt Page)
             <>
-              {readonlyVaultVariant === 'recovery' ? (
+              {!readonlyVaultName ? (
+                // No vault selected yet - show placeholder badge
+                <div
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-dashed border-gray-300 rounded-full bg-gray-50 text-sm text-gray-500"
+                  style={{ height: '32px', minWidth: '140px' }}
+                  title="Select an encrypted vault file to continue"
+                >
+                  <Archive className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="font-medium">Select Vault...</span>
+                </div>
+              ) : readonlyVaultVariant === 'recovery' ? (
                 // Recovery mode - yellow badge with warning icon
                 <div
                   className="inline-flex items-center gap-2 px-4 py-1.5 border border-yellow-200 rounded-full bg-yellow-50 text-sm text-slate-700"
-                  style={{ height: '32px' }}
+                  style={{ height: '32px', minWidth: '140px' }}
                   title="Vault manifest not found - recovery mode active"
                 >
                   <AlertTriangle className="h-3.5 w-3.5 text-yellow-600" />
-                  <span className="font-medium">{readonlyVaultName || 'Recovery Mode'}</span>
+                  <span className="font-medium">
+                    {readonlyVaultName.length > 20
+                      ? readonlyVaultName.substring(0, 20) + '...'
+                      : readonlyVaultName}
+                  </span>
                 </div>
               ) : (
                 // Normal mode - blue badge with vault icon
                 <div
                   className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700"
-                  style={{ height: '32px' }}
+                  style={{ height: '32px', minWidth: '140px' }}
                   title={readonlyVaultName}
                 >
                   <Archive className="h-3.5 w-3.5 text-blue-600" />
                   <span className="font-medium">
-                    {readonlyVaultName && readonlyVaultName.length > 20
+                    {readonlyVaultName.length > 20
                       ? readonlyVaultName.substring(0, 20) + '...'
                       : readonlyVaultName}
                   </span>
