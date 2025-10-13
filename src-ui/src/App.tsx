@@ -25,7 +25,10 @@ function SmartLanding(): ReactElement {
       isInitialized,
       vaultCount: vaults.length,
       keyCacheSize: keyCache.size,
-      keyCacheEntries: Array.from(keyCache.entries()),
+      keyCacheEntries: Array.from(keyCache.entries()).map(([id, keys]) => ({
+        vaultId: id,
+        keyCount: keys.length
+      })),
     });
 
     // Wait for initial data load to complete
@@ -36,7 +39,8 @@ function SmartLanding(): ReactElement {
 
     // Calculate total keys across all vaults
     const totalKeys = Array.from(keyCache.values()).reduce((acc, keys) => acc + keys.length, 0);
-    console.log('🎯 SmartLanding: Loading complete. Total keys:', totalKeys, 'Vaults:', vaults.length);
+    console.log('🎯 SmartLanding: ✅ INITIALIZATION COMPLETE!');
+    console.log('🎯 SmartLanding: Total keys:', totalKeys, 'Vaults:', vaults.length);
 
     // Landing logic: Guide through setup sequence
     if (totalKeys === 0) {
@@ -46,7 +50,7 @@ function SmartLanding(): ReactElement {
       console.log('🎯 SmartLanding: Has keys but no vaults → Navigating to /vault-hub');
       navigate('/vault-hub', { replace: true });
     } else {
-      console.log('🎯 SmartLanding: Setup complete → Navigating to /encrypt');
+      console.log('🎯 SmartLanding: ✅ Setup complete (has vaults & keys) → Navigating to /encrypt');
       navigate('/encrypt', { replace: true });
     }
   }, [isInitialized, vaults, keyCache, navigate]); // Wait for initialization

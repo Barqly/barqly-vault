@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Landing - Console Output</title>
+</head>
+<body>
+    <h1>Open Browser DevTools Console</h1>
+    <p>Click the button below to open the Barqly Vault app and watch the console for initialization logs:</p>
+
+    <button onclick="window.open('http://localhost:1420/', '_blank')">Open Barqly Vault</button>
+
+    <h2>Expected Console Output:</h2>
+    <pre>
+    🔍 VaultContext: Starting initialization...
+    🔍 VaultContext: refreshVaults called
+    🔍 VaultContext: Vaults loaded, marking hasLoadedVaults=true
+    🔍 VaultContext: Starting cache population for all vaults...
+    🔍 VaultContext: All data loaded and cached, marking as initialized
+    🎯 SmartLanding: ✅ INITIALIZATION COMPLETE!
+    🎯 SmartLanding: ✅ Setup complete (has vaults & keys) → Navigating to /encrypt
+    </pre>
+
+    <p>The app should navigate to <code>/encrypt</code> instead of <code>/keys</code></p>
+</body>
+</html>

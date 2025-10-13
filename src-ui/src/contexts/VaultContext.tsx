@@ -61,6 +61,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
   const [isLoadingStatistics, setIsLoadingStatistics] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [hasLoadedVaults, setHasLoadedVaults] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Get keys for current vault from cache (instant, no async)
@@ -364,17 +365,32 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // Load vaults on mount
   useEffect(() => {
     const initializeData = async () => {
+      console.log('🔍 VaultContext: Starting initialization...');
       await refreshVaults();
-      setIsInitialized(true); // Mark as initialized after first load
+      console.log('🔍 VaultContext: Vaults loaded, marking hasLoadedVaults=true');
+      setHasLoadedVaults(true);
+      // Don't set isInitialized here - wait for keys to be cached (or no vaults)
     };
     initializeData();
   }, []);
 
   // NEW: Initial cache population - load keys and statistics for all vaults on mount
   useEffect(() => {
-    const loadAllVaultData = async () => {
-      if (vaults.length === 0) return;
+    // Don't run until vaults have been loaded at least once
+    if (!hasLoadedVaults) {
+      console.log('🔍 VaultContext: Waiting for initial vault load...');
+      return;
+    }
 
+    const loadAllVaultData = async () => {
+      // If no vaults, we're fully initialized (nothing to cache)
+      if (vaults.length === 0) {
+        console.log('🔍 VaultContext: No vaults to cache, marking as initialized');
+        setIsInitialized(true);
+        return;
+      }
+
+      console.log('🔍 VaultContext: Starting cache population for all vaults...');
       logger.info('VaultContext', 'Populating cache for all vaults', {
         vaultCount: vaults.length,
       });
@@ -401,10 +417,14 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       logger.info('VaultContext', 'Cache population complete', {
         cachedVaultCount: vaults.length,
       });
+
+      // NOW we're fully initialized - vaults loaded AND keys cached
+      console.log('🔍 VaultContext: All data loaded and cached, marking as initialized');
+      setIsInitialized(true);
     };
 
     loadAllVaultData();
-  }, [vaults.length]); // Only run when vault count changes
+  }, [hasLoadedVaults, vaults.length]); // Run when vaults are first loaded OR vault count changes
 
   return (
     <VaultContext.Provider
