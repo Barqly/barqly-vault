@@ -9,7 +9,6 @@ import {
   Clock,
   HardDrive,
   Files,
-  AlertCircle,
 } from 'lucide-react';
 import { VaultSummary, KeyReference, VaultStatistics, commands } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
@@ -17,7 +16,6 @@ import {
   formatLastEncrypted,
   formatBytes,
   formatFileCount,
-  getVaultStatusBadge,
 } from '../../lib/format-utils';
 
 interface VaultCardProps {
@@ -100,11 +98,6 @@ const VaultCard: React.FC<VaultCardProps> = ({
   // Calculate key statistics
   const passphraseKeys = keys.filter(isPassphraseKey);
   const yubiKeys = keys.filter(isYubiKey);
-  const totalKeySlots = 4; // Max 4 keys per vault
-  const emptySlots = Math.max(0, totalKeySlots - keys.length);
-
-  // Get vault status badge configuration
-  const statusBadge = statistics ? getVaultStatusBadge(statistics.status) : null;
 
   // Truncate vault name for display
   const displayName = vault.name.length > 20
