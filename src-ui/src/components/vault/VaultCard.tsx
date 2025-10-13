@@ -106,6 +106,11 @@ const VaultCard: React.FC<VaultCardProps> = ({
   // Get vault status badge configuration
   const statusBadge = statistics ? getVaultStatusBadge(statistics.status) : null;
 
+  // Truncate vault name for display
+  const displayName = vault.name.length > 20
+    ? `${vault.name.substring(0, 20)}...`
+    : vault.name;
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -158,7 +163,9 @@ const VaultCard: React.FC<VaultCardProps> = ({
                     />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-800">{vault.name}</h3>
+                    <h3 className="text-lg font-semibold text-slate-800" title={vault.name}>
+                      {displayName}
+                    </h3>
 
                     {/* Key Badges - moved here from separate section */}
                     <div className="flex gap-2 mt-2">
