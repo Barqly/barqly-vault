@@ -152,27 +152,6 @@ const VaultCard: React.FC<VaultCardProps> = ({
               <p className="text-sm text-slate-500 mt-0.5">
                 {vault.description || 'No description'}
               </p>
-              {/* Status Badge */}
-              {statusBadge && (
-                <div className="mt-2 inline-flex items-center gap-1">
-                  <span
-                    className={`
-                      inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                      ${statusBadge.bgClass} ${statusBadge.textClass}
-                    `}
-                    title={statusBadge.description}
-                  >
-                    {statusBadge.label}
-                  </span>
-                  {/* Show warning icon for vaults without keys */}
-                  {statistics?.status === 'orphaned' && (
-                    <AlertCircle
-                      className="h-3.5 w-3.5 text-red-600"
-                      title="This vault has no keys attached"
-                    />
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
@@ -209,22 +188,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
             </div>
           )}
 
-          {/* Empty Slots */}
-          {emptySlots > 0 && keys.length < totalKeySlots && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onManageKeys();
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 border-2 border-dashed border-slate-300 rounded-full hover:border-blue-400 hover:bg-blue-50 transition-colors"
-              aria-label="Add key"
-            >
-              <Plus className="h-3.5 w-3.5 text-slate-400" />
-              <span className="text-xs font-medium text-slate-400">Add</span>
-            </button>
-          )}
-
-          {/* Show remaining slots indicator */}
+          {/* Show message if no keys */}
           {keys.length === 0 && <span className="text-xs text-slate-400">No keys configured</span>}
         </div>
       </div>
@@ -288,7 +252,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
         >
           <Key className="h-3.5 w-3.5" />
-          Manage
+          Keys
         </button>
 
         <button
