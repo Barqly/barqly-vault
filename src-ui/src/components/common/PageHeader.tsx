@@ -117,14 +117,16 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
       <div className="px-2 h-16 flex items-center justify-between">
         {/* Left side: Title only */}
-        <h1
-          className="flex items-center gap-3 text-2xl font-semibold"
-          style={{ color: '#565555' }}
-          title={titleTooltip}
-        >
-          <Icon className="h-5 w-5 text-blue-600" aria-hidden="true" />
-          {title}
-        </h1>
+        <div className="flex items-center">
+          <h1
+            className="flex items-center gap-3 text-2xl font-semibold leading-none"
+            style={{ color: '#565555' }}
+            title={titleTooltip}
+          >
+            <Icon className="h-5 w-5 text-blue-600" aria-hidden="true" />
+            {title}
+          </h1>
+        </div>
 
         {/* Right side: Vault Selector + Keys grouped together */}
         <div className="flex items-center gap-3">
