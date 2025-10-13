@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LucideIcon, Archive } from 'lucide-react';
+import { LucideIcon, Archive, AlertTriangle } from 'lucide-react';
 import { KeyMenuBar } from '../keys/KeyMenuBar';
 import { CompactPassphraseCard } from '../keys/CompactPassphraseCard';
 import { CompactYubiKeyCard } from '../keys/CompactYubiKeyCard';
@@ -25,6 +25,16 @@ interface PageHeaderProps {
   onVaultChange?: (vaultId: string) => void;
   /** Whether there are selected files (for confirmation on vault change) */
   hasSelectedFiles?: boolean;
+
+  // NEW: Readonly mode for Decrypt page
+  /** Mode: 'interactive' (Encrypt) or 'readonly' (Decrypt) */
+  vaultSelectorMode?: 'interactive' | 'readonly';
+  /** Vault name to display in readonly mode */
+  readonlyVaultName?: string;
+  /** Variant: 'normal' (blue) or 'recovery' (yellow) */
+  readonlyVaultVariant?: 'normal' | 'recovery';
+  /** Vault ID for readonly mode (to populate KeyMenuBar from cache) */
+  readonlyVaultId?: string | null;
 }
 
 /**
@@ -41,6 +51,10 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   showVaultSelector = false,
   onVaultChange,
   hasSelectedFiles = false,
+  vaultSelectorMode = 'interactive',
+  readonlyVaultName,
+  readonlyVaultVariant = 'normal',
+  readonlyVaultId,
 }) => {
   const { currentVault, vaults, setCurrentVault, keyCache } = useVault();
   const navigate = useNavigate();
@@ -130,7 +144,37 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
         {/* Right side: Vault Selector + Keys grouped together */}
         <div className="flex items-center gap-3">
-          {showVaultSelector && (
+          {showVaultSelector && vaultSelectorMode === 'readonly' ? (
+            // READONLY MODE (Decrypt Page)
+            <>
+              {readonlyVaultVariant === 'recovery' ? (
+                // Recovery mode - yellow badge with warning icon
+                <div
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-yellow-200 rounded-full bg-yellow-50 text-sm text-slate-700"
+                  style={{ height: '32px' }}
+                  title="Vault manifest not found - recovery mode active"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 text-yellow-600" />
+                  <span className="font-medium">{readonlyVaultName || 'Recovery Mode'}</span>
+                </div>
+              ) : (
+                // Normal mode - blue badge with vault icon
+                <div
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700"
+                  style={{ height: '32px' }}
+                  title={readonlyVaultName}
+                >
+                  <Archive className="h-3.5 w-3.5 text-blue-600" />
+                  <span className="font-medium">
+                    {readonlyVaultName && readonlyVaultName.length > 20
+                      ? readonlyVaultName.substring(0, 20) + '...'
+                      : readonlyVaultName}
+                  </span>
+                </div>
+              )}
+            </>
+          ) : showVaultSelector ? (
+            // INTERACTIVE MODE (Encrypt Page) - existing logic
             <>
               {vaultsWithKeys.length === 0 ? (
                 // No vaults with keys - show "Create Vault" button-like select
@@ -197,20 +241,81 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 </div>
               )}
             </>
-          )}
+          ) : null}
 
           {/* Separator between vault selector and key menu (only when vault selector is shown) */}
-          {showVaultSelector && vaultsWithKeys.length > 0 && (
+          {showVaultSelector && (vaultsWithKeys.length > 0 || vaultSelectorMode === 'readonly') && (
             <span className="text-slate-300 text-lg">|</span>
           )}
 
           {/* Interactive Key Menu (hidden on mobile, shown on md+ screens) */}
-          {/* Only show keys if user has selected a vault (in multi-vault scenario) */}
           <div className="hidden md:block">
-            {vaultsWithKeys.length <= 1 || userSelectedVault ? (
+            {vaultSelectorMode === 'readonly' ? (
+              // READONLY MODE (Decrypt): Show keys based on vault ID or empty for recovery
+              readonlyVaultId && readonlyVaultVariant === 'normal' ? (
+                // Normal mode: Render keys from cache directly
+                (() => {
+                  const cachedKeys = keyCache.get(readonlyVaultId) || [];
+                  const passphraseKey = cachedKeys.find((k) => k.type === 'Passphrase');
+                  const yubiKeys = cachedKeys.filter((k) => k.type === 'YubiKey');
+
+                  return (
+                    <div className="flex items-center gap-1">
+                      <CompactPassphraseCard
+                        isConfigured={!!passphraseKey}
+                        label={passphraseKey?.label}
+                        isInteractive={false}
+                      />
+                      <span className="text-slate-400 text-xs mx-1">|</span>
+                      <CompactYubiKeyCard
+                        index={0}
+                        state={yubiKeys[0] ? 'active' : 'empty'}
+                        serial={
+                          yubiKeys[0]?.type === 'YubiKey' ? yubiKeys[0].data.serial : undefined
+                        }
+                        label={yubiKeys[0]?.label}
+                        isInteractive={false}
+                      />
+                      <span className="text-slate-400 text-xs mx-1">|</span>
+                      <CompactYubiKeyCard
+                        index={1}
+                        state={yubiKeys[1] ? 'active' : 'empty'}
+                        serial={
+                          yubiKeys[1]?.type === 'YubiKey' ? yubiKeys[1].data.serial : undefined
+                        }
+                        label={yubiKeys[1]?.label}
+                        isInteractive={false}
+                      />
+                      <span className="text-slate-400 text-xs mx-1">|</span>
+                      <CompactYubiKeyCard
+                        index={2}
+                        state={yubiKeys[2] ? 'active' : 'empty'}
+                        serial={
+                          yubiKeys[2]?.type === 'YubiKey' ? yubiKeys[2].data.serial : undefined
+                        }
+                        label={yubiKeys[2]?.label}
+                        isInteractive={false}
+                      />
+                    </div>
+                  );
+                })()
+              ) : (
+                // Recovery mode: Show empty slots (no manifest = unknown keys)
+                <div className="flex items-center gap-1">
+                  <CompactPassphraseCard isConfigured={false} isInteractive={false} />
+                  <span className="text-slate-400 text-xs mx-1">|</span>
+                  <CompactYubiKeyCard index={0} state="empty" isInteractive={false} />
+                  <span className="text-slate-400 text-xs mx-1">|</span>
+                  <CompactYubiKeyCard index={1} state="empty" isInteractive={false} />
+                  <span className="text-slate-400 text-xs mx-1">|</span>
+                  <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
+                </div>
+              )
+            ) : vaultsWithKeys.length <= 1 || userSelectedVault ? (
+              // INTERACTIVE MODE (Encrypt): Show KeyMenuBar when vault selected
               <KeyMenuBar onKeySelect={onKeySelect} />
             ) : (
-              // Show empty key slots when no vault selected (matching KeyMenuBar layout)
+              // INTERACTIVE MODE (Encrypt): Show empty slots when no vault selected
               <div className="flex items-center gap-1">
                 <CompactPassphraseCard isConfigured={false} isInteractive={false} />
                 <span className="text-slate-400 text-xs mx-1">|</span>
