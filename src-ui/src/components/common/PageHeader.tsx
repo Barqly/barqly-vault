@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, Archive } from 'lucide-react';
 import { KeyMenuBar } from '../keys/KeyMenuBar';
 import { CompactPassphraseCard } from '../keys/CompactPassphraseCard';
 import { CompactYubiKeyCard } from '../keys/CompactYubiKeyCard';
@@ -132,7 +132,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               {vaultsWithKeys.length === 0 ? (
                 // No vaults with keys - show "Create Vault" button-like select
                 <select
-                  className="px-4 py-1 border border-gray-300 rounded-full bg-white text-sm font-medium text-blue-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="inline-flex items-center gap-2 px-4 py-1 border border-gray-300 rounded-full bg-white text-sm font-medium text-blue-600 cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value="create-vault"
                   onChange={handleVaultChange}
                   style={{ height: '28px' }}
@@ -142,39 +142,57 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               ) : vaultsWithKeys.length === 1 ? (
                 // Single vault - show as non-interactive label (auto-selected)
                 <div
-                  className="px-4 py-1 border border-gray-300 rounded-full bg-gray-50 text-sm text-gray-700"
-                  style={{ height: '28px', display: 'flex', alignItems: 'center' }}
+                  className="inline-flex items-center gap-2 px-4 py-1 border border-slate-200 rounded-full bg-slate-50 text-sm text-slate-700"
+                  style={{ height: '28px' }}
+                  title={vaultsWithKeys[0].name}
                 >
-                  {vaultsWithKeys[0].name.length > 20
-                    ? vaultsWithKeys[0].name.substring(0, 20) + '...'
-                    : vaultsWithKeys[0].name}
+                  <Archive className="h-3.5 w-3.5 text-slate-600" />
+                  <span className="font-medium">
+                    {vaultsWithKeys[0].name.length > 20
+                      ? vaultsWithKeys[0].name.substring(0, 20) + '...'
+                      : vaultsWithKeys[0].name}
+                  </span>
                 </div>
               ) : (
                 // Multiple vaults - show dropdown with "Select Vault..." placeholder
-                <select
-                  className="px-4 py-1 border border-gray-300 rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={userSelectedVault && currentVault ? currentVault.id : ''}
-                  onChange={handleVaultChange}
-                  style={{ height: '28px' }}
-                >
-                  <option value="" disabled>
-                    Select Vault...
-                  </option>
-                  {vaultsWithKeys.map((vault) => {
-                    const displayName =
-                      vault.name.length > 20 ? vault.name.substring(0, 20) + '...' : vault.name;
+                <div className="relative inline-flex items-center">
+                  <Archive className="absolute left-3 h-3.5 w-3.5 text-slate-600 pointer-events-none z-10" />
+                  <select
+                    className="pl-8 pr-8 py-1 border border-slate-200 rounded-full bg-slate-50 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+                    value={userSelectedVault && currentVault ? currentVault.id : ''}
+                    onChange={handleVaultChange}
+                    style={{
+                      height: '28px',
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.5rem center',
+                      backgroundSize: '12px 12px',
+                    }}
+                  >
+                    <option value="" disabled>
+                      Select Vault...
+                    </option>
+                    {vaultsWithKeys.map((vault) => {
+                      const displayName =
+                        vault.name.length > 20 ? vault.name.substring(0, 20) + '...' : vault.name;
 
-                    return (
-                      <option key={vault.id} value={vault.id} title={vault.name}>
-                        {displayName}
-                      </option>
-                    );
-                  })}
-                </select>
+                      return (
+                        <option key={vault.id} value={vault.id} title={vault.name}>
+                          {displayName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
               )}
             </>
           )}
         </div>
+
+        {/* Separator between vault selector and key menu (only when vault selector is shown) */}
+        {showVaultSelector && vaultsWithKeys.length > 0 && (
+          <span className="text-slate-300 text-lg mx-3">|</span>
+        )}
 
         {/* Right side: Interactive Key Menu (hidden on mobile, shown on md+ screens) */}
         {/* Only show keys if user has selected a vault (in multi-vault scenario) */}
