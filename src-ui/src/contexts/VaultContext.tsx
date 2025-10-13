@@ -35,6 +35,7 @@ interface VaultContextType {
   isLoading: boolean;
   isLoadingKeys: boolean;
   isLoadingStatistics: boolean;
+  isInitialized: boolean; // Has initial data been loaded?
 
   // Error state
   error: string | null;
@@ -59,6 +60,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
   const [isLoadingStatistics, setIsLoadingStatistics] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Get keys for current vault from cache (instant, no async)
@@ -361,7 +363,11 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Load vaults on mount
   useEffect(() => {
-    refreshVaults();
+    const initializeData = async () => {
+      await refreshVaults();
+      setIsInitialized(true); // Mark as initialized after first load
+    };
+    initializeData();
   }, []);
 
   // NEW: Initial cache population - load keys and statistics for all vaults on mount
@@ -412,6 +418,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         isLoading,
         isLoadingKeys,
         isLoadingStatistics,
+        isInitialized,
         error,
         createVault,
         setCurrentVault,

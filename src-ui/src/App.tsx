@@ -18,20 +18,19 @@ const YubiKeySetupPage = lazy(() => import('./pages/YubiKeySetupPage'));
  */
 function SmartLanding(): ReactElement {
   const navigate = useNavigate();
-  const { vaults, keyCache, isLoading, isLoadingKeys } = useVault();
+  const { vaults, keyCache, isInitialized } = useVault();
 
   useEffect(() => {
     console.log('🎯 SmartLanding: Effect triggered', {
-      isLoading,
-      isLoadingKeys,
+      isInitialized,
       vaultCount: vaults.length,
       keyCacheSize: keyCache.size,
       keyCacheEntries: Array.from(keyCache.entries()),
     });
 
-    // Wait for BOTH vaults AND keys to finish loading
-    if (isLoading || isLoadingKeys) {
-      console.log('🎯 SmartLanding: Still loading, waiting...');
+    // Wait for initial data load to complete
+    if (!isInitialized) {
+      console.log('🎯 SmartLanding: Not initialized yet, waiting...');
       return;
     }
 
@@ -50,7 +49,7 @@ function SmartLanding(): ReactElement {
       console.log('🎯 SmartLanding: Setup complete → Navigating to /encrypt');
       navigate('/encrypt', { replace: true });
     }
-  }, [isLoading, isLoadingKeys, vaults, keyCache, navigate]); // Wait for both loading states
+  }, [isInitialized, vaults, keyCache, navigate]); // Wait for initialization
 
   return <LoadingSpinner centered showText text="Loading..." />;
 }
