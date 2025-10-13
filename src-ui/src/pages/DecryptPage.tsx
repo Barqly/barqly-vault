@@ -82,21 +82,32 @@ const DecryptPage: React.FC = () => {
   } = useDecryptionWorkflow();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Unified App Header */}
-      <PageHeader title="Decrypt Your Vault" icon={Unlock} skipNavTarget="#main-content" />
-
-      {/* Progress Bar */}
-      <ProgressBar
-        steps={DECRYPTION_STEPS}
-        currentStep={currentStep}
-        completedSteps={new Set(Array.from({ length: currentStep - 1 }, (_, i) => i + 1))}
-        onStepClick={undefined}
-        isClickable={false}
-        variant="compact"
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
+      {/* Page Header with Vault Display - Full Width */}
+      <PageHeader
+        title="Decrypt Your Vault"
+        icon={Unlock}
+        skipNavTarget="#main-content"
+        showVaultSelector={!!selectedFile && !!detectedVaultName}
+        vaultSelectorMode="readonly"
+        readonlyVaultName={detectedVaultName || undefined}
+        readonlyVaultVariant={isRecoveryMode ? 'recovery' : 'normal'}
+        readonlyVaultId={detectedVaultId}
       />
 
-      {/* Main content */}
+      {/* Progress Bar - Full Width */}
+      <div className="w-full">
+        <ProgressBar
+          steps={DECRYPTION_STEPS}
+          currentStep={currentStep}
+          completedSteps={new Set(Array.from({ length: currentStep - 1 }, (_, i) => i + 1))}
+          onStepClick={undefined}
+          isClickable={false}
+          variant="compact"
+        />
+      </div>
+
+      {/* Main content - Centered Container */}
       <AppPrimaryContainer id="main-content">
         <div className="mt-6 space-y-6">
           {/* Error display */}

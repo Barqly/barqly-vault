@@ -110,44 +110,64 @@ export const useDecryptionWorkflow = () => {
     [canNavigateToStep],
   );
 
-  // Check if vault is recognized
-  const checkVaultRecognition = useCallback(
-    async (filePath: string) => {
-      try {
-        // Extract vault name from filename (e.g., "Personal-Documents-2024-01-15.age")
-        const fileName = filePath.split('/').pop() || '';
-        const vaultNameMatch = fileName.match(/^([^-]+(?:-[^-]+)*?)(?:-\d{4}-\d{2}-\d{2})?\.age$/i);
-        const possibleVaultName = vaultNameMatch ? vaultNameMatch[1] : null;
+  // Check if vault is recognized using backend API
+  const checkVaultRecognition = useCallback(async (filePath: string) => {
+    try {
+      // Use backend API to analyze encrypted vault file
+      const analysisResult = await commands.analyzeEncryptedVault({
+        encrypted_file_path: filePath,
+      });
 
-        if (possibleVaultName) {
-          setDetectedVaultName(possibleVaultName);
-
-          // Check if this vault exists in our local list
-          const existingVault = vaults.find(
-            (v) => v.name.toLowerCase().replace(/\s+/g, '-') === possibleVaultName.toLowerCase(),
-          );
-
-          if (existingVault) {
-            setIsKnownVault(true);
-            setDetectedVaultId(existingVault.id);
-            setIsRecoveryMode(false);
-          } else {
-            setIsKnownVault(false);
-            setIsRecoveryMode(true);
-          }
-        } else {
-          // Can't determine vault name from file
-          setIsKnownVault(false);
-          setIsRecoveryMode(true);
-        }
-      } catch (error) {
-        console.error('[DecryptionWorkflow] Error checking vault recognition:', error);
-        setIsKnownVault(false);
-        setIsRecoveryMode(true);
+      if (analysisResult.status === 'error') {
+        throw new Error(analysisResult.error.message);
       }
-    },
-    [vaults],
-  );
+
+      const vaultInfo = analysisResult.data;
+
+      // Set vault information from backend analysis
+      setDetectedVaultName(vaultInfo.vault_name); // Already desanitized by backend
+      setDetectedVaultId(vaultInfo.vault_id);
+      setIsKnownVault(vaultInfo.manifest_exists);
+      setIsRecoveryMode(vaultInfo.is_recovery_mode);
+
+      // If normal mode, populate available keys from manifest
+      if (!vaultInfo.is_recovery_mode && vaultInfo.associated_keys.length > 0) {
+        setAvailableKeys(vaultInfo.associated_keys);
+        setSuggestedKeys(vaultInfo.associated_keys);
+      } else if (vaultInfo.is_recovery_mode) {
+        // Recovery mode: Get ALL available keys
+        const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
+
+        if (allKeysResult.status === 'ok') {
+          // Convert KeyInfo to KeyReference format
+          const keyReferences: KeyReference[] = allKeysResult.data.map((keyInfo) => ({
+            id: keyInfo.id,
+            label: keyInfo.label,
+            type: keyInfo.key_type.type,
+            data: keyInfo.key_type.data,
+            lifecycle_status: keyInfo.lifecycle_status,
+            created_at: keyInfo.created_at,
+            last_used: keyInfo.last_used,
+          }));
+
+          setAvailableKeys(keyReferences);
+          setSuggestedKeys(keyReferences);
+        }
+      }
+
+      // Extract creation date from analysis
+      if (vaultInfo.creation_date) {
+        setVaultMetadata((prev) => ({
+          ...prev,
+          creationDate: vaultInfo.creation_date || undefined,
+        }));
+      }
+    } catch (error) {
+      console.error('[DecryptionWorkflow] Error checking vault recognition:', error);
+      setIsKnownVault(false);
+      setIsRecoveryMode(true);
+    }
+  }, []);
 
   // Handle file selection
   const handleFileSelected = useCallback(
