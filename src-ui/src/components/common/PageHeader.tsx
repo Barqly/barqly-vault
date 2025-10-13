@@ -53,6 +53,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [vaults, keyCache]);
 
+  // Track if user has made a selection on this page
+  const [userSelectedVault, setUserSelectedVault] = React.useState(false);
+
   // Smart vault selection logic
   useEffect(() => {
     if (!showVaultSelector) return;
@@ -64,12 +67,10 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         setCurrentVault(singleVault.id);
         onVaultChange?.(singleVault.id);
       }
+      setUserSelectedVault(true);
     } else if (vaultsWithKeys.length > 1) {
-      // Multiple vaults: clear selection to force user choice
-      if (currentVault) {
-        setCurrentVault('');
-        onVaultChange?.('');
-      }
+      // Multiple vaults: reset user selection state on page load
+      setUserSelectedVault(false);
     }
   }, [showVaultSelector, vaultsWithKeys.length]); // Only run when vault count changes
 
@@ -83,6 +84,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
     }
 
     if (!newVaultId) return;
+
+    // Mark that user has made a selection
+    setUserSelectedVault(true);
 
     // If on Encrypt page with selected files, show confirmation
     if (hasSelectedFiles && onVaultChange) {
@@ -147,7 +151,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 // Multiple vaults - show dropdown with "Select Vault..." placeholder
                 <select
                   className="px-4 py-1 border border-gray-300 rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={currentVault?.id || ''}
+                  value={userSelectedVault && currentVault ? currentVault.id : ''}
                   onChange={handleVaultChange}
                   style={{ height: '28px' }}
                 >
@@ -171,8 +175,30 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
 
         {/* Right side: Interactive Key Menu (hidden on mobile, shown on md+ screens) */}
+        {/* Only show keys if user has selected a vault (in multi-vault scenario) */}
         <div className="hidden md:block">
-          <KeyMenuBar onKeySelect={onKeySelect} />
+          {vaultsWithKeys.length <= 1 || userSelectedVault ? (
+            <KeyMenuBar onKeySelect={onKeySelect} />
+          ) : (
+            // Show empty key slots when no vault selected
+            <div className="flex items-center gap-1">
+              <div className="px-3 py-1 border border-gray-300 rounded-full bg-gray-50 text-xs text-gray-400">
+                Empty
+              </div>
+              <span className="text-slate-400 text-xs mx-1">|</span>
+              <div className="px-3 py-1 border border-gray-300 rounded-full bg-gray-50 text-xs text-gray-400">
+                Empty
+              </div>
+              <span className="text-slate-400 text-xs mx-1">|</span>
+              <div className="px-3 py-1 border border-gray-300 rounded-full bg-gray-50 text-xs text-gray-400">
+                Empty
+              </div>
+              <span className="text-slate-400 text-xs mx-1">|</span>
+              <div className="px-3 py-1 border border-gray-300 rounded-full bg-gray-50 text-xs text-gray-400">
+                Empty
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
