@@ -2,6 +2,8 @@ import React, { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { KeyMenuBar } from '../keys/KeyMenuBar';
+import { CompactPassphraseCard } from '../keys/CompactPassphraseCard';
+import { CompactYubiKeyCard } from '../keys/CompactYubiKeyCard';
 import { useVault } from '../../contexts/VaultContext';
 
 interface PageHeaderProps {
@@ -180,23 +182,15 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {vaultsWithKeys.length <= 1 || userSelectedVault ? (
             <KeyMenuBar onKeySelect={onKeySelect} />
           ) : (
-            // Show empty key slots when no vault selected
+            // Show empty key slots when no vault selected (matching KeyMenuBar layout)
             <div className="flex items-center gap-1">
-              <div className="px-3 py-1 border border-gray-300 rounded-full bg-gray-50 text-xs text-gray-400">
-                Empty
-              </div>
+              <CompactPassphraseCard isConfigured={false} isInteractive={false} />
               <span className="text-slate-400 text-xs mx-1">|</span>
-              <div className="px-3 py-1 border border-gray-300 rounded-full bg-gray-50 text-xs text-gray-400">
-                Empty
-              </div>
+              <CompactYubiKeyCard index={0} state="empty" isInteractive={false} />
               <span className="text-slate-400 text-xs mx-1">|</span>
-              <div className="px-3 py-1 border border-gray-300 rounded-full bg-gray-50 text-xs text-gray-400">
-                Empty
-              </div>
+              <CompactYubiKeyCard index={1} state="empty" isInteractive={false} />
               <span className="text-slate-400 text-xs mx-1">|</span>
-              <div className="px-3 py-1 border border-gray-300 rounded-full bg-gray-50 text-xs text-gray-400">
-                Empty
-              </div>
+              <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
             </div>
           )}
         </div>
