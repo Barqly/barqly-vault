@@ -150,12 +150,12 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               {!readonlyVaultName ? (
                 // No vault selected yet - show placeholder badge
                 <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-dashed border-gray-300 rounded-full bg-gray-50 text-sm text-gray-500"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-dashed border-gray-300 rounded-full bg-gray-50 text-sm text-gray-400"
                   style={{ height: '32px', width: '200px' }}
                   title="Select an encrypted vault file to continue"
                 >
                   <Archive className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                  <span className="font-medium">Select Vault...</span>
+                  <span className="font-medium">No Vault</span>
                 </div>
               ) : readonlyVaultVariant === 'recovery' ? (
                 // Recovery mode - yellow badge with warning icon
