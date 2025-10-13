@@ -18,24 +18,39 @@ const YubiKeySetupPage = lazy(() => import('./pages/YubiKeySetupPage'));
  */
 function SmartLanding(): ReactElement {
   const navigate = useNavigate();
-  const { vaults, keyCache } = useVault();
+  const { vaults, keyCache, isLoading, isLoadingKeys } = useVault();
 
   useEffect(() => {
+    console.log('🎯 SmartLanding: Effect triggered', {
+      isLoading,
+      isLoadingKeys,
+      vaultCount: vaults.length,
+      keyCacheSize: keyCache.size,
+      keyCacheEntries: Array.from(keyCache.entries()),
+    });
+
+    // Wait for BOTH vaults AND keys to finish loading
+    if (isLoading || isLoadingKeys) {
+      console.log('🎯 SmartLanding: Still loading, waiting...');
+      return;
+    }
+
     // Calculate total keys across all vaults
     const totalKeys = Array.from(keyCache.values()).reduce((acc, keys) => acc + keys.length, 0);
+    console.log('🎯 SmartLanding: Loading complete. Total keys:', totalKeys, 'Vaults:', vaults.length);
 
     // Landing logic: Guide through setup sequence
     if (totalKeys === 0) {
-      // No keys exist → Must create keys first
+      console.log('🎯 SmartLanding: No keys → Navigating to /keys');
       navigate('/keys', { replace: true });
     } else if (vaults.length === 0) {
-      // Has keys but no vaults → Must create vault
+      console.log('🎯 SmartLanding: Has keys but no vaults → Navigating to /vault-hub');
       navigate('/vault-hub', { replace: true });
     } else {
-      // Setup complete → Ready to encrypt
+      console.log('🎯 SmartLanding: Setup complete → Navigating to /encrypt');
       navigate('/encrypt', { replace: true });
     }
-  }, []); // Run only once on mount
+  }, [isLoading, isLoadingKeys, vaults, keyCache, navigate]); // Wait for both loading states
 
   return <LoadingSpinner centered showText text="Loading..." />;
 }
