@@ -192,10 +192,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
                 {/* Flip Button */}
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsFlipped(!isFlipped);
-                  }}
+                  onClick={() => setIsFlipped(!isFlipped)}
                   className="p-1 rounded hover:bg-slate-100"
                   aria-label="Flip card"
                 >
@@ -236,10 +233,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
               {/* Flip Back Button */}
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsFlipped(!isFlipped);
-                }}
+                onClick={() => setIsFlipped(!isFlipped)}
                 className="p-1 rounded hover:bg-slate-100"
                 aria-label="Flip back"
               >
