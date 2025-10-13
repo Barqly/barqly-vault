@@ -131,7 +131,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
         }
         ${isDropTarget ? 'border-blue-400 border-dashed bg-blue-50' : ''}
       `}
-      style={{ minHeight: '200px' }}
+      style={{ height: '200px' }}
     >
       {/* Card Content - flippable */}
       <div
@@ -205,7 +205,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
             </div>
 
             {/* Metadata Section */}
-            <div className="px-6 pb-12">
+            <div className="px-6 pb-4">
               {isLoading ? (
                 <div className="text-xs text-slate-400">Loading statistics...</div>
               ) : error ? (
@@ -232,7 +232,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           // BACK SIDE - Description
           <div className="p-6">
             <div className="flex items-start justify-between mb-4">
-              <h3 className="text-sm font-medium text-slate-600">Description</h3>
+              <h3 className="text-sm font-semibold text-slate-700">Description</h3>
 
               {/* Flip Back Button */}
               <button
