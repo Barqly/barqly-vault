@@ -5,7 +5,7 @@ import {
   Shield,
   Lock,
   Plus,
-  MoreVertical,
+  FlipHorizontal,
   Clock,
   HardDrive,
   Files,
@@ -58,6 +58,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const [localStatistics, setLocalStatistics] = useState<VaultStatistics | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
 
   // Use prop statistics if provided, otherwise fetch locally
   const statistics = propStatistics !== undefined ? propStatistics : localStatistics;
@@ -122,7 +123,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   return (
     <div
       className={`
-        relative bg-white rounded-lg border-2 transition-all cursor-pointer
+        relative bg-white rounded-lg border-2 transition-all
         ${
           isActive
             ? 'border-blue-600 bg-blue-50 shadow-lg'
@@ -130,95 +131,130 @@ const VaultCard: React.FC<VaultCardProps> = ({
         }
         ${isDropTarget ? 'border-blue-400 border-dashed bg-blue-50' : ''}
       `}
-      onClick={onSelect}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      style={{ minHeight: '280px' }}
     >
-      {/* Card Header */}
-      <div className="p-6 pb-3">
-        <div className="flex items-start justify-between">
-          {/* Vault Icon and Info */}
-          <div className="flex gap-3">
-            <div
-              className={`
+      {/* Card Content - flippable */}
+      <div
+        className="cursor-pointer"
+        onClick={onSelect}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {!isFlipped ? (
+          // FRONT SIDE
+          <>
+            <div className="p-6 pb-3">
+              <div className="flex items-start justify-between">
+                {/* Vault Icon and Info */}
+                <div className="flex gap-3">
+                  <div
+                    className={`
               p-3 rounded-lg
               ${isActive ? 'bg-blue-100' : 'bg-slate-100'}
             `}
-            >
-              <Archive className={`h-8 w-8 ${isActive ? 'text-blue-600' : 'text-slate-600'}`} />
+                  >
+                    <Archive
+                      className={`h-8 w-8 ${isActive ? 'text-blue-600' : 'text-slate-600'}`}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-slate-800">{vault.name}</h3>
+
+                    {/* Key Badges - moved here from separate section */}
+                    <div className="flex gap-2 mt-2">
+                      {/* Passphrase Keys */}
+                      {passphraseKeys.length > 0 && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-green-100 rounded-full">
+                          <Key className="h-3.5 w-3.5 text-green-700" />
+                          <span className="text-xs font-medium text-green-700">
+                            {passphraseKeys.length}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* YubiKeys */}
+                      {yubiKeys.length > 0 && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-100 rounded-full">
+                          <Shield className="h-3.5 w-3.5 text-purple-700" />
+                          <span className="text-xs font-medium text-purple-700">
+                            {yubiKeys.length}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Show message if no keys */}
+                      {keys.length === 0 && (
+                        <span className="text-xs text-slate-400">No keys configured</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Flip Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsFlipped(!isFlipped);
+                  }}
+                  className="p-1 rounded hover:bg-slate-100"
+                  aria-label="Flip card"
+                >
+                  <FlipHorizontal className="h-4 w-4 text-slate-400" />
+                </button>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-slate-800">{vault.name}</h3>
-              <p className="text-sm text-slate-500 mt-0.5">
-                {vault.description || 'No description'}
-              </p>
+
+            {/* Metadata Section */}
+            <div className="px-6 pb-4">
+              {isLoading ? (
+                <div className="text-xs text-slate-400">Loading statistics...</div>
+              ) : error ? (
+                <div className="text-xs text-red-500">{error}</div>
+              ) : (
+                <div className="flex items-center gap-4 text-xs text-slate-500">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{formatLastEncrypted(statistics?.last_encrypted_at || null)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <HardDrive className="h-3 w-3" />
+                    <span>{formatBytes(statistics?.total_size_bytes || 0)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Files className="h-3 w-3" />
+                    <span>{formatFileCount(statistics?.file_count || 0)}</span>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-
-          {/* More Options */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              // Future: Show context menu
-            }}
-            className="p-1 rounded hover:bg-slate-100"
-            aria-label="More options"
-          >
-            <MoreVertical className="h-4 w-4 text-slate-400" />
-          </button>
-        </div>
-      </div>
-
-      {/* Key Badges Section */}
-      <div className="px-6 pb-3">
-        <div className="flex gap-2">
-          {/* Passphrase Keys */}
-          {passphraseKeys.length > 0 && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-green-100 rounded-full">
-              <Key className="h-3.5 w-3.5 text-green-700" />
-              <span className="text-xs font-medium text-green-700">{passphraseKeys.length}</span>
-            </div>
-          )}
-
-          {/* YubiKeys */}
-          {yubiKeys.length > 0 && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-100 rounded-full">
-              <Shield className="h-3.5 w-3.5 text-purple-700" />
-              <span className="text-xs font-medium text-purple-700">{yubiKeys.length}</span>
-            </div>
-          )}
-
-          {/* Show message if no keys */}
-          {keys.length === 0 && <span className="text-xs text-slate-400">No keys configured</span>}
-        </div>
-      </div>
-
-      {/* Metadata Section */}
-      <div className="px-6 pb-4">
-        {isLoading ? (
-          <div className="text-xs text-slate-400">Loading statistics...</div>
-        ) : error ? (
-          <div className="text-xs text-red-500">{error}</div>
+          </>
         ) : (
-          <div className="flex items-center gap-4 text-xs text-slate-500">
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span>{formatLastEncrypted(statistics?.last_encrypted_at || null)}</span>
+          // BACK SIDE - Description
+          <div className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="text-sm font-medium text-slate-600">Description</h3>
+
+              {/* Flip Back Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFlipped(!isFlipped);
+                }}
+                className="p-1 rounded hover:bg-slate-100"
+                aria-label="Flip back"
+              >
+                <FlipHorizontal className="h-4 w-4 text-slate-400" />
+              </button>
             </div>
-            <div className="flex items-center gap-1">
-              <HardDrive className="h-3 w-3" />
-              <span>{formatBytes(statistics?.total_size_bytes || 0)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Files className="h-3 w-3" />
-              <span>{formatFileCount(statistics?.file_count || 0)}</span>
-            </div>
+            <p className="text-sm text-slate-700 pb-12">
+              {vault.description || 'No description provided'}
+            </p>
           </div>
         )}
       </div>
 
-      {/* Quick Actions */}
-      <div className="border-t border-slate-200 px-4 py-3 flex items-center gap-2">
+      {/* Quick Actions - Fixed Footer */}
+      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 px-4 py-2 flex items-center gap-2 bg-white rounded-b-lg">
         {/* Show Encrypt button only if vault has keys (not orphaned) */}
         {statistics?.status !== 'orphaned' && keys.length > 0 ? (
           <button
