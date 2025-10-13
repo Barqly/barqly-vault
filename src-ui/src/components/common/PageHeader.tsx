@@ -116,17 +116,18 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       </a>
 
       <div className="px-2 h-16 flex items-center justify-between">
-        {/* Left side: Title + Vault Selector */}
-        <div className="flex items-center gap-6">
-          <h1
-            className="flex items-center gap-3 text-2xl font-semibold"
-            style={{ color: '#565555' }}
-            title={titleTooltip}
-          >
-            <Icon className="h-5 w-5 text-blue-600" aria-hidden="true" />
-            {title}
-          </h1>
+        {/* Left side: Title only */}
+        <h1
+          className="flex items-center gap-3 text-2xl font-semibold"
+          style={{ color: '#565555' }}
+          title={titleTooltip}
+        >
+          <Icon className="h-5 w-5 text-blue-600" aria-hidden="true" />
+          {title}
+        </h1>
 
+        {/* Right side: Vault Selector + Keys grouped together */}
+        <div className="flex items-center gap-3">
           {showVaultSelector && (
             <>
               {vaultsWithKeys.length === 0 ? (
@@ -195,30 +196,30 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               )}
             </>
           )}
-        </div>
 
-        {/* Separator between vault selector and key menu (only when vault selector is shown) */}
-        {showVaultSelector && vaultsWithKeys.length > 0 && (
-          <span className="text-slate-300 text-lg mx-3">|</span>
-        )}
-
-        {/* Right side: Interactive Key Menu (hidden on mobile, shown on md+ screens) */}
-        {/* Only show keys if user has selected a vault (in multi-vault scenario) */}
-        <div className="hidden md:block">
-          {vaultsWithKeys.length <= 1 || userSelectedVault ? (
-            <KeyMenuBar onKeySelect={onKeySelect} />
-          ) : (
-            // Show empty key slots when no vault selected (matching KeyMenuBar layout)
-            <div className="flex items-center gap-1">
-              <CompactPassphraseCard isConfigured={false} isInteractive={false} />
-              <span className="text-slate-400 text-xs mx-1">|</span>
-              <CompactYubiKeyCard index={0} state="empty" isInteractive={false} />
-              <span className="text-slate-400 text-xs mx-1">|</span>
-              <CompactYubiKeyCard index={1} state="empty" isInteractive={false} />
-              <span className="text-slate-400 text-xs mx-1">|</span>
-              <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
-            </div>
+          {/* Separator between vault selector and key menu (only when vault selector is shown) */}
+          {showVaultSelector && vaultsWithKeys.length > 0 && (
+            <span className="text-slate-300 text-lg">|</span>
           )}
+
+          {/* Interactive Key Menu (hidden on mobile, shown on md+ screens) */}
+          {/* Only show keys if user has selected a vault (in multi-vault scenario) */}
+          <div className="hidden md:block">
+            {vaultsWithKeys.length <= 1 || userSelectedVault ? (
+              <KeyMenuBar onKeySelect={onKeySelect} />
+            ) : (
+              // Show empty key slots when no vault selected (matching KeyMenuBar layout)
+              <div className="flex items-center gap-1">
+                <CompactPassphraseCard isConfigured={false} isInteractive={false} />
+                <span className="text-slate-400 text-xs mx-1">|</span>
+                <CompactYubiKeyCard index={0} state="empty" isInteractive={false} />
+                <span className="text-slate-400 text-xs mx-1">|</span>
+                <CompactYubiKeyCard index={1} state="empty" isInteractive={false} />
+                <span className="text-slate-400 text-xs mx-1">|</span>
+                <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
