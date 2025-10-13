@@ -104,6 +104,23 @@ async getProgress(input: GetProgressInput) : Promise<Result<GetProgressResponse,
 }
 },
 /**
+ * Analyze encrypted vault file and return metadata for UI display
+ * 
+ * This command extracts vault metadata from the encrypted file path without
+ * performing actual decryption. It's used by the Decrypt page to:
+ * - Display vault name in PageHeader
+ * - Show appropriate keys in dropdown
+ * - Detect recovery mode scenarios
+ */
+async analyzeEncryptedVault(input: AnalyzeEncryptedVaultRequest) : Promise<Result<AnalyzeEncryptedVaultResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("analyze_encrypted_vault", { input }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * List keys with flexible filtering options - unified API
  */
 async listUnifiedKeys(filter: KeyListFilter) : Promise<Result<KeyInfo[], CommandError>> {
@@ -434,6 +451,46 @@ async yubikeyDecryptFile(encryptedFile: string, unlockMethod: UnlockMethod | nul
 
 export type AddPassphraseKeyRequest = { vault_id: string; label: string; passphrase: string }
 export type AddPassphraseKeyResponse = { key_reference: KeyReference; public_key: string }
+/**
+ * Request to analyze an encrypted vault file
+ */
+export type AnalyzeEncryptedVaultRequest = { 
+/**
+ * Absolute path to the encrypted .age file
+ */
+encrypted_file_path: string }
+/**
+ * Response containing vault analysis results
+ */
+export type AnalyzeEncryptedVaultResponse = { 
+/**
+ * Desanitized vault name for display (e.g., "Sam Family Vault")
+ */
+vault_name: string; 
+/**
+ * Sanitized vault name from filename (e.g., "Sam-Family-Vault")
+ */
+vault_name_sanitized: string; 
+/**
+ * Whether a vault manifest exists on this machine
+ */
+manifest_exists: boolean; 
+/**
+ * Vault ID if manifest was found, null otherwise
+ */
+vault_id: string | null; 
+/**
+ * Associated keys from manifest (empty if recovery mode)
+ */
+associated_keys: KeyReference[]; 
+/**
+ * Creation date extracted from filename (e.g., "2025-01-13")
+ */
+creation_date: string | null; 
+/**
+ * True if manifest is missing (disaster recovery scenario)
+ */
+is_recovery_mode: boolean }
 /**
  * Request to attach a key to a vault
  */

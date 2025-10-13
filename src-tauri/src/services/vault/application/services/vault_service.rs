@@ -65,6 +65,34 @@ impl VaultService {
         self.repository.get_vault(vault_id).await
     }
 
+    /// Get vault metadata by sanitized name
+    ///
+    /// Searches all vaults to find one matching the sanitized name.
+    /// Used for encrypted vault file analysis where only the filename is available.
+    ///
+    /// # Arguments
+    /// * `sanitized_name` - Sanitized vault name (e.g., "Sam-Family-Vault")
+    ///
+    /// # Returns
+    /// * `Ok(Some(VaultMetadata))` - Vault found
+    /// * `Ok(None)` - No vault with matching sanitized name
+    /// * `Err(VaultError)` - Repository access error
+    pub async fn get_vault_by_sanitized_name(
+        &self,
+        sanitized_name: &str,
+    ) -> VaultResult<Option<VaultMetadata>> {
+        // List all vaults and find matching sanitized name
+        let all_vaults = self.repository.list_vaults().await?;
+
+        for vault in all_vaults {
+            if vault.vault.sanitized_name == sanitized_name {
+                return Ok(Some(vault));
+            }
+        }
+
+        Ok(None)
+    }
+
     /// Delete vault with optional force
     pub async fn delete_vault(&self, vault_id: &str, force: bool) -> VaultResult<()> {
         let metadata = self.repository.get_vault(vault_id).await?;

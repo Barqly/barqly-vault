@@ -33,6 +33,16 @@ impl VaultManager {
         self.vault_service.get_vault(vault_id).await
     }
 
+    /// Get vault metadata by sanitized name
+    pub async fn get_vault_by_sanitized_name(
+        &self,
+        sanitized_name: &str,
+    ) -> VaultResult<Option<VaultMetadata>> {
+        self.vault_service
+            .get_vault_by_sanitized_name(sanitized_name)
+            .await
+    }
+
     /// Delete vault
     pub async fn delete_vault(&self, vault_id: &str, force: bool) -> VaultResult<()> {
         self.vault_service.delete_vault(vault_id, force).await

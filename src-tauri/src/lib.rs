@@ -15,6 +15,7 @@ pub mod services; // Business logic layer (DDD) - renamed from key_management
 pub mod types; // Shared interface types for Tauri bridge (used by commands and services)
 
 use commands::{
+    analyze_encrypted_vault,
     create_manifest,
     decrypt_data,
     encrypt_files,
@@ -96,6 +97,7 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         decrypt_data,
         verify_manifest,
         get_progress,
+        analyze_encrypted_vault,
         // Storage commands
         // Unified key management
         list_unified_keys,
@@ -178,6 +180,7 @@ pub fn run_app() {
             decrypt_data,
             verify_manifest,
             get_progress,
+            analyze_encrypted_vault,
             // Storage commands
             // Unified key management
             list_unified_keys,

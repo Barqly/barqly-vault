@@ -127,6 +127,30 @@ fn collapse_separators(s: &str) -> String {
     result
 }
 
+/// Desanitize a vault name from filesystem format back to display format
+///
+/// Converts filesystem-safe name like "Sam-Family-Vault" back to "Sam Family Vault".
+/// This is a simple inverse of the sanitization process - replaces hyphens with spaces.
+///
+/// Note: This is a best-effort reconstruction. Complex sanitization (emojis, special chars)
+/// cannot be perfectly reversed. For accurate display names, use the `display` field
+/// from `SanitizedLabel` or vault manifest.
+///
+/// # Arguments
+/// * `sanitized` - Sanitized vault name (e.g., "Sam-Family-Vault")
+///
+/// # Returns
+/// * Desanitized name (e.g., "Sam Family Vault")
+///
+/// # Examples
+/// ```ignore
+/// let display_name = desanitize_vault_name("Sam-Family-Vault");
+/// // Returns: "Sam Family Vault"
+/// ```
+pub fn desanitize_vault_name(sanitized: &str) -> String {
+    sanitized.replace('-', " ")
+}
+
 /// Check if name is a Windows reserved name
 fn check_reserved_names(_name: &str) -> Result<(), StorageError> {
     #[cfg(target_os = "windows")]
@@ -187,5 +211,29 @@ mod tests {
     fn test_empty_label_fails() {
         assert!(sanitize_label("").is_err());
         assert!(sanitize_label("   ").is_err());
+    }
+
+    #[test]
+    fn test_desanitize_basic() {
+        let display_name = desanitize_vault_name("Sam-Family-Vault");
+        assert_eq!(display_name, "Sam Family Vault");
+    }
+
+    #[test]
+    fn test_desanitize_preserves_underscores() {
+        let display_name = desanitize_vault_name("test_vault");
+        assert_eq!(display_name, "test_vault");
+    }
+
+    #[test]
+    fn test_desanitize_single_word() {
+        let display_name = desanitize_vault_name("Vault");
+        assert_eq!(display_name, "Vault");
+    }
+
+    #[test]
+    fn test_desanitize_with_multiple_words() {
+        let display_name = desanitize_vault_name("AKAH-Family-Trust");
+        assert_eq!(display_name, "AKAH Family Trust");
     }
 }
