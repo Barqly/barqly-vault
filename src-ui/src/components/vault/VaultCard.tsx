@@ -302,13 +302,6 @@ const VaultCard: React.FC<VaultCardProps> = ({
           Delete
         </button>
       </div>
-
-      {/* Active Indicator */}
-      {isActive && (
-        <div className="absolute top-0 right-0 mt-2 mr-2">
-          <div className="px-2 py-1 bg-blue-600 text-white text-xs font-medium rounded">Active</div>
-        </div>
-      )}
     </div>
   );
 };
