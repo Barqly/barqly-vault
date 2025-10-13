@@ -18,18 +18,6 @@ const SidebarNav: React.FC = () => {
 
   const navItems: NavItem[] = [
     {
-      id: 'vault-hub',
-      label: 'Vault Hub',
-      icon: Archive,
-      path: '/',
-    },
-    {
-      id: 'manage-keys',
-      label: 'Manage Keys',
-      icon: Key,
-      path: '/keys',
-    },
-    {
       id: 'encrypt',
       label: 'Encrypt',
       icon: Lock,
@@ -40,6 +28,18 @@ const SidebarNav: React.FC = () => {
       label: 'Decrypt',
       icon: Unlock,
       path: '/decrypt',
+    },
+    {
+      id: 'vault-hub',
+      label: 'Vault Hub',
+      icon: Archive,
+      path: '/vault-hub',
+    },
+    {
+      id: 'manage-keys',
+      label: 'Manage Keys',
+      icon: Key,
+      path: '/keys',
     },
   ];
 
