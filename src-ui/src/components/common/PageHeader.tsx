@@ -41,19 +41,14 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   const { currentVault, vaults, setCurrentVault, keyCache } = useVault();
 
-  // Sort vaults by key count (vaults with keys first) then alphabetically
-  const sortedVaults = useMemo(() => {
-    return [...vaults].sort((a, b) => {
-      const aKeys = keyCache.get(a.id)?.length || 0;
-      const bKeys = keyCache.get(b.id)?.length || 0;
-
-      // Vaults with keys come first
-      if (aKeys > 0 && bKeys === 0) return -1;
-      if (aKeys === 0 && bKeys > 0) return 1;
-
-      // Then sort alphabetically
-      return a.name.localeCompare(b.name);
-    });
+  // Filter to only vaults with keys, then sort alphabetically
+  const vaultsWithKeys = useMemo(() => {
+    return [...vaults]
+      .filter((vault) => {
+        const keyCount = keyCache.get(vault.id)?.length || 0;
+        return keyCount > 0;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [vaults, keyCache]);
 
   const handleVaultChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -98,25 +93,23 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             {title}
           </h1>
 
-          {showVaultSelector && vaults.length > 0 && (
+          {showVaultSelector && vaultsWithKeys.length > 0 && (
             <select
-              className="w-64 px-3 py-1.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-1 border border-gray-300 rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={currentVault?.id || ''}
               onChange={handleVaultChange}
+              style={{ height: '28px' }}
             >
               <option value="" disabled>
                 Select vault...
               </option>
-              {sortedVaults.map((vault) => {
-                const keyCount = keyCache.get(vault.id)?.length || 0;
+              {vaultsWithKeys.map((vault) => {
                 const displayName =
-                  vault.name.length > 25 ? vault.name.substring(0, 25) + '...' : vault.name;
-                const isDisabled = keyCount === 0;
+                  vault.name.length > 20 ? vault.name.substring(0, 20) + '...' : vault.name;
 
                 return (
-                  <option key={vault.id} value={vault.id} disabled={isDisabled} title={vault.name}>
-                    {isDisabled && '⚠️ '}
-                    {displayName} ({keyCount} key{keyCount !== 1 ? 's' : ''})
+                  <option key={vault.id} value={vault.id} title={vault.name}>
+                    {displayName}
                   </option>
                 );
               })}
