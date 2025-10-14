@@ -39,6 +39,7 @@ const EncryptPage: React.FC = () => {
     pendingOverwriteFile,
     bundleContents,
     currentVault,
+    sessionVaultId,
 
     // From useFileEncryption
     isLoading,
@@ -91,9 +92,9 @@ const EncryptPage: React.FC = () => {
         icon={Lock}
         skipNavTarget="#main-content"
         showVaultBadge={true}
-        vaultName={currentStep >= 2 && currentVault ? currentVault.name : undefined}
+        vaultName={sessionVaultId && currentVault ? currentVault.name : undefined}
         vaultVariant="normal"
-        vaultId={currentStep >= 2 && currentVault ? currentVault.id : null}
+        vaultId={sessionVaultId && currentVault ? currentVault.id : null}
       />
 
       {/* Progress Bar - Full Width */}

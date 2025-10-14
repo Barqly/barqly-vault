@@ -56,6 +56,7 @@ export const useEncryptionWorkflow = () => {
   const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
   const [pendingOverwriteFile, setPendingOverwriteFile] = useState<string>('');
   const [bundleContents, setBundleContents] = useState<BundleContents | null>(null);
+  const [sessionVaultId, setSessionVaultId] = useState<string | null>(null); // Track vault selected in THIS session
 
   // Track previous selectedFiles to distinguish between initial selection and navigation
   const [prevSelectedFiles, setPrevSelectedFiles] = useState<{
@@ -300,6 +301,7 @@ export const useEncryptionWorkflow = () => {
     setEncryptionResult(null);
     setShowOverwriteDialog(false);
     setPendingOverwriteFile('');
+    setSessionVaultId(null); // Clear session vault selection
   }, [reset]);
 
   // Handle encrypt another
@@ -319,11 +321,10 @@ export const useEncryptionWorkflow = () => {
     setFileValidationError(error);
   }, []);
 
-  // Handle vault change - just update vault selection (called from Step 2)
+  // Handle vault change - track session-specific vault selection (called from Step 2)
   const handleVaultChange = useCallback((vaultId: string) => {
-    // Vault selection happens in Step 2 (after file selection)
-    // VaultContext.setCurrentVault is called by the component
-    // This handler is just for cleanup if needed
+    // Track that vault was selected in THIS session
+    setSessionVaultId(vaultId);
 
     // Reset archive name to match new vault
     setArchiveName('');
@@ -346,7 +347,8 @@ export const useEncryptionWorkflow = () => {
     showOverwriteDialog,
     pendingOverwriteFile,
     bundleContents, // Recovery bundle contents
-    currentVault, // Current vault selection
+    currentVault, // Vault from context (for dropdown to work)
+    sessionVaultId, // Track if vault was selected in THIS session (for display logic)
 
     // From useFileEncryption
     isLoading,
