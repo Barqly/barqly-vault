@@ -64,6 +64,11 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
       setYubikeys(availableKeys);
 
+      // Set specific error message if YubiKeys were detected but all are already registered
+      if (allKeys.length > 0 && availableKeys.length === 0) {
+        setError('This YubiKey is already registered');
+      }
+
       // Auto-select if only one available
       if (availableKeys.length === 1) {
         const key = availableKeys[0];
@@ -228,17 +233,25 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   </div>
                 ) : yubikeys.length === 0 ? (
                   <>
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div
+                      className={`${error ? 'bg-blue-50 border-blue-200' : 'bg-amber-50 border-amber-200'} border rounded-lg p-4`}
+                    >
                       <div className="flex gap-3">
-                        <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <AlertCircle
+                          className={`h-5 w-5 ${error ? 'text-blue-600' : 'text-amber-600'} flex-shrink-0 mt-0.5`}
+                        />
                         <div>
-                          <p className="text-sm text-amber-800 font-medium">
-                            No YubiKeys available for registration
+                          <p
+                            className={`text-sm ${error ? 'text-blue-800' : 'text-amber-800'} font-medium`}
+                          >
+                            {error || 'No YubiKeys available for registration'}
                           </p>
-                          <p className="text-sm text-amber-700 mt-1">
-                            Insert your YubiKey to add it to the registry. The green light should be
-                            blinking.
-                          </p>
+                          {!error && (
+                            <p className="text-sm text-amber-700 mt-1">
+                              Insert your YubiKey to add it to the registry. The green light should
+                              be blinking.
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
