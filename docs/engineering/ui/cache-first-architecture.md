@@ -891,11 +891,118 @@ await refreshKeysForVault(currentVault.id); // ✅ Updates cache
 
 ---
 
+## Global State vs Local Workflow State
+
+### The Problem: Persisted State in Multi-Step Workflows
+
+VaultContext's `currentVault` is designed to persist across sessions and pages. This is correct for app-wide vault context, but creates issues for page-specific workflows that need fresh state on each session.
+
+**Example Issue (Encrypt Page):**
+- User selects vault on Encrypt page → VaultContext persists it
+- User closes app or navigates away
+- User returns to Encrypt page
+- Dropdown shows persisted vault instead of "Choose vault..." placeholder
+- Confusing: User didn't select vault in THIS session
+
+### The Solution: Local Workflow State Pattern
+
+**Pattern:** Separate global app state from page-specific workflow state
+
+```typescript
+export const useEncryptionWorkflow = () => {
+  // Read from global context (for cache access)
+  const { vaults, keyCache } = useVault();
+
+  // LOCAL workflow state (resets on each session)
+  const [workflowVault, setWorkflowVault] = useState<VaultSummary | null>(null);
+  const [sessionVaultId, setSessionVaultId] = useState<string | null>(null);
+
+  const handleVaultChange = (vaultId: string) => {
+    const selectedVault = vaults.find(v => v.id === vaultId);
+
+    // Set LOCAL workflow state (not global currentVault)
+    setWorkflowVault(selectedVault);
+    setSessionVaultId(vaultId);
+
+    // DON'T call VaultContext.setCurrentVault here!
+    // Let the workflow manage its own state
+  };
+
+  const handleReset = () => {
+    // Clear workflow-specific state
+    setWorkflowVault(null);
+    setSessionVaultId(null);
+  };
+
+  return {
+    workflowVault, // Use this for workflow logic
+    sessionVaultId, // Use this to check if vault was selected in session
+    // Don't return currentVault - workflow doesn't need it
+  };
+};
+```
+
+**Usage in Components:**
+```typescript
+// Dropdown uses LOCAL workflow state
+<select value={workflowVault?.id || ''}>
+  <option value="">Choose vault...</option>
+  {vaults.map(v => <option value={v.id}>{v.name}</option>)}
+</select>
+
+// PageHeader uses LOCAL workflow state
+<PageHeader
+  vaultName={sessionVaultId && workflowVault ? workflowVault.name : undefined}
+  vaultId={sessionVaultId && workflowVault ? workflowVault.id : null}
+/>
+
+// Encryption uses LOCAL workflow vault
+await commands.encryptFilesMulti({
+  vault_id: workflowVault.id,  // ✅ From workflow, not global context
+  ...
+});
+```
+
+### When to Use This Pattern
+
+**Use Local Workflow State when:**
+- ✅ Page has multi-step process that resets each session
+- ✅ Selection shouldn't persist across page navigations
+- ✅ Fresh page load should show empty/placeholder state
+- ✅ Page-specific selection doesn't affect other pages
+
+**Use Global VaultContext.currentVault when:**
+- ✅ Selection should persist across app
+- ✅ All pages need to know which vault is active
+- ✅ Vault switching affects multiple screens simultaneously
+- ✅ Backend needs to know "current vault" globally
+
+### Examples in Barqly Vault
+
+**Local Workflow State:**
+- ✅ Encrypt page: `workflowVault` (reset each encryption session)
+- ✅ Decrypt page: `detectedVaultId` (derived from file, not persisted)
+
+**Global Context State:**
+- ✅ VaultHub: Uses `currentVault` for vault selection (persists)
+- ✅ Manage Keys: Uses `currentVault` to know which vault's keys to manage
+
+### Key Insight
+
+**Global state and local state can coexist!**
+- VaultContext provides global cache (keys, vaults)
+- Workflows manage their own selection state
+- Clean separation of concerns
+- No conflicts, no tech debt
+
+---
+
 ## Commits
 
 - `216c4486` - Cache-first architecture implementation
 - `b0e6fa00` - Initial key caching (partial fix)
 - `d349a65e` - Key count flickering fix
+- `dceb016f` - Local workflow vault state for Encrypt page
 
 ---
 
