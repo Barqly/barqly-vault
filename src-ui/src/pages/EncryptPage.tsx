@@ -91,9 +91,9 @@ const EncryptPage: React.FC = () => {
         icon={Lock}
         skipNavTarget="#main-content"
         showVaultBadge={true}
-        vaultName={currentVault?.name}
+        vaultName={currentStep >= 2 && currentVault ? currentVault.name : undefined}
         vaultVariant="normal"
-        vaultId={currentVault?.id || null}
+        vaultId={currentStep >= 2 && currentVault ? currentVault.id : null}
       />
 
       {/* Progress Bar - Full Width */}
