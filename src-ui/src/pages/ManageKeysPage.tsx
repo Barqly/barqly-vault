@@ -142,12 +142,12 @@ const ManageKeysPage: React.FC = () => {
 
   // Note: Physical key deletion is not supported by design
   // Keys can only be removed from vaults using removeKeyFromVault
-  // Orphaned keys remain in the registry for potential recovery
+  // Suspended keys remain in the registry for potential recovery
   const handleDeleteKey = useCallback(async (keyId: string) => {
     alert(
       'Physical key deletion is not supported.\n\n' +
         'Keys can be removed from vaults but remain in the registry for recovery purposes.\n' +
-        'Orphaned keys can be re-attached to vaults at any time.',
+        'Suspended keys can be re-attached to vaults at any time.',
     );
     logger.info('ManageKeysPage', 'Delete requested but not supported', { keyId });
   }, []);
@@ -218,7 +218,7 @@ const ManageKeysPage: React.FC = () => {
             <option value="all">All Keys</option>
             <option value="passphrase">Passphrase Only</option>
             <option value="yubikey">YubiKey Only</option>
-            <option value="orphan">Orphan Keys</option>
+            <option value="suspended">Suspended Keys</option>
           </select>
 
           {/* View Toggle */}
@@ -285,16 +285,16 @@ const ManageKeysPage: React.FC = () => {
             ) : (
               allKeys.map((key) => {
                 const attachments = getKeyVaultAttachments(key.id);
-                const isOrphan = attachments.length === 0;
+                const isSuspended = attachments.length === 0;
 
                 return (
                   <KeyCard
                     key={key.id}
                     keyRef={key}
                     vaultAttachments={attachments}
-                    isOrphan={isOrphan}
+                    isOrphan={isSuspended}
                     onAttach={handleAttachKey}
-                    onDelete={isOrphan ? handleDeleteKey : undefined}
+                    onDelete={isSuspended ? handleDeleteKey : undefined}
                     onExport={handleExportKey}
                     vaultNames={vaultNameMap}
                   />

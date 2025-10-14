@@ -4,7 +4,7 @@ import { useUI } from '../contexts/UIContext';
 import { logger } from '../lib/logger';
 import { commands, type KeyInfo } from '../bindings';
 
-export type FilterType = 'all' | 'passphrase' | 'yubikey' | 'orphan';
+export type FilterType = 'all' | 'passphrase' | 'yubikey' | 'suspended';
 
 export const useManageKeysWorkflow = () => {
   const { keyCache, refreshKeysForVault, vaults } = useVault();
@@ -53,10 +53,11 @@ export const useManageKeysWorkflow = () => {
   const getKeyVaultAttachments = useCallback(
     (keyId: string) => {
       const key = globalKeys.find((k) => k.id === keyId);
-      if (!key || !key.vault_id) {
+      if (!key) {
         return [];
       }
-      return [key.vault_id];
+      // Use vault_associations (multi-vault support)
+      return key.vault_associations;
     },
     [globalKeys],
   );
@@ -70,7 +71,7 @@ export const useManageKeysWorkflow = () => {
       keys = keys.filter((k) => k.type === 'Passphrase');
     } else if (filterType === 'yubikey') {
       keys = keys.filter((k) => k.type === 'YubiKey');
-    } else if (filterType === 'orphan') {
+    } else if (filterType === 'suspended') {
       // Keys without vault attachment
       keys = keys.filter((k) => {
         const attachments = getKeyVaultAttachments(k.id);

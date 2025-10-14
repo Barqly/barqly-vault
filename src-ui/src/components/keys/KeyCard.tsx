@@ -102,7 +102,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         {isOrphan ? (
           <div className="flex items-center gap-2 text-orange-600">
             <AlertTriangle className="h-4 w-4" />
-            <span className="text-sm font-medium">Orphan - Not attached to any vault</span>
+            <span className="text-sm font-medium">Suspended - Not attached to any vault</span>
           </div>
         ) : (
           <div className="text-sm">
