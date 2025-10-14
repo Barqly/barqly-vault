@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Key, Plus, Upload, Search, Grid3x3, List, RefreshCcw } from 'lucide-react';
+import { Key, Plus, Upload, Grid3x3, List, RefreshCcw } from 'lucide-react';
 import { useVault } from '../contexts/VaultContext';
 import { useManageKeysWorkflow } from '../hooks/useManageKeysWorkflow';
 import PageHeader from '../components/common/PageHeader';
@@ -18,7 +18,6 @@ import { commands } from '../bindings';
 const ManageKeysPage: React.FC = () => {
   const { vaults, currentVault, refreshKeysForVault } = useVault();
   const {
-    searchQuery,
     filterType,
     keyViewMode,
     isImporting,
@@ -26,7 +25,6 @@ const ManageKeysPage: React.FC = () => {
     error,
     allKeys,
     getKeyVaultAttachments,
-    setSearchQuery,
     setFilterType,
     setKeyViewMode,
     setIsCreatingKey,
@@ -378,22 +376,6 @@ const ManageKeysPage: React.FC = () => {
           </div>
 
           <div className="flex gap-3 items-center">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search keys..."
-                className="
-                  pl-10 pr-4 py-2 w-64
-                  text-sm border border-slate-200 rounded-lg
-                  focus:outline-none focus:ring-2 focus:ring-blue-600
-                "
-              />
-            </div>
-
             {/* Filter */}
             <select
               value={filterType}
