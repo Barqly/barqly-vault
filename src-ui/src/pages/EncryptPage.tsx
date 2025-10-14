@@ -38,7 +38,7 @@ const EncryptPage: React.FC = () => {
     showOverwriteDialog,
     pendingOverwriteFile,
     bundleContents,
-    currentVault,
+    workflowVault,
     sessionVaultId,
 
     // From useFileEncryption
@@ -92,9 +92,9 @@ const EncryptPage: React.FC = () => {
         icon={Lock}
         skipNavTarget="#main-content"
         showVaultBadge={true}
-        vaultName={sessionVaultId && currentVault ? currentVault.name : undefined}
+        vaultName={sessionVaultId && workflowVault ? workflowVault.name : undefined}
         vaultVariant="normal"
-        vaultId={sessionVaultId && currentVault ? currentVault.id : null}
+        vaultId={sessionVaultId && workflowVault ? workflowVault.id : null}
       />
 
       {/* Progress Bar - Full Width */}
@@ -160,7 +160,11 @@ const EncryptPage: React.FC = () => {
                     const commandError: CommandError = {
                       code: 'INVALID_INPUT',
                       message: error.message,
+                      details: null,
+                      recovery_guidance: 'Please select valid files and try again',
                       user_actionable: true,
+                      trace_id: null,
+                      span_id: null,
                     };
                     handleFileValidationError(commandError);
                   }}
@@ -170,6 +174,7 @@ const EncryptPage: React.FC = () => {
                   outputPath={outputPath}
                   archiveName={archiveName}
                   bundleContents={bundleContents}
+                  workflowVault={workflowVault}
                 />
 
                 {/* Ready to encrypt panel - Step 3 */}

@@ -25,6 +25,7 @@ interface ProgressiveEncryptionCardsProps {
     recoveryGuide: boolean;
     totalSize: number;
   } | null;
+  workflowVault?: { id: string; name: string } | null; // Pass workflow vault from parent
 }
 
 /**
@@ -46,8 +47,9 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   outputPath,
   archiveName,
   bundleContents,
+  workflowVault,
 }) => {
-  const { currentVault, vaults, getCurrentVaultKeys, keyCache, setCurrentVault } = useVault();
+  const { vaults, keyCache } = useVault();
   const continueButtonRef = useRef<HTMLButtonElement>(null);
   const vaultSelectorRef = useRef<HTMLSelectElement>(null);
   const canGoToPreviousStep = currentStep > 1;
@@ -58,7 +60,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
       case 1:
         return !!selectedFiles; // Can continue from step 1 if files are selected
       case 2:
-        return !!currentVault; // Can continue from step 2 only if vault is selected
+        return !!workflowVault; // Can continue from step 2 only if vault is selected
       default:
         return false;
     }
@@ -102,7 +104,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
           </div>
         );
 
-      case 2:
+      case 2: {
         // Step 2: Select Vault & Review
         if (!selectedFiles) {
           return null;
@@ -126,9 +128,8 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                 <select
                   ref={vaultSelectorRef}
                   className="w-full pl-11 pr-10 py-2.5 border border-slate-300 rounded-lg bg-white text-sm font-medium text-slate-700 hover:border-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
-                  value={currentVault?.id || ''}
+                  value={workflowVault?.id || ''}
                   onChange={(e) => {
-                    setCurrentVault(e.target.value);
                     onVaultChange(e.target.value);
                   }}
                   disabled={vaultsWithKeys.length === 0}
@@ -161,14 +162,14 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
             </div>
 
             {/* Show summary only after vault is selected */}
-            {currentVault && bundleContents && (
+            {workflowVault && bundleContents && (
               <>
                 {/* Encryption Summary */}
                 <EncryptionSummary
-                  vaultName={currentVault.name}
+                  vaultName={workflowVault.name}
                   fileCount={selectedFiles.file_count}
                   totalSize={selectedFiles.total_size}
-                  recipientCount={getCurrentVaultKeys().length}
+                  recipientCount={(keyCache.get(workflowVault.id) || []).length}
                   outputFileName={archiveName ? `${archiveName}.age` : 'Auto-generated filename'}
                   outputPath={outputPath || '~/Documents/Barqly-Vaults'}
                   hasRecoveryItems={true}
@@ -180,12 +181,13 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                   totalSize={selectedFiles.total_size}
                   hasPassphraseKeys={bundleContents.passphraseKeys > 0}
                   passphraseKeyCount={bundleContents.passphraseKeys}
-                  vaultName={currentVault.name}
+                  vaultName={workflowVault.name}
                 />
               </>
             )}
           </div>
         );
+      }
 
       default:
         return null;

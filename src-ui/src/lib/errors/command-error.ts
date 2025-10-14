@@ -17,8 +17,11 @@ export const createCommandError = (
 ): CommandError => ({
   code,
   message,
+  details: null,
   recovery_guidance,
   user_actionable,
+  trace_id: null,
+  span_id: null,
 });
 
 /**

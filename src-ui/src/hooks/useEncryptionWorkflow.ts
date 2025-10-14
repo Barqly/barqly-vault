@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileEncryption } from './useFileEncryption';
-import type { ErrorCode, CommandError } from '../bindings';
+import type { CommandError, VaultSummary } from '../bindings';
 import { createCommandError } from '../lib/errors/command-error';
 import { useVault } from '../contexts/VaultContext';
 import { commands, EncryptFilesMultiInput } from '../bindings';
@@ -30,7 +30,7 @@ interface BundleContents {
  * Mirrors useDecryptionWorkflow architecture exactly for consistency
  */
 export const useEncryptionWorkflow = () => {
-  const { currentVault, getCurrentVaultKeys } = useVault();
+  const { vaults, keyCache } = useVault();
   const fileEncryptionHook = useFileEncryption();
   const {
     selectFiles,
@@ -57,6 +57,7 @@ export const useEncryptionWorkflow = () => {
   const [pendingOverwriteFile, setPendingOverwriteFile] = useState<string>('');
   const [bundleContents, setBundleContents] = useState<BundleContents | null>(null);
   const [sessionVaultId, setSessionVaultId] = useState<string | null>(null); // Track vault selected in THIS session
+  const [workflowVault, setWorkflowVault] = useState<VaultSummary | null>(null); // Local vault selection for this workflow
 
   // Track previous selectedFiles to distinguish between initial selection and navigation
   const [prevSelectedFiles, setPrevSelectedFiles] = useState<{
@@ -75,9 +76,10 @@ export const useEncryptionWorkflow = () => {
 
   // Calculate bundle contents when files are selected or vault keys change
   useEffect(() => {
-    if (selectedFiles && currentVault) {
-      const keys = getCurrentVaultKeys();
-      const passphraseKeyCount = keys.filter((key) => key.key_type === 'Passphrase').length;
+    if (selectedFiles && workflowVault) {
+      // Get keys for the workflow-selected vault, not the global current vault
+      const keys = keyCache.get(workflowVault.id) || [];
+      const passphraseKeyCount = keys.filter((key) => key.type === 'Passphrase').length;
 
       setBundleContents({
         userFiles: {
@@ -90,7 +92,7 @@ export const useEncryptionWorkflow = () => {
         totalSize: selectedFiles.total_size, // Will be updated after encryption
       });
     }
-  }, [selectedFiles, currentVault, getCurrentVaultKeys]);
+  }, [selectedFiles, workflowVault, keyCache]);
 
   // Check if user can navigate to a specific step
   const canNavigateToStep = useCallback(
@@ -138,7 +140,7 @@ export const useEncryptionWorkflow = () => {
       } catch (err) {
         console.error('[EncryptionWorkflow] File selection error:', err);
         const commandError = createCommandError(
-          ErrorCode.INTERNAL_ERROR,
+          'INTERNAL_ERROR',
           'File selection failed',
           err instanceof Error ? err.message : 'Please try again',
         );
@@ -152,7 +154,7 @@ export const useEncryptionWorkflow = () => {
   const handleEncryption = useCallback(async () => {
     if (!selectedFiles) {
       const error = createCommandError(
-        ErrorCode.MISSING_PARAMETER,
+        'MISSING_PARAMETER',
         'Missing files',
         'Please select files to encrypt before proceeding',
       );
@@ -160,9 +162,9 @@ export const useEncryptionWorkflow = () => {
       return;
     }
 
-    if (!currentVault) {
+    if (!workflowVault) {
       const error = createCommandError(
-        ErrorCode.MISSING_PARAMETER,
+        'MISSING_PARAMETER',
         'No vault selected',
         'Please select a vault before encrypting files',
       );
@@ -181,7 +183,7 @@ export const useEncryptionWorkflow = () => {
       setStartTime(Date.now());
 
       const input: EncryptFilesMultiInput = {
-        vault_id: currentVault.id,
+        vault_id: workflowVault.id,
         in_file_paths: selectedFiles.paths,
         out_encrypted_file_name: archiveName || null,
         out_encrypted_file_path: outputPath || null,
@@ -199,8 +201,8 @@ export const useEncryptionWorkflow = () => {
 
       // Build list of recovery items included
       const recoveryItemsIncluded: string[] = ['Vault manifest'];
-      const keys = getCurrentVaultKeys();
-      const passphraseKeyCount = keys.filter((key) => key.key_type === 'Passphrase').length;
+      const keys = keyCache.get(workflowVault.id) || [];
+      const passphraseKeyCount = keys.filter((key) => key.type === 'Passphrase').length;
       if (passphraseKeyCount > 0) {
         recoveryItemsIncluded.push(
           `${passphraseKeyCount} passphrase key${passphraseKeyCount > 1 ? 's' : ''} (.enc)`,
@@ -235,7 +237,7 @@ export const useEncryptionWorkflow = () => {
         err instanceof Object && 'code' in err
           ? (err as CommandError)
           : createCommandError(
-              ErrorCode.INTERNAL_ERROR,
+              'INTERNAL_ERROR',
               'Encryption failed',
               err instanceof Error ? err.message : 'Please try again',
             );
@@ -244,7 +246,7 @@ export const useEncryptionWorkflow = () => {
       console.log('[DEBUG] Finally block: setting isEncrypting=false');
       setIsEncrypting(false);
     }
-  }, [selectedFiles, archiveName, outputPath, currentVault, startTime]);
+  }, [selectedFiles, archiveName, outputPath, workflowVault, keyCache, startTime]);
 
   // Generate default output path
   const getDefaultOutputPath = useCallback(async () => {
@@ -265,12 +267,12 @@ export const useEncryptionWorkflow = () => {
     }
   }, [selectedFiles, outputPath, getDefaultOutputPath]);
 
-  // Set default archive name based on vault label
+  // Set default archive name based on vault name
   useEffect(() => {
-    if (currentVault && !archiveName) {
-      setArchiveName(currentVault.label);
+    if (workflowVault && !archiveName) {
+      setArchiveName(workflowVault.name);
     }
-  }, [currentVault, archiveName]);
+  }, [workflowVault, archiveName]);
 
   // Handle overwrite confirmation
   const handleOverwriteConfirm = useCallback(() => {
@@ -302,6 +304,7 @@ export const useEncryptionWorkflow = () => {
     setShowOverwriteDialog(false);
     setPendingOverwriteFile('');
     setSessionVaultId(null); // Clear session vault selection
+    setWorkflowVault(null); // Clear workflow vault selection
   }, [reset]);
 
   // Handle encrypt another
@@ -322,17 +325,29 @@ export const useEncryptionWorkflow = () => {
   }, []);
 
   // Handle vault change - track session-specific vault selection (called from Step 2)
-  const handleVaultChange = useCallback((vaultId: string) => {
-    // Track that vault was selected in THIS session
-    setSessionVaultId(vaultId);
+  const handleVaultChange = useCallback(
+    (vaultId: string) => {
+      // Find vault in the vaults list
+      const selectedVault = vaults.find((v) => v.id === vaultId);
+      if (!selectedVault) {
+        console.error('[EncryptionWorkflow] Vault not found:', vaultId);
+        return;
+      }
 
-    // Reset archive name to match new vault
-    setArchiveName('');
+      // Track that vault was selected in THIS session
+      setSessionVaultId(vaultId);
+      setWorkflowVault(selectedVault); // Set local workflow vault
 
-    console.log('[EncryptionWorkflow] Vault selected in Step 2', {
-      vaultId,
-    });
-  }, []);
+      // Reset archive name to match new vault
+      setArchiveName('');
+
+      console.log('[EncryptionWorkflow] Vault selected in Step 2', {
+        vaultId,
+        vaultName: selectedVault.name,
+      });
+    },
+    [vaults],
+  );
 
   return {
     // State - simplified for multi-key encryption
@@ -347,7 +362,7 @@ export const useEncryptionWorkflow = () => {
     showOverwriteDialog,
     pendingOverwriteFile,
     bundleContents, // Recovery bundle contents
-    currentVault, // Vault from context (for dropdown to work)
+    workflowVault, // Local vault selection for this workflow
     sessionVaultId, // Track if vault was selected in THIS session (for display logic)
 
     // From useFileEncryption
