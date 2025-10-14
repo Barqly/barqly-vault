@@ -26,7 +26,6 @@ use std::collections::HashSet;
 /// Convert PassphraseKeyInfo to unified KeyInfo
 fn convert_passphrase_to_unified(
     passphrase_key: PassphraseKeyInfo,
-    vault_id: Option<String>,
     vault_associations: Vec<String>,
 ) -> KeyInfo {
     let key_id = passphrase_key.id.clone();
@@ -36,7 +35,6 @@ fn convert_passphrase_to_unified(
         key_type: KeyType::Passphrase { key_id },
         recipient: passphrase_key.public_key, // Real public key from registry!
         is_available: passphrase_key.is_available,
-        vault_id,
         vault_associations,
         lifecycle_status: KeyLifecycleStatus::Active, // Passphrase keys are always active when in registry
         created_at: passphrase_key.created_at,
@@ -48,7 +46,6 @@ fn convert_passphrase_to_unified(
 /// Convert YubiKeyStateInfo to unified KeyInfo
 fn convert_yubikey_to_unified(
     yubikey_key: YubiKeyStateInfo,
-    vault_id: Option<String>,
     vault_associations: Vec<String>,
 ) -> KeyInfo {
     let is_available = match yubikey_key.state {
@@ -71,7 +68,6 @@ fn convert_yubikey_to_unified(
             .recipient
             .unwrap_or_else(|| "unknown".to_string()), // Real recipient from registry!
         is_available,
-        vault_id,
         vault_associations,
         lifecycle_status: match yubikey_key.state {
             YubiKeyState::Registered => KeyLifecycleStatus::Active,
@@ -91,10 +87,7 @@ fn convert_yubikey_to_unified(
 }
 
 /// Convert AvailableYubiKey to unified KeyInfo
-fn convert_available_yubikey_to_unified(
-    available_key: AvailableYubiKey,
-    vault_id: Option<String>,
-) -> KeyInfo {
+fn convert_available_yubikey_to_unified(available_key: AvailableYubiKey) -> KeyInfo {
     use chrono::Utc;
 
     KeyInfo {
@@ -110,10 +103,9 @@ fn convert_available_yubikey_to_unified(
             .recipient
             .unwrap_or_else(|| "pending".to_string()),
         is_available: true,
-        vault_id,
         vault_associations: vec![], // Available keys not yet attached to any vault
+        created_at: Utc::now(),     // Not yet registered, use current time
         lifecycle_status: available_key.lifecycle_status,
-        created_at: Utc::now(), // Not yet registered, use current time
         last_used: None,
         yubikey_info: Some(YubiKeyInfo {
             slot: available_key.slot,
@@ -199,12 +191,8 @@ impl UnifiedKeyListService {
                         is_available: true, // Passphrase keys are always available (file-based)
                     };
 
-                    // Get first vault for backward compatibility
-                    let vault_id = vault_associations.first().cloned();
-
                     all_keys.push(convert_passphrase_to_unified(
                         passphrase_info,
-                        vault_id,
                         vault_associations,
                     ));
                 }
@@ -259,14 +247,7 @@ impl UnifiedKeyListService {
                         last_used,
                     };
 
-                    // Get first vault for backward compatibility
-                    let vault_id = vault_associations.first().cloned();
-
-                    all_keys.push(convert_yubikey_to_unified(
-                        yubikey_info,
-                        vault_id,
-                        vault_associations,
-                    ));
+                    all_keys.push(convert_yubikey_to_unified(yubikey_info, vault_associations));
                 }
             }
         }
@@ -318,7 +299,6 @@ impl UnifiedKeyListService {
                         };
                         unified_keys.push(convert_passphrase_to_unified(
                             passphrase_info,
-                            Some(vault_id.clone()),
                             vault_associations.clone(),
                         ));
                     }
@@ -362,7 +342,6 @@ impl UnifiedKeyListService {
                                 {
                                     unified_keys.push(convert_yubikey_to_unified(
                                         yubikey,
-                                        Some(vault_id.clone()),
                                         vault_associations,
                                     ));
                                 }
@@ -418,7 +397,6 @@ impl UnifiedKeyListService {
                                 };
                                 available_keys.push(convert_passphrase_to_unified(
                                     passphrase_info,
-                                    None,
                                     vault_associations.clone(),
                                 ));
                             }
@@ -495,7 +473,6 @@ impl UnifiedKeyListService {
                                     // Convert to unified format and add
                                     available_keys.push(convert_available_yubikey_to_unified(
                                         available_yubikey,
-                                        None,
                                     ));
                                 }
                             }
@@ -542,10 +519,8 @@ impl UnifiedKeyListService {
                             last_used,
                             is_available: true,
                         };
-                        let vault_id = vault_associations.first().cloned();
                         connected_keys.push(convert_passphrase_to_unified(
                             passphrase_info,
-                            vault_id,
                             vault_associations,
                         ));
                     }
@@ -594,10 +569,8 @@ impl UnifiedKeyListService {
                                             })
                                             .unwrap_or_default();
 
-                                        let vault_id = vault_associations.first().cloned();
                                         connected_keys.push(convert_yubikey_to_unified(
                                             yubikey,
-                                            vault_id,
                                             vault_associations,
                                         ));
                                     }

@@ -43,7 +43,6 @@ pub fn convert_passphrase_to_unified(
         key_type: KeyType::Passphrase { key_id },
         recipient: passphrase_key.public_key, // Real public key from registry!
         is_available: passphrase_key.is_available,
-        vault_id: vault_id.clone(),
         vault_associations: vault_id.map(|v| vec![v]).unwrap_or_default(), // Convert single vault to array
         lifecycle_status: KeyLifecycleStatus::Active, // Passphrase keys are always active when in registry
         created_at: passphrase_key.created_at,
@@ -78,7 +77,6 @@ pub fn convert_yubikey_to_unified(
             .recipient
             .unwrap_or_else(|| "unknown".to_string()), // Real recipient from registry!
         is_available,
-        vault_id: vault_id.clone(),
         vault_associations: vault_id.map(|v| vec![v]).unwrap_or_default(), // Convert single vault to array
         lifecycle_status: match yubikey_key.state {
             YubiKeyState::Registered => KeyLifecycleStatus::Active,
@@ -118,7 +116,6 @@ pub fn convert_available_yubikey_to_unified(
             .recipient
             .unwrap_or_else(|| "pending".to_string()),
         is_available: true,
-        vault_id: vault_id.clone(),
         vault_associations: vault_id.map(|v| vec![v]).unwrap_or_default(), // Convert single vault to array
         // Use lifecycle_status from AvailableYubiKey (already mapped)
         lifecycle_status: available_key.lifecycle_status,

@@ -9,6 +9,9 @@ _Agent-specific guidance for Claude Code_
 3. **Domain Deep Dive** → `/docs/[domain]/context.md` based on your task
 
 ## Critical Agent Rules
+### Backward compatibility
+- Unless otherwise asked, do not create any backward compability code as a shortcut to make the things work! It's a form of technical debt!
+- Unless it is part of a standard design pattern, do not create files like V2, enhanced, adapter etc for patch work which introduce more bug, more tech debt, and maintainability issues in the code.
 
 ### Before ANY Coding Task
 

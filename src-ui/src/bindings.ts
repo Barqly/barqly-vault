@@ -778,11 +778,6 @@ recipient: string;
  */
 is_available: boolean; 
 /**
- * Single vault ID (deprecated - use vault_associations for multi-vault support)
- * Populated with first vault from vault_associations for backward compatibility
- */
-vault_id: string | null; 
-/**
  * Array of vault IDs this key is attached to (supports multi-vault per NIST)
  * Empty array means key is not attached to any vault (orphaned/suspended)
  */

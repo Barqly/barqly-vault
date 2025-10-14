@@ -41,11 +41,8 @@ export type KeyInfo = {
   recipient: string;
   is_available: boolean;
 
-  // DEPRECATED: Use vault_associations
-  vault_id: string | null;
-
-  // NEW: Multi-vault support ✨
-  vault_associations: string[];
+  // Multi-vault support (NIST-aligned) ✨
+  vault_associations: string[];  // Array of vault IDs this key is attached to
 
   lifecycle_status: KeyLifecycleStatus;
   created_at: string;
@@ -54,12 +51,14 @@ export type KeyInfo = {
 }
 ```
 
+**BREAKING CHANGE:** `vault_id` field has been **removed**. Use `vault_associations` instead.
+
 ### Backend listUnifiedKeys({ type: 'All' }) Now:
 1. ✅ Reads from registry (source of truth)
 2. ✅ Returns ALL keys (plugged + unplugged)
 3. ✅ Includes vault_associations array from registry
 4. ✅ Sets is_available based on hardware connection status
-5. ✅ Populates vault_id with first vault (backward compat)
+5. ✅ Clean API - only vault_associations field (no tech debt)
 
 ---
 
@@ -74,7 +73,7 @@ export type KeyInfo = {
 const getKeyVaultAttachments = useCallback(
   (keyId: string) => {
     const key = globalKeys.find((k) => k.id === keyId);
-    if (!key || !key.vault_id) {
+    if (!key || !key.vault_id) {  // ← vault_id field NO LONGER EXISTS
       return [];
     }
     return [key.vault_id];  // Single vault only
@@ -95,6 +94,8 @@ const getKeyVaultAttachments = useCallback(
   [globalKeys],
 );
 ```
+
+**IMPORTANT:** vault_id field has been completely removed. Replace ALL `.vault_id` references with `.vault_associations`.
 
 ### Step 2: Update ManageKeysPage.tsx
 
@@ -125,7 +126,6 @@ allKeys.map((key) => {
 {
   id: "MBP2024-Nauman",
   label: "MBP2024 Nauman",
-  vault_id: "7Bw3eqLGahnF5DXZyMa8Jz",  // First vault (backward compat)
   vault_associations: [
     "7Bw3eqLGahnF5DXZyMa8Jz",  // Sam Family Vault
     "BvwMbXYuaoHHGWpTif9QWK"   // AKAH Trust
@@ -147,7 +147,6 @@ allKeys.map((key) => {
 {
   id: "yubikey_31310420",
   label: "YubiKey-31310420",
-  vault_id: "7Bw3eqLGahnF5DXZyMa8Jz",
   vault_associations: [
     "7Bw3eqLGahnF5DXZyMa8Jz",
     "BvwMbXYuaoHHGWpTif9QWK"
@@ -170,8 +169,7 @@ allKeys.map((key) => {
 {
   id: "yubikey_15903715",
   label: "YubiKey-15903715",
-  vault_id: null,
-  vault_associations: [],  // ✅ Empty array
+  vault_associations: [],  // ✅ Empty array - not attached to any vault
   is_available: true,
   lifecycle_status: "active"
 }
@@ -207,12 +205,38 @@ allKeys.map((key) => {
 
 ## Breaking Changes
 
-### None! Fully Backward Compatible
+### ⚠️ vault_id Field REMOVED (Breaking Change)
 
-- ✅ `vault_id` field still present (deprecated but functional)
-- ✅ `vault_associations` added as new field
-- ✅ Frontend can migrate gradually
-- ✅ Old code using `vault_id` continues to work
+- ❌ `vault_id` field has been **completely removed** from KeyInfo
+- ✅ `vault_associations` array is the only field now
+- ⚠️ All frontend code using `.vault_id` must be updated
+- ✅ Clean API with zero technical debt
+
+### Frontend Files Requiring Updates (11 files)
+
+All files using `.vault_id` must migrate to `.vault_associations`:
+
+1. **`useManageKeysWorkflow.ts`** - Change `key.vault_id` → `key.vault_associations`
+2. **`ManageKeysPage.tsx`** - Update vault attachment logic
+3. **`useEncryptionWorkflow.ts`** - Vault context handling
+4. **`useDecryptionWorkflow.ts`** - Vault context handling
+5. **`VaultContext.tsx`** - Vault selection state
+6. **`useKeySelection.ts`** - Key filtering by vault
+7. **`YubiKeySetupDialog.tsx`** - Vault-specific YubiKey setup
+8. **`PassphraseKeyDialog.tsx`** - Vault-specific key creation
+9. **`useVaultHubWorkflow.ts`** - Vault management
+
+**Migration Pattern:**
+```typescript
+// OLD (will cause TypeScript errors):
+if (key.vault_id) { ... }
+
+// NEW:
+if (key.vault_associations.length > 0) { ... }
+
+// For single-vault contexts (Encrypt/Decrypt pages):
+const currentVault = key.vault_associations[0];  // Or get from context
+```
 
 ---
 
