@@ -49,6 +49,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
 }) => {
   const { currentVault, vaults, getCurrentVaultKeys, keyCache, setCurrentVault } = useVault();
   const continueButtonRef = useRef<HTMLButtonElement>(null);
+  const vaultSelectorRef = useRef<HTMLSelectElement>(null);
   const canGoToPreviousStep = currentStep > 1;
 
   // Define continue conditions for each step
@@ -116,16 +117,14 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
         return (
           <div className="space-y-6">
             {/* Vault Selection */}
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">
                 Select vault for these files:
               </label>
-              <div
-                className="relative inline-block"
-                style={{ minWidth: '320px', maxWidth: '480px' }}
-              >
+              <div className="relative flex-1" style={{ maxWidth: '400px' }}>
                 <Archive className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600 pointer-events-none z-10" />
                 <select
+                  ref={vaultSelectorRef}
                   className="w-full pl-11 pr-10 py-2.5 border border-slate-300 rounded-lg bg-white text-sm font-medium text-slate-700 hover:border-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
                   value={currentVault?.id || ''}
                   onChange={(e) => {
@@ -133,6 +132,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                     onVaultChange(e.target.value);
                   }}
                   disabled={vaultsWithKeys.length === 0}
+                  autoFocus={currentStep === 2}
                   style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                     backgroundRepeat: 'no-repeat',
@@ -152,12 +152,12 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                     );
                   })}
                 </select>
+                {vaultsWithKeys.length === 0 && (
+                  <p className="text-sm text-orange-600 mt-2 absolute left-0">
+                    ⚠️ No vaults with keys available. Please create a vault and add keys first.
+                  </p>
+                )}
               </div>
-              {vaultsWithKeys.length === 0 && (
-                <p className="text-sm text-orange-600 mt-2">
-                  ⚠️ No vaults with keys available. Please create a vault and add keys first.
-                </p>
-              )}
             </div>
 
             {/* Show summary only after vault is selected */}
