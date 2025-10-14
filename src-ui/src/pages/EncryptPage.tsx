@@ -38,6 +38,7 @@ const EncryptPage: React.FC = () => {
     showOverwriteDialog,
     pendingOverwriteFile,
     bundleContents,
+    currentVault,
 
     // From useFileEncryption
     isLoading,
@@ -90,9 +91,9 @@ const EncryptPage: React.FC = () => {
         icon={Lock}
         skipNavTarget="#main-content"
         showVaultBadge={true}
-        vaultName={undefined}
+        vaultName={currentVault?.name}
         vaultVariant="normal"
-        vaultId={null}
+        vaultId={currentVault?.id || null}
       />
 
       {/* Progress Bar - Full Width */}
@@ -164,6 +165,7 @@ const EncryptPage: React.FC = () => {
                   }}
                   onKeyChange={handleKeyChange}
                   onStepChange={handleStepNavigation}
+                  onVaultChange={handleVaultChange}
                   outputPath={outputPath}
                   archiveName={archiveName}
                   bundleContents={bundleContents}

@@ -15,6 +15,7 @@ interface ProgressiveEncryptionCardsProps {
   onFileError: (error: Error) => void;
   onKeyChange: (keyId: string) => void;
   onStepChange: (step: number) => void;
+  onVaultChange: (vaultId: string) => void;
   outputPath?: string;
   archiveName?: string;
   bundleContents?: {
@@ -41,11 +42,12 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   onFileError,
   onKeyChange: _onKeyChange,
   onStepChange,
+  onVaultChange,
   outputPath,
   archiveName,
   bundleContents,
 }) => {
-  const { currentVault, getCurrentVaultKeys } = useVault();
+  const { currentVault, vaults, getCurrentVaultKeys, keyCache, setCurrentVault } = useVault();
   const continueButtonRef = useRef<HTMLButtonElement>(null);
   const canGoToPreviousStep = currentStep > 1;
 
@@ -55,7 +57,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
       case 1:
         return !!selectedFiles; // Can continue from step 1 if files are selected
       case 2:
-        return true; // Can always continue from step 2 (review is just informational)
+        return !!currentVault; // Can continue from step 2 only if vault is selected
       default:
         return false;
     }
@@ -100,35 +102,74 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
         );
 
       case 2:
-        // Step 2 shows recovery info and summary
-        if (!selectedFiles || !currentVault || !bundleContents) {
+        // Step 2: Select Vault & Review
+        if (!selectedFiles) {
           return null;
         }
 
-        const keys = getCurrentVaultKeys();
-        const fileName = archiveName ? `${archiveName}.age` : 'Auto-generated filename';
+        // Get vaults with keys for dropdown
+        const vaultsWithKeys = vaults.filter((v) => {
+          const keys = keyCache.get(v.id) || [];
+          return keys.length > 0;
+        });
 
         return (
-          <div className="space-y-4">
-            {/* Encryption Summary */}
-            <EncryptionSummary
-              vaultName={currentVault.label}
-              fileCount={selectedFiles.file_count}
-              totalSize={selectedFiles.total_size}
-              recipientCount={keys.length}
-              outputFileName={fileName}
-              outputPath={outputPath || '~/Documents/Barqly-Vaults'}
-              hasRecoveryItems={true}
-            />
+          <div className="space-y-6">
+            {/* Vault Selection */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">Encrypt to vault:</label>
+              <select
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={currentVault?.id || ''}
+                onChange={(e) => {
+                  setCurrentVault(e.target.value);
+                  onVaultChange(e.target.value);
+                }}
+                disabled={vaultsWithKeys.length === 0}
+              >
+                <option value="" disabled>
+                  {vaultsWithKeys.length === 0 ? 'No vaults available' : 'Select a vault...'}
+                </option>
+                {vaultsWithKeys.map((vault) => {
+                  const keys = keyCache.get(vault.id) || [];
+                  return (
+                    <option key={vault.id} value={vault.id}>
+                      {vault.name} ({keys.length} key{keys.length !== 1 ? 's' : ''})
+                    </option>
+                  );
+                })}
+              </select>
+              {vaultsWithKeys.length === 0 && (
+                <p className="text-sm text-orange-600 mt-2">
+                  ⚠️ No vaults with keys available. Please create a vault and add keys first.
+                </p>
+              )}
+            </div>
 
-            {/* Recovery Info Panel */}
-            <RecoveryInfoPanel
-              fileCount={selectedFiles.file_count}
-              totalSize={selectedFiles.total_size}
-              hasPassphraseKeys={bundleContents.passphraseKeys > 0}
-              passphraseKeyCount={bundleContents.passphraseKeys}
-              vaultName={currentVault.label}
-            />
+            {/* Show summary only after vault is selected */}
+            {currentVault && bundleContents && (
+              <>
+                {/* Encryption Summary */}
+                <EncryptionSummary
+                  vaultName={currentVault.name}
+                  fileCount={selectedFiles.file_count}
+                  totalSize={selectedFiles.total_size}
+                  recipientCount={getCurrentVaultKeys().length}
+                  outputFileName={archiveName ? `${archiveName}.age` : 'Auto-generated filename'}
+                  outputPath={outputPath || '~/Documents/Barqly-Vaults'}
+                  hasRecoveryItems={true}
+                />
+
+                {/* Recovery Info Panel */}
+                <RecoveryInfoPanel
+                  fileCount={selectedFiles.file_count}
+                  totalSize={selectedFiles.total_size}
+                  hasPassphraseKeys={bundleContents.passphraseKeys > 0}
+                  passphraseKeyCount={bundleContents.passphraseKeys}
+                  vaultName={currentVault.name}
+                />
+              </>
+            )}
           </div>
         );
 

@@ -319,26 +319,19 @@ export const useEncryptionWorkflow = () => {
     setFileValidationError(error);
   }, []);
 
-  // Handle vault change - clear selected files and reset workflow
-  const handleVaultChange = useCallback(
-    (vaultId: string) => {
-      // Clear selected files when vault changes
-      clearSelection();
-      setCurrentStep(1);
-      setPrevSelectedFiles(null);
-      setFileValidationError(null);
-      setBundleContents(null);
+  // Handle vault change - just update vault selection (called from Step 2)
+  const handleVaultChange = useCallback((vaultId: string) => {
+    // Vault selection happens in Step 2 (after file selection)
+    // VaultContext.setCurrentVault is called by the component
+    // This handler is just for cleanup if needed
 
-      // Reset output settings so they can be regenerated for new vault
-      setOutputPath('');
-      setArchiveName('');
+    // Reset archive name to match new vault
+    setArchiveName('');
 
-      console.log('[EncryptionWorkflow] Vault changed, resetting workflow', {
-        newVaultId: vaultId,
-      });
-    },
-    [clearSelection],
-  );
+    console.log('[EncryptionWorkflow] Vault selected in Step 2', {
+      vaultId,
+    });
+  }, []);
 
   return {
     // State - simplified for multi-key encryption
@@ -353,6 +346,7 @@ export const useEncryptionWorkflow = () => {
     showOverwriteDialog,
     pendingOverwriteFile,
     bundleContents, // Recovery bundle contents
+    currentVault, // Current vault selection
 
     // From useFileEncryption
     isLoading,
