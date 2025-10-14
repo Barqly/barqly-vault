@@ -88,11 +88,10 @@ const DecryptPage: React.FC = () => {
         title="Decrypt Vault"
         icon={Unlock}
         skipNavTarget="#main-content"
-        showVaultSelector={true}
-        vaultSelectorMode="readonly"
-        readonlyVaultName={selectedFile && detectedVaultName ? detectedVaultName : undefined}
-        readonlyVaultVariant={isRecoveryMode ? 'recovery' : 'normal'}
-        readonlyVaultId={detectedVaultId}
+        showVaultBadge={true}
+        vaultName={selectedFile && detectedVaultName ? detectedVaultName : undefined}
+        vaultVariant={isRecoveryMode ? 'recovery' : 'normal'}
+        vaultId={detectedVaultId}
       />
 
       {/* Progress Bar - Full Width */}

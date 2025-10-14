@@ -84,14 +84,15 @@ const EncryptPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
-      {/* Page Header with Vault Selector - Full Width */}
+      {/* Page Header with Vault Display - Full Width */}
       <PageHeader
         title="Encrypt Vault"
         icon={Lock}
         skipNavTarget="#main-content"
-        showVaultSelector={true}
-        onVaultChange={handleVaultChange}
-        hasSelectedFiles={!!selectedFiles}
+        showVaultBadge={true}
+        vaultName={undefined}
+        vaultVariant="normal"
+        vaultId={null}
       />
 
       {/* Progress Bar - Full Width */}
