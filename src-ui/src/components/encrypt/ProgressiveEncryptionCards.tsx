@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Archive } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import RecoveryInfoPanel from './RecoveryInfoPanel';
 import EncryptionSummary from './EncryptionSummary';
@@ -116,29 +116,43 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
         return (
           <div className="space-y-6">
             {/* Vault Selection */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">Encrypt to vault:</label>
-              <select
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={currentVault?.id || ''}
-                onChange={(e) => {
-                  setCurrentVault(e.target.value);
-                  onVaultChange(e.target.value);
-                }}
-                disabled={vaultsWithKeys.length === 0}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-slate-700">
+                Select vault for these files:
+              </label>
+              <div
+                className="relative inline-block"
+                style={{ minWidth: '320px', maxWidth: '480px' }}
               >
-                <option value="" disabled>
-                  {vaultsWithKeys.length === 0 ? 'No vaults available' : 'Select a vault...'}
-                </option>
-                {vaultsWithKeys.map((vault) => {
-                  const keys = keyCache.get(vault.id) || [];
-                  return (
-                    <option key={vault.id} value={vault.id}>
-                      {vault.name} ({keys.length} key{keys.length !== 1 ? 's' : ''})
-                    </option>
-                  );
-                })}
-              </select>
+                <Archive className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600 pointer-events-none z-10" />
+                <select
+                  className="w-full pl-11 pr-10 py-2.5 border border-slate-300 rounded-lg bg-white text-sm font-medium text-slate-700 hover:border-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+                  value={currentVault?.id || ''}
+                  onChange={(e) => {
+                    setCurrentVault(e.target.value);
+                    onVaultChange(e.target.value);
+                  }}
+                  disabled={vaultsWithKeys.length === 0}
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 0.75rem center',
+                    backgroundSize: '16px 16px',
+                  }}
+                >
+                  <option value="" disabled>
+                    {vaultsWithKeys.length === 0 ? 'No vaults available' : 'Choose vault...'}
+                  </option>
+                  {vaultsWithKeys.map((vault) => {
+                    const keys = keyCache.get(vault.id) || [];
+                    return (
+                      <option key={vault.id} value={vault.id}>
+                        {vault.name} ({keys.length} key{keys.length !== 1 ? 's' : ''})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
               {vaultsWithKeys.length === 0 && (
                 <p className="text-sm text-orange-600 mt-2">
                   ⚠️ No vaults with keys available. Please create a vault and add keys first.
