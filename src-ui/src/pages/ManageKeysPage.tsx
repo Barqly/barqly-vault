@@ -5,7 +5,7 @@ import { useManageKeysWorkflow } from '../hooks/useManageKeysWorkflow';
 import PageHeader from '../components/common/PageHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import { KeyCard } from '../components/keys/KeyCard';
-import { YubiKeySetupDialog } from '../components/keys/YubiKeySetupDialog';
+import { YubiKeyRegistryDialog } from '../components/keys/YubiKeyRegistryDialog';
 import { PassphraseKeyDialog } from '../components/keys/PassphraseKeyDialog';
 import { logger } from '../lib/logger';
 import { commands } from '../bindings';
@@ -318,8 +318,8 @@ const ManageKeysPage: React.FC = () => {
           }}
         />
 
-        {/* YubiKey Setup Dialog */}
-        <YubiKeySetupDialog
+        {/* YubiKey Registry Dialog */}
+        <YubiKeyRegistryDialog
           isOpen={isDetectingYubiKey}
           onClose={() => setIsDetectingYubiKey(false)}
           onSuccess={refreshAllKeys}
