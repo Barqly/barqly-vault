@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Key, Plus, Upload, Grid3x3, List, RefreshCcw } from 'lucide-react';
+import { Key, Fingerprint, Grid3x3, List, RefreshCcw } from 'lucide-react';
 import { useVault } from '../contexts/VaultContext';
 import { useManageKeysWorkflow } from '../hooks/useManageKeysWorkflow';
 import PageHeader from '../components/common/PageHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import { KeyCard } from '../components/keys/KeyCard';
-import { KeyImportDialog } from '../components/keys/KeyImportDialog';
-import { YubiKeyDetector } from '../components/keys/YubiKeyDetector';
+import { YubiKeySetupDialog } from '../components/keys/YubiKeySetupDialog';
 import { PassphraseKeyDialog } from '../components/keys/PassphraseKeyDialog';
 import { logger } from '../lib/logger';
 import { commands } from '../bindings';
@@ -20,7 +19,6 @@ const ManageKeysPage: React.FC = () => {
   const {
     filterType,
     keyViewMode,
-    isImporting,
     isDetectingYubiKey,
     error,
     allKeys,
@@ -28,7 +26,6 @@ const ManageKeysPage: React.FC = () => {
     setFilterType,
     setKeyViewMode,
     setIsCreatingKey,
-    setIsImporting,
     setIsDetectingYubiKey,
     refreshAllKeys,
   } = useManageKeysWorkflow();
@@ -54,10 +51,6 @@ const ManageKeysPage: React.FC = () => {
     setIsCreatingKey(true);
   }, [setIsCreatingKey]);
 
-  const handleImportKey = useCallback(() => {
-    setIsImporting(true);
-  }, [setIsImporting]);
-
   const handleDetectYubiKey = useCallback(() => {
     setIsDetectingYubiKey(true);
   }, [setIsDetectingYubiKey]);
@@ -67,165 +60,6 @@ const ManageKeysPage: React.FC = () => {
     setIsCreatingKey(false);
     await refreshAllKeys();
   }, [refreshAllKeys, setIsCreatingKey]);
-
-  const handleKeyImport = useCallback(
-    async (filePath: string) => {
-      try {
-        logger.info('ManageKeysPage', 'Starting key import', { filePath });
-
-        // Prompt for passphrase (keys are encrypted)
-        const passphrase = prompt('Enter the passphrase for this encrypted key file:');
-        if (!passphrase) {
-          logger.info('ManageKeysPage', 'Import cancelled - no passphrase provided');
-          return;
-        }
-
-        // First, validate the key file without importing (dry-run)
-        logger.info('ManageKeysPage', 'Validating key file...');
-        const validationResult = await commands.importKeyFile({
-          file_path: filePath,
-          passphrase: passphrase,
-          override_label: null,
-          attach_to_vault: null,
-          validate_only: true, // Dry-run mode
-        });
-
-        if (validationResult.status === 'error') {
-          const error = validationResult.error as any;
-          logger.error('ManageKeysPage', 'Key validation failed', error);
-
-          const errorMessage = error.recovery_guidance
-            ? `${error.message}\n\n${error.recovery_guidance}`
-            : error.message || 'Invalid key file';
-
-          alert(`Validation failed: ${errorMessage}`);
-          return;
-        }
-
-        if (validationResult.status === 'ok') {
-          const validation = validationResult.data.validation_status;
-
-          if (!validation.is_valid) {
-            alert('The key file is not valid. Please check the file and passphrase.');
-            return;
-          }
-
-          // Show original metadata if available
-          if (validation.original_metadata) {
-            const metadata = validation.original_metadata;
-            logger.info('ManageKeysPage', 'Key metadata', metadata);
-          }
-
-          // Check for duplicate
-          if (validation.is_duplicate) {
-            const proceed = confirm(
-              'This key already exists in the registry. Do you want to import it anyway?\n\n' +
-                'Note: This will create a duplicate entry.',
-            );
-            if (!proceed) {
-              logger.info('ManageKeysPage', 'Import cancelled - duplicate key');
-              return;
-            }
-          }
-
-          // Ask if user wants to override the label
-          let overrideLabel: string | null = null;
-          if (validation.original_metadata?.label) {
-            const customLabel = prompt(
-              `Original key label: "${validation.original_metadata.label}"\n\n` +
-                'Enter a new label (or leave blank to keep original):',
-            );
-            if (customLabel) {
-              overrideLabel = customLabel;
-            }
-          }
-
-          // Ask if user wants to attach to a vault immediately
-          let attachToVault: string | null = null;
-          if (vaults.length > 0) {
-            const attachNow = confirm('Would you like to attach this key to a vault immediately?');
-            if (attachNow) {
-              if (vaults.length === 1) {
-                attachToVault = vaults[0].id;
-              } else {
-                const vaultNames = vaults.map((v, i) => `${i + 1}. ${v.name}`).join('\n');
-                const selection = prompt(
-                  `Select a vault to attach this key to:\n\n${vaultNames}\n\nEnter the number (or leave blank to skip):`,
-                );
-                if (selection) {
-                  const index = parseInt(selection) - 1;
-                  if (index >= 0 && index < vaults.length) {
-                    attachToVault = vaults[index].id;
-                  }
-                }
-              }
-            }
-          }
-
-          // Now perform the actual import
-          logger.info('ManageKeysPage', 'Importing key...', {
-            overrideLabel,
-            attachToVault,
-          });
-
-          const importResult = await commands.importKeyFile({
-            file_path: filePath,
-            passphrase: passphrase,
-            override_label: overrideLabel,
-            attach_to_vault: attachToVault,
-            validate_only: false, // Actually import this time
-          });
-
-          if (importResult.status === 'ok') {
-            const keyRef = importResult.data.key_reference;
-            logger.info('ManageKeysPage', 'Key imported successfully', keyRef);
-
-            // Show any warnings
-            if (importResult.data.import_warnings.length > 0) {
-              const warnings = importResult.data.import_warnings.join('\n');
-              alert(`Key imported successfully!\n\nWarnings:\n${warnings}`);
-            } else {
-              alert(`Key imported successfully!\n\nLabel: ${keyRef.label}\nID: ${keyRef.id}`);
-            }
-
-            // Refresh the UI
-            await refreshAllKeys();
-            if (attachToVault) {
-              await refreshKeysForVault(attachToVault);
-            }
-          } else if (importResult.status === 'error') {
-            const error = importResult.error as any;
-            logger.error('ManageKeysPage', 'Import failed', error);
-
-            const errorMessage = error.recovery_guidance
-              ? `${error.message}\n\n${error.recovery_guidance}`
-              : error.message || 'Failed to import key';
-
-            alert(`Import failed: ${errorMessage}`);
-          }
-        }
-      } catch (err) {
-        logger.error('ManageKeysPage', 'Failed to import key', err as Error);
-        alert('An unexpected error occurred during key import');
-        throw err;
-      }
-    },
-    [refreshAllKeys, refreshKeysForVault, vaults],
-  );
-
-  const handleYubiKeyAdd = useCallback(
-    async (yubikey: any) => {
-      try {
-        // TODO: Implement actual YubiKey addition when backend command is available
-        logger.info('ManageKeysPage', 'Adding YubiKey to registry', yubikey);
-        await refreshAllKeys();
-      } catch (err) {
-        logger.error('ManageKeysPage', 'Failed to add YubiKey', err as Error);
-        throw err;
-      }
-    },
-    [refreshAllKeys],
-  );
 
   const handleAttachKey = useCallback(
     async (keyId: string) => {
@@ -334,69 +168,64 @@ const ManageKeysPage: React.FC = () => {
       <PageHeader title="Manage Keys" icon={Key} />
 
       <AppPrimaryContainer>
-        {/* Action Bar */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex gap-3">
+        {/* Create New Key Section - Like Vault Hub */}
+        <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-medium text-slate-700 mb-4 text-center">Create New Key</h3>
+
+          <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+            {/* Passphrase Card */}
             <button
               onClick={handleCreatePassphrase}
-              className="
-                flex items-center gap-2 px-4 py-2
-                text-sm font-medium text-white
-                bg-blue-600 rounded-lg
-                hover:bg-blue-700 transition-colors
-              "
+              className="group p-6 border-2 border-slate-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all"
             >
-              <Plus className="h-4 w-4" />
-              New Passphrase
+              <div className="flex flex-col items-center gap-3">
+                <Key className="h-12 w-12 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                <h4 className="font-semibold text-slate-700 group-hover:text-blue-700">
+                  Passphrase
+                </h4>
+                <p className="text-sm text-slate-500 text-center">Password-protected key</p>
+              </div>
             </button>
-            <button
-              onClick={handleImportKey}
-              className="
-                flex items-center gap-2 px-4 py-2
-                text-sm font-medium text-blue-600
-                border border-blue-600 rounded-lg
-                hover:bg-blue-50 transition-colors
-              "
-            >
-              <Upload className="h-4 w-4" />
-              Import .enc
-            </button>
+
+            {/* YubiKey Card */}
             <button
               onClick={handleDetectYubiKey}
-              className="
-                flex items-center gap-2 px-4 py-2
-                text-sm font-medium text-purple-600
-                border border-purple-600 rounded-lg
-                hover:bg-purple-50 transition-colors
-              "
+              className="group p-6 border-2 border-slate-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all"
             >
-              <Key className="h-4 w-4" />
-              Detect YubiKey
+              <div className="flex flex-col items-center gap-3">
+                <Fingerprint className="h-12 w-12 text-slate-400 group-hover:text-purple-600 transition-colors" />
+                <h4 className="font-semibold text-slate-700 group-hover:text-purple-700">
+                  YubiKey
+                </h4>
+                <p className="text-sm text-slate-500 text-center">Hardware security key</p>
+              </div>
             </button>
           </div>
+        </div>
 
-          <div className="flex gap-3 items-center">
-            {/* Filter */}
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as any)}
-              className="
+        {/* Action Bar - Right-aligned only */}
+        <div className="flex gap-3 items-center justify-end mb-6">
+          {/* Filter */}
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as any)}
+            className="
                 px-3 py-2 text-sm
                 border border-slate-200 rounded-lg
                 focus:outline-none focus:ring-2 focus:ring-blue-600
               "
-            >
-              <option value="all">All Keys</option>
-              <option value="passphrase">Passphrase Only</option>
-              <option value="yubikey">YubiKey Only</option>
-              <option value="orphan">Orphan Keys</option>
-            </select>
+          >
+            <option value="all">All Keys</option>
+            <option value="passphrase">Passphrase Only</option>
+            <option value="yubikey">YubiKey Only</option>
+            <option value="orphan">Orphan Keys</option>
+          </select>
 
-            {/* View Toggle */}
-            <div className="flex border border-slate-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setKeyViewMode('cards')}
-                className={`
+          {/* View Toggle */}
+          <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setKeyViewMode('cards')}
+              className={`
                   p-2 transition-colors
                   ${
                     keyViewMode === 'cards'
@@ -404,12 +233,12 @@ const ManageKeysPage: React.FC = () => {
                       : 'bg-white text-slate-600 hover:bg-slate-50'
                   }
                 `}
-              >
-                <Grid3x3 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setKeyViewMode('table')}
-                className={`
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setKeyViewMode('table')}
+              className={`
                   p-2 transition-colors
                   ${
                     keyViewMode === 'table'
@@ -417,23 +246,22 @@ const ManageKeysPage: React.FC = () => {
                       : 'bg-white text-slate-600 hover:bg-slate-50'
                   }
                 `}
-              >
-                <List className="h-4 w-4" />
-              </button>
-            </div>
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
 
-            {/* Refresh */}
-            <button
-              onClick={refreshAllKeys}
-              className="
+          {/* Refresh */}
+          <button
+            onClick={refreshAllKeys}
+            className="
                 p-2 text-slate-600
                 border border-slate-200 rounded-lg
                 hover:bg-slate-50 transition-colors
               "
-            >
-              <RefreshCcw className="h-4 w-4" />
-            </button>
-          </div>
+          >
+            <RefreshCcw className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Error Display */}
@@ -490,20 +318,12 @@ const ManageKeysPage: React.FC = () => {
           }}
         />
 
-        {isImporting && (
-          <div className="mt-6">
-            <KeyImportDialog onImport={handleKeyImport} onClose={() => setIsImporting(false)} />
-          </div>
-        )}
-
-        {isDetectingYubiKey && (
-          <div className="mt-6">
-            <YubiKeyDetector
-              onAddToRegistry={handleYubiKeyAdd}
-              onCancel={() => setIsDetectingYubiKey(false)}
-            />
-          </div>
-        )}
+        {/* YubiKey Setup Dialog */}
+        <YubiKeySetupDialog
+          isOpen={isDetectingYubiKey}
+          onClose={() => setIsDetectingYubiKey(false)}
+          onSuccess={refreshAllKeys}
+        />
       </AppPrimaryContainer>
     </div>
   );
