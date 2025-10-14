@@ -110,20 +110,16 @@ const VaultHub: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
       {/* Unified App Header */}
       <PageHeader
-        title={
-          currentVault
-            ? currentVault.name.length > 20
-              ? `${currentVault.name.substring(0, 20)}...`
-              : currentVault.name
-            : 'Create New Vault'
-        }
-        titleTooltip={currentVault?.name}
+        title="Vault Hub"
         icon={Shield}
-        description="Manage your encrypted vaults"
         skipNavTarget="#main-content"
+        showVaultBadge={true}
+        vaultName={currentVault?.name}
+        vaultVariant="normal"
+        vaultId={currentVault?.id || null}
       />
 
       {/* Main content */}

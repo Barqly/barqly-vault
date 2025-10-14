@@ -116,62 +116,70 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {/* Separator between vault badge and keys */}
           {showVaultBadge && <span className="text-slate-300 text-lg">|</span>}
 
-          {/* Key Status Badges (readonly) */}
-          <div className="hidden md:block">
-            {vaultId && vaultVariant === 'normal' ? (
-              // Show keys from cache for this vault
-              (() => {
-                const cachedKeys = keyCache.get(vaultId) || [];
-                const passphraseKey = cachedKeys.find((k) => k.type === 'Passphrase');
-                const yubiKeys = cachedKeys.filter((k) => k.type === 'YubiKey');
+          {/* Key Status Badges (readonly) - Only show when showVaultBadge is true */}
+          {showVaultBadge && (
+            <div className="hidden md:block">
+              {vaultId && vaultVariant === 'normal' ? (
+                // Show keys from cache for this vault
+                (() => {
+                  const cachedKeys = keyCache.get(vaultId) || [];
+                  const passphraseKey = cachedKeys.find((k) => k.type === 'Passphrase');
+                  const yubiKeys = cachedKeys.filter((k) => k.type === 'YubiKey');
 
-                return (
-                  <div className="flex items-center gap-1">
-                    <CompactPassphraseCard
-                      isConfigured={!!passphraseKey}
-                      label={passphraseKey?.label}
-                      isInteractive={false}
-                    />
-                    <span className="text-slate-400 text-xs mx-1">|</span>
-                    <CompactYubiKeyCard
-                      index={0}
-                      state={yubiKeys[0] ? 'active' : 'empty'}
-                      serial={yubiKeys[0]?.type === 'YubiKey' ? yubiKeys[0].data.serial : undefined}
-                      label={yubiKeys[0]?.label}
-                      isInteractive={false}
-                    />
-                    <span className="text-slate-400 text-xs mx-1">|</span>
-                    <CompactYubiKeyCard
-                      index={1}
-                      state={yubiKeys[1] ? 'active' : 'empty'}
-                      serial={yubiKeys[1]?.type === 'YubiKey' ? yubiKeys[1].data.serial : undefined}
-                      label={yubiKeys[1]?.label}
-                      isInteractive={false}
-                    />
-                    <span className="text-slate-400 text-xs mx-1">|</span>
-                    <CompactYubiKeyCard
-                      index={2}
-                      state={yubiKeys[2] ? 'active' : 'empty'}
-                      serial={yubiKeys[2]?.type === 'YubiKey' ? yubiKeys[2].data.serial : undefined}
-                      label={yubiKeys[2]?.label}
-                      isInteractive={false}
-                    />
-                  </div>
-                );
-              })()
-            ) : (
-              // No vault or recovery mode - show empty slots
-              <div className="flex items-center gap-1">
-                <CompactPassphraseCard isConfigured={false} isInteractive={false} />
-                <span className="text-slate-400 text-xs mx-1">|</span>
-                <CompactYubiKeyCard index={0} state="empty" isInteractive={false} />
-                <span className="text-slate-400 text-xs mx-1">|</span>
-                <CompactYubiKeyCard index={1} state="empty" isInteractive={false} />
-                <span className="text-slate-400 text-xs mx-1">|</span>
-                <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
-              </div>
-            )}
-          </div>
+                  return (
+                    <div className="flex items-center gap-1">
+                      <CompactPassphraseCard
+                        isConfigured={!!passphraseKey}
+                        label={passphraseKey?.label}
+                        isInteractive={false}
+                      />
+                      <span className="text-slate-400 text-xs mx-1">|</span>
+                      <CompactYubiKeyCard
+                        index={0}
+                        state={yubiKeys[0] ? 'active' : 'empty'}
+                        serial={
+                          yubiKeys[0]?.type === 'YubiKey' ? yubiKeys[0].data.serial : undefined
+                        }
+                        label={yubiKeys[0]?.label}
+                        isInteractive={false}
+                      />
+                      <span className="text-slate-400 text-xs mx-1">|</span>
+                      <CompactYubiKeyCard
+                        index={1}
+                        state={yubiKeys[1] ? 'active' : 'empty'}
+                        serial={
+                          yubiKeys[1]?.type === 'YubiKey' ? yubiKeys[1].data.serial : undefined
+                        }
+                        label={yubiKeys[1]?.label}
+                        isInteractive={false}
+                      />
+                      <span className="text-slate-400 text-xs mx-1">|</span>
+                      <CompactYubiKeyCard
+                        index={2}
+                        state={yubiKeys[2] ? 'active' : 'empty'}
+                        serial={
+                          yubiKeys[2]?.type === 'YubiKey' ? yubiKeys[2].data.serial : undefined
+                        }
+                        label={yubiKeys[2]?.label}
+                        isInteractive={false}
+                      />
+                    </div>
+                  );
+                })()
+              ) : (
+                // No vault or recovery mode - show empty slots
+                <div className="flex items-center gap-1">
+                  <CompactPassphraseCard isConfigured={false} isInteractive={false} />
+                  <span className="text-slate-400 text-xs mx-1">|</span>
+                  <CompactYubiKeyCard index={0} state="empty" isInteractive={false} />
+                  <span className="text-slate-400 text-xs mx-1">|</span>
+                  <CompactYubiKeyCard index={1} state="empty" isInteractive={false} />
+                  <span className="text-slate-400 text-xs mx-1">|</span>
+                  <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>
