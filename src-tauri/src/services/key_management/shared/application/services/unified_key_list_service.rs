@@ -27,6 +27,7 @@ use std::collections::HashSet;
 fn convert_passphrase_to_unified(
     passphrase_key: PassphraseKeyInfo,
     vault_id: Option<String>,
+    vault_associations: Vec<String>,
 ) -> KeyInfo {
     let key_id = passphrase_key.id.clone();
     KeyInfo {
@@ -36,6 +37,7 @@ fn convert_passphrase_to_unified(
         recipient: passphrase_key.public_key, // Real public key from registry!
         is_available: passphrase_key.is_available,
         vault_id,
+        vault_associations,
         lifecycle_status: KeyLifecycleStatus::Active, // Passphrase keys are always active when in registry
         created_at: passphrase_key.created_at,
         last_used: passphrase_key.last_used,
@@ -44,7 +46,11 @@ fn convert_passphrase_to_unified(
 }
 
 /// Convert YubiKeyStateInfo to unified KeyInfo
-fn convert_yubikey_to_unified(yubikey_key: YubiKeyStateInfo, vault_id: Option<String>) -> KeyInfo {
+fn convert_yubikey_to_unified(
+    yubikey_key: YubiKeyStateInfo,
+    vault_id: Option<String>,
+    vault_associations: Vec<String>,
+) -> KeyInfo {
     let is_available = match yubikey_key.state {
         YubiKeyState::Registered => true,
         YubiKeyState::Orphaned => true,
@@ -66,6 +72,7 @@ fn convert_yubikey_to_unified(yubikey_key: YubiKeyStateInfo, vault_id: Option<St
             .unwrap_or_else(|| "unknown".to_string()), // Real recipient from registry!
         is_available,
         vault_id,
+        vault_associations,
         lifecycle_status: match yubikey_key.state {
             YubiKeyState::Registered => KeyLifecycleStatus::Active,
             YubiKeyState::Orphaned => KeyLifecycleStatus::Suspended, // Was used before
@@ -104,11 +111,8 @@ fn convert_available_yubikey_to_unified(
             .unwrap_or_else(|| "pending".to_string()),
         is_available: true,
         vault_id,
-        lifecycle_status: match available_key.state.as_str() {
-            "new" => KeyLifecycleStatus::PreActivation,
-            "orphaned" => KeyLifecycleStatus::Suspended,
-            _ => KeyLifecycleStatus::PreActivation,
-        },
+        vault_associations: vec![], // Available keys not yet attached to any vault
+        lifecycle_status: available_key.lifecycle_status,
         created_at: Utc::now(), // Not yet registered, use current time
         last_used: None,
         yubikey_info: Some(YubiKeyInfo {
@@ -156,55 +160,121 @@ impl UnifiedKeyListService {
     }
 
     /// List all registered keys across all vaults
+    ///
+    /// **Design:** Registry is the single source of truth. Returns ALL keys in registry
+    /// regardless of hardware connection status. For YubiKeys, checks if device is
+    /// currently connected and sets is_available accordingly.
     async fn list_all_keys(&self) -> Result<Vec<KeyInfo>, Box<dyn std::error::Error>> {
         let mut all_keys = Vec::new();
 
-        // Get all YubiKeys using YubiKeyManager
-        match YubiKeyManager::new().await {
-            Ok(yubikey_manager) => match yubikey_manager.list_yubikeys_with_state().await {
-                Ok(yubikey_list) => {
-                    for yubikey in yubikey_list {
-                        all_keys.push(convert_yubikey_to_unified(yubikey, None));
-                    }
-                }
-                Err(e) => {
-                    warn!("Failed to list YubiKey devices: {:?}", e);
-                }
-            },
+        // Initialize YubiKey manager for connection status checks (optional - don't fail if unavailable)
+        let yubikey_manager = YubiKeyManager::new().await.ok();
+
+        // Load registry - this is the source of truth for ALL keys
+        let registry = match self.registry_service.load_registry() {
+            Ok(r) => r,
             Err(e) => {
-                warn!("Failed to initialize YubiKeyManager: {:?}", e);
-                // Continue with other key types even if YubiKeys fail
+                warn!("Failed to load key registry: {:?}", e);
+                return Ok(all_keys);
+            }
+        };
+
+        // Iterate through ALL registry entries (passphrase + yubikey)
+        for (key_id, entry) in registry.keys {
+            match entry {
+                KeyEntry::Passphrase {
+                    label,
+                    created_at,
+                    last_used,
+                    public_key,
+                    vault_associations,
+                    ..
+                } => {
+                    let passphrase_info = PassphraseKeyInfo {
+                        id: key_id,
+                        label,
+                        public_key,
+                        created_at,
+                        last_used,
+                        is_available: true, // Passphrase keys are always available (file-based)
+                    };
+
+                    // Get first vault for backward compatibility
+                    let vault_id = vault_associations.first().cloned();
+
+                    all_keys.push(convert_passphrase_to_unified(
+                        passphrase_info,
+                        vault_id,
+                        vault_associations,
+                    ));
+                }
+                KeyEntry::Yubikey {
+                    label,
+                    created_at,
+                    last_used,
+                    serial,
+                    slot,
+                    recipient,
+                    identity_tag,
+                    firmware_version,
+                    vault_associations,
+                    ..
+                } => {
+                    // Check if YubiKey is currently connected (physical availability)
+                    let is_available = if let Some(ref manager) = yubikey_manager {
+                        use crate::services::key_management::yubikey::domain::models::Serial;
+                        if let Ok(serial_obj) = Serial::new(serial.clone()) {
+                            manager
+                                .is_device_connected(&serial_obj)
+                                .await
+                                .unwrap_or(false)
+                        } else {
+                            false
+                        }
+                    } else {
+                        false // YubiKeyManager unavailable, assume not connected
+                    };
+
+                    // Determine YubiKey state based on connection and registry
+                    let yubikey_state = if is_available {
+                        YubiKeyState::Registered // Connected and in registry
+                    } else {
+                        YubiKeyState::Orphaned // In registry but not connected
+                    };
+
+                    let yubikey_info = YubiKeyStateInfo {
+                        serial: serial.clone(),
+                        state: yubikey_state,
+                        slot: Some(slot),
+                        recipient: Some(recipient),
+                        identity_tag: Some(identity_tag),
+                        label: Some(label.clone()),
+                        pin_status: if is_available {
+                            crate::services::key_management::yubikey::domain::models::PinStatus::Custom
+                        } else {
+                            crate::services::key_management::yubikey::domain::models::PinStatus::Unknown
+                        },
+                        firmware_version,
+                        created_at,
+                        last_used,
+                    };
+
+                    // Get first vault for backward compatibility
+                    let vault_id = vault_associations.first().cloned();
+
+                    all_keys.push(convert_yubikey_to_unified(
+                        yubikey_info,
+                        vault_id,
+                        vault_associations,
+                    ));
+                }
             }
         }
 
-        // Get all passphrase keys from registry using KeyRegistryService
-        match self.registry_service.load_registry() {
-            Ok(registry) => {
-                for (key_id, entry) in registry.keys {
-                    if let KeyEntry::Passphrase {
-                        label,
-                        created_at,
-                        last_used,
-                        public_key,
-                        ..
-                    } = entry
-                    {
-                        let passphrase_info = PassphraseKeyInfo {
-                            id: key_id,
-                            label,
-                            public_key,
-                            created_at,
-                            last_used,
-                            is_available: true,
-                        };
-                        all_keys.push(convert_passphrase_to_unified(passphrase_info, None));
-                    }
-                }
-            }
-            Err(e) => {
-                warn!("Failed to load key registry: {:?}", e);
-            }
-        }
+        info!(
+            total_keys = all_keys.len(),
+            "Listed all registered keys from registry"
+        );
 
         Ok(all_keys)
     }
@@ -234,6 +304,7 @@ impl UnifiedKeyListService {
                         created_at,
                         last_used,
                         public_key,
+                        vault_associations,
                         ..
                     }) = registry.get_key(key_id)
                     {
@@ -248,6 +319,7 @@ impl UnifiedKeyListService {
                         unified_keys.push(convert_passphrase_to_unified(
                             passphrase_info,
                             Some(vault_id.clone()),
+                            vault_associations.clone(),
                         ));
                     }
                 }
@@ -263,28 +335,35 @@ impl UnifiedKeyListService {
             Ok(yubikey_manager) => {
                 match yubikey_manager.list_yubikeys_with_state().await {
                     Ok(all_yubikeys) => {
-                        // Get vault yubikey serials from registry
+                        // Get vault yubikey data from registry
                         if let Ok(registry) = self.registry_service.load_registry() {
-                            let vault_yubikey_serials: HashSet<String> = vault
-                                .get_key_ids()
-                                .iter()
-                                .filter_map(|key_id| {
-                                    if let Some(KeyEntry::Yubikey { serial, .. }) =
-                                        registry.get_key(key_id)
-                                    {
-                                        Some(serial.clone())
-                                    } else {
-                                        None
-                                    }
-                                })
-                                .collect();
+                            let vault_key_ids = vault.get_key_ids();
 
                             // Filter YubiKeys that are in this vault
                             for yubikey in all_yubikeys {
-                                if vault_yubikey_serials.contains(&yubikey.serial) {
+                                // Check if this YubiKey is in the vault
+                                if let Some((_key_id, vault_associations)) =
+                                    vault_key_ids.iter().find_map(|kid| {
+                                        if let Some(KeyEntry::Yubikey {
+                                            serial,
+                                            vault_associations,
+                                            ..
+                                        }) = registry.get_key(kid)
+                                        {
+                                            if serial == &yubikey.serial {
+                                                Some((kid.clone(), vault_associations.clone()))
+                                            } else {
+                                                None
+                                            }
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                {
                                     unified_keys.push(convert_yubikey_to_unified(
                                         yubikey,
                                         Some(vault_id.clone()),
+                                        vault_associations,
                                     ));
                                 }
                             }
@@ -324,6 +403,7 @@ impl UnifiedKeyListService {
                                 created_at,
                                 last_used,
                                 public_key,
+                                vault_associations,
                                 ..
                             } = entry
                                 && !vault_key_ids.contains(key_id)
@@ -336,8 +416,11 @@ impl UnifiedKeyListService {
                                     last_used: *last_used,
                                     is_available: true,
                                 };
-                                available_keys
-                                    .push(convert_passphrase_to_unified(passphrase_info, None));
+                                available_keys.push(convert_passphrase_to_unified(
+                                    passphrase_info,
+                                    None,
+                                    vault_associations.clone(),
+                                ));
                             }
                         }
                     }
@@ -447,6 +530,7 @@ impl UnifiedKeyListService {
                         created_at,
                         last_used,
                         public_key,
+                        vault_associations,
                         ..
                     } = entry
                     {
@@ -458,7 +542,12 @@ impl UnifiedKeyListService {
                             last_used,
                             is_available: true,
                         };
-                        connected_keys.push(convert_passphrase_to_unified(passphrase_info, None));
+                        let vault_id = vault_associations.first().cloned();
+                        connected_keys.push(convert_passphrase_to_unified(
+                            passphrase_info,
+                            vault_id,
+                            vault_associations,
+                        ));
                     }
                 }
             }
@@ -468,29 +557,64 @@ impl UnifiedKeyListService {
         }
 
         // Only include YubiKeys that are physically connected
-        match YubiKeyManager::new().await {
-            Ok(yubikey_manager) => {
-                match yubikey_manager.list_yubikeys_with_state().await {
-                    Ok(yubikey_list) => {
-                        for yubikey in yubikey_list {
-                            // Only include if yubikey is in a "connected" state
-                            if matches!(
-                                yubikey.state,
-                                YubiKeyState::Registered
-                                    | YubiKeyState::Orphaned
-                                    | YubiKeyState::Reused
-                            ) {
-                                connected_keys.push(convert_yubikey_to_unified(yubikey, None));
+        // Load registry to get vault_associations for each YubiKey
+        match self.registry_service.load_registry() {
+            Ok(registry) => {
+                match YubiKeyManager::new().await {
+                    Ok(yubikey_manager) => {
+                        match yubikey_manager.list_yubikeys_with_state().await {
+                            Ok(yubikey_list) => {
+                                for yubikey in yubikey_list {
+                                    // Only include if yubikey is in a "connected" state
+                                    if matches!(
+                                        yubikey.state,
+                                        YubiKeyState::Registered
+                                            | YubiKeyState::Orphaned
+                                            | YubiKeyState::Reused
+                                    ) {
+                                        // Find vault_associations from registry
+                                        let vault_associations = registry
+                                            .keys
+                                            .iter()
+                                            .find_map(|(_, entry)| {
+                                                if let KeyEntry::Yubikey {
+                                                    serial,
+                                                    vault_associations,
+                                                    ..
+                                                } = entry
+                                                {
+                                                    if serial == &yubikey.serial {
+                                                        Some(vault_associations.clone())
+                                                    } else {
+                                                        None
+                                                    }
+                                                } else {
+                                                    None
+                                                }
+                                            })
+                                            .unwrap_or_default();
+
+                                        let vault_id = vault_associations.first().cloned();
+                                        connected_keys.push(convert_yubikey_to_unified(
+                                            yubikey,
+                                            vault_id,
+                                            vault_associations,
+                                        ));
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                warn!("Failed to list YubiKey devices: {:?}", e);
                             }
                         }
                     }
                     Err(e) => {
-                        warn!("Failed to list YubiKey devices: {:?}", e);
+                        warn!("Failed to initialize YubiKeyManager: {:?}", e);
                     }
                 }
             }
             Err(e) => {
-                warn!("Failed to initialize YubiKeyManager: {:?}", e);
+                warn!("Failed to load registry: {:?}", e);
             }
         }
 

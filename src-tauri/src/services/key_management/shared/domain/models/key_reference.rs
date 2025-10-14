@@ -79,8 +79,15 @@ pub struct KeyInfo {
     pub recipient: String,
     /// Whether key is currently available (green vs blue in UI)
     pub is_available: bool,
-    /// Which vault this key belongs to (if any)
+
+    /// Single vault ID (deprecated - use vault_associations for multi-vault support)
+    /// Populated with first vault from vault_associations for backward compatibility
     pub vault_id: Option<String>,
+
+    /// Array of vault IDs this key is attached to (supports multi-vault per NIST)
+    /// Empty array means key is not attached to any vault (orphaned/suspended)
+    pub vault_associations: Vec<String>,
+
     /// Current lifecycle status
     pub lifecycle_status: KeyLifecycleStatus,
     /// When this key was created

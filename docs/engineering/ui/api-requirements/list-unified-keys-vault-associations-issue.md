@@ -4,7 +4,7 @@
 **Priority**: Critical (R2 Blocker - Oct 15 deadline)
 **Created**: 2025-10-14
 **Reporter**: Frontend Engineer
-**Assignee**: sr-backend-engineer
+
 
 ---
 
