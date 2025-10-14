@@ -6,7 +6,16 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-/// YubiKey state - the single source of truth
+/// YubiKey state - Device-level hardware initialization status
+///
+/// This enum tracks YubiKey DEVICE state (hardware initialization).
+/// For registry-level lifecycle state, see `KeyLifecycleStatus` (NIST-aligned).
+///
+/// **Architecture Note:** This is intentionally separate from KeyLifecycleStatus:
+/// - YubiKeyState = Device-level (hardware initialization status)
+/// - KeyLifecycleStatus = Registry-level (NIST SP 800-57 lifecycle state)
+///
+/// Both systems coexist with clear mapping (see NIST Mapping below).
 ///
 /// This replaces the duplicate YubiKeyState enums found in:
 /// - commands/yubikey_commands/streamlined.rs:24
@@ -19,6 +28,7 @@ pub enum YubiKeyState {
     /// - Age identity: None
     /// - Manifest entry: None
     /// - Action needed: Initialize with custom PIN and generate age identity
+    /// - **NIST Mapping:** KeyLifecycleStatus::PreActivation
     New,
 
     /// YubiKey with custom PIN but no age identity registered
@@ -26,6 +36,7 @@ pub enum YubiKeyState {
     /// - Age identity: None
     /// - Manifest entry: None
     /// - Action needed: Generate age identity for Barqly
+    /// - **NIST Mapping:** KeyLifecycleStatus::PreActivation
     Reused,
 
     /// YubiKey with age identity already registered and ready to use
@@ -33,6 +44,7 @@ pub enum YubiKeyState {
     /// - Age identity: Present and valid
     /// - Manifest entry: Present and valid
     /// - Action needed: None (ready for operations)
+    /// - **NIST Mapping:** KeyLifecycleStatus::Active
     Registered,
 
     /// YubiKey has age identity but no manifest entry (needs recovery)
@@ -40,6 +52,10 @@ pub enum YubiKeyState {
     /// - Age identity: Present
     /// - Manifest entry: Missing or invalid
     /// - Action needed: Recover manifest entry or re-register
+    /// - **NIST Mapping:** KeyLifecycleStatus::Suspended (was active, now detached)
+    ///
+    /// **Note:** This device state name is kept for backward compatibility.
+    /// When creating registry entries, use KeyLifecycleStatus::Suspended instead.
     Orphaned,
 }
 

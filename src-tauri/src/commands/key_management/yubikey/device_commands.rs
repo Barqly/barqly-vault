@@ -11,6 +11,7 @@
 
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::prelude::*;
+use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
 use crate::services::key_management::yubikey::{
     YubiKeyManager,
     domain::models::{Pin, Serial},
@@ -142,17 +143,189 @@ pub async fn init_yubikey(
     })
 }
 
-/// Register an existing YubiKey device (orphaned state)
-/// Uses existing streamlined implementation - fully integrated with YubiKeyManager
+/// Register an existing YubiKey device to global registry (vault-agnostic)
+///
+/// This command adds an already-initialized YubiKey (with existing age identity)
+/// to the global key registry WITHOUT attaching it to any vault.
+///
+/// **Use Case:** YubiKey in "orphaned"/"suspended" state:
+/// - Has age identity (was used before)
+/// - NOT in current machine's registry
+/// - User wants to add to registry for future vault attachment
+///
+/// **State Transitions:**
+/// - Device State: Orphaned → Registered
+/// - Lifecycle Status: Suspended → Active (NIST-aligned)
+///
+/// **Differs from init_yubikey:**
+/// - init_yubikey: For NEW YubiKeys (generates new identity)
+/// - register_yubikey: For ORPHANED YubiKeys (reads existing identity)
 #[tauri::command]
 #[specta::specta]
 pub async fn register_yubikey(
-    _serial: String,
-    _label: String,
-    _pin: String,
+    serial: String,
+    label: String,
+    pin: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
-    Err(CommandError::operation(
-        ErrorCode::YubiKeyInitializationFailed,
-        "YubiKey registration functionality needs to be implemented with YubiKeyManager",
-    ))
+    info!(
+        "Registering existing YubiKey to global registry: {}",
+        &serial[..8.min(serial.len())]
+    );
+
+    // Create domain objects for type safety
+    let serial_obj = Serial::new(serial.clone())
+        .map_err(|e| CommandError::validation(format!("Invalid serial format: {e}")))?;
+
+    let pin_obj =
+        Pin::new(pin).map_err(|e| CommandError::validation(format!("Invalid PIN: {e}")))?;
+
+    // Initialize YubiKey manager
+    let manager = YubiKeyManager::new().await.map_err(|e| {
+        CommandError::operation(
+            ErrorCode::YubiKeyInitializationFailed,
+            format!("Failed to initialize YubiKey manager: {e}"),
+        )
+    })?;
+
+    // Validate device exists
+    let device = manager
+        .detect_device(&serial_obj)
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyNotFound,
+                format!("Failed to detect YubiKey: {e}"),
+            )
+        })?
+        .ok_or_else(|| {
+            CommandError::operation(
+                ErrorCode::YubiKeyNotFound,
+                "YubiKey not found or not connected",
+            )
+        })?;
+
+    // Check if YubiKey already has identity
+    let has_identity = manager.has_identity(&serial_obj).await.map_err(|e| {
+        CommandError::operation(
+            ErrorCode::YubiKeyInitializationFailed,
+            format!("Failed to check YubiKey identity: {e}"),
+        )
+    })?;
+
+    if !has_identity {
+        return Err(CommandError::operation(
+            ErrorCode::InvalidInput,
+            "This YubiKey needs to be initialized first - it has no age identity",
+        ));
+    }
+
+    // Verify PIN (ownership proof)
+    if !manager
+        .validate_pin(&serial_obj, &pin_obj)
+        .await
+        .unwrap_or(false)
+    {
+        return Err(CommandError::operation(
+            ErrorCode::YubiKeyPinRequired,
+            "Invalid PIN - could not verify YubiKey ownership",
+        ));
+    }
+
+    // Check if already in registry
+    if manager
+        .find_by_serial(&serial_obj)
+        .await
+        .unwrap_or(None)
+        .is_some()
+    {
+        return Err(CommandError::operation(
+            ErrorCode::KeyAlreadyExists,
+            "This YubiKey is already registered in the global registry",
+        ));
+    }
+
+    // Get existing identity from YubiKey
+    let identity = manager
+        .get_existing_identity(&serial_obj)
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                format!("Failed to get YubiKey identity: {e}"),
+            )
+        })?
+        .ok_or_else(|| {
+            CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                "YubiKey identity not found despite has_identity check",
+            )
+        })?;
+
+    // Generate recovery code placeholder (key was already initialized elsewhere)
+    use sha2::{Digest, Sha256};
+    let recovery_placeholder = format!("{:x}", Sha256::digest(b"orphaned-key-recovery"));
+
+    // Register device in global registry
+    // Note: register_device sets lifecycle_status to PreActivation initially
+    let entry_id = manager
+        .register_device(
+            &device,
+            &identity,
+            1,
+            recovery_placeholder,
+            Some(label.clone()),
+        )
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::InternalError,
+                format!("Failed to register YubiKey in registry: {e}"),
+            )
+        })?;
+
+    // Transition lifecycle status from PreActivation → Active
+    // This is correct for orphaned YubiKeys (were active before, suspended, now active again)
+    use crate::services::key_management::shared::KeyManager;
+    let key_manager = KeyManager::new();
+
+    if let Ok(mut registry) = key_manager.load_registry()
+        && let Some(key_entry) = registry.get_key_mut(&entry_id)
+    {
+        // Transition: Suspended → Active (orphaned key being re-registered)
+        if let Err(e) = key_entry.set_lifecycle_status(
+            KeyLifecycleStatus::Active,
+            "Registered orphaned YubiKey from Manage Keys".to_string(),
+            "user".to_string(),
+        ) {
+            warn!("Failed to transition lifecycle status: {}", e);
+        } else {
+            // Save updated registry
+            if let Err(e) = registry.save() {
+                warn!(
+                    "Failed to save registry after lifecycle transition: {:?}",
+                    e
+                );
+            }
+        }
+    }
+
+    // Shutdown manager gracefully
+    if let Err(e) = manager.shutdown().await {
+        warn!("Failed to shutdown YubiKey manager: {}", e);
+    }
+
+    info!(
+        "Successfully registered YubiKey to global registry: {} with entry ID: {}",
+        serial_obj.redacted(),
+        entry_id
+    );
+
+    Ok(StreamlinedYubiKeyInitResult {
+        serial: device.serial().value().to_string(),
+        slot: 1,
+        recipient: identity.to_recipient().to_string(),
+        identity_tag: identity.identity_tag().to_string(),
+        label,
+        recovery_code: String::new(), // No recovery code for orphaned keys (already initialized)
+    })
 }

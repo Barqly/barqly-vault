@@ -414,8 +414,23 @@ async initYubikey(serial: string, newPin: string, label: string) : Promise<Resul
 }
 },
 /**
- * Register an existing YubiKey device (orphaned state)
- * Uses existing streamlined implementation - fully integrated with YubiKeyManager
+ * Register an existing YubiKey device to global registry (vault-agnostic)
+ * 
+ * This command adds an already-initialized YubiKey (with existing age identity)
+ * to the global key registry WITHOUT attaching it to any vault.
+ * 
+ * **Use Case:** YubiKey in "orphaned"/"suspended" state:
+ * - Has age identity (was used before)
+ * - NOT in current machine's registry
+ * - User wants to add to registry for future vault attachment
+ * 
+ * **State Transitions:**
+ * - Device State: Orphaned → Registered
+ * - Lifecycle Status: Suspended → Active (NIST-aligned)
+ * 
+ * **Differs from init_yubikey:**
+ * - init_yubikey: For NEW YubiKeys (generates new identity)
+ * - register_yubikey: For ORPHANED YubiKeys (reads existing identity)
  */
 async registerYubikey(serial: string, label: string, pin: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
     try {
@@ -1080,7 +1095,16 @@ export type YubiKeyOperationType = "Detection" | "Initialization" | "Authenticat
  */
 export type YubiKeyPhase = "Starting" | { InProgress: { percentage: number | null } } | "WaitingForPin" | "WaitingForTouch" | "Completing" | "Completed" | { Failed: { error: string } }
 /**
- * YubiKey state - the single source of truth
+ * YubiKey state - Device-level hardware initialization status
+ * 
+ * This enum tracks YubiKey DEVICE state (hardware initialization).
+ * For registry-level lifecycle state, see `KeyLifecycleStatus` (NIST-aligned).
+ * 
+ * **Architecture Note:** This is intentionally separate from KeyLifecycleStatus:
+ * - YubiKeyState = Device-level (hardware initialization status)
+ * - KeyLifecycleStatus = Registry-level (NIST SP 800-57 lifecycle state)
+ * 
+ * Both systems coexist with clear mapping (see NIST Mapping below).
  * 
  * This replaces the duplicate YubiKeyState enums found in:
  * - commands/yubikey_commands/streamlined.rs:24
@@ -1093,6 +1117,7 @@ export type YubiKeyState =
  * - Age identity: None
  * - Manifest entry: None
  * - Action needed: Initialize with custom PIN and generate age identity
+ * - **NIST Mapping:** KeyLifecycleStatus::PreActivation
  */
 "new" | 
 /**
@@ -1101,6 +1126,7 @@ export type YubiKeyState =
  * - Age identity: None
  * - Manifest entry: None
  * - Action needed: Generate age identity for Barqly
+ * - **NIST Mapping:** KeyLifecycleStatus::PreActivation
  */
 "reused" | 
 /**
@@ -1109,6 +1135,7 @@ export type YubiKeyState =
  * - Age identity: Present and valid
  * - Manifest entry: Present and valid
  * - Action needed: None (ready for operations)
+ * - **NIST Mapping:** KeyLifecycleStatus::Active
  */
 "registered" | 
 /**
@@ -1117,6 +1144,10 @@ export type YubiKeyState =
  * - Age identity: Present
  * - Manifest entry: Missing or invalid
  * - Action needed: Recover manifest entry or re-register
+ * - **NIST Mapping:** KeyLifecycleStatus::Suspended (was active, now detached)
+ * 
+ * **Note:** This device state name is kept for backward compatibility.
+ * When creating registry entries, use KeyLifecycleStatus::Suspended instead.
  */
 "orphaned"
 export type YubiKeyStateInfo = { serial: string; state: YubiKeyState; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus; firmware_version: string | null; created_at: string; last_used: string | null }

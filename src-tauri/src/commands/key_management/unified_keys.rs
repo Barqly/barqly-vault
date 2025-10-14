@@ -114,11 +114,8 @@ pub fn convert_available_yubikey_to_unified(
             .unwrap_or_else(|| "pending".to_string()),
         is_available: true,
         vault_id,
-        lifecycle_status: match available_key.state.as_str() {
-            "new" => KeyLifecycleStatus::PreActivation,
-            "orphaned" => KeyLifecycleStatus::Suspended,
-            _ => KeyLifecycleStatus::PreActivation,
-        },
+        // Use lifecycle_status from AvailableYubiKey (already mapped)
+        lifecycle_status: available_key.lifecycle_status,
         created_at: Utc::now(), // Not yet registered, use current time
         last_used: None,
         yubikey_info: Some(YubiKeyInfo {

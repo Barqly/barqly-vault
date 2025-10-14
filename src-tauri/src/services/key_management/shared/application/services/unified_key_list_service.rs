@@ -384,14 +384,24 @@ impl UnifiedKeyListService {
                                         .await
                                         .unwrap_or(false);
 
-                                    // Build AvailableYubiKey
+                                    // Build AvailableYubiKey with proper state mapping
+                                    let state_str = if has_identity {
+                                        "orphaned".to_string()
+                                    } else {
+                                        "new".to_string()
+                                    };
+
+                                    // Map device state to NIST lifecycle status
+                                    let lifecycle_status = if has_identity {
+                                        KeyLifecycleStatus::Suspended // Orphaned → Suspended (NIST)
+                                    } else {
+                                        KeyLifecycleStatus::PreActivation // New → PreActivation (NIST)
+                                    };
+
                                     let available_yubikey = AvailableYubiKey {
                                         serial: serial_str,
-                                        state: if has_identity {
-                                            "orphaned".to_string()
-                                        } else {
-                                            "new".to_string()
-                                        },
+                                        state: state_str,
+                                        lifecycle_status,
                                         slot: None,
                                         recipient: None,
                                         identity_tag: None,
