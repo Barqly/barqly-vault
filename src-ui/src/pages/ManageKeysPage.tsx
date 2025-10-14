@@ -6,7 +6,7 @@ import PageHeader from '../components/common/PageHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import { KeyCard } from '../components/keys/KeyCard';
 import { YubiKeyRegistryDialog } from '../components/keys/YubiKeyRegistryDialog';
-import { PassphraseKeyDialog } from '../components/keys/PassphraseKeyDialog';
+import { PassphraseKeyRegistryDialog } from '../components/keys/PassphraseKeyRegistryDialog';
 import { logger } from '../lib/logger';
 import { commands } from '../bindings';
 
@@ -309,7 +309,7 @@ const ManageKeysPage: React.FC = () => {
         )}
 
         {/* Passphrase Dialog */}
-        <PassphraseKeyDialog
+        <PassphraseKeyRegistryDialog
           isOpen={showPassphraseDialog}
           onSuccess={handlePassphraseCreated}
           onClose={() => {
