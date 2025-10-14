@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import { useUI } from '../contexts/UIContext';
 import { logger } from '../lib/logger';
+import { commands, type KeyInfo } from '../bindings';
 
 export type FilterType = 'all' | 'passphrase' | 'yubikey' | 'orphan';
 
@@ -17,25 +18,47 @@ export const useManageKeysWorkflow = () => {
   const [isDetectingYubiKey, setIsDetectingYubiKey] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(new Set<string>());
   const [error, setError] = useState<string | null>(null);
+  const [globalKeys, setGlobalKeys] = useState<KeyInfo[]>([]);
 
-  // Get all keys from cache across all vaults
+  // Convert KeyInfo to KeyReference-like structure for compatibility with existing components
   const allKeys = useMemo(() => {
-    const keys = Array.from(keyCache.values()).flat();
-    return keys;
-  }, [keyCache]);
+    return globalKeys.map((keyInfo) => {
+      // Create a KeyReference-like object from KeyInfo
+      const keyRef: any = {
+        id: keyInfo.id,
+        label: keyInfo.label,
+        type: keyInfo.key_type.type, // Extract type from key_type
+        created_at: keyInfo.created_at,
+        lifecycle_status: keyInfo.lifecycle_status,
+        is_available: keyInfo.is_available,
+      };
+
+      // Add type-specific data
+      if (keyInfo.key_type.type === 'YubiKey') {
+        keyRef.data = {
+          serial: keyInfo.key_type.data.serial,
+          firmware_version: keyInfo.key_type.data.firmware_version || null,
+        };
+      } else if (keyInfo.key_type.type === 'Passphrase') {
+        keyRef.data = {
+          key_id: keyInfo.key_type.data.key_id,
+        };
+      }
+
+      return keyRef;
+    });
+  }, [globalKeys]);
 
   // Get vault attachments for a key
   const getKeyVaultAttachments = useCallback(
     (keyId: string) => {
-      const attachments: string[] = [];
-      keyCache.forEach((keys, vaultId) => {
-        if (keys.some((k) => k.id === keyId)) {
-          attachments.push(vaultId);
-        }
-      });
-      return attachments;
+      const key = globalKeys.find((k) => k.id === keyId);
+      if (!key || !key.vault_id) {
+        return [];
+      }
+      return [key.vault_id];
     },
-    [keyCache],
+    [globalKeys],
   );
 
   // Filter and search keys
@@ -48,6 +71,7 @@ export const useManageKeysWorkflow = () => {
     } else if (filterType === 'yubikey') {
       keys = keys.filter((k) => k.type === 'YubiKey');
     } else if (filterType === 'orphan') {
+      // Keys without vault attachment
       keys = keys.filter((k) => {
         const attachments = getKeyVaultAttachments(k.id);
         return attachments.length === 0;
@@ -62,22 +86,31 @@ export const useManageKeysWorkflow = () => {
       );
     }
 
-    // Remove duplicates (keys can be in multiple vaults)
+    // Remove duplicates (keys should already be unique from global registry)
     const uniqueKeys = Array.from(new Map(keys.map((k) => [k.id, k])).values());
 
     return uniqueKeys;
   }, [allKeys, filterType, searchQuery, getKeyVaultAttachments]);
 
-  // Refresh all keys across all vaults
+  // Refresh all keys from global registry
   const refreshAllKeys = useCallback(async () => {
     try {
-      const promises = vaults.map((vault) => refreshKeysForVault(vault.id));
-      await Promise.all(promises);
+      // Get ALL keys from global registry
+      const result = await commands.listUnifiedKeys({ type: 'All' });
+
+      if (result.status === 'ok') {
+        setGlobalKeys(result.data);
+        logger.info('ManageKeysWorkflow', 'Refreshed global keys', {
+          keyCount: result.data.length,
+        });
+      } else {
+        throw new Error(result.error.message);
+      }
     } catch (err) {
       logger.error('ManageKeysWorkflow', 'Failed to refresh all keys', err as Error);
       setError('Failed to refresh keys');
     }
-  }, [vaults, refreshKeysForVault]);
+  }, []);
 
   // Toggle key selection
   const toggleKeySelection = useCallback((keyId: string) => {
@@ -101,6 +134,11 @@ export const useManageKeysWorkflow = () => {
   const clearError = useCallback(() => {
     setError(null);
   }, []);
+
+  // Load keys on mount
+  useEffect(() => {
+    refreshAllKeys();
+  }, [refreshAllKeys]);
 
   return {
     // State
