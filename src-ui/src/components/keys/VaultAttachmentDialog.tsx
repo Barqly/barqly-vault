@@ -257,8 +257,8 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+      <div className="bg-white rounded-lg shadow-2xl border border-slate-300 max-w-md w-full mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <h3 className="text-lg font-semibold text-slate-800">Attach to Vaults</h3>
