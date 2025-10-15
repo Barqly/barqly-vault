@@ -1,5 +1,5 @@
 import React from 'react';
-import { Key, MoreVertical, Link2, FileText, Trash2, AlertTriangle } from 'lucide-react';
+import { Key, MoreVertical, Link2, FileText, Trash2 } from 'lucide-react';
 import { KeyReference } from '../../bindings';
 
 interface KeyCardProps {
