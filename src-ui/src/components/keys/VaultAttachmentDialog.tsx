@@ -37,7 +37,11 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
         setIsLoadingVaults(true);
         setError(null);
 
-        logger.info('VaultAttachmentDialog', 'Loading vaults...');
+        logger.info('VaultAttachmentDialog', 'Loading vaults...', {
+          keyInfo,
+          hasVaultAssociations: 'vault_associations' in keyInfo,
+          vaultAssociations: keyInfo.vault_associations,
+        });
 
         // Get all vaults
         const vaultsResult = await commands.listVaults();
@@ -68,64 +72,73 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
         // Process each vault (use allSettled to handle failures gracefully)
         const results = await Promise.allSettled(
           allVaults.map(async (vault) => {
-            logger.info('VaultAttachmentDialog', 'Processing vault', {
-              vaultId: vault.id,
-              vaultName: vault.name,
-            });
-
-            const isAttached = keyInfo.vault_associations.includes(vault.id);
-            logger.info('VaultAttachmentDialog', 'Attachment check', {
-              vaultId: vault.id,
-              isAttached,
-              associations: keyInfo.vault_associations,
-            });
-
-            // Determine if vault has been encrypted (immutability check)
-            let isDisabled = false;
-            let tooltip = '';
-
-            if (isAttached) {
-              // Check if vault is encrypted
-              logger.info('VaultAttachmentDialog', 'Fetching vault stats', {
+            try {
+              logger.info('VaultAttachmentDialog', 'Processing vault', {
+                vaultId: vault.id,
                 vaultName: vault.name,
               });
-              const statsResult = await commands.getVaultStatistics({
-                vault_name: vault.name,
-              });
-              logger.info('VaultAttachmentDialog', 'Vault stats result', {
-                vaultName: vault.name,
-                status: statsResult.status,
-                result: statsResult,
+
+              const isAttached = keyInfo.vault_associations.includes(vault.id);
+              logger.info('VaultAttachmentDialog', 'Attachment check', {
+                vaultId: vault.id,
+                isAttached,
+                associations: keyInfo.vault_associations,
               });
 
-              if (statsResult.status === 'ok' && statsResult.data.statistics) {
-                const encryptionCount = statsResult.data.statistics.encryption_count;
-                const isKeySetMutable = encryptionCount === 0;
+              // Determine if vault has been encrypted (immutability check)
+              let isDisabled = false;
+              let tooltip = '';
 
-                if (!isKeySetMutable) {
-                  // Vault has been encrypted - can't detach
-                  isDisabled = true;
-                  tooltip = 'This key was used to encrypt this vault. It cannot be removed.';
+              if (isAttached) {
+                // Check if vault is encrypted
+                logger.info('VaultAttachmentDialog', 'Fetching vault stats', {
+                  vaultName: vault.name,
+                });
+                const statsResult = await commands.getVaultStatistics({
+                  vault_name: vault.name,
+                });
+                logger.info('VaultAttachmentDialog', 'Vault stats result', {
+                  vaultName: vault.name,
+                  status: statsResult.status,
+                  result: statsResult,
+                });
+
+                if (statsResult.status === 'ok' && statsResult.data.statistics) {
+                  const encryptionCount = statsResult.data.statistics.encryption_count;
+                  const isKeySetMutable = encryptionCount === 0;
+
+                  if (!isKeySetMutable) {
+                    // Vault has been encrypted - can't detach
+                    isDisabled = true;
+                    tooltip = 'This key was used to encrypt this vault. It cannot be removed.';
+                  } else {
+                    // Vault never encrypted - can detach
+                    tooltip = 'Unlink key from vault (metadata only)';
+                  }
                 } else {
-                  // Vault never encrypted - can detach
-                  tooltip = 'Unlink key from vault (metadata only)';
+                  // Fallback if stats not available - allow detach
+                  tooltip = 'Unlink key from vault';
                 }
               } else {
-                // Fallback if stats not available - allow detach
-                tooltip = 'Unlink key from vault';
+                // Not attached - can attach
+                tooltip = 'Attach this key to use it for encrypting this vault.';
               }
-            } else {
-              // Not attached - can attach
-              tooltip = 'Attach this key to use it for encrypting this vault.';
-            }
 
-            return {
-              vault,
-              isAttached,
-              isDisabled,
-              isLoading: false,
-              tooltip,
-            };
+              return {
+                vault,
+                isAttached,
+                isDisabled,
+                isLoading: false,
+                tooltip,
+              };
+            } catch (err) {
+              logger.error('VaultAttachmentDialog', 'Error processing vault', {
+                vaultId: vault.id,
+                vaultName: vault.name,
+                error: err,
+              });
+              throw err; // Re-throw to mark as rejected
+            }
           }),
         );
 

@@ -205,6 +205,7 @@ impl UnifiedKeyListService {
                     recipient,
                     identity_tag,
                     firmware_version,
+                    lifecycle_status,
                     vault_associations,
                     ..
                 } => {
@@ -230,24 +231,33 @@ impl UnifiedKeyListService {
                         YubiKeyState::Orphaned // In registry but not connected
                     };
 
-                    let yubikey_info = YubiKeyStateInfo {
-                        serial: serial.clone(),
-                        state: yubikey_state,
-                        slot: Some(slot),
-                        recipient: Some(recipient),
-                        identity_tag: Some(identity_tag),
-                        label: Some(label.clone()),
-                        pin_status: if is_available {
-                            crate::services::key_management::yubikey::domain::models::PinStatus::Custom
-                        } else {
-                            crate::services::key_management::yubikey::domain::models::PinStatus::Unknown
+                    // Build KeyInfo directly from registry (NO ID transformation!)
+                    let key_info = KeyInfo {
+                        id: key_id, // ← Use actual registry key_id! (e.g., "YubiKey-35230900")
+                        label,
+                        key_type: KeyType::YubiKey {
+                            serial: serial.clone(),
+                            firmware_version,
                         },
-                        firmware_version,
+                        recipient,
+                        is_available,
+                        vault_associations,
+                        lifecycle_status,
                         created_at,
                         last_used,
+                        yubikey_info: Some(YubiKeyInfo {
+                            slot: Some(slot),
+                            identity_tag: Some(identity_tag),
+                            pin_status: if is_available {
+                                crate::services::key_management::yubikey::domain::models::PinStatus::Custom
+                            } else {
+                                crate::services::key_management::yubikey::domain::models::PinStatus::Unknown
+                            },
+                            yubikey_state,
+                        }),
                     };
 
-                    all_keys.push(convert_yubikey_to_unified(yubikey_info, vault_associations));
+                    all_keys.push(key_info);
                 }
             }
         }
