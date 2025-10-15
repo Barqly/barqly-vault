@@ -85,7 +85,7 @@ impl Vault {
     pub fn new(name: String, description: Option<String>) -> Self {
         let now = Utc::now();
         Self {
-            encryption_revision: 1,
+            encryption_revision: 0, // 0 = never encrypted, increments with each encryption
             app_version: env!("CARGO_PKG_VERSION").to_string(),
             id: generate_vault_id(),
             name,

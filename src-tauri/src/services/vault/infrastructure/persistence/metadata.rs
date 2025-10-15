@@ -159,7 +159,7 @@ impl VaultMetadata {
                 sanitized_name,
             },
             versioning: Versioning {
-                revision: 1,
+                revision: 0, // 0 = never encrypted, increments with each encryption
                 created_at: now,
                 last_encrypted: None, // Set during first encryption
             },
@@ -734,10 +734,10 @@ mod tests {
 
         let mut metadata = create_test_metadata("vault-006", "Version Test", vec![]);
 
-        assert_eq!(metadata.encryption_revision(), 1);
+        assert_eq!(metadata.encryption_revision(), 0); // New vault starts at 0
 
         metadata.increment_version(&device_info);
-        assert_eq!(metadata.encryption_revision(), 2);
+        assert_eq!(metadata.encryption_revision(), 1); // First encryption increments to 1
         assert_eq!(
             metadata.last_encrypted_by().unwrap().machine_id,
             "test-machine-123"
