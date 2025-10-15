@@ -144,9 +144,14 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               text-xs font-medium text-red-600 border border-red-200
               rounded-md hover:bg-red-50 transition-colors
             "
+            title={
+              isPassphrase
+                ? 'Mark key for deletion. 30-day grace period before encrypted key is permanently removed.'
+                : 'Mark YubiKey as inactive. Device unchanged. Record removed after 30 days.'
+            }
           >
             <Trash2 className="h-3 w-3" />
-            Delete
+            Deactivate
           </button>
         )}
       </div>
