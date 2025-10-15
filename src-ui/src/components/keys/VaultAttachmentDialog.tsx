@@ -65,8 +65,8 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
           return;
         }
 
-        // Process each vault
-        const states = await Promise.all(
+        // Process each vault (use allSettled to handle failures gracefully)
+        const results = await Promise.allSettled(
           allVaults.map(async (vault) => {
             logger.info('VaultAttachmentDialog', 'Processing vault', {
               vaultId: vault.id,
@@ -128,6 +128,16 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
             };
           }),
         );
+
+        // Filter successful results
+        const states = results
+          .filter((result) => result.status === 'fulfilled')
+          .map((result) => (result as PromiseFulfilledResult<VaultCheckboxState>).value);
+
+        logger.info('VaultAttachmentDialog', 'States processed', {
+          totalVaults: allVaults.length,
+          successfulStates: states.length,
+        });
 
         setVaultStates(states);
       } catch (err) {
