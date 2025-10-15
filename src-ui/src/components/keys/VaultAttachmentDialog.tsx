@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
-import { commands, VaultSummary, KeyInfo } from '../../bindings';
+import { commands, VaultSummary, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
 
 interface VaultAttachmentDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  keyInfo: KeyInfo;
+  keyInfo: GlobalKey;
   onSuccess: () => void;
 }
 
