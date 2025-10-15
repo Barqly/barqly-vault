@@ -300,7 +300,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent pointer-events-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm pointer-events-none">
       <div
         className="bg-white rounded-lg shadow-2xl border border-slate-300 max-w-md w-full mx-4 pointer-events-auto"
         style={{
