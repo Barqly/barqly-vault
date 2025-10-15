@@ -55,7 +55,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
 
         if (vaultsResult.status === 'error') {
           logger.error('VaultAttachmentDialog', 'Failed to load vaults', vaultsResult.error);
-          setError(`Failed to load vaults: ${vaultsResult.error.message}`);
+          setError('Failed to load vaults');
           setIsLoadingVaults(false);
           return;
         }
@@ -137,8 +137,6 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
               };
             } catch (err) {
               logger.error('VaultAttachmentDialog', 'Error processing vault', {
-                vaultId: vault.id,
-                vaultName: vault.name,
                 error: err,
               });
               throw err; // Re-throw to mark as rejected
