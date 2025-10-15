@@ -9,7 +9,7 @@ import { YubiKeyRegistryDialog } from '../components/keys/YubiKeyRegistryDialog'
 import { PassphraseKeyRegistryDialog } from '../components/keys/PassphraseKeyRegistryDialog';
 import { VaultAttachmentDialog } from '../components/keys/VaultAttachmentDialog';
 import { logger } from '../lib/logger';
-import { commands, KeyInfo } from '../bindings';
+import { commands, GlobalKey } from '../bindings';
 
 /**
  * Manage Keys Page - Central registry for all encryption keys
@@ -33,7 +33,7 @@ const ManageKeysPage: React.FC = () => {
 
   const [showPassphraseDialog, setShowPassphraseDialog] = useState(false);
   const [showVaultAttachmentDialog, setShowVaultAttachmentDialog] = useState(false);
-  const [selectedKeyForAttachment, setSelectedKeyForAttachment] = useState<KeyInfo | null>(null);
+  const [selectedKeyForAttachment, setSelectedKeyForAttachment] = useState<GlobalKey | null>(null);
 
   // Build vault name map for display
   const vaultNameMap = React.useMemo(() => {
@@ -66,37 +66,18 @@ const ManageKeysPage: React.FC = () => {
 
   const handleAttachKey = useCallback(
     (keyId: string) => {
-      // Need to get the original KeyInfo (not converted KeyReference) to access vault_associations
-      // Temporarily use getKeyVaultAttachments to get the data we need
-      // TODO: Refactor to expose globalKeys from workflow
-      logger.info('ManageKeysPage', 'Opening attach dialog for key', { keyId });
-
-      // For now, we need the workflow to expose globalKeys
-      // This is a quick workaround - will fix properly
+      // allKeys is now GlobalKey[] - has all fields including vault_associations!
       const keyInfo = allKeys.find((k) => k.id === keyId);
       if (!keyInfo) {
         logger.error('ManageKeysPage', 'Key not found', { keyId });
         return;
       }
 
-      // Create a proper KeyInfo with vault_associations from getKeyVaultAttachments
-      const vault_associations = getKeyVaultAttachments(keyId);
-      const fullKeyInfo: KeyInfo = {
-        ...(keyInfo as any),
-        vault_associations,
-        key_type:
-          keyInfo.type === 'YubiKey'
-            ? { type: 'YubiKey', data: (keyInfo as any).data }
-            : { type: 'Passphrase', data: (keyInfo as any).data },
-        recipient: '', // Not needed for this dialog
-        yubikey_info: null,
-      };
-
-      // Open the vault attachment dialog
-      setSelectedKeyForAttachment(fullKeyInfo);
+      // Open the vault attachment dialog - no reconstruction needed!
+      setSelectedKeyForAttachment(keyInfo);
       setShowVaultAttachmentDialog(true);
     },
-    [allKeys, getKeyVaultAttachments],
+    [allKeys],
   );
 
   const handleVaultAttachmentSuccess = useCallback(async () => {
