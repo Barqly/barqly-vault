@@ -107,7 +107,8 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
 
               if (statsResult.status === 'ok' && statsResult.data.statistics) {
                 const encryptionCount = statsResult.data.statistics.encryption_count;
-                const isKeySetMutable = encryptionCount === 0;
+                // encryption_count: 1 = never encrypted (default), >1 = encrypted
+                const isKeySetMutable = encryptionCount === 1;
 
                 if (!isKeySetMutable) {
                   // Vault has been encrypted - keyset is sealed (immutable)
