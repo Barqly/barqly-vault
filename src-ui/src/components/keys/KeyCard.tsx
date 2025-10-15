@@ -80,9 +80,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       <div className="px-5 pb-3 space-y-2">
         <div className="text-sm">
           <span className="text-slate-500">Attached to:</span>{' '}
-          <span className="font-medium text-slate-700">
-            {attachedVaultNames.length === 0 ? 'None' : attachedVaultNames.join(', ')}
-          </span>
+          {attachedVaultNames.length > 0 && (
+            <span className="font-medium text-slate-700">{attachedVaultNames.join(', ')}</span>
+          )}
         </div>
 
         {isYubiKey && keyRef.type === 'YubiKey' && (
