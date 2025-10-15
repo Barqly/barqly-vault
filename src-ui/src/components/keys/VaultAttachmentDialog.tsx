@@ -68,7 +68,17 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
         // Process each vault
         const states = await Promise.all(
           allVaults.map(async (vault) => {
+            logger.info('VaultAttachmentDialog', 'Processing vault', {
+              vaultId: vault.id,
+              vaultName: vault.name,
+            });
+
             const isAttached = keyInfo.vault_associations.includes(vault.id);
+            logger.info('VaultAttachmentDialog', 'Attachment check', {
+              vaultId: vault.id,
+              isAttached,
+              associations: keyInfo.vault_associations,
+            });
 
             // Determine if vault has been encrypted (immutability check)
             let isDisabled = false;
@@ -76,8 +86,16 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
 
             if (isAttached) {
               // Check if vault is encrypted
+              logger.info('VaultAttachmentDialog', 'Fetching vault stats', {
+                vaultName: vault.name,
+              });
               const statsResult = await commands.getVaultStatistics({
                 vault_name: vault.name,
+              });
+              logger.info('VaultAttachmentDialog', 'Vault stats result', {
+                vaultName: vault.name,
+                status: statsResult.status,
+                result: statsResult,
               });
 
               if (statsResult.status === 'ok' && statsResult.data.statistics) {
