@@ -1,7 +1,6 @@
 import React from 'react';
 import { Key, MoreVertical, Link2, FileText, Trash2, AlertTriangle } from 'lucide-react';
 import { KeyReference } from '../../bindings';
-import { formatDistanceToNow } from 'date-fns';
 
 interface KeyCardProps {
   keyRef: KeyReference;
@@ -71,11 +70,6 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               >
                 {isPassphrase ? 'Passphrase' : 'YubiKey'}
               </span>
-              {keyRef.created_at && (
-                <span className="text-xs text-slate-500">
-                  Created {formatDistanceToNow(new Date(keyRef.created_at), { addSuffix: true })}
-                </span>
-              )}
             </div>
           </div>
         </div>
