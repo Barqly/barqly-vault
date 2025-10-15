@@ -88,43 +88,43 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                 associations: keyInfo.vault_associations,
               });
 
-              // Determine if vault has been encrypted (immutability check)
+              // Check if vault has been encrypted (immutability check)
+              // Conservative model: Once encrypted, keyset is sealed (no attach or detach)
+              logger.info('VaultAttachmentDialog', 'Fetching vault stats', {
+                vaultId: vault.id,
+              });
+              const statsResult = await commands.getVaultStatistics({
+                vault_id: vault.id,
+              });
+              logger.info('VaultAttachmentDialog', 'Vault stats result', {
+                vaultId: vault.id,
+                status: statsResult.status,
+                result: statsResult,
+              });
+
               let isDisabled = false;
               let tooltip = '';
 
-              if (isAttached) {
-                // Check if vault is encrypted
-                logger.info('VaultAttachmentDialog', 'Fetching vault stats', {
-                  vaultId: vault.id,
-                });
-                const statsResult = await commands.getVaultStatistics({
-                  vault_id: vault.id,
-                });
-                logger.info('VaultAttachmentDialog', 'Vault stats result', {
-                  vaultId: vault.id,
-                  status: statsResult.status,
-                  result: statsResult,
-                });
+              if (statsResult.status === 'ok' && statsResult.data.statistics) {
+                const encryptionCount = statsResult.data.statistics.encryption_count;
+                const isKeySetMutable = encryptionCount === 0;
 
-                if (statsResult.status === 'ok' && statsResult.data.statistics) {
-                  const encryptionCount = statsResult.data.statistics.encryption_count;
-                  const isKeySetMutable = encryptionCount === 0;
-
-                  if (!isKeySetMutable) {
-                    // Vault has been encrypted - can't detach
-                    isDisabled = true;
-                    tooltip = 'This key was used to encrypt this vault. It cannot be removed.';
-                  } else {
-                    // Vault never encrypted - can detach
-                    tooltip = 'Unlink key from vault (metadata only)';
-                  }
+                if (!isKeySetMutable) {
+                  // Vault has been encrypted - keyset is sealed (immutable)
+                  isDisabled = true;
+                  tooltip =
+                    'Vault already encrypted — key set is sealed. To add or remove keys, create a new vault or re-encrypt existing data.';
                 } else {
-                  // Fallback if stats not available - allow detach
-                  tooltip = 'Unlink key from vault';
+                  // Vault never encrypted - can attach or detach
+                  tooltip = isAttached
+                    ? 'Unlink key from vault (metadata only)'
+                    : 'Attach this key to use it for encrypting this vault.';
                 }
               } else {
-                // Not attached - can attach
-                tooltip = 'Attach this key to use it for encrypting this vault.';
+                // Fallback if stats not available - allow operation
+                tooltip = isAttached
+                  ? 'Unlink key from vault'
+                  : 'Attach this key to use it for encrypting this vault.';
               }
 
               return {
