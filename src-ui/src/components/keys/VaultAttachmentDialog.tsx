@@ -117,8 +117,9 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                 if (!isKeySetMutable) {
                   // Vault has been encrypted - keyset is sealed (immutable)
                   isDisabled = true;
-                  tooltip =
-                    'Vault already encrypted — key set is sealed. To add or remove keys, create a new vault or re-encrypt existing data.';
+                  tooltip = isAttached
+                    ? 'This vault has already been encrypted with this key.'
+                    : 'Vault already encrypted — key set is sealed. To add or remove keys, create a new vault or re-encrypt existing data.';
                 } else {
                   // Vault never encrypted - can attach or detach
                   tooltip = isAttached
