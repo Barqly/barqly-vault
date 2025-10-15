@@ -193,12 +193,13 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 value={label}
                 onChange={handleLabelChange}
                 disabled={isCreating}
+                maxLength={24}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
                   labelError
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
-                placeholder="e.g., bitcoin-wallet or bitcoin_wallet_2024"
+                placeholder="e.g., My Backup Key 2024"
                 autoFocus
               />
               {labelError && <p className="text-xs text-red-600 mt-1">{labelError}</p>}

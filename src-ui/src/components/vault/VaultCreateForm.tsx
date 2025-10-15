@@ -79,11 +79,11 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
             disabled={isSubmitting}
-            maxLength={50}
+            maxLength={24}
             className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
             placeholder="e.g., Personal Documents"
           />
-          <p className="mt-1 text-xs text-slate-500">{name.length}/50 characters</p>
+          <p className="mt-1 text-xs text-slate-500">{name.length}/24 characters</p>
         </div>
 
         {/* Description Field */}
