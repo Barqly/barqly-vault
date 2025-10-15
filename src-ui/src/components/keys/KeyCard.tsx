@@ -1,9 +1,9 @@
 import React from 'react';
 import { Key, MoreVertical, Link2, FileText, Trash2 } from 'lucide-react';
-import { KeyReference } from '../../bindings';
+import { GlobalKey } from '../../bindings';
 
 interface KeyCardProps {
-  keyRef: KeyReference;
+  keyRef: GlobalKey;
   vaultAttachments: string[];
   isOrphan: boolean;
   isSelected?: boolean;
@@ -25,8 +25,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   onExport,
   vaultNames = new Map(),
 }) => {
-  const isPassphrase = keyRef.type === 'Passphrase';
-  const isYubiKey = keyRef.type === 'YubiKey';
+  const isPassphrase = keyRef.key_type.type === 'Passphrase';
+  const isYubiKey = keyRef.key_type.type === 'YubiKey';
 
   // Get vault names for display
   const attachedVaultNames = vaultAttachments.map((id) => vaultNames.get(id) || id);
@@ -85,8 +85,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           )}
         </div>
 
-        {isYubiKey && keyRef.type === 'YubiKey' && (
-          <div className="text-sm text-slate-500">Serial: {keyRef.data.serial}</div>
+        {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
+          <div className="text-sm text-slate-500">Serial: {keyRef.key_type.data.serial}</div>
         )}
       </div>
 
