@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Key } from 'lucide-react';
 import { commands, VaultSummary, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -331,9 +331,22 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
         {/* Content */}
         <div className="p-4">
           {/* Key Info */}
-          <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-            <div className="text-sm text-slate-600">Key:</div>
-            <div className="font-medium text-slate-800">{keyInfo.label}</div>
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-3">
+            <div
+              className={`rounded-lg p-2 ${
+                keyInfo.key_type.type === 'Passphrase' ? 'bg-green-100' : 'bg-purple-100'
+              }`}
+            >
+              <Key
+                className={`h-4 w-4 ${
+                  keyInfo.key_type.type === 'Passphrase' ? 'text-green-700' : 'text-purple-700'
+                }`}
+              />
+            </div>
+            <div>
+              <div className="text-xs text-blue-600 font-medium">Key:</div>
+              <div className="font-semibold text-slate-800">{keyInfo.label}</div>
+            </div>
           </div>
 
           {/* Error Message */}
