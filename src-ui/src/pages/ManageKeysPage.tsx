@@ -66,18 +66,37 @@ const ManageKeysPage: React.FC = () => {
 
   const handleAttachKey = useCallback(
     (keyId: string) => {
-      // Find the key info from allKeys
+      // Need to get the original KeyInfo (not converted KeyReference) to access vault_associations
+      // Temporarily use getKeyVaultAttachments to get the data we need
+      // TODO: Refactor to expose globalKeys from workflow
+      logger.info('ManageKeysPage', 'Opening attach dialog for key', { keyId });
+
+      // For now, we need the workflow to expose globalKeys
+      // This is a quick workaround - will fix properly
       const keyInfo = allKeys.find((k) => k.id === keyId);
       if (!keyInfo) {
         logger.error('ManageKeysPage', 'Key not found', { keyId });
         return;
       }
 
+      // Create a proper KeyInfo with vault_associations from getKeyVaultAttachments
+      const vault_associations = getKeyVaultAttachments(keyId);
+      const fullKeyInfo: KeyInfo = {
+        ...(keyInfo as any),
+        vault_associations,
+        key_type:
+          keyInfo.type === 'YubiKey'
+            ? { type: 'YubiKey', data: (keyInfo as any).data }
+            : { type: 'Passphrase', data: (keyInfo as any).data },
+        recipient: '', // Not needed for this dialog
+        yubikey_info: null,
+      };
+
       // Open the vault attachment dialog
-      setSelectedKeyForAttachment(keyInfo);
+      setSelectedKeyForAttachment(fullKeyInfo);
       setShowVaultAttachmentDialog(true);
     },
-    [allKeys],
+    [allKeys, getKeyVaultAttachments],
   );
 
   const handleVaultAttachmentSuccess = useCallback(async () => {
