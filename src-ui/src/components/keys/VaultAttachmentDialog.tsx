@@ -304,7 +304,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.15)',
-        backdropFilter: 'blur(2px)',
+        backdropFilter: 'blur(4px)',
       }}
     >
       <div
@@ -321,7 +321,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
           <h3 className="text-lg font-semibold text-slate-800">Attach to Vaults</h3>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-slate-100 rounded transition-colors"
+            className="p-1 hover:bg-slate-100 rounded transition-colors hover:text-slate-700"
             aria-label="Close"
           >
             <X className="h-5 w-5 text-slate-500" />
