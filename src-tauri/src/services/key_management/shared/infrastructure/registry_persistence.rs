@@ -35,6 +35,15 @@ pub enum KeyEntry {
         status_history: Vec<StatusHistoryEntry>,
         #[serde(default)]
         vault_associations: Vec<String>, // List of vault IDs this key is attached to
+
+        // Deactivation tracking (30-day grace period)
+        #[serde(default)]
+        #[serde(skip_serializing_if = "Option::is_none")]
+        deactivated_at: Option<DateTime<Utc>>,
+
+        #[serde(default)]
+        #[serde(skip_serializing_if = "Option::is_none")]
+        previous_lifecycle_status: Option<KeyLifecycleStatus>,
     },
     /// YubiKey hardware token
     #[serde(rename = "yubikey")]
@@ -58,6 +67,15 @@ pub enum KeyEntry {
         status_history: Vec<StatusHistoryEntry>,
         #[serde(default)]
         vault_associations: Vec<String>, // List of vault IDs this key is attached to
+
+        // Deactivation tracking (30-day grace period)
+        #[serde(default)]
+        #[serde(skip_serializing_if = "Option::is_none")]
+        deactivated_at: Option<DateTime<Utc>>,
+
+        #[serde(default)]
+        #[serde(skip_serializing_if = "Option::is_none")]
+        previous_lifecycle_status: Option<KeyLifecycleStatus>,
     },
 }
 
@@ -241,6 +259,135 @@ impl KeyEntry {
     pub fn has_usage_history(&self) -> bool {
         self.last_used().is_some() || !self.vault_associations().is_empty()
     }
+
+    /// Deactivate the key (start 30-day grace period before deletion)
+    pub fn deactivate(&mut self, reason: String, changed_by: String) -> Result<(), String> {
+        let current_status = self.lifecycle_status();
+
+        // Only Active or Suspended keys can be deactivated
+        if current_status != KeyLifecycleStatus::Active
+            && current_status != KeyLifecycleStatus::Suspended
+        {
+            return Err(format!(
+                "Cannot deactivate key in {:?} state. Only Active or Suspended keys can be deactivated.",
+                current_status
+            ));
+        }
+
+        // Store the previous status for potential restoration
+        match self {
+            KeyEntry::Passphrase {
+                lifecycle_status,
+                status_history,
+                deactivated_at,
+                previous_lifecycle_status,
+                ..
+            } => {
+                *previous_lifecycle_status = Some(*lifecycle_status);
+                *lifecycle_status = KeyLifecycleStatus::Deactivated;
+                *deactivated_at = Some(Utc::now());
+                status_history.push(StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Deactivated,
+                    reason,
+                    changed_by,
+                ));
+            }
+            KeyEntry::Yubikey {
+                lifecycle_status,
+                status_history,
+                deactivated_at,
+                previous_lifecycle_status,
+                ..
+            } => {
+                *previous_lifecycle_status = Some(*lifecycle_status);
+                *lifecycle_status = KeyLifecycleStatus::Deactivated;
+                *deactivated_at = Some(Utc::now());
+                status_history.push(StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Deactivated,
+                    reason,
+                    changed_by,
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Restore a deactivated key to its previous state
+    pub fn restore(&mut self, reason: String, changed_by: String) -> Result<(), String> {
+        let current_status = self.lifecycle_status();
+
+        // Only Deactivated keys can be restored
+        if current_status != KeyLifecycleStatus::Deactivated {
+            return Err(format!(
+                "Cannot restore key in {:?} state. Only Deactivated keys can be restored.",
+                current_status
+            ));
+        }
+
+        match self {
+            KeyEntry::Passphrase {
+                lifecycle_status,
+                status_history,
+                deactivated_at,
+                previous_lifecycle_status,
+                vault_associations,
+                ..
+            } => {
+                // Determine the state to restore to
+                let restore_to = if let Some(prev_status) = previous_lifecycle_status {
+                    *prev_status
+                } else {
+                    // Fallback: restore based on vault associations
+                    if !vault_associations.is_empty() {
+                        KeyLifecycleStatus::Active
+                    } else {
+                        KeyLifecycleStatus::Suspended
+                    }
+                };
+
+                *lifecycle_status = restore_to;
+                *deactivated_at = None;
+                *previous_lifecycle_status = None;
+                status_history.push(StatusHistoryEntry::new(restore_to, reason, changed_by));
+            }
+            KeyEntry::Yubikey {
+                lifecycle_status,
+                status_history,
+                deactivated_at,
+                previous_lifecycle_status,
+                vault_associations,
+                ..
+            } => {
+                // Determine the state to restore to
+                let restore_to = if let Some(prev_status) = previous_lifecycle_status {
+                    *prev_status
+                } else {
+                    // Fallback: restore based on vault associations
+                    if !vault_associations.is_empty() {
+                        KeyLifecycleStatus::Active
+                    } else {
+                        KeyLifecycleStatus::Suspended
+                    }
+                };
+
+                *lifecycle_status = restore_to;
+                *deactivated_at = None;
+                *previous_lifecycle_status = None;
+                status_history.push(StatusHistoryEntry::new(restore_to, reason, changed_by));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Get the deactivation timestamp if the key is deactivated
+    pub fn deactivated_at(&self) -> Option<DateTime<Utc>> {
+        match self {
+            KeyEntry::Passphrase { deactivated_at, .. } => *deactivated_at,
+            KeyEntry::Yubikey { deactivated_at, .. } => *deactivated_at,
+        }
+    }
 }
 
 /// Central registry for all encryption keys
@@ -384,6 +531,8 @@ impl KeyRegistry {
                 "system",
             )],
             vault_associations: vec![],
+            deactivated_at: None,
+            previous_lifecycle_status: None,
         };
 
         self.keys.insert(key_id.clone(), entry);
@@ -590,6 +739,8 @@ mod tests {
                 "test",
             )],
             vault_associations: vec![],
+            deactivated_at: None,
+            previous_lifecycle_status: None,
         };
         registry
             .register_key("keyref_test1".to_string(), passphrase_entry)
@@ -615,6 +766,8 @@ mod tests {
                 "test",
             )],
             vault_associations: vec![],
+            deactivated_at: None,
+            previous_lifecycle_status: None,
         };
         registry
             .register_key("keyref_test2".to_string(), yubikey_entry)

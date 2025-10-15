@@ -312,6 +312,7 @@ impl RegistryService for DefaultRegistryService {
         // Update label
         let updated_entry = match entry {
             KeyEntry::Yubikey {
+                label: _, // We'll replace this with new_label
                 serial,
                 created_at,
                 last_used,
@@ -325,7 +326,8 @@ impl RegistryService for DefaultRegistryService {
                 lifecycle_status,
                 status_history,
                 vault_associations,
-                ..
+                deactivated_at,
+                previous_lifecycle_status,
             } => KeyEntry::Yubikey {
                 label: new_label,
                 created_at,
@@ -341,6 +343,8 @@ impl RegistryService for DefaultRegistryService {
                 lifecycle_status,
                 status_history,
                 vault_associations,
+                deactivated_at,
+                previous_lifecycle_status,
             },
             _ => return Err(YubiKeyError::registry("Not a YubiKey entry".to_string())),
         };

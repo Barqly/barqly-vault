@@ -48,6 +48,7 @@ pub fn convert_passphrase_to_unified(
         created_at: passphrase_key.created_at,
         last_used: passphrase_key.last_used,
         yubikey_info: None,
+        deactivated_at: None, // Deprecated conversion function - not used in production
     }
 }
 
@@ -92,6 +93,7 @@ pub fn convert_yubikey_to_unified(
             pin_status: yubikey_key.pin_status,
             yubikey_state: yubikey_key.state,
         }),
+        deactivated_at: None, // Deprecated conversion function - not used in production
     }
 }
 
@@ -131,6 +133,7 @@ pub fn convert_available_yubikey_to_unified(
                 _ => YubiKeyState::Orphaned,
             },
         }),
+        deactivated_at: None, // Deprecated conversion function - not used in production
     }
 }
 

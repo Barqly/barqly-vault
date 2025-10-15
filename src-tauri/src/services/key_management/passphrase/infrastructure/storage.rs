@@ -72,6 +72,8 @@ impl PassphraseKeyRepository {
                 "system",
             )],
             vault_associations: vec![],
+            deactivated_at: None,
+            previous_lifecycle_status: None,
         };
 
         registry

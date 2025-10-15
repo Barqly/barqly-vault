@@ -1,6 +1,6 @@
 use crate::services::key_management::passphrase::infrastructure::StorageError;
 use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
-use crate::services::key_management::shared::domain::models::{VaultKey, KeyType};
+use crate::services::key_management::shared::domain::models::{KeyType, VaultKey};
 use crate::services::vault;
 use crate::services::vault::infrastructure::persistence::metadata::{RecipientInfo, RecipientType};
 use chrono::Utc;

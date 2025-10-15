@@ -259,6 +259,8 @@ mod tests {
             lifecycle_status: KeyLifecycleStatus::Active,
             status_history: vec![],
             vault_associations: vec![],
+            deactivated_at: None,
+            previous_lifecycle_status: None,
         };
 
         let recipient = VaultMetadataService::registry_entry_to_recipient("test-key-id", &entry);
@@ -288,6 +290,8 @@ mod tests {
             lifecycle_status: KeyLifecycleStatus::Active,
             status_history: vec![],
             vault_associations: vec![],
+            deactivated_at: None,
+            previous_lifecycle_status: None,
         };
 
         let recipient = VaultMetadataService::registry_entry_to_recipient("test-key-id", &entry);

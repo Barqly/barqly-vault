@@ -8,7 +8,7 @@ use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::prelude::*;
 use crate::services::key_management::shared::KeyEntry;
 use crate::services::key_management::shared::domain::models::{
-    VaultKey, KeyType, key_lifecycle::KeyLifecycleStatus,
+    KeyType, VaultKey, key_lifecycle::KeyLifecycleStatus,
 };
 use crate::services::vault;
 use serde::{Deserialize, Serialize};

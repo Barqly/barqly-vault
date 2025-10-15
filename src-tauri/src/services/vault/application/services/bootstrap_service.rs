@@ -226,6 +226,8 @@ impl BootstrapService {
                     "system",
                 )],
                 vault_associations: vec![], // Will be populated by higher level
+                deactivated_at: None,
+                previous_lifecycle_status: None,
             },
             RecipientType::YubiKey {
                 serial,
@@ -254,6 +256,8 @@ impl BootstrapService {
                     "system",
                 )],
                 vault_associations: vec![], // Will be populated by higher level
+                deactivated_at: None,
+                previous_lifecycle_status: None,
             },
         }
     }

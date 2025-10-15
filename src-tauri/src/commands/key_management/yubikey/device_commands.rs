@@ -11,7 +11,6 @@
 
 use crate::commands::command_types::{CommandError, ErrorCode};
 use crate::prelude::*;
-use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
 use crate::services::key_management::yubikey::{
     YubiKeyManager,
     domain::models::{Pin, Serial},

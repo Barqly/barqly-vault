@@ -14,7 +14,7 @@ use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
 use crate::prelude::*;
 use crate::services::key_management::shared::KeyRegistry;
 use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
-use crate::services::key_management::shared::domain::models::{VaultKey, KeyType};
+use crate::services::key_management::shared::domain::models::{KeyType, VaultKey};
 use crate::services::key_management::yubikey::YubiKeyManager;
 use crate::services::key_management::yubikey::domain::models::{Pin, Serial};
 use crate::services::shared::infrastructure::sanitize_label;

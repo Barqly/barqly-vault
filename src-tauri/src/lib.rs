@@ -28,11 +28,13 @@ use commands::{
     get_progress,
     key_management::{
         attach_key::attach_key_to_vault,
+        deactivate_key::deactivate_key,
         import_key::import_key_file,
         passphrase::{
             add_passphrase_key_to_vault, generate_key, validate_passphrase,
             validate_passphrase_strength, validate_vault_passphrase_key, verify_key_passphrase,
         },
+        restore_key::restore_key,
         unified_keys::{
             get_vault_keys, list_unified_keys, remove_key_from_vault, test_unified_keys,
             update_key_label,
@@ -106,6 +108,9 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         get_key_menu_data,
         remove_key_from_vault,
         update_key_label,
+        // Key lifecycle management
+        deactivate_key,
+        restore_key,
         // File commands
         select_files,
         select_directory,
@@ -189,6 +194,9 @@ pub fn run_app() {
             get_key_menu_data,
             remove_key_from_vault,
             update_key_label,
+            // Key lifecycle management
+            deactivate_key,
+            restore_key,
             // File commands
             select_files,
             select_directory,

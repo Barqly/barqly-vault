@@ -264,7 +264,9 @@ mod tests {
 
     #[test]
     fn test_key_label_too_long_fails() {
-        assert!(ValidationHelper::validate_key_label("This is a very long key label name").is_err());
+        assert!(
+            ValidationHelper::validate_key_label("This is a very long key label name").is_err()
+        );
         assert!(ValidationHelper::validate_key_label("12345678901234567890123456").is_err());
     }
 

@@ -354,6 +354,8 @@ impl KeyImportService {
                             )
                         ],
                         vault_associations: vec![],
+                        deactivated_at: None,
+                        previous_lifecycle_status: None,
                     }
                 } else {
                     return Err(ImportError::InvalidKeyData(
@@ -390,6 +392,8 @@ impl KeyImportService {
                         )
                     ],
                     vault_associations: vec![],
+                    deactivated_at: None,
+                    previous_lifecycle_status: None,
                 }
             }
         };

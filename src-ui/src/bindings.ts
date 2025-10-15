@@ -187,6 +187,36 @@ async updateKeyLabel(input: UpdateKeyLabelRequest) : Promise<Result<UpdateKeyLab
 }
 },
 /**
+ * Deactivate a key (start 30-day grace period)
+ * 
+ * This command transitions a key from Active or Suspended state to Deactivated.
+ * The key will be permanently deleted after 30 days unless restored.
+ * This operation is idempotent - deactivating an already deactivated key returns success.
+ */
+async deactivateKey(request: DeactivateKeyRequest) : Promise<Result<DeactivateKeyResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("deactivate_key", { request }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Restore a deactivated key
+ * 
+ * This command restores a deactivated key back to its previous state (Active or Suspended).
+ * Only keys in Deactivated state can be restored, and only within 30 days of deactivation.
+ * This operation is NOT idempotent - attempting to restore a non-deactivated key returns an error.
+ */
+async restoreKey(request: RestoreKeyRequest) : Promise<Result<RestoreKeyResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("restore_key", { request }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Select files or folder for encryption
  */
 async selectFiles(selectionType: SelectionType) : Promise<Result<FileSelection, CommandError>> {
@@ -583,6 +613,30 @@ export type CreateVaultRequest = { name: string; description: string | null }
  */
 export type CreateVaultResponse = { vault: VaultSummary }
 /**
+ * Request to deactivate a key
+ */
+export type DeactivateKeyRequest = { 
+/**
+ * The key ID to deactivate
+ */
+key_id: string; 
+/**
+ * Reason for deactivation (optional, for audit trail)
+ */
+reason: string | null }
+/**
+ * Response from key deactivation
+ */
+export type DeactivateKeyResponse = { success: boolean; key_id: string; new_status: KeyLifecycleStatus; 
+/**
+ * ISO 8601 timestamp when key was deactivated
+ */
+deactivated_at: string; 
+/**
+ * ISO 8601 timestamp when key will be permanently deleted (deactivated_at + 30 days)
+ */
+deletion_scheduled_at: string }
+/**
  * Input for decryption command
  */
 export type DecryptDataInput = { encrypted_file: string; key_id: string; passphrase: string; output_dir: string }
@@ -755,7 +809,12 @@ last_used: string | null;
 /**
  * Additional metadata for YubiKey keys
  */
-yubikey_info: YubiKeyInfo | null }
+yubikey_info: YubiKeyInfo | null; 
+/**
+ * Timestamp when key was deactivated (null if not deactivated)
+ * Used to calculate days remaining before permanent deletion
+ */
+deactivated_at?: string | null }
 /**
  * Summary statistics across all vaults
  */
@@ -951,6 +1010,26 @@ export type RemoveKeyFromVaultRequest = { vault_id: string; key_id: string }
  * Response from removing key
  */
 export type RemoveKeyFromVaultResponse = { success: boolean }
+/**
+ * Request to restore a deactivated key
+ */
+export type RestoreKeyRequest = { 
+/**
+ * The key ID to restore
+ */
+key_id: string }
+/**
+ * Response from key restoration
+ */
+export type RestoreKeyResponse = { success: boolean; key_id: string; 
+/**
+ * The restored status (Active or Suspended, based on previous state)
+ */
+new_status: KeyLifecycleStatus; 
+/**
+ * ISO 8601 timestamp when key was restored
+ */
+restored_at: string }
 /**
  * File selection type
  */

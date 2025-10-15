@@ -40,6 +40,7 @@ fn convert_passphrase_to_unified(
         created_at: passphrase_key.created_at,
         last_used: passphrase_key.last_used,
         yubikey_info: None,
+        deactivated_at: None, // TODO: Read from registry when available
     }
 }
 
@@ -83,6 +84,7 @@ fn convert_yubikey_to_unified(
             pin_status: yubikey_key.pin_status,
             yubikey_state: yubikey_key.state,
         }),
+        deactivated_at: None, // TODO: Read from registry when available
     }
 }
 
@@ -117,6 +119,7 @@ fn convert_available_yubikey_to_unified(available_key: AvailableYubiKey) -> Glob
                 _ => YubiKeyState::Orphaned,
             },
         }),
+        deactivated_at: None,
     }
 }
 
@@ -180,21 +183,24 @@ impl UnifiedKeyListService {
                     last_used,
                     public_key,
                     vault_associations,
+                    lifecycle_status,
+                    deactivated_at,
                     ..
                 } => {
-                    let passphrase_info = PassphraseKeyInfo {
-                        id: key_id,
+                    // Build GlobalKey directly to include deactivated_at
+                    all_keys.push(GlobalKey {
+                        id: key_id.clone(),
                         label,
-                        public_key,
+                        key_type: KeyType::Passphrase { key_id },
+                        recipient: public_key,
+                        is_available: true, // Passphrase keys are always available (file-based)
+                        vault_associations,
+                        lifecycle_status,
                         created_at,
                         last_used,
-                        is_available: true, // Passphrase keys are always available (file-based)
-                    };
-
-                    all_keys.push(convert_passphrase_to_unified(
-                        passphrase_info,
-                        vault_associations,
-                    ));
+                        yubikey_info: None,
+                        deactivated_at,
+                    });
                 }
                 KeyEntry::Yubikey {
                     label,
@@ -207,6 +213,7 @@ impl UnifiedKeyListService {
                     firmware_version,
                     lifecycle_status,
                     vault_associations,
+                    deactivated_at,
                     ..
                 } => {
                     // Check if YubiKey is currently connected (physical availability)
@@ -255,6 +262,7 @@ impl UnifiedKeyListService {
                             },
                             yubikey_state,
                         }),
+                        deactivated_at, // Now read from registry!
                     };
 
                     all_keys.push(key_info);

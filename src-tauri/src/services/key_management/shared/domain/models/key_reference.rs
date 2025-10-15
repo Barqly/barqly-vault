@@ -104,6 +104,11 @@ pub struct GlobalKey {
     pub last_used: Option<DateTime<Utc>>,
     /// Additional metadata for YubiKey keys
     pub yubikey_info: Option<YubiKeyInfo>,
+
+    /// Timestamp when key was deactivated (null if not deactivated)
+    /// Used to calculate days remaining before permanent deletion
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deactivated_at: Option<DateTime<Utc>>,
 }
 
 /// YubiKey-specific information for unified API

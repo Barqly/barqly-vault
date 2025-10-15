@@ -11,9 +11,11 @@
 //! - import_key.rs: Import external .enc key files (R2 API Phase 4)
 
 pub mod attach_key;
+pub mod deactivate_key;
 pub mod import_key;
 pub mod key_menu_commands;
 pub mod passphrase;
+pub mod restore_key;
 pub mod unified_keys;
 pub mod yubikey;
 
@@ -44,3 +46,7 @@ pub use attach_key::{AttachKeyToVaultRequest, AttachKeyToVaultResponse, attach_k
 pub use import_key::{
     ImportKeyFileRequest, ImportKeyFileResponse, KeyMetadata, ValidationStatus, import_key_file,
 };
+
+pub use deactivate_key::{DeactivateKeyRequest, DeactivateKeyResponse, deactivate_key};
+
+pub use restore_key::{RestoreKeyRequest, RestoreKeyResponse, restore_key};
