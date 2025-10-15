@@ -344,7 +344,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
               />
             </div>
             <div>
-              <div className="text-xs text-blue-600 font-medium">Key:</div>
+              <div className="text-xs text-slate-600 font-medium">Key:</div>
               <div className="font-semibold text-slate-800">{keyInfo.label}</div>
             </div>
           </div>
