@@ -106,13 +106,13 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               onAttach(keyRef.id);
             }}
             className="
-              flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5
-              text-sm font-medium text-blue-600 border border-blue-600
+              flex items-center justify-center gap-1 px-2 py-1.5 w-24
+              text-xs font-medium text-blue-600 border border-blue-600
               rounded-md hover:bg-blue-50 transition-colors
             "
           >
-            <Link2 className="h-3.5 w-3.5" />
-            Attach to Vault
+            <Link2 className="h-3 w-3" />
+            Vault
           </button>
         )}
 
@@ -123,12 +123,12 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               onExport(keyRef.id);
             }}
             className="
-              flex items-center justify-center gap-1.5 px-3 py-1.5
-              text-sm font-medium text-slate-600 border border-slate-200
+              flex items-center justify-center gap-1 px-2 py-1.5 w-24
+              text-xs font-medium text-slate-600 border border-slate-200
               rounded-md hover:bg-slate-50 transition-colors
             "
           >
-            <FileText className="h-3.5 w-3.5" />
+            <FileText className="h-3 w-3" />
             Export
           </button>
         )}
@@ -140,12 +140,12 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               onDelete(keyRef.id);
             }}
             className="
-              flex items-center justify-center gap-1.5 px-3 py-1.5
-              text-sm font-medium text-red-600 border border-red-200
+              flex items-center justify-center gap-1 px-2 py-1.5 w-24
+              text-xs font-medium text-red-600 border border-red-200
               rounded-md hover:bg-red-50 transition-colors
             "
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-3 w-3" />
             Delete
           </button>
         )}
