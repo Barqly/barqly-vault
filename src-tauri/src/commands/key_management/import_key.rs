@@ -3,7 +3,7 @@
 //! Commands for importing external .enc key files into the registry (R2 API Phase 4)
 
 use crate::services::key_management::shared::application::services::KeyImportService;
-use crate::services::key_management::shared::domain::models::key_reference::KeyReference;
+use crate::services::key_management::shared::domain::models::key_reference::VaultKey;
 use crate::types::{CommandError, CommandResponse, ErrorCode};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, warn};
@@ -27,7 +27,7 @@ pub struct ImportKeyFileRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct ImportKeyFileResponse {
     /// The imported or validated key reference
-    pub key_reference: KeyReference,
+    pub key_reference: VaultKey,
     /// Validation status information
     pub validation_status: ValidationStatus,
     /// Any warnings encountered during import

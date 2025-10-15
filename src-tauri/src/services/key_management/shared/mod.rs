@@ -27,4 +27,4 @@ pub use application::{KeyManagementError, KeyManager, KeyRegistryService, Unifie
 
 // Re-export domain types
 pub use domain::models::key_lifecycle::KeyLifecycleStatus;
-pub use domain::models::{KeyReference, KeyType};
+pub use domain::models::{VaultKey, GlobalKey, KeyType};

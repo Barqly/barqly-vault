@@ -10,7 +10,7 @@ use crate::services::key_management::shared::application::services::KeyRegistryS
 use crate::services::key_management::shared::domain::models::KeyType;
 use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
 use crate::services::key_management::shared::domain::models::key_reference::{
-    KeyInfo, KeyListFilter, YubiKeyInfo,
+    GlobalKey, KeyListFilter, YubiKeyInfo,
 };
 use crate::services::key_management::yubikey::YubiKeyManager;
 use crate::services::key_management::yubikey::domain::models::{
@@ -23,13 +23,13 @@ use std::collections::HashSet;
 
 // Conversion functions to transform Layer 2 types to unified types
 
-/// Convert PassphraseKeyInfo to unified KeyInfo
+/// Convert PassphraseKeyInfo to unified GlobalKey
 fn convert_passphrase_to_unified(
     passphrase_key: PassphraseKeyInfo,
     vault_associations: Vec<String>,
-) -> KeyInfo {
+) -> GlobalKey {
     let key_id = passphrase_key.id.clone();
-    KeyInfo {
+    GlobalKey {
         id: passphrase_key.id,
         label: passphrase_key.label,
         key_type: KeyType::Passphrase { key_id },
@@ -43,11 +43,11 @@ fn convert_passphrase_to_unified(
     }
 }
 
-/// Convert YubiKeyStateInfo to unified KeyInfo
+/// Convert YubiKeyStateInfo to unified GlobalKey
 fn convert_yubikey_to_unified(
     yubikey_key: YubiKeyStateInfo,
     vault_associations: Vec<String>,
-) -> KeyInfo {
+) -> GlobalKey {
     let is_available = match yubikey_key.state {
         YubiKeyState::Registered => true,
         YubiKeyState::Orphaned => true,
@@ -55,7 +55,7 @@ fn convert_yubikey_to_unified(
         YubiKeyState::New => false,
     };
 
-    KeyInfo {
+    GlobalKey {
         id: format!("yubikey_{}", yubikey_key.serial), // Generate consistent ID
         label: yubikey_key
             .label
@@ -86,11 +86,11 @@ fn convert_yubikey_to_unified(
     }
 }
 
-/// Convert AvailableYubiKey to unified KeyInfo
-fn convert_available_yubikey_to_unified(available_key: AvailableYubiKey) -> KeyInfo {
+/// Convert AvailableYubiKey to unified GlobalKey
+fn convert_available_yubikey_to_unified(available_key: AvailableYubiKey) -> GlobalKey {
     use chrono::Utc;
 
-    KeyInfo {
+    GlobalKey {
         id: format!("available_yubikey_{}", available_key.serial),
         label: available_key
             .label
@@ -138,7 +138,7 @@ impl UnifiedKeyListService {
     pub async fn list_keys(
         &self,
         filter: KeyListFilter,
-    ) -> Result<Vec<KeyInfo>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<GlobalKey>, Box<dyn std::error::Error>> {
         info!("Listing unified keys with filter: {:?}", filter);
 
         match filter {
@@ -156,7 +156,7 @@ impl UnifiedKeyListService {
     /// **Design:** Registry is the single source of truth. Returns ALL keys in registry
     /// regardless of hardware connection status. For YubiKeys, checks if device is
     /// currently connected and sets is_available accordingly.
-    async fn list_all_keys(&self) -> Result<Vec<KeyInfo>, Box<dyn std::error::Error>> {
+    async fn list_all_keys(&self) -> Result<Vec<GlobalKey>, Box<dyn std::error::Error>> {
         let mut all_keys = Vec::new();
 
         // Initialize YubiKey manager for connection status checks (optional - don't fail if unavailable)
@@ -231,8 +231,8 @@ impl UnifiedKeyListService {
                         YubiKeyState::Orphaned // In registry but not connected
                     };
 
-                    // Build KeyInfo directly from registry (NO ID transformation!)
-                    let key_info = KeyInfo {
+                    // Build GlobalKey directly from registry (NO ID transformation!)
+                    let key_info = GlobalKey {
                         id: key_id, // ← Use actual registry key_id! (e.g., "YubiKey-35230900")
                         label,
                         key_type: KeyType::YubiKey {
@@ -274,7 +274,7 @@ impl UnifiedKeyListService {
     async fn list_vault_keys(
         &self,
         vault_id: String,
-    ) -> Result<Vec<KeyInfo>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<GlobalKey>, Box<dyn std::error::Error>> {
         let mut unified_keys = Vec::new();
 
         // Get vault first - needed for both passphrase and YubiKey filtering
@@ -375,7 +375,7 @@ impl UnifiedKeyListService {
     async fn list_available_for_vault(
         &self,
         vault_id: String,
-    ) -> Result<Vec<KeyInfo>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<GlobalKey>, Box<dyn std::error::Error>> {
         let mut available_keys = Vec::new();
 
         // Get vault and registry to determine which keys are already in vault
@@ -505,7 +505,7 @@ impl UnifiedKeyListService {
     }
 
     /// List only currently connected/available keys (for decryption UI)
-    async fn list_connected_keys(&self) -> Result<Vec<KeyInfo>, Box<dyn std::error::Error>> {
+    async fn list_connected_keys(&self) -> Result<Vec<GlobalKey>, Box<dyn std::error::Error>> {
         let mut connected_keys = Vec::new();
 
         // All passphrase keys are always "connected" (available on disk)

@@ -69,7 +69,7 @@ pub async fn attach_key_to_vault(
     let manager = KeyManager::new();
 
     match manager
-        .attach_orphaned_key(&request.key_id, &request.vault_id)
+        .attach_key_to_vault(&request.key_id, &request.vault_id)
         .await
     {
         Ok(()) => {

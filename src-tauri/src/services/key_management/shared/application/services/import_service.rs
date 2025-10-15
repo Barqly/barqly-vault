@@ -4,7 +4,7 @@
 //! Supports both passphrase and YubiKey metadata import with comprehensive validation.
 
 use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
-use crate::services::key_management::shared::domain::models::key_reference::KeyReference;
+use crate::services::key_management::shared::domain::models::key_reference::VaultKey;
 use crate::services::key_management::shared::infrastructure::{KeyEntry, KeyRegistry};
 use crate::services::shared::infrastructure::path_management::get_keys_dir;
 use age::secrecy::SecretString;
@@ -130,7 +130,7 @@ impl KeyImportService {
         override_label: Option<String>,
         attach_to_vault: Option<String>,
         validate_only: bool,
-    ) -> Result<(KeyReference, ValidationStatus, Vec<String>), ImportError> {
+    ) -> Result<(VaultKey, ValidationStatus, Vec<String>), ImportError> {
         debug!(
             file_path = %file_path,
             has_passphrase = passphrase.is_some(),
@@ -292,7 +292,7 @@ impl KeyImportService {
 
         // If validate-only mode, return here
         if validate_only {
-            let key_ref = KeyReference {
+            let key_ref = VaultKey {
                 id: format!("preview_{}", uuid::Uuid::new_v4()),
                 key_type: match key_metadata.key_type {
                     ImportedKeyType::Passphrase => {
@@ -413,7 +413,7 @@ impl KeyImportService {
         let attached_to_vault = if let Some(vault_id) = attach_to_vault {
             let manager =
                 crate::services::key_management::shared::application::manager::KeyManager::new();
-            match manager.attach_orphaned_key(&key_id, &vault_id).await {
+            match manager.attach_key_to_vault(&key_id, &vault_id).await {
                 Ok(()) => true,
                 Err(e) => {
                     warn!(
@@ -431,7 +431,7 @@ impl KeyImportService {
         };
 
         // Create key reference for response
-        let key_ref = KeyReference::from_registry_entry(
+        let key_ref = VaultKey::from_registry_entry(
             key_id.clone(),
             &key_entry,
             if attached_to_vault {

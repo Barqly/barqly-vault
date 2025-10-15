@@ -5,7 +5,7 @@
 
 use crate::commands::types::{CommandError, CommandResponse, ErrorCode, ValidationHelper};
 use crate::prelude::*;
-use crate::services::key_management::shared::domain::models::KeyReference;
+use crate::services::key_management::shared::domain::models::VaultKey;
 use crate::services::shared::infrastructure::label_sanitization::desanitize_vault_name;
 use crate::services::vault::VaultManager;
 use regex::Regex;
@@ -35,7 +35,7 @@ pub struct AnalyzeEncryptedVaultResponse {
 
     // Key information
     /// Associated keys from manifest (empty if recovery mode)
-    pub associated_keys: Vec<KeyReference>,
+    pub associated_keys: Vec<VaultKey>,
 
     // Metadata from filename
     /// Creation date extracted from filename (e.g., "2025-01-13")
@@ -154,10 +154,10 @@ pub async fn analyze_encrypted_vault(
         Ok(Some(vault_metadata)) => {
             // Manifest found - normal mode
             let vault_id = vault_metadata.vault_id().to_string();
-            let keys: Vec<KeyReference> = vault_metadata
+            let keys: Vec<VaultKey> = vault_metadata
                 .recipients()
                 .iter()
-                .map(|recipient| KeyReference {
+                .map(|recipient| VaultKey {
                     id: recipient.key_id.clone(),
                     label: recipient.label.clone(),
                     key_type: match &recipient.recipient_type {

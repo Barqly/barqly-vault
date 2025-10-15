@@ -34,7 +34,7 @@ pub use operations::{
 pub(crate) use metadata::update_key_metadata_access_time;
 pub(crate) use validation::validate_key_file;
 
-/// Information about a stored key
+/// Information about a stored key file (file metadata, not registry key)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct KeyInfo {
     /// User-friendly label for the key

@@ -123,7 +123,7 @@ async analyzeEncryptedVault(input: AnalyzeEncryptedVaultRequest) : Promise<Resul
 /**
  * List keys with flexible filtering options - unified API
  */
-async listUnifiedKeys(filter: KeyListFilter) : Promise<Result<KeyInfo[], CommandError>> {
+async listUnifiedKeys(filter: KeyListFilter) : Promise<Result<GlobalKey[], CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("list_unified_keys", { filter }) };
 } catch (e) {
@@ -465,7 +465,7 @@ async yubikeyDecryptFile(encryptedFile: string, unlockMethod: UnlockMethod | nul
 /** user-defined types **/
 
 export type AddPassphraseKeyRequest = { vault_id: string; label: string; passphrase: string }
-export type AddPassphraseKeyResponse = { key_reference: KeyReference; public_key: string }
+export type AddPassphraseKeyResponse = { key_reference: VaultKey; public_key: string }
 /**
  * Request to analyze an encrypted vault file
  */
@@ -497,7 +497,7 @@ vault_id: string | null;
 /**
  * Associated keys from manifest (empty if recovery mode)
  */
-associated_keys: KeyReference[]; 
+associated_keys: VaultKey[]; 
 /**
  * Creation date extracted from filename (e.g., "2025-01-13")
  */
@@ -672,7 +672,7 @@ export type GetKeyMenuDataRequest = { vault_id: string }
 /**
  * Response with structured key menu data
  */
-export type GetKeyMenuDataResponse = { vault_id: string; keys: KeyReference[] }
+export type GetKeyMenuDataResponse = { vault_id: string; keys: VaultKey[] }
 /**
  * Input for progress status command
  */
@@ -692,71 +692,29 @@ include_all: boolean | null }
 /**
  * Response containing vault keys
  */
-export type GetVaultKeysResponse = { vault_id: string; keys: KeyReference[] }
+export type GetVaultKeysResponse = { vault_id: string; keys: VaultKey[] }
 /**
  * Request for getting single vault statistics
  */
 export type GetVaultStatisticsRequest = { 
 /**
- * The sanitized vault name (filesystem-safe)
+ * The vault ID (deterministic unique identifier)
  */
-vault_name: string }
+vault_id: string }
 /**
  * Response containing vault statistics
  */
 export type GetVaultStatisticsResponse = { success: boolean; statistics: VaultStatistics | null; error: string | null }
 /**
- * Summary statistics across all vaults
+ * Complete key information for global contexts
+ * 
+ * Used when managing keys across all vaults (ManageKeys page, global key registry).
+ * Contains ALL fields including vault_associations, recipient, availability, and metadata.
+ * 
+ * For vault-specific contexts (Encrypt/Decrypt pages), use `VaultKey` instead which
+ * contains only the minimal fields needed for vault operations.
  */
-export type GlobalVaultStatistics = { total_vaults: number; active_vaults: number; new_vaults: number; orphaned_vaults: number; total_encryptions: number; total_files: number; total_size_bytes: number; vault_statistics: VaultStatistics[] }
-/**
- * Request to import a key file
- */
-export type ImportKeyFileRequest = { 
-/**
- * Path to the .enc file to import
- */
-file_path: string; 
-/**
- * Passphrase for encrypted .enc files (optional)
- */
-passphrase: string | null; 
-/**
- * Override the label extracted from file name (optional)
- */
-override_label: string | null; 
-/**
- * Immediately attach to a vault after import (optional)
- */
-attach_to_vault: string | null; 
-/**
- * Only validate without actually importing (dry-run mode)
- */
-validate_only: boolean }
-/**
- * Response from key import
- */
-export type ImportKeyFileResponse = { 
-/**
- * The imported or validated key reference
- */
-key_reference: KeyReference; 
-/**
- * Validation status information
- */
-validation_status: ValidationStatus; 
-/**
- * Any warnings encountered during import
- */
-import_warnings: string[] }
-/**
- * Detailed information about a key
- */
-export type KeyDetail = { key_id: string; label: string; key_type: string; lifecycle_status: KeyLifecycleStatus; created_at: string; last_used: string | null; is_available: boolean }
-/**
- * Unified key information structure
- */
-export type KeyInfo = { 
+export type GlobalKey = { 
 /**
  * Unique identifier for this key
  */
@@ -798,6 +756,54 @@ last_used: string | null;
  * Additional metadata for YubiKey keys
  */
 yubikey_info: YubiKeyInfo | null }
+/**
+ * Summary statistics across all vaults
+ */
+export type GlobalVaultStatistics = { total_vaults: number; active_vaults: number; new_vaults: number; orphaned_vaults: number; total_encryptions: number; total_files: number; total_size_bytes: number; vault_statistics: VaultStatistics[] }
+/**
+ * Request to import a key file
+ */
+export type ImportKeyFileRequest = { 
+/**
+ * Path to the .enc file to import
+ */
+file_path: string; 
+/**
+ * Passphrase for encrypted .enc files (optional)
+ */
+passphrase: string | null; 
+/**
+ * Override the label extracted from file name (optional)
+ */
+override_label: string | null; 
+/**
+ * Immediately attach to a vault after import (optional)
+ */
+attach_to_vault: string | null; 
+/**
+ * Only validate without actually importing (dry-run mode)
+ */
+validate_only: boolean }
+/**
+ * Response from key import
+ */
+export type ImportKeyFileResponse = { 
+/**
+ * The imported or validated key reference
+ */
+key_reference: VaultKey; 
+/**
+ * Validation status information
+ */
+validation_status: ValidationStatus; 
+/**
+ * Any warnings encountered during import
+ */
+import_warnings: string[] }
+/**
+ * Detailed information about a key
+ */
+export type KeyDetail = { key_id: string; label: string; key_type: string; lifecycle_status: KeyLifecycleStatus; created_at: string; last_used: string | null; is_available: boolean }
 /**
  * NIST-aligned lifecycle states for encryption keys
  */
@@ -850,54 +856,6 @@ export type KeyListFilter =
  * Simplified key metadata for frontend
  */
 export type KeyMetadata = { label: string; created_at: string; public_key: string }
-/**
- * Reference to a key that can unlock a vault (for frontend communication)
- */
-export type KeyReference = 
-/**
- * Type of key
- */
-(
-/**
- * Passphrase-based key
- */
-{ type: "Passphrase"; data: { 
-/**
- * Reference to the stored key file
- */
-key_id: string } } | 
-/**
- * YubiKey hardware token
- */
-{ type: "YubiKey"; data: { 
-/**
- * Serial number of the YubiKey
- */
-serial: string; 
-/**
- * Firmware version for compatibility tracking
- */
-firmware_version?: string | null } }) & { 
-/**
- * Unique identifier for this key reference
- */
-id: string; 
-/**
- * User-friendly label
- */
-label: string; 
-/**
- * Current lifecycle status of the key
- */
-lifecycle_status: KeyLifecycleStatus; 
-/**
- * When this key was added to the vault
- */
-created_at: string; 
-/**
- * Last time this key was used
- */
-last_used: string | null }
 /**
  * Key statistics for a vault
  */
@@ -1042,6 +1000,60 @@ is_duplicate: boolean;
 original_metadata: KeyMetadata | null }
 export type VaultDecryptionResult = { method_used: UnlockMethod; recipient_used: string; files_extracted: string[]; output_path: string; decryption_time: string }
 /**
+ * Minimal key information for vault-specific contexts
+ * 
+ * Used when displaying keys within a single vault context (Encrypt/Decrypt pages).
+ * Contains only the essential fields needed for vault operations.
+ * 
+ * For global key management (ManageKeys page), use `GlobalKey` instead which includes
+ * vault_associations, recipient, is_available, and yubikey_info fields.
+ */
+export type VaultKey = 
+/**
+ * Type of key
+ */
+(
+/**
+ * Passphrase-based key
+ */
+{ type: "Passphrase"; data: { 
+/**
+ * Reference to the stored key file
+ */
+key_id: string } } | 
+/**
+ * YubiKey hardware token
+ */
+{ type: "YubiKey"; data: { 
+/**
+ * Serial number of the YubiKey
+ */
+serial: string; 
+/**
+ * Firmware version for compatibility tracking
+ */
+firmware_version?: string | null } }) & { 
+/**
+ * Unique identifier for this key reference
+ */
+id: string; 
+/**
+ * User-friendly label
+ */
+label: string; 
+/**
+ * Current lifecycle status of the key
+ */
+lifecycle_status: KeyLifecycleStatus; 
+/**
+ * When this key was added to the vault
+ */
+created_at: string; 
+/**
+ * Last time this key was used
+ */
+last_used: string | null }
+/**
  * Statistics for a single vault
  */
 export type VaultStatistics = { vault_id: string; vault_name: string; description: string | null; status: VaultStatus; encryption_count: number; created_at: string; last_encrypted_at: string | null; last_encrypted_by: string | null; file_count: number; total_size_bytes: number; key_statistics: KeyStatistics; archive_exists: boolean; manifest_exists: boolean }
@@ -1155,7 +1167,7 @@ export type YubiKeyStateInfo = { serial: string; state: YubiKeyState; slot: numb
 /**
  * Result from YubiKey operations
  */
-export type YubiKeyVaultResult = { success: boolean; key_reference: KeyReference; recovery_code_hash: string }
+export type YubiKeyVaultResult = { success: boolean; key_reference: VaultKey; recovery_code_hash: string }
 
 /** tauri-specta globals **/
 

@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 pub use crate::services::key_management::passphrase::domain::models::passphrase_key_info::PassphraseKeyInfo;
 pub use crate::services::key_management::shared::domain::models::KeyType;
 pub use crate::services::key_management::shared::domain::models::key_reference::{
-    KeyInfo, KeyListFilter, YubiKeyInfo,
+    GlobalKey, KeyListFilter, YubiKeyInfo,
 };
 pub use crate::services::key_management::yubikey::domain::models::{
     available_yubikey::AvailableYubiKey,
@@ -30,14 +30,14 @@ pub use crate::services::key_management::yubikey::domain::models::{
 
 // Conversion functions to transform Layer 2 types to unified types
 
-/// Convert PassphraseKeyInfo to unified KeyInfo
+/// Convert PassphraseKeyInfo to unified GlobalKey
 /// NOTE: Deprecated - use conversion functions in unified_key_list_service instead
 pub fn convert_passphrase_to_unified(
     passphrase_key: PassphraseKeyInfo,
     vault_id: Option<String>,
-) -> KeyInfo {
+) -> GlobalKey {
     let key_id = passphrase_key.id.clone();
-    KeyInfo {
+    GlobalKey {
         id: passphrase_key.id,
         label: passphrase_key.label,
         key_type: KeyType::Passphrase { key_id },
@@ -51,12 +51,12 @@ pub fn convert_passphrase_to_unified(
     }
 }
 
-/// Convert YubiKeyStateInfo to unified KeyInfo
+/// Convert YubiKeyStateInfo to unified GlobalKey
 /// NOTE: Deprecated - use conversion functions in unified_key_list_service instead
 pub fn convert_yubikey_to_unified(
     yubikey_key: YubiKeyStateInfo,
     vault_id: Option<String>,
-) -> KeyInfo {
+) -> GlobalKey {
     let is_available = match yubikey_key.state {
         YubiKeyState::Registered => true,
         YubiKeyState::Orphaned => true,
@@ -64,7 +64,7 @@ pub fn convert_yubikey_to_unified(
         YubiKeyState::New => false,
     };
 
-    KeyInfo {
+    GlobalKey {
         id: format!("yubikey_{}", yubikey_key.serial), // Generate consistent ID
         label: yubikey_key
             .label
@@ -95,15 +95,15 @@ pub fn convert_yubikey_to_unified(
     }
 }
 
-/// Convert AvailableYubiKey to unified KeyInfo
+/// Convert AvailableYubiKey to unified GlobalKey
 /// NOTE: Deprecated - use conversion functions in unified_key_list_service instead
 pub fn convert_available_yubikey_to_unified(
     available_key: AvailableYubiKey,
     vault_id: Option<String>,
-) -> KeyInfo {
+) -> GlobalKey {
     use chrono::Utc;
 
-    KeyInfo {
+    GlobalKey {
         id: format!("available_yubikey_{}", available_key.serial),
         label: available_key
             .label
@@ -137,7 +137,7 @@ pub fn convert_available_yubikey_to_unified(
 /// List keys with flexible filtering options - unified API
 #[tauri::command]
 #[specta::specta]
-pub async fn list_unified_keys(filter: KeyListFilter) -> Result<Vec<KeyInfo>, CommandError> {
+pub async fn list_unified_keys(filter: KeyListFilter) -> Result<Vec<GlobalKey>, CommandError> {
     info!("Listing keys with filter: {:?}", filter);
 
     let manager = KeyManager::new();
@@ -166,7 +166,7 @@ pub struct GetVaultKeysRequest {
 #[derive(Debug, Serialize, specta::Type)]
 pub struct GetVaultKeysResponse {
     pub vault_id: String,
-    pub keys: Vec<crate::services::key_management::shared::domain::models::KeyReference>,
+    pub keys: Vec<crate::services::key_management::shared::domain::models::VaultKey>,
 }
 
 /// Get all keys for a vault - wrapper around unified API
@@ -179,10 +179,10 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
     // Delegate to unified API for actual implementation
     match list_unified_keys(KeyListFilter::ForVault(input.vault_id.clone())).await {
         Ok(unified_keys) => {
-            // Convert from unified KeyInfo to vault KeyReference
-            let key_refs: Vec<crate::services::key_management::shared::domain::models::KeyReference> = unified_keys
+            // Convert from unified GlobalKey to vault VaultKey
+            let key_refs: Vec<crate::services::key_management::shared::domain::models::VaultKey> = unified_keys
                 .into_iter()
-                .map(|key_info| crate::services::key_management::shared::domain::models::KeyReference {
+                .map(|key_info| crate::services::key_management::shared::domain::models::VaultKey {
                     id: key_info.id,
                     key_type: match key_info.key_type {
                         KeyType::Passphrase { key_id } => {

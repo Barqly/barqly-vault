@@ -223,15 +223,16 @@ impl KeyRegistryService {
             }
         };
 
-        // Remove recipient by label
+        // Remove recipient by label (idempotent)
         if metadata.remove_recipient(&key_label).is_some() {
             debug!(key_id = %key_id, vault_id = %vault_id, "Recipient removed from vault metadata");
         } else {
-            warn!(key_id = %key_id, vault_id = %vault_id, "Recipient not found in vault");
-            return Err(KeyManagementError::InvalidOperation(format!(
-                "Key '{}' is not attached to vault '{}'",
-                key_id, vault_id
-            )));
+            info!(
+                key_id = %key_id,
+                vault_id = %vault_id,
+                "Key already not attached to vault (idempotent - no-op)"
+            );
+            return Ok(()); // Already not attached - success (no-op)
         }
 
         // Save updated vault metadata

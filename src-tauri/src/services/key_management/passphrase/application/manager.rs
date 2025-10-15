@@ -3,7 +3,7 @@ use super::services::{
     VaultIntegrationError, VaultIntegrationService,
 };
 use crate::services::key_management::passphrase::domain::ValidationResult;
-use crate::services::key_management::shared::domain::models::KeyReference;
+use crate::services::key_management::shared::domain::models::VaultKey;
 use crate::services::vault::VaultMetadata;
 
 pub struct PassphraseManager {
@@ -67,7 +67,7 @@ impl PassphraseManager {
         key_id: String,
         label: String,
         public_key: String,
-    ) -> Result<KeyReference, VaultIntegrationError> {
+    ) -> Result<VaultKey, VaultIntegrationError> {
         self.vault_service
             .add_key_to_vault(vault_id, key_id, label, public_key)
             .await

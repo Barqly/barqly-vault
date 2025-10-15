@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 /// Request for getting single vault statistics
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct GetVaultStatisticsRequest {
-    /// The sanitized vault name (filesystem-safe)
-    pub vault_name: String,
+    /// The vault ID (deterministic unique identifier)
+    pub vault_id: String,
 }
 
 /// Response containing vault statistics
@@ -47,36 +47,41 @@ pub struct GetAllVaultStatisticsResponse {
 pub async fn get_vault_statistics(
     request: GetVaultStatisticsRequest,
 ) -> Result<GetVaultStatisticsResponse, String> {
-    debug!(vault_name = %request.vault_name, "Getting vault statistics");
+    debug!(vault_id = %request.vault_id, "Getting vault statistics");
 
-    // Validate vault name
-    if request.vault_name.is_empty() {
+    // Validate vault ID
+    if request.vault_id.is_empty() {
         return Ok(GetVaultStatisticsResponse {
             success: false,
             statistics: None,
-            error: Some("Vault name cannot be empty".to_string()),
+            error: Some("Vault ID cannot be empty".to_string()),
         });
     }
 
-    // Sanitize vault name to prevent path traversal
-    if request.vault_name.contains("..")
-        || request.vault_name.contains('/')
-        || request.vault_name.contains('\\')
-    {
-        return Ok(GetVaultStatisticsResponse {
-            success: false,
-            statistics: None,
-            error: Some("Invalid vault name format".to_string()),
-        });
-    }
+    // Get vault to retrieve sanitized name
+    use crate::services::vault::VaultManager;
+    let vault_manager = VaultManager::new();
+
+    let vault = match vault_manager.get_vault(&request.vault_id).await {
+        Ok(v) => v,
+        Err(e) => {
+            return Ok(GetVaultStatisticsResponse {
+                success: false,
+                statistics: None,
+                error: Some(format!("Vault not found: {}", e)),
+            });
+        }
+    };
+
+    let sanitized_name = &vault.vault.sanitized_name;
 
     // Create service and get statistics
     let service = VaultStatisticsService::new();
 
-    match service.get_vault_statistics(&request.vault_name) {
+    match service.get_vault_statistics(sanitized_name) {
         Ok(statistics) => {
             info!(
-                vault_name = %request.vault_name,
+                vault_id = %request.vault_id,
                 status = ?statistics.status,
                 key_count = statistics.key_statistics.total_keys,
                 file_count = statistics.file_count,
@@ -91,7 +96,7 @@ pub async fn get_vault_statistics(
         }
         Err(e) => {
             error!(
-                vault_name = %request.vault_name,
+                vault_id = %request.vault_id,
                 error = %e,
                 "Failed to get vault statistics"
             );
@@ -202,19 +207,17 @@ mod tests {
 
     #[test]
     fn test_request_validation() {
-        // Test empty vault name
+        // Test empty vault ID
         let request = GetVaultStatisticsRequest {
-            vault_name: "".to_string(),
+            vault_id: "".to_string(),
         };
-        assert!(request.vault_name.is_empty());
+        assert!(request.vault_id.is_empty());
 
-        // Test valid vault name
+        // Test valid vault ID
         let request = GetVaultStatisticsRequest {
-            vault_name: "my-vault".to_string(),
+            vault_id: "7Bw3eqLGahnF5DXZyMa8Jz".to_string(),
         };
-        assert!(!request.vault_name.is_empty());
-        assert!(!request.vault_name.contains(".."));
-        assert!(!request.vault_name.contains('/'));
+        assert!(!request.vault_id.is_empty());
     }
 
     #[test]

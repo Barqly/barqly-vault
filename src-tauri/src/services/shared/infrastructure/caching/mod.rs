@@ -30,7 +30,7 @@ pub use ttl_lru::TtlLruCache;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::key_management::shared::KeyInfo;
+    use crate::services::key_management::shared::infrastructure::KeyInfo;
     use std::sync::Arc;
     use std::thread;
     use std::time::Duration;

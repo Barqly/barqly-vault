@@ -8,7 +8,7 @@ use crate::commands::types::{CommandError, CommandResponse, ErrorCode};
 use crate::prelude::*;
 use crate::services::key_management::shared::KeyEntry;
 use crate::services::key_management::shared::domain::models::{
-    KeyReference, KeyType, key_lifecycle::KeyLifecycleStatus,
+    VaultKey, KeyType, key_lifecycle::KeyLifecycleStatus,
 };
 use crate::services::vault;
 use serde::{Deserialize, Serialize};
@@ -24,7 +24,7 @@ pub struct GetKeyMenuDataRequest {
 #[derive(Debug, Serialize, specta::Type)]
 pub struct GetKeyMenuDataResponse {
     pub vault_id: String,
-    pub keys: Vec<KeyReference>,
+    pub keys: Vec<VaultKey>,
 }
 
 /// Get structured key menu data for UI display
@@ -91,8 +91,8 @@ pub async fn get_key_menu_data(
                     label, created_at, ..
                 }) = registry.get_key(key_id)
                 {
-                    // Build KeyReference for passphrase
-                    key_menu_items.push(KeyReference {
+                    // Build VaultKey for passphrase
+                    key_menu_items.push(VaultKey {
                         id: key_id.to_string(),
                         label: label.clone(),
                         lifecycle_status: KeyLifecycleStatus::Active, // Passphrase keys are always active when in vault
@@ -127,8 +127,8 @@ pub async fn get_key_menu_data(
                         None => KeyLifecycleStatus::PreActivation,
                     };
 
-                    // Build KeyReference for YubiKey
-                    key_menu_items.push(KeyReference {
+                    // Build VaultKey for YubiKey
+                    key_menu_items.push(VaultKey {
                         id: key_id.to_string(),
                         label: label.clone(),
                         lifecycle_status,
@@ -151,7 +151,7 @@ pub async fn get_key_menu_data(
                         None => KeyLifecycleStatus::PreActivation,
                     };
 
-                    key_menu_items.push(KeyReference {
+                    key_menu_items.push(VaultKey {
                         id: key_id.to_string(),
                         label: recipient.label.clone(),
                         lifecycle_status,

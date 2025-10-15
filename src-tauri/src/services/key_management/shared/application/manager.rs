@@ -1,8 +1,9 @@
 use super::services::{KeyManagementError, KeyRegistryService, UnifiedKeyListService};
+use crate::prelude::*;
 use crate::services::key_management::shared::KeyEntry;
 use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
 use crate::services::key_management::shared::domain::models::key_reference::{
-    KeyInfo, KeyListFilter,
+    GlobalKey, KeyListFilter,
 };
 
 pub type Result<T> = std::result::Result<T, KeyManagementError>;
@@ -31,7 +32,7 @@ impl KeyManager {
     pub async fn list_keys(
         &self,
         filter: KeyListFilter,
-    ) -> std::result::Result<Vec<KeyInfo>, Box<dyn std::error::Error>> {
+    ) -> std::result::Result<Vec<GlobalKey>, Box<dyn std::error::Error>> {
         self.unified_list_service.list_keys(filter).await
     }
 
@@ -154,15 +155,16 @@ impl KeyManager {
         self.registry_service.load_registry()
     }
 
-    /// Attach an orphaned key to a vault (universal for all key types)
+    /// Attach a key to a vault (universal for all key types)
     ///
     /// This method:
-    /// 1. Validates the key exists and is attachable
+    /// 1. Validates the key exists and is attachable (PreActivation or Active states)
     /// 2. Checks vault key limits (max 4 keys)
-    /// 3. Updates key status to Active
-    /// 4. Updates vault manifest with new key
-    /// 5. Updates key registry with vault association
-    pub async fn attach_orphaned_key(
+    /// 3. Idempotent: Returns success if already attached
+    /// 4. Updates key status to Active if needed
+    /// 5. Updates vault manifest with new key
+    /// 6. Updates key registry with vault association
+    pub async fn attach_key_to_vault(
         &self,
         key_id: &str,
         vault_id: &str,
@@ -202,16 +204,17 @@ impl KeyManager {
             .into());
         }
 
-        // Check if key is already attached to this vault
+        // Check if key is already attached to this vault (idempotent)
         if key_entry
             .vault_associations()
             .contains(&vault_id.to_string())
         {
-            return Err(format!(
-                "Key '{}' is already attached to vault '{}'",
-                key_id, vault_id
-            )
-            .into());
+            info!(
+                key_id = %key_id,
+                vault_id = %vault_id,
+                "Key already attached to vault (idempotent - no-op)"
+            );
+            return Ok(()); // Already attached - success (no-op)
         }
 
         // Create recipient info based on key type

@@ -1,6 +1,6 @@
 use crate::services::key_management::passphrase::infrastructure::StorageError;
 use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
-use crate::services::key_management::shared::domain::models::{KeyReference, KeyType};
+use crate::services::key_management::shared::domain::models::{VaultKey, KeyType};
 use crate::services::vault;
 use crate::services::vault::infrastructure::persistence::metadata::{RecipientInfo, RecipientType};
 use chrono::Utc;
@@ -63,7 +63,7 @@ impl VaultIntegrationService {
         key_id: String,
         label: String,
         public_key: String,
-    ) -> Result<KeyReference> {
+    ) -> Result<VaultKey> {
         let mut metadata = vault::get_vault(vault_id)
             .await
             .map_err(|e| VaultIntegrationError::VaultNotFound(e.to_string()))?;
@@ -72,7 +72,7 @@ impl VaultIntegrationService {
             return Err(VaultIntegrationError::DuplicatePassphraseKey);
         }
 
-        let key_reference = KeyReference {
+        let key_reference = VaultKey {
             id: key_id.clone(),
             key_type: KeyType::Passphrase {
                 key_id: label.clone(),

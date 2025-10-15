@@ -8,9 +8,15 @@ use crate::services::key_management::shared::domain::models::key_lifecycle::KeyL
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-/// Reference to a key that can unlock a vault (for frontend communication)
+/// Minimal key information for vault-specific contexts
+///
+/// Used when displaying keys within a single vault context (Encrypt/Decrypt pages).
+/// Contains only the essential fields needed for vault operations.
+///
+/// For global key management (ManageKeys page), use `GlobalKey` instead which includes
+/// vault_associations, recipient, is_available, and yubikey_info fields.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, specta::Type)]
-pub struct KeyReference {
+pub struct VaultKey {
     /// Type of key
     #[serde(flatten)]
     pub key_type: KeyType,
@@ -66,9 +72,15 @@ pub enum KeyListFilter {
     ConnectedOnly,
 }
 
-/// Unified key information structure
-#[derive(Debug, Serialize, specta::Type)]
-pub struct KeyInfo {
+/// Complete key information for global contexts
+///
+/// Used when managing keys across all vaults (ManageKeys page, global key registry).
+/// Contains ALL fields including vault_associations, recipient, availability, and metadata.
+///
+/// For vault-specific contexts (Encrypt/Decrypt pages), use `VaultKey` instead which
+/// contains only the minimal fields needed for vault operations.
+#[derive(Debug, Clone, Serialize, specta::Type)]
+pub struct GlobalKey {
     /// Unique identifier for this key
     pub id: String,
     /// User-friendly label
@@ -95,7 +107,7 @@ pub struct KeyInfo {
 }
 
 /// YubiKey-specific information for unified API
-#[derive(Debug, Serialize, specta::Type)]
+#[derive(Debug, Clone, Serialize, specta::Type)]
 pub struct YubiKeyInfo {
     pub slot: Option<u8>,
     pub identity_tag: Option<String>,
@@ -103,8 +115,8 @@ pub struct YubiKeyInfo {
     pub yubikey_state: crate::services::key_management::yubikey::domain::models::YubiKeyState,
 }
 
-impl KeyReference {
-    /// Create a KeyReference from a key registry entry
+impl VaultKey {
+    /// Create a VaultKey from a key registry entry
     pub fn from_registry_entry(
         key_id: String,
         entry: &crate::services::key_management::shared::KeyEntry,

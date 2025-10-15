@@ -14,7 +14,7 @@ use crate::commands::command_types::{CommandError, CommandResponse, ErrorCode};
 use crate::prelude::*;
 use crate::services::key_management::shared::KeyRegistry;
 use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
-use crate::services::key_management::shared::domain::models::{KeyReference, KeyType};
+use crate::services::key_management::shared::domain::models::{VaultKey, KeyType};
 use crate::services::key_management::yubikey::YubiKeyManager;
 use crate::services::key_management::yubikey::domain::models::{Pin, Serial};
 use crate::services::shared::infrastructure::sanitize_label;
@@ -68,7 +68,7 @@ async fn register_yubikey_in_vault(
     mut vault: crate::services::vault::infrastructure::persistence::metadata::VaultMetadata,
     mut registry: KeyRegistry,
     params: RegisterYubiKeyParams,
-) -> Result<(KeyReference, String), Box<CommandError>> {
+) -> Result<(VaultKey, String), Box<CommandError>> {
     // Sanitize the label for use as key_id
     let sanitized = sanitize_label(&params.label).map_err(|e| {
         Box::new(
@@ -126,7 +126,7 @@ async fn register_yubikey_in_vault(
         )
     })?;
 
-    let key_reference = KeyReference {
+    let key_reference = VaultKey {
         id: key_registry_id,
         label: params.label,
         lifecycle_status: params.lifecycle_status,
@@ -192,7 +192,7 @@ pub struct RegisterYubiKeyForVaultParams {
 #[derive(Debug, Serialize, specta::Type)]
 pub struct YubiKeyVaultResult {
     pub success: bool,
-    pub key_reference: crate::services::key_management::shared::domain::models::KeyReference,
+    pub key_reference: crate::services::key_management::shared::domain::models::VaultKey,
     pub recovery_code_hash: String,
 }
 
