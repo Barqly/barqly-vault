@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Key } from 'lucide-react';
+import { X, Loader2, Key, Shield } from 'lucide-react';
 import { commands, VaultSummary, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -373,7 +373,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                 <label
                   key={state.vault.id}
                   className={`
-                    flex items-center p-3 rounded-lg border transition-colors
+                    flex items-center gap-3 p-3 rounded-lg border transition-colors
                     ${
                       state.isDisabled
                         ? 'bg-slate-50 border-slate-200 cursor-not-allowed'
@@ -390,18 +390,25 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                     className="
                       h-4 w-4 text-blue-600 rounded border-slate-300
                       focus:ring-2 focus:ring-blue-500
-                      disabled:opacity-50 disabled:cursor-not-allowed
+                      disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0
                     "
                   />
-                  <div className="ml-3 flex-1">
-                    <div className="text-sm font-medium text-slate-800">{state.vault.name}</div>
+                  <Shield className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-800 truncate">
+                      {state.vault.name}
+                    </div>
                     {state.vault.description && (
-                      <div className="text-xs text-slate-500">{state.vault.description}</div>
+                      <div className="text-xs text-slate-500 truncate">
+                        {state.vault.description}
+                      </div>
                     )}
                   </div>
-                  {state.isLoading && <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />}
+                  {state.isLoading && (
+                    <Loader2 className="h-4 w-4 text-blue-600 animate-spin flex-shrink-0" />
+                  )}
                   {state.isDisabled && (
-                    <span className="text-xs text-slate-500 ml-2">🔒 Locked</span>
+                    <span className="text-xs text-slate-500 ml-2 flex-shrink-0">🔒 Locked</span>
                   )}
                 </label>
               ))}
