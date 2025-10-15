@@ -64,7 +64,17 @@ export const useManageKeysWorkflow = () => {
     // Remove duplicates (keys should already be unique from global registry)
     const uniqueKeys = Array.from(new Map(keys.map((k) => [k.id, k])).values());
 
-    return uniqueKeys;
+    // Sort: Passphrase first (alphabetically), then YubiKey (alphabetically)
+    const sortedKeys = uniqueKeys.sort((a, b) => {
+      // First, sort by type (Passphrase before YubiKey)
+      if (a.key_type.type !== b.key_type.type) {
+        return a.key_type.type === 'Passphrase' ? -1 : 1;
+      }
+      // Then, sort alphabetically by label
+      return a.label.localeCompare(b.label);
+    });
+
+    return sortedKeys;
   }, [allKeys, filterType, searchQuery, getKeyVaultAttachments]);
 
   // Refresh all keys from global registry
