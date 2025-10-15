@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import { useUI } from '../contexts/UIContext';
 import { logger } from '../lib/logger';
-import { commands, type KeyInfo } from '../bindings';
+import { commands, type GlobalKey } from '../bindings';
 
 export type FilterType = 'all' | 'passphrase' | 'yubikey' | 'suspended';
 
@@ -18,36 +18,10 @@ export const useManageKeysWorkflow = () => {
   const [isDetectingYubiKey, setIsDetectingYubiKey] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(new Set<string>());
   const [error, setError] = useState<string | null>(null);
-  const [globalKeys, setGlobalKeys] = useState<KeyInfo[]>([]);
+  const [globalKeys, setGlobalKeys] = useState<GlobalKey[]>([]);
 
-  // Convert KeyInfo to KeyReference-like structure for compatibility with existing components
-  const allKeys = useMemo(() => {
-    return globalKeys.map((keyInfo) => {
-      // Create a KeyReference-like object from KeyInfo
-      const keyRef: any = {
-        id: keyInfo.id,
-        label: keyInfo.label,
-        type: keyInfo.key_type.type, // Extract type from key_type
-        created_at: keyInfo.created_at,
-        lifecycle_status: keyInfo.lifecycle_status,
-        is_available: keyInfo.is_available,
-      };
-
-      // Add type-specific data
-      if (keyInfo.key_type.type === 'YubiKey') {
-        keyRef.data = {
-          serial: keyInfo.key_type.data.serial,
-          firmware_version: keyInfo.key_type.data.firmware_version || null,
-        };
-      } else if (keyInfo.key_type.type === 'Passphrase') {
-        keyRef.data = {
-          key_id: keyInfo.key_type.data.key_id,
-        };
-      }
-
-      return keyRef;
-    });
-  }, [globalKeys]);
+  // Use GlobalKey directly - no conversion needed!
+  const allKeys = globalKeys;
 
   // Get vault attachments for a key
   const getKeyVaultAttachments = useCallback(
@@ -68,9 +42,9 @@ export const useManageKeysWorkflow = () => {
 
     // Apply filter
     if (filterType === 'passphrase') {
-      keys = keys.filter((k) => k.type === 'Passphrase');
+      keys = keys.filter((k) => k.key_type.type === 'Passphrase');
     } else if (filterType === 'yubikey') {
-      keys = keys.filter((k) => k.type === 'YubiKey');
+      keys = keys.filter((k) => k.key_type.type === 'YubiKey');
     } else if (filterType === 'suspended') {
       // Keys without vault attachment
       keys = keys.filter((k) => {
