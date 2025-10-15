@@ -92,13 +92,13 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
               if (isAttached) {
                 // Check if vault is encrypted
                 logger.info('VaultAttachmentDialog', 'Fetching vault stats', {
-                  vaultName: vault.name,
+                  vaultId: vault.id,
                 });
                 const statsResult = await commands.getVaultStatistics({
-                  vault_name: vault.name,
+                  vault_id: vault.id,
                 });
                 logger.info('VaultAttachmentDialog', 'Vault stats result', {
-                  vaultName: vault.name,
+                  vaultId: vault.id,
                   status: statsResult.status,
                   result: statsResult,
                 });
