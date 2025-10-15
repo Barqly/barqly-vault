@@ -116,7 +116,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           </button>
         )}
 
-        {onExport && (
+        {onExport && isPassphrase && (
           <button
             onClick={(e) => {
               e.stopPropagation();
