@@ -202,10 +202,13 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 placeholder="e.g., My Backup Key 2024"
                 autoFocus
               />
-              {labelError && <p className="text-xs text-red-600 mt-1">{labelError}</p>}
-              {!labelError && label && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Tip: Use descriptive names like "My Backup Key 2024"
+              {labelError ? (
+                <p className="text-xs text-red-600 mt-1">{labelError}</p>
+              ) : (
+                <p
+                  className={`mt-1 text-xs ${label.length >= 24 ? 'text-red-600' : 'text-gray-500'}`}
+                >
+                  {label.length}/24 characters
                 </p>
               )}
             </div>
