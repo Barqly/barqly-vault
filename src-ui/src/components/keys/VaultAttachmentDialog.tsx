@@ -27,6 +27,9 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
   const [vaultStates, setVaultStates] = useState<VaultCheckboxState[]>([]);
   const [isLoadingVaults, setIsLoadingVaults] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   // Load vaults and determine checkbox states
   useEffect(() => {
@@ -254,13 +257,60 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
     }
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging) {
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragStart]);
+
+  // Reset position when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setPosition({ x: 0, y: 0 });
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-      <div className="bg-white rounded-lg shadow-2xl border border-slate-300 max-w-md w-full mx-4">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent pointer-events-none">
+      <div
+        className="bg-white rounded-lg shadow-2xl border border-slate-300 max-w-md w-full mx-4 pointer-events-auto"
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px)`,
+        }}
+      >
+        {/* Header - Draggable Area */}
+        <div
+          className="flex items-center justify-between p-4 border-b border-slate-200 cursor-move select-none"
+          onMouseDown={handleMouseDown}
+        >
           <h3 className="text-lg font-semibold text-slate-800">Attach to Vaults</h3>
           <button
             onClick={onClose}
