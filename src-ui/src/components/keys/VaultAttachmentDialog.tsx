@@ -147,16 +147,30 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
         );
 
         // Filter successful results
-        const states = results
+        const allStates = results
           .filter((result) => result.status === 'fulfilled')
           .map((result) => (result as PromiseFulfilledResult<VaultCheckboxState>).value);
 
-        logger.info('VaultAttachmentDialog', 'States processed', {
-          totalVaults: allVaults.length,
-          successfulStates: states.length,
+        // Filter to only show relevant vaults (reduce information overload):
+        // 1. Available vaults (not attached, not encrypted) - can attach
+        // 2. Sealed vaults with this key (attached and encrypted) - historical reference
+        // HIDE: Sealed vaults without this key (not attached but encrypted) - irrelevant
+        const relevantStates = allStates.filter((state) => {
+          if (!state.isAttached && !state.isDisabled) return true; // Available
+          if (state.isAttached && state.isDisabled) return true; // Sealed with this key
+          return false; // Hide irrelevant sealed vaults
         });
 
-        setVaultStates(states);
+        // Sort alphabetically
+        relevantStates.sort((a, b) => a.vault.name.localeCompare(b.vault.name));
+
+        logger.info('VaultAttachmentDialog', 'States processed', {
+          totalVaults: allVaults.length,
+          successfulStates: allStates.length,
+          relevantStates: relevantStates.length,
+        });
+
+        setVaultStates(relevantStates);
       } catch (err) {
         logger.error('VaultAttachmentDialog', 'Failed to load vaults', err as Error);
         setError('An unexpected error occurred');
@@ -373,11 +387,11 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                 <label
                   key={state.vault.id}
                   className={`
-                    flex items-center gap-3 p-3 rounded-lg border transition-colors
+                    flex items-center gap-3 p-3 rounded-lg border transition-all
                     ${
                       state.isDisabled
                         ? 'bg-slate-50 border-slate-200 cursor-not-allowed'
-                        : 'bg-white border-slate-200 hover:bg-slate-50 cursor-pointer'
+                        : 'bg-white border-blue-200 hover:bg-blue-50 hover:border-blue-300 cursor-pointer'
                     }
                   `}
                   title={state.tooltip}
@@ -387,11 +401,14 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                     checked={state.isAttached}
                     disabled={state.isDisabled || state.isLoading}
                     onChange={() => handleToggle(state.vault.id)}
-                    className="
-                      h-4 w-4 text-blue-600 rounded border-slate-300
-                      focus:ring-2 focus:ring-blue-500
-                      disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0
-                    "
+                    className={`
+                      h-4 w-4 rounded focus:ring-2 focus:ring-blue-500 flex-shrink-0
+                      ${
+                        state.isDisabled
+                          ? 'text-blue-600 border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed'
+                          : 'text-blue-600 border-blue-400 cursor-pointer'
+                      }
+                    `}
                   />
                   <Shield
                     className={`h-4 w-4 flex-shrink-0 ${
