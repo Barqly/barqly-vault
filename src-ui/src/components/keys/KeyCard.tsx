@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Key, MoreVertical, Link2, FileText } from 'lucide-react';
-import { GlobalKey } from '../../bindings';
+import { GlobalKey, commands } from '../../bindings';
+import { logger } from '../../lib/logger';
 
 interface KeyCardProps {
   keyRef: GlobalKey;
@@ -11,6 +12,7 @@ interface KeyCardProps {
   onAttach?: (keyId: string) => void;
   onDelete?: (keyId: string) => void;
   onExport?: (keyId: string) => void;
+  onRefresh?: () => Promise<void>;
   vaultNames?: Map<string, string>;
 }
 
@@ -23,9 +25,11 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   onAttach,
   onDelete,
   onExport,
+  onRefresh,
   vaultNames = new Map(),
 }) => {
   const [showMenu, setShowMenu] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const isPassphrase = keyRef.key_type.type === 'Passphrase';
   const isYubiKey = keyRef.key_type.type === 'YubiKey';
 
@@ -36,13 +40,24 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   // Truncate label to 12 characters
   const displayLabel = keyRef.label.length > 12 ? keyRef.label.slice(0, 12) + '...' : keyRef.label;
 
+  // Calculate days remaining for deactivated keys
+  const getDaysRemaining = (deactivatedAt: string): number => {
+    const now = new Date();
+    const deactivated = new Date(deactivatedAt);
+    const daysPassed = Math.floor(
+      (now.getTime() - deactivated.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return Math.max(0, 30 - daysPassed);
+  };
+
   // Status badge helper
   const getStatusBadge = () => {
-    const { lifecycle_status } = keyRef;
+    const { lifecycle_status, deactivated_at } = keyRef;
 
-    // Mock deactivation countdown (will use real deactivated_at once backend ready)
-    const isDeactivated = lifecycle_status === 'deactivated';
-    const daysRemaining = 28; // Mock value - will calculate from deactivated_at
+    // Calculate real countdown for deactivated keys
+    const daysRemaining = lifecycle_status === 'deactivated' && deactivated_at
+      ? getDaysRemaining(deactivated_at)
+      : 0;
 
     switch (lifecycle_status) {
       case 'pre_activation':
@@ -85,17 +100,72 @@ export const KeyCard: React.FC<KeyCardProps> = ({
     setShowMenu(!showMenu);
   };
 
-  const handleDeactivate = (e: React.MouseEvent) => {
+  const handleDeactivate = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowMenu(false);
-    onDelete?.(keyRef.id);
+
+    // Confirmation dialog
+    if (!confirm('Deactivate this key? You have 30 days to restore it before permanent deletion.')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await commands.deactivateKey({
+        key_id: keyRef.id,
+        reason: null,
+      });
+
+      if (result.status === 'ok') {
+        logger.info('KeyCard', 'Key deactivated successfully', {
+          keyId: keyRef.id,
+          deactivatedAt: result.data.deactivated_at,
+          deletionScheduledAt: result.data.deletion_scheduled_at,
+        });
+
+        // Refresh key list
+        await onRefresh?.();
+      } else {
+        logger.error('KeyCard', 'Failed to deactivate key', new Error(result.error.message));
+        alert(`Failed to deactivate key: ${result.error.message}`);
+      }
+    } catch (err) {
+      logger.error('KeyCard', 'Error deactivating key', err as Error);
+      alert('An unexpected error occurred while deactivating the key.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleRestore = (e: React.MouseEvent) => {
+  const handleRestore = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowMenu(false);
-    // TODO: Call restore API once backend ready
-    console.log('Restore key:', keyRef.id);
+
+    setIsLoading(true);
+    try {
+      const result = await commands.restoreKey({
+        key_id: keyRef.id,
+      });
+
+      if (result.status === 'ok') {
+        logger.info('KeyCard', 'Key restored successfully', {
+          keyId: keyRef.id,
+          newStatus: result.data.new_status,
+          restoredAt: result.data.restored_at,
+        });
+
+        // Refresh key list
+        await onRefresh?.();
+      } else {
+        logger.error('KeyCard', 'Failed to restore key', new Error(result.error.message));
+        alert(`Failed to restore key: ${result.error.message}`);
+      }
+    } catch (err) {
+      logger.error('KeyCard', 'Error restoring key', err as Error);
+      alert('An unexpected error occurred while restoring the key.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -151,21 +221,19 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
                 {keyRef.lifecycle_status === 'deactivated' ? (
                   <button
-                    className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleRestore}
-                    disabled={true}
-                    title="API not ready yet"
+                    disabled={isLoading}
                   >
-                    Restore (pending API)
+                    {isLoading ? 'Restoring...' : 'Restore'}
                   </button>
                 ) : (
                   <button
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleDeactivate}
-                    disabled={true}
-                    title="API not ready yet"
+                    disabled={isLoading}
                   >
-                    Deactivate (pending API)
+                    {isLoading ? 'Deactivating...' : 'Deactivate'}
                   </button>
                 )}
               </div>

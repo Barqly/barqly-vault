@@ -245,6 +245,7 @@ const ManageKeysPage: React.FC = () => {
                     onAttach={handleAttachKey}
                     onDelete={isSuspended ? handleDeleteKey : undefined}
                     onExport={handleExportKey}
+                    onRefresh={refreshAllKeys}
                     vaultNames={vaultNameMap}
                   />
                 );
