@@ -142,16 +142,38 @@ impl ValidationHelper {
         Ok(())
     }
 
-    /// Validate key label format
+    /// Validate key label format (aligned with vault label validation)
+    ///
+    /// Allows spaces and most punctuation for user-friendly labels like "My Bitcoin Keys".
+    /// Only forbids filesystem-unsafe characters for cross-platform safety.
     pub fn validate_key_label(label: &str) -> Result<(), Box<CommandError>> {
-        // Key labels should only contain letters, numbers, dashes, and underscores
-        if !label
-            .chars()
-            .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
-        {
-            let invalid_chars: Vec<char> = label
+        let trimmed = label.trim();
+
+        // Check not empty
+        if trimmed.is_empty() {
+            return Err(Box::new(
+                CommandError::validation("Key label cannot be empty".to_string())
+                    .with_recovery_guidance("Enter a descriptive name for your encryption key (e.g., 'My Bitcoin Keys', 'family backup')"),
+            ));
+        }
+
+        // Check length (24 character UI constraint)
+        if trimmed.len() > 24 {
+            return Err(Box::new(
+                CommandError::validation(format!(
+                    "Key label is too long ({} characters, maximum 24)",
+                    trimmed.len()
+                ))
+                .with_recovery_guidance("Use a shorter label (up to 24 characters)"),
+            ));
+        }
+
+        // Check for filesystem-unsafe characters (same as vault validation)
+        const FORBIDDEN_CHARS: [char; 9] = ['/', '\\', ':', '*', '?', '"', '<', '>', '|'];
+        if trimmed.chars().any(|c| FORBIDDEN_CHARS.contains(&c)) {
+            let invalid_chars: Vec<char> = trimmed
                 .chars()
-                .filter(|c| !c.is_alphanumeric() && *c != '-' && *c != '_')
+                .filter(|c| FORBIDDEN_CHARS.contains(c))
                 .collect();
             let invalid_chars_str = invalid_chars.iter().collect::<String>();
             return Err(Box::new(
@@ -159,9 +181,10 @@ impl ValidationHelper {
                     ErrorCode::InvalidKeyLabel,
                     format!("Key label contains invalid characters: {invalid_chars_str}"),
                 )
-                .with_recovery_guidance("Remove special characters and spaces. Valid: letters (a-z, A-Z), numbers (0-9), dashes (-), and underscores (_). Example: 'my-bitcoin-keys' or 'bitcoin_wallet_2024'"),
+                .with_recovery_guidance("Remove filesystem-unsafe characters. Avoid: / \\ : * ? \" < > | Example: 'My Bitcoin Keys' or 'bitcoin-wallet-2024'"),
             ));
         }
+
         Ok(())
     }
 
@@ -212,5 +235,53 @@ impl ValidationHelper {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_key_label_allows_spaces() {
+        assert!(ValidationHelper::validate_key_label("My Bitcoin Keys").is_ok());
+        assert!(ValidationHelper::validate_key_label("Hello World123").is_ok());
+        assert!(ValidationHelper::validate_key_label("test key 1").is_ok());
+    }
+
+    #[test]
+    fn test_key_label_allows_punctuation() {
+        assert!(ValidationHelper::validate_key_label("Sam's Backup").is_ok());
+        assert!(ValidationHelper::validate_key_label("bitcoin-wallet_2024").is_ok());
+        assert!(ValidationHelper::validate_key_label("Keys (2024)").is_ok());
+    }
+
+    #[test]
+    fn test_key_label_empty_fails() {
+        assert!(ValidationHelper::validate_key_label("").is_err());
+        assert!(ValidationHelper::validate_key_label("   ").is_err());
+    }
+
+    #[test]
+    fn test_key_label_too_long_fails() {
+        assert!(ValidationHelper::validate_key_label("This is a very long key label name").is_err());
+        assert!(ValidationHelper::validate_key_label("12345678901234567890123456").is_err());
+    }
+
+    #[test]
+    fn test_key_label_filesystem_unsafe_fails() {
+        assert!(ValidationHelper::validate_key_label("My/Key").is_err());
+        assert!(ValidationHelper::validate_key_label("Key*Name").is_err());
+        assert!(ValidationHelper::validate_key_label("Key:Label").is_err());
+        assert!(ValidationHelper::validate_key_label("Key?Name").is_err());
+        assert!(ValidationHelper::validate_key_label("Key\"Name").is_err());
+        assert!(ValidationHelper::validate_key_label("Key<>Name").is_err());
+        assert!(ValidationHelper::validate_key_label("Key|Name").is_err());
+    }
+
+    #[test]
+    fn test_key_label_max_24_chars() {
+        assert!(ValidationHelper::validate_key_label("123456789012345678901234").is_ok()); // Exactly 24
+        assert!(ValidationHelper::validate_key_label("1234567890123456789012345").is_err()); // 25 chars
     }
 }
