@@ -393,7 +393,11 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                       disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0
                     "
                   />
-                  <Shield className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                  <Shield
+                    className={`h-4 w-4 flex-shrink-0 ${
+                      state.isDisabled ? 'text-slate-400' : 'text-blue-500'
+                    }`}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-slate-800 truncate">
                       {state.vault.name}
