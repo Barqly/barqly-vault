@@ -40,11 +40,19 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
         // Get all vaults
         const vaultsResult = await commands.listVaults();
         if (vaultsResult.status === 'error') {
-          setError('Failed to load vaults');
+          logger.error('VaultAttachmentDialog', 'Failed to load vaults', vaultsResult.error);
+          setError(`Failed to load vaults: ${vaultsResult.error.message}`);
+          setIsLoadingVaults(false);
           return;
         }
 
         const allVaults = vaultsResult.data.vaults;
+
+        if (allVaults.length === 0) {
+          setVaultStates([]);
+          setIsLoadingVaults(false);
+          return;
+        }
 
         // Process each vault
         const states = await Promise.all(
