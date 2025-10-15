@@ -28,14 +28,6 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   const isPassphrase = keyRef.type === 'Passphrase';
   const isYubiKey = keyRef.type === 'YubiKey';
 
-  // Format identity for display (truncate if long)
-  const formatIdentity = (id: string) => {
-    if (id.length > 20) {
-      return `${id.slice(0, 8)}...${id.slice(-8)}`;
-    }
-    return id;
-  };
-
   // Get vault names for display
   const attachedVaultNames = vaultAttachments.map((id) => vaultNames.get(id) || id);
 
@@ -84,15 +76,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         </button>
       </div>
 
-      {/* Identity & Attachments */}
+      {/* Attachments */}
       <div className="px-5 pb-3 space-y-2">
-        <div className="text-sm">
-          <span className="text-slate-500">Identity:</span>{' '}
-          <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">
-            {formatIdentity(keyRef.id)}
-          </code>
-        </div>
-
         {isOrphan ? (
           <div className="flex items-center gap-2 text-orange-600">
             <AlertTriangle className="h-4 w-4" />
