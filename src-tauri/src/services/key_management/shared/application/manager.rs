@@ -264,12 +264,16 @@ impl KeyManager {
         // Add recipient to vault metadata
         metadata.add_recipient(recipient);
 
-        // Update key status to Active and add vault association
-        key_entry.set_lifecycle_status(
-            KeyLifecycleStatus::Active,
-            format!("Attached to vault '{}'", vault_id),
-            "system".to_string(),
-        )?;
+        // Update key status to Active (only if not already Active - for multi-vault support)
+        if key_entry.lifecycle_status() != KeyLifecycleStatus::Active {
+            key_entry.set_lifecycle_status(
+                KeyLifecycleStatus::Active,
+                format!("Attached to vault '{}'", vault_id),
+                "system".to_string(),
+            )?;
+        }
+
+        // Add vault association (multi-vault support)
         key_entry.add_vault_association(vault_id.to_string());
 
         // Save updated registry

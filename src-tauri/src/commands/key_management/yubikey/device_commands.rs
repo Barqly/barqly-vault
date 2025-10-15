@@ -267,6 +267,7 @@ pub async fn register_yubikey(
 
     // Register device in global registry
     // Note: register_device sets lifecycle_status to PreActivation initially
+    // Key will transition to Active when first attached to a vault (NIST standard)
     let entry_id = manager
         .register_device(
             &device,
@@ -283,31 +284,8 @@ pub async fn register_yubikey(
             )
         })?;
 
-    // Transition lifecycle status from PreActivation → Active
-    // This is correct for orphaned YubiKeys (were active before, suspended, now active again)
-    use crate::services::key_management::shared::KeyManager;
-    let key_manager = KeyManager::new();
-
-    if let Ok(mut registry) = key_manager.load_registry()
-        && let Some(key_entry) = registry.get_key_mut(&entry_id)
-    {
-        // Transition: Suspended → Active (orphaned key being re-registered)
-        if let Err(e) = key_entry.set_lifecycle_status(
-            KeyLifecycleStatus::Active,
-            "Registered orphaned YubiKey from Manage Keys".to_string(),
-            "user".to_string(),
-        ) {
-            warn!("Failed to transition lifecycle status: {}", e);
-        } else {
-            // Save updated registry
-            if let Err(e) = registry.save() {
-                warn!(
-                    "Failed to save registry after lifecycle transition: {:?}",
-                    e
-                );
-            }
-        }
-    }
+    // NOTE: We do NOT transition to Active here - key stays in PreActivation
+    // Per NIST lifecycle: Key becomes Active only when first attached to a vault
 
     // Shutdown manager gracefully
     if let Err(e) = manager.shutdown().await {
