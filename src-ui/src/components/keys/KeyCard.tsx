@@ -78,19 +78,12 @@ export const KeyCard: React.FC<KeyCardProps> = ({
 
       {/* Attachments */}
       <div className="px-5 pb-3 space-y-2">
-        {isOrphan ? (
-          <div className="flex items-center gap-2 text-orange-600">
-            <AlertTriangle className="h-4 w-4" />
-            <span className="text-sm font-medium">Suspended - Not attached to any vault</span>
-          </div>
-        ) : (
-          <div className="text-sm">
-            <span className="text-slate-500">Attached to:</span>{' '}
-            <span className="font-medium text-slate-700">
-              {attachedVaultNames.length === 0 ? 'No vaults' : attachedVaultNames.join(', ')}
-            </span>
-          </div>
-        )}
+        <div className="text-sm">
+          <span className="text-slate-500">Attached to:</span>{' '}
+          <span className="font-medium text-slate-700">
+            {attachedVaultNames.length === 0 ? 'None' : attachedVaultNames.join(', ')}
+          </span>
+        </div>
 
         {isYubiKey && keyRef.type === 'YubiKey' && (
           <div className="text-sm text-slate-500">Serial: {keyRef.data.serial}</div>
