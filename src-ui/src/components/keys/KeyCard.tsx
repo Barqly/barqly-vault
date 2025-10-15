@@ -127,6 +127,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               text-xs font-medium text-slate-600 border border-slate-200
               rounded-md hover:bg-slate-50 transition-colors
             "
+            title="Download an encrypted backup of this key for recovery."
           >
             <FileText className="h-3 w-3" />
             Export
