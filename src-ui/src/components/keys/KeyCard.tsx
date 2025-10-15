@@ -217,25 +217,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       </div>
 
       {/* Footer: Action Buttons */}
-      <div className="flex gap-2 px-5 pb-5 pt-2 border-t border-slate-100">
-        {onAttach && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onAttach(keyRef.id);
-            }}
-            className="
-              flex items-center justify-center gap-1 px-2 py-1.5 w-24
-              text-xs font-medium text-blue-600 border border-blue-600
-              rounded-md hover:bg-blue-50 transition-colors
-            "
-          >
-            <Link2 className="h-3 w-3" />
-            Vault
-          </button>
-        )}
-
-        {onExport && isPassphrase && (
+      <div className="flex justify-between px-5 pb-5 pt-2 border-t border-slate-100">
+        {onExport && isPassphrase ? (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -250,6 +233,25 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           >
             <FileText className="h-3 w-3" />
             Export
+          </button>
+        ) : (
+          <div />
+        )}
+
+        {onAttach && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAttach(keyRef.id);
+            }}
+            className="
+              flex items-center justify-center gap-1 px-2 py-1.5 w-24
+              text-xs font-medium text-blue-600 border border-blue-600
+              rounded-md hover:bg-blue-50 transition-colors
+            "
+          >
+            <Link2 className="h-3 w-3" />
+            Vault
           </button>
         )}
       </div>
