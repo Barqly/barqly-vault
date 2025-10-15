@@ -300,11 +300,17 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm pointer-events-none">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.15)',
+        backdropFilter: 'blur(2px)',
+      }}
+    >
       <div
-        className="bg-white rounded-lg shadow-2xl border border-slate-300 max-w-md w-full mx-4 pointer-events-auto"
+        className="bg-white rounded-lg shadow-2xl border border-slate-300 max-w-md w-full mx-4 transition-transform duration-150"
         style={{
-          transform: `translate(${position.x}px, ${position.y}px)`,
+          transform: `translate(${position.x}px, ${position.y}px) scale(${isOpen ? 1 : 0.95})`,
         }}
       >
         {/* Header - Draggable Area */}
