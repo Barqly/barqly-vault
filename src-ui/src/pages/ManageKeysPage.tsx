@@ -7,8 +7,9 @@ import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import { KeyCard } from '../components/keys/KeyCard';
 import { YubiKeyRegistryDialog } from '../components/keys/YubiKeyRegistryDialog';
 import { PassphraseKeyRegistryDialog } from '../components/keys/PassphraseKeyRegistryDialog';
+import { VaultAttachmentDialog } from '../components/keys/VaultAttachmentDialog';
 import { logger } from '../lib/logger';
-import { commands } from '../bindings';
+import { commands, KeyInfo } from '../bindings';
 
 /**
  * Manage Keys Page - Central registry for all encryption keys
@@ -31,6 +32,8 @@ const ManageKeysPage: React.FC = () => {
   } = useManageKeysWorkflow();
 
   const [showPassphraseDialog, setShowPassphraseDialog] = useState(false);
+  const [showVaultAttachmentDialog, setShowVaultAttachmentDialog] = useState(false);
+  const [selectedKeyForAttachment, setSelectedKeyForAttachment] = useState<KeyInfo | null>(null);
 
   // Build vault name map for display
   const vaultNameMap = React.useMemo(() => {
@@ -62,83 +65,29 @@ const ManageKeysPage: React.FC = () => {
   }, [refreshAllKeys, setIsCreatingKey]);
 
   const handleAttachKey = useCallback(
-    async (keyId: string) => {
-      // If no current vault or multiple vaults, show selection dialog
-      let targetVaultId: string | null = null;
-
-      if (!currentVault && vaults.length === 1) {
-        // Only one vault exists, use it
-        targetVaultId = vaults[0].id;
-      } else if (!currentVault && vaults.length > 1) {
-        // Multiple vaults, need user to select
-        // For now, use a simple prompt - in production, use a proper modal
-        const vaultNames = vaults.map((v, i) => `${i + 1}. ${v.name}`).join('\n');
-        const selection = prompt(
-          `Select a vault to attach this key to:\n\n${vaultNames}\n\nEnter the number:`,
-        );
-
-        if (!selection) return;
-
-        const index = parseInt(selection) - 1;
-        if (index >= 0 && index < vaults.length) {
-          targetVaultId = vaults[index].id;
-        } else {
-          alert('Invalid selection');
-          return;
-        }
-      } else if (currentVault) {
-        targetVaultId = currentVault.id;
-      } else {
-        alert('No vaults available. Please create a vault first.');
+    (keyId: string) => {
+      // Find the key info from allKeys
+      const keyInfo = allKeys.find((k) => k.id === keyId);
+      if (!keyInfo) {
+        logger.error('ManageKeysPage', 'Key not found', { keyId });
         return;
       }
 
-      try {
-        logger.info('ManageKeysPage', 'Attaching key to vault', {
-          keyId,
-          vaultId: targetVaultId,
-        });
-
-        const result = await commands.attachKeyToVault({
-          key_id: keyId,
-          vault_id: targetVaultId,
-        });
-
-        if (result.status === 'ok' && result.data.success) {
-          // Show success message
-          logger.info('ManageKeysPage', 'Key attached successfully', {
-            keyId: result.data.key_id,
-            vaultId: result.data.vault_id,
-          });
-
-          // Show any warnings if present
-          if (result.data.message) {
-            alert(`Success: ${result.data.message}`);
-          }
-
-          // Refresh the UI
-          if (targetVaultId) {
-            await refreshKeysForVault(targetVaultId);
-          }
-          await refreshAllKeys();
-        } else if (result.status === 'error') {
-          const error = result.error as any;
-          logger.error('ManageKeysPage', 'Failed to attach key', error);
-
-          // Show user-friendly error with recovery guidance
-          const errorMessage = error.recovery_guidance
-            ? `${error.message}\n\n${error.recovery_guidance}`
-            : error.message || 'Failed to attach key';
-
-          alert(errorMessage);
-        }
-      } catch (err) {
-        logger.error('ManageKeysPage', 'Failed to attach key', err as Error);
-        alert('An unexpected error occurred while attaching the key');
-      }
+      // Open the vault attachment dialog
+      setSelectedKeyForAttachment(keyInfo);
+      setShowVaultAttachmentDialog(true);
     },
-    [currentVault, vaults, refreshKeysForVault, refreshAllKeys],
+    [allKeys],
   );
+
+  const handleVaultAttachmentSuccess = useCallback(async () => {
+    // Refresh the UI after successful attachment/detachment
+    await refreshAllKeys();
+    // Also refresh the vault cache if there's a current vault
+    if (currentVault) {
+      await refreshKeysForVault(currentVault.id);
+    }
+  }, [refreshAllKeys, currentVault, refreshKeysForVault]);
 
   // Note: Physical key deletion is not supported by design
   // Keys can only be removed from vaults using removeKeyFromVault
@@ -324,6 +273,19 @@ const ManageKeysPage: React.FC = () => {
           onClose={() => setIsDetectingYubiKey(false)}
           onSuccess={refreshAllKeys}
         />
+
+        {/* Vault Attachment Dialog */}
+        {selectedKeyForAttachment && (
+          <VaultAttachmentDialog
+            isOpen={showVaultAttachmentDialog}
+            onClose={() => {
+              setShowVaultAttachmentDialog(false);
+              setSelectedKeyForAttachment(null);
+            }}
+            keyInfo={selectedKeyForAttachment}
+            onSuccess={handleVaultAttachmentSuccess}
+          />
+        )}
       </AppPrimaryContainer>
     </div>
   );
