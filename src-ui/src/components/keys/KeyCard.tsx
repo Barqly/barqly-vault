@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, MoreVertical, Link2, FileText } from 'lucide-react';
+import { Key, Link2, FileText } from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -30,7 +30,6 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   onRefresh,
   vaultNames = new Map(),
 }) => {
-  const [showMenu, setShowMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const isPassphrase = keyRef.key_type.type === 'Passphrase';
   const isYubiKey = keyRef.key_type.type === 'YubiKey';
@@ -137,14 +136,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
     }
   };
 
-  const handleMenuClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowMenu(!showMenu);
-  };
-
   const handleDeactivate = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowMenu(false);
 
     // Confirmation dialog
     if (!confirm('Deactivate this key? You have 30 days to restore it before permanent deletion.')) {
@@ -181,7 +174,6 @@ export const KeyCard: React.FC<KeyCardProps> = ({
 
   const handleRestore = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowMenu(false);
 
     setIsLoading(true);
     try {
@@ -218,76 +210,25 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       `}
       onClick={() => onSelect?.(keyRef.id)}
     >
-      {/* Row 1: Icon + Label + Menu */}
-      <div className="flex items-center justify-between px-5 pt-3 pb-2">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          {/* Icon - h-4 w-4 to match VaultAttachmentDialog */}
-          <div
-            className={`
-              rounded-lg p-2 flex-shrink-0
-              ${isPassphrase ? 'bg-green-100' : 'bg-purple-100'}
-            `}
-          >
-            <Key className={`h-4 w-4 ${isPassphrase ? 'text-green-700' : 'text-purple-700'}`} />
-          </div>
-
-          {/* Label with tooltip for full text */}
-          <h3
-            className="font-semibold text-slate-800 truncate"
-            title={keyRef.label}
-          >
-            {displayLabel}
-          </h3>
+      {/* Row 1: Icon + Label (NO overflow menu) */}
+      <div className="flex items-center gap-3 px-5 pt-3 pb-2">
+        {/* Icon - h-4 w-4 to match VaultAttachmentDialog */}
+        <div
+          className={`
+            rounded-lg p-2 flex-shrink-0
+            ${isPassphrase ? 'bg-green-100' : 'bg-purple-100'}
+          `}
+        >
+          <Key className={`h-4 w-4 ${isPassphrase ? 'text-green-700' : 'text-purple-700'}`} />
         </div>
 
-        {/* 3-dot menu */}
-        <div className="relative flex-shrink-0">
-          <button
-            className="p-1 hover:bg-slate-100 rounded transition-colors"
-            onClick={handleMenuClick}
-            title="More actions"
-          >
-            <MoreVertical className="h-4 w-4 text-slate-400" />
-          </button>
-
-          {/* Dropdown Menu */}
-          {showMenu && (
-            <>
-              {/* Backdrop to close menu */}
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setShowMenu(false)}
-              />
-
-              {/* Menu */}
-              <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
-                {isDeactivated ? (
-                  <button
-                    className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={handleRestore}
-                    disabled={isLoading}
-                    title="Restore this key to active status"
-                  >
-                    {isLoading ? 'Restoring...' : 'Restore'}
-                  </button>
-                ) : (
-                  <button
-                    className={`w-full px-4 py-2 text-left text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                      canDeactivate
-                        ? 'text-red-600 hover:bg-red-50'
-                        : 'text-slate-400 cursor-not-allowed'
-                    }`}
-                    onClick={handleDeactivate}
-                    disabled={isLoading || !canDeactivate}
-                    title={deactivateTooltip}
-                  >
-                    {isLoading ? 'Deactivating...' : 'Deactivate'}
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+        {/* Label with tooltip for full text */}
+        <h3
+          className="font-semibold text-slate-800 truncate"
+          title={keyRef.label}
+        >
+          {displayLabel}
+        </h3>
       </div>
 
       {/* Row 2: Type Badge + Status Badge */}
@@ -334,26 +275,41 @@ export const KeyCard: React.FC<KeyCardProps> = ({
 
       {/* Footer: Action Buttons */}
       <div className="flex justify-between px-5 py-3 border-t border-slate-100">
-        {onExport && isPassphrase ? (
+        {/* Left: Deactivate/Restore */}
+        {isDeactivated ? (
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onExport(keyRef.id);
-            }}
+            onClick={handleRestore}
+            disabled={isLoading}
             className="
-              flex items-center justify-center gap-1 px-2 py-1.5 w-24
-              text-xs font-medium text-slate-600 border border-slate-200
-              rounded-md hover:bg-slate-50 transition-colors
+              flex items-center justify-center gap-1 px-3 py-1.5
+              text-xs font-medium text-blue-600 border border-blue-600
+              rounded-md hover:bg-blue-50 transition-colors
+              disabled:opacity-50 disabled:cursor-not-allowed
             "
-            title="Download an encrypted backup of this key for recovery."
+            title="Restore this key to active status"
           >
-            <FileText className="h-3 w-3" />
-            Export
+            {isLoading ? 'Restoring...' : 'Restore'}
           </button>
         ) : (
-          <div />
+          <button
+            onClick={canDeactivate ? handleDeactivate : undefined}
+            disabled={isLoading || !canDeactivate}
+            className={`
+              flex items-center justify-center gap-1 px-3 py-1.5
+              text-xs font-medium rounded-md transition-colors
+              disabled:opacity-50 disabled:cursor-not-allowed
+              ${canDeactivate
+                ? 'text-red-600 border border-red-600 hover:bg-red-50'
+                : 'text-slate-400 border border-slate-300'
+              }
+            `}
+            title={deactivateTooltip}
+          >
+            {isLoading ? 'Deactivating...' : 'Deactivate'}
+          </button>
         )}
 
+        {/* Right: Vault button */}
         {onAttach && (
           <button
             onClick={(e) => {
@@ -361,10 +317,11 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               onAttach(keyRef.id);
             }}
             className="
-              flex items-center justify-center gap-1 px-2 py-1.5 w-24
+              flex items-center justify-center gap-1 px-3 py-1.5
               text-xs font-medium text-blue-600 border border-blue-600
               rounded-md hover:bg-blue-50 transition-colors
             "
+            title="Manage vault attachments"
           >
             <Link2 className="h-3 w-3" />
             Vault
