@@ -196,7 +196,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                 >
                   {/* Icon + Label */}
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 relative group">
                       <div
                         className="rounded-lg p-1.5 flex-shrink-0"
                         style={{
@@ -210,9 +210,21 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                           <Fingerprint className="h-4 w-4" style={{ color: '#A16207' }} />
                         )}
                       </div>
-                      <span className="text-xs font-medium text-slate-700" title={keyRef.label}>
+                      <span className="text-xs font-medium text-slate-700">
                         {keyRef.label.length > 12 ? keyRef.label.slice(0, 12) + '...' : keyRef.label}
                       </span>
+
+                      {/* Tooltip for full label on hover */}
+                      {keyRef.label.length > 12 && (
+                        <div className="absolute left-0 top-full mt-1 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                          <div>{keyRef.label}</div>
+                          {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
+                            <div className="mt-0.5 text-slate-300">
+                              S/N: {keyRef.key_type.data.serial}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </td>
 
