@@ -261,7 +261,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           style={{
             backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(197, 161, 0, 0.15)',
             color: isPassphrase ? '#0F766E' : '#A16207',
-            border: `1px solid ${isPassphrase ? '#A7F3D0' : '#E6D8AA'}`,
+            border: `1px solid ${isPassphrase ? '#B7E1DD' : '#E6D8AA'}`,
           }}
         >
           {isPassphrase ? 'Passphrase' : 'YubiKey'}
