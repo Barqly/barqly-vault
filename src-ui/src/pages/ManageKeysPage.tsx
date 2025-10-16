@@ -34,6 +34,7 @@ const ManageKeysPage: React.FC = () => {
   const [showPassphraseDialog, setShowPassphraseDialog] = useState(false);
   const [showVaultAttachmentDialog, setShowVaultAttachmentDialog] = useState(false);
   const [selectedKeyForAttachment, setSelectedKeyForAttachment] = useState<GlobalKey | null>(null);
+  const [showNewKeyMenu, setShowNewKeyMenu] = useState(false);
 
   // Vault statistics for deactivation eligibility checks
   const [vaultStats, setVaultStats] = useState<Map<string, VaultStatistics>>(new Map());
@@ -166,43 +167,98 @@ const ManageKeysPage: React.FC = () => {
       <PageHeader title="Manage Keys" icon={Key} />
 
       <AppPrimaryContainer>
-        {/* Create New Key Section - Like Vault Hub */}
-        <div className="mt-6 border-2 border-dashed border-slate-300 rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-medium text-slate-700 mb-4 text-center">Create New Key</h3>
+        {/* Create New Key Section - Only show when no keys exist (empty state) */}
+        {allKeys.length === 0 && (
+          <div className="mt-6 border-2 border-dashed border-slate-300 rounded-lg p-6 mb-6">
+            <h3 className="text-lg font-medium text-slate-700 mb-4 text-center">Create New Key</h3>
 
-          <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-            {/* Passphrase Card */}
-            <button
-              onClick={handleCreatePassphrase}
-              className="group p-6 border-2 border-slate-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all"
-            >
-              <div className="flex flex-col items-center gap-3">
-                <Key className="h-12 w-12 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                <h4 className="font-semibold text-slate-700 group-hover:text-blue-700">
-                  Passphrase
-                </h4>
-                <p className="text-sm text-slate-500 text-center">Password-protected key</p>
-              </div>
-            </button>
+            <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+              {/* Passphrase Card */}
+              <button
+                onClick={handleCreatePassphrase}
+                className="group p-6 border-2 border-slate-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all"
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <Key className="h-12 w-12 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                  <h4 className="font-semibold text-slate-700 group-hover:text-blue-700">
+                    Passphrase
+                  </h4>
+                  <p className="text-sm text-slate-500 text-center">Password-protected key</p>
+                </div>
+              </button>
 
-            {/* YubiKey Card */}
-            <button
-              onClick={handleDetectYubiKey}
-              className="group p-6 border-2 border-slate-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all"
-            >
-              <div className="flex flex-col items-center gap-3">
-                <Fingerprint className="h-12 w-12 text-slate-400 group-hover:text-purple-600 transition-colors" />
-                <h4 className="font-semibold text-slate-700 group-hover:text-purple-700">
-                  YubiKey
-                </h4>
-                <p className="text-sm text-slate-500 text-center">Hardware security key</p>
-              </div>
-            </button>
+              {/* YubiKey Card */}
+              <button
+                onClick={handleDetectYubiKey}
+                className="group p-6 border-2 border-slate-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all"
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <Fingerprint className="h-12 w-12 text-slate-400 group-hover:text-purple-600 transition-colors" />
+                  <h4 className="font-semibold text-slate-700 group-hover:text-purple-700">
+                    YubiKey
+                  </h4>
+                  <p className="text-sm text-slate-500 text-center">Hardware security key</p>
+                </div>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Action Bar - Right-aligned only */}
-        <div className="flex gap-3 items-center justify-end mb-6">
+        {/* Action Bar - Right-aligned with + New Key button when keys exist */}
+        <div className="flex gap-3 items-center justify-between mt-6 mb-6">
+          {/* Left: + New Key Dropdown (only when keys exist) */}
+          {allKeys.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setShowNewKeyMenu(!showNewKeyMenu)}
+                className="
+                  flex items-center gap-2 px-4 py-2
+                  text-sm font-medium text-white bg-blue-600
+                  rounded-lg hover:bg-blue-700 transition-colors
+                "
+              >
+                + New Key
+              </button>
+
+              {/* Dropdown Menu */}
+              {showNewKeyMenu && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowNewKeyMenu(false)}
+                  />
+
+                  {/* Menu */}
+                  <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-20">
+                    <button
+                      onClick={() => {
+                        setShowNewKeyMenu(false);
+                        handleCreatePassphrase();
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
+                    >
+                      <Key className="h-4 w-4 text-green-600" />
+                      <span>Create Passphrase Key</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowNewKeyMenu(false);
+                        handleDetectYubiKey();
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
+                    >
+                      <Fingerprint className="h-4 w-4 text-purple-600" />
+                      <span>Register YubiKey</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Right: Filter, View Toggle, Refresh */}
+          <div className="flex gap-3 items-center">
           {/* Filter */}
           <select
             value={filterType}
@@ -259,6 +315,7 @@ const ManageKeysPage: React.FC = () => {
           >
             <RefreshCcw className="h-4 w-4" />
           </button>
+          </div>
         </div>
 
         {/* Error Display */}
