@@ -70,7 +70,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             style={{ color: '#565555' }}
             title={titleTooltip}
           >
-            <Icon className="h-5 w-5 text-blue-600" aria-hidden="true" />
+            <Icon className="h-5 w-5" style={{ color: '#475569' }} aria-hidden="true" />
             {title}
           </h1>
         </div>
