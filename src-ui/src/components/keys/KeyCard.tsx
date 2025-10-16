@@ -233,8 +233,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         </div>
       </div>
 
-      {/* Row 2: Type Badge + Serial + Status Badge */}
-      <div className="flex items-center gap-2 px-5 pb-2">
+      {/* Row 2: Type Badge + Status Badge */}
+      <div className="flex items-center justify-between px-5 py-2">
         {/* Type Badge */}
         <span
           className={`
@@ -245,35 +245,37 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           {isPassphrase ? 'Passphrase' : 'YubiKey'}
         </span>
 
-        {/* Serial Badge (YubiKey only) */}
-        {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
-          <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-600">
-            S/N: {keyRef.key_type.data.serial}
-          </span>
-        )}
-
         {/* Status Badge */}
         {getStatusBadge()}
       </div>
 
-      {/* Row 3: Attachment Status */}
-      <div className="px-5 pb-3">
-        {vaultCount > 0 ? (
+      {/* Row 3: Attachment Status + Serial (YubiKey) */}
+      <div className="flex items-center justify-between px-5 py-2">
+        <div>
+          {vaultCount > 0 ? (
+            <span className="text-xs font-medium text-slate-600">
+              Attached to:{' '}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAttach?.(keyRef.id);
+                }}
+                className="text-blue-600 font-medium hover:underline"
+              >
+                {vaultCount} {vaultCount === 1 ? 'vault' : 'vaults'}
+              </button>
+            </span>
+          ) : (
+            <span className="text-xs font-medium text-amber-600">
+              Not attached to any vault
+            </span>
+          )}
+        </div>
+
+        {/* Serial (YubiKey only) - right-aligned */}
+        {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
           <span className="text-xs font-medium text-slate-600">
-            Attached to:{' '}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onAttach?.(keyRef.id);
-              }}
-              className="text-blue-600 font-medium hover:underline"
-            >
-              {vaultCount} {vaultCount === 1 ? 'vault' : 'vaults'}
-            </button>
-          </span>
-        ) : (
-          <span className="text-xs font-medium text-amber-600">
-            Not attached to any vault
+            S/N: {keyRef.key_type.data.serial}
           </span>
         )}
       </div>
