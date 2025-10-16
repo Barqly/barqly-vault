@@ -272,7 +272,7 @@ const ManageKeysPage: React.FC = () => {
                 }}
                 onMouseEnter={(e) => {
                   if (showPassphraseKeys) {
-                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(167, 243, 208, 0.4)';
+                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(167, 243, 208, 0.6)';
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -308,7 +308,7 @@ const ManageKeysPage: React.FC = () => {
                 }}
                 onMouseEnter={(e) => {
                   if (showYubiKeyKeys) {
-                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(197, 161, 0, 0.4)';
+                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(197, 161, 0, 0.6)';
                   }
                 }}
                 onMouseLeave={(e) => {
