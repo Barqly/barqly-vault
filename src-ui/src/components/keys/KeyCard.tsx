@@ -224,6 +224,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           className="rounded-lg p-2 flex-shrink-0"
           style={{
             backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(197, 161, 0, 0.15)',
+            border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #E6D8AA',
           }}
         >
           {isPassphrase ? (
