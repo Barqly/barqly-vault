@@ -179,9 +179,18 @@ const ManageKeysPage: React.FC = () => {
                 onClick={() => setShowNewKeyMenu(!showNewKeyMenu)}
                 className="
                   flex items-center gap-2 px-4 py-2
-                  text-sm font-medium text-white bg-blue-600
-                  rounded-lg hover:bg-blue-700 transition-colors
+                  text-sm font-medium text-white
+                  rounded-lg transition-colors
                 "
+                style={{
+                  backgroundColor: '#1D4ED8',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1E40AF';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1D4ED8';
+                }}
               >
                 + New Key
               </button>
