@@ -292,7 +292,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       </div>
 
       {/* Row 2: Type Badge + Status Badge */}
-      <div className="flex items-center justify-between px-5 pt-2">
+      <div className="flex items-center justify-between px-5 py-2">
         {/* Type Badge */}
         <span
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
@@ -310,7 +310,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       </div>
 
       {/* Row 3: Attachment Status + Serial (YubiKey) */}
-      <div className="flex items-center justify-between px-5 py-2">
+      <div className="flex items-center justify-between px-5 pt-2 pb-2">
         <div className="flex items-center gap-1.5">
           <span className={`text-xs font-medium ${vaultCount === 0 ? 'text-slate-500' : 'text-slate-600'}`}>
             Attached to: {vaultCount} {vaultCount === 1 ? 'vault' : 'vaults'}
