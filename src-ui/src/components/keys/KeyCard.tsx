@@ -252,7 +252,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       {/* Row 3: Attachment Status + Serial (YubiKey) */}
       <div className="flex items-center justify-between px-5 py-2">
         <div className="flex items-center gap-1.5">
-          <span className={`text-xs font-medium ${vaultCount === 0 ? 'text-amber-600' : 'text-slate-600'}`}>
+          <span className={`text-xs font-medium ${vaultCount === 0 ? 'text-slate-500' : 'text-slate-600'}`}>
             Attached to: {vaultCount} {vaultCount === 1 ? 'vault' : 'vaults'}
           </span>
           <button
