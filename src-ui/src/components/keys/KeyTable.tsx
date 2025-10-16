@@ -125,8 +125,8 @@ export const KeyTable: React.FC<KeyTableProps> = ({
         <span
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
-            backgroundColor: 'rgba(148, 163, 184, 0.12)',
-            color: '#475569',
+            backgroundColor: '#F1F5F9',
+            color: '#334155',
             border: '1px solid #CBD5E1',
           }}
         >
@@ -140,9 +140,9 @@ export const KeyTable: React.FC<KeyTableProps> = ({
         <span
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
-            backgroundColor: 'rgba(15, 118, 110, 0.08)',
+            backgroundColor: 'rgba(15, 118, 110, 0.1)',
             color: '#0F766E',
-            border: '1px solid #A7F3D0',
+            border: '1px solid #99F6E4',
           }}
         >
           Active
@@ -160,9 +160,9 @@ export const KeyTable: React.FC<KeyTableProps> = ({
         <span
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
-            backgroundColor: 'rgba(220, 38, 38, 0.08)',
+            backgroundColor: 'rgba(185, 28, 28, 0.1)',
             color: '#B91C1C',
-            border: '1px solid #FECACA',
+            border: '1px solid #FCA5A5',
           }}
         >
           Inactive {daysRemaining}d
@@ -175,7 +175,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
         <span
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
-            backgroundColor: 'rgba(220, 38, 38, 0.12)',
+            backgroundColor: 'rgba(185, 28, 28, 0.15)',
             color: '#991B1B',
             border: '1px solid #FCA5A5',
           }}
