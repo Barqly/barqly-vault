@@ -169,65 +169,6 @@ const ManageKeysPage: React.FC = () => {
         icon={Key}
         actions={
           <div className="flex items-center gap-3">
-            {/* Filter - Badge-style dropdown */}
-            <div className="relative">
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as any)}
-                className="
-                  appearance-none
-                  px-4 py-1.5 pr-8
-                  text-sm font-medium
-                  bg-slate-100 text-slate-700
-                  border border-slate-200 rounded-full
-                  hover:bg-slate-200 transition-colors
-                  cursor-pointer
-                  focus:outline-none focus:ring-2 focus:ring-blue-500
-                "
-                style={{ height: '32px' }}
-              >
-                <option value="all">All Keys</option>
-                <option value="passphrase">Passphrase Only</option>
-                <option value="yubikey">YubiKey Only</option>
-              </select>
-              {/* Dropdown arrow overlay */}
-              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-
-            {/* View Toggle */}
-            <div className="flex border border-slate-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setKeyViewMode('cards')}
-                className={`
-                  p-2 transition-colors
-                  ${
-                    keyViewMode === 'cards'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-50'
-                  }
-                `}
-              >
-                <Grid3x3 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setKeyViewMode('table')}
-                className={`
-                  p-2 transition-colors
-                  ${
-                    keyViewMode === 'table'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-50'
-                  }
-                `}
-              >
-                <List className="h-4 w-4" />
-              </button>
-            </div>
-
             {/* + New Key Dropdown (always visible) */}
             <div className="relative">
               <button
@@ -275,6 +216,65 @@ const ManageKeysPage: React.FC = () => {
                   </div>
                 </>
               )}
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setKeyViewMode('cards')}
+                className={`
+                  p-2 transition-colors
+                  ${
+                    keyViewMode === 'cards'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }
+                `}
+              >
+                <Grid3x3 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setKeyViewMode('table')}
+                className={`
+                  p-2 transition-colors
+                  ${
+                    keyViewMode === 'table'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }
+                `}
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Filter - Badge-style dropdown */}
+            <div className="relative">
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as any)}
+                className="
+                  appearance-none
+                  px-4 py-1.5 pr-8
+                  text-sm font-medium
+                  bg-slate-100 text-slate-700
+                  border border-slate-200 rounded-full
+                  hover:bg-slate-200 transition-colors
+                  cursor-pointer
+                  focus:outline-none focus:ring-2 focus:ring-blue-500
+                "
+                style={{ height: '32px' }}
+              >
+                <option value="all">All Keys</option>
+                <option value="passphrase">Passphrase Only</option>
+                <option value="yubikey">YubiKey Only</option>
+              </select>
+              {/* Dropdown arrow overlay */}
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                <svg className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
         }
