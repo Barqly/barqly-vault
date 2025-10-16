@@ -88,8 +88,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   const attachedVaultNames = vaultAttachments.map((id) => vaultNames.get(id) || id);
   const vaultCount = vaultAttachments.length;
 
-  // Truncate label to 12 characters
-  const displayLabel = keyRef.label.length > 12 ? keyRef.label.slice(0, 12) + '...' : keyRef.label;
+  // Truncate label to 24 characters
+  const displayLabel = keyRef.label.length > 24 ? keyRef.label.slice(0, 24) + '...' : keyRef.label;
 
   // Calculate days remaining for deactivated keys
   const getDaysRemaining = (deactivatedAt: string): number => {

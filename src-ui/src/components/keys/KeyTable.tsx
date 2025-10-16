@@ -250,11 +250,11 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                         )}
                       </div>
                       <span className="text-xs font-medium text-slate-700">
-                        {keyRef.label.length > 12 ? keyRef.label.slice(0, 12) + '...' : keyRef.label}
+                        {keyRef.label.length > 24 ? keyRef.label.slice(0, 24) + '...' : keyRef.label}
                       </span>
 
                       {/* Tooltip for full label on hover */}
-                      {keyRef.label.length > 12 && (
+                      {keyRef.label.length > 24 && (
                         <div className="absolute left-0 bottom-full mb-1 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
                           <div>{keyRef.label}</div>
                           {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
