@@ -267,7 +267,7 @@ const ManageKeysPage: React.FC = () => {
                 `}
                 style={{
                   backgroundColor: showPassphraseKeys ? '#1A2238' : undefined,
-                  border: showPassphraseKeys ? '1px solid #2C2C2C' : undefined,
+                  border: showPassphraseKeys ? '1px solid #1F2A3A' : undefined,
                   boxShadow: showPassphraseKeys ? '0 0 0 2px rgba(167, 243, 208, 0)' : undefined,
                 }}
                 onMouseEnter={(e) => {
