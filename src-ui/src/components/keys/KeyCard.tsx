@@ -275,8 +275,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       </div>
 
       {/* Row 4: Public Key Info - All Keys */}
-      <div className="flex items-center justify-between px-5 pt-0">
-        {/* Left: Public key with copy button */}
+      <div className="flex items-center px-5 pt-0 pb-2">
+        {/* Public key with copy button */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <span className="text-xs font-medium text-slate-600">Public key:</span>
           <code className="text-xs text-slate-700 font-mono truncate" title={keyRef.recipient}>
@@ -297,30 +297,10 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             {isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           </button>
         </div>
-
-        {/* Right: Export button (Passphrase only) */}
-        {isPassphrase && onExport && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onExport(keyRef.id);
-            }}
-            className="
-              flex items-center gap-1 px-2 py-1
-              text-xs font-medium text-slate-600
-              border border-slate-200 rounded-md
-              hover:bg-slate-50 transition-colors
-            "
-            title="Download an encrypted backup of this key for recovery"
-          >
-            <FileText className="h-3 w-3" />
-            Export
-          </button>
-        )}
       </div>
 
       {/* Footer: Action Buttons */}
-      <div className="flex justify-between px-5 py-3 border-t border-slate-100">
+      <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-slate-100">
         {/* Left: Deactivate/Restore */}
         {isDeactivated ? (
           <button
@@ -352,6 +332,26 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             title={deactivateTooltip}
           >
             {isLoading ? 'Deactivating...' : 'Deactivate'}
+          </button>
+        )}
+
+        {/* Center: Export (Passphrase only) */}
+        {isPassphrase && onExport && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onExport(keyRef.id);
+            }}
+            className="
+              flex items-center gap-1 px-3 py-1.5
+              text-xs font-medium text-slate-600
+              border border-slate-200 rounded-md
+              hover:bg-slate-50 transition-colors
+            "
+            title="Download an encrypted backup of this key for recovery"
+          >
+            <FileText className="h-3 w-3" />
+            Export
           </button>
         )}
 
