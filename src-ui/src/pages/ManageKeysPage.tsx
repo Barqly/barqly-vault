@@ -267,17 +267,17 @@ const ManageKeysPage: React.FC = () => {
                 `}
                 style={{
                   backgroundColor: showPassphraseKeys ? '#1A2238' : undefined,
-                  border: showPassphraseKeys ? '1px solid #1F2A3A' : undefined,
-                  boxShadow: showPassphraseKeys ? '0 0 0 2px rgba(167, 243, 208, 0)' : undefined,
+                  border: showPassphraseKeys ? '1px solid #2C3E50' : undefined,
+                  boxShadow: showPassphraseKeys ? 'inset -3px 0 6px -2px rgba(167, 243, 208, 0)' : undefined,
                 }}
                 onMouseEnter={(e) => {
                   if (showPassphraseKeys) {
-                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(167, 243, 208, 0.6)';
+                    e.currentTarget.style.boxShadow = 'inset -3px 0 6px -2px rgba(167, 243, 208, 0.8)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (showPassphraseKeys) {
-                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(167, 243, 208, 0)';
+                    e.currentTarget.style.boxShadow = 'inset -3px 0 6px -2px rgba(167, 243, 208, 0)';
                   }
                 }}
                 title={showPassphraseKeys ? 'Hide Passphrase keys' : 'Show Passphrase keys'}
@@ -304,16 +304,16 @@ const ManageKeysPage: React.FC = () => {
                 style={{
                   backgroundColor: showYubiKeyKeys ? '#151515' : undefined,
                   border: showYubiKeyKeys ? '1px solid #2C2C2C' : undefined,
-                  boxShadow: showYubiKeyKeys ? '0 0 0 2px rgba(197, 161, 0, 0)' : undefined,
+                  boxShadow: showYubiKeyKeys ? 'inset 3px 0 6px -2px rgba(197, 161, 0, 0)' : undefined,
                 }}
                 onMouseEnter={(e) => {
                   if (showYubiKeyKeys) {
-                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(197, 161, 0, 0.6)';
+                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(197, 161, 0, 0.8)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (showYubiKeyKeys) {
-                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(197, 161, 0, 0)';
+                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(197, 161, 0, 0)';
                   }
                 }}
                 title={showYubiKeyKeys ? 'Hide YubiKey keys' : 'Show YubiKey keys'}
