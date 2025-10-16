@@ -170,9 +170,9 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                   )}
                 </button>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Vaults</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Public Key</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Vaults</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Status</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-slate-600">Actions</th>
             </tr>
           </thead>
@@ -228,9 +228,22 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                     </div>
                   </td>
 
-                  {/* Status Badge */}
+                  {/* Public Key */}
                   <td className="px-4 py-3">
-                    {getStatusBadge(keyRef)}
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs text-slate-700 font-mono" title={keyRef.recipient}>
+                        {keyRef.recipient.slice(0, 12)}...
+                      </code>
+                      <button
+                        onClick={() => handleCopy(keyRef.id, keyRef.recipient)}
+                        className={`transition-colors ${
+                          isCopied ? 'text-green-600' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                        title={isCopied ? 'Copied!' : 'Copy public key'}
+                      >
+                        {isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      </button>
+                    </div>
                   </td>
 
                   {/* Vault Attachments */}
@@ -256,27 +269,31 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                     </div>
                   </td>
 
-                  {/* Public Key */}
+                  {/* Status Badge */}
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <code className="text-xs text-slate-700 font-mono" title={keyRef.recipient}>
-                        {keyRef.recipient.slice(0, 12)}...
-                      </code>
-                      <button
-                        onClick={() => handleCopy(keyRef.id, keyRef.recipient)}
-                        className={`transition-colors ${
-                          isCopied ? 'text-green-600' : 'text-slate-400 hover:text-slate-600'
-                        }`}
-                        title={isCopied ? 'Copied!' : 'Copy public key'}
-                      >
-                        {isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      </button>
-                    </div>
+                    {getStatusBadge(keyRef)}
                   </td>
 
                   {/* Actions */}
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
+                      {/* Export (Passphrase only) */}
+                      {isPassphrase && onExport && (
+                        <button
+                          onClick={() => onExport(keyRef.id)}
+                          className="
+                            flex items-center gap-1 px-2 py-1
+                            text-xs font-medium text-slate-600
+                            border border-slate-200 rounded-md
+                            hover:bg-slate-50 transition-colors
+                          "
+                          title="Download encrypted backup"
+                        >
+                          <FileText className="h-3 w-3" />
+                          Export
+                        </button>
+                      )}
+
                       {/* Deactivate/Restore */}
                       {isDeactivated ? (
                         <button
@@ -316,23 +333,6 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                           }
                         >
                           Deactivate
-                        </button>
-                      )}
-
-                      {/* Export (Passphrase only) */}
-                      {isPassphrase && onExport && (
-                        <button
-                          onClick={() => onExport(keyRef.id)}
-                          className="
-                            flex items-center gap-1 px-2 py-1
-                            text-xs font-medium text-slate-600
-                            border border-slate-200 rounded-md
-                            hover:bg-slate-50 transition-colors
-                          "
-                          title="Download encrypted backup"
-                        >
-                          <FileText className="h-3 w-3" />
-                          Export
                         </button>
                       )}
 
