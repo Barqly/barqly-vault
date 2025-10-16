@@ -237,7 +237,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             <Fingerprint
               className="h-4 w-4"
               style={{
-                color: '#C5A100',
+                color: '#A16207',
               }}
             />
           )}
