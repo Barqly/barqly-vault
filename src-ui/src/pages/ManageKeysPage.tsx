@@ -167,7 +167,7 @@ const ManageKeysPage: React.FC = () => {
 
       <AppPrimaryContainer>
         {/* Create New Key Section - Like Vault Hub */}
-        <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 mb-6">
+        <div className="mt-6 border-2 border-dashed border-slate-300 rounded-lg p-6 mb-6">
           <h3 className="text-lg font-medium text-slate-700 mb-4 text-center">Create New Key</h3>
 
           <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
