@@ -50,7 +50,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
     return Math.max(0, 30 - daysPassed);
   };
 
-  // Status badge helper
+  // Status badge helper - ONLY show for special states (New or Deactivated)
   const getStatusBadge = () => {
     const { lifecycle_status, deactivated_at } = keyRef;
 
@@ -66,21 +66,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             New
           </span>
         );
-      case 'active':
-        return vaultCount > 0 ? (
-          <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
-            Attached
-          </span>
-        ) : null;
-      case 'suspended':
-        return (
-          <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700">
-            Unattached
-          </span>
-        );
       case 'deactivated':
         return (
-          <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700">
+          <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-700">
             Deactivated {daysRemaining}d
           </span>
         );
@@ -90,6 +78,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             Compromised
           </span>
         );
+      // Don't show status badge for active/suspended - Row 3 already shows attachment status
+      case 'active':
+      case 'suspended':
       default:
         return null;
     }
