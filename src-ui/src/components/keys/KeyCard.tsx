@@ -151,7 +151,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               border: '1px solid #FECACA',
             }}
           >
-            Deactivated {daysRemaining}d
+            Inactive {daysRemaining}d
           </span>
         );
       case 'compromised':

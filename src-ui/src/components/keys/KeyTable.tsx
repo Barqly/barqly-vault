@@ -165,7 +165,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
             border: '1px solid #FECACA',
           }}
         >
-          Deactivated {daysRemaining}d
+          Inactive {daysRemaining}d
         </span>
       );
     }
