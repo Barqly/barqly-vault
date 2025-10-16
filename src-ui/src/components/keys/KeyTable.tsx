@@ -212,7 +212,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                         )}
                       </div>
                       <span className="text-xs font-medium text-slate-700" title={keyRef.label}>
-                        {keyRef.label}
+                        {keyRef.label.length > 12 ? keyRef.label.slice(0, 12) + '...' : keyRef.label}
                       </span>
                     </div>
                   </td>
