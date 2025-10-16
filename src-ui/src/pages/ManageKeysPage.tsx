@@ -5,6 +5,7 @@ import { useManageKeysWorkflow } from '../hooks/useManageKeysWorkflow';
 import PageHeader from '../components/common/PageHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import { KeyCard } from '../components/keys/KeyCard';
+import { KeyTable } from '../components/keys/KeyTable';
 import { YubiKeyRegistryDialog } from '../components/keys/YubiKeyRegistryDialog';
 import { PassphraseKeyRegistryDialog } from '../components/keys/PassphraseKeyRegistryDialog';
 import { VaultAttachmentDialog } from '../components/keys/VaultAttachmentDialog';
@@ -429,8 +430,19 @@ const ManageKeysPage: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
-            <p className="text-sm text-slate-500">Table view coming soon...</p>
+          <div className="mt-6">
+            <KeyTable
+              keys={allKeys}
+              vaultAttachments={getKeyVaultAttachments}
+              vaultStats={vaultStats}
+              onAttach={handleAttachKey}
+              onExport={handleExportKey}
+              onRefresh={async () => {
+                await refreshAllKeys();
+                await fetchVaultStatistics();
+              }}
+              vaultNames={vaultNameMap}
+            />
           </div>
         )}
 
