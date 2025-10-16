@@ -245,10 +245,10 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           {isPassphrase ? 'Passphrase' : 'YubiKey'}
         </span>
 
-        {/* Serial (YubiKey only) */}
+        {/* Serial Badge (YubiKey only) */}
         {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
-          <span className="text-xs text-slate-500">
-            Serial: {keyRef.key_type.data.serial}
+          <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-600">
+            S/N: {keyRef.key_type.data.serial}
           </span>
         )}
 
