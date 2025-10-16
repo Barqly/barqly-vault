@@ -168,7 +168,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       onClick={() => onSelect?.(keyRef.id)}
     >
       {/* Row 1: Icon + Label + Menu */}
-      <div className="flex items-center justify-between px-5 pt-5 pb-2">
+      <div className="flex items-center justify-between px-5 pt-3 pb-2">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {/* Icon - h-4 w-4 to match VaultAttachmentDialog */}
           <div
