@@ -303,7 +303,7 @@ const ManageKeysPage: React.FC = () => {
                 `}
                 style={{
                   backgroundColor: showYubiKeyKeys ? '#151515' : undefined,
-                  borderLeft: showYubiKeyKeys ? '1px solid #2C2C2C' : undefined,
+                  border: showYubiKeyKeys ? '1px solid #2C2C2C' : undefined,
                   boxShadow: showYubiKeyKeys ? '0 0 0 2px rgba(197, 161, 0, 0)' : undefined,
                 }}
                 onMouseEnter={(e) => {
