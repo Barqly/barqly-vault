@@ -216,7 +216,6 @@ const ManageKeysPage: React.FC = () => {
             <option value="all">All Keys</option>
             <option value="passphrase">Passphrase Only</option>
             <option value="yubikey">YubiKey Only</option>
-            <option value="suspended">Suspended Keys</option>
           </select>
 
           {/* View Toggle */}
