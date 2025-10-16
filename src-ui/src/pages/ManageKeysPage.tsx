@@ -8,6 +8,7 @@ import { KeyCard } from '../components/keys/KeyCard';
 import { YubiKeyRegistryDialog } from '../components/keys/YubiKeyRegistryDialog';
 import { PassphraseKeyRegistryDialog } from '../components/keys/PassphraseKeyRegistryDialog';
 import { VaultAttachmentDialog } from '../components/keys/VaultAttachmentDialog';
+import { CreateKeyModal } from '../components/keys/CreateKeyModal';
 import { logger } from '../lib/logger';
 import { commands, GlobalKey, VaultStatistics } from '../bindings';
 
@@ -38,7 +39,7 @@ const ManageKeysPage: React.FC = () => {
   const [showPassphraseDialog, setShowPassphraseDialog] = useState(false);
   const [showVaultAttachmentDialog, setShowVaultAttachmentDialog] = useState(false);
   const [selectedKeyForAttachment, setSelectedKeyForAttachment] = useState<GlobalKey | null>(null);
-  const [showNewKeyMenu, setShowNewKeyMenu] = useState(false);
+  const [showCreateKeyModal, setShowCreateKeyModal] = useState(false);
 
   // Vault statistics for deactivation eligibility checks
   const [vaultStats, setVaultStats] = useState<Map<string, VaultStatistics>>(new Map());
@@ -173,63 +174,26 @@ const ManageKeysPage: React.FC = () => {
         icon={Key}
         actions={
           <div className="flex items-center gap-3">
-            {/* + New Key Dropdown (always visible) */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNewKeyMenu(!showNewKeyMenu)}
-                className="
-                  flex items-center gap-2 px-4 py-2
-                  text-sm font-medium text-white
-                  rounded-lg transition-colors
-                "
-                style={{
-                  backgroundColor: '#1D4ED8',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1E40AF';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1D4ED8';
-                }}
-              >
-                + New Key
-              </button>
-
-              {/* Dropdown Menu */}
-              {showNewKeyMenu && (
-                <>
-                  {/* Backdrop */}
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowNewKeyMenu(false)}
-                  />
-
-                  {/* Menu */}
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-20">
-                    <button
-                      onClick={() => {
-                        setShowNewKeyMenu(false);
-                        handleCreatePassphrase();
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
-                    >
-                      <Key className="h-4 w-4 text-green-600" />
-                      <span>Create Passphrase Key</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowNewKeyMenu(false);
-                        handleDetectYubiKey();
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
-                    >
-                      <Fingerprint className="h-4 w-4 text-purple-600" />
-                      <span>Register YubiKey</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            {/* + New Key Button (always visible) */}
+            <button
+              onClick={() => setShowCreateKeyModal(true)}
+              className="
+                flex items-center gap-2 px-4 py-2
+                text-sm font-medium text-white
+                rounded-lg transition-colors
+              "
+              style={{
+                backgroundColor: '#1D4ED8',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1E40AF';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#1D4ED8';
+              }}
+            >
+              + New Key
+            </button>
 
             {/* View Toggle */}
             <div className="flex border border-slate-200 rounded-lg overflow-hidden">
@@ -461,6 +425,14 @@ const ManageKeysPage: React.FC = () => {
             onSuccess={handleVaultAttachmentSuccess}
           />
         )}
+
+        {/* Create Key Modal */}
+        <CreateKeyModal
+          isOpen={showCreateKeyModal}
+          onClose={() => setShowCreateKeyModal(false)}
+          onCreatePassphrase={handleCreatePassphrase}
+          onRegisterYubiKey={handleDetectYubiKey}
+        />
       </AppPrimaryContainer>
     </div>
   );
