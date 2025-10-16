@@ -216,7 +216,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
 
                       {/* Tooltip for full label on hover */}
                       {keyRef.label.length > 12 && (
-                        <div className="absolute left-0 top-full mt-1 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                        <div className="absolute left-0 bottom-full mb-1 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
                           <div>{keyRef.label}</div>
                           {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
                             <div className="mt-0.5 text-slate-300">
