@@ -207,7 +207,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
     <div
       className={`
         relative rounded-lg border bg-white transition-all
-        ${isSelected ? 'ring-2 ring-blue-600 border-blue-600' : 'border-slate-200 hover:shadow-lg'}
+        ${isSelected ? 'ring-2 border-2' : 'border-slate-200 hover:shadow-lg'}
       `}
       onClick={() => onSelect?.(keyRef.id)}
     >
@@ -259,7 +259,14 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               e.stopPropagation();
               onAttach?.(keyRef.id);
             }}
-            className="text-blue-500 hover:text-blue-700 transition-colors"
+            className="transition-colors"
+            style={{ color: '#1D4ED8' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#1E40AF';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#1D4ED8';
+            }}
             title="Manage vault attachments"
           >
             <Link2 className="h-3 w-3" />
@@ -308,10 +315,23 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             disabled={isLoading}
             className="
               flex items-center justify-center gap-1 px-3 py-1.5
-              text-xs font-medium text-blue-600 border border-blue-600
-              rounded-md hover:bg-blue-50 transition-colors
+              text-xs font-medium text-white
+              rounded-md transition-colors
               disabled:opacity-50 disabled:cursor-not-allowed
             "
+            style={{
+              backgroundColor: '#1D4ED8',
+            }}
+            onMouseEnter={(e) => {
+              if (!isLoading) {
+                e.currentTarget.style.backgroundColor = '#1E40AF';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isLoading) {
+                e.currentTarget.style.backgroundColor = '#1D4ED8';
+              }
+            }}
             title="Restore this key to active status"
           >
             {isLoading ? 'Restoring...' : 'Restore'}
@@ -364,9 +384,18 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             }}
             className="
               flex items-center justify-center gap-1 px-3 py-1.5
-              text-xs font-medium text-blue-600 border border-blue-600
-              rounded-md hover:bg-blue-50 transition-colors
+              text-xs font-medium text-white
+              rounded-md transition-colors
             "
+            style={{
+              backgroundColor: '#1D4ED8',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1E40AF';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#1D4ED8';
+            }}
             title="Manage vault attachments"
           >
             <Link2 className="h-3 w-3" />
