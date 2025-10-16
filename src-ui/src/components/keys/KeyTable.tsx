@@ -211,7 +211,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                           <Fingerprint className="h-4 w-4" style={{ color: '#A16207' }} />
                         )}
                       </div>
-                      <span className="text-sm font-medium text-slate-700" title={keyRef.label}>
+                      <span className="text-xs font-medium text-slate-700" title={keyRef.label}>
                         {keyRef.label}
                       </span>
                     </div>
