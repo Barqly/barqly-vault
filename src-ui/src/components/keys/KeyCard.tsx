@@ -259,20 +259,20 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       {/* Row 3: Attachment Status */}
       <div className="px-5 pb-3">
         {vaultCount > 0 ? (
-          <span className="text-sm text-slate-600">
+          <span className="text-xs font-medium text-slate-600">
             Attached to:{' '}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onAttach?.(keyRef.id);
               }}
-              className="text-blue-600 hover:underline"
+              className="text-blue-600 font-medium hover:underline"
             >
               {vaultCount} {vaultCount === 1 ? 'vault' : 'vaults'}
             </button>
           </span>
         ) : (
-          <span className="text-sm text-amber-600">
+          <span className="text-xs font-medium text-amber-600">
             Not attached to any vault
           </span>
         )}
