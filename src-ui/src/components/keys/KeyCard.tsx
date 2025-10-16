@@ -234,7 +234,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       </div>
 
       {/* Row 2: Type Badge + Status Badge */}
-      <div className="flex items-center justify-between px-5 py-2">
+      <div className="flex items-center justify-between px-5 pt-2">
         {/* Type Badge */}
         <span
           className={`
