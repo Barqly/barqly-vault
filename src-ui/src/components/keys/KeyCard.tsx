@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, Link2, FileText, Copy } from 'lucide-react';
+import { Key, Link2, FileText, Copy, Check } from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -31,6 +31,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   vaultNames = new Map(),
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const isPassphrase = keyRef.key_type.type === 'Passphrase';
   const isYubiKey = keyRef.key_type.type === 'YubiKey';
 
@@ -285,11 +286,15 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               navigator.clipboard.writeText(keyRef.recipient);
+              setIsCopied(true);
+              setTimeout(() => setIsCopied(false), 2000);
             }}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
-            title="Copy public key"
+            className={`transition-colors ${
+              isCopied ? 'text-green-600' : 'text-slate-400 hover:text-slate-600'
+            }`}
+            title={isCopied ? 'Copied!' : 'Copy public key'}
           >
-            <Copy className="h-3 w-3" />
+            {isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           </button>
         </div>
 
