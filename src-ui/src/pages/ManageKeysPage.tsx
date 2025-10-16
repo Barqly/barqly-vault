@@ -308,14 +308,14 @@ const ManageKeysPage: React.FC = () => {
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mt-6 mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 
         {/* Key Display */}
         {keyViewMode === 'cards' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {allKeys.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 <Key className="h-12 w-12 text-slate-300 mx-auto mb-4" />
