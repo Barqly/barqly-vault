@@ -269,7 +269,7 @@ const ManageKeysPage: React.FC = () => {
 
             {/* Filter - Icon Toggle (multi-select) */}
             <div className="flex border border-slate-200 rounded-lg overflow-hidden">
-              {/* Passphrase Filter - Navy background with mint icon */}
+              {/* Passphrase Filter - Navy background with teal icon */}
               <button
                 onClick={togglePassphraseFilter}
                 className={`
@@ -283,16 +283,16 @@ const ManageKeysPage: React.FC = () => {
                 style={{
                   backgroundColor: showPassphraseKeys ? '#1A2238' : undefined,
                   border: showPassphraseKeys ? '1px solid #2C3E50' : undefined,
-                  boxShadow: showPassphraseKeys ? 'inset -3px 0 6px -2px rgba(167, 243, 208, 0)' : undefined,
+                  boxShadow: showPassphraseKeys ? 'inset -3px 0 6px -2px rgba(15, 118, 110, 0)' : undefined,
                 }}
                 onMouseEnter={(e) => {
                   if (showPassphraseKeys) {
-                    e.currentTarget.style.boxShadow = 'inset -3px 0 6px -2px rgba(167, 243, 208, 0.8)';
+                    e.currentTarget.style.boxShadow = 'inset -3px 0 6px -2px rgba(15, 118, 110, 0.6)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (showPassphraseKeys) {
-                    e.currentTarget.style.boxShadow = 'inset -3px 0 6px -2px rgba(167, 243, 208, 0)';
+                    e.currentTarget.style.boxShadow = 'inset -3px 0 6px -2px rgba(15, 118, 110, 0)';
                   }
                 }}
                 title={showPassphraseKeys ? 'Hide Passphrase keys' : 'Show Passphrase keys'}
@@ -300,12 +300,12 @@ const ManageKeysPage: React.FC = () => {
                 <Key
                   className="h-4 w-4"
                   style={{
-                    color: showPassphraseKeys ? '#A7F3D0' : '#94a3b8',
+                    color: showPassphraseKeys ? '#0F766E' : '#94a3b8',
                   }}
                 />
               </button>
 
-              {/* YubiKey Filter - Dark gray background with gold fingerprint */}
+              {/* YubiKey Filter - Dark gray background with darker gold fingerprint */}
               <button
                 onClick={toggleYubiKeyFilter}
                 className={`
@@ -319,16 +319,16 @@ const ManageKeysPage: React.FC = () => {
                 style={{
                   backgroundColor: showYubiKeyKeys ? '#151515' : undefined,
                   border: showYubiKeyKeys ? '1px solid #2C2C2C' : undefined,
-                  boxShadow: showYubiKeyKeys ? 'inset 3px 0 6px -2px rgba(197, 161, 0, 0)' : undefined,
+                  boxShadow: showYubiKeyKeys ? 'inset 3px 0 6px -2px rgba(161, 98, 7, 0)' : undefined,
                 }}
                 onMouseEnter={(e) => {
                   if (showYubiKeyKeys) {
-                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(197, 161, 0, 0.8)';
+                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(161, 98, 7, 0.6)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (showYubiKeyKeys) {
-                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(197, 161, 0, 0)';
+                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(161, 98, 7, 0)';
                   }
                 }}
                 title={showYubiKeyKeys ? 'Hide YubiKey keys' : 'Show YubiKey keys'}
@@ -336,7 +336,7 @@ const ManageKeysPage: React.FC = () => {
                 <Fingerprint
                   className="h-4 w-4"
                   style={{
-                    color: showYubiKeyKeys ? '#C5A100' : '#94a3b8',
+                    color: showYubiKeyKeys ? '#A16207' : '#94a3b8',
                   }}
                 />
               </button>
