@@ -172,7 +172,6 @@ export const KeyTable: React.FC<KeyTableProps> = ({
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Status</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Vaults</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Serial</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Public Key</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-slate-600">Actions</th>
             </tr>
@@ -243,15 +242,6 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                         <Link2 className="h-3 w-3" />
                       </button>
                     </div>
-                  </td>
-
-                  {/* Serial (YubiKey only) */}
-                  <td className="px-4 py-3">
-                    {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
-                      <span className="text-xs font-medium text-slate-600">
-                        {keyRef.key_type.data.serial}
-                      </span>
-                    )}
                   </td>
 
                   {/* Public Key */}
