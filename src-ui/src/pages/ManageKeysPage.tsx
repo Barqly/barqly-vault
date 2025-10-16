@@ -239,10 +239,13 @@ const ManageKeysPage: React.FC = () => {
                   p-2 transition-colors
                   ${
                     keyViewMode === 'cards'
-                      ? 'bg-blue-600 text-white'
+                      ? 'text-white'
                       : 'bg-white text-slate-600 hover:bg-slate-50'
                   }
                 `}
+                style={{
+                  backgroundColor: keyViewMode === 'cards' ? '#1D4ED8' : undefined,
+                }}
               >
                 <Grid3x3 className="h-4 w-4" />
               </button>
@@ -252,10 +255,13 @@ const ManageKeysPage: React.FC = () => {
                   p-2 transition-colors
                   ${
                     keyViewMode === 'table'
-                      ? 'bg-blue-600 text-white'
+                      ? 'text-white'
                       : 'bg-white text-slate-600 hover:bg-slate-50'
                   }
                 `}
+                style={{
+                  backgroundColor: keyViewMode === 'table' ? '#1D4ED8' : undefined,
+                }}
               >
                 <List className="h-4 w-4" />
               </button>
