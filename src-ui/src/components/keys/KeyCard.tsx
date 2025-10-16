@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Key, MoreVertical, Link2, FileText } from 'lucide-react';
-import { GlobalKey, commands } from '../../bindings';
+import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
 
 interface KeyCardProps {
   keyRef: GlobalKey;
   vaultAttachments: string[];
   isOrphan: boolean;
+  vaultStats?: Map<string, VaultStatistics>;
   isSelected?: boolean;
   onSelect?: (keyId: string) => void;
   onAttach?: (keyId: string) => void;
@@ -20,6 +21,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   keyRef,
   vaultAttachments,
   isOrphan,
+  vaultStats,
   isSelected = false,
   onSelect,
   onAttach,
@@ -32,6 +34,55 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const isPassphrase = keyRef.key_type.type === 'Passphrase';
   const isYubiKey = keyRef.key_type.type === 'YubiKey';
+
+  /**
+   * Determines if a key has been used in ANY encryption envelope
+   *
+   * A key is considered "used in envelope" if:
+   * - It is attached to at least one vault (keyRef.vault_associations)
+   * - AND at least one of those vaults has been encrypted (encryption_count > 0)
+   *
+   * Per spec: Keys used in encryption envelopes cannot be deactivated
+   * because they are part of sealed vault data.
+   */
+  const isKeyUsedInEnvelope = (
+    keyRef: GlobalKey,
+    vaultStats?: Map<string, VaultStatistics>
+  ): boolean => {
+    // Early return if no stats available (fail-safe to false)
+    if (!vaultStats) {
+      return false;
+    }
+
+    // Early return if no attachments
+    if (keyRef.vault_associations.length === 0) {
+      return false;
+    }
+
+    // Check each vault this key is attached to
+    for (const vaultId of keyRef.vault_associations) {
+      const stats = vaultStats.get(vaultId);
+
+      // If we have stats and encryption_count > 0, key is used in envelope
+      if (stats && stats.encryption_count > 0) {
+        return true;
+      }
+    }
+
+    // Key is either attached to vaults that were never encrypted,
+    // or we don't have stats (fail-safe to false)
+    return false;
+  };
+
+  // Deactivation eligibility checks
+  const usedInEnvelope = isKeyUsedInEnvelope(keyRef, vaultStats);
+  const isDeactivated = keyRef.lifecycle_status === 'deactivated';
+  const canDeactivate = !isDeactivated && !usedInEnvelope;
+
+  // Tooltip text for deactivation button
+  const deactivateTooltip = usedInEnvelope
+    ? "This key is part of a vault's encryption envelope and cannot be deactivated."
+    : "Deactivate this key. It will be permanently deleted after 30 days unless restored.";
 
   // Get vault names for display
   const attachedVaultNames = vaultAttachments.map((id) => vaultNames.get(id) || id);
@@ -209,20 +260,26 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               />
 
               {/* Menu */}
-              <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
-                {keyRef.lifecycle_status === 'deactivated' ? (
+              <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
+                {isDeactivated ? (
                   <button
                     className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleRestore}
                     disabled={isLoading}
+                    title="Restore this key to active status"
                   >
                     {isLoading ? 'Restoring...' : 'Restore'}
                   </button>
                 ) : (
                   <button
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={`w-full px-4 py-2 text-left text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      canDeactivate
+                        ? 'text-red-600 hover:bg-red-50'
+                        : 'text-slate-400 cursor-not-allowed'
+                    }`}
                     onClick={handleDeactivate}
-                    disabled={isLoading}
+                    disabled={isLoading || !canDeactivate}
+                    title={deactivateTooltip}
                   >
                     {isLoading ? 'Deactivating...' : 'Deactivate'}
                   </button>

@@ -9,7 +9,7 @@ import { YubiKeyRegistryDialog } from '../components/keys/YubiKeyRegistryDialog'
 import { PassphraseKeyRegistryDialog } from '../components/keys/PassphraseKeyRegistryDialog';
 import { VaultAttachmentDialog } from '../components/keys/VaultAttachmentDialog';
 import { logger } from '../lib/logger';
-import { commands, GlobalKey } from '../bindings';
+import { commands, GlobalKey, VaultStatistics } from '../bindings';
 
 /**
  * Manage Keys Page - Central registry for all encryption keys
@@ -35,6 +35,10 @@ const ManageKeysPage: React.FC = () => {
   const [showVaultAttachmentDialog, setShowVaultAttachmentDialog] = useState(false);
   const [selectedKeyForAttachment, setSelectedKeyForAttachment] = useState<GlobalKey | null>(null);
 
+  // Vault statistics for deactivation eligibility checks
+  const [vaultStats, setVaultStats] = useState<Map<string, VaultStatistics>>(new Map());
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+
   // Build vault name map for display
   const vaultNameMap = React.useMemo(() => {
     const map = new Map<string, string>();
@@ -43,6 +47,49 @@ const ManageKeysPage: React.FC = () => {
     });
     return map;
   }, [vaults]);
+
+  // Fetch vault statistics for deactivation eligibility checks
+  const fetchVaultStatistics = useCallback(async () => {
+    if (vaults.length === 0) {
+      setVaultStats(new Map());
+      return;
+    }
+
+    setIsLoadingStats(true);
+    try {
+      const statsMap = new Map<string, VaultStatistics>();
+
+      // Fetch statistics for all vaults in parallel
+      const results = await Promise.all(
+        vaults.map((vault) =>
+          commands.getVaultStatistics({ vault_id: vault.id })
+        )
+      );
+
+      results.forEach((result, index) => {
+        if (result.status === 'ok' && result.data.statistics) {
+          statsMap.set(vaults[index].id, result.data.statistics);
+        }
+      });
+
+      setVaultStats(statsMap);
+      logger.info('ManageKeysPage', 'Vault statistics loaded', {
+        vaultCount: vaults.length,
+        statsCount: statsMap.size,
+      });
+    } catch (err) {
+      logger.error('ManageKeysPage', 'Failed to fetch vault statistics', err as Error);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  }, [vaults]);
+
+  // Refresh vault statistics when vaults change
+  useEffect(() => {
+    if (vaults.length > 0) {
+      fetchVaultStatistics();
+    }
+  }, [vaults.length, fetchVaultStatistics]);
 
   // Refresh all keys on mount
   useEffect(() => {
@@ -83,11 +130,13 @@ const ManageKeysPage: React.FC = () => {
   const handleVaultAttachmentSuccess = useCallback(async () => {
     // Refresh the UI after successful attachment/detachment
     await refreshAllKeys();
+    // Also refresh vault statistics (attachment changes may affect eligibility)
+    await fetchVaultStatistics();
     // Also refresh the vault cache if there's a current vault
     if (currentVault) {
       await refreshKeysForVault(currentVault.id);
     }
-  }, [refreshAllKeys, currentVault, refreshKeysForVault]);
+  }, [refreshAllKeys, fetchVaultStatistics, currentVault, refreshKeysForVault]);
 
   // Note: Physical key deletion is not supported by design
   // Keys can only be removed from vaults using removeKeyFromVault
@@ -242,10 +291,14 @@ const ManageKeysPage: React.FC = () => {
                     keyRef={key}
                     vaultAttachments={attachments}
                     isOrphan={isSuspended}
+                    vaultStats={vaultStats}
                     onAttach={handleAttachKey}
                     onDelete={isSuspended ? handleDeleteKey : undefined}
                     onExport={handleExportKey}
-                    onRefresh={refreshAllKeys}
+                    onRefresh={async () => {
+                      await refreshAllKeys();
+                      await fetchVaultStatistics();
+                    }}
                     vaultNames={vaultNameMap}
                   />
                 );
