@@ -68,17 +68,20 @@ const SidebarNav: React.FC = () => {
                     transition-colors duration-150
                     ${
                       isActive
-                        ? 'bg-blue-50 text-blue-600'
+                        ? 'text-white'
                         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                     }
                   `}
+                  style={{
+                    backgroundColor: isActive ? '#1D4ED8' : undefined,
+                  }}
                   title={sidebarCollapsed ? item.label : undefined}
                 >
                   <Icon
-                    className={`
-                      flex-shrink-0 w-5 h-5
-                      ${isActive ? 'text-blue-600' : 'text-slate-400'}
-                    `}
+                    className="flex-shrink-0 w-5 h-5"
+                    style={{
+                      color: isActive ? '#ffffff' : '#94a3b8',
+                    }}
                   />
 
                   {!sidebarCollapsed && (
@@ -89,10 +92,11 @@ const SidebarNav: React.FC = () => {
 
                       {item.badge && badgeCount > 0 && (
                         <span
-                          className={`
-                            text-xs px-2 py-0.5 rounded-full
-                            ${isActive ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'}
-                          `}
+                          className="text-xs px-2 py-0.5 rounded-full"
+                          style={{
+                            backgroundColor: isActive ? '#1E40AF' : '#e2e8f0',
+                            color: isActive ? '#ffffff' : '#475569',
+                          }}
                         >
                           {badgeCount}
                         </span>
