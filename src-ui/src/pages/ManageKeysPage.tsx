@@ -116,7 +116,7 @@ const ManageKeysPage: React.FC = () => {
       // allKeys is now GlobalKey[] - has all fields including vault_associations!
       const keyInfo = allKeys.find((k) => k.id === keyId);
       if (!keyInfo) {
-        logger.error('ManageKeysPage', 'Key not found', { keyId });
+        logger.error('ManageKeysPage', 'Key not found', new Error(`Key not found: ${keyId}`));
         return;
       }
 
