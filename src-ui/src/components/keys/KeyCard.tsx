@@ -279,7 +279,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       </div>
 
       {/* Footer: Action Buttons */}
-      <div className="flex justify-between px-5 pb-5 pt-2 border-t border-slate-100">
+      <div className="flex justify-between px-5 py-3 border-t border-slate-100">
         {onExport && isPassphrase ? (
           <button
             onClick={(e) => {
