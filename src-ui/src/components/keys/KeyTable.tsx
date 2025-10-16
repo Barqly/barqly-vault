@@ -209,7 +209,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Public Key</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Vaults</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Status</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-slate-600">Actions</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-slate-600">Actions</th>
             </tr>
           </thead>
 
