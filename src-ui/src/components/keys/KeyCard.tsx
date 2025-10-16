@@ -215,12 +215,17 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       <div className="flex items-center gap-3 px-5 pt-3 pb-2">
         {/* Icon - h-4 w-4 to match VaultAttachmentDialog */}
         <div
-          className={`
-            rounded-lg p-2 flex-shrink-0
-            ${isPassphrase ? 'bg-green-100' : 'bg-purple-100'}
-          `}
+          className="rounded-lg p-2 flex-shrink-0"
+          style={{
+            backgroundColor: isPassphrase ? 'rgba(167, 243, 208, 0.2)' : 'rgba(197, 161, 0, 0.15)',
+          }}
         >
-          <Key className={`h-4 w-4 ${isPassphrase ? 'text-green-700' : 'text-purple-700'}`} />
+          <Key
+            className="h-4 w-4"
+            style={{
+              color: isPassphrase ? '#A7F3D0' : '#C5A100',
+            }}
+          />
         </div>
 
         {/* Label with tooltip for full text */}
@@ -236,10 +241,11 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       <div className="flex items-center justify-between px-5 pt-2">
         {/* Type Badge */}
         <span
-          className={`
-            inline-flex px-2 py-0.5 text-xs font-medium rounded-full
-            ${isPassphrase ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}
-          `}
+          className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+          style={{
+            backgroundColor: isPassphrase ? 'rgba(167, 243, 208, 0.2)' : 'rgba(197, 161, 0, 0.15)',
+            color: isPassphrase ? '#10b981' : '#ca8a04',
+          }}
         >
           {isPassphrase ? 'Passphrase' : 'YubiKey'}
         </span>
