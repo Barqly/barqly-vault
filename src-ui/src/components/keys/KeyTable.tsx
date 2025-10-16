@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, Fingerprint, Link2, FileText, Copy, Check } from 'lucide-react';
+import { Key, Fingerprint, Link2, FileText, Copy, Check, Clock, Sparkles, AlertTriangle } from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -123,13 +123,14 @@ export const KeyTable: React.FC<KeyTableProps> = ({
     if (lifecycle_status === 'pre_activation') {
       return (
         <span
-          className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
             backgroundColor: '#F1F5F9',
             color: '#334155',
             border: '1px solid #CBD5E1',
           }}
         >
+          <Sparkles className="h-3 w-3" />
           New
         </span>
       );
@@ -158,13 +159,14 @@ export const KeyTable: React.FC<KeyTableProps> = ({
 
       return (
         <span
-          className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
             backgroundColor: 'rgba(185, 28, 28, 0.1)',
             color: '#B91C1C',
             border: '1px solid #FCA5A5',
           }}
         >
+          <Clock className="h-3 w-3" />
           Inactive {daysRemaining}d
         </span>
       );
@@ -173,13 +175,14 @@ export const KeyTable: React.FC<KeyTableProps> = ({
     if (lifecycle_status === 'compromised') {
       return (
         <span
-          className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
             backgroundColor: 'rgba(185, 28, 28, 0.15)',
             color: '#991B1B',
             border: '1px solid #FCA5A5',
           }}
         >
+          <AlertTriangle className="h-3 w-3" />
           Compromised
         </span>
       );

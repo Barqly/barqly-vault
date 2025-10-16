@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, Link2, FileText, Copy, Check, Fingerprint } from 'lucide-react';
+import { Key, Link2, FileText, Copy, Check, Fingerprint, Clock, Sparkles, AlertTriangle } from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -114,13 +114,14 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       case 'pre_activation':
         return (
           <span
-            className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
             style={{
               backgroundColor: '#F1F5F9',
               color: '#334155',
               border: '1px solid #CBD5E1',
             }}
           >
+            <Sparkles className="h-3 w-3" />
             New
           </span>
         );
@@ -144,26 +145,28 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       case 'deactivated':
         return (
           <span
-            className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
             style={{
               backgroundColor: 'rgba(185, 28, 28, 0.1)',
               color: '#B91C1C',
               border: '1px solid #FCA5A5',
             }}
           >
+            <Clock className="h-3 w-3" />
             Inactive {daysRemaining}d
           </span>
         );
       case 'compromised':
         return (
           <span
-            className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
             style={{
               backgroundColor: 'rgba(185, 28, 28, 0.15)',
               color: '#991B1B',
               border: '1px solid #FCA5A5',
             }}
           >
+            <AlertTriangle className="h-3 w-3" />
             Compromised
           </span>
         );
