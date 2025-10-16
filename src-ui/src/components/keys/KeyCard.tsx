@@ -209,6 +209,12 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         relative rounded-lg border bg-white transition-all
         ${isSelected ? 'ring-2 border-2' : 'border-slate-200 hover:shadow-lg'}
       `}
+      style={{
+        boxShadow: isSelected
+          ? `0 0 0 2px ${isPassphrase ? 'rgba(167, 243, 208, 0.5)' : 'rgba(197, 161, 0, 0.5)'}`
+          : '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        borderColor: isSelected ? (isPassphrase ? '#A7F3D0' : '#C5A100') : undefined,
+      }}
       onClick={() => onSelect?.(keyRef.id)}
     >
       {/* Row 1: Icon + Label (NO overflow menu) */}
@@ -217,13 +223,13 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         <div
           className="rounded-lg p-2 flex-shrink-0"
           style={{
-            backgroundColor: isPassphrase ? 'rgba(167, 243, 208, 0.2)' : 'rgba(197, 161, 0, 0.15)',
+            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(197, 161, 0, 0.15)',
           }}
         >
           <Key
             className="h-4 w-4"
             style={{
-              color: isPassphrase ? '#A7F3D0' : '#C5A100',
+              color: isPassphrase ? '#0F766E' : '#C5A100',
             }}
           />
         </div>
@@ -243,8 +249,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         <span
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
-            backgroundColor: isPassphrase ? 'rgba(167, 243, 208, 0.2)' : 'rgba(197, 161, 0, 0.15)',
-            color: isPassphrase ? '#10b981' : '#ca8a04',
+            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(197, 161, 0, 0.15)',
+            color: isPassphrase ? '#0F766E' : '#ca8a04',
           }}
         >
           {isPassphrase ? 'Passphrase' : 'YubiKey'}
