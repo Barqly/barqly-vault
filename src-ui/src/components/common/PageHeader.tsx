@@ -25,6 +25,10 @@ interface PageHeaderProps {
   vaultVariant?: 'normal' | 'recovery';
   /** Vault ID for displaying keys from cache */
   vaultId?: string | null;
+
+  // Custom actions (for Manage Keys page)
+  /** Optional custom actions to display on the right side instead of vault badge */
+  actions?: React.ReactNode;
 }
 
 /**
@@ -44,6 +48,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   vaultName,
   vaultVariant = 'normal',
   vaultId,
+  actions,
 }) => {
   const { keyCache } = useVault();
 
@@ -70,10 +75,15 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </h1>
         </div>
 
-        {/* Right side: Vault Badge + Keys grouped together */}
+        {/* Right side: Custom actions OR Vault Badge + Keys */}
         <div className="flex items-center gap-3">
-          {/* Vault Status Badge (readonly) */}
-          {showVaultBadge && (
+          {/* Custom actions (if provided, replaces vault badge) */}
+          {actions ? (
+            actions
+          ) : (
+            <>
+              {/* Vault Status Badge (readonly) */}
+              {showVaultBadge && (
             <>
               {!vaultName ? (
                 // No vault selected - show placeholder
@@ -116,8 +126,8 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {/* Separator between vault badge and keys */}
           {showVaultBadge && <span className="text-slate-300 text-lg">|</span>}
 
-          {/* Key Status Badges (readonly) - Only show when showVaultBadge is true */}
-          {showVaultBadge && (
+              {/* Key Status Badges (readonly) - Only show when showVaultBadge is true */}
+              {showVaultBadge && (
             <div className="hidden md:block">
               {vaultId && vaultVariant === 'normal' ? (
                 // Show keys from cache for this vault
@@ -178,7 +188,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                   <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
                 </div>
               )}
-            </div>
+              </div>
+            )}
+            </>
           )}
         </div>
       </div>

@@ -164,7 +164,109 @@ const ManageKeysPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
-      <PageHeader title="Manage Keys" icon={Key} />
+      <PageHeader
+        title="Manage Keys"
+        icon={Key}
+        actions={
+          <div className="flex items-center gap-3">
+            {/* Filter */}
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as any)}
+              className="
+                px-3 py-2 text-sm
+                border border-slate-200 rounded-lg
+                focus:outline-none focus:ring-2 focus:ring-blue-600
+              "
+            >
+              <option value="all">All Keys</option>
+              <option value="passphrase">Passphrase Only</option>
+              <option value="yubikey">YubiKey Only</option>
+            </select>
+
+            {/* View Toggle */}
+            <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setKeyViewMode('cards')}
+                className={`
+                  p-2 transition-colors
+                  ${
+                    keyViewMode === 'cards'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }
+                `}
+              >
+                <Grid3x3 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setKeyViewMode('table')}
+                className={`
+                  p-2 transition-colors
+                  ${
+                    keyViewMode === 'table'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }
+                `}
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* + New Key Dropdown (only when keys exist) */}
+            {allKeys.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowNewKeyMenu(!showNewKeyMenu)}
+                  className="
+                    flex items-center gap-2 px-4 py-2
+                    text-sm font-medium text-white bg-blue-600
+                    rounded-lg hover:bg-blue-700 transition-colors
+                  "
+                >
+                  + New Key
+                </button>
+
+                {/* Dropdown Menu */}
+                {showNewKeyMenu && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowNewKeyMenu(false)}
+                    />
+
+                    {/* Menu */}
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-20">
+                      <button
+                        onClick={() => {
+                          setShowNewKeyMenu(false);
+                          handleCreatePassphrase();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
+                      >
+                        <Key className="h-4 w-4 text-green-600" />
+                        <span>Create Passphrase Key</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowNewKeyMenu(false);
+                          handleDetectYubiKey();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
+                      >
+                        <Fingerprint className="h-4 w-4 text-purple-600" />
+                        <span>Register YubiKey</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        }
+      />
 
       <AppPrimaryContainer>
         {/* Create New Key Section - Only show when no keys exist (empty state) */}
@@ -203,120 +305,6 @@ const ManageKeysPage: React.FC = () => {
             </div>
           </div>
         )}
-
-        {/* Action Bar - Right-aligned with + New Key button when keys exist */}
-        <div className="flex gap-3 items-center justify-between mt-6 mb-6">
-          {/* Left: + New Key Dropdown (only when keys exist) */}
-          {allKeys.length > 0 && (
-            <div className="relative">
-              <button
-                onClick={() => setShowNewKeyMenu(!showNewKeyMenu)}
-                className="
-                  flex items-center gap-2 px-4 py-2
-                  text-sm font-medium text-white bg-blue-600
-                  rounded-lg hover:bg-blue-700 transition-colors
-                "
-              >
-                + New Key
-              </button>
-
-              {/* Dropdown Menu */}
-              {showNewKeyMenu && (
-                <>
-                  {/* Backdrop */}
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowNewKeyMenu(false)}
-                  />
-
-                  {/* Menu */}
-                  <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-20">
-                    <button
-                      onClick={() => {
-                        setShowNewKeyMenu(false);
-                        handleCreatePassphrase();
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
-                    >
-                      <Key className="h-4 w-4 text-green-600" />
-                      <span>Create Passphrase Key</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowNewKeyMenu(false);
-                        handleDetectYubiKey();
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
-                    >
-                      <Fingerprint className="h-4 w-4 text-purple-600" />
-                      <span>Register YubiKey</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Right: Filter, View Toggle, Refresh */}
-          <div className="flex gap-3 items-center">
-          {/* Filter */}
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as any)}
-            className="
-                px-3 py-2 text-sm
-                border border-slate-200 rounded-lg
-                focus:outline-none focus:ring-2 focus:ring-blue-600
-              "
-          >
-            <option value="all">All Keys</option>
-            <option value="passphrase">Passphrase Only</option>
-            <option value="yubikey">YubiKey Only</option>
-          </select>
-
-          {/* View Toggle */}
-          <div className="flex border border-slate-200 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setKeyViewMode('cards')}
-              className={`
-                  p-2 transition-colors
-                  ${
-                    keyViewMode === 'cards'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-50'
-                  }
-                `}
-            >
-              <Grid3x3 className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setKeyViewMode('table')}
-              className={`
-                  p-2 transition-colors
-                  ${
-                    keyViewMode === 'table'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-50'
-                  }
-                `}
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Refresh */}
-          <button
-            onClick={refreshAllKeys}
-            className="
-                p-2 text-slate-600
-                border border-slate-200 rounded-lg
-                hover:bg-slate-50 transition-colors
-              "
-          >
-            <RefreshCcw className="h-4 w-4" />
-          </button>
-          </div>
-        </div>
 
         {/* Error Display */}
         {error && (
