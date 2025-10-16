@@ -254,6 +254,7 @@ const ManageKeysPage: React.FC = () => {
 
             {/* Filter - Icon Toggle (multi-select) */}
             <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+              {/* Passphrase Filter */}
               <button
                 onClick={togglePassphraseFilter}
                 className={`
@@ -268,19 +269,25 @@ const ManageKeysPage: React.FC = () => {
               >
                 <Key className="h-4 w-4" />
               </button>
+
+              {/* YubiKey Filter - Black background with gold fingerprint */}
               <button
                 onClick={toggleYubiKeyFilter}
                 className={`
                   p-2 transition-colors
                   ${
                     showYubiKeyKeys
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white text-slate-400 hover:bg-slate-50'
+                      ? 'bg-black'
+                      : 'bg-white hover:bg-slate-50'
                   }
                 `}
                 title={showYubiKeyKeys ? 'Hide YubiKey keys' : 'Show YubiKey keys'}
               >
-                <Fingerprint className="h-4 w-4" />
+                <Fingerprint
+                  className={`h-4 w-4 ${
+                    showYubiKeyKeys ? 'text-yellow-500' : 'text-slate-400'
+                  }`}
+                />
               </button>
             </div>
           </div>
