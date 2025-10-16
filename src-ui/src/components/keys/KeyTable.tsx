@@ -122,7 +122,14 @@ export const KeyTable: React.FC<KeyTableProps> = ({
 
     if (lifecycle_status === 'pre_activation') {
       return (
-        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
+        <span
+          className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+          style={{
+            backgroundColor: 'rgba(148, 163, 184, 0.12)',
+            color: '#475569',
+            border: '1px solid #CBD5E1',
+          }}
+        >
           New
         </span>
       );
@@ -130,7 +137,14 @@ export const KeyTable: React.FC<KeyTableProps> = ({
 
     if (lifecycle_status === 'active' && vaultCount > 0) {
       return (
-        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+        <span
+          className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+          style={{
+            backgroundColor: 'rgba(15, 118, 110, 0.08)',
+            color: '#0F766E',
+            border: '1px solid #A7F3D0',
+          }}
+        >
           Active
         </span>
       );
@@ -143,7 +157,14 @@ export const KeyTable: React.FC<KeyTableProps> = ({
       const daysRemaining = Math.max(0, 30 - daysPassed);
 
       return (
-        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-700">
+        <span
+          className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+          style={{
+            backgroundColor: 'rgba(220, 38, 38, 0.08)',
+            color: '#B91C1C',
+            border: '1px solid #FECACA',
+          }}
+        >
           Deactivated {daysRemaining}d
         </span>
       );
@@ -151,7 +172,14 @@ export const KeyTable: React.FC<KeyTableProps> = ({
 
     if (lifecycle_status === 'compromised') {
       return (
-        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700">
+        <span
+          className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
+          style={{
+            backgroundColor: 'rgba(220, 38, 38, 0.12)',
+            color: '#991B1B',
+            border: '1px solid #FCA5A5',
+          }}
+        >
           Compromised
         </span>
       );
