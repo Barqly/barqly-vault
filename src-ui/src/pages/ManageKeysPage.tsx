@@ -29,6 +29,10 @@ const ManageKeysPage: React.FC = () => {
     setIsCreatingKey,
     setIsDetectingYubiKey,
     refreshAllKeys,
+    showPassphraseKeys,
+    showYubiKeyKeys,
+    togglePassphraseFilter,
+    toggleYubiKeyFilter,
   } = useManageKeysWorkflow();
 
   const [showPassphraseDialog, setShowPassphraseDialog] = useState(false);
@@ -248,33 +252,36 @@ const ManageKeysPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Filter - Badge-style dropdown */}
-            <div className="relative">
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as any)}
-                className="
-                  appearance-none
-                  px-4 py-1.5 pr-8
-                  text-sm font-medium
-                  bg-slate-100 text-slate-700
-                  border border-slate-200 rounded-full
-                  hover:bg-slate-200 transition-colors
-                  cursor-pointer
-                  focus:outline-none focus:ring-2 focus:ring-blue-500
-                "
-                style={{ height: '32px' }}
+            {/* Filter - Icon Toggle (multi-select) */}
+            <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+              <button
+                onClick={togglePassphraseFilter}
+                className={`
+                  p-2 transition-colors
+                  ${
+                    showPassphraseKeys
+                      ? 'bg-green-600 text-white'
+                      : 'bg-white text-slate-400 hover:bg-slate-50'
+                  }
+                `}
+                title={showPassphraseKeys ? 'Hide Passphrase keys' : 'Show Passphrase keys'}
               >
-                <option value="all">All Keys</option>
-                <option value="passphrase">Passphrase Only</option>
-                <option value="yubikey">YubiKey Only</option>
-              </select>
-              {/* Dropdown arrow overlay */}
-              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+                <Key className="h-4 w-4" />
+              </button>
+              <button
+                onClick={toggleYubiKeyFilter}
+                className={`
+                  p-2 transition-colors
+                  ${
+                    showYubiKeyKeys
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-white text-slate-400 hover:bg-slate-50'
+                  }
+                `}
+                title={showYubiKeyKeys ? 'Hide YubiKey keys' : 'Show YubiKey keys'}
+              >
+                <Fingerprint className="h-4 w-4" />
+              </button>
             </div>
           </div>
         }

@@ -13,6 +13,9 @@ export const useManageKeysWorkflow = () => {
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
+  // New: Multi-select filter state
+  const [showPassphraseKeys, setShowPassphraseKeys] = useState(true);
+  const [showYubiKeyKeys, setShowYubiKeyKeys] = useState(true);
   const [isCreatingKey, setIsCreatingKey] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isDetectingYubiKey, setIsDetectingYubiKey] = useState(false);
@@ -36,21 +39,31 @@ export const useManageKeysWorkflow = () => {
     [globalKeys],
   );
 
+  // Toggle filter functions
+  const togglePassphraseFilter = useCallback(() => {
+    setShowPassphraseKeys((prev) => !prev);
+  }, []);
+
+  const toggleYubiKeyFilter = useCallback(() => {
+    setShowYubiKeyKeys((prev) => !prev);
+  }, []);
+
   // Filter and search keys
   const filteredKeys = useMemo(() => {
     let keys = allKeys;
 
-    // Apply filter
-    if (filterType === 'passphrase') {
+    // Apply multi-select filter
+    // If both are selected or both are unselected = show all
+    // If only one is selected = show only that type
+    const bothSelected = showPassphraseKeys && showYubiKeyKeys;
+    const noneSelected = !showPassphraseKeys && !showYubiKeyKeys;
+
+    if (bothSelected || noneSelected) {
+      // Show all keys (no filter)
+    } else if (showPassphraseKeys) {
       keys = keys.filter((k) => k.key_type.type === 'Passphrase');
-    } else if (filterType === 'yubikey') {
+    } else if (showYubiKeyKeys) {
       keys = keys.filter((k) => k.key_type.type === 'YubiKey');
-    } else if (filterType === 'suspended') {
-      // Keys without vault attachment
-      keys = keys.filter((k) => {
-        const attachments = getKeyVaultAttachments(k.id);
-        return attachments.length === 0;
-      });
     }
 
     // Apply search
@@ -75,7 +88,7 @@ export const useManageKeysWorkflow = () => {
     });
 
     return sortedKeys;
-  }, [allKeys, filterType, searchQuery, getKeyVaultAttachments]);
+  }, [allKeys, showPassphraseKeys, showYubiKeyKeys, searchQuery, getKeyVaultAttachments]);
 
   // Refresh all keys from global registry
   const refreshAllKeys = useCallback(async () => {
@@ -135,6 +148,8 @@ export const useManageKeysWorkflow = () => {
     isDetectingYubiKey,
     selectedKeys,
     error,
+    showPassphraseKeys,
+    showYubiKeyKeys,
 
     // Derived state
     allKeys: filteredKeys,
@@ -151,5 +166,7 @@ export const useManageKeysWorkflow = () => {
     clearSelections,
     refreshAllKeys,
     clearError,
+    togglePassphraseFilter,
+    toggleYubiKeyFilter,
   };
 };
