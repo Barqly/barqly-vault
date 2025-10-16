@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, Link2, FileText } from 'lucide-react';
+import { Key, Link2, FileText, Copy } from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -272,6 +272,47 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           </span>
         )}
       </div>
+
+      {/* Row 4 (Optional): Public Key Info - Passphrase Only */}
+      {isPassphrase && onExport && (
+        <div className="flex items-center justify-between px-5 py-2 border-t border-slate-50">
+          {/* Left: Public key with copy button */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <span className="text-xs text-slate-500">Public key:</span>
+            <code className="text-xs text-slate-700 font-mono truncate" title={keyRef.recipient}>
+              {keyRef.recipient.slice(0, 15)}...
+            </code>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(keyRef.recipient);
+              }}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+              title="Copy public key"
+            >
+              <Copy className="h-3 w-3" />
+            </button>
+          </div>
+
+          {/* Right: Export button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onExport(keyRef.id);
+            }}
+            className="
+              flex items-center gap-1 px-2 py-1
+              text-xs font-medium text-slate-600
+              border border-slate-200 rounded-md
+              hover:bg-slate-50 transition-colors
+            "
+            title="Download an encrypted backup of this key for recovery"
+          >
+            <FileText className="h-3 w-3" />
+            Export
+          </button>
+        </div>
+      )}
 
       {/* Footer: Action Buttons */}
       <div className="flex justify-between px-5 py-3 border-t border-slate-100">
