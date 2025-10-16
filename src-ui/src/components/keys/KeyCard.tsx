@@ -325,7 +325,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               text-xs font-medium rounded-md transition-colors
               disabled:opacity-50 disabled:cursor-not-allowed
               ${canDeactivate
-                ? 'text-red-600 border border-red-600 hover:bg-red-50'
+                ? 'text-slate-600 border border-slate-300 hover:bg-slate-50'
                 : 'text-slate-400 border border-slate-300'
               }
             `}
