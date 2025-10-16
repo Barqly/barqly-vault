@@ -117,13 +117,21 @@ export const KeyTable: React.FC<KeyTableProps> = ({
   };
 
   // Get status badge helper
-  const getStatusBadge = (keyRef: GlobalKey) => {
+  const getStatusBadge = (keyRef: GlobalKey, vaultCount: number) => {
     const { lifecycle_status, deactivated_at } = keyRef;
 
     if (lifecycle_status === 'pre_activation') {
       return (
         <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
           New
+        </span>
+      );
+    }
+
+    if (lifecycle_status === 'active' && vaultCount > 0) {
+      return (
+        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+          Active
         </span>
       );
     }
@@ -271,7 +279,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
 
                   {/* Status Badge */}
                   <td className="px-4 py-3">
-                    {getStatusBadge(keyRef)}
+                    {getStatusBadge(keyRef, vaultCount)}
                   </td>
 
                   {/* Actions */}
