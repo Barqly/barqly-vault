@@ -169,20 +169,34 @@ const ManageKeysPage: React.FC = () => {
         icon={Key}
         actions={
           <div className="flex items-center gap-3">
-            {/* Filter */}
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as any)}
-              className="
-                px-3 py-2 text-sm
-                border border-slate-200 rounded-lg
-                focus:outline-none focus:ring-2 focus:ring-blue-600
-              "
-            >
-              <option value="all">All Keys</option>
-              <option value="passphrase">Passphrase Only</option>
-              <option value="yubikey">YubiKey Only</option>
-            </select>
+            {/* Filter - Badge-style dropdown */}
+            <div className="relative">
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as any)}
+                className="
+                  appearance-none
+                  px-4 py-1.5 pr-8
+                  text-sm font-medium
+                  bg-slate-100 text-slate-700
+                  border border-slate-200 rounded-full
+                  hover:bg-slate-200 transition-colors
+                  cursor-pointer
+                  focus:outline-none focus:ring-2 focus:ring-blue-500
+                "
+                style={{ height: '32px' }}
+              >
+                <option value="all">All Keys</option>
+                <option value="passphrase">Passphrase Only</option>
+                <option value="yubikey">YubiKey Only</option>
+              </select>
+              {/* Dropdown arrow overlay */}
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                <svg className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
 
             {/* View Toggle */}
             <div className="flex border border-slate-200 rounded-lg overflow-hidden">
@@ -214,56 +228,54 @@ const ManageKeysPage: React.FC = () => {
               </button>
             </div>
 
-            {/* + New Key Dropdown (only when keys exist) */}
-            {allKeys.length > 0 && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowNewKeyMenu(!showNewKeyMenu)}
-                  className="
-                    flex items-center gap-2 px-4 py-2
-                    text-sm font-medium text-white bg-blue-600
-                    rounded-lg hover:bg-blue-700 transition-colors
-                  "
-                >
-                  + New Key
-                </button>
+            {/* + New Key Dropdown (always visible) */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNewKeyMenu(!showNewKeyMenu)}
+                className="
+                  flex items-center gap-2 px-4 py-2
+                  text-sm font-medium text-white bg-blue-600
+                  rounded-lg hover:bg-blue-700 transition-colors
+                "
+              >
+                + New Key
+              </button>
 
-                {/* Dropdown Menu */}
-                {showNewKeyMenu && (
-                  <>
-                    {/* Backdrop */}
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setShowNewKeyMenu(false)}
-                    />
+              {/* Dropdown Menu */}
+              {showNewKeyMenu && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowNewKeyMenu(false)}
+                  />
 
-                    {/* Menu */}
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-20">
-                      <button
-                        onClick={() => {
-                          setShowNewKeyMenu(false);
-                          handleCreatePassphrase();
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
-                      >
-                        <Key className="h-4 w-4 text-green-600" />
-                        <span>Create Passphrase Key</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowNewKeyMenu(false);
-                          handleDetectYubiKey();
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
-                      >
-                        <Fingerprint className="h-4 w-4 text-purple-600" />
-                        <span>Register YubiKey</span>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+                  {/* Menu */}
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-20">
+                    <button
+                      onClick={() => {
+                        setShowNewKeyMenu(false);
+                        handleCreatePassphrase();
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
+                    >
+                      <Key className="h-4 w-4 text-green-600" />
+                      <span>Create Passphrase Key</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowNewKeyMenu(false);
+                        handleDetectYubiKey();
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-3"
+                    >
+                      <Fingerprint className="h-4 w-4 text-purple-600" />
+                      <span>Register YubiKey</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         }
       />
