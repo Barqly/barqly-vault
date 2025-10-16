@@ -254,39 +254,52 @@ const ManageKeysPage: React.FC = () => {
 
             {/* Filter - Icon Toggle (multi-select) */}
             <div className="flex border border-slate-200 rounded-lg overflow-hidden">
-              {/* Passphrase Filter */}
+              {/* Passphrase Filter - Navy background with mint icon */}
               <button
                 onClick={togglePassphraseFilter}
                 className={`
                   p-2 transition-colors
                   ${
                     showPassphraseKeys
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-slate-400 hover:bg-slate-50'
+                      ? 'hover:opacity-90'
+                      : 'bg-white hover:bg-slate-50'
                   }
                 `}
+                style={{
+                  backgroundColor: showPassphraseKeys ? '#1A2238' : undefined,
+                }}
                 title={showPassphraseKeys ? 'Hide Passphrase keys' : 'Show Passphrase keys'}
               >
-                <Key className="h-4 w-4" />
+                <Key
+                  className="h-4 w-4"
+                  style={{
+                    color: showPassphraseKeys ? '#A7F3D0' : '#94a3b8',
+                  }}
+                />
               </button>
 
-              {/* YubiKey Filter - Black background with gold fingerprint */}
+              {/* YubiKey Filter - Dark gray background with gold fingerprint */}
               <button
                 onClick={toggleYubiKeyFilter}
                 className={`
                   p-2 transition-colors
                   ${
                     showYubiKeyKeys
-                      ? 'bg-black'
+                      ? 'hover:opacity-90'
                       : 'bg-white hover:bg-slate-50'
                   }
                 `}
+                style={{
+                  backgroundColor: showYubiKeyKeys ? '#151515' : undefined,
+                  borderLeft: showYubiKeyKeys ? '1px solid #2C2C2C' : undefined,
+                }}
                 title={showYubiKeyKeys ? 'Hide YubiKey keys' : 'Show YubiKey keys'}
               >
                 <Fingerprint
-                  className={`h-4 w-4 ${
-                    showYubiKeyKeys ? 'text-yellow-500' : 'text-slate-400'
-                  }`}
+                  className="h-4 w-4"
+                  style={{
+                    color: showYubiKeyKeys ? '#C5A100' : '#94a3b8',
+                  }}
                 />
               </button>
             </div>
