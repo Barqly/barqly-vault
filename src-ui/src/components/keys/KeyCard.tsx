@@ -251,25 +251,20 @@ export const KeyCard: React.FC<KeyCardProps> = ({
 
       {/* Row 3: Attachment Status + Serial (YubiKey) */}
       <div className="flex items-center justify-between px-5 py-2">
-        <div>
-          {vaultCount > 0 ? (
-            <span className="text-xs font-medium text-slate-600">
-              Attached to:{' '}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAttach?.(keyRef.id);
-                }}
-                className="text-blue-600 font-medium hover:underline"
-              >
-                {vaultCount} {vaultCount === 1 ? 'vault' : 'vaults'}
-              </button>
-            </span>
-          ) : (
-            <span className="text-xs font-medium text-amber-600">
-              Not attached to any vault
-            </span>
-          )}
+        <div className="flex items-center gap-1.5">
+          <span className={`text-xs font-medium ${vaultCount === 0 ? 'text-amber-600' : 'text-slate-600'}`}>
+            Attached to: {vaultCount} {vaultCount === 1 ? 'vault' : 'vaults'}
+          </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAttach?.(keyRef.id);
+            }}
+            className="text-blue-500 hover:text-blue-700 transition-colors"
+            title="Manage vault attachments"
+          >
+            <Link2 className="h-3 w-3" />
+          </button>
         </div>
 
         {/* Serial (YubiKey only) - right-aligned */}
