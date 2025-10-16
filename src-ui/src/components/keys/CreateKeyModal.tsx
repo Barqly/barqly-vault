@@ -52,7 +52,18 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                   onClose();
                   onCreatePassphrase();
                 }}
-                className="group p-6 border-2 border-slate-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all"
+                className="group p-6 border-2 border-slate-200 rounded-lg transition-all"
+                style={{
+                  borderColor: undefined,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#B7E1DD';
+                  e.currentTarget.style.backgroundColor = 'rgba(15, 118, 110, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
                 <div className="flex flex-col items-center gap-3">
                   <div
@@ -67,7 +78,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                       style={{ color: '#0F766E' }}
                     />
                   </div>
-                  <h4 className="font-semibold text-slate-700 group-hover:text-blue-700">
+                  <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
                     Passphrase
                   </h4>
                   <p className="text-sm text-slate-500 text-center">Password-protected key</p>
@@ -80,7 +91,18 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                   onClose();
                   onRegisterYubiKey();
                 }}
-                className="group p-6 border-2 border-slate-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all"
+                className="group p-6 border-2 border-slate-200 rounded-lg transition-all"
+                style={{
+                  borderColor: undefined,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#E6D8AA';
+                  e.currentTarget.style.backgroundColor = 'rgba(197, 161, 0, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
                 <div className="flex flex-col items-center gap-3">
                   <div
@@ -95,7 +117,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                       style={{ color: '#A16207' }}
                     />
                   </div>
-                  <h4 className="font-semibold text-slate-700 group-hover:text-purple-700">
+                  <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
                     YubiKey
                   </h4>
                   <p className="text-sm text-slate-500 text-center">Hardware security key</p>

@@ -319,11 +319,30 @@ const ManageKeysPage: React.FC = () => {
               {/* Passphrase Card */}
               <button
                 onClick={handleCreatePassphrase}
-                className="group p-6 border-2 border-slate-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all"
+                className="group p-6 border-2 border-slate-200 rounded-lg transition-all"
+                style={{
+                  borderColor: undefined,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#B7E1DD';
+                  e.currentTarget.style.backgroundColor = 'rgba(15, 118, 110, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
                 <div className="flex flex-col items-center gap-3">
-                  <Key className="h-12 w-12 text-slate-400 group-hover:text-blue-600 transition-colors" />
-                  <h4 className="font-semibold text-slate-700 group-hover:text-blue-700">
+                  <div
+                    className="rounded-lg p-3"
+                    style={{
+                      backgroundColor: 'rgba(15, 118, 110, 0.1)',
+                      border: '1px solid #B7E1DD',
+                    }}
+                  >
+                    <Key className="h-12 w-12" style={{ color: '#0F766E' }} />
+                  </div>
+                  <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
                     Passphrase
                   </h4>
                   <p className="text-sm text-slate-500 text-center">Password-protected key</p>
@@ -333,11 +352,30 @@ const ManageKeysPage: React.FC = () => {
               {/* YubiKey Card */}
               <button
                 onClick={handleDetectYubiKey}
-                className="group p-6 border-2 border-slate-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all"
+                className="group p-6 border-2 border-slate-200 rounded-lg transition-all"
+                style={{
+                  borderColor: undefined,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#E6D8AA';
+                  e.currentTarget.style.backgroundColor = 'rgba(197, 161, 0, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
                 <div className="flex flex-col items-center gap-3">
-                  <Fingerprint className="h-12 w-12 text-slate-400 group-hover:text-purple-600 transition-colors" />
-                  <h4 className="font-semibold text-slate-700 group-hover:text-purple-700">
+                  <div
+                    className="rounded-lg p-3"
+                    style={{
+                      backgroundColor: 'rgba(197, 161, 0, 0.15)',
+                      border: '1px solid #E6D8AA',
+                    }}
+                  >
+                    <Fingerprint className="h-12 w-12" style={{ color: '#A16207' }} />
+                  </div>
+                  <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
                     YubiKey
                   </h4>
                   <p className="text-sm text-slate-500 text-center">Hardware security key</p>
