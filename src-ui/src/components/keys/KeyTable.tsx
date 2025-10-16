@@ -170,17 +170,6 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                   )}
                 </button>
               </th>
-              <th className="px-4 py-3 text-left">
-                <button
-                  onClick={() => handleSort('type')}
-                  className="flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
-                >
-                  Type
-                  {sortBy === 'type' && (
-                    <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </button>
-              </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Status</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Vaults</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Serial</th>
@@ -226,20 +215,6 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                         {keyRef.label}
                       </span>
                     </div>
-                  </td>
-
-                  {/* Type Badge */}
-                  <td className="px-4 py-3">
-                    <span
-                      className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
-                      style={{
-                        backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(197, 161, 0, 0.15)',
-                        color: isPassphrase ? '#0F766E' : '#A16207',
-                        border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #E6D8AA',
-                      }}
-                    >
-                      {isPassphrase ? 'Passphrase' : 'YubiKey'}
-                    </span>
                   </td>
 
                   {/* Status Badge */}
