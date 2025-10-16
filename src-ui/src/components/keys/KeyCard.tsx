@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, Link2, FileText, Copy, Check } from 'lucide-react';
+import { Key, Link2, FileText, Copy, Check, Fingerprint } from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -212,7 +212,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       style={{
         boxShadow: isSelected
           ? `0 0 0 2px ${isPassphrase ? 'rgba(167, 243, 208, 0.5)' : 'rgba(197, 161, 0, 0.5)'}`
-          : '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+          : '0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)',
         borderColor: isSelected ? (isPassphrase ? '#A7F3D0' : '#C5A100') : undefined,
       }}
       onClick={() => onSelect?.(keyRef.id)}
@@ -226,12 +226,21 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(197, 161, 0, 0.15)',
           }}
         >
-          <Key
-            className="h-4 w-4"
-            style={{
-              color: isPassphrase ? '#0F766E' : '#C5A100',
-            }}
-          />
+          {isPassphrase ? (
+            <Key
+              className="h-4 w-4"
+              style={{
+                color: '#0F766E',
+              }}
+            />
+          ) : (
+            <Fingerprint
+              className="h-4 w-4"
+              style={{
+                color: '#C5A100',
+              }}
+            />
+          )}
         </div>
 
         {/* Label with tooltip for full text */}
@@ -250,7 +259,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
             backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(197, 161, 0, 0.15)',
-            color: isPassphrase ? '#0F766E' : '#ca8a04',
+            color: isPassphrase ? '#0F766E' : '#A16207',
           }}
         >
           {isPassphrase ? 'Passphrase' : 'YubiKey'}
