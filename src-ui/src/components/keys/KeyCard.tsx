@@ -275,10 +275,10 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       </div>
 
       {/* Row 4: Public Key Info - All Keys */}
-      <div className="flex items-center justify-between px-5 py-2 border-t border-slate-50">
+      <div className="flex items-center justify-between px-5 pt-0">
         {/* Left: Public key with copy button */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-xs text-slate-500">Public key:</span>
+          <span className="text-xs font-medium text-slate-600">Public key:</span>
           <code className="text-xs text-slate-700 font-mono truncate" title={keyRef.recipient}>
             {keyRef.recipient.slice(0, 15)}...
           </code>
