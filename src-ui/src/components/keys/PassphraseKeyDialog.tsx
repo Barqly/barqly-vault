@@ -87,7 +87,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
       case 'fair':
         return 'bg-yellow-500';
       case 'good':
-        return 'bg-blue-500';
+        return ''; // Will use inline style for premium blue
       case 'strong':
         return 'bg-green-500';
       default:
@@ -174,12 +174,12 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
 
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div className="bg-white rounded-lg shadow-xl max-w-lg w-full border-t-4" style={{ borderTopColor: '#13897F' }}>
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <Key className="h-6 w-6 text-blue-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Add Passphrase Key</h2>
+              <Key className="h-6 w-6" style={{ color: '#13897F' }} />
+              <h2 className="text-xl font-semibold text-gray-900">Create Passphrase Key</h2>
             </div>
             <button
               onClick={handleCancel}
@@ -206,8 +206,9 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
                   labelError
                     ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:ring-blue-500'
+                    : 'border-gray-300'
                 }`}
+                style={!labelError ? { '--tw-ring-color': '#13897F' } as React.CSSProperties : undefined}
                 placeholder="e.g., bitcoin-wallet or bitcoin_wallet_2024"
                 autoFocus
               />
@@ -230,7 +231,8 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                   value={passphrase}
                   onChange={(e) => setPassphrase(e.target.value)}
                   disabled={isCreating}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50"
+                  style={{ '--tw-ring-color': '#13897F' } as React.CSSProperties}
                   placeholder="Enter secure passphrase"
                 />
                 <button
@@ -267,8 +269,9 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                     ? passphrase === confirmPassphrase
                       ? 'border-green-500 focus:ring-green-500'
                       : 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:ring-blue-500'
+                    : 'border-gray-300'
                 }`}
+                style={!confirmPassphrase ? { '--tw-ring-color': '#13897F' } as React.CSSProperties : undefined}
                 placeholder="Re-enter passphrase"
               />
               {confirmPassphrase && (
@@ -297,9 +300,10 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                           : validation.strength === 'fair'
                             ? 'text-yellow-600'
                             : validation.strength === 'good'
-                              ? 'text-blue-600'
+                              ? ''
                               : 'text-green-600'
                       }`}
+                      style={validation.strength === 'good' ? { color: '#1D4ED8' } : undefined}
                     >
                       {validation.strength.charAt(0).toUpperCase() + validation.strength.slice(1)}
                     </span>
@@ -308,6 +312,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-300 ${getStrengthColor()} ${getStrengthWidth()}`}
+                    style={validation?.strength === 'good' ? { backgroundColor: '#1D4ED8' } : undefined}
                   />
                 </div>
                 {validation?.feedback && validation.feedback.length > 0 && (
@@ -321,10 +326,10 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
             )}
 
             {/* Security Note */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(15, 118, 110, 0.08)', borderWidth: '1px', borderColor: '#B7E1DD' }}>
               <div className="flex gap-2">
-                <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                <div className="text-sm text-blue-800">
+                <AlertCircle className="h-5 w-5 flex-shrink-0" style={{ color: '#13897F' }} />
+                <div className="text-sm" style={{ color: '#0F5B56' }}>
                   <p className="font-medium">Security Tips:</p>
                   <ul className="text-xs mt-1 space-y-0.5">
                     <li>• Use a unique passphrase you haven't used elsewhere</li>
@@ -351,7 +356,26 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                   !validation?.is_valid ||
                   passphrase !== confirmPassphrase
                 }
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 text-white rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                style={
+                  !(isCreating ||
+                    !label.trim() ||
+                    labelError !== null ||
+                    !validation?.is_valid ||
+                    passphrase !== confirmPassphrase)
+                    ? { backgroundColor: '#1D4ED8' }
+                    : undefined
+                }
+                onMouseEnter={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.backgroundColor = '#1E40AF';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.backgroundColor = '#1D4ED8';
+                  }
+                }}
               >
                 {isCreating ? (
                   <>
@@ -366,7 +390,7 @@ export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
                 type="button"
                 onClick={handleCancel}
                 disabled={isCreating}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-gray-700 bg-transparent border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
