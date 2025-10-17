@@ -75,7 +75,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                   >
                     <Key
                       className="h-12 w-12"
-                      style={{ color: '#0F766E' }}
+                      style={{ color: '#13897F' }}
                     />
                   </div>
                   <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>

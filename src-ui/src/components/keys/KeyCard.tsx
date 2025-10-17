@@ -132,7 +132,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
             style={{
               backgroundColor: 'rgba(15, 118, 110, 0.1)',
-              color: '#0F766E',
+              color: '#13897F',
               border: '1px solid #99F6E4',
             }}
           >
@@ -269,7 +269,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             <Key
               className="h-4 w-4"
               style={{
-                color: '#0F766E',
+                color: '#13897F',
               }}
             />
           ) : (
@@ -298,7 +298,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
             backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.15)',
-            color: isPassphrase ? '#0F766E' : '#F98B1C',
+            color: isPassphrase ? '#13897F' : '#F98B1C',
             border: `1px solid ${isPassphrase ? '#B7E1DD' : '#ffd4a3'}`,
           }}
         >

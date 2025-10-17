@@ -265,7 +265,7 @@ const ManageKeysPage: React.FC = () => {
                 <Key
                   className="h-4 w-4"
                   style={{
-                    color: showPassphraseKeys ? '#0F766E' : '#94a3b8',
+                    color: showPassphraseKeys ? '#13897F' : '#94a3b8',
                   }}
                 />
               </button>
@@ -341,7 +341,7 @@ const ManageKeysPage: React.FC = () => {
                       border: '1px solid #B7E1DD',
                     }}
                   >
-                    <Key className="h-12 w-12" style={{ color: '#0F766E' }} />
+                    <Key className="h-12 w-12" style={{ color: '#13897F' }} />
                   </div>
                   <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
                     Passphrase

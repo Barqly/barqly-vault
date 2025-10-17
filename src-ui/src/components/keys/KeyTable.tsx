@@ -244,7 +244,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                         }}
                       >
                         {isPassphrase ? (
-                          <Key className="h-4 w-4" style={{ color: '#0F766E' }} />
+                          <Key className="h-4 w-4" style={{ color: '#13897F' }} />
                         ) : (
                           <Fingerprint className="h-4 w-4" style={{ color: '#F98B1C' }} />
                         )}
