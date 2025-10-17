@@ -1,0 +1,68 @@
+/**
+ * Component Semantic Tokens
+ * Maps design tokens to component-specific usage
+ */
+
+@layer utilities {
+  /* ===== SURFACES ===== */
+  .bg-app { background-color: rgb(var(--surface-app)); }
+  .bg-card { background-color: rgb(var(--surface-card)); }
+  .bg-elevated { background-color: rgb(var(--surface-elevated)); }
+  .bg-input { background-color: rgb(var(--surface-input)); }
+  .bg-hover { background-color: rgb(var(--surface-hover)); }
+
+  /* ===== TEXT ===== */
+  .text-main { color: rgb(var(--text-primary)); }
+  .text-secondary { color: rgb(var(--text-secondary)); }
+  .text-muted { color: rgb(var(--text-muted)); }
+  .text-inverse { color: rgb(var(--text-inverse)); }
+
+  /* ===== BORDERS ===== */
+  .border-default { border-color: rgb(var(--border-default)); }
+  .border-subtle { border-color: rgb(var(--border-subtle)); }
+  .border-strong { border-color: rgb(var(--border-strong)); }
+
+  /* ===== BRAND ===== */
+  .bg-brand-blue { background-color: rgb(var(--brand-blue)); }
+  .bg-brand-blue-hover { background-color: rgb(var(--brand-blue-hover)); }
+  .text-brand-teal { color: rgb(var(--brand-teal)); }
+  .text-brand-orange { color: rgb(var(--brand-orange)); }
+  .text-brand-orange-vibrant { color: rgb(var(--brand-orange-vibrant)); }
+
+  /* ===== COMPONENT-SPECIFIC ===== */
+  .pill-passphrase {
+    background-color: rgba(var(--passphrase-bg));
+    color: rgb(var(--brand-teal));
+    border: 1px solid rgb(var(--passphrase-border));
+  }
+
+  .pill-yubikey {
+    background-color: rgba(var(--yubikey-bg));
+    color: rgb(var(--brand-orange));
+    border: 1px solid rgb(var(--yubikey-border));
+  }
+
+  .input-default {
+    background-color: rgb(var(--surface-input));
+    color: rgb(var(--text-primary));
+    border: 1px solid rgb(var(--border-default));
+  }
+
+  .input-default:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(var(--focus-ring) / 0.5);
+  }
+
+  /* ===== STATUS BADGES ===== */
+  .badge-success {
+    background-color: rgba(var(--passphrase-bg));
+    color: rgb(var(--status-success));
+    border: 1px solid #99F6E4;
+  }
+
+  .badge-error {
+    background-color: rgba(var(--status-error) / 0.1);
+    color: rgb(var(--status-error));
+    border: 1px solid #FCA5A5;
+  }
+}

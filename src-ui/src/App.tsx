@@ -4,6 +4,7 @@ import MainLayout from './components/layout/MainLayout';
 import { LoadingSpinner } from './components/ui/loading-spinner';
 import { VaultProvider, useVault } from './contexts/VaultContext';
 import { UIProvider } from './contexts/UIContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Lazy load page components for better initial render performance
 const VaultHub = lazy(() => import('./pages/VaultHub'));
@@ -119,11 +120,13 @@ function AppRoutes(): ReactElement {
 function App(): ReactElement {
   return (
     <Router>
-      <UIProvider>
-        <VaultProvider>
-          <AppRoutes />
-        </VaultProvider>
-      </UIProvider>
+      <ThemeProvider>
+        <UIProvider>
+          <VaultProvider>
+            <AppRoutes />
+          </VaultProvider>
+        </UIProvider>
+      </ThemeProvider>
     </Router>
   );
 }
