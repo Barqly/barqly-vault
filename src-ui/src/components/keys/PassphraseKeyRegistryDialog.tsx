@@ -343,11 +343,53 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 aria-hidden={!showSecurityTips}
               >
                 <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Use a unique passphrase you haven't used elsewhere</li>
-                    <li>• Consider using a passphrase generator</li>
-                    <li>• Store it securely (password manager recommended)</li>
-                  </ul>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-semibold text-blue-800 ring-1 ring-slate-200">
+                          1
+                        </span>
+                        <span className="text-sm font-semibold text-blue-800">
+                          Use Unique Passphrase
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-700 leading-relaxed">
+                        Never reuse from other accounts.
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-semibold text-blue-800 ring-1 ring-slate-200">
+                          2
+                        </span>
+                        <span className="text-sm font-semibold text-blue-800">
+                          Generate Strong One
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-700 leading-relaxed">
+                        Use a passphrase generator.
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-semibold text-blue-800 ring-1 ring-slate-200">
+                          3
+                        </span>
+                        <span className="text-sm font-semibold text-blue-800">
+                          Store Securely
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-700 leading-relaxed">
+                        Save in password manager.
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="mt-4 border-t border-slate-200 pt-3 text-xs text-slate-500 italic">
+                    <span className="font-semibold">Security Note:</span> Your passphrase cannot be recovered if lost. Store it carefully in a password manager.
+                  </p>
                 </div>
               </div>
             </div>
