@@ -169,7 +169,15 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <Key className="h-6 w-6" style={{ color: '#13897F' }} />
+              <div
+                className="rounded-lg p-2 flex-shrink-0"
+                style={{
+                  backgroundColor: 'rgba(15, 118, 110, 0.1)',
+                  border: '1px solid #B7E1DD',
+                }}
+              >
+                <Key className="h-5 w-5" style={{ color: '#13897F' }} />
+              </div>
               <h2 className="text-xl font-semibold text-gray-900">Create Passphrase Key</h2>
             </div>
             <button
