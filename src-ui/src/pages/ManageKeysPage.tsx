@@ -339,7 +339,7 @@ const ManageKeysPage: React.FC = () => {
                   {/* White background to hide border */}
                   <div className="absolute inset-0 bg-white rounded-full" style={{ margin: '-2px' }} />
                   {/* Badge */}
-                  <div className="relative flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(249, 139, 28, 0.15)', color: '#F98B1C', border: '1px solid #ffd4a3' }}>
+                  <div className="relative flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(249, 139, 28, 0.08)', color: '#F98B1C', border: '1px solid #ffd4a3' }}>
                     <Shield className="h-3 w-3" />
                     Most Secure
                   </div>
@@ -349,7 +349,7 @@ const ManageKeysPage: React.FC = () => {
                   <div
                     className="rounded-lg p-3"
                     style={{
-                      backgroundColor: 'rgba(249, 139, 28, 0.15)',
+                      backgroundColor: 'rgba(249, 139, 28, 0.08)',
                       border: '1px solid #ffd4a3',
                     }}
                   >
