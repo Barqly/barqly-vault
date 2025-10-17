@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Archive, Key, Lock, Unlock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUI } from '../../contexts/UIContext';
 import { useVault } from '../../contexts/VaultContext';
+import { ThemeToggle } from '../common/ThemeToggle';
 
 interface NavItem {
   id: string;
@@ -124,6 +125,15 @@ const SidebarNav: React.FC = () => {
           })}
         </ul>
       </nav>
+
+      {/* Theme Toggle */}
+      {!sidebarCollapsed && (
+        <div className="border-t border-slate-200 p-2">
+          <div className="flex justify-center">
+            <ThemeToggle />
+          </div>
+        </div>
+      )}
 
       {/* Collapse Toggle Button */}
       <div className="border-t border-slate-200 p-2">
