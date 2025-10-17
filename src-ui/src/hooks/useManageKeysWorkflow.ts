@@ -7,7 +7,7 @@ import { commands, type GlobalKey } from '../bindings';
 export type FilterType = 'all' | 'passphrase' | 'yubikey' | 'suspended';
 
 export const useManageKeysWorkflow = () => {
-  const { keyCache, refreshKeysForVault, vaults } = useVault();
+  const { getGlobalKeys, refreshGlobalKeys, vaults } = useVault();
   const { keyViewMode, setKeyViewMode } = useUI();
 
   // Local state
@@ -21,22 +21,21 @@ export const useManageKeysWorkflow = () => {
   const [isDetectingYubiKey, setIsDetectingYubiKey] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(new Set<string>());
   const [error, setError] = useState<string | null>(null);
-  const [globalKeys, setGlobalKeys] = useState<GlobalKey[]>([]);
 
-  // Use GlobalKey directly - no conversion needed!
-  const allKeys = globalKeys;
+  // Read from global cache (instant, no async!)
+  const allKeys = getGlobalKeys();
 
   // Get vault attachments for a key
   const getKeyVaultAttachments = useCallback(
     (keyId: string) => {
-      const key = globalKeys.find((k) => k.id === keyId);
+      const key = allKeys.find((k) => k.id === keyId);
       if (!key) {
         return [];
       }
       // Use vault_associations (multi-vault support)
       return key.vault_associations;
     },
-    [globalKeys],
+    [allKeys],
   );
 
   // Toggle filter functions
@@ -90,25 +89,6 @@ export const useManageKeysWorkflow = () => {
     return sortedKeys;
   }, [allKeys, showPassphraseKeys, showYubiKeyKeys, searchQuery, getKeyVaultAttachments]);
 
-  // Refresh all keys from global registry
-  const refreshAllKeys = useCallback(async () => {
-    try {
-      // Get ALL keys from global registry
-      const result = await commands.listUnifiedKeys({ type: 'All' });
-
-      if (result.status === 'ok') {
-        setGlobalKeys(result.data);
-        logger.info('ManageKeysWorkflow', 'Refreshed global keys', {
-          keyCount: result.data.length,
-        });
-      } else {
-        throw new Error(result.error.message);
-      }
-    } catch (err) {
-      logger.error('ManageKeysWorkflow', 'Failed to refresh all keys', err as Error);
-      setError('Failed to refresh keys');
-    }
-  }, []);
 
   // Toggle key selection
   const toggleKeySelection = useCallback((keyId: string) => {
@@ -133,10 +113,6 @@ export const useManageKeysWorkflow = () => {
     setError(null);
   }, []);
 
-  // Load keys on mount
-  useEffect(() => {
-    refreshAllKeys();
-  }, [refreshAllKeys]);
 
   return {
     // State
@@ -164,7 +140,7 @@ export const useManageKeysWorkflow = () => {
     setIsDetectingYubiKey,
     toggleKeySelection,
     clearSelections,
-    refreshAllKeys,
+    refreshAllKeys: refreshGlobalKeys,
     clearError,
     togglePassphraseFilter,
     toggleYubiKeyFilter,

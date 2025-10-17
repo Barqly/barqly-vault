@@ -15,6 +15,7 @@ import {
   RemoveKeyFromVaultRequest,
   GetKeyMenuDataRequest,
   VaultStatistics,
+  GlobalKey,
 } from '../bindings';
 import { logger } from '../lib/logger';
 
@@ -26,6 +27,10 @@ interface VaultContextType {
   // Cache-first key access
   keyCache: Map<string, KeyReference[]>;
   getCurrentVaultKeys: () => KeyReference[];
+
+  // NEW: Global key registry cache
+  globalKeyCache: GlobalKey[];
+  getGlobalKeys: () => GlobalKey[];
 
   // NEW: Statistics cache
   statisticsCache: Map<string, VaultStatistics>;
@@ -45,6 +50,7 @@ interface VaultContextType {
   setCurrentVault: (vaultId: string) => void; // Synchronous vault switching
   refreshVaults: () => Promise<void>;
   refreshKeysForVault: (vaultId: string) => Promise<void>;
+  refreshGlobalKeys: () => Promise<void>;
   removeKeyFromVault: (keyId: string) => Promise<void>;
   refreshAllStatistics: () => Promise<void>;
   refreshVaultStatistics: (vaultName: string) => Promise<void>;
@@ -56,6 +62,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [currentVault, setCurrentVaultState] = useState<VaultSummary | null>(null);
   const [vaults, setVaults] = useState<VaultSummary[]>([]);
   const [keyCache, setKeyCache] = useState<Map<string, KeyReference[]>>(new Map());
+  const [globalKeyCache, setGlobalKeyCache] = useState<GlobalKey[]>([]);
   const [statisticsCache, setStatisticsCache] = useState<Map<string, VaultStatistics>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
@@ -69,6 +76,11 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (!currentVault) return [];
     return keyCache.get(currentVault.id) || [];
   }, [currentVault?.id, keyCache]);
+
+  // Get all global keys from cache (instant, no async)
+  const getGlobalKeys = useCallback((): GlobalKey[] => {
+    return globalKeyCache;
+  }, [globalKeyCache]);
 
   // Get statistics for a vault from cache (instant, no async)
   const getVaultStatistics = useCallback(
@@ -266,6 +278,30 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, []);
 
+  // NEW: Refresh global key registry and update cache
+  const refreshGlobalKeys = useCallback(async () => {
+    setError(null);
+
+    try {
+      logger.info('VaultContext', 'Fetching all keys from global registry');
+
+      const result = await commands.listUnifiedKeys({ type: 'All' });
+
+      if (result.status === 'error') {
+        throw new Error(result.error.message || 'Failed to list global keys');
+      }
+
+      setGlobalKeyCache(result.data);
+
+      logger.info('VaultContext', 'Global keys cached', {
+        keyCount: result.data.length,
+      });
+    } catch (err: any) {
+      logger.error('VaultContext', 'Failed to refresh global keys', err);
+      setError(err.message || 'Failed to load global keys');
+    }
+  }, []);
+
   const createVault = async (name: string, description?: string | null) => {
     console.log('🔍 VaultContext: createVault called', { name, description });
     setError(null);
@@ -395,24 +431,35 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         vaultCount: vaults.length,
       });
 
-      // Load keys for all vaults in parallel
-      const loadPromises = vaults.map(async (vault) => {
-        try {
-          await refreshKeysForVault(vault.id);
-        } catch (err) {
-          // Log but don't fail the entire cache load
-          logger.error('VaultContext', `Failed to cache keys for vault: ${vault.id}`, err as Error);
-        }
-      });
+      // Load data in parallel: vault keys + global keys + statistics
+      const loadPromises = [
+        // Load keys for all vaults
+        ...vaults.map(async (vault) => {
+          try {
+            await refreshKeysForVault(vault.id);
+          } catch (err) {
+            logger.error('VaultContext', `Failed to cache keys for vault: ${vault.id}`, err as Error);
+          }
+        }),
+        // Load global key registry
+        (async () => {
+          try {
+            await refreshGlobalKeys();
+          } catch (err) {
+            logger.error('VaultContext', 'Failed to cache global keys', err as Error);
+          }
+        })(),
+        // Load statistics for all vaults
+        (async () => {
+          try {
+            await refreshAllStatistics();
+          } catch (err) {
+            logger.error('VaultContext', 'Failed to load statistics for all vaults', err as Error);
+          }
+        })(),
+      ];
 
       await Promise.all(loadPromises);
-
-      // Load statistics for all vaults in one batch call
-      try {
-        await refreshAllStatistics();
-      } catch (err) {
-        logger.error('VaultContext', 'Failed to load statistics for all vaults', err as Error);
-      }
 
       logger.info('VaultContext', 'Cache population complete', {
         cachedVaultCount: vaults.length,
@@ -433,6 +480,8 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         vaults,
         keyCache,
         getCurrentVaultKeys,
+        globalKeyCache,
+        getGlobalKeys,
         statisticsCache,
         getVaultStatistics,
         isLoading,
@@ -444,6 +493,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setCurrentVault,
         refreshVaults,
         refreshKeysForVault,
+        refreshGlobalKeys,
         removeKeyFromVault,
         refreshAllStatistics,
         refreshVaultStatistics,
