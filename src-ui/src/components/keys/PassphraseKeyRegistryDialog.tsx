@@ -241,6 +241,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 <button
                   type="button"
                   onClick={() => setShowPassphrase(!showPassphrase)}
+                  tabIndex={-1}
                   className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600"
                   aria-label={showPassphrase ? 'Hide passphrase' : 'Show passphrase'}
                 >
