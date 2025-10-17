@@ -126,13 +126,11 @@ const SidebarNav: React.FC = () => {
       </nav>
 
       {/* Theme Toggle */}
-      {!sidebarCollapsed && (
-        <div className="border-t border-slate-200 p-2">
-          <div className="flex justify-center">
-            <ThemeToggle />
-          </div>
+      <div className="border-t border-slate-200 p-2">
+        <div className="flex justify-center">
+          <ThemeToggle collapsed={sidebarCollapsed} />
         </div>
-      )}
+      </div>
 
       {/* Collapse Toggle Button */}
       <div className="border-t border-slate-200 p-2">

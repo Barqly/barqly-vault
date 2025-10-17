@@ -2,11 +2,19 @@ import React from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
-export const ThemeToggle: React.FC = () => {
+interface ThemeToggleProps {
+  collapsed?: boolean;
+}
+
+export const ThemeToggle: React.FC<ThemeToggleProps> = ({ collapsed = false }) => {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="flex border rounded-lg overflow-hidden border-default">
+    <div
+      className={`flex border rounded-lg overflow-hidden border-default ${
+        collapsed ? 'flex-col' : 'flex-row'
+      }`}
+    >
       <button
         onClick={() => setTheme('light')}
         className={`p-2 transition-colors ${
