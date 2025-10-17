@@ -261,7 +261,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         <div
           className="rounded-lg p-2 flex-shrink-0"
           style={{
-            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.15)',
+            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.08)',
             border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
           }}
         >
@@ -297,7 +297,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         <span
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
-            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.15)',
+            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.08)',
             color: isPassphrase ? '#13897F' : '#F98B1C',
             border: `1px solid ${isPassphrase ? '#B7E1DD' : '#ffd4a3'}`,
           }}

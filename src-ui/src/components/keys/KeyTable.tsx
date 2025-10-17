@@ -239,7 +239,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                       <div
                         className="rounded-lg p-1.5 flex-shrink-0"
                         style={{
-                          backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.15)',
+                          backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.08)',
                           border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
                         }}
                       >
