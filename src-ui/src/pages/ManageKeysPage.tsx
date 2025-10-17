@@ -114,6 +114,7 @@ const ManageKeysPage: React.FC = () => {
 
   const handlePassphraseCreated = useCallback(async () => {
     setShowPassphraseDialog(false);
+    setShowCreateKeyModal(false); // Close both modals on success
     setIsCreatingKey(false);
     await refreshAllKeys();
   }, [refreshAllKeys, setIsCreatingKey]);
@@ -459,14 +460,22 @@ const ManageKeysPage: React.FC = () => {
           onClose={() => {
             setShowPassphraseDialog(false);
             setIsCreatingKey(false);
+            // Don't close CreateKeyModal - return to it
           }}
         />
 
         {/* YubiKey Registry Dialog */}
         <YubiKeyRegistryDialog
           isOpen={isDetectingYubiKey}
-          onClose={() => setIsDetectingYubiKey(false)}
-          onSuccess={refreshAllKeys}
+          onClose={() => {
+            setIsDetectingYubiKey(false);
+            // Don't close CreateKeyModal - return to it
+          }}
+          onSuccess={async () => {
+            setIsDetectingYubiKey(false);
+            setShowCreateKeyModal(false); // Close both modals on success
+            await refreshAllKeys();
+          }}
         />
 
         {/* Vault Attachment Dialog */}

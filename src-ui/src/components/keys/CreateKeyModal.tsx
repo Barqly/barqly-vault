@@ -48,10 +48,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
             <div className="grid grid-cols-2 gap-4">
               {/* YubiKey Card - LEFT (Most Secure) */}
               <button
-                onClick={() => {
-                  onClose();
-                  onRegisterYubiKey();
-                }}
+                onClick={onRegisterYubiKey}
                 className="group p-6 border-2 border-slate-200 rounded-lg transition-all relative"
                 style={{
                   borderColor: undefined,
@@ -93,10 +90,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
 
               {/* Passphrase Card - RIGHT */}
               <button
-                onClick={() => {
-                  onClose();
-                  onCreatePassphrase();
-                }}
+                onClick={onCreatePassphrase}
                 className="group p-6 border-2 border-slate-200 rounded-lg transition-all"
                 style={{
                   borderColor: undefined,

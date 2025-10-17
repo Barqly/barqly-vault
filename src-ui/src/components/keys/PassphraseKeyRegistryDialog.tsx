@@ -197,11 +197,11 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
 
   return (
     <>
-      {/* Backdrop with blur */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={handleCancel} />
+      {/* Backdrop - transparent for nested modal (CreateKeyModal provides blur) */}
+      <div className="fixed inset-0 bg-transparent z-[60]" onClick={handleCancel} />
 
       {/* Dialog */}
-      <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 flex items-center justify-center z-[70] p-4">
         <div className="bg-white rounded-lg shadow-xl w-full" style={{ maxWidth: '600px', border: '1px solid #B7E1DD' }}>
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
