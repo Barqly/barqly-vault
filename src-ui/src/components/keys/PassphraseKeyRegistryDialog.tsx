@@ -87,13 +87,13 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
     if (!validation) return 'bg-gray-200';
     switch (validation.strength) {
       case 'weak':
-        return 'bg-red-500';
+        return ''; // Use inline style for muted red
       case 'fair':
         return 'bg-yellow-500';
       case 'good':
         return 'bg-blue-500';
       case 'strong':
-        return 'bg-green-500';
+        return ''; // Use inline style for teal
       default:
         return 'bg-gray-200';
     }
@@ -243,17 +243,19 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 maxLength={24}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
                   labelError
-                    ? 'border-red-500 focus:ring-red-500'
+                    ? 'border-gray-300'
                     : 'border-gray-300 focus:ring-blue-300'
                 }`}
+                style={labelError ? { borderColor: '#FCA5A5' } : undefined}
                 placeholder="e.g., My Backup Key 2024"
                 autoFocus
               />
               {labelError ? (
-                <p className="text-xs text-red-600 mt-1">{labelError}</p>
+                <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{labelError}</p>
               ) : (
                 <p
-                  className={`mt-1 text-xs ${label.length >= 24 ? 'text-red-600' : 'text-gray-500'}`}
+                  className="mt-1 text-xs"
+                  style={{ color: label.length >= 24 ? '#B91C1C' : '#64748b' }}
                 >
                   {label.length}/24 characters
                 </p>
@@ -285,7 +287,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 </button>
               </div>
               {passphrase && passphrase.length < 12 && (
-                <p className="text-xs text-red-600 mt-1">
+                <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>
                   {12 - passphrase.length} more characters needed
                 </p>
               )}
@@ -307,15 +309,23 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
                   confirmPassphrase
                     ? passphrase === confirmPassphrase
-                      ? 'border-green-500 focus:ring-green-500'
-                      : 'border-red-500 focus:ring-red-500'
+                      ? 'border-gray-300'
+                      : 'border-gray-300'
                     : 'border-gray-300 focus:ring-blue-300'
                 }`}
+                style={
+                  confirmPassphrase
+                    ? passphrase === confirmPassphrase
+                      ? { borderColor: '#B7E1DD', '--tw-ring-color': '#13897F' } as React.CSSProperties
+                      : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
+                    : undefined
+                }
                 placeholder="Re-enter passphrase"
               />
               {confirmPassphrase && (
                 <p
-                  className={`text-xs mt-1 ${passphrase === confirmPassphrase ? 'text-green-600' : 'text-red-600'}`}
+                  className="text-xs mt-1"
+                  style={{ color: passphrase === confirmPassphrase ? '#13897F' : '#B91C1C' }}
                 >
                   {passphrase === confirmPassphrase
                     ? '✓ Passphrases match'
@@ -335,13 +345,20 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                     <span
                       className={`font-medium ${
                         validation.strength === 'weak'
-                          ? 'text-red-600'
+                          ? ''
                           : validation.strength === 'fair'
                             ? 'text-yellow-600'
                             : validation.strength === 'good'
                               ? 'text-blue-600'
-                              : 'text-green-600'
+                              : ''
                       }`}
+                      style={
+                        validation.strength === 'weak'
+                          ? { color: '#B91C1C' }
+                          : validation.strength === 'strong'
+                            ? { color: '#13897F' }
+                            : undefined
+                      }
                     >
                       {validation.strength.charAt(0).toUpperCase() + validation.strength.slice(1)}
                     </span>
@@ -350,6 +367,13 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-300 ${getStrengthColor()} ${getStrengthWidth()}`}
+                    style={
+                      validation?.strength === 'weak'
+                        ? { backgroundColor: '#B91C1C' }
+                        : validation?.strength === 'strong'
+                          ? { backgroundColor: '#13897F' }
+                          : undefined
+                    }
                   />
                 </div>
                 {validation?.feedback && validation.feedback.length > 0 && (
