@@ -270,7 +270,7 @@ const ManageKeysPage: React.FC = () => {
                 />
               </button>
 
-              {/* YubiKey Filter - Dark gray background with darker gold fingerprint */}
+              {/* YubiKey Filter - Dark background with bitcoin orange fingerprint */}
               <button
                 onClick={toggleYubiKeyFilter}
                 className={`
@@ -282,18 +282,18 @@ const ManageKeysPage: React.FC = () => {
                   }
                 `}
                 style={{
-                  backgroundColor: showYubiKeyKeys ? '#151515' : undefined,
+                  backgroundColor: showYubiKeyKeys ? '#0F172A' : undefined,
                   border: showYubiKeyKeys ? '1px solid #2C2C2C' : undefined,
-                  boxShadow: showYubiKeyKeys ? 'inset 3px 0 6px -2px rgba(161, 98, 7, 0)' : undefined,
+                  boxShadow: showYubiKeyKeys ? 'inset 3px 0 6px -2px rgba(255, 138, 0, 0)' : undefined,
                 }}
                 onMouseEnter={(e) => {
                   if (showYubiKeyKeys) {
-                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(161, 98, 7, 0.6)';
+                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(255, 138, 0, 0.6)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (showYubiKeyKeys) {
-                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(161, 98, 7, 0)';
+                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(255, 138, 0, 0)';
                   }
                 }}
                 title={showYubiKeyKeys ? 'Hide YubiKey keys' : 'Show YubiKey keys'}
@@ -301,7 +301,7 @@ const ManageKeysPage: React.FC = () => {
                 <Fingerprint
                   className="h-4 w-4"
                   style={{
-                    color: showYubiKeyKeys ? '#A16207' : '#94a3b8',
+                    color: showYubiKeyKeys ? '#ff8a00' : '#94a3b8',
                   }}
                 />
               </button>
@@ -358,8 +358,8 @@ const ManageKeysPage: React.FC = () => {
                   borderColor: undefined,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#E6D8AA';
-                  e.currentTarget.style.backgroundColor = 'rgba(197, 161, 0, 0.05)';
+                  e.currentTarget.style.borderColor = '#ffd4a3';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 138, 0, 0.05)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = '#e2e8f0';
@@ -370,11 +370,11 @@ const ManageKeysPage: React.FC = () => {
                   <div
                     className="rounded-lg p-3"
                     style={{
-                      backgroundColor: 'rgba(197, 161, 0, 0.15)',
-                      border: '1px solid #E6D8AA',
+                      backgroundColor: 'rgba(255, 138, 0, 0.15)',
+                      border: '1px solid #ffd4a3',
                     }}
                   >
-                    <Fingerprint className="h-12 w-12" style={{ color: '#A16207' }} />
+                    <Fingerprint className="h-12 w-12" style={{ color: '#ff8a00' }} />
                   </div>
                   <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
                     YubiKey

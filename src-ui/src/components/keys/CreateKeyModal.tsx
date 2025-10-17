@@ -96,8 +96,8 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                   borderColor: undefined,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#E6D8AA';
-                  e.currentTarget.style.backgroundColor = 'rgba(197, 161, 0, 0.05)';
+                  e.currentTarget.style.borderColor = '#ffd4a3';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 138, 0, 0.05)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = '#e2e8f0';
@@ -108,13 +108,13 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                   <div
                     className="rounded-lg p-3"
                     style={{
-                      backgroundColor: 'rgba(197, 161, 0, 0.15)',
-                      border: '1px solid #E6D8AA',
+                      backgroundColor: 'rgba(255, 138, 0, 0.15)',
+                      border: '1px solid #ffd4a3',
                     }}
                   >
                     <Fingerprint
                       className="h-12 w-12"
-                      style={{ color: '#A16207' }}
+                      style={{ color: '#ff8a00' }}
                     />
                   </div>
                   <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>

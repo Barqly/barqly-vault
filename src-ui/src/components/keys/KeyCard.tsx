@@ -249,9 +249,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       `}
       style={{
         boxShadow: isSelected
-          ? `0 0 0 2px ${isPassphrase ? 'rgba(167, 243, 208, 0.5)' : 'rgba(197, 161, 0, 0.5)'}`
+          ? `0 0 0 2px ${isPassphrase ? 'rgba(167, 243, 208, 0.5)' : 'rgba(255, 138, 0, 0.5)'}`
           : '0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)',
-        borderColor: isSelected ? (isPassphrase ? '#A7F3D0' : '#C5A100') : undefined,
+        borderColor: isSelected ? (isPassphrase ? '#A7F3D0' : '#ff8a00') : undefined,
       }}
       onClick={() => onSelect?.(keyRef.id)}
     >
@@ -261,8 +261,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         <div
           className="rounded-lg p-2 flex-shrink-0"
           style={{
-            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(197, 161, 0, 0.15)',
-            border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #E6D8AA',
+            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(255, 138, 0, 0.15)',
+            border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
           }}
         >
           {isPassphrase ? (
@@ -276,7 +276,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             <Fingerprint
               className="h-4 w-4"
               style={{
-                color: '#A16207',
+                color: '#ff8a00',
               }}
             />
           )}
@@ -297,9 +297,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         <span
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
-            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(197, 161, 0, 0.15)',
-            color: isPassphrase ? '#0F766E' : '#A16207',
-            border: `1px solid ${isPassphrase ? '#B7E1DD' : '#E6D8AA'}`,
+            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(255, 138, 0, 0.15)',
+            color: isPassphrase ? '#0F766E' : '#ff8a00',
+            border: `1px solid ${isPassphrase ? '#B7E1DD' : '#ffd4a3'}`,
           }}
         >
           {isPassphrase ? 'Passphrase' : 'YubiKey'}

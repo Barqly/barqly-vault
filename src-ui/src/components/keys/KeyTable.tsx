@@ -239,14 +239,14 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                       <div
                         className="rounded-lg p-1.5 flex-shrink-0"
                         style={{
-                          backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(197, 161, 0, 0.15)',
-                          border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #E6D8AA',
+                          backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(255, 138, 0, 0.15)',
+                          border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
                         }}
                       >
                         {isPassphrase ? (
                           <Key className="h-4 w-4" style={{ color: '#0F766E' }} />
                         ) : (
-                          <Fingerprint className="h-4 w-4" style={{ color: '#A16207' }} />
+                          <Fingerprint className="h-4 w-4" style={{ color: '#ff8a00' }} />
                         )}
                       </div>
                       <span className="text-xs font-medium text-slate-700">
