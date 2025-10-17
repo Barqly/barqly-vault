@@ -1,9 +1,30 @@
 # Barqly Vault UI Style Guide
 
-**Version:** 1.0
-**Date:** 2025-10-16
+**Version:** 1.1
+**Date:** 2025-10-17
 **Status:** Production-Ready
 **Purpose:** Comprehensive visual design system for consistent UI implementation
+
+---
+
+## 🎯 Core Design Principle
+
+**IMPORTANT: Brand vs. Functional Color Usage**
+
+Use **brand colors** (premium blue, teal, Bitcoin orange, or brand gray) **ONLY** for:
+- Icons (key type identity, CTAs)
+- Borders (dialog/card identity)
+- Primary action buttons (CTAs)
+- Brand-defining visual elements
+
+Keep **all other UI elements** on **Tailwind defaults**:
+- Form input focus rings (`blue-300`)
+- Informational tooltips and collapsibles (`blue-600/700`)
+- Help panels (`bg-blue-50 border-blue-200`)
+- Validation states (green/red)
+- Secondary informational elements
+
+**Why:** This prevents brand color overload and maintains familiar, natural UX for functional elements while preserving strong brand identity where it matters.
 
 ---
 

@@ -87,7 +87,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
       case 'fair':
         return 'bg-yellow-500';
       case 'good':
-        return ''; // Will use inline style for premium blue
+        return 'bg-blue-500';
       case 'strong':
         return 'bg-green-500';
       default:
@@ -292,10 +292,9 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                           : validation.strength === 'fair'
                             ? 'text-yellow-600'
                             : validation.strength === 'good'
-                              ? ''
+                              ? 'text-blue-600'
                               : 'text-green-600'
                       }`}
-                      style={validation.strength === 'good' ? { color: '#1D4ED8' } : undefined}
                     >
                       {validation.strength.charAt(0).toUpperCase() + validation.strength.slice(1)}
                     </span>
@@ -304,7 +303,6 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-300 ${getStrengthColor()} ${getStrengthWidth()}`}
-                    style={validation?.strength === 'good' ? { backgroundColor: '#1D4ED8' } : undefined}
                   />
                 </div>
                 {validation?.feedback && validation.feedback.length > 0 && (
