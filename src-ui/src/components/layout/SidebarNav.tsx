@@ -2,7 +2,6 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Archive, Key, Lock, Unlock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUI } from '../../contexts/UIContext';
-import { useVault } from '../../contexts/VaultContext';
 import { ThemeToggle } from '../common/ThemeToggle';
 
 interface NavItem {

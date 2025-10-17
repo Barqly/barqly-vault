@@ -84,112 +84,112 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             <>
               {/* Vault Status Badge (readonly) */}
               {showVaultBadge && (
-            <>
-              {!vaultName ? (
-                // No vault selected - show placeholder
-                <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-dashed border-gray-300 rounded-full bg-gray-50 text-sm text-gray-400"
-                  style={{ height: '32px', width: '200px' }}
-                  title="No vault selected"
-                >
-                  <Archive className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                  <span className="font-medium">No Vault</span>
-                </div>
-              ) : vaultVariant === 'recovery' ? (
-                // Recovery mode - yellow badge
-                <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-yellow-200 rounded-full bg-yellow-50 text-sm text-slate-700 whitespace-nowrap"
-                  style={{ height: '32px', width: '200px' }}
-                  title="Vault manifest not found - recovery mode"
-                >
-                  <AlertTriangle className="h-3.5 w-3.5 text-yellow-600 flex-shrink-0" />
-                  <span className="font-medium overflow-hidden text-ellipsis">
-                    {vaultName.length > 20 ? vaultName.substring(0, 20) + '...' : vaultName}
-                  </span>
-                </div>
-              ) : (
-                // Normal mode - blue badge
-                <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700 whitespace-nowrap"
-                  style={{ height: '32px', width: '200px' }}
-                  title={vaultName}
-                >
-                  <Archive className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
-                  <span className="font-medium overflow-hidden text-ellipsis">
-                    {vaultName.length > 20 ? vaultName.substring(0, 20) + '...' : vaultName}
-                  </span>
-                </div>
+                <>
+                  {!vaultName ? (
+                    // No vault selected - show placeholder
+                    <div
+                      className="inline-flex items-center gap-2 px-4 py-1.5 border border-dashed border-gray-300 rounded-full bg-gray-50 text-sm text-gray-400"
+                      style={{ height: '32px', width: '200px' }}
+                      title="No vault selected"
+                    >
+                      <Archive className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                      <span className="font-medium">No Vault</span>
+                    </div>
+                  ) : vaultVariant === 'recovery' ? (
+                    // Recovery mode - yellow badge
+                    <div
+                      className="inline-flex items-center gap-2 px-4 py-1.5 border border-yellow-200 rounded-full bg-yellow-50 text-sm text-slate-700 whitespace-nowrap"
+                      style={{ height: '32px', width: '200px' }}
+                      title="Vault manifest not found - recovery mode"
+                    >
+                      <AlertTriangle className="h-3.5 w-3.5 text-yellow-600 flex-shrink-0" />
+                      <span className="font-medium overflow-hidden text-ellipsis">
+                        {vaultName.length > 20 ? vaultName.substring(0, 20) + '...' : vaultName}
+                      </span>
+                    </div>
+                  ) : (
+                    // Normal mode - blue badge
+                    <div
+                      className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700 whitespace-nowrap"
+                      style={{ height: '32px', width: '200px' }}
+                      title={vaultName}
+                    >
+                      <Archive className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                      <span className="font-medium overflow-hidden text-ellipsis">
+                        {vaultName.length > 20 ? vaultName.substring(0, 20) + '...' : vaultName}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
-            </>
-          )}
 
-          {/* Separator between vault badge and keys */}
-          {showVaultBadge && <span className="text-slate-300 text-lg">|</span>}
+              {/* Separator between vault badge and keys */}
+              {showVaultBadge && <span className="text-slate-300 text-lg">|</span>}
 
               {/* Key Status Badges (readonly) - Only show when showVaultBadge is true */}
               {showVaultBadge && (
-            <div className="hidden md:block">
-              {vaultId && vaultVariant === 'normal' ? (
-                // Show keys from cache for this vault
-                (() => {
-                  const cachedKeys = keyCache.get(vaultId) || [];
-                  const passphraseKey = cachedKeys.find((k) => k.type === 'Passphrase');
-                  const yubiKeys = cachedKeys.filter((k) => k.type === 'YubiKey');
+                <div className="hidden md:block">
+                  {vaultId && vaultVariant === 'normal' ? (
+                    // Show keys from cache for this vault
+                    (() => {
+                      const cachedKeys = keyCache.get(vaultId) || [];
+                      const passphraseKey = cachedKeys.find((k) => k.type === 'Passphrase');
+                      const yubiKeys = cachedKeys.filter((k) => k.type === 'YubiKey');
 
-                  return (
+                      return (
+                        <div className="flex items-center gap-1">
+                          <CompactPassphraseCard
+                            isConfigured={!!passphraseKey}
+                            label={passphraseKey?.label}
+                            isInteractive={false}
+                          />
+                          <span className="text-slate-400 text-xs mx-1">|</span>
+                          <CompactYubiKeyCard
+                            index={0}
+                            state={yubiKeys[0] ? 'active' : 'empty'}
+                            serial={
+                              yubiKeys[0]?.type === 'YubiKey' ? yubiKeys[0].data.serial : undefined
+                            }
+                            label={yubiKeys[0]?.label}
+                            isInteractive={false}
+                          />
+                          <span className="text-slate-400 text-xs mx-1">|</span>
+                          <CompactYubiKeyCard
+                            index={1}
+                            state={yubiKeys[1] ? 'active' : 'empty'}
+                            serial={
+                              yubiKeys[1]?.type === 'YubiKey' ? yubiKeys[1].data.serial : undefined
+                            }
+                            label={yubiKeys[1]?.label}
+                            isInteractive={false}
+                          />
+                          <span className="text-slate-400 text-xs mx-1">|</span>
+                          <CompactYubiKeyCard
+                            index={2}
+                            state={yubiKeys[2] ? 'active' : 'empty'}
+                            serial={
+                              yubiKeys[2]?.type === 'YubiKey' ? yubiKeys[2].data.serial : undefined
+                            }
+                            label={yubiKeys[2]?.label}
+                            isInteractive={false}
+                          />
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    // No vault or recovery mode - show empty slots
                     <div className="flex items-center gap-1">
-                      <CompactPassphraseCard
-                        isConfigured={!!passphraseKey}
-                        label={passphraseKey?.label}
-                        isInteractive={false}
-                      />
+                      <CompactPassphraseCard isConfigured={false} isInteractive={false} />
                       <span className="text-slate-400 text-xs mx-1">|</span>
-                      <CompactYubiKeyCard
-                        index={0}
-                        state={yubiKeys[0] ? 'active' : 'empty'}
-                        serial={
-                          yubiKeys[0]?.type === 'YubiKey' ? yubiKeys[0].data.serial : undefined
-                        }
-                        label={yubiKeys[0]?.label}
-                        isInteractive={false}
-                      />
+                      <CompactYubiKeyCard index={0} state="empty" isInteractive={false} />
                       <span className="text-slate-400 text-xs mx-1">|</span>
-                      <CompactYubiKeyCard
-                        index={1}
-                        state={yubiKeys[1] ? 'active' : 'empty'}
-                        serial={
-                          yubiKeys[1]?.type === 'YubiKey' ? yubiKeys[1].data.serial : undefined
-                        }
-                        label={yubiKeys[1]?.label}
-                        isInteractive={false}
-                      />
+                      <CompactYubiKeyCard index={1} state="empty" isInteractive={false} />
                       <span className="text-slate-400 text-xs mx-1">|</span>
-                      <CompactYubiKeyCard
-                        index={2}
-                        state={yubiKeys[2] ? 'active' : 'empty'}
-                        serial={
-                          yubiKeys[2]?.type === 'YubiKey' ? yubiKeys[2].data.serial : undefined
-                        }
-                        label={yubiKeys[2]?.label}
-                        isInteractive={false}
-                      />
+                      <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
                     </div>
-                  );
-                })()
-              ) : (
-                // No vault or recovery mode - show empty slots
-                <div className="flex items-center gap-1">
-                  <CompactPassphraseCard isConfigured={false} isInteractive={false} />
-                  <span className="text-slate-400 text-xs mx-1">|</span>
-                  <CompactYubiKeyCard index={0} state="empty" isInteractive={false} />
-                  <span className="text-slate-400 text-xs mx-1">|</span>
-                  <CompactYubiKeyCard index={1} state="empty" isInteractive={false} />
-                  <span className="text-slate-400 text-xs mx-1">|</span>
-                  <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
+                  )}
                 </div>
               )}
-              </div>
-            )}
             </>
           )}
         </div>
