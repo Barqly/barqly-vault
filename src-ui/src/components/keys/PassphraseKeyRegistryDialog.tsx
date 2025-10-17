@@ -133,6 +133,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
       setLabel('');
       setPassphrase('');
       setConfirmPassphrase('');
+      setShowSecurityTips(false); // Reset to collapsed
 
       onSuccess?.();
       onClose();
@@ -152,6 +153,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
       setError(null);
       setLabelError(null);
       setValidation(null);
+      setShowSecurityTips(false); // Reset to collapsed
       onClose();
     }
   };
