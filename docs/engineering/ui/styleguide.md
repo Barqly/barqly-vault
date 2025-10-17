@@ -35,23 +35,23 @@ Barqly Vault uses distinct color palettes to differentiate Passphrase (software)
 
 #### YubiKey Keys (Hardware-Based)
 
-**Primary Color:** Dark Gold
-**Visual Intent:** Hardware-based security with metallic, premium feel
+**Primary Color:** Bitcoin Orange (Brand Color)
+**Visual Intent:** Hardware-based security with vibrant, brand-consistent feel
 
 | Element | Color | Usage |
 |---------|-------|-------|
-| Icon | `#A16207` | Fingerprint icon in cards, filters, modals |
-| Icon Background | `rgba(197, 161, 0, 0.15)` | Soft gold tint (15% opacity) |
-| Icon Border | `#E6D8AA` | Soft gold border (desaturated pale gold) |
-| Badge Background | `rgba(197, 161, 0, 0.15)` | Type badge background |
-| Badge Text | `#A16207` | Type badge text (darker gold) |
-| Badge Border | `#E6D8AA` | Type badge border |
+| Icon | `#ff8a00` | Fingerprint icon in cards, filters, modals |
+| Icon Background | `rgba(255, 138, 0, 0.15)` | Soft orange tint (15% opacity) |
+| Icon Border | `#ffd4a3` | Light orange tint border |
+| Badge Background | `rgba(255, 138, 0, 0.15)` | Type badge background |
+| Badge Text | `#ff8a00` | Type badge text (Bitcoin orange) |
+| Badge Border | `#ffd4a3` | Light orange tint border |
 
 **Filter Button (Selected State):**
-- Background: `#151515` (dark gray)
+- Background: `#0F172A` (dark navy/black)
 - Border: `#2C2C2C` (subtle gray)
-- Icon: `#A16207` (darker gold)
-- Hover Glow: `inset 3px 0 6px -2px rgba(161, 98, 7, 0.6)` (gold inner glow)
+- Icon: `#ff8a00` (Bitcoin orange)
+- Hover Glow: `inset 3px 0 6px -2px rgba(255, 138, 0, 0.6)` (orange inner glow)
 
 ---
 
@@ -484,12 +484,12 @@ icon-color: #0F766E
 
 **YubiKey:**
 ```css
-background: rgba(197, 161, 0, 0.15)
-border: 1px solid #E6D8AA
+background: rgba(255, 138, 0, 0.15)
+border: 1px solid #ffd4a3
 border-radius: 0.5rem
 padding: 0.5rem
 icon-size: 1rem  /* h-4 w-4 */
-icon-color: #A16207
+icon-color: #ff8a00
 icon-type: Fingerprint  /* Not Key */
 ```
 
@@ -508,12 +508,12 @@ icon-type: Key
 
 **YubiKey:**
 ```css
-background: rgba(197, 161, 0, 0.15)
-border: 1px solid #E6D8AA
+background: rgba(255, 138, 0, 0.15)
+border: 1px solid #ffd4a3
 border-radius: 0.5rem
 padding: 0.75rem
 icon-size: 3rem  /* h-12 w-12 */
-icon-color: #A16207
+icon-color: #ff8a00
 icon-type: Fingerprint
 ```
 
@@ -1040,14 +1040,15 @@ Bright Teal (Active badge border): #99F6E4
 Mint (Filter icon - not used): #A7F3D0
 ```
 
-### Gold (YubiKey)
+### Bitcoin Orange (YubiKey - Brand Color)
 
 ```css
-Dark Gold (Icon/Text): #A16207
-Gold Tint (Background): rgba(197, 161, 0, 0.15)
-Pale Gold (Border): #E6D8AA
-Light Gold (Filter icon - not used): #C5A100
+Bitcoin Orange (Icon/Text): #ff8a00
+Orange Tint (Background): rgba(255, 138, 0, 0.15)
+Light Orange (Border): #ffd4a3
 ```
+
+**Brand Identity:** Matches Barqly logo color, creates strong visual cohesion.
 
 ### Blue (Primary Actions)
 
