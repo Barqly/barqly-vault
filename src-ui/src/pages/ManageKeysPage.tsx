@@ -98,11 +98,6 @@ const ManageKeysPage: React.FC = () => {
     }
   }, [vaults.length, fetchVaultStatistics]);
 
-  // Refresh all keys on mount
-  useEffect(() => {
-    refreshAllKeys();
-  }, []);
-
   const handleCreatePassphrase = useCallback(() => {
     setShowPassphraseDialog(true);
     setIsCreatingKey(true);
