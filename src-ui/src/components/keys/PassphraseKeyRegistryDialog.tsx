@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { X, Key, Loader2, AlertCircle, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { commands, PassphraseValidationResult, GenerateKeyInput } from '../../bindings';
 import { validateLabel } from '../../lib/sanitization';
@@ -28,6 +28,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
   const [validation, setValidation] = useState<PassphraseValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false); // Loading state for validation
   const [labelError, setLabelError] = useState<string | null>(null);
+  const [showSecurityTips, setShowSecurityTips] = useState(false);
 
   // Real-time passphrase validation
   useEffect(() => {
@@ -164,7 +165,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
 
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full border-t-4" style={{ maxWidth: '600px', borderTopColor: '#13897F' }}>
+        <div className="bg-white rounded-lg shadow-xl w-full" style={{ maxWidth: '600px', border: '1px solid #B7E1DD' }}>
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
@@ -319,13 +320,40 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
               </div>
             )}
 
-            {/* Security Note */}
-            <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(15, 118, 110, 0.08)', borderWidth: '1px', borderColor: '#B7E1DD' }}>
-              <div className="flex gap-2">
-                <AlertCircle className="h-5 w-5 flex-shrink-0" style={{ color: '#13897F' }} />
-                <div className="text-sm" style={{ color: '#0F5B56' }}>
-                  <p className="font-medium">Security Tips:</p>
-                  <ul className="text-xs mt-1 space-y-0.5">
+            {/* Security Tips - Collapsible */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowSecurityTips(!showSecurityTips)}
+                className="inline-flex items-center gap-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 rounded-md"
+                style={{ color: '#13897F' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#0F766E';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#13897F';
+                }}
+                aria-expanded={showSecurityTips}
+                aria-controls="security-tips-content"
+              >
+                <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                <span>Security Tips</span>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform duration-200 ${showSecurityTips ? 'rotate-180' : ''}`}
+                  aria-hidden="true"
+                />
+              </button>
+
+              <div
+                id="security-tips-content"
+                className={`
+                  overflow-hidden transition-all duration-300 ease-in-out
+                  ${showSecurityTips ? 'max-h-48 opacity-100 mt-3' : 'max-h-0 opacity-0'}
+                `}
+                aria-hidden={!showSecurityTips}
+              >
+                <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(15, 118, 110, 0.08)', borderWidth: '1px', borderColor: '#B7E1DD' }}>
+                  <ul className="text-xs space-y-1" style={{ color: '#0F5B56' }}>
                     <li>• Use a unique passphrase you haven't used elsewhere</li>
                     <li>• Consider using a passphrase generator</li>
                     <li>• Store it securely (password manager recommended)</li>
