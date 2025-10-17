@@ -282,7 +282,7 @@ const ManageKeysPage: React.FC = () => {
                   }
                 `}
                 style={{
-                  backgroundColor: showYubiKeyKeys ? '#0F172A' : undefined,
+                  backgroundColor: showYubiKeyKeys ? '#1E1E1E' : undefined,
                   border: showYubiKeyKeys ? '1px solid #2C2C2C' : undefined,
                   boxShadow: showYubiKeyKeys ? 'inset 3px 0 6px -2px rgba(255, 138, 0, 0)' : undefined,
                 }}
