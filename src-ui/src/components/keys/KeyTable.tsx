@@ -142,7 +142,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
             backgroundColor: 'rgba(15, 118, 110, 0.1)',
-            color: '#0F766E',
+            color: '#13897F',
             border: '1px solid #99F6E4',
           }}
         >
