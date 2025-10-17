@@ -77,7 +77,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                   <div
                     className="rounded-lg p-3"
                     style={{
-                      backgroundColor: 'rgba(249, 139, 28, 0.15)',
+                      backgroundColor: 'rgba(249, 139, 28, 0.08)',
                       border: '1px solid #ffd4a3',
                     }}
                   >
