@@ -15,42 +15,43 @@ Barqly Vault uses distinct color palettes to differentiate Passphrase (software)
 
 #### Passphrase Keys (Software-Based)
 
-**Primary Color:** Deep Teal
-**Visual Intent:** Software-based security with premium, confident feel
+**Primary Color:** Brighter Teal (~7-10% brighter than original)
+**Visual Intent:** Software-based security with vibrant, confident feel
 
 | Element | Color | Usage |
 |---------|-------|-------|
-| Icon | `#0F766E` | Key icon in cards, filters, modals |
+| Icon | `#13897F` | Key icon in cards, filters, modals (brighter, more alive) |
 | Icon Background | `rgba(15, 118, 110, 0.1)` | Soft teal tint (10% opacity) |
 | Icon Border | `#B7E1DD` | Soft teal border (20-25% tint) |
 | Badge Background | `rgba(15, 118, 110, 0.1)` | Type badge background |
-| Badge Text | `#0F766E` | Type badge text |
+| Badge Text | `#13897F` | Type badge text (brighter teal) |
 | Badge Border | `#B7E1DD` | Type badge border |
 
 **Filter Button (Selected State):**
 - Background: `#1A2238` (navy)
 - Border: `#2C3E50` (lighter navy)
-- Icon: `#0F766E` (deep teal)
+- Icon: `#13897F` (brighter teal)
 - Hover Glow: `inset -3px 0 6px -2px rgba(15, 118, 110, 0.6)` (teal inner glow)
 
 #### YubiKey Keys (Hardware-Based)
 
-**Primary Color:** Bitcoin Orange (Brand Color)
+**Primary Color:** Bitcoin Orange (Brand Color - Softer Variant)
 **Visual Intent:** Hardware-based security with vibrant, brand-consistent feel
 
 | Element | Color | Usage |
 |---------|-------|-------|
-| Icon | `#ff8a00` | Fingerprint icon in cards, filters, modals |
-| Icon Background | `rgba(255, 138, 0, 0.15)` | Soft orange tint (15% opacity) |
+| Icon (Light backgrounds) | `#F98B1C` | Fingerprint icon in cards, tables, modals (softer, premium) |
+| Icon (Dark backgrounds) | `#ff8a00` | Fingerprint icon in filter button (vibrant on dark) |
+| Icon Background | `rgba(249, 139, 28, 0.15)` | Soft orange tint (15% opacity) |
 | Icon Border | `#ffd4a3` | Light orange tint border |
-| Badge Background | `rgba(255, 138, 0, 0.15)` | Type badge background |
-| Badge Text | `#ff8a00` | Type badge text (Bitcoin orange) |
+| Badge Background | `rgba(249, 139, 28, 0.15)` | Type badge background |
+| Badge Text | `#F98B1C` | Type badge text (softer orange, less 'alert' feel) |
 | Badge Border | `#ffd4a3` | Light orange tint border |
 
 **Filter Button (Selected State):**
-- Background: `#0F172A` (dark navy/black)
+- Background: `#1E1E1E` (softer dark gray, not pure black)
 - Border: `#2C2C2C` (subtle gray)
-- Icon: `#ff8a00` (Bitcoin orange)
+- Icon: `#ff8a00` (vibrant Bitcoin orange - needs brightness on dark bg)
 - Hover Glow: `inset 3px 0 6px -2px rgba(255, 138, 0, 0.6)` (orange inner glow)
 
 ---
@@ -65,12 +66,12 @@ Status badges communicate key lifecycle states with distinct colors and icons.
 
 ```css
 background: rgba(15, 118, 110, 0.1)  /* Teal tint 10% */
-color: #0F766E                       /* Deep teal */
+color: #13897F                       /* Brighter teal (matches Passphrase) */
 border: 1px solid #99F6E4            /* Bright teal */
 icon: none                           /* No icon for Active */
 ```
 
-**Visual Intent:** Confident, stable state. Pairs with Passphrase theme.
+**Visual Intent:** Confident, stable state. Pairs with Passphrase theme. Brighter for better visibility.
 
 #### New Status
 
@@ -233,9 +234,9 @@ font-weight: 500  /* font-medium */
 
 **YubiKey Badge:**
 ```css
-background: rgba(197, 161, 0, 0.15)
-color: #A16207
-border: 1px solid #E6D8AA
+background: rgba(249, 139, 28, 0.15)
+color: #F98B1C
+border: 1px solid #ffd4a3
 border-radius: 9999px
 padding: 0.125rem 0.5rem
 font-size: 0.75rem
@@ -484,12 +485,12 @@ icon-color: #0F766E
 
 **YubiKey:**
 ```css
-background: rgba(255, 138, 0, 0.15)
+background: rgba(249, 139, 28, 0.15)
 border: 1px solid #ffd4a3
 border-radius: 0.5rem
 padding: 0.5rem
 icon-size: 1rem  /* h-4 w-4 */
-icon-color: #ff8a00
+icon-color: #F98B1C
 icon-type: Fingerprint  /* Not Key */
 ```
 
@@ -508,12 +509,12 @@ icon-type: Key
 
 **YubiKey:**
 ```css
-background: rgba(255, 138, 0, 0.15)
+background: rgba(249, 139, 28, 0.15)
 border: 1px solid #ffd4a3
 border-radius: 0.5rem
 padding: 0.75rem
 icon-size: 3rem  /* h-12 w-12 */
-icon-color: #ff8a00
+icon-color: #F98B1C
 icon-type: Fingerprint
 ```
 
@@ -1033,22 +1034,24 @@ const noneSelected = !showPassphraseKeys && !showYubiKeyKeys;
 ### Teal (Passphrase)
 
 ```css
-Deep Teal (Icon/Text): #0F766E
-Teal Tint (Background): rgba(15, 118, 110, 0.1)
+Brighter Teal (Icon/Text): #13897F  /* Primary - cards, badges, icons */
+Deep Teal (Background base): rgba(15, 118, 110, 0.1)  /* Backgrounds */
 Light Mint (Border): #B7E1DD
 Bright Teal (Active badge border): #99F6E4
-Mint (Filter icon - not used): #A7F3D0
 ```
+
+**Color Strategy:** Brighter teal (#13897F) for better visual weight balance with orange. More alive and vibrant while maintaining software-based security identity.
 
 ### Bitcoin Orange (YubiKey - Brand Color)
 
 ```css
-Bitcoin Orange (Icon/Text): #ff8a00
-Orange Tint (Background): rgba(255, 138, 0, 0.15)
+Softer Orange (Icon/Text): #F98B1C  /* Primary - cards, badges, icons on light bg */
+Vibrant Orange (Filter icon): #ff8a00  /* Only on dark filter button background */
+Orange Tint (Background): rgba(249, 139, 28, 0.15)  /* Softer variant */
 Light Orange (Border): #ffd4a3
 ```
 
-**Brand Identity:** Matches Barqly logo color, creates strong visual cohesion.
+**Brand Identity:** Based on Barqly logo color (#ff8a00). Softer variant (#F98B1C) used on light backgrounds for premium feel (less 'alert', more brand accent). Vibrant variant (#ff8a00) reserved for dark backgrounds where brightness is needed.
 
 ### Blue (Primary Actions)
 
