@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { X, Key, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { useVault } from '../../contexts/VaultContext';
 import { logger } from '../../lib/logger';
-import { commands, PassphraseValidationResult, GenerateKeyInput } from '../../bindings';
+import { commands, PassphraseValidationResult, AddPassphraseKeyRequest } from '../../bindings';
 import { validateLabel } from '../../lib/sanitization';
 
-interface PassphraseKeyRegistryDialogProps {
+interface PassphraseKeyDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
 /**
- * Dialog for creating a passphrase key in the global registry (vault-agnostic)
- * Creates keys without vault context for later attachment to vaults
+ * Dialog for creating a passphrase key for the current vault
  */
-export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogProps> = ({
+export const PassphraseKeyDialog: React.FC<PassphraseKeyDialogProps> = ({
   isOpen,
   onClose,
   onSuccess,
 }) => {
+  const { currentVault, refreshKeysForVault } = useVault();
   const [label, setLabel] = useState('');
   const [passphrase, setPassphrase] = useState('');
   const [confirmPassphrase, setConfirmPassphrase] = useState('');
@@ -45,7 +46,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
         }
         setValidation(result.data);
       } catch (err) {
-        logger.error('PassphraseKeyRegistryDialog', 'Failed to validate passphrase', err as Error);
+        logger.error('PassphraseKeyDialog', 'Failed to validate passphrase', err as Error);
       } finally {
         setIsValidating(false);
       }
@@ -112,21 +113,30 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
       return;
     }
 
+    if (!currentVault) {
+      setError('No vault selected');
+      return;
+    }
+
     setIsCreating(true);
     setError(null);
 
     try {
-      const request: GenerateKeyInput = {
+      const request: AddPassphraseKeyRequest = {
+        vault_id: currentVault.id,
         label: label.trim(),
         passphrase,
       };
 
-      const result = await commands.generateKey(request);
+      const result = await commands.addPassphraseKeyToVault(request);
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to create passphrase key');
       }
 
-      logger.info('PassphraseKeyRegistryDialog', 'Passphrase key created successfully', result);
+      logger.info('PassphraseKeyDialog', 'Passphrase key created successfully', result);
+
+      // Refresh the vault keys to show the new key
+      await refreshKeysForVault(currentVault.id);
 
       // Clear form
       setLabel('');
@@ -136,7 +146,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      logger.error('PassphraseKeyRegistryDialog', 'Failed to create passphrase key', err);
+      logger.error('PassphraseKeyDialog', 'Failed to create passphrase key', err);
       setError(err.message || 'Failed to create passphrase key');
     } finally {
       setIsCreating(false);
@@ -193,23 +203,19 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 value={label}
                 onChange={handleLabelChange}
                 disabled={isCreating}
-                maxLength={24}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
                   labelError
                     ? 'border-red-500 focus:ring-red-500'
                     : 'border-gray-300'
                 }`}
                 style={!labelError ? { '--tw-ring-color': '#13897F' } as React.CSSProperties : undefined}
-                placeholder="e.g., My Backup Key 2024"
+                placeholder="e.g., bitcoin-wallet or bitcoin_wallet_2024"
                 autoFocus
               />
-              {labelError ? (
-                <p className="text-xs text-red-600 mt-1">{labelError}</p>
-              ) : (
-                <p
-                  className={`mt-1 text-xs ${label.length >= 24 ? 'text-red-600' : 'text-gray-500'}`}
-                >
-                  {label.length}/24 characters
+              {labelError && <p className="text-xs text-red-600 mt-1">{labelError}</p>}
+              {!labelError && label && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Tip: Use descriptive names like "My Backup Key 2024"
                 </p>
               )}
             </div>
