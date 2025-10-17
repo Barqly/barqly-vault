@@ -1,8 +1,7 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import { useUI } from '../contexts/UIContext';
-import { logger } from '../lib/logger';
-import { commands, type GlobalKey } from '../bindings';
+import type { GlobalKey } from '../bindings';
 
 export type FilterType = 'all' | 'passphrase' | 'yubikey' | 'suspended';
 
