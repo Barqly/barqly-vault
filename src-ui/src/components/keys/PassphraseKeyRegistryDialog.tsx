@@ -164,7 +164,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
 
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-lg w-full border-t-4" style={{ borderTopColor: '#13897F' }}>
+        <div className="bg-white rounded-lg shadow-xl w-full border-t-4" style={{ maxWidth: '600px', borderTopColor: '#13897F' }}>
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
