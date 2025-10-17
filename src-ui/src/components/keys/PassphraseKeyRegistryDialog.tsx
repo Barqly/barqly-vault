@@ -198,9 +198,8 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
                   labelError
                     ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300'
+                    : 'border-gray-300 focus:ring-blue-300'
                 }`}
-                style={!labelError ? { '--tw-ring-color': '#13897F' } as React.CSSProperties : undefined}
                 placeholder="e.g., My Backup Key 2024"
                 autoFocus
               />
@@ -226,8 +225,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                   value={passphrase}
                   onChange={(e) => setPassphrase(e.target.value)}
                   disabled={isCreating}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50"
-                  style={{ '--tw-ring-color': '#13897F' } as React.CSSProperties}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:bg-gray-50"
                   placeholder="Enter secure passphrase"
                 />
                 <button
@@ -264,9 +262,8 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                     ? passphrase === confirmPassphrase
                       ? 'border-green-500 focus:ring-green-500'
                       : 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300'
+                    : 'border-gray-300 focus:ring-blue-300'
                 }`}
-                style={!confirmPassphrase ? { '--tw-ring-color': '#13897F' } as React.CSSProperties : undefined}
                 placeholder="Re-enter passphrase"
               />
               {confirmPassphrase && (
