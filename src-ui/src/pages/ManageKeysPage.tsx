@@ -370,11 +370,11 @@ const ManageKeysPage: React.FC = () => {
                   <div
                     className="rounded-lg p-3"
                     style={{
-                      backgroundColor: 'rgba(255, 138, 0, 0.15)',
+                      backgroundColor: 'rgba(249, 139, 28, 0.15)',
                       border: '1px solid #ffd4a3',
                     }}
                   >
-                    <Fingerprint className="h-12 w-12" style={{ color: '#ff8a00' }} />
+                    <Fingerprint className="h-12 w-12" style={{ color: '#F98B1C' }} />
                   </div>
                   <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
                     YubiKey

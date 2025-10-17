@@ -261,7 +261,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         <div
           className="rounded-lg p-2 flex-shrink-0"
           style={{
-            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(255, 138, 0, 0.15)',
+            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.15)',
             border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
           }}
         >
@@ -276,7 +276,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             <Fingerprint
               className="h-4 w-4"
               style={{
-                color: '#ff8a00',
+                color: '#F98B1C',
               }}
             />
           )}
@@ -297,8 +297,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         <span
           className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
           style={{
-            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(255, 138, 0, 0.15)',
-            color: isPassphrase ? '#0F766E' : '#ff8a00',
+            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.15)',
+            color: isPassphrase ? '#0F766E' : '#F98B1C',
             border: `1px solid ${isPassphrase ? '#B7E1DD' : '#ffd4a3'}`,
           }}
         >
