@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Key, Fingerprint, Grid3x3, List, RefreshCcw } from 'lucide-react';
+import { Key, Fingerprint, Grid3x3, List, RefreshCcw, Shield } from 'lucide-react';
 import { useVault } from '../contexts/VaultContext';
 import { useManageKeysWorkflow } from '../hooks/useManageKeysWorkflow';
 import PageHeader from '../components/common/PageHeader';
@@ -317,7 +317,46 @@ const ManageKeysPage: React.FC = () => {
             <h3 className="text-lg font-medium text-slate-700 mb-4 text-center">Create New Key</h3>
 
             <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-              {/* Passphrase Card */}
+              {/* YubiKey Card - LEFT (Most Secure) */}
+              <button
+                onClick={handleDetectYubiKey}
+                className="group p-6 border-2 border-slate-200 rounded-lg transition-all relative"
+                style={{
+                  borderColor: undefined,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#ffd4a3';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 138, 0, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                {/* Most Secure Badge */}
+                <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(249, 139, 28, 0.15)', color: '#F98B1C', border: '1px solid #ffd4a3' }}>
+                  <Shield className="h-3 w-3" />
+                  Most Secure
+                </div>
+
+                <div className="flex flex-col items-center gap-3">
+                  <div
+                    className="rounded-lg p-3"
+                    style={{
+                      backgroundColor: 'rgba(249, 139, 28, 0.15)',
+                      border: '1px solid #ffd4a3',
+                    }}
+                  >
+                    <Fingerprint className="h-12 w-12" style={{ color: '#F98B1C' }} />
+                  </div>
+                  <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
+                    YubiKey
+                  </h4>
+                  <p className="text-sm text-slate-500 text-center">Hardware security key</p>
+                </div>
+              </button>
+
+              {/* Passphrase Card - RIGHT */}
               <button
                 onClick={handleCreatePassphrase}
                 className="group p-6 border-2 border-slate-200 rounded-lg transition-all"
@@ -347,39 +386,6 @@ const ManageKeysPage: React.FC = () => {
                     Passphrase
                   </h4>
                   <p className="text-sm text-slate-500 text-center">Password-protected key</p>
-                </div>
-              </button>
-
-              {/* YubiKey Card */}
-              <button
-                onClick={handleDetectYubiKey}
-                className="group p-6 border-2 border-slate-200 rounded-lg transition-all"
-                style={{
-                  borderColor: undefined,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#ffd4a3';
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 138, 0, 0.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <div className="flex flex-col items-center gap-3">
-                  <div
-                    className="rounded-lg p-3"
-                    style={{
-                      backgroundColor: 'rgba(249, 139, 28, 0.15)',
-                      border: '1px solid #ffd4a3',
-                    }}
-                  >
-                    <Fingerprint className="h-12 w-12" style={{ color: '#F98B1C' }} />
-                  </div>
-                  <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
-                    YubiKey
-                  </h4>
-                  <p className="text-sm text-slate-500 text-center">Hardware security key</p>
                 </div>
               </button>
             </div>

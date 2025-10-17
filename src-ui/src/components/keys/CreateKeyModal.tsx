@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Key, Fingerprint } from 'lucide-react';
+import { X, Key, Fingerprint, Shield } from 'lucide-react';
 
 interface CreateKeyModalProps {
   isOpen: boolean;
@@ -46,7 +46,52 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
           {/* Content */}
           <div className="p-6">
             <div className="grid grid-cols-2 gap-4">
-              {/* Passphrase Card */}
+              {/* YubiKey Card - LEFT (Most Secure) */}
+              <button
+                onClick={() => {
+                  onClose();
+                  onRegisterYubiKey();
+                }}
+                className="group p-6 border-2 border-slate-200 rounded-lg transition-all relative"
+                style={{
+                  borderColor: undefined,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#ffd4a3';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 138, 0, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                {/* Most Secure Badge */}
+                <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(249, 139, 28, 0.15)', color: '#F98B1C', border: '1px solid #ffd4a3' }}>
+                  <Shield className="h-3 w-3" />
+                  Most Secure
+                </div>
+
+                <div className="flex flex-col items-center gap-3">
+                  <div
+                    className="rounded-lg p-3"
+                    style={{
+                      backgroundColor: 'rgba(249, 139, 28, 0.15)',
+                      border: '1px solid #ffd4a3',
+                    }}
+                  >
+                    <Fingerprint
+                      className="h-12 w-12"
+                      style={{ color: '#F98B1C' }}
+                    />
+                  </div>
+                  <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
+                    YubiKey
+                  </h4>
+                  <p className="text-sm text-slate-500 text-center">Hardware security key</p>
+                </div>
+              </button>
+
+              {/* Passphrase Card - RIGHT */}
               <button
                 onClick={() => {
                   onClose();
@@ -82,45 +127,6 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                     Passphrase
                   </h4>
                   <p className="text-sm text-slate-500 text-center">Password-protected key</p>
-                </div>
-              </button>
-
-              {/* YubiKey Card */}
-              <button
-                onClick={() => {
-                  onClose();
-                  onRegisterYubiKey();
-                }}
-                className="group p-6 border-2 border-slate-200 rounded-lg transition-all"
-                style={{
-                  borderColor: undefined,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#ffd4a3';
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 138, 0, 0.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <div className="flex flex-col items-center gap-3">
-                  <div
-                    className="rounded-lg p-3"
-                    style={{
-                      backgroundColor: 'rgba(249, 139, 28, 0.15)',
-                      border: '1px solid #ffd4a3',
-                    }}
-                  >
-                    <Fingerprint
-                      className="h-12 w-12"
-                      style={{ color: '#F98B1C' }}
-                    />
-                  </div>
-                  <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
-                    YubiKey
-                  </h4>
-                  <p className="text-sm text-slate-500 text-center">Hardware security key</p>
                 </div>
               </button>
             </div>
