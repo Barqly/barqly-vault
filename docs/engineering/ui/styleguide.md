@@ -28,6 +28,95 @@ Keep **all other UI elements** on **Tailwind defaults**:
 
 ---
 
+## ♿ Accessibility & UX Philosophy
+
+### 90/10 Design Principle
+
+**Optimize for the 90% majority while providing options for the 10%.**
+
+- Focus on creating the best possible experience for the primary use case (90%)
+- Provide alternative access methods for edge cases (10%)
+- Don't compromise majority UX for edge case optimization
+
+**Examples:**
+- Mouse users (90%) get direct clicks; keyboard users (10%) get tab navigation
+- Password visibility toggle: Skip in tab order, but clickable with mouse
+- Security tips: Skip in tab order, but expandable with mouse/Enter
+
+---
+
+### Modal Dialog Behavior
+
+**Focus Trap Requirements:**
+
+All modal dialogs MUST trap focus within the modal:
+
+1. **Focus stays within modal** - Tab never escapes to background elements
+2. **Cycle focus** - After last focusable element, Tab returns to first element
+3. **Shift+Tab reverses** - Cycles backward through focusable elements
+4. **Close on Escape** - ESC key closes modal (if not in loading state)
+
+**Implementation Pattern:**
+```tsx
+const handleKeyDown = (e: React.KeyboardEvent) => {
+  if (e.key !== 'Tab') return;
+
+  const isLastEnabled = /* check if on last focusable element */;
+  const isFirstEnabled = /* check if on first focusable element */;
+
+  if (!e.shiftKey && isLastEnabled) {
+    e.preventDefault();
+    firstFocusableRef.current?.focus();
+  } else if (e.shiftKey && isFirstEnabled) {
+    e.preventDefault();
+    lastFocusableRef.current?.focus();
+  }
+};
+
+<form onKeyDown={handleKeyDown}>
+  <input ref={firstFocusableRef} />
+  {/* ... */}
+  <button ref={lastFocusableRef} />
+</form>
+```
+
+---
+
+### Tab Order Optimization
+
+**Primary Flow Only:**
+
+Tab navigation should include ONLY primary form flow elements:
+
+**Include in tab order (tabIndex >= 0):**
+- ✅ Form input fields (text, password, select, etc.)
+- ✅ Primary action button (when enabled)
+- ✅ Critical actions required for form completion
+
+**Exclude from tab order (tabIndex={-1}):**
+- ❌ Password visibility toggles (eye icon)
+- ❌ Collapsible help sections ("Security Tips", "How it Works")
+- ❌ Cancel buttons (secondary action)
+- ❌ Tooltips and info icons
+- ❌ Copy buttons (tertiary actions)
+- ❌ Informational accordions
+
+**Rationale:**
+- Keyboard users can Tab → fill fields → Tab → submit (fast, uninterrupted)
+- Secondary controls remain clickable with mouse (no functionality lost)
+- Reduces cognitive load (fewer stops during form flow)
+
+**Example Tab Order:**
+```
+1. Key Label field
+2. Passphrase field
+3. Confirm Passphrase field
+4. Create Passphrase Key button (only if enabled)
+→ Cycles back to Key Label field
+```
+
+---
+
 ## 🎨 Color System
 
 ### Key Type Visual Identity
