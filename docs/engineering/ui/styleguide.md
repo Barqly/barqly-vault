@@ -152,9 +152,9 @@ Barqly Vault uses distinct color palettes to differentiate Passphrase (software)
 |---------|-------|-------|
 | Icon (Light backgrounds) | `#F98B1C` | Fingerprint icon in cards, tables, modals (softer, premium) |
 | Icon (Dark backgrounds) | `#ff8a00` | Fingerprint icon in filter button (vibrant on dark) |
-| Icon Background | `rgba(249, 139, 28, 0.15)` | Soft orange tint (15% opacity) |
+| Icon Background | `rgba(249, 139, 28, 0.08)` | Subtle orange tint (8% opacity - refined) |
 | Icon Border | `#ffd4a3` | Light orange tint border |
-| Badge Background | `rgba(249, 139, 28, 0.15)` | Type badge background |
+| Badge Background | `rgba(249, 139, 28, 0.08)` | Type badge background |
 | Badge Text | `#F98B1C` | Type badge text (softer orange, less 'alert' feel) |
 | Badge Border | `#ffd4a3` | Light orange tint border |
 
@@ -344,7 +344,7 @@ font-weight: 500  /* font-medium */
 
 **YubiKey Badge:**
 ```css
-background: rgba(249, 139, 28, 0.15)
+background: rgba(249, 139, 28, 0.08)
 color: #F98B1C
 border: 1px solid #ffd4a3
 border-radius: 9999px
@@ -595,7 +595,7 @@ icon-color: #0F766E
 
 **YubiKey:**
 ```css
-background: rgba(249, 139, 28, 0.15)
+background: rgba(249, 139, 28, 0.08)
 border: 1px solid #ffd4a3
 border-radius: 0.5rem
 padding: 0.5rem
@@ -619,7 +619,7 @@ icon-type: Key
 
 **YubiKey:**
 ```css
-background: rgba(249, 139, 28, 0.15)
+background: rgba(249, 139, 28, 0.08)
 border: 1px solid #ffd4a3
 border-radius: 0.5rem
 padding: 0.75rem
@@ -1157,7 +1157,7 @@ Bright Teal (Active badge border): #99F6E4
 ```css
 Softer Orange (Icon/Text): #F98B1C  /* Primary - cards, badges, icons on light bg */
 Vibrant Orange (Filter icon): #ff8a00  /* Only on dark filter button background */
-Orange Tint (Background): rgba(249, 139, 28, 0.15)  /* Softer variant */
+Orange Tint (Background): rgba(249, 139, 28, 0.08)  /* Refined 8% opacity - lets icon pop */
 Light Orange (Border): #ffd4a3
 ```
 
