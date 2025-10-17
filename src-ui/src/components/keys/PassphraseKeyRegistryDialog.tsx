@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, Loader2, AlertCircle, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { X, Key, Loader2, Info, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { commands, PassphraseValidationResult, GenerateKeyInput } from '../../bindings';
 import { validateLabel } from '../../lib/sanitization';
@@ -322,18 +322,11 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
               <button
                 type="button"
                 onClick={() => setShowSecurityTips(!showSecurityTips)}
-                className="inline-flex items-center gap-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 rounded-md"
-                style={{ color: '#13897F' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#0F766E';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#13897F';
-                }}
+                className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md"
                 aria-expanded={showSecurityTips}
                 aria-controls="security-tips-content"
               >
-                <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                <Info className="h-4 w-4" aria-hidden="true" />
                 <span>Security Tips</span>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform duration-200 ${showSecurityTips ? 'rotate-180' : ''}`}
@@ -345,12 +338,12 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 id="security-tips-content"
                 className={`
                   overflow-hidden transition-all duration-300 ease-in-out
-                  ${showSecurityTips ? 'max-h-48 opacity-100 mt-3' : 'max-h-0 opacity-0'}
+                  ${showSecurityTips ? 'max-h-48 opacity-100 mt-4' : 'max-h-0 opacity-0'}
                 `}
                 aria-hidden={!showSecurityTips}
               >
-                <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(15, 118, 110, 0.08)', borderWidth: '1px', borderColor: '#B7E1DD' }}>
-                  <ul className="text-xs space-y-1" style={{ color: '#0F5B56' }}>
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                  <ul className="text-sm text-blue-800 space-y-1">
                     <li>• Use a unique passphrase you haven't used elsewhere</li>
                     <li>• Consider using a passphrase generator</li>
                     <li>• Store it securely (password manager recommended)</li>
