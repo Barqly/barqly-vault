@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Key, Loader2, Info, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { commands, PassphraseValidationResult, GenerateKeyInput } from '../../bindings';
@@ -29,6 +29,10 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
   const [isValidating, setIsValidating] = useState(false); // Loading state for validation
   const [labelError, setLabelError] = useState<string | null>(null);
   const [showSecurityTips, setShowSecurityTips] = useState(false);
+
+  // Refs for focus trap
+  const firstFocusableRef = useRef<HTMLInputElement>(null);
+  const lastFocusableRef = useRef<HTMLButtonElement>(null);
 
   // Real-time passphrase validation
   useEffect(() => {
@@ -158,6 +162,37 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
     }
   };
 
+  // Focus trap: cycle focus within modal
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+
+    const isButtonEnabled = !isCreating &&
+      label.trim() &&
+      labelError === null &&
+      validation?.is_valid &&
+      passphrase === confirmPassphrase;
+
+    // If going backwards (Shift+Tab) from first field
+    if (e.shiftKey && document.activeElement === firstFocusableRef.current) {
+      e.preventDefault();
+      if (isButtonEnabled && lastFocusableRef.current) {
+        lastFocusableRef.current.focus();
+      } else {
+        firstFocusableRef.current?.focus();
+      }
+    }
+    // If going forward (Tab) from last enabled element
+    else if (!e.shiftKey) {
+      if (isButtonEnabled && document.activeElement === lastFocusableRef.current) {
+        e.preventDefault();
+        firstFocusableRef.current?.focus();
+      } else if (!isButtonEnabled && document.activeElement?.id === 'confirm-passphrase') {
+        e.preventDefault();
+        firstFocusableRef.current?.focus();
+      }
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -193,13 +228,14 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="p-6 space-y-4">
             <div>
               <label htmlFor="key-label" className="block text-sm font-medium text-gray-700 mb-2">
                 Key Label *
               </label>
               <input
                 id="key-label"
+                ref={firstFocusableRef}
                 type="text"
                 value={label}
                 onChange={handleLabelChange}
@@ -413,6 +449,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
             <div className="flex gap-3 pt-2">
               <button
                 type="submit"
+                ref={lastFocusableRef}
                 disabled={
                   isCreating ||
                   !label.trim() ||
