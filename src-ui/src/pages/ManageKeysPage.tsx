@@ -321,7 +321,7 @@ const ManageKeysPage: React.FC = () => {
               {/* YubiKey Card - LEFT (Most Secure) */}
               <button
                 onClick={handleDetectYubiKey}
-                className="group p-6 border-2 border-slate-200 rounded-lg transition-all relative"
+                className="group p-6 pt-8 border-2 border-slate-200 rounded-lg transition-all relative"
                 style={{
                   borderColor: undefined,
                 }}
@@ -334,10 +334,15 @@ const ManageKeysPage: React.FC = () => {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                {/* Most Secure Badge */}
-                <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(249, 139, 28, 0.15)', color: '#F98B1C', border: '1px solid #ffd4a3' }}>
-                  <Shield className="h-3 w-3" />
-                  Most Secure
+                {/* Most Secure Badge - Centered on top border */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  {/* White background to hide border */}
+                  <div className="absolute inset-0 bg-white rounded-full" style={{ margin: '-2px' }} />
+                  {/* Badge */}
+                  <div className="relative flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(249, 139, 28, 0.15)', color: '#F98B1C', border: '1px solid #ffd4a3' }}>
+                    <Shield className="h-3 w-3" />
+                    Most Secure
+                  </div>
                 </div>
 
                 <div className="flex flex-col items-center gap-3">
