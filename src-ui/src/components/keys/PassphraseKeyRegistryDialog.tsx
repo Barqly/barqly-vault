@@ -331,6 +331,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
               <button
                 type="button"
                 onClick={() => setShowSecurityTips(!showSecurityTips)}
+                tabIndex={-1}
                 className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md"
                 aria-expanded={showSecurityTips}
                 aria-controls="security-tips-content"
@@ -453,6 +454,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 type="button"
                 onClick={handleCancel}
                 disabled={isCreating}
+                tabIndex={-1}
                 className="px-4 py-2 text-gray-700 bg-transparent border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Cancel
