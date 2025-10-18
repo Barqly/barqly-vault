@@ -116,9 +116,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
             style={{
-              backgroundColor: '#F1F5F9',
-              color: '#334155',
-              border: '1px solid #CBD5E1',
+              backgroundColor: 'rgb(var(--status-new-bg))',
+              color: 'rgb(var(--status-new-text))',
+              border: '1px solid rgb(var(--status-new-border))',
             }}
           >
             <Sparkles className="h-3 w-3" />

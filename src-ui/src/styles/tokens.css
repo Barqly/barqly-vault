@@ -45,6 +45,9 @@
   --status-error: 185 28 28;         /* #B91C1C - Muted red */
   --status-warning: 234 179 8;       /* yellow-600 */
   --status-info: 29 78 216;          /* Premium blue */
+  --status-new-bg: 241 245 249;      /* slate-100 - Light gray for New badge */
+  --status-new-text: 51 65 85;       /* slate-700 - Dark text */
+  --status-new-border: 203 213 225;  /* slate-300 */
 
   /* ===== FOCUS & INTERACTION ===== */
   --focus-ring: 147 197 253;         /* blue-300 - Standard focus */
@@ -78,6 +81,11 @@
   /* ===== YUBIKEY ACCENTS ===== */
   --yubikey-bg: 249 139 28 / 0.12;        /* Slightly higher in dark mode */
   --yubikey-border: 180 83 9;             /* Darker orange border */
+
+  /* ===== STATUS BADGE ADJUSTMENTS ===== */
+  --status-new-bg: 51 65 85;         /* slate-700 - Darker gray for dark mode */
+  --status-new-text: 203 213 225;    /* slate-300 - Lighter text */
+  --status-new-border: 71 85 105;    /* slate-600 */
 
   /* OPTIONAL: Lighten brand colors for better dark mode contrast */
   /* Test these if contrast ratios fail: */
