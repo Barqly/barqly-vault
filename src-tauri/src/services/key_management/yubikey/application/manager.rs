@@ -162,6 +162,15 @@ impl YubiKeyManager {
                 }
             };
 
+            // Map device state to NIST lifecycle status
+            use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
+            let lifecycle_status = match state {
+                YubiKeyState::New => KeyLifecycleStatus::PreActivation,
+                YubiKeyState::Reused => KeyLifecycleStatus::PreActivation,
+                YubiKeyState::Registered => KeyLifecycleStatus::Active,
+                YubiKeyState::Orphaned => KeyLifecycleStatus::Suspended,
+            };
+
             let pin_status = if self.has_default_pin(serial).await.unwrap_or(false) {
                 PinStatus::Default
             } else {
@@ -239,6 +248,7 @@ impl YubiKeyManager {
             let yubikey_info = YubiKeyStateInfo {
                 serial: serial.value().to_string(),
                 state,
+                lifecycle_status,
                 slot,
                 recipient: identity_recipient,
                 identity_tag,
