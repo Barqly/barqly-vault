@@ -46,7 +46,7 @@ const SidebarNav: React.FC = () => {
   return (
     <aside
       className={`
-        relative flex flex-col bg-white border-r border-slate-200 h-full
+        relative flex flex-col bg-card border-r border-default h-full
         transition-all duration-200 ease-out
         ${sidebarCollapsed ? 'w-16' : 'w-48'}
       `}
@@ -69,7 +69,7 @@ const SidebarNav: React.FC = () => {
                     ${
                       isActive
                         ? 'text-white'
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                        : 'text-secondary hover:bg-hover hover:text-main'
                     }
                   `}
                   style={{
@@ -109,11 +109,12 @@ const SidebarNav: React.FC = () => {
                     <span
                       className="
                         absolute left-12 ml-1 px-2 py-1
-                        bg-slate-800 text-white text-xs rounded
+                        text-white text-xs rounded
                         opacity-0 pointer-events-none
                         group-hover:opacity-100
                         transition-opacity duration-150
                       "
+                      style={{ backgroundColor: '#1e293b' }}
                     >
                       {badgeCount}
                     </span>
@@ -126,19 +127,19 @@ const SidebarNav: React.FC = () => {
       </nav>
 
       {/* Theme Toggle */}
-      <div className="border-t border-slate-200 p-2">
+      <div className="border-t border-default p-2">
         <div className="flex justify-center">
           <ThemeToggle collapsed={sidebarCollapsed} />
         </div>
       </div>
 
       {/* Collapse Toggle Button */}
-      <div className="border-t border-slate-200 p-2">
+      <div className="border-t border-default p-2">
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           className="
             flex items-center justify-center w-full px-3 py-2
-            text-slate-400 hover:text-slate-600 hover:bg-slate-50
+            text-muted hover:text-secondary hover:bg-hover
             rounded-lg transition-colors duration-150
           "
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
