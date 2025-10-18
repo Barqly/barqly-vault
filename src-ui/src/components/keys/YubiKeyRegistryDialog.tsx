@@ -461,7 +461,22 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     <button
                       onClick={handleSetup}
                       disabled={isSetupInProgress || !label.trim() || !pin || !confirmPin}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
+                      style={
+                        !(isSetupInProgress || !label.trim() || !pin || !confirmPin)
+                          ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
+                          : { backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-muted))', borderColor: 'rgb(var(--border-default))' }
+                      }
+                      onMouseEnter={(e) => {
+                        if (!e.currentTarget.disabled) {
+                          e.currentTarget.style.backgroundColor = '#1E40AF';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!e.currentTarget.disabled) {
+                          e.currentTarget.style.backgroundColor = '#1D4ED8';
+                        }
+                      }}
                     >
                       {isSetupInProgress ? (
                         <>
