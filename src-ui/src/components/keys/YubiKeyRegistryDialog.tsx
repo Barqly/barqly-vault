@@ -243,7 +243,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <Fingerprint className="h-6 w-6 text-blue-600" />
+              <Fingerprint className="h-6 w-6" style={{ color: '#F98B1C' }} />
               <h2 className="text-xl font-semibold text-gray-900">Register YubiKey</h2>
             </div>
             <button
