@@ -4,7 +4,9 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 const AppHeader: React.FC = () => {
   const { effectiveTheme } = useTheme();
-  const logoSrc = effectiveTheme === 'dark' ? '/barqly-vault-hdr-dark.svg' : '/barqly-vault-hdr-light.svg';
+  // barqly-vault-hdr-dark.svg = darker text (for light backgrounds)
+  // barqly-vault-hdr-light.svg = lighter text (for dark backgrounds)
+  const logoSrc = effectiveTheme === 'dark' ? '/barqly-vault-hdr-light.svg' : '/barqly-vault-hdr-dark.svg';
 
   return (
     <header className="bg-card border-b border-default px-6 py-3 flex items-center justify-between">
