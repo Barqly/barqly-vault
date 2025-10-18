@@ -404,10 +404,10 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             className={`
               flex items-center justify-center gap-1 px-3 py-1.5
               text-xs font-medium rounded-md transition-colors border
-              disabled:opacity-50 disabled:cursor-not-allowed
+              disabled:opacity-50
               ${canDeactivate
-                ? 'text-secondary border-default hover:bg-hover'
-                : 'text-muted border-default'
+                ? 'text-secondary border-default hover:bg-hover hover:text-heading cursor-pointer'
+                : 'text-muted border-default cursor-default'
               }
             `}
             title={deactivateTooltip}
@@ -427,7 +427,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               flex items-center gap-1 px-3 py-1.5
               text-xs font-medium text-secondary
               border border-default rounded-md
-              hover:bg-hover transition-colors
+              hover:bg-hover hover:text-heading transition-colors cursor-pointer
             "
             title="Download an encrypted backup of this key for recovery"
           >
