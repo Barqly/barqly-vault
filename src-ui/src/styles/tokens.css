@@ -20,10 +20,11 @@
   --surface-hover: 248 250 252;      /* Hover states */
 
   /* ===== TEXT (Theme-aware) ===== */
-  --text-primary: 30 41 59;          /* slate-800 - Headings, body */
+  --text-primary: 30 41 59;          /* slate-800 - Body text */
   --text-secondary: 100 116 139;     /* slate-500 - Secondary text */
   --text-muted: 148 163 184;         /* slate-400 - Placeholders, disabled */
   --text-inverse: 255 255 255;       /* White text on dark surfaces */
+  --heading-primary: 86 85 85;       /* #565555 - Brand gray for headings */
 
   /* ===== BORDERS (Theme-aware) ===== */
   --border-default: 226 232 240;     /* slate-200 - Standard borders */
@@ -63,6 +64,7 @@
   --text-secondary: 148 163 184;     /* slate-400 */
   --text-muted: 100 116 139;         /* slate-500 */
   --text-inverse: 15 23 42;          /* slate-900 */
+  --heading-primary: 248 250 252;    /* slate-50 - Bright white for dark mode */
 
   /* ===== BORDERS ===== */
   --border-default: 51 65 85;        /* slate-700 */

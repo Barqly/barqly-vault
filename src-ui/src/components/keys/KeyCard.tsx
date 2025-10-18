@@ -284,7 +284,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
 
         {/* Label with tooltip for full text */}
         <h3
-          className="font-semibold text-main truncate"
+          className="font-semibold text-heading truncate"
           title={keyRef.label}
         >
           {displayLabel}

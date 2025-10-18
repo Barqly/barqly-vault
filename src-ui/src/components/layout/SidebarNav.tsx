@@ -69,7 +69,7 @@ const SidebarNav: React.FC = () => {
                     ${
                       isActive
                         ? 'text-white'
-                        : 'text-secondary hover:bg-hover hover:text-main'
+                        : 'text-heading hover:bg-hover'
                     }
                   `}
                   style={{
@@ -78,10 +78,7 @@ const SidebarNav: React.FC = () => {
                   title={sidebarCollapsed ? item.label : undefined}
                 >
                   <Icon
-                    className="flex-shrink-0 w-5 h-5"
-                    style={{
-                      color: isActive ? '#ffffff' : '#94a3b8',
-                    }}
+                    className={`flex-shrink-0 w-5 h-5 ${isActive ? 'text-white' : 'text-secondary'}`}
                   />
 
                   {!sidebarCollapsed && (

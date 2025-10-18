@@ -16,6 +16,7 @@
   .text-secondary { color: rgb(var(--text-secondary)); }
   .text-muted { color: rgb(var(--text-muted)); }
   .text-inverse { color: rgb(var(--text-inverse)); }
+  .text-heading { color: rgb(var(--heading-primary)); }
 
   /* ===== BORDERS ===== */
   .border-default { border-color: rgb(var(--border-default)); }
