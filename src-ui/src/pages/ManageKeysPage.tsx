@@ -233,16 +233,9 @@ const ManageKeysPage: React.FC = () => {
               {/* Passphrase Filter - Navy background with teal icon */}
               <button
                 onClick={togglePassphraseFilter}
-                className={`
-                  p-2 transition-all
-                  ${
-                    showPassphraseKeys
-                      ? ''
-                      : 'bg-card hover:bg-hover'
-                  }
-                `}
+                className="p-2 transition-all"
                 style={{
-                  backgroundColor: showPassphraseKeys ? '#1A2238' : undefined,
+                  backgroundColor: showPassphraseKeys ? '#1A2238' : 'rgb(var(--surface-hover))',
                   border: showPassphraseKeys ? '1px solid #2C3E50' : undefined,
                   boxShadow: showPassphraseKeys ? 'inset -3px 0 6px -2px rgba(15, 118, 110, 0)' : undefined,
                 }}
@@ -269,16 +262,9 @@ const ManageKeysPage: React.FC = () => {
               {/* YubiKey Filter - Dark background with bitcoin orange fingerprint */}
               <button
                 onClick={toggleYubiKeyFilter}
-                className={`
-                  p-2 transition-all
-                  ${
-                    showYubiKeyKeys
-                      ? ''
-                      : 'bg-card hover:bg-hover'
-                  }
-                `}
+                className="p-2 transition-all"
                 style={{
-                  backgroundColor: showYubiKeyKeys ? '#1E1E1E' : undefined,
+                  backgroundColor: showYubiKeyKeys ? '#1E1E1E' : 'rgb(var(--surface-hover))',
                   border: showYubiKeyKeys ? '1px solid #2C2C2C' : undefined,
                   boxShadow: showYubiKeyKeys ? 'inset 3px 0 6px -2px rgba(255, 138, 0, 0)' : undefined,
                 }}
