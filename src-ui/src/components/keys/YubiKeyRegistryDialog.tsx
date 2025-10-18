@@ -866,31 +866,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   />
                 </div>
 
-                {/* YubiKey Ready - Collapsible */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setShowSecurityTips(!showSecurityTips)}
-                    tabIndex={-1}
-                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                    aria-expanded={showSecurityTips}
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>YubiKey Ready</span>
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform duration-200 ${showSecurityTips ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-
-                  {showSecurityTips && (
-                    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-800">
-                        This YubiKey is already initialized and ready to use. Once added to the registry, you can attach it to vaults for encryption operations.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
                 {error && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-sm text-red-800">{error}</p>
