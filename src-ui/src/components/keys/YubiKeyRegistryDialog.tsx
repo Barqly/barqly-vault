@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info, RefreshCw, Copy, Check, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import {
+  X,
+  Fingerprint,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  Info,
+  RefreshCw,
+  Copy,
+  Check,
+  ChevronDown,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { commands, YubiKeyStateInfo, YubiKeyState } from '../../bindings';
 
@@ -199,7 +212,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
           selectedKey.serial,
           pin,
           recoveryPin,
-          label.trim()
+          label.trim(),
         );
 
         if (initResult.status === 'error') {
@@ -375,11 +388,17 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
   return (
     <>
       {/* Backdrop with blur - progressive dismissal */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" onClick={handleBackdropClick} />
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
+        onClick={handleBackdropClick}
+      />
 
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center z-[70] p-4 pointer-events-none">
-        <div className="bg-elevated rounded-lg shadow-xl w-full pointer-events-auto" style={{ maxWidth: '600px', border: '1px solid #ffd4a3' }}>
+        <div
+          className="bg-elevated rounded-lg shadow-xl w-full pointer-events-auto"
+          style={{ maxWidth: '600px', border: '1px solid #ffd4a3' }}
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-default">
             <div className="flex items-center gap-3">
@@ -469,8 +488,14 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           }}
                           className="w-full p-3 border rounded-lg text-left transition-colors"
                           style={{
-                            borderColor: selectedKey?.serial === yk.serial ? '#3B82F6' : 'rgb(var(--border-default))',
-                            backgroundColor: selectedKey?.serial === yk.serial ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                            borderColor:
+                              selectedKey?.serial === yk.serial
+                                ? '#3B82F6'
+                                : 'rgb(var(--border-default))',
+                            backgroundColor:
+                              selectedKey?.serial === yk.serial
+                                ? 'rgba(59, 130, 246, 0.1)'
+                                : 'transparent',
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
@@ -495,7 +520,9 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                             {(() => {
                               const badge = getYubiKeyBadge(yk.state);
                               return (
-                                <span className={`text-xs px-2 py-1 rounded ${badge.bgClass} ${badge.textClass}`}>
+                                <span
+                                  className={`text-xs px-2 py-1 rounded ${badge.bgClass} ${badge.textClass}`}
+                                >
                                   {badge.label}
                                 </span>
                               );
@@ -523,7 +550,9 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
                   {/* YubiKey Label */}
                   <div>
-                    <label className="block text-sm font-medium text-main mb-2">YubiKey Label *</label>
+                    <label className="block text-sm font-medium text-main mb-2">
+                      YubiKey Label *
+                    </label>
                     <input
                       ref={firstFocusableRef}
                       type="text"
@@ -576,9 +605,18 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           style={
                             confirmPin
                               ? pin === confirmPin
-                                ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
-                                : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
-                              : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                                ? ({
+                                    borderColor: 'rgb(var(--border-default))',
+                                    '--tw-ring-color': 'rgb(59, 130, 246)',
+                                  } as React.CSSProperties)
+                                : ({
+                                    borderColor: '#FCA5A5',
+                                    '--tw-ring-color': '#B91C1C',
+                                  } as React.CSSProperties)
+                              : ({
+                                  borderColor: 'rgb(var(--border-default))',
+                                  '--tw-ring-color': 'rgb(59, 130, 246)',
+                                } as React.CSSProperties)
                           }
                           placeholder="6-8 digits"
                         />
@@ -593,7 +631,10 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                         </button>
                       </div>
                       {confirmPin && (
-                        <p className="text-xs mt-1" style={{ color: pin === confirmPin ? 'inherit' : '#B91C1C' }}>
+                        <p
+                          className="text-xs mt-1"
+                          style={{ color: pin === confirmPin ? 'inherit' : '#B91C1C' }}
+                        >
                           {pin === confirmPin ? '' : 'PINs do not match'}
                         </p>
                       )}
@@ -616,9 +657,18 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           style={
                             recoveryPin && pin
                               ? recoveryPin !== pin
-                                ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
-                                : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
-                              : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                                ? ({
+                                    borderColor: 'rgb(var(--border-default))',
+                                    '--tw-ring-color': 'rgb(59, 130, 246)',
+                                  } as React.CSSProperties)
+                                : ({
+                                    borderColor: '#FCA5A5',
+                                    '--tw-ring-color': '#B91C1C',
+                                  } as React.CSSProperties)
+                              : ({
+                                  borderColor: 'rgb(var(--border-default))',
+                                  '--tw-ring-color': 'rgb(59, 130, 246)',
+                                } as React.CSSProperties)
                           }
                           placeholder="6-8 digits"
                         />
@@ -629,7 +679,11 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
                           aria-label={showRecoveryPin ? 'Hide Recovery PIN' : 'Show Recovery PIN'}
                         >
-                          {showRecoveryPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showRecoveryPin ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                       {recoveryPin && pin && recoveryPin === pin && (
@@ -654,9 +708,18 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           style={
                             confirmRecoveryPin
                               ? recoveryPin === confirmRecoveryPin
-                                ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
-                                : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
-                              : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                                ? ({
+                                    borderColor: 'rgb(var(--border-default))',
+                                    '--tw-ring-color': 'rgb(59, 130, 246)',
+                                  } as React.CSSProperties)
+                                : ({
+                                    borderColor: '#FCA5A5',
+                                    '--tw-ring-color': '#B91C1C',
+                                  } as React.CSSProperties)
+                              : ({
+                                  borderColor: 'rgb(var(--border-default))',
+                                  '--tw-ring-color': 'rgb(59, 130, 246)',
+                                } as React.CSSProperties)
                           }
                           placeholder="6-8 digits"
                         />
@@ -667,11 +730,20 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
                           aria-label={showRecoveryPin ? 'Hide Recovery PIN' : 'Show Recovery PIN'}
                         >
-                          {showRecoveryPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showRecoveryPin ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                       {confirmRecoveryPin && (
-                        <p className="text-xs mt-1" style={{ color: recoveryPin === confirmRecoveryPin ? 'inherit' : '#B91C1C' }}>
+                        <p
+                          className="text-xs mt-1"
+                          style={{
+                            color: recoveryPin === confirmRecoveryPin ? 'inherit' : '#B91C1C',
+                          }}
+                        >
                           {recoveryPin === confirmRecoveryPin ? '' : 'Recovery PINs do not match'}
                         </p>
                       )}
@@ -706,13 +778,20 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                         style={{
                           borderColor: 'rgb(var(--border-default))',
                           backgroundColor: 'rgba(var(--info-panel-bg))',
-                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.05)'
+                          boxShadow:
+                            '0 1px 3px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
                         }}
                       >
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <div className="mb-1 flex items-center gap-2">
-                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
+                              <span
+                                className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border"
+                                style={{
+                                  backgroundColor: 'rgb(var(--surface-card))',
+                                  borderColor: 'rgb(var(--border-default))',
+                                }}
+                              >
                                 1
                               </span>
                               <span className="text-sm font-semibold text-heading">
@@ -726,7 +805,13 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
                           <div>
                             <div className="mb-1 flex items-center gap-2">
-                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
+                              <span
+                                className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border"
+                                style={{
+                                  backgroundColor: 'rgb(var(--surface-card))',
+                                  borderColor: 'rgb(var(--border-default))',
+                                }}
+                              >
                                 2
                               </span>
                               <span className="text-sm font-semibold text-heading">
@@ -739,8 +824,12 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           </div>
                         </div>
 
-                        <p className="mt-4 border-t pt-3 text-xs text-secondary italic" style={{ borderColor: 'rgb(var(--border-default))' }}>
-                          <span className="font-semibold">Security Note:</span> Store both PINs securely in a password manager. Keep them separate from your YubiKey.
+                        <p
+                          className="mt-4 border-t pt-3 text-xs text-secondary italic"
+                          style={{ borderColor: 'rgb(var(--border-default))' }}
+                        >
+                          <span className="font-semibold">Security Note:</span> Store both PINs
+                          securely in a password manager. Keep them separate from your YubiKey.
                         </p>
                       </div>
                     </div>
@@ -781,7 +870,11 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           pin === recoveryPin
                         )
                           ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
-                          : { backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-muted))', borderColor: 'rgb(var(--border-default))' }
+                          : {
+                              backgroundColor: 'rgb(var(--surface-hover))',
+                              color: 'rgb(var(--text-muted))',
+                              borderColor: 'rgb(var(--border-default))',
+                            }
                       }
                       onMouseEnter={(e) => {
                         if (!e.currentTarget.disabled) {
@@ -860,7 +953,9 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
                 {/* YubiKey Label */}
                 <div>
-                  <label className="block text-sm font-medium text-main mb-2">YubiKey Label *</label>
+                  <label className="block text-sm font-medium text-main mb-2">
+                    YubiKey Label *
+                  </label>
                   <input
                     ref={firstFocusableRef}
                     type="text"
@@ -901,7 +996,11 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     style={
                       !(isSetupInProgress || !label.trim() || !pin)
                         ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
-                        : { backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-muted))', borderColor: 'rgb(var(--border-default))' }
+                        : {
+                            backgroundColor: 'rgb(var(--surface-hover))',
+                            color: 'rgb(var(--text-muted))',
+                            borderColor: 'rgb(var(--border-default))',
+                          }
                     }
                     onMouseEnter={(e) => {
                       if (!e.currentTarget.disabled) {
@@ -938,7 +1037,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </div>
