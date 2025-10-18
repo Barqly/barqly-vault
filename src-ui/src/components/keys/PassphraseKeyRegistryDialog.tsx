@@ -201,8 +201,8 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" onClick={handleCancel} />
 
       {/* Dialog */}
-      <div className="fixed inset-0 flex items-center justify-center z-[70] p-4">
-        <div className="bg-elevated rounded-lg shadow-xl w-full" style={{ maxWidth: '600px', border: '1px solid #B7E1DD' }}>
+      <div className="fixed inset-0 flex items-center justify-center z-[70] p-4 pointer-events-none">
+        <div className="bg-elevated rounded-lg shadow-xl w-full pointer-events-auto" style={{ maxWidth: '600px', border: '1px solid #B7E1DD' }}>
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-default">
             <div className="flex items-center gap-3">

@@ -29,8 +29,8 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-elevated rounded-lg shadow-xl max-w-2xl w-full">
+      <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
+        <div className="bg-elevated rounded-lg shadow-xl max-w-2xl w-full pointer-events-auto">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-default">
             <h2 className="text-xl font-semibold text-main">Create New Key</h2>
