@@ -192,16 +192,16 @@ export const KeyTable: React.FC<KeyTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div className="bg-card rounded-lg border border-default overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           {/* Header */}
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-hover border-b border-default">
             <tr>
               <th className="px-4 py-3 text-left">
                 <button
                   onClick={() => handleSort('label')}
-                  className="flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                  className="flex items-center gap-2 text-xs font-medium text-secondary hover:text-heading"
                 >
                   Key
                   {sortBy === 'label' && (
@@ -209,10 +209,10 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                   )}
                 </button>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Public Key</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Vaults</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Status</th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-slate-600">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-secondary">Public Key</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-secondary">Vaults</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-secondary">Status</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-secondary">Actions</th>
             </tr>
           </thead>
 
@@ -231,7 +231,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
               return (
                 <tr
                   key={keyRef.id}
-                  className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                  className="border-b border-subtle hover:bg-hover transition-colors"
                 >
                   {/* Icon + Label */}
                   <td className="px-4 py-3">
@@ -249,16 +249,16 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                           <Fingerprint className="h-4 w-4" style={{ color: '#F98B1C' }} />
                         )}
                       </div>
-                      <span className="text-xs font-medium text-slate-700">
+                      <span className="text-xs font-medium text-heading">
                         {keyRef.label.length > 24 ? keyRef.label.slice(0, 24) + '...' : keyRef.label}
                       </span>
 
                       {/* Tooltip for full label on hover */}
                       {keyRef.label.length > 24 && (
-                        <div className="absolute left-0 bottom-full mb-1 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                        <div className="absolute left-0 bottom-full mb-1 px-2 py-1 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10" style={{ backgroundColor: '#1e293b' }}>
                           <div>{keyRef.label}</div>
                           {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
-                            <div className="mt-0.5 text-slate-300">
+                            <div className="mt-0.5 text-muted">
                               S/N: {keyRef.key_type.data.serial}
                             </div>
                           )}
@@ -270,13 +270,13 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                   {/* Public Key */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <code className="text-xs text-slate-700 font-mono" title={keyRef.recipient}>
+                      <code className="text-xs text-main font-mono" title={keyRef.recipient}>
                         {keyRef.recipient.slice(0, 12)}...
                       </code>
                       <button
                         onClick={() => handleCopy(keyRef.id, keyRef.recipient)}
                         className={`transition-colors ${
-                          isCopied ? 'text-green-600' : 'text-slate-400 hover:text-slate-600'
+                          isCopied ? 'text-green-600' : 'text-muted hover:text-secondary'
                         }`}
                         title={isCopied ? 'Copied!' : 'Copy public key'}
                       >
@@ -288,7 +288,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                   {/* Vault Attachments */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-xs font-medium ${vaultCount === 0 ? 'text-slate-500' : 'text-slate-600'}`}>
+                      <span className="text-xs font-medium text-secondary">
                         {vaultCount} {vaultCount === 1 ? 'vault' : 'vaults'}
                       </span>
                       <button
@@ -322,10 +322,24 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                           onClick={() => onExport(keyRef.id)}
                           className="
                             flex items-center gap-1 px-2 py-1
-                            text-xs font-medium text-slate-600
-                            border border-slate-200 rounded-md
-                            hover:bg-slate-50 transition-colors
+                            text-xs font-medium
+                            border rounded-md
+                            transition-all cursor-pointer
                           "
+                          style={{
+                            borderColor: 'rgb(var(--border-default))',
+                            color: 'rgb(var(--text-secondary))',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                            e.currentTarget.style.color = 'rgb(var(--heading-primary))';
+                            e.currentTarget.style.borderColor = 'rgb(var(--border-strong))';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = 'rgb(var(--text-secondary))';
+                            e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+                          }}
                           title="Download encrypted backup"
                         >
                           <FileText className="h-3 w-3" />
@@ -359,12 +373,28 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                           disabled={!canDeactivate}
                           className={`
                             flex items-center gap-1 px-2 py-1
-                            text-xs font-medium rounded-md transition-colors
-                            ${canDeactivate
-                              ? 'text-slate-600 border border-slate-300 hover:bg-slate-50'
-                              : 'text-slate-400 border border-slate-300 opacity-50 cursor-not-allowed'
-                            }
+                            text-xs font-medium rounded-md transition-all border
+                            disabled:opacity-50
+                            ${canDeactivate ? 'cursor-pointer' : 'cursor-default'}
                           `}
+                          style={{
+                            borderColor: 'rgb(var(--border-default))',
+                            color: canDeactivate ? 'rgb(var(--text-secondary))' : 'rgb(var(--text-muted))',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (canDeactivate) {
+                              e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                              e.currentTarget.style.color = 'rgb(var(--heading-primary))';
+                              e.currentTarget.style.borderColor = 'rgb(var(--border-strong))';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (canDeactivate) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = 'rgb(var(--text-secondary))';
+                              e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+                            }
+                          }}
                           title={
                             usedInEnvelope
                               ? "Cannot deactivate - part of vault's encryption envelope"
@@ -406,9 +436,9 @@ export const KeyTable: React.FC<KeyTableProps> = ({
         {/* Empty State */}
         {keys.length === 0 && (
           <div className="text-center py-12">
-            <Key className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-600 mb-2">No keys found</h3>
-            <p className="text-sm text-slate-500">
+            <Key className="h-12 w-12 text-muted mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-secondary mb-2">No keys found</h3>
+            <p className="text-sm text-secondary">
               Create a new passphrase key or detect a YubiKey to get started
             </p>
           </div>
