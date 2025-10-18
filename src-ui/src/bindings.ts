@@ -1242,7 +1242,15 @@ export type YubiKeyState =
  * When creating registry entries, use KeyLifecycleStatus::Suspended instead.
  */
 "orphaned"
-export type YubiKeyStateInfo = { serial: string; state: YubiKeyState; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus; firmware_version: string | null; created_at: string; last_used: string | null }
+export type YubiKeyStateInfo = { serial: string; 
+/**
+ * Device-level state (hardware initialization status)
+ */
+state: YubiKeyState; 
+/**
+ * Registry-level lifecycle status (NIST-aligned) for consistent UI badges
+ */
+lifecycle_status: KeyLifecycleStatus; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus; firmware_version: string | null; created_at: string; last_used: string | null }
 /**
  * Result from YubiKey operations
  */

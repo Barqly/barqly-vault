@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { commands, YubiKeyStateInfo } from '../../bindings';
+import { getKeyLifecycleStatusBadge } from '../../lib/format-utils';
 
 interface YubiKeyRegistryDialogProps {
   isOpen: boolean;
@@ -307,21 +308,14 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                                       : 'Ready to register'}
                               </p>
                             </div>
-                            {yk.state === 'new' && (
-                              <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
-                                New
-                              </span>
-                            )}
-                            {yk.state === 'orphaned' && (
-                              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                                Initialized
-                              </span>
-                            )}
-                            {yk.state === 'reused' && (
-                              <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded">
-                                Reset
-                              </span>
-                            )}
+                            {(() => {
+                              const badge = getKeyLifecycleStatusBadge(yk.lifecycle_status);
+                              return (
+                                <span className={`text-xs px-2 py-1 rounded ${badge.bgClass} ${badge.textClass}`}>
+                                  {badge.label}
+                                </span>
+                              );
+                            })()}
                           </div>
                         </button>
                       ))}
