@@ -7,10 +7,12 @@ const DEFAULT_MGMT_KEY: &str = "010203040506070801020304050607080102030405060708
 
 /// Change management key to TDES with protected mode
 #[instrument(skip(pin))]
-pub fn change_management_key_pty(pin: &str) -> Result<()> {
-    info!("Changing management key to TDES with protected mode");
+pub fn change_management_key_pty(serial: &str, pin: &str) -> Result<()> {
+    info!("Changing management key to TDES with protected mode for YubiKey {}", serial);
 
     let args = vec![
+        "--device".to_string(),
+        serial.to_string(),
         "piv".to_string(),
         "access".to_string(),
         "change-management-key".to_string(),
@@ -24,7 +26,7 @@ pub fn change_management_key_pty(pin: &str) -> Result<()> {
         pin.to_string(),
     ];
 
-    debug!(command = %format!("piv access change-management-key -a tdes -p -g -m [REDACTED] -P [REDACTED]"), "Executing ykman command");
+    debug!(command = %format!("ykman --device {} piv access change-management-key -a tdes -p -g -m [REDACTED] -P [REDACTED]", serial), "Executing ykman command");
 
     match run_ykman_command(args, Some(pin)) {
         Ok(output) => {

@@ -10,11 +10,16 @@ const DEFAULT_PUK: &str = "12345678";
 /// Check if YubiKey has default PIN
 /// Uses 'ykman piv info' without PIN and parses output for default PIN warnings
 #[instrument]
-pub fn has_default_pin() -> Result<bool> {
-    info!("Checking if YubiKey has default PIN by parsing piv info output");
+pub fn has_default_pin(serial: &str) -> Result<bool> {
+    info!("Checking if YubiKey {} has default PIN by parsing piv info output", serial);
 
     // Run 'ykman piv info' without PIN - this doesn't require authentication
-    let args = vec!["piv".to_string(), "info".to_string()];
+    let args = vec![
+        "--device".to_string(),
+        serial.to_string(),
+        "piv".to_string(),
+        "info".to_string(),
+    ];
 
     let output = run_ykman_command(args, None)?;
 
@@ -33,8 +38,9 @@ pub fn has_default_pin() -> Result<bool> {
 
 /// Change YubiKey PIN via PTY
 #[instrument(skip(old_pin, new_pin))]
-pub fn change_pin_pty(old_pin: &str, new_pin: &str) -> Result<()> {
+pub fn change_pin_pty(serial: &str, old_pin: &str, new_pin: &str) -> Result<()> {
     info!(
+        serial = %serial,
         old_pin_type = if old_pin == DEFAULT_PIN {
             "DEFAULT"
         } else {
@@ -55,6 +61,8 @@ pub fn change_pin_pty(old_pin: &str, new_pin: &str) -> Result<()> {
     }
 
     let args = vec![
+        "--device".to_string(),
+        serial.to_string(),
         "piv".to_string(),
         "access".to_string(),
         "change-pin".to_string(),
@@ -64,7 +72,7 @@ pub fn change_pin_pty(old_pin: &str, new_pin: &str) -> Result<()> {
         new_pin.to_string(),
     ];
 
-    debug!(command = %args.join(" "), "Executing ykman command");
+    debug!(command = %format!("ykman --device {} piv access change-pin -P [REDACTED] -n [REDACTED]", serial), "Executing ykman command");
 
     match run_ykman_command(args, Some(old_pin)) {
         Ok(output) => {
@@ -80,8 +88,9 @@ pub fn change_pin_pty(old_pin: &str, new_pin: &str) -> Result<()> {
 
 /// Change YubiKey PUK via PTY
 #[instrument(skip(old_puk, new_puk))]
-pub fn change_puk_pty(old_puk: &str, new_puk: &str) -> Result<()> {
+pub fn change_puk_pty(serial: &str, old_puk: &str, new_puk: &str) -> Result<()> {
     info!(
+        serial = %serial,
         old_puk_type = if old_puk == DEFAULT_PUK {
             "DEFAULT"
         } else {
@@ -102,6 +111,8 @@ pub fn change_puk_pty(old_puk: &str, new_puk: &str) -> Result<()> {
     }
 
     let args = vec![
+        "--device".to_string(),
+        serial.to_string(),
         "piv".to_string(),
         "access".to_string(),
         "change-puk".to_string(),
@@ -111,7 +122,7 @@ pub fn change_puk_pty(old_puk: &str, new_puk: &str) -> Result<()> {
         new_puk.to_string(),
     ];
 
-    debug!(command = %args.join(" "), "Executing ykman command");
+    debug!(command = %format!("ykman --device {} piv access change-puk -p [REDACTED] -n [REDACTED]", serial), "Executing ykman command");
 
     match run_ykman_command(args, None) {
         Ok(output) => {
@@ -127,9 +138,10 @@ pub fn change_puk_pty(old_puk: &str, new_puk: &str) -> Result<()> {
 
 /// Initialize YubiKey with secure defaults (simplified for retired slots)
 #[instrument(skip(new_pin, new_puk))]
-pub fn initialize_yubikey(new_pin: &str, new_puk: &str) -> Result<()> {
-    info!("Initializing YubiKey with secure defaults");
+pub fn initialize_yubikey(serial: &str, new_pin: &str, new_puk: &str) -> Result<()> {
+    info!("Initializing YubiKey {} with secure defaults", serial);
     debug!(
+        serial = %serial,
         new_pin_length = new_pin.len(),
         new_puk_length = new_puk.len(),
         "Credential lengths"
@@ -139,54 +151,27 @@ pub fn initialize_yubikey(new_pin: &str, new_puk: &str) -> Result<()> {
 
     // Step 1: Change PIN from default
     info!("Step 1: Changing PIN from default...");
-    change_pin_pty(DEFAULT_PIN, new_pin)?;
+    change_pin_pty(serial, DEFAULT_PIN, new_pin)?;
     info!("Step 1 complete: PIN changed successfully");
 
     // Step 2: Change PUK from default
     info!("Step 2: Changing PUK from default...");
-    change_puk_pty(DEFAULT_PUK, new_puk)?;
+    change_puk_pty(serial, DEFAULT_PUK, new_puk)?;
     info!("Step 2 complete: PUK changed successfully");
 
     // Step 3: Change management key to TDES with protected mode
     // NOTE: This is required even for retired slots because age-plugin-yubikey
     // checks the management key state and requires TDES+protected mode
     info!("Step 3: Changing management key to TDES with protected mode...");
-    change_management_key_pty(new_pin)?;
+    change_management_key_pty(serial, new_pin)?;
     info!("Step 3 complete: Management key changed successfully");
 
     info!("YubiKey initialization complete");
     Ok(())
 }
 
-/// Initialize YubiKey with auto-generated recovery code
-#[instrument(skip(new_pin))]
-pub fn initialize_yubikey_with_recovery(new_pin: &str) -> Result<String> {
-    use crate::services::key_management::shared::generate_recovery_code;
-
-    info!("Initializing YubiKey with auto-generated recovery code");
-
-    // Generate Base58 recovery code for PUK
-    let recovery_code = generate_recovery_code();
-    log_sensitive!(dev_only: {
-        debug!(
-            recovery_code_preview = %&recovery_code[..4],
-            recovery_code_length = recovery_code.len(),
-            "Generated recovery code (PUK)"
-        );
-    });
-
-    // Initialize with PIN and recovery code as PUK
-    match initialize_yubikey(new_pin, &recovery_code) {
-        Ok(_) => {
-            info!("YubiKey initialized with recovery code successfully");
-            Ok(recovery_code)
-        }
-        Err(e) => {
-            warn!(error = ?e, "Failed to initialize YubiKey");
-            Err(e)
-        }
-    }
-}
+// Note: initialize_yubikey_with_recovery has been removed
+// We now use initialize_yubikey directly with user-provided recovery PIN
 
 /// Verify YubiKey PIN by accepting the PIN without separate verification
 ///

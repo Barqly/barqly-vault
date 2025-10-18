@@ -30,7 +30,7 @@ pub struct StreamlinedYubiKeyInitResult {
     pub recipient: String,
     pub identity_tag: String,
     pub label: String,
-    pub recovery_code: String,
+    // Recovery code removed - user provides their own recovery PIN
 }
 
 /// List all YubiKeys with intelligent state detection
@@ -65,6 +65,7 @@ pub async fn list_yubikeys() -> Result<Vec<YubiKeyStateInfo>, CommandError> {
 pub async fn init_yubikey(
     serial: String,
     new_pin: String,
+    recovery_pin: String,
     label: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
     info!(
@@ -72,12 +73,22 @@ pub async fn init_yubikey(
         label
     );
 
+    // Validate that PIN and recovery PIN are different
+    if new_pin == recovery_pin {
+        return Err(CommandError::validation(
+            "PIN and Recovery PIN must be different for security".to_string(),
+        ));
+    }
+
     // Create domain objects for type safety
     let serial_obj = Serial::new(serial.clone())
         .map_err(|e| CommandError::validation(format!("Invalid serial format: {e}")))?;
 
     let pin_obj =
         Pin::new(new_pin).map_err(|e| CommandError::validation(format!("Invalid PIN: {e}")))?;
+
+    let recovery_pin_obj = Pin::new(recovery_pin)
+        .map_err(|e| CommandError::validation(format!("Invalid Recovery PIN: {e}")))?;
 
     // Initialize YubiKey manager
     let manager = YubiKeyManager::new().await.map_err(|e| {
@@ -87,9 +98,9 @@ pub async fn init_yubikey(
         )
     })?;
 
-    // Generate recovery code using centralized hardware initialization
-    let recovery_code = manager
-        .initialize_device_hardware(&pin_obj)
+    // Initialize hardware with user-provided recovery PIN (no auto-generation)
+    manager
+        .initialize_device_hardware(&serial_obj, &pin_obj, &recovery_pin_obj)
         .await
         .map_err(|e| {
             CommandError::operation(
@@ -98,10 +109,10 @@ pub async fn init_yubikey(
             )
         })?;
 
-    // Hash recovery code for secure storage
+    // Hash recovery PIN for secure storage
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
-    hasher.update(recovery_code.as_bytes());
+    hasher.update(recovery_pin_obj.value().as_bytes());
     let recovery_code_hash = format!("{:x}", hasher.finalize());
 
     // Use centralized manager for the complete initialization workflow
@@ -138,7 +149,7 @@ pub async fn init_yubikey(
         recipient: identity.to_recipient().to_string(),
         identity_tag: identity.identity_tag().to_string(),
         label,
-        recovery_code, // Return to UI for one-time display
+        // Recovery PIN not returned - user already knows it
     })
 }
 
@@ -303,6 +314,6 @@ pub async fn register_yubikey(
         recipient: identity.to_recipient().to_string(),
         identity_tag: identity.identity_tag().to_string(),
         label,
-        recovery_code: String::new(), // No recovery code for orphaned keys (already initialized)
+        // Recovery code removed - not needed for registration
     })
 }

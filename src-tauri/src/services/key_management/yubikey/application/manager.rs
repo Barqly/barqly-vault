@@ -468,25 +468,32 @@ impl YubiKeyManager {
     // High-Level Workflow Operations
     // =============================================================================
 
-    /// Initialize YubiKey hardware with recovery code generation
+    /// Initialize YubiKey hardware with user-provided recovery PIN
     /// This handles the low-level hardware initialization with ykman
-    pub async fn initialize_device_hardware(&self, pin: &Pin) -> YubiKeyResult<String> {
-        info!("Initializing YubiKey hardware with auto-generated recovery code");
+    pub async fn initialize_device_hardware(
+        &self,
+        serial: &Serial,
+        pin: &Pin,
+        recovery_pin: &Pin,
+    ) -> YubiKeyResult<()> {
+        info!("Initializing YubiKey hardware with user-provided recovery PIN");
 
         // Import the PTY function for hardware initialization
-        use crate::services::key_management::yubikey::infrastructure::pty::ykman_ops::initialize_yubikey_with_recovery;
+        use crate::services::key_management::yubikey::infrastructure::pty::ykman_ops::initialize_yubikey;
 
-        // Generate recovery code and initialize hardware
-        let recovery_code = tokio::task::spawn_blocking({
+        // Initialize hardware with user-provided PINs
+        tokio::task::spawn_blocking({
+            let serial_value = serial.value().to_string();
             let pin_value = pin.value().to_string();
-            move || initialize_yubikey_with_recovery(&pin_value)
+            let recovery_pin_value = recovery_pin.value().to_string();
+            move || initialize_yubikey(&serial_value, &pin_value, &recovery_pin_value)
         })
         .await
         .map_err(|e| YubiKeyError::device(format!("Task join error: {}", e)))?
         .map_err(|e| YubiKeyError::device(format!("Hardware initialization failed: {}", e)))?;
 
         info!("YubiKey hardware initialized successfully");
-        Ok(recovery_code)
+        Ok(())
     }
 
     /// Initialize YubiKey for first-time use
@@ -517,10 +524,11 @@ impl YubiKeyManager {
         );
 
         if needs_hardware_init {
-            info!("Fresh YubiKey detected, initializing hardware first");
-            // Initialize hardware with new PIN/PUK/management key
-            let _recovery_code = self.initialize_device_hardware(pin).await?;
-            info!("Hardware initialization completed");
+            info!("Fresh YubiKey detected, but hardware should already be initialized");
+            // Hardware initialization should have been done by the command layer
+            // calling initialize_device_hardware before this method.
+            // We'll just log and continue since hardware is already set up.
+            info!("Proceeding with identity generation after hardware init");
         } else {
             info!("YubiKey already initialized, validating PIN");
             // Validate existing PIN

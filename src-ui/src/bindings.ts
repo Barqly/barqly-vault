@@ -435,9 +435,9 @@ async listYubikeys() : Promise<Result<YubiKeyStateInfo[], CommandError>> {
  * Initialize a brand new YubiKey device
  * Uses YubiKeyManager for complete hardware and software initialization
  */
-async initYubikey(serial: string, newPin: string, label: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
+async initYubikey(serial: string, newPin: string, recoveryPin: string, label: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("init_yubikey", { serial, newPin, label }) };
+    return { status: "ok", data: await TAURI_INVOKE("init_yubikey", { serial, newPin, recoveryPin, label }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -1042,7 +1042,7 @@ export type SetCurrentVaultRequest = { vault_id: string }
  * Response from setting current vault
  */
 export type SetCurrentVaultResponse = { success: boolean; vault: VaultSummary }
-export type StreamlinedYubiKeyInitResult = { serial: string; slot: number; recipient: string; identity_tag: string; label: string; recovery_code: string }
+export type StreamlinedYubiKeyInitResult = { serial: string; slot: number; recipient: string; identity_tag: string; label: string }
 /**
  * Credentials for unlocking vaults
  */
