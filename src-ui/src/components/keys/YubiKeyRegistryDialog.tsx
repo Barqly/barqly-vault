@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
+import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info, RefreshCw, Copy, Check, ChevronDown } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { commands, YubiKeyStateInfo, YubiKeyState } from '../../bindings';
 
@@ -60,6 +60,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
   const [isSetupInProgress, setIsSetupInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'detect' | 'setup' | 'recovery'>('detect');
+  const [isCopied, setIsCopied] = useState(false);
+  const [showSecurityTips, setShowSecurityTips] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -231,6 +233,17 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
   };
 
   if (!isOpen) return null;
+
+  // Copy public key to clipboard
+  const handleCopyPublicKey = async (publicKey: string) => {
+    try {
+      await navigator.clipboard.writeText(publicKey);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      logger.error('YubiKeyRegistryDialog', 'Failed to copy public key', err);
+    }
+  };
 
   // Handle backdrop click - progressive dismissal
   const handleBackdropClick = () => {
@@ -473,30 +486,36 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
             {/* Setup Step - For ORPHANED YubiKeys */}
             {step === 'setup' && selectedKey && selectedKey.state === 'orphaned' && (
               <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm text-blue-800 font-medium">YubiKey Ready</p>
-                      <p className="text-sm text-blue-700 mt-1">
-                        This YubiKey is already initialized. Provide a label and verify your PIN to
-                        add it to the registry.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
+                {/* YubiKey Info - S/N and Public Key */}
                 <div className="bg-gray-50 rounded-lg p-3 space-y-2">
                   <p className="text-sm text-gray-700">
-                    <span className="font-medium">Serial:</span> {selectedKey.serial}
+                    <span className="font-medium">S/N:</span> {selectedKey.serial}
                   </p>
                   {selectedKey.recipient && (
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">Has encryption key:</span> Yes ✓
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-700">
+                          <span className="font-medium">Public key:</span>{' '}
+                          <span className="font-mono text-xs">{selectedKey.recipient.substring(0, 20)}...</span>
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleCopyPublicKey(selectedKey.recipient!)}
+                        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                        aria-label="Copy public key"
+                        title="Copy public key"
+                      >
+                        {isCopied ? (
+                          <Check className="h-3.5 w-3.5 text-green-600" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
                   )}
                 </div>
 
+                {/* Form Fields */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Label *</label>
                   <input
@@ -523,13 +542,28 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   />
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <div className="flex gap-2">
-                    <Info className="h-5 w-5 text-amber-600 flex-shrink-0" />
-                    <p className="text-sm text-amber-800">
-                      This YubiKey is already initialized and ready to use
-                    </p>
-                  </div>
+                {/* YubiKey Ready - Collapsible */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowSecurityTips(!showSecurityTips)}
+                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                    aria-expanded={showSecurityTips}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>YubiKey Ready</span>
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform duration-200 ${showSecurityTips ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+
+                  {showSecurityTips && (
+                    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-sm text-blue-800">
+                        This YubiKey is already initialized and ready to use. Once added to the registry, you can attach it to vaults for encryption operations.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {error && (
@@ -538,11 +572,27 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   </div>
                 )}
 
+                {/* Buttons with Premium Blue */}
                 <div className="flex gap-3">
                   <button
                     onClick={handleSetup}
                     disabled={isSetupInProgress || !label.trim() || !pin}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
+                    style={
+                      !(isSetupInProgress || !label.trim() || !pin)
+                        ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
+                        : { backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-muted))', borderColor: 'rgb(var(--border-default))' }
+                    }
+                    onMouseEnter={(e) => {
+                      if (!e.currentTarget.disabled) {
+                        e.currentTarget.style.backgroundColor = '#1E40AF';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!e.currentTarget.disabled) {
+                        e.currentTarget.style.backgroundColor = '#1D4ED8';
+                      }
+                    }}
                   >
                     {isSetupInProgress ? (
                       <>
