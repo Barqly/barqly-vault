@@ -485,13 +485,15 @@ const ManageKeysPage: React.FC = () => {
           />
         )}
 
-        {/* Create Key Modal */}
-        <CreateKeyModal
-          isOpen={showCreateKeyModal}
-          onClose={() => setShowCreateKeyModal(false)}
-          onCreatePassphrase={handleCreatePassphrase}
-          onRegisterYubiKey={handleDetectYubiKey}
-        />
+        {/* Create Key Modal - Hide when nested dialog is open */}
+        {showCreateKeyModal && !showPassphraseDialog && !isDetectingYubiKey && (
+          <CreateKeyModal
+            isOpen={showCreateKeyModal}
+            onClose={() => setShowCreateKeyModal(false)}
+            onCreatePassphrase={handleCreatePassphrase}
+            onRegisterYubiKey={handleDetectYubiKey}
+          />
+        )}
       </AppPrimaryContainer>
     </div>
   );
