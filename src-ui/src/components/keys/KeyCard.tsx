@@ -244,8 +244,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   return (
     <div
       className={`
-        relative rounded-lg border bg-white transition-all
-        ${isSelected ? 'ring-2 border-2' : 'border-slate-200 hover:shadow-lg'}
+        relative rounded-lg border bg-card transition-all
+        ${isSelected ? 'ring-2 border-2' : 'border-default hover:shadow-lg'}
       `}
       style={{
         boxShadow: isSelected
@@ -284,7 +284,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
 
         {/* Label with tooltip for full text */}
         <h3
-          className="font-semibold text-slate-800 truncate"
+          className="font-semibold text-main truncate"
           title={keyRef.label}
         >
           {displayLabel}
@@ -312,7 +312,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       {/* Row 3: Attachment Status + Serial (YubiKey) */}
       <div className="flex items-center justify-between px-5 pt-2 pb-2">
         <div className="flex items-center gap-1.5">
-          <span className={`text-xs font-medium ${vaultCount === 0 ? 'text-slate-500' : 'text-slate-600'}`}>
+          <span className="text-xs font-medium text-secondary">
             Attached to: {vaultCount} {vaultCount === 1 ? 'vault' : 'vaults'}
           </span>
           <button
@@ -336,7 +336,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
 
         {/* Serial (YubiKey only) - right-aligned */}
         {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
-          <span className="text-xs font-medium text-slate-600">
+          <span className="text-xs font-medium text-secondary">
             S/N: {keyRef.key_type.data.serial}
           </span>
         )}
@@ -346,8 +346,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       <div className="flex items-center px-5 pt-0 pb-2">
         {/* Public key with copy button */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-xs font-medium text-slate-600">Public key:</span>
-          <code className="text-xs text-slate-700 font-mono truncate" title={keyRef.recipient}>
+          <span className="text-xs font-medium text-secondary">Public key:</span>
+          <code className="text-xs text-main font-mono truncate" title={keyRef.recipient}>
             {keyRef.recipient.slice(0, 15)}...
           </code>
           <button
@@ -358,7 +358,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               setTimeout(() => setIsCopied(false), 2000);
             }}
             className={`transition-colors ${
-              isCopied ? 'text-green-600' : 'text-slate-400 hover:text-slate-600'
+              isCopied ? 'text-green-600' : 'text-muted hover:text-secondary'
             }`}
             title={isCopied ? 'Copied!' : 'Copy public key'}
           >
@@ -368,7 +368,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       </div>
 
       {/* Footer: Action Buttons */}
-      <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-slate-100">
+      <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-subtle">
         {/* Left: Deactivate/Restore */}
         {isDeactivated ? (
           <button
@@ -403,11 +403,11 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             disabled={isLoading || !canDeactivate}
             className={`
               flex items-center justify-center gap-1 px-3 py-1.5
-              text-xs font-medium rounded-md transition-colors
+              text-xs font-medium rounded-md transition-colors border
               disabled:opacity-50 disabled:cursor-not-allowed
               ${canDeactivate
-                ? 'text-slate-600 border border-slate-300 hover:bg-slate-50'
-                : 'text-slate-400 border border-slate-300'
+                ? 'text-secondary border-default hover:bg-hover'
+                : 'text-muted border-default'
               }
             `}
             title={deactivateTooltip}
@@ -425,9 +425,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             }}
             className="
               flex items-center gap-1 px-3 py-1.5
-              text-xs font-medium text-slate-600
-              border border-slate-200 rounded-md
-              hover:bg-slate-50 transition-colors
+              text-xs font-medium text-secondary
+              border border-default rounded-md
+              hover:bg-hover transition-colors
             "
             title="Download an encrypted backup of this key for recovery"
           >
