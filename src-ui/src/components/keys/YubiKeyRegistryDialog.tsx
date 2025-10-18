@@ -232,10 +232,28 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
   if (!isOpen) return null;
 
+  // Handle backdrop click - progressive dismissal
+  const handleBackdropClick = () => {
+    if (step === 'detect') {
+      // On detect step, close entire dialog
+      handleCancel();
+    } else if (step === 'setup') {
+      // On setup step, go back to detect
+      setStep('detect');
+      setSelectedKey(null);
+      setPin('');
+      setConfirmPin('');
+      setError(null);
+    } else if (step === 'recovery') {
+      // On recovery step, prevent closing (user must acknowledge)
+      // Do nothing - user must click "I Have Saved My Recovery Code"
+    }
+  };
+
   return (
     <>
-      {/* Backdrop with blur */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" onClick={handleCancel} />
+      {/* Backdrop with blur - progressive dismissal */}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" onClick={handleBackdropClick} />
 
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center z-[70] p-4 pointer-events-none">
