@@ -412,52 +412,52 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 `}
                 aria-hidden={!showSecurityTips}
               >
-                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                <div className="rounded-xl border p-4" style={{ borderColor: 'rgb(var(--border-default))', backgroundColor: 'rgb(var(--surface-hover))' }}>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <div className="mb-1 flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-semibold text-blue-800 ring-1 ring-slate-200">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-blue-600 border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
                           1
                         </span>
-                        <span className="text-sm font-semibold text-blue-800">
+                        <span className="text-sm font-semibold text-blue-600">
                           Use Unique Passphrase
                         </span>
                       </div>
-                      <p className="text-sm text-slate-700 leading-relaxed">
+                      <p className="text-sm text-secondary leading-relaxed">
                         Never reuse from other accounts.
                       </p>
                     </div>
 
                     <div>
                       <div className="mb-1 flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-semibold text-blue-800 ring-1 ring-slate-200">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-blue-600 border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
                           2
                         </span>
-                        <span className="text-sm font-semibold text-blue-800">
+                        <span className="text-sm font-semibold text-blue-600">
                           Generate Strong One
                         </span>
                       </div>
-                      <p className="text-sm text-slate-700 leading-relaxed">
+                      <p className="text-sm text-secondary leading-relaxed">
                         Use a passphrase generator.
                       </p>
                     </div>
 
                     <div>
                       <div className="mb-1 flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-semibold text-blue-800 ring-1 ring-slate-200">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-blue-600 border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
                           3
                         </span>
-                        <span className="text-sm font-semibold text-blue-800">
+                        <span className="text-sm font-semibold text-blue-600">
                           Store Securely
                         </span>
                       </div>
-                      <p className="text-sm text-slate-700 leading-relaxed">
+                      <p className="text-sm text-secondary leading-relaxed">
                         Save in password manager.
                       </p>
                     </div>
                   </div>
 
-                  <p className="mt-4 border-t border-slate-200 pt-3 text-xs text-slate-500 italic">
+                  <p className="mt-4 border-t pt-3 text-xs text-secondary italic" style={{ borderColor: 'rgb(var(--border-default))' }}>
                     <span className="font-semibold">Security Note:</span> Your passphrase cannot be recovered if lost. Store it carefully in a password manager.
                   </p>
                 </div>
@@ -481,15 +481,15 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                   !validation?.is_valid ||
                   passphrase !== confirmPassphrase
                 }
-                className="flex-1 px-4 py-2 text-white rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
                 style={
                   !(isCreating ||
                     !label.trim() ||
                     labelError !== null ||
                     !validation?.is_valid ||
                     passphrase !== confirmPassphrase)
-                    ? { backgroundColor: '#1D4ED8' }
-                    : undefined
+                    ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
+                    : { backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-muted))', borderColor: 'rgb(var(--border-default))' }
                 }
                 onMouseEnter={(e) => {
                   if (!e.currentTarget.disabled) {
