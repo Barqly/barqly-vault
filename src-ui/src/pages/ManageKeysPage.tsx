@@ -347,7 +347,7 @@ const ManageKeysPage: React.FC = () => {
                   >
                     <Fingerprint className="h-12 w-12" style={{ color: '#F98B1C' }} />
                   </div>
-                  <h4 className="font-semibold" style={{ color: '#334155' }}>
+                  <h4 className="font-semibold text-heading">
                     YubiKey
                   </h4>
                   <p className="text-sm text-secondary text-center">Hardware security key</p>
@@ -377,7 +377,7 @@ const ManageKeysPage: React.FC = () => {
                   >
                     <Key className="h-12 w-12" style={{ color: '#13897F' }} />
                   </div>
-                  <h4 className="font-semibold" style={{ color: '#334155' }}>
+                  <h4 className="font-semibold text-heading">
                     Passphrase
                   </h4>
                   <p className="text-sm text-secondary text-center">Password-protected key</p>
