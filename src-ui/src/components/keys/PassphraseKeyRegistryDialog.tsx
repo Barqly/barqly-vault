@@ -416,10 +416,10 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <div className="mb-1 flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-blue-600 border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
                           1
                         </span>
-                        <span className="text-sm font-semibold text-blue-600">
+                        <span className="text-sm font-semibold text-heading">
                           Use Unique Passphrase
                         </span>
                       </div>
@@ -430,10 +430,10 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
 
                     <div>
                       <div className="mb-1 flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-blue-600 border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
                           2
                         </span>
-                        <span className="text-sm font-semibold text-blue-600">
+                        <span className="text-sm font-semibold text-heading">
                           Generate Strong One
                         </span>
                       </div>
@@ -444,10 +444,10 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
 
                     <div>
                       <div className="mb-1 flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-blue-600 border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
                           3
                         </span>
-                        <span className="text-sm font-semibold text-blue-600">
+                        <span className="text-sm font-semibold text-heading">
                           Store Securely
                         </span>
                       </div>
