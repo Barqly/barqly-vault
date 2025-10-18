@@ -63,22 +63,22 @@ enum KeyState {
 enum YubiKeyState {
     New,         // Brand new with default PIN
     Reused,      // Custom PIN but no age identity
-    Registered,  // Fully configured and ready
     Orphaned,    // Has identity but no manifest entry
+    Registered,  // Fully configured and ready
 }
 ```
 
 ### State Mapping Table
 
-| Current System | Current State | New NIST State | Migration Notes |
-|----------------|---------------|----------------|-----------------|
-| KeyState | Active | **Active** | Direct mapping |
-| KeyState | Registered | **Active** | Was confusing - registered means active |
-| KeyState | Orphaned | **PreActivation** or **Suspended** | Depends on usage history |
-| YubiKeyState | New | **PreActivation** | Never been used |
-| YubiKeyState | Reused | **PreActivation** | Setup incomplete |
-| YubiKeyState | Registered | **Active** | Ready for use |
-| YubiKeyState | Orphaned | **Suspended** | Was active, now detached |
+| Current System  | Current State | New NIST State                      | Migration Notes |
+|---------------- |---------------|----------------                     |-----------------|
+| KeyState        | Active        | **Active**                          | Direct mapping |
+| KeyState        | Registered    | **Active**                          | Was confusing - registered means active |
+| KeyState        | Orphaned      | **PreActivation** or **Suspended**  | Depends on usage history |
+| YubiKeyState    | New           | **PreActivation**                   | Never been used |
+| YubiKeyState    | Reused        | **PreActivation**                   | Setup incomplete |
+| YubiKeyState    | Registered    | **Active**                          | Ready for use |
+| YubiKeyState    | Orphaned      | **Suspended**                       | Was active, now detached |
 
 ### Migration Logic
 

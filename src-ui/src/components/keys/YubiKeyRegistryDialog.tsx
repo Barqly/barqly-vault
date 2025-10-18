@@ -1,14 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import { logger } from '../../lib/logger';
-import { commands, YubiKeyStateInfo } from '../../bindings';
-import { getKeyLifecycleStatusBadge } from '../../lib/format-utils';
+import { commands, YubiKeyStateInfo, YubiKeyState } from '../../bindings';
 
 interface YubiKeyRegistryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
+
+/**
+ * Get user-friendly badge configuration for YubiKey device state
+ * Context: Registration dialog - user needs to know setup status, not lifecycle management
+ */
+const getDeviceStateBadge = (state: YubiKeyState) => {
+  switch (state) {
+    case 'new':
+    case 'reused':
+      return {
+        label: 'Ready to Setup',
+        bgClass: 'bg-gray-100',
+        textClass: 'text-gray-700',
+      };
+    case 'orphaned':
+      return {
+        label: 'Ready to Add',
+        bgClass: 'bg-blue-100',
+        textClass: 'text-blue-700',
+      };
+    case 'registered':
+      return {
+        label: 'Registered',
+        bgClass: 'bg-green-100',
+        textClass: 'text-green-700',
+      };
+  }
+};
 
 /**
  * Dialog for registering YubiKeys to the global registry (vault-agnostic)
@@ -309,7 +336,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                               </p>
                             </div>
                             {(() => {
-                              const badge = getKeyLifecycleStatusBadge(yk.lifecycle_status);
+                              const badge = getDeviceStateBadge(yk.state);
                               return (
                                 <span className={`text-xs px-2 py-1 rounded ${badge.bgClass} ${badge.textClass}`}>
                                   {badge.label}
