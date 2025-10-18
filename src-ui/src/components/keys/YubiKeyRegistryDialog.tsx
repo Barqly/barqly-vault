@@ -457,9 +457,21 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                         value={confirmPin}
                         onChange={(e) => setConfirmPin(e.target.value)}
                         maxLength={8}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                        style={
+                          confirmPin
+                            ? pin === confirmPin
+                              ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                              : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
+                            : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                        }
                         placeholder="6-8 digits"
                       />
+                      {confirmPin && (
+                        <p className="text-xs mt-1" style={{ color: pin === confirmPin ? 'inherit' : '#B91C1C' }}>
+                          {pin === confirmPin ? '' : 'PINs do not match'}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -474,9 +486,21 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                         value={recoveryPin}
                         onChange={(e) => setRecoveryPin(e.target.value)}
                         maxLength={8}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                        style={
+                          recoveryPin && pin
+                            ? recoveryPin !== pin
+                              ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                              : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
+                            : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                        }
                         placeholder="6-8 digits"
                       />
+                      {recoveryPin && pin && recoveryPin === pin && (
+                        <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>
+                          Cannot be same as PIN
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -488,13 +512,25 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                         value={confirmRecoveryPin}
                         onChange={(e) => setConfirmRecoveryPin(e.target.value)}
                         maxLength={8}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                        style={
+                          confirmRecoveryPin
+                            ? recoveryPin === confirmRecoveryPin
+                              ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                              : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
+                            : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                        }
                         placeholder="6-8 digits"
                       />
+                      {confirmRecoveryPin && (
+                        <p className="text-xs mt-1" style={{ color: recoveryPin === confirmRecoveryPin ? 'inherit' : '#B91C1C' }}>
+                          {recoveryPin === confirmRecoveryPin ? '' : 'Recovery PINs do not match'}
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {/* Recovery Code - Collapsible */}
+                  {/* Security Tips - Collapsible */}
                   <div>
                     <button
                       type="button"
@@ -503,19 +539,62 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       aria-expanded={showSecurityTips}
                     >
                       <Info className="h-4 w-4" />
-                      <span>Recovery Code</span>
+                      <span>Security Tips</span>
                       <ChevronDown
                         className={`h-4 w-4 transition-transform duration-200 ${showSecurityTips ? 'rotate-180' : ''}`}
                       />
                     </button>
 
-                    {showSecurityTips && (
-                      <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-sm text-blue-800">
-                          A recovery code will be generated for PIN recovery. Save it securely - you'll only see it once!
+                    <div
+                      className={`
+                        overflow-hidden transition-all duration-300 ease-in-out
+                        ${showSecurityTips ? 'max-h-48 opacity-100 mt-4' : 'max-h-0 opacity-0'}
+                      `}
+                      aria-hidden={!showSecurityTips}
+                    >
+                      <div
+                        className="rounded-xl border p-4"
+                        style={{
+                          borderColor: 'rgb(var(--border-default))',
+                          backgroundColor: 'rgba(var(--info-panel-bg))',
+                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.05)'
+                        }}
+                      >
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="mb-1 flex items-center gap-2">
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
+                                1
+                              </span>
+                              <span className="text-sm font-semibold text-heading">
+                                PIN for Daily Use
+                              </span>
+                            </div>
+                            <p className="text-sm text-secondary leading-relaxed">
+                              Use your PIN for regular encryption and decryption operations.
+                            </p>
+                          </div>
+
+                          <div>
+                            <div className="mb-1 flex items-center gap-2">
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
+                                2
+                              </span>
+                              <span className="text-sm font-semibold text-heading">
+                                Recovery PIN for Emergencies
+                              </span>
+                            </div>
+                            <p className="text-sm text-secondary leading-relaxed">
+                              Needed only if your PIN is blocked after failed attempts.
+                            </p>
+                          </div>
+                        </div>
+
+                        <p className="mt-4 border-t pt-3 text-xs text-secondary italic" style={{ borderColor: 'rgb(var(--border-default))' }}>
+                          <span className="font-semibold">Security Note:</span> Store both PINs securely in a password manager. Keep them separate from your YubiKey.
                         </p>
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {error && (
