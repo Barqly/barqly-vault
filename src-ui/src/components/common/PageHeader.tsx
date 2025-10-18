@@ -66,11 +66,10 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         {/* Left side: Title only */}
         <div className="flex items-center">
           <h1
-            className="flex items-center gap-3 text-2xl font-semibold leading-none"
-            style={{ color: '#565555' }}
+            className="flex items-center gap-3 text-2xl font-semibold leading-none text-main"
             title={titleTooltip}
           >
-            <Icon className="h-5 w-5" style={{ color: '#475569' }} aria-hidden="true" />
+            <Icon className="h-5 w-5 text-secondary" aria-hidden="true" />
             {title}
           </h1>
         </div>
