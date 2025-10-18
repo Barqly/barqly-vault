@@ -10,31 +10,35 @@ interface YubiKeyRegistryDialogProps {
 }
 
 /**
- * Get user-friendly badge configuration for YubiKey device state
- * Context: Registration dialog - user needs to know setup status, not lifecycle management
+ * Get simplified badge for YubiKey registration
+ * Philosophy: Don't make users think - all non-registered YubiKeys just need to be "registered"
+ * The form will handle device-specific setup after selection
  */
-const getDeviceStateBadge = (state: YubiKeyState) => {
-  switch (state) {
-    case 'new':
-    case 'reused':
-      return {
-        label: 'Ready to Setup',
-        bgClass: 'bg-gray-100',
-        textClass: 'text-gray-700',
-      };
-    case 'orphaned':
-      return {
-        label: 'Ready to Add',
-        bgClass: 'bg-blue-100',
-        textClass: 'text-blue-700',
-      };
-    case 'registered':
-      return {
-        label: 'Registered',
-        bgClass: 'bg-green-100',
-        textClass: 'text-green-700',
-      };
+const getYubiKeyBadge = (state: YubiKeyState) => {
+  if (state === 'registered') {
+    return {
+      label: 'Registered',
+      bgClass: 'bg-green-100',
+      textClass: 'text-green-700',
+    };
   }
+
+  // All other states (new, reused, orphaned) = ready to register
+  return {
+    label: 'Register',
+    bgClass: 'bg-blue-100',
+    textClass: 'text-blue-700',
+  };
+};
+
+/**
+ * Get simplified description for YubiKey
+ */
+const getYubiKeyDescription = (state: YubiKeyState) => {
+  if (state === 'registered') {
+    return 'Already in registry';
+  }
+  return 'New device - ready to register';
 };
 
 /**
@@ -326,17 +330,11 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                                 YubiKey {yk.serial.substring(0, 8)}
                               </p>
                               <p className="text-xs text-gray-500">
-                                {yk.state === 'new'
-                                  ? 'New device - will be initialized'
-                                  : yk.state === 'orphaned'
-                                    ? 'Already initialized - ready to register'
-                                    : yk.state === 'reused'
-                                      ? 'Reset device - ready to initialize'
-                                      : 'Ready to register'}
+                                {getYubiKeyDescription(yk.state)}
                               </p>
                             </div>
                             {(() => {
-                              const badge = getDeviceStateBadge(yk.state);
+                              const badge = getYubiKeyBadge(yk.state);
                               return (
                                 <span className={`text-xs px-2 py-1 rounded ${badge.bgClass} ${badge.textClass}`}>
                                   {badge.label}
