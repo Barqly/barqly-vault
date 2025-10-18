@@ -49,6 +49,9 @@
   --status-new-text: 51 65 85;       /* slate-700 - Dark text */
   --status-new-border: 203 213 225;  /* slate-300 */
 
+  /* ===== INFO PANEL (Security Tips, Help) ===== */
+  --info-panel-bg: 239 246 255;      /* blue-50 - Light blue tint */
+
   /* ===== FOCUS & INTERACTION ===== */
   --focus-ring: 147 197 253;         /* blue-300 - Standard focus */
   --focus-ring-error: 252 165 165;   /* red-300 */
@@ -86,6 +89,9 @@
   --status-new-bg: 51 65 85;         /* slate-700 - Darker gray for dark mode */
   --status-new-text: 203 213 225;    /* slate-300 - Lighter text */
   --status-new-border: 71 85 105;    /* slate-600 */
+
+  /* ===== INFO PANEL (Dark Mode) ===== */
+  --info-panel-bg: 29 78 216 / 0.08; /* Premium blue tint 8% - Subtle, premium */
 
   /* OPTIONAL: Lighten brand colors for better dark mode contrast */
   /* Test these if contrast ratios fail: */

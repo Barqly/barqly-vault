@@ -412,7 +412,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 `}
                 aria-hidden={!showSecurityTips}
               >
-                <div className="rounded-xl border p-4" style={{ borderColor: 'rgb(var(--border-default))', backgroundColor: 'rgb(var(--surface-hover))' }}>
+                <div className="rounded-xl border p-4" style={{ borderColor: 'rgb(var(--border-default))', backgroundColor: 'rgba(var(--info-panel-bg))' }}>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <div className="mb-1 flex items-center gap-2">
