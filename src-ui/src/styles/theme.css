@@ -66,4 +66,7 @@
     color: rgb(var(--status-error));
     border: 1px solid #FCA5A5;
   }
+
+  /* ===== SVG FILLS ===== */
+  .fill-heading { fill: rgb(var(--heading-primary)); }
 }
