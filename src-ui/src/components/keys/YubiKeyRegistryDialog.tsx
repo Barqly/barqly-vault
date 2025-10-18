@@ -55,11 +55,12 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
   const [label, setLabel] = useState('');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
-  const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
+  const [recoveryPin, setRecoveryPin] = useState('');
+  const [confirmRecoveryPin, setConfirmRecoveryPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSetupInProgress, setIsSetupInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<'detect' | 'setup' | 'recovery'>('detect');
+  const [step, setStep] = useState<'detect' | 'setup'>('detect');
   const [isCopied, setIsCopied] = useState(false);
   const [showSecurityTips, setShowSecurityTips] = useState(false);
 
@@ -140,6 +141,21 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
     if (pin !== confirmPin) {
       return 'PINs do not match';
     }
+
+    // Validate Recovery PIN
+    if (recoveryPin.length < 6 || recoveryPin.length > 8) {
+      return 'Recovery PIN must be 6-8 digits';
+    }
+    if (!/^\d+$/.test(recoveryPin)) {
+      return 'Recovery PIN must contain only numbers';
+    }
+    if (recoveryPin !== confirmRecoveryPin) {
+      return 'Recovery PINs do not match';
+    }
+    if (pin === recoveryPin) {
+      return 'PIN and Recovery PIN cannot be the same';
+    }
+
     return null;
   };
 
@@ -166,15 +182,19 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
           state: selectedKey.state,
         });
 
-        const initResult = await commands.initYubikey(selectedKey.serial, pin, label.trim());
+        const initResult = await commands.initYubikey(
+          selectedKey.serial,
+          pin,
+          recoveryPin,
+          label.trim()
+        );
 
         if (initResult.status === 'error') {
           throw new Error(initResult.error.message || 'Failed to initialize YubiKey');
         }
 
-        // Show recovery code step
-        setRecoveryCode(initResult.data.recovery_code);
-        setStep('recovery');
+        // Success - no recovery code step needed
+        handleSuccess();
       } else if (selectedKey.state === 'orphaned') {
         // Register orphaned YubiKey
         logger.info('YubiKeyRegistryDialog', 'Registering orphaned YubiKey', {
@@ -202,17 +222,14 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
     }
   };
 
-  const handleRecoveryAcknowledge = () => {
-    handleSuccess();
-  };
-
   const handleSuccess = () => {
     // Clear form
     setSelectedKey(null);
     setLabel('');
     setPin('');
     setConfirmPin('');
-    setRecoveryCode(null);
+    setRecoveryPin('');
+    setConfirmRecoveryPin('');
     setStep('detect');
 
     onSuccess?.();
@@ -225,7 +242,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
       setLabel('');
       setPin('');
       setConfirmPin('');
-      setRecoveryCode(null);
+      setRecoveryPin('');
+      setConfirmRecoveryPin('');
       setError(null);
       setStep('detect');
       onClose();
@@ -256,10 +274,9 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
       setSelectedKey(null);
       setPin('');
       setConfirmPin('');
+      setRecoveryPin('');
+      setConfirmRecoveryPin('');
       setError(null);
-    } else if (step === 'recovery') {
-      // On recovery step, prevent closing (user must acknowledge)
-      // Do nothing - user must click "I Have Saved My Recovery Code"
     }
   };
 
@@ -415,35 +432,66 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     />
                   </div>
 
-                  {/* Create PIN */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Create PIN *
-                      <span className="text-gray-500 ml-2">(6-8 digits)</span>
-                    </label>
-                    <input
-                      type="password"
-                      value={pin}
-                      onChange={(e) => setPin(e.target.value)}
-                      maxLength={8}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="••••••"
-                    />
+                  {/* PIN Fields - 2 Column Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Create PIN *
+                      </label>
+                      <input
+                        type="password"
+                        value={pin}
+                        onChange={(e) => setPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="6-8 digits"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Confirm PIN *
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmPin}
+                        onChange={(e) => setConfirmPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="6-8 digits"
+                      />
+                    </div>
                   </div>
 
-                  {/* Confirm PIN */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirm PIN *
-                    </label>
-                    <input
-                      type="password"
-                      value={confirmPin}
-                      onChange={(e) => setConfirmPin(e.target.value)}
-                      maxLength={8}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="••••••"
-                    />
+                  {/* Recovery PIN Fields - 2 Column Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Recovery PIN *
+                      </label>
+                      <input
+                        type="password"
+                        value={recoveryPin}
+                        onChange={(e) => setRecoveryPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="6-8 digits"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Confirm Recovery PIN *
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmRecoveryPin}
+                        onChange={(e) => setConfirmRecoveryPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="6-8 digits"
+                      />
+                    </div>
                   </div>
 
                   {/* Recovery Code - Collapsible */}
@@ -479,10 +527,10 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   <div className="flex gap-3">
                     <button
                       onClick={handleSetup}
-                      disabled={isSetupInProgress || !label.trim() || !pin || !confirmPin}
+                      disabled={isSetupInProgress || !label.trim() || !pin || !confirmPin || !recoveryPin || !confirmRecoveryPin}
                       className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
                       style={
-                        !(isSetupInProgress || !label.trim() || !pin || !confirmPin)
+                        !(isSetupInProgress || !label.trim() || !pin || !confirmPin || !recoveryPin || !confirmRecoveryPin)
                           ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
                           : { backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-muted))', borderColor: 'rgb(var(--border-default))' }
                       }
@@ -652,48 +700,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
               </div>
             )}
 
-            {/* Recovery Code Step */}
-            {step === 'recovery' && recoveryCode && (
-              <div className="space-y-4">
-                <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-6 w-6 text-yellow-600 flex-shrink-0 mt-0.5" />
-                    <div className="space-y-3 flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Save Your Recovery Code
-                      </h3>
-                      <p className="text-sm text-gray-700">
-                        This code can unlock your YubiKey PIN if you forget it.
-                        <strong className="block mt-2 text-red-600">
-                          This is the ONLY time you will see this code!
-                        </strong>
-                      </p>
-                      <div className="bg-white border border-gray-300 rounded-lg p-4 font-mono text-xl text-center">
-                        {recoveryCode}
-                      </div>
-                      <button
-                        onClick={() => navigator.clipboard.writeText(recoveryCode)}
-                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                      >
-                        Copy Code
-                      </button>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• Store in a password manager</li>
-                        <li>• Keep separate from your YubiKey</li>
-                        <li>• Required for PIN recovery</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleRecoveryAcknowledge}
-                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
-                >
-                  <CheckCircle2 className="h-5 w-5" />I Have Saved My Recovery Code
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
