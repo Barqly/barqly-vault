@@ -278,17 +278,28 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
   // Focus trap: cycle focus within modal
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    const isOrphaned = selectedKey?.state === 'orphaned';
+
     // Enter key submission
     if (e.key === 'Enter' && !isSetupInProgress) {
-      const isFormValid =
-        label.trim() &&
-        pin &&
-        confirmPin &&
-        recoveryPin &&
-        confirmRecoveryPin &&
-        pin === confirmPin &&
-        recoveryPin === confirmRecoveryPin &&
-        pin !== recoveryPin;
+      let isFormValid = false;
+
+      if (isOrphaned) {
+        // Orphaned: only need label and PIN
+        isFormValid = !!(label.trim() && pin);
+      } else {
+        // New/Reused: need all PIN fields valid
+        isFormValid = !!(
+          label.trim() &&
+          pin &&
+          confirmPin &&
+          recoveryPin &&
+          confirmRecoveryPin &&
+          pin === confirmPin &&
+          recoveryPin === confirmRecoveryPin &&
+          pin !== recoveryPin
+        );
+      }
 
       if (isFormValid) {
         e.preventDefault();
@@ -300,16 +311,28 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
     // Tab key focus trap
     if (e.key !== 'Tab') return;
 
-    const isButtonEnabled =
-      !isSetupInProgress &&
-      label.trim() &&
-      pin &&
-      confirmPin &&
-      recoveryPin &&
-      confirmRecoveryPin &&
-      pin === confirmPin &&
-      recoveryPin === confirmRecoveryPin &&
-      pin !== recoveryPin;
+    let isButtonEnabled = false;
+    let lastInputId = '';
+
+    if (isOrphaned) {
+      // Orphaned form: Label + PIN
+      isButtonEnabled = !!(label.trim() && pin && !isSetupInProgress);
+      lastInputId = 'yubikey-pin-orphaned';
+    } else {
+      // New/Reused form: Label + PIN + Confirm + Recovery PIN + Confirm
+      isButtonEnabled = !!(
+        !isSetupInProgress &&
+        label.trim() &&
+        pin &&
+        confirmPin &&
+        recoveryPin &&
+        confirmRecoveryPin &&
+        pin === confirmPin &&
+        recoveryPin === confirmRecoveryPin &&
+        pin !== recoveryPin
+      );
+      lastInputId = 'confirm-recovery-pin';
+    }
 
     // If going backwards (Shift+Tab) from first field
     if (e.shiftKey && document.activeElement === firstFocusableRef.current) {
@@ -325,7 +348,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
       if (isButtonEnabled && document.activeElement === lastFocusableRef.current) {
         e.preventDefault();
         firstFocusableRef.current?.focus();
-      } else if (!isButtonEnabled && document.activeElement?.id === 'confirm-recovery-pin') {
+      } else if (!isButtonEnabled && document.activeElement?.id === lastInputId) {
         e.preventDefault();
         firstFocusableRef.current?.focus();
       }
@@ -784,7 +807,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
             {/* Setup Step - For ORPHANED YubiKeys */}
             {step === 'setup' && selectedKey && selectedKey.state === 'orphaned' && (
-              <div className="space-y-4">
+              <div className="space-y-4" onKeyDown={handleKeyDown}>
                 {/* S/N */}
                 <div>
                   <p className="text-sm text-gray-700">
@@ -820,6 +843,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">YubiKey Label *</label>
                   <input
+                    ref={firstFocusableRef}
                     type="text"
                     value={label}
                     onChange={(e) => setLabel(e.target.value)}
@@ -832,6 +856,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">YubiKey PIN *</label>
                   <input
+                    id="yubikey-pin-orphaned"
                     type="password"
                     value={pin}
                     onChange={(e) => setPin(e.target.value)}
@@ -846,6 +871,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowSecurityTips(!showSecurityTips)}
+                    tabIndex={-1}
                     className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
                     aria-expanded={showSecurityTips}
                   >
@@ -874,6 +900,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                 {/* Buttons with Premium Blue */}
                 <div className="flex gap-3">
                   <button
+                    ref={lastFocusableRef}
                     onClick={handleSetup}
                     disabled={isSetupInProgress || !label.trim() || !pin}
                     className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
@@ -909,6 +936,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       setError(null);
                     }}
                     disabled={isSetupInProgress}
+                    tabIndex={-1}
                     className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                   >
                     Back
