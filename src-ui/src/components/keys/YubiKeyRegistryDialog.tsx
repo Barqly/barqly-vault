@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info, RefreshCw, Copy, Check, ChevronDown } from 'lucide-react';
+import { X, Fingerprint, Loader2, AlertCircle, CheckCircle2, Info, RefreshCw, Copy, Check, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { commands, YubiKeyStateInfo, YubiKeyState } from '../../bindings';
 
@@ -63,6 +63,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
   const [step, setStep] = useState<'detect' | 'setup'>('detect');
   const [isCopied, setIsCopied] = useState(false);
   const [showSecurityTips, setShowSecurityTips] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+  const [showRecoveryPin, setShowRecoveryPin] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -438,35 +440,55 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Create PIN *
                       </label>
-                      <input
-                        type="password"
-                        value={pin}
-                        onChange={(e) => setPin(e.target.value)}
-                        maxLength={8}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="6-8 digits"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPin ? 'text' : 'password'}
+                          value={pin}
+                          onChange={(e) => setPin(e.target.value)}
+                          maxLength={8}
+                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="6-8 digits"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPin(!showPin)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
+                        >
+                          {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Confirm PIN *
                       </label>
-                      <input
-                        type="password"
-                        value={confirmPin}
-                        onChange={(e) => setConfirmPin(e.target.value)}
-                        maxLength={8}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
-                        style={
-                          confirmPin
-                            ? pin === confirmPin
-                              ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
-                              : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
-                            : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
-                        }
-                        placeholder="6-8 digits"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPin ? 'text' : 'password'}
+                          value={confirmPin}
+                          onChange={(e) => setConfirmPin(e.target.value)}
+                          maxLength={8}
+                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2"
+                          style={
+                            confirmPin
+                              ? pin === confirmPin
+                                ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                                : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
+                              : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                          }
+                          placeholder="6-8 digits"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPin(!showPin)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
+                        >
+                          {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                       {confirmPin && (
                         <p className="text-xs mt-1" style={{ color: pin === confirmPin ? 'inherit' : '#B91C1C' }}>
                           {pin === confirmPin ? '' : 'PINs do not match'}
@@ -481,21 +503,31 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Recovery PIN *
                       </label>
-                      <input
-                        type="password"
-                        value={recoveryPin}
-                        onChange={(e) => setRecoveryPin(e.target.value)}
-                        maxLength={8}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
-                        style={
-                          recoveryPin && pin
-                            ? recoveryPin !== pin
-                              ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
-                              : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
-                            : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
-                        }
-                        placeholder="6-8 digits"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showRecoveryPin ? 'text' : 'password'}
+                          value={recoveryPin}
+                          onChange={(e) => setRecoveryPin(e.target.value)}
+                          maxLength={8}
+                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2"
+                          style={
+                            recoveryPin && pin
+                              ? recoveryPin !== pin
+                                ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                                : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
+                              : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                          }
+                          placeholder="6-8 digits"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowRecoveryPin(!showRecoveryPin)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          aria-label={showRecoveryPin ? 'Hide Recovery PIN' : 'Show Recovery PIN'}
+                        >
+                          {showRecoveryPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                       {recoveryPin && pin && recoveryPin === pin && (
                         <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>
                           Cannot be same as PIN
@@ -507,21 +539,31 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Confirm Recovery PIN *
                       </label>
-                      <input
-                        type="password"
-                        value={confirmRecoveryPin}
-                        onChange={(e) => setConfirmRecoveryPin(e.target.value)}
-                        maxLength={8}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
-                        style={
-                          confirmRecoveryPin
-                            ? recoveryPin === confirmRecoveryPin
-                              ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
-                              : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
-                            : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
-                        }
-                        placeholder="6-8 digits"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showRecoveryPin ? 'text' : 'password'}
+                          value={confirmRecoveryPin}
+                          onChange={(e) => setConfirmRecoveryPin(e.target.value)}
+                          maxLength={8}
+                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2"
+                          style={
+                            confirmRecoveryPin
+                              ? recoveryPin === confirmRecoveryPin
+                                ? { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                                : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
+                              : { borderColor: 'rgb(var(--border-default))', '--tw-ring-color': 'rgb(59, 130, 246)' } as React.CSSProperties
+                          }
+                          placeholder="6-8 digits"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowRecoveryPin(!showRecoveryPin)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          aria-label={showRecoveryPin ? 'Hide Recovery PIN' : 'Show Recovery PIN'}
+                        >
+                          {showRecoveryPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                       {confirmRecoveryPin && (
                         <p className="text-xs mt-1" style={{ color: recoveryPin === confirmRecoveryPin ? 'inherit' : '#B91C1C' }}>
                           {recoveryPin === confirmRecoveryPin ? '' : 'Recovery PINs do not match'}
@@ -606,10 +648,30 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   <div className="flex gap-3">
                     <button
                       onClick={handleSetup}
-                      disabled={isSetupInProgress || !label.trim() || !pin || !confirmPin || !recoveryPin || !confirmRecoveryPin}
+                      disabled={
+                        isSetupInProgress ||
+                        !label.trim() ||
+                        !pin ||
+                        !confirmPin ||
+                        !recoveryPin ||
+                        !confirmRecoveryPin ||
+                        pin !== confirmPin ||
+                        recoveryPin !== confirmRecoveryPin ||
+                        pin === recoveryPin
+                      }
                       className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
                       style={
-                        !(isSetupInProgress || !label.trim() || !pin || !confirmPin || !recoveryPin || !confirmRecoveryPin)
+                        !(
+                          isSetupInProgress ||
+                          !label.trim() ||
+                          !pin ||
+                          !confirmPin ||
+                          !recoveryPin ||
+                          !confirmRecoveryPin ||
+                          pin !== confirmPin ||
+                          recoveryPin !== confirmRecoveryPin ||
+                          pin === recoveryPin
+                        )
                           ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
                           : { backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-muted))', borderColor: 'rgb(var(--border-default))' }
                       }
