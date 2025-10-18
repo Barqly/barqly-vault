@@ -825,7 +825,16 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       </p>
                       <button
                         onClick={() => handleCopyPublicKey(selectedKey.recipient!)}
-                        className="flex-shrink-0 p-1.5 text-muted hover:text-secondary hover:bg-blue-100 rounded transition-colors"
+                        className="flex-shrink-0 p-1.5 rounded transition-colors"
+                        style={{ color: 'rgb(var(--text-muted))' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                          e.currentTarget.style.color = 'rgb(var(--text-secondary))';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.color = 'rgb(var(--text-muted))';
+                        }}
                         aria-label="Copy public key"
                         title="Copy public key"
                       >
