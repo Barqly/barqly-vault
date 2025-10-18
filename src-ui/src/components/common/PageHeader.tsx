@@ -53,7 +53,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   const { keyCache } = useVault();
 
   return (
-    <header className={`bg-white border-b border-slate-200 ${className}`}>
+    <header className={`bg-card border-b border-default ${className}`}>
       {/* Skip Navigation Link - Hidden until focused */}
       <a
         href={skipNavTarget}
@@ -124,7 +124,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               )}
 
               {/* Separator between vault badge and keys */}
-              {showVaultBadge && <span className="text-slate-300 text-lg">|</span>}
+              {showVaultBadge && <span className="text-muted text-lg">|</span>}
 
               {/* Key Status Badges (readonly) - Only show when showVaultBadge is true */}
               {showVaultBadge && (
@@ -143,7 +143,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                             label={passphraseKey?.label}
                             isInteractive={false}
                           />
-                          <span className="text-slate-400 text-xs mx-1">|</span>
+                          <span className="text-muted text-xs mx-1">|</span>
                           <CompactYubiKeyCard
                             index={0}
                             state={yubiKeys[0] ? 'active' : 'empty'}
@@ -153,7 +153,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                             label={yubiKeys[0]?.label}
                             isInteractive={false}
                           />
-                          <span className="text-slate-400 text-xs mx-1">|</span>
+                          <span className="text-muted text-xs mx-1">|</span>
                           <CompactYubiKeyCard
                             index={1}
                             state={yubiKeys[1] ? 'active' : 'empty'}
@@ -163,7 +163,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                             label={yubiKeys[1]?.label}
                             isInteractive={false}
                           />
-                          <span className="text-slate-400 text-xs mx-1">|</span>
+                          <span className="text-muted text-xs mx-1">|</span>
                           <CompactYubiKeyCard
                             index={2}
                             state={yubiKeys[2] ? 'active' : 'empty'}
@@ -180,11 +180,11 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                     // No vault or recovery mode - show empty slots
                     <div className="flex items-center gap-1">
                       <CompactPassphraseCard isConfigured={false} isInteractive={false} />
-                      <span className="text-slate-400 text-xs mx-1">|</span>
+                      <span className="text-muted text-xs mx-1">|</span>
                       <CompactYubiKeyCard index={0} state="empty" isInteractive={false} />
-                      <span className="text-slate-400 text-xs mx-1">|</span>
+                      <span className="text-muted text-xs mx-1">|</span>
                       <CompactYubiKeyCard index={1} state="empty" isInteractive={false} />
-                      <span className="text-slate-400 text-xs mx-1">|</span>
+                      <span className="text-muted text-xs mx-1">|</span>
                       <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
                     </div>
                   )}
