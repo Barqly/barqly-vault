@@ -922,7 +922,13 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                 {selectedKey.recipient && (
                   <div>
                     <label className="block text-sm font-medium text-main mb-2">Public Key:</label>
-                    <div className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50">
+                    <div
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border"
+                      style={{
+                        borderColor: 'rgba(59, 130, 246, 0.3)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      }}
+                    >
                       <p className="flex-1 font-mono text-sm text-main truncate">
                         {selectedKey.recipient}
                       </p>
