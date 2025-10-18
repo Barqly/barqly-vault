@@ -403,10 +403,10 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             disabled={isLoading || !canDeactivate}
             className={`
               flex items-center justify-center gap-1 px-3 py-1.5
-              text-xs font-medium rounded-md transition-colors border
+              text-xs font-medium rounded-md transition-all border
               disabled:opacity-50
               ${canDeactivate
-                ? 'text-secondary border-default hover:bg-hover hover:text-heading cursor-pointer'
+                ? 'text-secondary border-default hover:bg-hover hover:text-heading hover:border-strong cursor-pointer'
                 : 'text-muted border-default cursor-default'
               }
             `}
@@ -427,7 +427,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               flex items-center gap-1 px-3 py-1.5
               text-xs font-medium text-secondary
               border border-default rounded-md
-              hover:bg-hover hover:text-heading transition-colors cursor-pointer
+              hover:bg-hover hover:text-heading hover:border-strong transition-all cursor-pointer
             "
             title="Download an encrypted backup of this key for recovery"
           >

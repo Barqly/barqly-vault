@@ -17,7 +17,7 @@
   --surface-card: 255 255 255;       /* Cards, panels */
   --surface-elevated: 248 250 252;   /* Modals, popovers, dialogs */
   --surface-input: 255 255 255;      /* Form inputs */
-  --surface-hover: 248 250 252;      /* Hover states */
+  --surface-hover: 241 245 249;      /* Hover states - slate-100 (more visible) */
 
   /* ===== TEXT (Theme-aware) ===== */
   --text-primary: 30 41 59;          /* slate-800 - Body text */
