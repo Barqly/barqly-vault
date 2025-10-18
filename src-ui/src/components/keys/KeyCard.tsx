@@ -405,11 +405,26 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               flex items-center justify-center gap-1 px-3 py-1.5
               text-xs font-medium rounded-md transition-all border
               disabled:opacity-50
-              ${canDeactivate
-                ? 'text-secondary border-default hover:bg-hover hover:text-heading hover:border-strong cursor-pointer'
-                : 'text-muted border-default cursor-default'
-              }
+              ${canDeactivate ? 'cursor-pointer' : 'cursor-default'}
             `}
+            style={{
+              borderColor: canDeactivate ? 'rgb(var(--border-default))' : 'rgb(var(--border-default))',
+              color: canDeactivate ? 'rgb(var(--text-secondary))' : 'rgb(var(--text-muted))',
+            }}
+            onMouseEnter={(e) => {
+              if (canDeactivate && !isLoading) {
+                e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                e.currentTarget.style.color = 'rgb(var(--heading-primary))';
+                e.currentTarget.style.borderColor = 'rgb(var(--border-strong))';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (canDeactivate && !isLoading) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'rgb(var(--text-secondary))';
+                e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+              }
+            }}
             title={deactivateTooltip}
           >
             {isLoading ? 'Deactivating...' : 'Deactivate'}
@@ -425,10 +440,24 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             }}
             className="
               flex items-center gap-1 px-3 py-1.5
-              text-xs font-medium text-secondary
-              border border-default rounded-md
-              hover:bg-hover hover:text-heading hover:border-strong transition-all cursor-pointer
+              text-xs font-medium
+              border rounded-md
+              transition-all cursor-pointer
             "
+            style={{
+              borderColor: 'rgb(var(--border-default))',
+              color: 'rgb(var(--text-secondary))',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+              e.currentTarget.style.color = 'rgb(var(--heading-primary))';
+              e.currentTarget.style.borderColor = 'rgb(var(--border-strong))';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'rgb(var(--text-secondary))';
+              e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+            }}
             title="Download an encrypted backup of this key for recovery"
           >
             <FileText className="h-3 w-3" />
