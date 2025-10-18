@@ -508,27 +508,27 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   </p>
                 </div>
 
-                {/* Public Key with Copy */}
+                {/* Public Key with Copy Box */}
                 {selectedKey.recipient && (
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-700">
-                        <span className="font-medium">Public Key:</span>{' '}
-                        <span className="font-mono text-xs">{selectedKey.recipient.substring(0, 20)}...</span>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Public Key:</label>
+                    <div className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50">
+                      <p className="flex-1 font-mono text-sm text-gray-900 truncate">
+                        {selectedKey.recipient}
                       </p>
+                      <button
+                        onClick={() => handleCopyPublicKey(selectedKey.recipient!)}
+                        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-blue-100 rounded transition-colors"
+                        aria-label="Copy public key"
+                        title="Copy public key"
+                      >
+                        {isCopied ? (
+                          <Check className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleCopyPublicKey(selectedKey.recipient!)}
-                      className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors"
-                      aria-label="Copy public key"
-                      title="Copy public key"
-                    >
-                      {isCopied ? (
-                        <Check className="h-3.5 w-3.5 text-green-600" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                    </button>
                   </div>
                 )}
 
