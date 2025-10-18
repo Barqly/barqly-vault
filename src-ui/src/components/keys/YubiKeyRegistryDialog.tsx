@@ -395,12 +395,14 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
               selectedKey &&
               (selectedKey.state === 'new' || selectedKey.state === 'reused') && (
                 <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-sm text-blue-800">
-                      Setting up YubiKey: <strong>{selectedKey.serial.substring(0, 8)}</strong>
+                  {/* S/N */}
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">S/N:</span> {selectedKey.serial}
                     </p>
                   </div>
 
+                  {/* YubiKey Label */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">YubiKey Label *</label>
                     <input
@@ -413,6 +415,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     />
                   </div>
 
+                  {/* Create PIN */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Create PIN *
@@ -428,6 +431,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     />
                   </div>
 
+                  {/* Confirm PIN */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Confirm PIN *
@@ -442,13 +446,28 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     />
                   </div>
 
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <div className="flex gap-2">
-                      <Info className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <p className="text-sm text-green-800">
-                        A recovery code will be generated for PIN recovery
-                      </p>
-                    </div>
+                  {/* Recovery Code - Collapsible */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setShowSecurityTips(!showSecurityTips)}
+                      className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                      aria-expanded={showSecurityTips}
+                    >
+                      <Info className="h-4 w-4" />
+                      <span>Recovery Code</span>
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform duration-200 ${showSecurityTips ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+
+                    {showSecurityTips && (
+                      <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-800">
+                          A recovery code will be generated for PIN recovery. Save it securely - you'll only see it once!
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {error && (
