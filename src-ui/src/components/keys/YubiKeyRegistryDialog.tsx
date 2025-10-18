@@ -234,22 +234,31 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={handleCancel} />
+      {/* Backdrop with blur */}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" onClick={handleCancel} />
 
       {/* Dialog */}
-      <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div className="fixed inset-0 flex items-center justify-center z-[70] p-4 pointer-events-none">
+        <div className="bg-elevated rounded-lg shadow-xl w-full pointer-events-auto" style={{ maxWidth: '600px', border: '1px solid #ffd4a3' }}>
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between p-6 border-b border-default">
             <div className="flex items-center gap-3">
-              <Fingerprint className="h-6 w-6" style={{ color: '#F98B1C' }} />
-              <h2 className="text-xl font-semibold text-gray-900">Register YubiKey</h2>
+              <div
+                className="rounded-lg p-2 flex-shrink-0"
+                style={{
+                  backgroundColor: 'rgba(249, 139, 28, 0.08)',
+                  border: '1px solid #ffd4a3',
+                }}
+              >
+                <Fingerprint className="h-5 w-5" style={{ color: '#F98B1C' }} />
+              </div>
+              <h2 className="text-xl font-semibold text-main">Register YubiKey</h2>
             </div>
             <button
               onClick={handleCancel}
               disabled={isSetupInProgress}
-              className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+              className="text-muted hover:text-secondary transition-colors disabled:opacity-50"
+              aria-label="Close"
             >
               <X className="h-5 w-5" />
             </button>
