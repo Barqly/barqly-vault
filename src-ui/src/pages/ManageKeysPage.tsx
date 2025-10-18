@@ -165,7 +165,7 @@ const ManageKeysPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
+    <div className="min-h-screen bg-app -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
       <PageHeader
         title="Manage Keys"
         icon={Key}
@@ -193,7 +193,7 @@ const ManageKeysPage: React.FC = () => {
             </button>
 
             {/* View Toggle */}
-            <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+            <div className="flex border border-default rounded-lg overflow-hidden">
               <button
                 onClick={() => setKeyViewMode('cards')}
                 className={`
@@ -201,7 +201,7 @@ const ManageKeysPage: React.FC = () => {
                   ${
                     keyViewMode === 'cards'
                       ? 'text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-50'
+                      : 'bg-card text-secondary hover:bg-hover'
                   }
                 `}
                 style={{
@@ -217,7 +217,7 @@ const ManageKeysPage: React.FC = () => {
                   ${
                     keyViewMode === 'table'
                       ? 'text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-50'
+                      : 'bg-card text-secondary hover:bg-hover'
                   }
                 `}
                 style={{
@@ -229,7 +229,7 @@ const ManageKeysPage: React.FC = () => {
             </div>
 
             {/* Filter - Icon Toggle (multi-select) */}
-            <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+            <div className="flex border border-default rounded-lg overflow-hidden">
               {/* Passphrase Filter - Navy background with teal icon */}
               <button
                 onClick={togglePassphraseFilter}
@@ -238,7 +238,7 @@ const ManageKeysPage: React.FC = () => {
                   ${
                     showPassphraseKeys
                       ? ''
-                      : 'bg-white hover:bg-slate-50'
+                      : 'bg-card hover:bg-hover'
                   }
                 `}
                 style={{
@@ -274,7 +274,7 @@ const ManageKeysPage: React.FC = () => {
                   ${
                     showYubiKeyKeys
                       ? ''
-                      : 'bg-white hover:bg-slate-50'
+                      : 'bg-card hover:bg-hover'
                   }
                 `}
                 style={{
@@ -309,30 +309,27 @@ const ManageKeysPage: React.FC = () => {
       <AppPrimaryContainer>
         {/* Create New Key Section - Only show when no keys exist (empty state) */}
         {allKeys.length === 0 && (
-          <div className="mt-6 border-2 border-dashed border-slate-300 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-medium text-slate-700 mb-4 text-center">Create New Key</h3>
+          <div className="mt-6 border-2 border-dashed border-default rounded-lg p-6 mb-6">
+            <h3 className="text-lg font-medium text-main mb-4 text-center">Create New Key</h3>
 
             <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
               {/* YubiKey Card - LEFT (Most Secure) */}
               <button
                 onClick={handleDetectYubiKey}
-                className="group p-6 pt-8 border-2 border-slate-200 rounded-lg transition-all relative"
-                style={{
-                  borderColor: undefined,
-                }}
+                className="group p-6 pt-8 border-2 border-default rounded-lg transition-all relative bg-card"
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = '#ffd4a3';
                   e.currentTarget.style.backgroundColor = 'rgba(255, 138, 0, 0.05)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+                  e.currentTarget.style.backgroundColor = 'rgb(var(--surface-card))';
                 }}
               >
                 {/* Most Secure Badge - Centered on top border */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  {/* White background to hide border */}
-                  <div className="absolute inset-0 bg-white rounded-full" style={{ margin: '-2px' }} />
+                  {/* Background to hide border */}
+                  <div className="absolute inset-0 bg-card rounded-full" style={{ margin: '-2px' }} />
                   {/* Badge */}
                   <div className="relative flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(249, 139, 28, 0.08)', color: '#F98B1C', border: '1px solid #ffd4a3' }}>
                     <Shield className="h-3 w-3" />
@@ -350,27 +347,24 @@ const ManageKeysPage: React.FC = () => {
                   >
                     <Fingerprint className="h-12 w-12" style={{ color: '#F98B1C' }} />
                   </div>
-                  <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
+                  <h4 className="font-semibold" style={{ color: '#334155' }}>
                     YubiKey
                   </h4>
-                  <p className="text-sm text-slate-500 text-center">Hardware security key</p>
+                  <p className="text-sm text-secondary text-center">Hardware security key</p>
                 </div>
               </button>
 
               {/* Passphrase Card - RIGHT */}
               <button
                 onClick={handleCreatePassphrase}
-                className="group p-6 border-2 border-slate-200 rounded-lg transition-all"
-                style={{
-                  borderColor: undefined,
-                }}
+                className="group p-6 border-2 border-default rounded-lg transition-all bg-card"
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = '#B7E1DD';
                   e.currentTarget.style.backgroundColor = 'rgba(15, 118, 110, 0.05)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+                  e.currentTarget.style.backgroundColor = 'rgb(var(--surface-card))';
                 }}
               >
                 <div className="flex flex-col items-center gap-3">
@@ -383,10 +377,10 @@ const ManageKeysPage: React.FC = () => {
                   >
                     <Key className="h-12 w-12" style={{ color: '#13897F' }} />
                   </div>
-                  <h4 className="font-semibold text-slate-700" style={{ color: '#334155' }}>
+                  <h4 className="font-semibold" style={{ color: '#334155' }}>
                     Passphrase
                   </h4>
-                  <p className="text-sm text-slate-500 text-center">Password-protected key</p>
+                  <p className="text-sm text-secondary text-center">Password-protected key</p>
                 </div>
               </button>
             </div>
@@ -405,9 +399,9 @@ const ManageKeysPage: React.FC = () => {
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {allKeys.length === 0 ? (
               <div className="col-span-full text-center py-12">
-                <Key className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-slate-600 mb-2">No keys found</h3>
-                <p className="text-sm text-slate-500">
+                <Key className="h-12 w-12 text-muted mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-secondary mb-2">No keys found</h3>
+                <p className="text-sm text-secondary">
                   Create a new passphrase key or detect a YubiKey to get started
                 </p>
               </div>
