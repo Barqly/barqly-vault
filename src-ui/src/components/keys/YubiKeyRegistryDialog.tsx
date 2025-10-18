@@ -440,14 +440,14 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     <div className="flex gap-3">
                       <button
                         onClick={detectYubiKeys}
-                        className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                        className="flex-1 px-4 py-2 bg-hover text-gray-800 rounded-lg hover:bg-gray-300"
                       >
                         <RefreshCw className="h-4 w-4 inline mr-2" />
                         Refresh
                       </button>
                       <button
                         onClick={handleCancel}
-                        className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                        className="flex-1 px-4 py-2 bg-hover text-main rounded-lg hover:bg-hover"
                       >
                         Cancel
                       </button>
@@ -455,7 +455,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   </>
                 ) : (
                   <>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-secondary">
                       Select a YubiKey to add to the registry:
                     </p>
                     <div className="space-y-2">
@@ -470,15 +470,15 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           className={`w-full p-3 border rounded-lg text-left transition-colors hover:bg-blue-50 hover:border-blue-300 ${
                             selectedKey?.serial === yk.serial
                               ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200'
+                              : 'border-default'
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium text-gray-900">
+                              <p className="font-medium text-main">
                                 YubiKey {yk.serial.substring(0, 8)}
                               </p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-secondary">
                                 {getYubiKeyDescription(yk.state)}
                               </p>
                             </div>
@@ -506,21 +506,21 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                 <div className="space-y-4" onKeyDown={handleKeyDown}>
                   {/* S/N */}
                   <div>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-main">
                       <span className="font-medium">S/N:</span> {selectedKey.serial}
                     </p>
                   </div>
 
                   {/* YubiKey Label */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">YubiKey Label *</label>
+                    <label className="block text-sm font-medium text-main mb-2">YubiKey Label *</label>
                     <input
                       ref={firstFocusableRef}
                       type="text"
                       value={label}
                       onChange={(e) => setLabel(e.target.value)}
                       maxLength={24}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., Personal YubiKey"
                     />
                   </div>
@@ -528,7 +528,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   {/* PIN Fields - 2 Column Grid */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-main mb-2">
                         Create PIN *
                       </label>
                       <div className="relative">
@@ -537,14 +537,14 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           value={pin}
                           onChange={(e) => setPin(e.target.value)}
                           maxLength={8}
-                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="6-8 digits"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPin(!showPin)}
                           tabIndex={-1}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
                           aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
                         >
                           {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -553,7 +553,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-main mb-2">
                         Confirm PIN *
                       </label>
                       <div className="relative">
@@ -576,7 +576,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           type="button"
                           onClick={() => setShowPin(!showPin)}
                           tabIndex={-1}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
                           aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
                         >
                           {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -593,7 +593,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   {/* Recovery PIN Fields - 2 Column Grid */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-main mb-2">
                         Recovery PIN *
                       </label>
                       <div className="relative">
@@ -616,7 +616,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           type="button"
                           onClick={() => setShowRecoveryPin(!showRecoveryPin)}
                           tabIndex={-1}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
                           aria-label={showRecoveryPin ? 'Hide Recovery PIN' : 'Show Recovery PIN'}
                         >
                           {showRecoveryPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -630,7 +630,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-main mb-2">
                         Confirm Recovery PIN *
                       </label>
                       <div className="relative">
@@ -654,7 +654,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           type="button"
                           onClick={() => setShowRecoveryPin(!showRecoveryPin)}
                           tabIndex={-1}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
                           aria-label={showRecoveryPin ? 'Hide Recovery PIN' : 'Show Recovery PIN'}
                         >
                           {showRecoveryPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -797,7 +797,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       onClick={() => setStep('detect')}
                       disabled={isSetupInProgress}
                       tabIndex={-1}
-                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      className="px-4 py-2 text-main bg-hover rounded-lg hover:bg-hover"
                     >
                       Back
                     </button>
@@ -810,7 +810,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
               <div className="space-y-4" onKeyDown={handleKeyDown}>
                 {/* S/N */}
                 <div>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-main">
                     <span className="font-medium">S/N:</span> {selectedKey.serial}
                   </p>
                 </div>
@@ -818,14 +818,14 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                 {/* Public Key with Copy Box */}
                 {selectedKey.recipient && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Public Key:</label>
+                    <label className="block text-sm font-medium text-main mb-2">Public Key:</label>
                     <div className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50">
-                      <p className="flex-1 font-mono text-sm text-gray-900 truncate">
+                      <p className="flex-1 font-mono text-sm text-main truncate">
                         {selectedKey.recipient}
                       </p>
                       <button
                         onClick={() => handleCopyPublicKey(selectedKey.recipient!)}
-                        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-blue-100 rounded transition-colors"
+                        className="flex-shrink-0 p-1.5 text-muted hover:text-secondary hover:bg-blue-100 rounded transition-colors"
                         aria-label="Copy public key"
                         title="Copy public key"
                       >
@@ -841,27 +841,27 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
                 {/* YubiKey Label */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">YubiKey Label *</label>
+                  <label className="block text-sm font-medium text-main mb-2">YubiKey Label *</label>
                   <input
                     ref={firstFocusableRef}
                     type="text"
                     value={label}
                     onChange={(e) => setLabel(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g., Personal YubiKey"
                   />
                 </div>
 
                 {/* YubiKey PIN */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">YubiKey PIN *</label>
+                  <label className="block text-sm font-medium text-main mb-2">YubiKey PIN *</label>
                   <input
                     id="yubikey-pin-orphaned"
                     type="password"
                     value={pin}
                     onChange={(e) => setPin(e.target.value)}
                     maxLength={8}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="••••••"
                   />
                 </div>
@@ -912,7 +912,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     }}
                     disabled={isSetupInProgress}
                     tabIndex={-1}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    className="px-4 py-2 text-main bg-hover rounded-lg hover:bg-hover"
                   >
                     Back
                   </button>
