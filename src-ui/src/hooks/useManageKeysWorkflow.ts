@@ -37,36 +37,26 @@ export const useManageKeysWorkflow = () => {
     [allKeys],
   );
 
-  // Toggle filter functions - Option B: Radio-like with "All" default
+  // Toggle filter functions - Prevent both from being deactivated
   const togglePassphraseFilter = useCallback(() => {
-    // If Passphrase is already active and it's the only one active
-    if (showPassphraseKeys && !showYubiKeyKeys) {
-      // Activate both (back to "All")
-      setShowYubiKeyKeys(true);
-    } else if (!showPassphraseKeys) {
-      // Passphrase is inactive, activate it and deactivate YubiKey
-      setShowPassphraseKeys(true);
-      setShowYubiKeyKeys(false);
-    } else {
-      // Both are active, deactivate Passphrase (show only YubiKey)
-      setShowPassphraseKeys(false);
-    }
-  }, [showPassphraseKeys, showYubiKeyKeys]);
+    setShowPassphraseKeys((prev) => {
+      // If trying to deactivate Passphrase, only allow if YubiKey is active
+      if (prev && !showYubiKeyKeys) {
+        return true; // Keep Passphrase active (can't deactivate both)
+      }
+      return !prev;
+    });
+  }, [showYubiKeyKeys]);
 
   const toggleYubiKeyFilter = useCallback(() => {
-    // If YubiKey is already active and it's the only one active
-    if (showYubiKeyKeys && !showPassphraseKeys) {
-      // Activate both (back to "All")
-      setShowPassphraseKeys(true);
-    } else if (!showYubiKeyKeys) {
-      // YubiKey is inactive, activate it and deactivate Passphrase
-      setShowYubiKeyKeys(true);
-      setShowPassphraseKeys(false);
-    } else {
-      // Both are active, deactivate YubiKey (show only Passphrase)
-      setShowYubiKeyKeys(false);
-    }
-  }, [showPassphraseKeys, showYubiKeyKeys]);
+    setShowYubiKeyKeys((prev) => {
+      // If trying to deactivate YubiKey, only allow if Passphrase is active
+      if (prev && !showPassphraseKeys) {
+        return true; // Keep YubiKey active (can't deactivate both)
+      }
+      return !prev;
+    });
+  }, [showPassphraseKeys]);
 
   // Filter and search keys
   const filteredKeys = useMemo(() => {
