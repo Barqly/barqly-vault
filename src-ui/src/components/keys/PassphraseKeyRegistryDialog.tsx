@@ -202,9 +202,9 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
 
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center z-[70] p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full" style={{ maxWidth: '600px', border: '1px solid #B7E1DD' }}>
+        <div className="bg-elevated rounded-lg shadow-xl w-full" style={{ maxWidth: '600px', border: '1px solid #B7E1DD' }}>
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between p-6 border-b border-default">
             <div className="flex items-center gap-3">
               <div
                 className="rounded-lg p-2 flex-shrink-0"
@@ -215,12 +215,12 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
               >
                 <Key className="h-5 w-5" style={{ color: '#13897F' }} />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">Create Passphrase Key</h2>
+              <h2 className="text-xl font-semibold text-main">Create Passphrase Key</h2>
             </div>
             <button
               onClick={handleCancel}
               disabled={isCreating}
-              className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+              className="text-muted hover:text-secondary transition-colors disabled:opacity-50"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -230,7 +230,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
           {/* Form */}
           <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="p-6 space-y-4">
             <div>
-              <label htmlFor="key-label" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="key-label" className="block text-sm font-medium text-main mb-2">
                 Key Label *
               </label>
               <input
@@ -241,10 +241,10 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 onChange={handleLabelChange}
                 disabled={isCreating}
                 maxLength={24}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50 bg-input text-main ${
                   labelError
-                    ? 'border-gray-300'
-                    : 'border-gray-300 focus:ring-blue-300'
+                    ? 'border-default'
+                    : 'border-default focus:ring-blue-300'
                 }`}
                 style={labelError ? { borderColor: '#FCA5A5' } : undefined}
                 placeholder="e.g., My Backup Key 2024"
@@ -263,7 +263,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
             </div>
 
             <div>
-              <label htmlFor="passphrase" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="passphrase" className="block text-sm font-medium text-main mb-2">
                 Passphrase * (min. 12 characters)
               </label>
               <div className="relative">
@@ -273,14 +273,14 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                   value={passphrase}
                   onChange={(e) => setPassphrase(e.target.value)}
                   disabled={isCreating}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:bg-gray-50"
+                  className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 bg-input text-main"
                   placeholder="Enter secure passphrase"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassphrase(!showPassphrase)}
                   tabIndex={-1}
-                  className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-2.5 text-muted hover:text-secondary"
                   aria-label={showPassphrase ? 'Hide passphrase' : 'Show passphrase'}
                 >
                   {showPassphrase ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -296,7 +296,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
             <div>
               <label
                 htmlFor="confirm-passphrase"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-main mb-2"
               >
                 Confirm Passphrase *
               </label>
@@ -306,12 +306,12 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 value={confirmPassphrase}
                 onChange={(e) => setConfirmPassphrase(e.target.value)}
                 disabled={isCreating}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-50 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50 bg-input text-main ${
                   confirmPassphrase
                     ? passphrase === confirmPassphrase
-                      ? 'border-gray-300'
-                      : 'border-gray-300'
-                    : 'border-gray-300 focus:ring-blue-300'
+                      ? 'border-default'
+                      : 'border-default'
+                    : 'border-default focus:ring-blue-300'
                 }`}
                 style={
                   confirmPassphrase
@@ -338,9 +338,9 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
             {passphrase && (validation || isValidating) && (
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Strength:</span>
+                  <span className="text-secondary">Strength:</span>
                   {isValidating ? (
-                    <span className="text-gray-500">Checking...</span>
+                    <span className="text-secondary">Checking...</span>
                   ) : validation ? (
                     <span
                       className={`font-medium ${
@@ -364,7 +364,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                     </span>
                   ) : null}
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgb(var(--border-default))' }}>
                   <div
                     className={`h-full transition-all duration-300 ${getStrengthColor()} ${getStrengthWidth()}`}
                     style={
@@ -377,7 +377,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                   />
                 </div>
                 {validation?.feedback && validation.feedback.length > 0 && (
-                  <ul className="text-xs text-gray-600 space-y-1">
+                  <ul className="text-xs text-secondary space-y-1">
                     {validation.feedback.map((item, idx) => (
                       <li key={idx}>• {item}</li>
                     ))}
@@ -516,7 +516,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 onClick={handleCancel}
                 disabled={isCreating}
                 tabIndex={-1}
-                className="px-4 py-2 text-gray-700 bg-transparent border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-main bg-transparent border border-default rounded-lg hover:bg-hover transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
