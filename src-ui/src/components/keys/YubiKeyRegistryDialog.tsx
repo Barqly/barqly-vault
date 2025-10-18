@@ -467,11 +467,21 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                             setLabel(yk.label || `YubiKey-${yk.serial}`);
                             setStep('setup');
                           }}
-                          className={`w-full p-3 border rounded-lg text-left transition-colors hover:bg-blue-50 hover:border-blue-300 ${
-                            selectedKey?.serial === yk.serial
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-default'
-                          }`}
+                          className="w-full p-3 border rounded-lg text-left transition-colors"
+                          style={{
+                            borderColor: selectedKey?.serial === yk.serial ? '#3B82F6' : 'rgb(var(--border-default))',
+                            backgroundColor: selectedKey?.serial === yk.serial ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                            e.currentTarget.style.borderColor = '#3B82F6';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (selectedKey?.serial !== yk.serial) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+                            }
+                          }}
                         >
                           <div className="flex items-center justify-between">
                             <div>
