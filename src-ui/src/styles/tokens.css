@@ -67,8 +67,8 @@
   --heading-primary: 248 250 252;    /* slate-50 - Bright white for dark mode */
 
   /* ===== BORDERS ===== */
-  --border-default: 51 65 85;        /* slate-700 */
-  --border-subtle: 30 41 59;         /* slate-800 */
+  --border-default: 71 85 105;       /* slate-600 - Lighter for better visibility */
+  --border-subtle: 51 65 85;         /* slate-700 */
   --border-strong: 100 116 139;      /* slate-500 */
 
   /* ===== PASSPHRASE ACCENTS ===== */
