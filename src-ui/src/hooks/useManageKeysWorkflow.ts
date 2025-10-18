@@ -37,14 +37,26 @@ export const useManageKeysWorkflow = () => {
     [allKeys],
   );
 
-  // Toggle filter functions
+  // Toggle filter functions - Prevent both from being deactivated
   const togglePassphraseFilter = useCallback(() => {
-    setShowPassphraseKeys((prev) => !prev);
-  }, []);
+    setShowPassphraseKeys((prev) => {
+      // If trying to deactivate Passphrase, only allow if YubiKey is active
+      if (prev && !showYubiKeyKeys) {
+        return true; // Keep Passphrase active (can't deactivate both)
+      }
+      return !prev;
+    });
+  }, [showYubiKeyKeys]);
 
   const toggleYubiKeyFilter = useCallback(() => {
-    setShowYubiKeyKeys((prev) => !prev);
-  }, []);
+    setShowYubiKeyKeys((prev) => {
+      // If trying to deactivate YubiKey, only allow if Passphrase is active
+      if (prev && !showPassphraseKeys) {
+        return true; // Keep YubiKey active (can't deactivate both)
+      }
+      return !prev;
+    });
+  }, [showPassphraseKeys]);
 
   // Filter and search keys
   const filteredKeys = useMemo(() => {
