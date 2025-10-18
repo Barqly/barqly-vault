@@ -402,7 +402,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Label *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">YubiKey Label *</label>
                     <input
                       type="text"
                       value={label}
@@ -415,7 +415,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Create PIN
+                      Create PIN *
                       <span className="text-gray-500 ml-2">(6-8 digits)</span>
                     </label>
                     <input
@@ -501,38 +501,40 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
             {/* Setup Step - For ORPHANED YubiKeys */}
             {step === 'setup' && selectedKey && selectedKey.state === 'orphaned' && (
               <div className="space-y-4">
-                {/* YubiKey Info - S/N and Public Key */}
-                <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                {/* S/N */}
+                <div>
                   <p className="text-sm text-gray-700">
                     <span className="font-medium">S/N:</span> {selectedKey.serial}
                   </p>
-                  {selectedKey.recipient && (
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-700">
-                          <span className="font-medium">Public key:</span>{' '}
-                          <span className="font-mono text-xs">{selectedKey.recipient.substring(0, 20)}...</span>
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleCopyPublicKey(selectedKey.recipient!)}
-                        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors"
-                        aria-label="Copy public key"
-                        title="Copy public key"
-                      >
-                        {isCopied ? (
-                          <Check className="h-3.5 w-3.5 text-green-600" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                      </button>
-                    </div>
-                  )}
                 </div>
 
-                {/* Form Fields */}
+                {/* Public Key with Copy */}
+                {selectedKey.recipient && (
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">Public Key:</span>{' '}
+                        <span className="font-mono text-xs">{selectedKey.recipient.substring(0, 20)}...</span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleCopyPublicKey(selectedKey.recipient!)}
+                      className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                      aria-label="Copy public key"
+                      title="Copy public key"
+                    >
+                      {isCopied ? (
+                        <Check className="h-3.5 w-3.5 text-green-600" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* YubiKey Label */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Label *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">YubiKey Label *</label>
                   <input
                     type="text"
                     value={label}
@@ -542,11 +544,9 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   />
                 </div>
 
+                {/* YubiKey PIN */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Enter YubiKey PIN *
-                    <span className="text-gray-500 ml-2">(to verify ownership)</span>
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">YubiKey PIN *</label>
                   <input
                     type="password"
                     value={pin}
