@@ -388,6 +388,65 @@ impl KeyEntry {
             KeyEntry::Yubikey { deactivated_at, .. } => *deactivated_at,
         }
     }
+
+    /// Destroy the key immediately (permanent deletion)
+    /// This transitions the key to Destroyed state without the 30-day grace period.
+    /// Can be called on PreActivation, Active, Suspended, or Deactivated keys.
+    pub fn destroy(&mut self, reason: String, changed_by: String) -> Result<(), String> {
+        let current_status = self.lifecycle_status();
+
+        // Destroyed keys cannot be destroyed again
+        if current_status == KeyLifecycleStatus::Destroyed {
+            return Err("Cannot destroy key that is already in Destroyed state".to_string());
+        }
+
+        // Compromised keys should go through a different flow (not implemented yet)
+        if current_status == KeyLifecycleStatus::Compromised {
+            return Err(
+                "Compromised keys require special handling. Use security workflow.".to_string(),
+            );
+        }
+
+        // Transition to Destroyed
+        match self {
+            KeyEntry::Passphrase {
+                lifecycle_status,
+                status_history,
+                deactivated_at,
+                previous_lifecycle_status,
+                ..
+            } => {
+                *lifecycle_status = KeyLifecycleStatus::Destroyed;
+                // Clear deactivation metadata since we're bypassing the grace period
+                *deactivated_at = None;
+                *previous_lifecycle_status = None;
+                status_history.push(StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Destroyed,
+                    reason,
+                    changed_by,
+                ));
+            }
+            KeyEntry::Yubikey {
+                lifecycle_status,
+                status_history,
+                deactivated_at,
+                previous_lifecycle_status,
+                ..
+            } => {
+                *lifecycle_status = KeyLifecycleStatus::Destroyed;
+                // Clear deactivation metadata since we're bypassing the grace period
+                *deactivated_at = None;
+                *previous_lifecycle_status = None;
+                status_history.push(StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Destroyed,
+                    reason,
+                    changed_by,
+                ));
+            }
+        }
+
+        Ok(())
+    }
 }
 
 /// Central registry for all encryption keys

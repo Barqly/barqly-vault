@@ -8,7 +8,10 @@ const DEFAULT_MGMT_KEY: &str = "010203040506070801020304050607080102030405060708
 /// Change management key to TDES with protected mode
 #[instrument(skip(pin))]
 pub fn change_management_key_pty(serial: &str, pin: &str) -> Result<()> {
-    info!("Changing management key to TDES with protected mode for YubiKey {}", serial);
+    info!(
+        "Changing management key to TDES with protected mode for YubiKey {}",
+        serial
+    );
 
     let args = vec![
         "--device".to_string(),

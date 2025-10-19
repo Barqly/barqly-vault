@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Key, Link2, FileText, Copy, Check, Fingerprint, Clock, Sparkles, AlertTriangle } from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
+import { DeactivateKeyModal } from './DeactivateKeyModal';
 
 interface KeyCardProps {
   keyRef: GlobalKey;
@@ -32,6 +33,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const isPassphrase = keyRef.key_type.type === 'Passphrase';
   const isYubiKey = keyRef.key_type.type === 'YubiKey';
 
@@ -175,40 +177,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
     }
   };
 
-  const handleDeactivate = async (e: React.MouseEvent) => {
+  const handleDeactivate = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    // Confirmation dialog
-    if (!confirm('Deactivate this key? You have 30 days to restore it before permanent deletion.')) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const result = await commands.deactivateKey({
-        key_id: keyRef.id,
-        reason: null,
-      });
-
-      if (result.status === 'ok') {
-        logger.info('KeyCard', 'Key deactivated successfully', {
-          keyId: keyRef.id,
-          deactivatedAt: result.data.deactivated_at,
-          deletionScheduledAt: result.data.deletion_scheduled_at,
-        });
-
-        // Refresh key list
-        await onRefresh?.();
-      } else {
-        logger.error('KeyCard', 'Failed to deactivate key', new Error(result.error.message));
-        alert(`Failed to deactivate key: ${result.error.message}`);
-      }
-    } catch (err) {
-      logger.error('KeyCard', 'Error deactivating key', err as Error);
-      alert('An unexpected error occurred while deactivating the key.');
-    } finally {
-      setIsLoading(false);
-    }
+    setShowDeactivateModal(true);
   };
 
   const handleRestore = async (e: React.MouseEvent) => {
@@ -493,6 +464,18 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           </button>
         )}
       </div>
+
+      {/* Deactivate Modal */}
+      <DeactivateKeyModal
+        isOpen={showDeactivateModal}
+        keyRef={keyRef}
+        vaultCount={vaultCount}
+        onClose={() => setShowDeactivateModal(false)}
+        onSuccess={async () => {
+          setShowDeactivateModal(false);
+          await onRefresh?.();
+        }}
+      />
     </div>
   );
 };

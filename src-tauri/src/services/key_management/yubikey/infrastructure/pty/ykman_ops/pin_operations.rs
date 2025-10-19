@@ -11,7 +11,10 @@ const DEFAULT_PUK: &str = "12345678";
 /// Uses 'ykman piv info' without PIN and parses output for default PIN warnings
 #[instrument]
 pub fn has_default_pin(serial: &str) -> Result<bool> {
-    info!("Checking if YubiKey {} has default PIN by parsing piv info output", serial);
+    info!(
+        "Checking if YubiKey {} has default PIN by parsing piv info output",
+        serial
+    );
 
     // Run 'ykman piv info' without PIN - this doesn't require authentication
     let args = vec![

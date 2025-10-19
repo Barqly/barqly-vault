@@ -29,6 +29,7 @@ use commands::{
     key_management::{
         attach_key::attach_key_to_vault,
         deactivate_key::deactivate_key,
+        delete_key::delete_key,
         import_key::import_key_file,
         passphrase::{
             add_passphrase_key_to_vault, generate_key, validate_passphrase,
@@ -110,6 +111,7 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         update_key_label,
         // Key lifecycle management
         deactivate_key,
+        delete_key,
         restore_key,
         // File commands
         select_files,
@@ -196,6 +198,7 @@ pub fn run_app() {
             update_key_label,
             // Key lifecycle management
             deactivate_key,
+            delete_key,
             restore_key,
             // File commands
             select_files,

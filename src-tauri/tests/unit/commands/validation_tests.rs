@@ -48,12 +48,17 @@ mod crypto_validation_tests {
 
     #[test]
     fn test_generate_key_input_invalid_label_characters() {
+        // Updated to use filesystem-unsafe characters (spaces and punctuation are now allowed)
         let test_cases = vec![
-            "test key", // space
-            "test@key", // @ symbol
-            "test#key", // # symbol
-            "test.key", // dot
-            "test/key", // slash
+            "test/key",  // slash (path separator)
+            "test\\key", // backslash (Windows path separator)
+            "test:key",  // colon (drive separator)
+            "test*key",  // asterisk (wildcard)
+            "test?key",  // question mark (wildcard)
+            "test\"key", // quote
+            "test<key",  // less-than (redirect)
+            "test>key",  // greater-than (redirect)
+            "test|key",  // pipe
         ];
 
         for invalid_label in test_cases {
@@ -65,14 +70,14 @@ mod crypto_validation_tests {
             let result = input.validate();
             assert!(
                 result.is_err(),
-                "Invalid label '{invalid_label}' should fail validation"
+                "Invalid label '{invalid_label}' should fail validation (filesystem-unsafe character)"
             );
 
             if let Err(error) = result {
                 assert!(
                     error.message.contains("invalid characters")
-                        || error.message.contains("letters, numbers, and dashes"),
-                    "Error message should mention valid characters for label '{invalid_label}'"
+                        || error.message.contains("filesystem-unsafe"),
+                    "Error message should mention invalid characters for label '{invalid_label}'"
                 );
             }
         }
@@ -410,21 +415,42 @@ mod edge_case_tests {
 
     #[test]
     fn test_very_long_inputs() {
-        let long_label = "a".repeat(1000);
+        // Test maximum label length (24 characters) - should pass
+        let max_valid_label = "a".repeat(24);
         let long_passphrase = "b".repeat(999) + "1"; // Add a number to meet requirements
 
         let input = GenerateKeyInput {
-            label: long_label.clone(),
+            label: max_valid_label,
             passphrase: long_passphrase.clone(),
         };
 
-        // Should pass validation as it meets minimum requirements
         let result = input.validate();
         assert!(
             result.is_ok(),
-            "Long inputs should pass validation if they meet requirements. Error: {:?}",
+            "24-character label (max) with long passphrase should pass. Error: {:?}",
             result.err()
         );
+
+        // Test excessive label length (1000 characters) - should fail
+        let excessive_label = "a".repeat(1000);
+        let input_too_long = GenerateKeyInput {
+            label: excessive_label,
+            passphrase: long_passphrase,
+        };
+
+        let result = input_too_long.validate();
+        assert!(
+            result.is_err(),
+            "1000-character label should fail validation (exceeds 24 char max)"
+        );
+
+        if let Err(error) = result {
+            assert!(
+                error.message.contains("too long") || error.message.contains("24"),
+                "Error should mention maximum length. Got: {}",
+                error.message
+            );
+        }
     }
 
     #[test]

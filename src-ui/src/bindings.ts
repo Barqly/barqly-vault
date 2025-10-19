@@ -187,15 +187,38 @@ async updateKeyLabel(input: UpdateKeyLabelRequest) : Promise<Result<UpdateKeyLab
 }
 },
 /**
- * Deactivate a key (start 30-day grace period)
+ * Deactivate a key (with optional immediate deletion)
  * 
- * This command transitions a key from Active or Suspended state to Deactivated.
- * The key will be permanently deleted after 30 days unless restored.
+ * This command has two modes:
+ * 1. Normal deactivation (delete_immediately=false): Transitions key to Deactivated with 30-day grace period
+ * 2. Immediate destruction (delete_immediately=true): Transitions key directly to Destroyed, deletes key file
+ * 
+ * For attached keys (Active state), both modes are available based on user choice.
  * This operation is idempotent - deactivating an already deactivated key returns success.
  */
 async deactivateKey(request: DeactivateKeyRequest) : Promise<Result<DeactivateKeyResponse, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("deactivate_key", { request }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Delete a key permanently (immediate destruction)
+ * 
+ * This command permanently deletes a key by:
+ * 1. Updating registry status to Destroyed
+ * 2. Deleting the key file from disk (for passphrase keys)
+ * 
+ * This is typically used for unattached keys (PreActivation state) that were never used.
+ * For attached keys, consider using deactivateKey with delete_immediately flag.
+ * 
+ * IMPORTANT: This does NOT un-encrypt vaults. Any backups of the key file can still decrypt vaults.
+ */
+async deleteKey(request: DeleteKeyRequest) : Promise<Result<DeleteKeyResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_key", { request }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -623,7 +646,12 @@ key_id: string;
 /**
  * Reason for deactivation (optional, for audit trail)
  */
-reason: string | null }
+reason: string | null; 
+/**
+ * If true, immediately destroy the key (skip 30-day grace period)
+ * If false or None, use normal deactivation with 30-day grace period
+ */
+delete_immediately?: boolean | null }
 /**
  * Response from key deactivation
  */
@@ -634,8 +662,9 @@ export type DeactivateKeyResponse = { success: boolean; key_id: string; new_stat
 deactivated_at: string; 
 /**
  * ISO 8601 timestamp when key will be permanently deleted (deactivated_at + 30 days)
+ * None if delete_immediately was true
  */
-deletion_scheduled_at: string }
+deletion_scheduled_at: string | null }
 /**
  * Input for decryption command
  */
@@ -644,6 +673,26 @@ export type DecryptDataInput = { encrypted_file: string; key_id: string; passphr
  * Result of decryption operation
  */
 export type DecryptionResult = { extracted_files: string[]; output_dir: string; manifest_verified: boolean; external_manifest_restored?: boolean | null }
+/**
+ * Request to delete a key permanently
+ */
+export type DeleteKeyRequest = { 
+/**
+ * The key ID to delete
+ */
+key_id: string; 
+/**
+ * Reason for deletion (optional, for audit trail)
+ */
+reason: string | null }
+/**
+ * Response from key deletion
+ */
+export type DeleteKeyResponse = { success: boolean; key_id: string; new_status: KeyLifecycleStatus; 
+/**
+ * ISO 8601 timestamp when key was deleted
+ */
+deleted_at: string }
 /**
  * Input for deleting a vault
  */

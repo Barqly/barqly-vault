@@ -382,6 +382,14 @@ mod tests {
     }
 
     fn create_test_manifest(version: u32, device_info: &DeviceInfo) -> VaultMetadata {
+        create_test_manifest_with_name(version, device_info, "Test-Vault")
+    }
+
+    fn create_test_manifest_with_name(
+        version: u32,
+        device_info: &DeviceInfo,
+        vault_name: &str,
+    ) -> VaultMetadata {
         let recipient = RecipientInfo::new_passphrase(
             "test-key".to_string(),
             "age1test123".to_string(),
@@ -393,7 +401,7 @@ mod tests {
             "test-vault-001".to_string(),
             "Test Vault".to_string(),
             None,
-            "Test-Vault".to_string(),
+            vault_name.to_string(),
             device_info,
             None, // source_root
             vec![recipient],
@@ -604,12 +612,14 @@ mod tests {
 
     #[test]
     fn test_restore_from_backup() {
+        // Use unique vault name to avoid test pollution
+        let vault_name = format!("Test-Vault-Restore-{}", std::process::id());
         let temp_dir = TempDir::new().unwrap();
         let manifest_path = temp_dir.path().join("test.manifest");
         let restore_path = temp_dir.path().join("restored.manifest");
 
         let device_info = create_test_device_info();
-        let v1 = create_test_manifest(1, &device_info);
+        let v1 = create_test_manifest_with_name(1, &device_info, &vault_name);
 
         // Save v1
         VersionComparisonService::save_manifest(&v1, &manifest_path).unwrap();
@@ -623,12 +633,12 @@ mod tests {
         VersionComparisonService::resolve_with_backup(&v2, Some(&v1), &manifest_path).unwrap();
 
         // List backups
-        let backups = VersionComparisonService::list_backups("Test-Vault").unwrap();
+        let backups = VersionComparisonService::list_backups(&vault_name).unwrap();
 
         if !backups.is_empty() {
             // Restore from backup
             let restored = VersionComparisonService::restore_from_backup(
-                "Test-Vault",
+                &vault_name,
                 &backups[0],
                 &restore_path,
             )
