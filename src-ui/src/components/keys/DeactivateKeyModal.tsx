@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, AlertCircle, Info } from 'lucide-react';
+import { X, AlertCircle, Info, Key, Fingerprint } from 'lucide-react';
 import { commands, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -31,6 +31,8 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
 
   const expectedConfirmation = `DELETE ${keyRef.label}`;
   const isConfirmationValid = confirmationText === expectedConfirmation;
+  const isPassphrase = keyRef.key_type.type === 'Passphrase';
+  const isYubiKey = keyRef.key_type.type === 'YubiKey';
 
   const handleDeactivate = async () => {
     // Frontend validation for delete immediately
@@ -101,11 +103,15 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
               <div
                 className="rounded-lg p-2 flex-shrink-0"
                 style={{
-                  backgroundColor: 'rgba(251, 191, 36, 0.1)',
-                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                  backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.08)',
+                  border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
                 }}
               >
-                <AlertCircle className="h-5 w-5" style={{ color: '#F59E0B' }} />
+                {isPassphrase ? (
+                  <Key className="h-5 w-5" style={{ color: '#13897F' }} />
+                ) : (
+                  <Fingerprint className="h-5 w-5" style={{ color: '#F98B1C' }} />
+                )}
               </div>
               <h2 className="text-xl font-semibold text-main">Deactivate Key?</h2>
             </div>
@@ -131,12 +137,19 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
 
             {/* Grace Period Info */}
             {!deleteImmediately && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div
+                className="rounded-lg p-4"
+                style={{
+                  borderColor: 'rgb(var(--border-default))',
+                  backgroundColor: 'rgba(var(--info-panel-bg))',
+                  border: '1px solid rgb(var(--border-default))',
+                }}
+              >
                 <div className="flex gap-3">
                   <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-semibold text-blue-800">30-Day Grace Period</p>
-                    <p className="text-sm text-blue-700 mt-1">
+                    <p className="text-sm font-semibold text-heading">30-Day Grace Period</p>
+                    <p className="text-sm text-secondary mt-1">
                       You can restore this key within 30 days. After that, it will be
                       permanently removed from your registry.
                     </p>
@@ -146,14 +159,21 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
             )}
 
             {/* Encryption Warning */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div
+              className="rounded-lg p-4"
+              style={{
+                borderColor: 'rgba(251, 191, 36, 0.3)',
+                backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                border: '1px solid rgba(251, 191, 36, 0.3)',
+              }}
+            >
               <div className="flex gap-3">
                 <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-amber-800">Important</p>
-                  <p className="text-sm text-amber-700 mt-1">
-                    Your encrypted vaults remain encrypted with this key. Any backup copies
-                    of the key file can still decrypt them.
+                  <p className="text-sm font-semibold text-main">Important</p>
+                  <p className="text-sm text-secondary mt-1">
+                    Your encrypted vaults remain encrypted using this key. Any existing backup
+                    copies of this key file can still decrypt them.
                   </p>
                 </div>
               </div>
