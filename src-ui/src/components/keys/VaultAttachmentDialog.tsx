@@ -331,15 +331,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
         {/* Content */}
         <div className="p-6">
           {/* Key Info */}
-          <div
-            className="mb-4 p-3 rounded-lg flex items-center gap-3"
-            style={{
-              backgroundColor: isPassphrase
-                ? 'rgba(15, 118, 110, 0.1)'
-                : 'rgba(249, 139, 28, 0.08)',
-              border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
-            }}
-          >
+          <div className="mb-4 p-3 rounded-lg border border-default">
             <div>
               <div className="text-xs text-secondary font-medium">Key:</div>
               <div className="font-semibold text-main">{keyInfo.label}</div>
