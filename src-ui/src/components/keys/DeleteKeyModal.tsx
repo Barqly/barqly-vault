@@ -204,7 +204,7 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
               className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
               style={
                 !(isProcessing || !isConfirmationValid)
-                  ? { backgroundColor: '#DC2626', color: '#ffffff', borderColor: '#DC2626' }
+                  ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
                   : {
                       backgroundColor: 'rgb(var(--surface-hover))',
                       color: 'rgb(var(--text-muted))',
@@ -213,12 +213,12 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
               }
               onMouseEnter={(e) => {
                 if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#B91C1C';
+                  e.currentTarget.style.backgroundColor = '#1E40AF';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#DC2626';
+                  e.currentTarget.style.backgroundColor = '#1D4ED8';
                 }
               }}
             >
