@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Key, Shield } from 'lucide-react';
+import { X, Loader2, Key, Shield, Fingerprint } from 'lucide-react';
 import { commands, VaultSummary, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -27,9 +27,9 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
   const [vaultStates, setVaultStates] = useState<VaultCheckboxState[]>([]);
   const [isLoadingVaults, setIsLoadingVaults] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const isPassphrase = keyInfo.key_type.type === 'Passphrase';
+  const isYubiKey = keyInfo.key_type.type === 'YubiKey';
 
   // Load vaults and determine checkbox states
   useEffect(() => {
@@ -279,94 +279,70 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    });
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging) {
-      setPosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, dragStart]);
-
-  // Reset position when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      setPosition({ x: 0, y: 0 });
-    }
-  }, [isOpen]);
 
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.15)',
-        backdropFilter: 'blur(4px)',
-      }}
-    >
+    <>
+      {/* Backdrop */}
       <div
-        className="bg-white rounded-lg shadow-2xl border border-slate-300 max-w-md w-full mx-4 transition-transform duration-150"
-        style={{
-          transform: `translate(${position.x}px, ${position.y}px) scale(${isOpen ? 1 : 0.95})`,
-        }}
-      >
-        {/* Header - Draggable Area */}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="fixed inset-0 flex items-center justify-center z-[70] p-4 pointer-events-none">
         <div
-          className="flex items-center justify-between p-4 border-b border-slate-200 cursor-move select-none"
-          onMouseDown={handleMouseDown}
+          className="bg-elevated rounded-lg shadow-xl w-full pointer-events-auto"
+          style={{
+            maxWidth: '500px',
+            border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
+          }}
         >
-          <h3 className="text-lg font-semibold text-slate-800">Attach to Vaults</h3>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-slate-100 rounded transition-colors hover:text-slate-700"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5 text-slate-500" />
-          </button>
-        </div>
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-default">
+            <div className="flex items-center gap-3">
+              <div
+                className="rounded-lg p-2 flex-shrink-0"
+                style={{
+                  backgroundColor: isPassphrase
+                    ? 'rgba(15, 118, 110, 0.1)'
+                    : 'rgba(249, 139, 28, 0.08)',
+                  border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
+                }}
+              >
+                {isPassphrase ? (
+                  <Key className="h-5 w-5" style={{ color: '#13897F' }} />
+                ) : (
+                  <Fingerprint className="h-5 w-5" style={{ color: '#F98B1C' }} />
+                )}
+              </div>
+              <h2 className="text-xl font-semibold text-main">Attach to Vaults</h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-muted hover:text-secondary transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-6">
           {/* Key Info */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-3">
-            <div
-              className={`rounded-lg p-2 ${
-                keyInfo.key_type.type === 'Passphrase' ? 'bg-green-100' : 'bg-purple-100'
-              }`}
-            >
-              <Key
-                className={`h-4 w-4 ${
-                  keyInfo.key_type.type === 'Passphrase' ? 'text-green-700' : 'text-purple-700'
-                }`}
-              />
-            </div>
+          <div
+            className="mb-4 p-3 rounded-lg flex items-center gap-3"
+            style={{
+              backgroundColor: isPassphrase
+                ? 'rgba(15, 118, 110, 0.1)'
+                : 'rgba(249, 139, 28, 0.08)',
+              border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
+            }}
+          >
             <div>
-              <div className="text-xs text-slate-600 font-medium">Key:</div>
-              <div className="font-semibold text-slate-800">{keyInfo.label}</div>
+              <div className="text-xs text-secondary font-medium">Key:</div>
+              <div className="font-semibold text-main">{keyInfo.label}</div>
             </div>
           </div>
 
@@ -381,26 +357,38 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
           {isLoadingVaults ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
-              <span className="ml-2 text-sm text-slate-600">Loading vaults...</span>
+              <span className="ml-2 text-sm text-secondary">Loading vaults...</span>
             </div>
           ) : vaultStates.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="text-sm text-slate-500">No vaults available</p>
-              <p className="text-xs text-slate-400 mt-1">Create a vault to attach this key</p>
+              <p className="text-sm text-secondary">No vaults available</p>
+              <p className="text-xs text-muted mt-1">Create a vault to attach this key</p>
             </div>
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {vaultStates.map((state) => (
                 <label
                   key={state.vault.id}
-                  className={`
-                    flex items-center gap-3 p-3 rounded-lg border transition-all
-                    ${
-                      state.isDisabled
-                        ? 'bg-slate-50 border-slate-200 cursor-not-allowed'
-                        : 'bg-white border-blue-200 hover:bg-blue-50 hover:border-blue-300 cursor-pointer'
+                  className="flex items-center gap-3 p-3 rounded-lg border transition-all"
+                  style={{
+                    borderColor: state.isDisabled
+                      ? 'rgb(var(--border-default))'
+                      : 'rgba(59, 130, 246, 0.3)',
+                    backgroundColor: state.isDisabled ? 'rgb(var(--surface-hover))' : 'transparent',
+                    cursor: state.isDisabled ? 'not-allowed' : 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!state.isDisabled) {
+                      e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                      e.currentTarget.style.borderColor = '#3B82F6';
                     }
-                  `}
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!state.isDisabled) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                    }
+                  }}
                   title={state.tooltip}
                 >
                   <input
@@ -419,15 +407,15 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                   />
                   <Shield
                     className={`h-4 w-4 flex-shrink-0 ${
-                      state.isDisabled ? 'text-slate-400' : 'text-blue-500'
+                      state.isDisabled ? 'text-muted' : 'text-blue-500'
                     }`}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-slate-800 truncate">
+                    <div className="text-sm font-medium text-main truncate">
                       {state.vault.name}
                     </div>
                     {state.vault.description && (
-                      <div className="text-xs text-slate-500 truncate">
+                      <div className="text-xs text-secondary truncate">
                         {state.vault.description}
                       </div>
                     )}
@@ -436,7 +424,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                     <Loader2 className="h-4 w-4 text-blue-600 animate-spin flex-shrink-0" />
                   )}
                   {state.isDisabled && (
-                    <span className="text-xs text-slate-500 ml-2 flex-shrink-0">🔒 Locked</span>
+                    <span className="text-xs text-secondary ml-2 flex-shrink-0">🔒 Locked</span>
                   )}
                 </label>
               ))}
@@ -445,15 +433,16 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end p-4 border-t border-slate-200">
+        <div className="flex justify-end p-6 border-t border-default">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-main bg-hover rounded-lg hover:bg-elevated transition-colors"
           >
             Close
           </button>
         </div>
       </div>
     </div>
+    </>
   );
 };
