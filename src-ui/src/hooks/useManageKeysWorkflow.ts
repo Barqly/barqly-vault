@@ -60,7 +60,8 @@ export const useManageKeysWorkflow = () => {
 
   // Filter and search keys
   const filteredKeys = useMemo(() => {
-    let keys = allKeys;
+    // Filter out destroyed keys (per NIST spec - not shown in UI)
+    let keys = allKeys.filter((k) => k.lifecycle_status !== 'destroyed');
 
     // Apply multi-select filter
     // If both are selected or both are unselected = show all
