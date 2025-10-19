@@ -3,6 +3,7 @@ import { Key, Link2, FileText, Copy, Check, Fingerprint, Clock, Sparkles, AlertT
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
 import { DeactivateKeyModal } from './DeactivateKeyModal';
+import { DeleteKeyModal } from './DeleteKeyModal';
 
 interface KeyCardProps {
   keyRef: GlobalKey;
@@ -34,6 +35,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const isPassphrase = keyRef.key_type.type === 'Passphrase';
   const isYubiKey = keyRef.key_type.type === 'YubiKey';
 
@@ -89,6 +91,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   // Get vault names for display
   const attachedVaultNames = vaultAttachments.map((id) => vaultNames.get(id) || id);
   const vaultCount = vaultAttachments.length;
+  const isUnattached = vaultCount === 0;
 
   // Truncate label to 24 characters
   const displayLabel = keyRef.label.length > 24 ? keyRef.label.slice(0, 24) + '...' : keyRef.label;
@@ -177,9 +180,13 @@ export const KeyCard: React.FC<KeyCardProps> = ({
     }
   };
 
-  const handleDeactivate = (e: React.MouseEvent) => {
+  const handleDeactivateOrDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowDeactivateModal(true);
+    if (isUnattached) {
+      setShowDeleteModal(true);
+    } else {
+      setShowDeactivateModal(true);
+    }
   };
 
   const handleRestore = async (e: React.MouseEvent) => {
@@ -370,7 +377,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
           </button>
         ) : (
           <button
-            onClick={canDeactivate ? handleDeactivate : undefined}
+            onClick={canDeactivate ? handleDeactivateOrDelete : undefined}
             disabled={isLoading || !canDeactivate}
             className={`
               flex items-center justify-center gap-1 px-3 py-1.5
@@ -396,9 +403,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
                 e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
               }
             }}
-            title={deactivateTooltip}
+            title={isUnattached ? 'Delete this unused key permanently' : deactivateTooltip}
           >
-            {isLoading ? 'Deactivating...' : 'Deactivate'}
+            {isLoading ? (isUnattached ? 'Deleting...' : 'Deactivating...') : (isUnattached ? 'Delete' : 'Deactivate')}
           </button>
         )}
 
@@ -465,7 +472,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         )}
       </div>
 
-      {/* Deactivate Modal */}
+      {/* Deactivate Modal (for attached keys) */}
       <DeactivateKeyModal
         isOpen={showDeactivateModal}
         keyRef={keyRef}
@@ -473,6 +480,17 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         onClose={() => setShowDeactivateModal(false)}
         onSuccess={async () => {
           setShowDeactivateModal(false);
+          await onRefresh?.();
+        }}
+      />
+
+      {/* Delete Modal (for unattached keys) */}
+      <DeleteKeyModal
+        isOpen={showDeleteModal}
+        keyRef={keyRef}
+        onClose={() => setShowDeleteModal(false)}
+        onSuccess={async () => {
+          setShowDeleteModal(false);
           await onRefresh?.();
         }}
       />
