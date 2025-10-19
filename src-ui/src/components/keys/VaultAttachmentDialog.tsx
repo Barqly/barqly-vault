@@ -154,12 +154,18 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
 
         // Filter to only show relevant vaults (reduce information overload):
         // 1. Available vaults (not attached, not encrypted) - can attach
-        // 2. Sealed vaults with this key (attached and encrypted) - historical reference
+        // 2. Attached vaults (not encrypted) - can detach
+        // 3. Sealed vaults with this key (attached and encrypted) - historical reference, view-only
         // HIDE: Sealed vaults without this key (not attached but encrypted) - irrelevant
         const relevantStates = allStates.filter((state) => {
-          if (!state.isAttached && !state.isDisabled) return true; // Available
-          if (state.isAttached && state.isDisabled) return true; // Sealed with this key
-          return false; // Hide irrelevant sealed vaults
+          // Show all attached vaults (mutable or sealed)
+          if (state.isAttached) return true;
+
+          // Show available vaults (not attached, not encrypted)
+          if (!state.isDisabled) return true;
+
+          // Hide: Not attached AND encrypted (irrelevant sealed vaults)
+          return false;
         });
 
         // Sort alphabetically
