@@ -95,7 +95,7 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
       <div className="fixed inset-0 flex items-center justify-center z-[70] p-4 pointer-events-none">
         <div
           className="bg-elevated rounded-lg shadow-xl w-full pointer-events-auto"
-          style={{ maxWidth: '500px' }}
+          style={{ maxWidth: '550px' }}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-default">
