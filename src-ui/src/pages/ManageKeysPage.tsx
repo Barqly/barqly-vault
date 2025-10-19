@@ -153,15 +153,15 @@ const ManageKeysPage: React.FC = () => {
     logger.info('ManageKeysPage', 'Delete requested but not supported', { keyId });
   }, []);
 
-  // Note: Key export is handled by .enc files which are already created
-  // No separate export functionality is needed
+  // Note: Export functionality requires backend API
+  // See: tbd/mk/backend-key-export-api-fe.md for requirements
   const handleExportKey = useCallback(async (keyId: string) => {
     alert(
-      'Key files are already stored as encrypted .enc files.\n\n' +
-        'You can find your key files in the Barqly vault directory.\n' +
-        'These files can be backed up and imported on other systems.',
+      'Export functionality coming soon!\n\n' +
+        'Key files are stored as encrypted .enc files in your Barqly vault directory.\n' +
+        'They can be manually backed up and imported on other systems.',
     );
-    logger.info('ManageKeysPage', 'Export info requested', { keyId });
+    logger.info('ManageKeysPage', 'Export requested (not yet implemented)', { keyId });
   }, []);
 
   return (
