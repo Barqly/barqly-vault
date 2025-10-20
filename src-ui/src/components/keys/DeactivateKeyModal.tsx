@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, AlertCircle, Info, Key, Fingerprint } from 'lucide-react';
 import { commands, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
@@ -28,6 +28,9 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
   const [confirmationText, setConfirmationText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Ref for focus trap
+  const deactivateButtonRef = useRef<HTMLButtonElement>(null);
 
   const expectedConfirmation = `DELETE ${keyRef.label}`;
   const isConfirmationValid = confirmationText === expectedConfirmation;
@@ -81,6 +84,14 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
     }
   };
 
+  // Focus trap: Keep focus on Deactivate button only (single primary action)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      deactivateButtonRef.current?.focus();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -93,6 +104,7 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
         <div
           className="bg-elevated rounded-lg shadow-xl w-full pointer-events-auto"
           style={{ maxWidth: '550px' }}
+          onKeyDown={handleKeyDown}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-default">
@@ -237,18 +249,13 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer - Deactivate button spans width, Cancel on right */}
           <div className="flex gap-3 p-6 border-t border-default">
             <button
-              onClick={handleCancel}
-              disabled={isProcessing}
-              className="px-4 py-2 text-main bg-hover rounded-lg hover:bg-elevated transition-colors"
-            >
-              Cancel
-            </button>
-            <button
+              ref={deactivateButtonRef}
               onClick={handleDeactivate}
               disabled={isProcessing || (deleteImmediately && !isConfirmationValid)}
+              autoFocus
               className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
               style={
                 deleteImmediately
@@ -285,6 +292,14 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
                 : deleteImmediately
                   ? 'Delete Permanently'
                   : 'Deactivate Key'}
+            </button>
+            <button
+              onClick={handleCancel}
+              disabled={isProcessing}
+              tabIndex={-1}
+              className="px-4 py-2 text-main bg-hover rounded-lg hover:bg-elevated transition-colors"
+            >
+              Cancel
             </button>
           </div>
         </div>
