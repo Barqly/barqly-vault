@@ -197,15 +197,15 @@ const ManageKeysPage: React.FC = () => {
     if (!selectedKeyForExport) return;
 
     const keyId = selectedKeyForExport.id;
-    const keyLabel = selectedKeyForExport.label;
 
     // Close warning dialog
     setShowExportWarning(false);
 
     try {
-      // 1. Get Downloads directory and construct full path
+      // 1. Get Downloads directory and construct full path with actual key filename
+      // Note: Filename is {key_id}.agekey.enc, not {label}.agekey.enc
       const downloadsPath = await downloadDir();
-      const defaultPath = await join(downloadsPath, `${keyLabel}.agekey.enc`);
+      const defaultPath = await join(downloadsPath, `${keyId}.agekey.enc`);
 
       // 2. Show file save dialog
       const destPath = await save({
