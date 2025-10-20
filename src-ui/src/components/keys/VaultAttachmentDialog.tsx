@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Key, Shield, Fingerprint } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Loader2, Key, Shield, Fingerprint, Plus } from 'lucide-react';
 import { commands, VaultSummary, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -25,6 +26,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
   keyInfo,
   onSuccess,
 }) => {
+  const navigate = useNavigate();
   const [vaultStates, setVaultStates] = useState<VaultCheckboxState[]>([]);
   const [isLoadingVaults, setIsLoadingVaults] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -378,9 +380,39 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                 <span className="ml-2 text-sm text-secondary">Loading vaults...</span>
               </div>
             ) : vaultStates.length === 0 ? (
-              <div className="py-8 text-center">
-                <p className="text-sm text-secondary">No vaults available</p>
-                <p className="text-xs text-muted mt-1">Create a vault to attach this key</p>
+              <div className="py-8 text-center space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-main">No Available Vaults</p>
+                  <p className="text-xs text-secondary mt-2">
+                    All vaults have reached the maximum of 4 keys.
+                  </p>
+                  <p className="text-xs text-muted mt-1">
+                    Create a new vault or remove a key from an existing vault.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    onClose();
+                    navigate('/vault-hub');
+                  }}
+                  className="
+                    inline-flex items-center gap-2 px-4 py-2
+                    text-sm font-medium text-white
+                    rounded-lg transition-colors
+                  "
+                  style={{
+                    backgroundColor: '#1D4ED8',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1E40AF';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1D4ED8';
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                  Create New Vault
+                </button>
               </div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
