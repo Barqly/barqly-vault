@@ -107,6 +107,17 @@ export const ImportPassphraseKeyDialog: React.FC<ImportPassphraseKeyDialogProps>
     return null;
   };
 
+  // Handle Enter key to submit form
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const validationError = validateForm();
+      if (!validationError && !isImporting) {
+        handleImport();
+      }
+    }
+  };
+
   const handleImport = async () => {
     const validationError = validateForm();
     if (validationError) {
@@ -273,6 +284,7 @@ export const ImportPassphraseKeyDialog: React.FC<ImportPassphraseKeyDialogProps>
                 type="text"
                 value={label}
                 onChange={handleLabelChange}
+                onKeyPress={handleKeyPress}
                 placeholder="e.g., My Backup Key 2024"
                 maxLength={128}
                 disabled={isImporting}
@@ -317,6 +329,7 @@ export const ImportPassphraseKeyDialog: React.FC<ImportPassphraseKeyDialogProps>
                   type={showPassphrase ? 'text' : 'password'}
                   value={passphrase}
                   onChange={(e) => setPassphrase(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   placeholder="Enter passphrase to decrypt key file"
                   disabled={isImporting}
                   className="
