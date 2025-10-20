@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, AlertTriangle, Key, Fingerprint } from 'lucide-react';
 import { commands, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
@@ -24,6 +24,10 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
   const [confirmationText, setConfirmationText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Refs for focus trap
+  const inputRef = useRef<HTMLInputElement>(null);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
 
   const expectedConfirmation = `DELETE ${keyRef.label}`;
   const isConfirmationValid = confirmationText === expectedConfirmation;
@@ -73,6 +77,43 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
     }
   };
 
+  // Handle Enter key to submit form
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && isConfirmationValid && !isProcessing) {
+      e.preventDefault();
+      handleDelete();
+    }
+  };
+
+  // Focus trap: cycle focus within modal
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+
+    const isDeleteEnabled = isConfirmationValid && !isProcessing;
+
+    // If going backwards (Shift+Tab) from input field
+    if (e.shiftKey && document.activeElement === inputRef.current) {
+      e.preventDefault();
+      if (isDeleteEnabled && deleteButtonRef.current) {
+        deleteButtonRef.current.focus();
+      } else {
+        // Stay on input if delete button is disabled
+        inputRef.current?.focus();
+      }
+    }
+    // If going forward (Tab) from delete button
+    else if (!e.shiftKey && document.activeElement === deleteButtonRef.current) {
+      e.preventDefault();
+      inputRef.current?.focus();
+    }
+    // If going forward (Tab) from input and delete is disabled
+    else if (!e.shiftKey && document.activeElement === inputRef.current && !isDeleteEnabled) {
+      e.preventDefault();
+      // Stay on input field if delete button is disabled
+      inputRef.current?.focus();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -85,6 +126,7 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
         <div
           className="bg-elevated rounded-lg shadow-xl w-full pointer-events-auto"
           style={{ maxWidth: '500px' }}
+          onKeyDown={handleKeyDown}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-default">
@@ -157,12 +199,14 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
                 to confirm:
               </label>
               <input
+                ref={inputRef}
                 type="text"
                 value={confirmationText}
                 onChange={(e) => {
                   setConfirmationText(e.target.value);
                   setError(null);
                 }}
+                onKeyPress={handleKeyPress}
                 disabled={isProcessing}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main ${
                   confirmationText && !isConfirmationValid
@@ -186,16 +230,10 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer - Delete button spans width, Cancel on right */}
           <div className="flex gap-3 p-6 border-t border-default">
             <button
-              onClick={handleCancel}
-              disabled={isProcessing}
-              className="px-4 py-2 text-main bg-hover rounded-lg hover:bg-elevated transition-colors"
-            >
-              Cancel
-            </button>
-            <button
+              ref={deleteButtonRef}
               onClick={handleDelete}
               disabled={isProcessing || !isConfirmationValid}
               className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
@@ -220,6 +258,14 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
               }}
             >
               {isProcessing ? 'Deleting...' : 'Delete Permanently'}
+            </button>
+            <button
+              onClick={handleCancel}
+              disabled={isProcessing}
+              tabIndex={-1}
+              className="px-4 py-2 text-main bg-hover rounded-lg hover:bg-elevated transition-colors"
+            >
+              Cancel
             </button>
           </div>
         </div>
