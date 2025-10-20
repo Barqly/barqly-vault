@@ -241,7 +241,74 @@ impl KeyRegistryService {
             KeyManagementError::StorageError(e.to_string())
         })?;
 
-        info!(key_id = %key_id, vault_id = %vault_id, "Key detached successfully");
+        // CRITICAL: Update global key registry (mirror of attach logic)
+        // This was missing and caused registry-manifest desynchronization
+
+        // Step 1: Load global registry
+        let mut registry = self.load_registry()?;
+
+        // Step 2: Get mutable key entry and perform updates
+        {
+            let key_entry = registry.get_key_mut(key_id).ok_or_else(|| {
+                error!(key_id = %key_id, "Key not found in registry during detach sync");
+                KeyManagementError::KeyNotFound(key_id.to_string())
+            })?;
+
+            // Step 3: Remove vault from associations
+            key_entry.remove_vault_association(vault_id);
+
+            let remaining_vaults = key_entry.vault_associations().len();
+
+            debug!(
+                key_id = %key_id,
+                vault_id = %vault_id,
+                remaining_vaults = remaining_vaults,
+                "Removed vault from key's vault_associations"
+            );
+
+            // Step 4: Update lifecycle status based on remaining vault associations
+            if key_entry.vault_associations().is_empty() {
+                // No more vaults → Transition to Suspended
+                key_entry
+                    .set_lifecycle_status(
+                        crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus::Suspended,
+                        format!("Detached from last vault '{}'", vault_id),
+                        "system".to_string(),
+                    )
+                    .map_err(|e| {
+                        error!(key_id = %key_id, error = %e, "Failed to set lifecycle status to Suspended");
+                        KeyManagementError::InvalidOperation(e)
+                    })?;
+
+                info!(
+                    key_id = %key_id,
+                    vault_id = %vault_id,
+                    remaining_vaults = remaining_vaults,
+                    "Key transitioned to Suspended (no more vault associations)"
+                );
+            } else {
+                // Still attached to other vaults → Stay Active, but log the detachment
+                debug!(
+                    key_id = %key_id,
+                    vault_id = %vault_id,
+                    remaining_vaults = remaining_vaults,
+                    "Key still Active (attached to other vaults)"
+                );
+            }
+        } // key_entry mutable borrow ends here
+
+        // Step 5: Save updated registry (borrow ended, safe to save)
+        registry.save().map_err(|e| {
+            error!(error = %e, "Failed to save registry after key detachment");
+            KeyManagementError::RegistrySaveFailed(e.to_string())
+        })?;
+
+        info!(
+            key_id = %key_id,
+            vault_id = %vault_id,
+            "Key detached successfully and registry synchronized"
+        );
+
         Ok(())
     }
 
