@@ -66,11 +66,7 @@ const SidebarNav: React.FC = () => {
                   className={`
                     flex items-center gap-3 px-3 py-3 rounded-lg
                     transition-colors duration-150
-                    ${
-                      isActive
-                        ? 'text-white'
-                        : 'text-heading hover:bg-hover'
-                    }
+                    ${isActive ? 'text-white' : 'text-heading hover:bg-hover'}
                   `}
                   style={{
                     backgroundColor: isActive ? '#1D4ED8' : undefined,

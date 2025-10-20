@@ -101,7 +101,6 @@ export const useManageKeysWorkflow = () => {
     return sortedKeys;
   }, [allKeys, showPassphraseKeys, showYubiKeyKeys, searchQuery, getKeyVaultAttachments]);
 
-
   // Toggle key selection
   const toggleKeySelection = useCallback((keyId: string) => {
     setSelectedKeys((prev) => {
@@ -124,7 +123,6 @@ export const useManageKeysWorkflow = () => {
   const clearError = useCallback(() => {
     setError(null);
   }, []);
-
 
   return {
     // State

@@ -78,10 +78,7 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
-        onClick={handleCancel}
-      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" onClick={handleCancel} />
 
       {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-[70] p-4 pointer-events-none">
@@ -143,8 +140,8 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
                 <div>
                   <p className="text-sm font-semibold text-main">This action cannot be undone</p>
                   <p className="text-sm text-secondary mt-1">
-                    This key will be permanently removed from your registry. Since it has never
-                    been used, this is a safe operation.
+                    This key will be permanently removed from your registry. Since it has never been
+                    used, this is a safe operation.
                   </p>
                 </div>
               </div>

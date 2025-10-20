@@ -166,7 +166,8 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== 'Tab') return;
 
-    const isButtonEnabled = !isCreating &&
+    const isButtonEnabled =
+      !isCreating &&
       label.trim() &&
       labelError === null &&
       validation?.is_valid &&
@@ -202,7 +203,10 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
 
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center z-[70] p-4 pointer-events-none">
-        <div className="bg-elevated rounded-lg shadow-xl w-full pointer-events-auto" style={{ maxWidth: '600px', border: '1px solid #B7E1DD' }}>
+        <div
+          className="bg-elevated rounded-lg shadow-xl w-full pointer-events-auto"
+          style={{ maxWidth: '600px', border: '1px solid #B7E1DD' }}
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-default">
             <div className="flex items-center gap-3">
@@ -242,16 +246,16 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 disabled={isCreating}
                 maxLength={24}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50 bg-input text-main ${
-                  labelError
-                    ? 'border-default'
-                    : 'border-default focus:ring-blue-300'
+                  labelError ? 'border-default' : 'border-default focus:ring-blue-300'
                 }`}
                 style={labelError ? { borderColor: '#FCA5A5' } : undefined}
                 placeholder="e.g., My Backup Key 2024"
                 autoFocus
               />
               {labelError ? (
-                <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>{labelError}</p>
+                <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>
+                  {labelError}
+                </p>
               ) : (
                 <p
                   className="mt-1 text-xs"
@@ -316,8 +320,14 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 style={
                   confirmPassphrase
                     ? passphrase === confirmPassphrase
-                      ? { borderColor: '#B7E1DD', '--tw-ring-color': '#13897F' } as React.CSSProperties
-                      : { borderColor: '#FCA5A5', '--tw-ring-color': '#B91C1C' } as React.CSSProperties
+                      ? ({
+                          borderColor: '#B7E1DD',
+                          '--tw-ring-color': '#13897F',
+                        } as React.CSSProperties)
+                      : ({
+                          borderColor: '#FCA5A5',
+                          '--tw-ring-color': '#B91C1C',
+                        } as React.CSSProperties)
                     : undefined
                 }
                 placeholder="Re-enter passphrase"
@@ -364,7 +374,10 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                     </span>
                   ) : null}
                 </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgb(var(--border-default))' }}>
+                <div
+                  className="h-2 rounded-full overflow-hidden"
+                  style={{ backgroundColor: 'rgb(var(--border-default))' }}
+                >
                   <div
                     className={`h-full transition-all duration-300 ${getStrengthColor()} ${getStrengthWidth()}`}
                     style={
@@ -417,13 +430,20 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                   style={{
                     borderColor: 'rgb(var(--border-default))',
                     backgroundColor: 'rgba(var(--info-panel-bg))',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.05)'
+                    boxShadow:
+                      '0 1px 3px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
                   }}
                 >
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <div className="mb-1 flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
+                        <span
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border"
+                          style={{
+                            backgroundColor: 'rgb(var(--surface-card))',
+                            borderColor: 'rgb(var(--border-default))',
+                          }}
+                        >
                           1
                         </span>
                         <span className="text-sm font-semibold text-heading">
@@ -437,7 +457,13 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
 
                     <div>
                       <div className="mb-1 flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
+                        <span
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border"
+                          style={{
+                            backgroundColor: 'rgb(var(--surface-card))',
+                            borderColor: 'rgb(var(--border-default))',
+                          }}
+                        >
                           2
                         </span>
                         <span className="text-sm font-semibold text-heading">
@@ -451,12 +477,16 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
 
                     <div>
                       <div className="mb-1 flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border" style={{ backgroundColor: 'rgb(var(--surface-card))', borderColor: 'rgb(var(--border-default))' }}>
+                        <span
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border"
+                          style={{
+                            backgroundColor: 'rgb(var(--surface-card))',
+                            borderColor: 'rgb(var(--border-default))',
+                          }}
+                        >
                           3
                         </span>
-                        <span className="text-sm font-semibold text-heading">
-                          Store Securely
-                        </span>
+                        <span className="text-sm font-semibold text-heading">Store Securely</span>
                       </div>
                       <p className="text-sm text-secondary leading-relaxed">
                         Save in password manager.
@@ -464,8 +494,12 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                     </div>
                   </div>
 
-                  <p className="mt-4 border-t pt-3 text-xs text-secondary italic" style={{ borderColor: 'rgb(var(--border-default))' }}>
-                    <span className="font-semibold">Security Note:</span> Your passphrase cannot be recovered if lost. Store it carefully in a password manager.
+                  <p
+                    className="mt-4 border-t pt-3 text-xs text-secondary italic"
+                    style={{ borderColor: 'rgb(var(--border-default))' }}
+                  >
+                    <span className="font-semibold">Security Note:</span> Your passphrase cannot be
+                    recovered if lost. Store it carefully in a password manager.
                   </p>
                 </div>
               </div>
@@ -490,13 +524,19 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 }
                 className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
                 style={
-                  !(isCreating ||
+                  !(
+                    isCreating ||
                     !label.trim() ||
                     labelError !== null ||
                     !validation?.is_valid ||
-                    passphrase !== confirmPassphrase)
+                    passphrase !== confirmPassphrase
+                  )
                     ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
-                    : { backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-muted))', borderColor: 'rgb(var(--border-default))' }
+                    : {
+                        backgroundColor: 'rgb(var(--surface-hover))',
+                        color: 'rgb(var(--text-muted))',
+                        borderColor: 'rgb(var(--border-default))',
+                      }
                 }
                 onMouseEnter={(e) => {
                   if (!e.currentTarget.disabled) {

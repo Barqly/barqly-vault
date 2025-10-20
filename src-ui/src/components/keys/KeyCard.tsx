@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Key, Link2, FileText, Copy, Check, Fingerprint, Clock, Sparkles, AlertTriangle } from 'lucide-react';
+import {
+  Key,
+  Link2,
+  FileText,
+  Copy,
+  Check,
+  Fingerprint,
+  Clock,
+  Sparkles,
+  AlertTriangle,
+} from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
 import { DeactivateKeyModal } from './DeactivateKeyModal';
@@ -51,7 +61,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
    */
   const isKeyUsedInEnvelope = (
     keyRef: GlobalKey,
-    vaultStats?: Map<string, VaultStatistics>
+    vaultStats?: Map<string, VaultStatistics>,
   ): boolean => {
     // Early return if no stats available (fail-safe to false)
     if (!vaultStats) {
@@ -86,7 +96,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   // Tooltip text for deactivation button
   const deactivateTooltip = usedInEnvelope
     ? "This key is part of a vault's encryption envelope and cannot be deactivated."
-    : "Deactivate this key. It will be permanently deleted after 30 days unless restored.";
+    : 'Deactivate this key. It will be permanently deleted after 30 days unless restored.';
 
   // Get vault names for display
   const attachedVaultNames = vaultAttachments.map((id) => vaultNames.get(id) || id);
@@ -100,9 +110,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   const getDaysRemaining = (deactivatedAt: string): number => {
     const now = new Date();
     const deactivated = new Date(deactivatedAt);
-    const daysPassed = Math.floor(
-      (now.getTime() - deactivated.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const daysPassed = Math.floor((now.getTime() - deactivated.getTime()) / (1000 * 60 * 60 * 24));
     return Math.max(0, 30 - daysPassed);
   };
 
@@ -111,9 +119,8 @@ export const KeyCard: React.FC<KeyCardProps> = ({
     const { lifecycle_status, deactivated_at } = keyRef;
 
     // Calculate real countdown for deactivated keys
-    const daysRemaining = lifecycle_status === 'deactivated' && deactivated_at
-      ? getDaysRemaining(deactivated_at)
-      : 0;
+    const daysRemaining =
+      lifecycle_status === 'deactivated' && deactivated_at ? getDaysRemaining(deactivated_at) : 0;
 
     switch (lifecycle_status) {
       case 'pre_activation':
@@ -261,10 +268,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         </div>
 
         {/* Label with tooltip for full text */}
-        <h3
-          className="font-semibold text-heading truncate"
-          title={keyRef.label}
-        >
+        <h3 className="font-semibold text-heading truncate" title={keyRef.label}>
           {displayLabel}
         </h3>
       </div>
@@ -386,7 +390,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               ${canDeactivate ? 'cursor-pointer' : 'cursor-default'}
             `}
             style={{
-              borderColor: canDeactivate ? 'rgb(var(--border-default))' : 'rgb(var(--border-default))',
+              borderColor: canDeactivate
+                ? 'rgb(var(--border-default))'
+                : 'rgb(var(--border-default))',
               color: canDeactivate ? 'rgb(var(--text-secondary))' : 'rgb(var(--text-muted))',
             }}
             onMouseEnter={(e) => {
@@ -405,7 +411,13 @@ export const KeyCard: React.FC<KeyCardProps> = ({
             }}
             title={isUnattached ? 'Delete this unused key permanently' : deactivateTooltip}
           >
-            {isLoading ? (isUnattached ? 'Deleting...' : 'Deactivating...') : (isUnattached ? 'Delete' : 'Deactivate')}
+            {isLoading
+              ? isUnattached
+                ? 'Deleting...'
+                : 'Deactivating...'
+              : isUnattached
+                ? 'Delete'
+                : 'Deactivate'}
           </button>
         )}
 

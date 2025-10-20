@@ -23,10 +23,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
   return (
     <>
       {/* Backdrop with blur */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={onClose} />
 
       {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
@@ -62,9 +59,19 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                 {/* Most Secure Badge - Centered on top border */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   {/* Background to hide border */}
-                  <div className="absolute inset-0 bg-elevated rounded-full" style={{ margin: '-2px' }} />
+                  <div
+                    className="absolute inset-0 bg-elevated rounded-full"
+                    style={{ margin: '-2px' }}
+                  />
                   {/* Badge */}
-                  <div className="relative flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(249, 139, 28, 0.08)', color: '#F98B1C', border: '1px solid #ffd4a3' }}>
+                  <div
+                    className="relative flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
+                    style={{
+                      backgroundColor: 'rgba(249, 139, 28, 0.08)',
+                      color: '#F98B1C',
+                      border: '1px solid #ffd4a3',
+                    }}
+                  >
                     <Shield className="h-3 w-3" />
                     Most Secure
                   </div>
@@ -78,14 +85,9 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                       border: '1px solid #ffd4a3',
                     }}
                   >
-                    <Fingerprint
-                      className="h-12 w-12"
-                      style={{ color: '#F98B1C' }}
-                    />
+                    <Fingerprint className="h-12 w-12" style={{ color: '#F98B1C' }} />
                   </div>
-                  <h4 className="font-semibold text-heading">
-                    YubiKey
-                  </h4>
+                  <h4 className="font-semibold text-heading">YubiKey</h4>
                   <p className="text-sm text-secondary text-center">Hardware security key</p>
                 </div>
               </button>
@@ -111,14 +113,9 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                       border: '1px solid #B7E1DD',
                     }}
                   >
-                    <Key
-                      className="h-12 w-12"
-                      style={{ color: '#13897F' }}
-                    />
+                    <Key className="h-12 w-12" style={{ color: '#13897F' }} />
                   </div>
-                  <h4 className="font-semibold text-heading">
-                    Passphrase
-                  </h4>
+                  <h4 className="font-semibold text-heading">Passphrase</h4>
                   <p className="text-sm text-secondary text-center">Password-protected key</p>
                 </div>
               </button>

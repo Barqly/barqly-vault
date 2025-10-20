@@ -86,10 +86,7 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
-        onClick={handleCancel}
-      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" onClick={handleCancel} />
 
       {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-[70] p-4 pointer-events-none">
@@ -103,7 +100,9 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
               <div
                 className="rounded-lg p-2 flex-shrink-0"
                 style={{
-                  backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.08)',
+                  backgroundColor: isPassphrase
+                    ? 'rgba(15, 118, 110, 0.1)'
+                    : 'rgba(249, 139, 28, 0.08)',
                   border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
                 }}
               >
@@ -150,8 +149,8 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
                   <div>
                     <p className="text-sm font-semibold text-heading">30-Day Grace Period</p>
                     <p className="text-sm text-secondary mt-1">
-                      You can restore this key within 30 days. After that, it will be
-                      permanently removed from your registry.
+                      You can restore this key within 30 days. After that, it will be permanently
+                      removed from your registry.
                     </p>
                   </div>
                 </div>
@@ -202,7 +201,11 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
             {deleteImmediately && (
               <div>
                 <label className="block text-sm font-medium text-main mb-2">
-                  Type <code className="px-1.5 py-0.5 bg-hover rounded text-xs font-mono">{expectedConfirmation}</code> to confirm:
+                  Type{' '}
+                  <code className="px-1.5 py-0.5 bg-hover rounded text-xs font-mono">
+                    {expectedConfirmation}
+                  </code>{' '}
+                  to confirm:
                 </label>
                 <input
                   type="text"
@@ -251,20 +254,20 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
                 deleteImmediately
                   ? // Red for permanent deletion
                     !(isProcessing || !isConfirmationValid)
-                      ? { backgroundColor: '#DC2626', color: '#ffffff', borderColor: '#DC2626' }
-                      : {
-                          backgroundColor: 'rgb(var(--surface-hover))',
-                          color: 'rgb(var(--text-muted))',
-                          borderColor: 'rgb(var(--border-default))',
-                        }
+                    ? { backgroundColor: '#DC2626', color: '#ffffff', borderColor: '#DC2626' }
+                    : {
+                        backgroundColor: 'rgb(var(--surface-hover))',
+                        color: 'rgb(var(--text-muted))',
+                        borderColor: 'rgb(var(--border-default))',
+                      }
                   : // Blue for reversible deactivation
                     !isProcessing
-                      ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
-                      : {
-                          backgroundColor: 'rgb(var(--surface-hover))',
-                          color: 'rgb(var(--text-muted))',
-                          borderColor: 'rgb(var(--border-default))',
-                        }
+                    ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
+                    : {
+                        backgroundColor: 'rgb(var(--surface-hover))',
+                        color: 'rgb(var(--text-muted))',
+                        borderColor: 'rgb(var(--border-default))',
+                      }
               }
               onMouseEnter={(e) => {
                 if (!e.currentTarget.disabled) {
@@ -273,9 +276,7 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
               }}
               onMouseLeave={(e) => {
                 if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = deleteImmediately
-                    ? '#DC2626'
-                    : '#1D4ED8';
+                  e.currentTarget.style.backgroundColor = deleteImmediately ? '#DC2626' : '#1D4ED8';
                 }
               }}
             >

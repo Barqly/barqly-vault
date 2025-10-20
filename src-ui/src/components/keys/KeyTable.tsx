@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Key, Fingerprint, Link2, FileText, Copy, Check, Clock, Sparkles, AlertTriangle } from 'lucide-react';
+import {
+  Key,
+  Fingerprint,
+  Link2,
+  FileText,
+  Copy,
+  Check,
+  Clock,
+  Sparkles,
+  AlertTriangle,
+} from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -32,9 +42,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
       const typeA = a.key_type.type;
       const typeB = b.key_type.type;
       if (typeA !== typeB) {
-        return sortDirection === 'asc'
-          ? typeA.localeCompare(typeB)
-          : typeB.localeCompare(typeA);
+        return sortDirection === 'asc' ? typeA.localeCompare(typeB) : typeB.localeCompare(typeA);
       }
     }
     // Default to label sort
@@ -80,7 +88,9 @@ export const KeyTable: React.FC<KeyTableProps> = ({
       return;
     }
 
-    if (!confirm('Deactivate this key? You have 30 days to restore it before permanent deletion.')) {
+    if (
+      !confirm('Deactivate this key? You have 30 days to restore it before permanent deletion.')
+    ) {
       return;
     }
 
@@ -154,7 +164,9 @@ export const KeyTable: React.FC<KeyTableProps> = ({
     if (lifecycle_status === 'deactivated' && deactivated_at) {
       const now = new Date();
       const deactivated = new Date(deactivated_at);
-      const daysPassed = Math.floor((now.getTime() - deactivated.getTime()) / (1000 * 60 * 60 * 24));
+      const daysPassed = Math.floor(
+        (now.getTime() - deactivated.getTime()) / (1000 * 60 * 60 * 24),
+      );
       const daysRemaining = Math.max(0, 30 - daysPassed);
 
       return (
@@ -204,9 +216,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                   className="flex items-center gap-2 text-xs font-medium text-secondary hover:text-heading"
                 >
                   Key
-                  {sortBy === 'label' && (
-                    <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                  )}
+                  {sortBy === 'label' && <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                 </button>
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-secondary">Public Key</th>
@@ -239,7 +249,9 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                       <div
                         className="rounded-lg p-1.5 flex-shrink-0"
                         style={{
-                          backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.08)',
+                          backgroundColor: isPassphrase
+                            ? 'rgba(15, 118, 110, 0.1)'
+                            : 'rgba(249, 139, 28, 0.08)',
                           border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
                         }}
                       >
@@ -250,12 +262,17 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                         )}
                       </div>
                       <span className="text-xs font-medium text-heading">
-                        {keyRef.label.length > 24 ? keyRef.label.slice(0, 24) + '...' : keyRef.label}
+                        {keyRef.label.length > 24
+                          ? keyRef.label.slice(0, 24) + '...'
+                          : keyRef.label}
                       </span>
 
                       {/* Tooltip for full label on hover */}
                       {keyRef.label.length > 24 && (
-                        <div className="absolute left-0 bottom-full mb-1 px-2 py-1 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10" style={{ backgroundColor: '#1e293b' }}>
+                        <div
+                          className="absolute left-0 bottom-full mb-1 px-2 py-1 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10"
+                          style={{ backgroundColor: '#1e293b' }}
+                        >
                           <div>{keyRef.label}</div>
                           {isYubiKey && keyRef.key_type.type === 'YubiKey' && (
                             <div className="mt-0.5 text-muted">
@@ -309,9 +326,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                   </td>
 
                   {/* Status Badge */}
-                  <td className="px-4 py-3">
-                    {getStatusBadge(keyRef, vaultCount)}
-                  </td>
+                  <td className="px-4 py-3">{getStatusBadge(keyRef, vaultCount)}</td>
 
                   {/* Actions */}
                   <td className="px-4 py-3">
@@ -379,7 +394,9 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                           `}
                           style={{
                             borderColor: 'rgb(var(--border-default))',
-                            color: canDeactivate ? 'rgb(var(--text-secondary))' : 'rgb(var(--text-muted))',
+                            color: canDeactivate
+                              ? 'rgb(var(--text-secondary))'
+                              : 'rgb(var(--text-muted))',
                           }}
                           onMouseEnter={(e) => {
                             if (canDeactivate) {

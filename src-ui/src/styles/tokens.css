@@ -5,90 +5,90 @@
 
 :root {
   /* ===== BRAND COLORS (Fixed across themes) ===== */
-  --brand-blue: 29 78 216;           /* #1D4ED8 - Premium blue */
-  --brand-blue-hover: 30 64 175;     /* #1E40AF */
-  --brand-teal: 19 137 127;          /* #13897F - Passphrase identity */
-  --brand-orange: 249 139 28;        /* #F98B1C - YubiKey (softer variant) */
+  --brand-blue: 29 78 216; /* #1D4ED8 - Premium blue */
+  --brand-blue-hover: 30 64 175; /* #1E40AF */
+  --brand-teal: 19 137 127; /* #13897F - Passphrase identity */
+  --brand-orange: 249 139 28; /* #F98B1C - YubiKey (softer variant) */
   --brand-orange-vibrant: 255 138 0; /* #ff8a00 - Dark backgrounds only */
-  --brand-gray: 86 85 85;            /* #565555 - Barqly logo gray */
+  --brand-gray: 86 85 85; /* #565555 - Barqly logo gray */
 
   /* ===== SURFACES (Theme-aware) ===== */
-  --surface-app: 255 255 255;        /* Main app background */
-  --surface-card: 255 255 255;       /* Cards, panels */
-  --surface-elevated: 248 250 252;   /* Modals, popovers, dialogs */
-  --surface-input: 255 255 255;      /* Form inputs */
-  --surface-hover: 241 245 249;      /* Hover states - slate-100 (more visible) */
+  --surface-app: 255 255 255; /* Main app background */
+  --surface-card: 255 255 255; /* Cards, panels */
+  --surface-elevated: 248 250 252; /* Modals, popovers, dialogs */
+  --surface-input: 255 255 255; /* Form inputs */
+  --surface-hover: 241 245 249; /* Hover states - slate-100 (more visible) */
 
   /* ===== TEXT (Theme-aware) ===== */
-  --text-primary: 30 41 59;          /* slate-800 - Body text */
-  --text-secondary: 100 116 139;     /* slate-500 - Secondary text */
-  --text-muted: 148 163 184;         /* slate-400 - Placeholders, disabled */
-  --text-inverse: 255 255 255;       /* White text on dark surfaces */
-  --heading-primary: 86 85 85;       /* #565555 - Brand gray for headings */
+  --text-primary: 30 41 59; /* slate-800 - Body text */
+  --text-secondary: 100 116 139; /* slate-500 - Secondary text */
+  --text-muted: 148 163 184; /* slate-400 - Placeholders, disabled */
+  --text-inverse: 255 255 255; /* White text on dark surfaces */
+  --heading-primary: 86 85 85; /* #565555 - Brand gray for headings */
 
   /* ===== BORDERS (Theme-aware) ===== */
-  --border-default: 226 232 240;     /* slate-200 - Standard borders */
-  --border-subtle: 241 245 249;      /* slate-100 - Very light borders */
-  --border-strong: 148 163 184;      /* slate-400 - Emphasis borders */
+  --border-default: 226 232 240; /* slate-200 - Standard borders */
+  --border-subtle: 241 245 249; /* slate-100 - Very light borders */
+  --border-strong: 148 163 184; /* slate-400 - Emphasis borders */
 
   /* ===== PASSPHRASE ACCENTS (Theme-aware backgrounds) ===== */
-  --passphrase-bg: 15 118 110 / 0.1;      /* Teal tint 10% */
-  --passphrase-border: 183 225 221;       /* #B7E1DD */
+  --passphrase-bg: 15 118 110 / 0.1; /* Teal tint 10% */
+  --passphrase-border: 183 225 221; /* #B7E1DD */
   --passphrase-bg-active: 15 118 110 / 0.1;
 
   /* ===== YUBIKEY ACCENTS (Theme-aware backgrounds) ===== */
-  --yubikey-bg: 249 139 28 / 0.08;        /* Orange tint 8% - REFINED! */
-  --yubikey-border: 255 212 163;          /* #ffd4a3 */
+  --yubikey-bg: 249 139 28 / 0.08; /* Orange tint 8% - REFINED! */
+  --yubikey-border: 255 212 163; /* #ffd4a3 */
 
   /* ===== STATUS COLORS (Semantic) ===== */
-  --status-success: 19 137 127;      /* Teal - matches Passphrase! */
-  --status-error: 185 28 28;         /* #B91C1C - Muted red */
-  --status-warning: 234 179 8;       /* yellow-600 */
-  --status-info: 29 78 216;          /* Premium blue */
-  --status-new-bg: 241 245 249;      /* slate-100 - Light gray for New badge */
-  --status-new-text: 51 65 85;       /* slate-700 - Dark text */
-  --status-new-border: 203 213 225;  /* slate-300 */
+  --status-success: 19 137 127; /* Teal - matches Passphrase! */
+  --status-error: 185 28 28; /* #B91C1C - Muted red */
+  --status-warning: 234 179 8; /* yellow-600 */
+  --status-info: 29 78 216; /* Premium blue */
+  --status-new-bg: 241 245 249; /* slate-100 - Light gray for New badge */
+  --status-new-text: 51 65 85; /* slate-700 - Dark text */
+  --status-new-border: 203 213 225; /* slate-300 */
 
   /* ===== INFO PANEL (Security Tips, Help) ===== */
-  --info-panel-bg: 239 246 255;      /* blue-50 - Light blue tint */
+  --info-panel-bg: 239 246 255; /* blue-50 - Light blue tint */
 
   /* ===== FOCUS & INTERACTION ===== */
-  --focus-ring: 147 197 253;         /* blue-300 - Standard focus */
-  --focus-ring-error: 252 165 165;   /* red-300 */
+  --focus-ring: 147 197 253; /* blue-300 - Standard focus */
+  --focus-ring-error: 252 165 165; /* red-300 */
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   /* ===== SURFACES ===== */
-  --surface-app: 15 23 42;           /* slate-900 #0f172a */
-  --surface-card: 30 41 59;          /* slate-800 #1e293b */
-  --surface-elevated: 51 65 85;      /* slate-700 #334155 */
-  --surface-input: 30 41 59;         /* slate-800 */
-  --surface-hover: 51 65 85;         /* slate-700 */
+  --surface-app: 15 23 42; /* slate-900 #0f172a */
+  --surface-card: 30 41 59; /* slate-800 #1e293b */
+  --surface-elevated: 51 65 85; /* slate-700 #334155 */
+  --surface-input: 30 41 59; /* slate-800 */
+  --surface-hover: 51 65 85; /* slate-700 */
 
   /* ===== TEXT ===== */
-  --text-primary: 248 250 252;       /* slate-50 */
-  --text-secondary: 148 163 184;     /* slate-400 */
-  --text-muted: 100 116 139;         /* slate-500 */
-  --text-inverse: 15 23 42;          /* slate-900 */
-  --heading-primary: 248 250 252;    /* slate-50 - Bright white for dark mode */
+  --text-primary: 248 250 252; /* slate-50 */
+  --text-secondary: 148 163 184; /* slate-400 */
+  --text-muted: 100 116 139; /* slate-500 */
+  --text-inverse: 15 23 42; /* slate-900 */
+  --heading-primary: 248 250 252; /* slate-50 - Bright white for dark mode */
 
   /* ===== BORDERS ===== */
-  --border-default: 71 85 105;       /* slate-600 - Lighter for better visibility */
-  --border-subtle: 51 65 85;         /* slate-700 */
-  --border-strong: 100 116 139;      /* slate-500 */
+  --border-default: 71 85 105; /* slate-600 - Lighter for better visibility */
+  --border-subtle: 51 65 85; /* slate-700 */
+  --border-strong: 100 116 139; /* slate-500 */
 
   /* ===== PASSPHRASE ACCENTS ===== */
-  --passphrase-bg: 15 118 110 / 0.15;     /* Slightly higher in dark mode */
-  --passphrase-border: 31 91 84;          /* Darker teal border */
+  --passphrase-bg: 15 118 110 / 0.15; /* Slightly higher in dark mode */
+  --passphrase-border: 31 91 84; /* Darker teal border */
 
   /* ===== YUBIKEY ACCENTS ===== */
-  --yubikey-bg: 249 139 28 / 0.12;        /* Slightly higher in dark mode */
-  --yubikey-border: 180 83 9;             /* Darker orange border */
+  --yubikey-bg: 249 139 28 / 0.12; /* Slightly higher in dark mode */
+  --yubikey-border: 180 83 9; /* Darker orange border */
 
   /* ===== STATUS BADGE ADJUSTMENTS ===== */
-  --status-new-bg: 51 65 85;         /* slate-700 - Darker gray for dark mode */
-  --status-new-text: 203 213 225;    /* slate-300 - Lighter text */
-  --status-new-border: 71 85 105;    /* slate-600 */
+  --status-new-bg: 51 65 85; /* slate-700 - Darker gray for dark mode */
+  --status-new-text: 203 213 225; /* slate-300 - Lighter text */
+  --status-new-border: 71 85 105; /* slate-600 */
 
   /* ===== INFO PANEL (Dark Mode) ===== */
   --info-panel-bg: 29 78 216 / 0.08; /* Premium blue tint 8% - Subtle, premium */

@@ -225,6 +225,23 @@ async deleteKey(request: DeleteKeyRequest) : Promise<Result<DeleteKeyResponse, C
 }
 },
 /**
+ * Export a passphrase key file to a user-selected destination
+ * 
+ * This command copies the encrypted key file (.agekey.enc) from the app's keys directory
+ * to a location chosen by the user (typically via file picker dialog in the frontend).
+ * 
+ * **Important:** This API assumes the key is a passphrase key. The frontend should only
+ * show the Export button for passphrase keys, not YubiKey keys (which don't have .enc files).
+ */
+async exportKey(request: ExportKeyRequest) : Promise<Result<ExportKeyResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("export_key", { request }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Restore a deactivated key
  * 
  * This command restores a deactivated key back to its previous state (Active or Suspended).
@@ -738,6 +755,30 @@ export type EncryptionStatusResponse = { operation_id: string; status: Encryptio
  * ```
  */
 export type ErrorCode = "INVALID_INPUT" | "MISSING_PARAMETER" | "INVALID_PATH" | "INVALID_KEY_LABEL" | "WEAK_PASSPHRASE" | "INVALID_FILE_FORMAT" | "FILE_TOO_LARGE" | "TOO_MANY_FILES" | "PERMISSION_DENIED" | "PATH_NOT_ALLOWED" | "INSUFFICIENT_PERMISSIONS" | "READ_ONLY_FILE_SYSTEM" | "KEY_NOT_FOUND" | "FILE_NOT_FOUND" | "DIRECTORY_NOT_FOUND" | "OPERATION_NOT_FOUND" | "ENCRYPTION_FAILED" | "DECRYPTION_FAILED" | "STORAGE_FAILED" | "ARCHIVE_CORRUPTED" | "MANIFEST_INVALID" | "INTEGRITY_CHECK_FAILED" | "CONCURRENT_OPERATION" | "DISK_SPACE_INSUFFICIENT" | "MEMORY_INSUFFICIENT" | "FILE_SYSTEM_ERROR" | "NETWORK_ERROR" | "INVALID_KEY" | "WRONG_PASSPHRASE" | "TAMPERED_DATA" | "UNAUTHORIZED_ACCESS" | "YUBI_KEY_ERROR" | "YUBI_KEY_NOT_FOUND" | "YUBI_KEY_PIN_REQUIRED" | "YUBI_KEY_PIN_BLOCKED" | "YUBI_KEY_TOUCH_REQUIRED" | "YUBI_KEY_TOUCH_TIMEOUT" | "WRONG_YUBI_KEY" | "YUBI_KEY_SLOT_IN_USE" | "YUBI_KEY_INITIALIZATION_FAILED" | "YUBI_KEY_COMMUNICATION_ERROR" | "VAULT_NOT_FOUND" | "VAULT_ALREADY_EXISTS" | "VAULT_KEY_LIMIT_EXCEEDED" | "KEY_ALREADY_EXISTS" | "INVALID_KEY_STATE" | "PLUGIN_NOT_FOUND" | "PLUGIN_VERSION_MISMATCH" | "PLUGIN_EXECUTION_FAILED" | "PLUGIN_DEPLOYMENT_FAILED" | "NO_UNLOCK_METHOD_AVAILABLE" | "RECIPIENT_MISMATCH" | "MULTI_RECIPIENT_SETUP_FAILED" | "INTERNAL_ERROR" | "UNEXPECTED_ERROR" | "CONFIGURATION_ERROR" | "UNKNOWN_ERROR"
+/**
+ * Request to export a key to a destination path
+ */
+export type ExportKeyRequest = { 
+/**
+ * The key ID to export
+ */
+key_id: string; 
+/**
+ * The full destination path where the key file should be copied
+ */
+destination_path: string }
+/**
+ * Response from key export
+ */
+export type ExportKeyResponse = { success: boolean; 
+/**
+ * The path where the file was exported
+ */
+exported_file: string; 
+/**
+ * Size of the exported file in bytes
+ */
+file_size: number }
 /**
  * File information
  */

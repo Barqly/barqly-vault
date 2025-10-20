@@ -279,16 +279,12 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
     }
   };
 
-
   if (!isOpen) return null;
 
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]" onClick={onClose} />
 
       {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-[70] p-4 pointer-events-none">
@@ -328,67 +324,69 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
             </button>
           </div>
 
-        {/* Content */}
-        <div className="p-6">
-          {/* Key Info */}
-          <div className="mb-4 p-3 rounded-lg border border-default">
-            <div>
-              <div className="text-xs text-secondary font-medium">Key:</div>
-              <div className="font-semibold text-main">{keyInfo.label}</div>
+          {/* Content */}
+          <div className="p-6">
+            {/* Key Info */}
+            <div className="mb-4 p-3 rounded-lg border border-default">
+              <div>
+                <div className="text-xs text-secondary font-medium">Key:</div>
+                <div className="font-semibold text-main">{keyInfo.label}</div>
+              </div>
             </div>
-          </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
 
-          {/* Vault List */}
-          {isLoadingVaults ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
-              <span className="ml-2 text-sm text-secondary">Loading vaults...</span>
-            </div>
-          ) : vaultStates.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-sm text-secondary">No vaults available</p>
-              <p className="text-xs text-muted mt-1">Create a vault to attach this key</p>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {vaultStates.map((state) => (
-                <label
-                  key={state.vault.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border transition-all"
-                  style={{
-                    borderColor: state.isDisabled
-                      ? 'rgb(var(--border-default))'
-                      : 'rgba(59, 130, 246, 0.3)',
-                    backgroundColor: state.isDisabled ? 'rgb(var(--surface-hover))' : 'transparent',
-                    cursor: state.isDisabled ? 'not-allowed' : 'pointer',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!state.isDisabled) {
-                      e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-                      e.currentTarget.style.borderColor = '#3B82F6';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!state.isDisabled) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-                    }
-                  }}
-                  title={state.tooltip}
-                >
-                  <input
-                    type="checkbox"
-                    checked={state.isAttached}
-                    disabled={state.isDisabled || state.isLoading}
-                    onChange={() => handleToggle(state.vault.id)}
-                    className={`
+            {/* Vault List */}
+            {isLoadingVaults ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
+                <span className="ml-2 text-sm text-secondary">Loading vaults...</span>
+              </div>
+            ) : vaultStates.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-sm text-secondary">No vaults available</p>
+                <p className="text-xs text-muted mt-1">Create a vault to attach this key</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {vaultStates.map((state) => (
+                  <label
+                    key={state.vault.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border transition-all"
+                    style={{
+                      borderColor: state.isDisabled
+                        ? 'rgb(var(--border-default))'
+                        : 'rgba(59, 130, 246, 0.3)',
+                      backgroundColor: state.isDisabled
+                        ? 'rgb(var(--surface-hover))'
+                        : 'transparent',
+                      cursor: state.isDisabled ? 'not-allowed' : 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!state.isDisabled) {
+                        e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                        e.currentTarget.style.borderColor = '#3B82F6';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!state.isDisabled) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                      }
+                    }}
+                    title={state.tooltip}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={state.isAttached}
+                      disabled={state.isDisabled || state.isLoading}
+                      onChange={() => handleToggle(state.vault.id)}
+                      className={`
                       h-4 w-4 rounded focus:ring-2 focus:ring-blue-500 flex-shrink-0
                       ${
                         state.isDisabled
@@ -396,45 +394,45 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                           : 'text-blue-600 border-blue-400 cursor-pointer'
                       }
                     `}
-                  />
-                  <Shield
-                    className={`h-4 w-4 flex-shrink-0 ${
-                      state.isDisabled ? 'text-muted' : 'text-blue-500'
-                    }`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-main truncate">
-                      {state.vault.name}
-                    </div>
-                    {state.vault.description && (
-                      <div className="text-xs text-secondary truncate">
-                        {state.vault.description}
+                    />
+                    <Shield
+                      className={`h-4 w-4 flex-shrink-0 ${
+                        state.isDisabled ? 'text-muted' : 'text-blue-500'
+                      }`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-main truncate">
+                        {state.vault.name}
                       </div>
+                      {state.vault.description && (
+                        <div className="text-xs text-secondary truncate">
+                          {state.vault.description}
+                        </div>
+                      )}
+                    </div>
+                    {state.isLoading && (
+                      <Loader2 className="h-4 w-4 text-blue-600 animate-spin flex-shrink-0" />
                     )}
-                  </div>
-                  {state.isLoading && (
-                    <Loader2 className="h-4 w-4 text-blue-600 animate-spin flex-shrink-0" />
-                  )}
-                  {state.isDisabled && (
-                    <span className="text-xs text-secondary ml-2 flex-shrink-0">🔒 Locked</span>
-                  )}
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
+                    {state.isDisabled && (
+                      <span className="text-xs text-secondary ml-2 flex-shrink-0">🔒 Locked</span>
+                    )}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Footer */}
-        <div className="flex justify-end p-6 border-t border-default">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-main bg-hover rounded-lg hover:bg-elevated transition-colors"
-          >
-            Close
-          </button>
+          {/* Footer */}
+          <div className="flex justify-end p-6 border-t border-default">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-main bg-hover rounded-lg hover:bg-elevated transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 };

@@ -13,6 +13,7 @@
 pub mod attach_key;
 pub mod deactivate_key;
 pub mod delete_key;
+pub mod export_key;
 pub mod import_key;
 pub mod key_menu_commands;
 pub mod passphrase;
@@ -51,5 +52,7 @@ pub use import_key::{
 pub use deactivate_key::{DeactivateKeyRequest, DeactivateKeyResponse, deactivate_key};
 
 pub use delete_key::{DeleteKeyRequest, DeleteKeyResponse, delete_key};
+
+pub use export_key::{ExportKeyRequest, ExportKeyResponse, export_key};
 
 pub use restore_key::{RestoreKeyRequest, RestoreKeyResponse, restore_key};

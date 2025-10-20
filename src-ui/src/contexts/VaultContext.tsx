@@ -438,7 +438,11 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           try {
             await refreshKeysForVault(vault.id);
           } catch (err) {
-            logger.error('VaultContext', `Failed to cache keys for vault: ${vault.id}`, err as Error);
+            logger.error(
+              'VaultContext',
+              `Failed to cache keys for vault: ${vault.id}`,
+              err as Error,
+            );
           }
         }),
         // Load global key registry
