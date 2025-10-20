@@ -15,6 +15,7 @@ import { VaultAttachmentDialog } from '../components/keys/VaultAttachmentDialog'
 import { CreateKeyModal } from '../components/keys/CreateKeyModal';
 import { ExportKeyWarningDialog } from '../components/keys/ExportKeyWarningDialog';
 import { ImportPassphraseKeyDialog } from '../components/keys/ImportPassphraseKeyDialog';
+import { EditKeyLabelDialog } from '../components/keys/EditKeyLabelDialog';
 import ToastContainer from '../components/ui/ToastContainer';
 import { logger } from '../lib/logger';
 import { commands, GlobalKey, VaultStatistics } from '../bindings';
@@ -50,6 +51,8 @@ const ManageKeysPage: React.FC = () => {
   const [showExportWarning, setShowExportWarning] = useState(false);
   const [selectedKeyForExport, setSelectedKeyForExport] = useState<GlobalKey | null>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showEditLabelDialog, setShowEditLabelDialog] = useState(false);
+  const [selectedKeyForEdit, setSelectedKeyForEdit] = useState<GlobalKey | null>(null);
 
   // Toast notifications
   const { toasts, removeToast, showSuccess, showError } = useToast();
@@ -268,6 +271,29 @@ const ManageKeysPage: React.FC = () => {
     setShowExportWarning(false);
     setSelectedKeyForExport(null);
   }, []);
+
+  /**
+   * Edit key label handler - Shows edit dialog
+   * Only called for non-Active keys (backend enforces safety)
+   */
+  const handleEditLabel = useCallback(
+    (keyId: string, currentLabel: string) => {
+      const keyInfo = allKeys.find((k) => k.id === keyId);
+      if (!keyInfo) {
+        logger.error(
+          'ManageKeysPage',
+          'Key not found for edit',
+          new Error(`Key not found: ${keyId}`),
+        );
+        showError('Edit Failed', 'Key not found');
+        return;
+      }
+
+      setSelectedKeyForEdit(keyInfo);
+      setShowEditLabelDialog(true);
+    },
+    [allKeys, showError],
+  );
 
   return (
     <div className="min-h-screen bg-app -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
@@ -547,6 +573,7 @@ const ManageKeysPage: React.FC = () => {
                     onAttach={handleAttachKey}
                     onDelete={isSuspended ? handleDeleteKey : undefined}
                     onExport={handleExportKey}
+                    onEditLabel={handleEditLabel}
                     onRefresh={async () => {
                       await refreshAllKeys();
                       await fetchVaultStatistics();
@@ -642,6 +669,24 @@ const ManageKeysPage: React.FC = () => {
             showSuccess('Key Imported', 'Passphrase key imported successfully');
           }}
         />
+
+        {/* Edit Key Label Dialog */}
+        {selectedKeyForEdit && (
+          <EditKeyLabelDialog
+            isOpen={showEditLabelDialog}
+            keyRef={selectedKeyForEdit}
+            onClose={() => {
+              setShowEditLabelDialog(false);
+              setSelectedKeyForEdit(null);
+            }}
+            onSuccess={async () => {
+              setShowEditLabelDialog(false);
+              setSelectedKeyForEdit(null);
+              await refreshAllKeys();
+              showSuccess('Label Updated', 'Key label updated successfully');
+            }}
+          />
+        )}
 
         {/* Toast Notifications */}
         <ToastContainer toasts={toasts} onClose={removeToast} />
