@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Key, Fingerprint, Grid3x3, List, RefreshCcw, Shield } from 'lucide-react';
 import { save } from '@tauri-apps/plugin-dialog';
+import { join, downloadDir } from '@tauri-apps/api/path';
 import { useVault } from '../contexts/VaultContext';
 import { useManageKeysWorkflow } from '../hooks/useManageKeysWorkflow';
 import { useToast } from '../hooks/useToast';
@@ -197,15 +198,13 @@ const ManageKeysPage: React.FC = () => {
     setShowExportWarning(false);
 
     try {
-      // 1. Show file save dialog
+      // 1. Get Downloads directory and construct full path
+      const downloadsPath = await downloadDir();
+      const defaultPath = await join(downloadsPath, `${keyLabel}.agekey.enc`);
+
+      // 2. Show file save dialog
       const destPath = await save({
-        defaultPath: `${keyLabel}.agekey.enc`,
-        filters: [
-          {
-            name: 'Age Key File',
-            extensions: ['enc'],
-          },
-        ],
+        defaultPath: defaultPath,
         title: 'Export Key File',
       });
 
