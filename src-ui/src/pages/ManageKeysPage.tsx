@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Key, Fingerprint, Grid3x3, List, RefreshCcw, Shield } from 'lucide-react';
+import { save } from '@tauri-apps/plugin-dialog';
 import { useVault } from '../contexts/VaultContext';
 import { useManageKeysWorkflow } from '../hooks/useManageKeysWorkflow';
+import { useToast } from '../hooks/useToast';
 import PageHeader from '../components/common/PageHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 import { KeyCard } from '../components/keys/KeyCard';
@@ -10,6 +12,8 @@ import { YubiKeyRegistryDialog } from '../components/keys/YubiKeyRegistryDialog'
 import { PassphraseKeyRegistryDialog } from '../components/keys/PassphraseKeyRegistryDialog';
 import { VaultAttachmentDialog } from '../components/keys/VaultAttachmentDialog';
 import { CreateKeyModal } from '../components/keys/CreateKeyModal';
+import { ExportKeyWarningDialog } from '../components/keys/ExportKeyWarningDialog';
+import ToastContainer from '../components/ui/ToastContainer';
 import { logger } from '../lib/logger';
 import { commands, GlobalKey, VaultStatistics } from '../bindings';
 
@@ -41,6 +45,11 @@ const ManageKeysPage: React.FC = () => {
   const [showVaultAttachmentDialog, setShowVaultAttachmentDialog] = useState(false);
   const [selectedKeyForAttachment, setSelectedKeyForAttachment] = useState<GlobalKey | null>(null);
   const [showCreateKeyModal, setShowCreateKeyModal] = useState(false);
+  const [showExportWarning, setShowExportWarning] = useState(false);
+  const [selectedKeyForExport, setSelectedKeyForExport] = useState<GlobalKey | null>(null);
+
+  // Toast notifications
+  const { toasts, removeToast, showSuccess, showError } = useToast();
 
   // Vault statistics for deactivation eligibility checks
   const [vaultStats, setVaultStats] = useState<Map<string, VaultStatistics>>(new Map());
@@ -68,9 +77,7 @@ const ManageKeysPage: React.FC = () => {
 
       // Fetch statistics for all vaults in parallel
       const results = await Promise.all(
-        vaults.map((vault) =>
-          commands.getVaultStatistics({ vault_id: vault.id })
-        )
+        vaults.map((vault) => commands.getVaultStatistics({ vault_id: vault.id })),
       );
 
       results.forEach((result, index) => {
@@ -153,15 +160,112 @@ const ManageKeysPage: React.FC = () => {
     logger.info('ManageKeysPage', 'Delete requested but not supported', { keyId });
   }, []);
 
-  // Note: Export functionality requires backend API
-  // See: tbd/mk/backend-key-export-api-fe.md for requirements
-  const handleExportKey = useCallback(async (keyId: string) => {
-    alert(
-      'Export functionality coming soon!\n\n' +
-        'Key files are stored as encrypted .enc files in your Barqly vault directory.\n' +
-        'They can be manually backed up and imported on other systems.',
-    );
-    logger.info('ManageKeysPage', 'Export requested (not yet implemented)', { keyId });
+  /**
+   * Export key handler - Shows warning dialog first
+   * Only called for passphrase keys (UI hides Export button for YubiKey)
+   */
+  const handleExportKey = useCallback(
+    async (keyId: string) => {
+      const keyInfo = allKeys.find((k) => k.id === keyId);
+      if (!keyInfo) {
+        logger.error(
+          'ManageKeysPage',
+          'Key not found for export',
+          new Error(`Key not found: ${keyId}`),
+        );
+        showError('Export Failed', 'Key not found');
+        return;
+      }
+
+      // Show warning dialog first
+      setSelectedKeyForExport(keyInfo);
+      setShowExportWarning(true);
+    },
+    [allKeys, showError],
+  );
+
+  /**
+   * Proceed with export after user confirms warning
+   */
+  const handleExportConfirmed = useCallback(async () => {
+    if (!selectedKeyForExport) return;
+
+    const keyId = selectedKeyForExport.id;
+    const keyLabel = selectedKeyForExport.label;
+
+    // Close warning dialog
+    setShowExportWarning(false);
+
+    try {
+      // 1. Show file save dialog
+      const destPath = await save({
+        defaultPath: `${keyLabel}.agekey.enc`,
+        filters: [
+          {
+            name: 'Age Key File',
+            extensions: ['enc'],
+          },
+        ],
+        title: 'Export Key File',
+      });
+
+      // User cancelled
+      if (!destPath) {
+        logger.info('ManageKeysPage', 'Export cancelled by user', { keyId });
+        setSelectedKeyForExport(null);
+        return;
+      }
+
+      logger.info('ManageKeysPage', 'Exporting key', { keyId, destination: destPath });
+
+      // 2. Call backend to copy file
+      const result = await commands.exportKey({
+        key_id: keyId,
+        destination_path: destPath,
+      });
+
+      // 3. Handle response
+      if (result.status === 'ok') {
+        const { file_size } = result.data;
+        const sizeKB = (file_size / 1024).toFixed(2);
+
+        // Extract filename from path for display
+        const filename = destPath.split('/').pop() || destPath.split('\\').pop() || 'key file';
+
+        showSuccess('Key Exported', `${filename} (${sizeKB} KB)`, { duration: 5000 });
+
+        logger.info('ManageKeysPage', 'Key exported successfully', {
+          keyId,
+          destination: destPath,
+          fileSize: file_size,
+        });
+      } else {
+        // Backend error
+        const errorMsg = result.error.message || 'Unknown error';
+        showError('Export Failed', errorMsg);
+        logger.error('ManageKeysPage', 'Export failed', new Error(errorMsg), {
+          keyId,
+          error: result.error,
+        });
+      }
+    } catch (err) {
+      // Unexpected error
+      const error = err as Error;
+      showError('Export Failed', error.message);
+      logger.error('ManageKeysPage', 'Unexpected error during export', error, {
+        keyId,
+      });
+    } finally {
+      setSelectedKeyForExport(null);
+    }
+  }, [selectedKeyForExport, showSuccess, showError]);
+
+  /**
+   * Cancel export warning
+   */
+  const handleExportCancelled = useCallback(() => {
+    setShowExportWarning(false);
+    setSelectedKeyForExport(null);
   }, []);
 
   return (
@@ -199,9 +303,7 @@ const ManageKeysPage: React.FC = () => {
                 className={`
                   p-2 transition-colors
                   ${
-                    keyViewMode === 'cards'
-                      ? 'text-white'
-                      : 'bg-card text-secondary hover:bg-hover'
+                    keyViewMode === 'cards' ? 'text-white' : 'bg-card text-secondary hover:bg-hover'
                   }
                 `}
                 style={{
@@ -215,9 +317,7 @@ const ManageKeysPage: React.FC = () => {
                 className={`
                   p-2 transition-colors
                   ${
-                    keyViewMode === 'table'
-                      ? 'text-white'
-                      : 'bg-card text-secondary hover:bg-hover'
+                    keyViewMode === 'table' ? 'text-white' : 'bg-card text-secondary hover:bg-hover'
                   }
                 `}
                 style={{
@@ -237,11 +337,14 @@ const ManageKeysPage: React.FC = () => {
                 style={{
                   backgroundColor: showPassphraseKeys ? '#1A2238' : 'rgb(var(--surface-hover))',
                   border: showPassphraseKeys ? '1px solid #2C3E50' : undefined,
-                  boxShadow: showPassphraseKeys ? 'inset -3px 0 6px -2px rgba(15, 118, 110, 0)' : undefined,
+                  boxShadow: showPassphraseKeys
+                    ? 'inset -3px 0 6px -2px rgba(15, 118, 110, 0)'
+                    : undefined,
                 }}
                 onMouseEnter={(e) => {
                   if (showPassphraseKeys) {
-                    e.currentTarget.style.boxShadow = 'inset -3px 0 6px -2px rgba(15, 118, 110, 0.6)';
+                    e.currentTarget.style.boxShadow =
+                      'inset -3px 0 6px -2px rgba(15, 118, 110, 0.6)';
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -266,7 +369,9 @@ const ManageKeysPage: React.FC = () => {
                 style={{
                   backgroundColor: showYubiKeyKeys ? '#1E1E1E' : 'rgb(var(--surface-hover))',
                   border: showYubiKeyKeys ? '1px solid #2C2C2C' : undefined,
-                  boxShadow: showYubiKeyKeys ? 'inset 3px 0 6px -2px rgba(255, 138, 0, 0)' : undefined,
+                  boxShadow: showYubiKeyKeys
+                    ? 'inset 3px 0 6px -2px rgba(255, 138, 0, 0)'
+                    : undefined,
                 }}
                 onMouseEnter={(e) => {
                   if (showYubiKeyKeys) {
@@ -315,9 +420,19 @@ const ManageKeysPage: React.FC = () => {
                 {/* Most Secure Badge - Centered on top border */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   {/* Background to hide border */}
-                  <div className="absolute inset-0 bg-card rounded-full" style={{ margin: '-2px' }} />
+                  <div
+                    className="absolute inset-0 bg-card rounded-full"
+                    style={{ margin: '-2px' }}
+                  />
                   {/* Badge */}
-                  <div className="relative flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(249, 139, 28, 0.08)', color: '#F98B1C', border: '1px solid #ffd4a3' }}>
+                  <div
+                    className="relative flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
+                    style={{
+                      backgroundColor: 'rgba(249, 139, 28, 0.08)',
+                      color: '#F98B1C',
+                      border: '1px solid #ffd4a3',
+                    }}
+                  >
                     <Shield className="h-3 w-3" />
                     Most Secure
                   </div>
@@ -333,9 +448,7 @@ const ManageKeysPage: React.FC = () => {
                   >
                     <Fingerprint className="h-12 w-12" style={{ color: '#F98B1C' }} />
                   </div>
-                  <h4 className="font-semibold text-heading">
-                    YubiKey
-                  </h4>
+                  <h4 className="font-semibold text-heading">YubiKey</h4>
                   <p className="text-sm text-secondary text-center">Hardware security key</p>
                 </div>
               </button>
@@ -363,9 +476,7 @@ const ManageKeysPage: React.FC = () => {
                   >
                     <Key className="h-12 w-12" style={{ color: '#13897F' }} />
                   </div>
-                  <h4 className="font-semibold text-heading">
-                    Passphrase
-                  </h4>
+                  <h4 className="font-semibold text-heading">Passphrase</h4>
                   <p className="text-sm text-secondary text-center">Password-protected key</p>
                 </div>
               </button>
@@ -480,6 +591,19 @@ const ManageKeysPage: React.FC = () => {
             onRegisterYubiKey={handleDetectYubiKey}
           />
         )}
+
+        {/* Export Key Warning Dialog */}
+        {selectedKeyForExport && (
+          <ExportKeyWarningDialog
+            isOpen={showExportWarning}
+            keyLabel={selectedKeyForExport.label}
+            onCancel={handleExportCancelled}
+            onConfirm={handleExportConfirmed}
+          />
+        )}
+
+        {/* Toast Notifications */}
+        <ToastContainer toasts={toasts} onClose={removeToast} />
       </AppPrimaryContainer>
     </div>
   );
