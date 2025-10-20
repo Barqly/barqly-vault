@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Key, X, AlertCircle } from 'lucide-react';
 
 interface ExportKeyWarningDialogProps {
@@ -20,6 +20,17 @@ export const ExportKeyWarningDialog: React.FC<ExportKeyWarningDialogProps> = ({
   onCancel,
   onConfirm,
 }) => {
+  // Ref for focus trap
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Focus trap: Keep focus on Continue button only (single primary action)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      confirmButtonRef.current?.focus();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -42,6 +53,7 @@ export const ExportKeyWarningDialog: React.FC<ExportKeyWarningDialogProps> = ({
             border: '1px solid #B7E1DD',
           }}
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={handleKeyDown}
         >
           {/* Close Button */}
           <button
@@ -109,11 +121,31 @@ export const ExportKeyWarningDialog: React.FC<ExportKeyWarningDialogProps> = ({
             </p>
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 px-6 pb-6">
-            {/* Cancel Button - Ghost style */}
+          {/* Actions - Continue button spans width, Cancel on right */}
+          <div className="flex gap-3 px-6 pb-6">
+            {/* Confirm Button - Premium blue, spans width */}
+            <button
+              ref={confirmButtonRef}
+              onClick={onConfirm}
+              autoFocus
+              className="flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+              style={{
+                backgroundColor: '#1D4ED8',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1E40AF';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#1D4ED8';
+              }}
+            >
+              Continue with Export
+            </button>
+
+            {/* Cancel Button - Ghost style, skip from tab */}
             <button
               onClick={onCancel}
+              tabIndex={-1}
               className="px-4 py-2 text-sm font-medium rounded-lg border transition-colors"
               style={{
                 borderColor: 'rgb(var(--border-default))',
@@ -129,23 +161,6 @@ export const ExportKeyWarningDialog: React.FC<ExportKeyWarningDialogProps> = ({
               }}
             >
               Cancel
-            </button>
-
-            {/* Confirm Button - Premium blue */}
-            <button
-              onClick={onConfirm}
-              className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
-              style={{
-                backgroundColor: '#1D4ED8',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1E40AF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#1D4ED8';
-              }}
-            >
-              Continue with Export
             </button>
           </div>
         </div>
