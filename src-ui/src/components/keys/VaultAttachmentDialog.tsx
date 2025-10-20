@@ -358,8 +358,16 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
 
             {/* Error Message */}
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{error}</p>
+              <div
+                className="mb-4 p-3 rounded-lg border"
+                style={{
+                  backgroundColor: 'rgba(185, 28, 28, 0.1)',
+                  borderColor: '#FCA5A5',
+                }}
+              >
+                <p className="text-sm" style={{ color: '#B91C1C' }}>
+                  {error}
+                </p>
               </div>
             )}
 

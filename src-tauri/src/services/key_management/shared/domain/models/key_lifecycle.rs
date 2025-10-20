@@ -93,7 +93,9 @@ impl KeyLifecycleStatus {
     pub fn can_attach_to_vault(&self) -> bool {
         matches!(
             self,
-            KeyLifecycleStatus::PreActivation | KeyLifecycleStatus::Active
+            KeyLifecycleStatus::PreActivation
+                | KeyLifecycleStatus::Active
+                | KeyLifecycleStatus::Suspended
         )
     }
 
@@ -266,7 +268,7 @@ mod tests {
     fn test_vault_attachment_eligibility() {
         assert!(KeyLifecycleStatus::PreActivation.can_attach_to_vault());
         assert!(KeyLifecycleStatus::Active.can_attach_to_vault());
-        assert!(!KeyLifecycleStatus::Suspended.can_attach_to_vault());
+        assert!(KeyLifecycleStatus::Suspended.can_attach_to_vault()); // Fixed: Suspended can be reactivated via attachment
         assert!(!KeyLifecycleStatus::Deactivated.can_attach_to_vault());
         assert!(!KeyLifecycleStatus::Destroyed.can_attach_to_vault());
         assert!(!KeyLifecycleStatus::Compromised.can_attach_to_vault());
