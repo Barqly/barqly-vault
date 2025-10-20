@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { Key, X } from 'lucide-react';
 
 interface ExportKeyWarningDialogProps {
   isOpen: boolean;
@@ -33,10 +33,10 @@ export const ExportKeyWarningDialog: React.FC<ExportKeyWarningDialogProps> = ({
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
         <div
-          className="relative w-full max-w-md rounded-lg shadow-xl border"
+          className="relative w-full max-w-md rounded-lg shadow-xl"
           style={{
             backgroundColor: 'rgb(var(--surface-elevated))',
-            borderColor: 'rgb(var(--border-default))',
+            border: '1px solid #B7E1DD',
           }}
         >
           {/* Close Button */}
@@ -59,11 +59,11 @@ export const ExportKeyWarningDialog: React.FC<ExportKeyWarningDialogProps> = ({
             <div
               className="rounded-lg p-2 flex-shrink-0"
               style={{
-                backgroundColor: 'rgba(234, 179, 8, 0.1)',
-                border: '1px solid #FDE047',
+                backgroundColor: 'rgba(15, 118, 110, 0.1)',
+                border: '1px solid #B7E1DD',
               }}
             >
-              <AlertTriangle className="h-5 w-5" style={{ color: '#EAB308' }} />
+              <Key className="h-5 w-5" style={{ color: '#13897F' }} />
             </div>
             <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--text-primary))' }}>
               Export Encryption Key
