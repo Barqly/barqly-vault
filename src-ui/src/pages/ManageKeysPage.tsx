@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Key, Fingerprint, Grid3x3, List, RefreshCcw, Shield } from 'lucide-react';
+import { Key, Fingerprint, Grid3x3, List, RefreshCcw, Shield, Upload } from 'lucide-react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { join, downloadDir } from '@tauri-apps/api/path';
 import { useVault } from '../contexts/VaultContext';
@@ -14,6 +14,7 @@ import { PassphraseKeyRegistryDialog } from '../components/keys/PassphraseKeyReg
 import { VaultAttachmentDialog } from '../components/keys/VaultAttachmentDialog';
 import { CreateKeyModal } from '../components/keys/CreateKeyModal';
 import { ExportKeyWarningDialog } from '../components/keys/ExportKeyWarningDialog';
+import { ImportPassphraseKeyDialog } from '../components/keys/ImportPassphraseKeyDialog';
 import ToastContainer from '../components/ui/ToastContainer';
 import { logger } from '../lib/logger';
 import { commands, GlobalKey, VaultStatistics } from '../bindings';
@@ -48,6 +49,7 @@ const ManageKeysPage: React.FC = () => {
   const [showCreateKeyModal, setShowCreateKeyModal] = useState(false);
   const [showExportWarning, setShowExportWarning] = useState(false);
   const [selectedKeyForExport, setSelectedKeyForExport] = useState<GlobalKey | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   // Toast notifications
   const { toasts, removeToast, showSuccess, showError } = useToast();
@@ -293,6 +295,35 @@ const ManageKeysPage: React.FC = () => {
               }}
             >
               + New Key
+            </button>
+
+            {/* Import Key Button - Ghost style */}
+            <button
+              onClick={() => setShowImportDialog(true)}
+              className="
+                flex items-center gap-2 px-4 py-2
+                text-sm font-medium
+                border rounded-lg
+                transition-colors
+              "
+              style={{
+                borderColor: 'rgb(var(--border-default))',
+                color: 'rgb(var(--text-secondary))',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                e.currentTarget.style.color = 'rgb(var(--text-primary))';
+                e.currentTarget.style.borderColor = 'rgb(var(--border-strong))';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'rgb(var(--text-secondary))';
+                e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+              }}
+              title="Import a passphrase key file (.enc, .agekey)"
+            >
+              <Upload className="h-4 w-4" />
+              Import Key
             </button>
 
             {/* View Toggle */}
@@ -600,6 +631,17 @@ const ManageKeysPage: React.FC = () => {
             onConfirm={handleExportConfirmed}
           />
         )}
+
+        {/* Import Passphrase Key Dialog */}
+        <ImportPassphraseKeyDialog
+          isOpen={showImportDialog}
+          onClose={() => setShowImportDialog(false)}
+          onSuccess={async () => {
+            setShowImportDialog(false);
+            await refreshAllKeys();
+            showSuccess('Key Imported', 'Passphrase key imported successfully');
+          }}
+        />
 
         {/* Toast Notifications */}
         <ToastContainer toasts={toasts} onClose={removeToast} />

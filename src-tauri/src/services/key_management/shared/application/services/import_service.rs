@@ -120,6 +120,9 @@ pub enum ImportError {
 
     #[error("File size validation failed: {0}")]
     FileSizeInvalid(String),
+
+    #[error("Duplicate key: {0}")]
+    DuplicateKey(String),
 }
 
 impl KeyImportService {
@@ -277,23 +280,29 @@ impl KeyImportService {
             );
         }
 
-        // Step 6: Check for duplicates in registry
+        // Step 6: Check for duplicates in registry (BLOCK duplicate public keys)
         let mut registry =
             KeyRegistry::load().map_err(|e| ImportError::RegistryError(e.to_string()))?;
 
         let is_duplicate = self.check_for_duplicate(&registry, &key_metadata.public_key);
-        if is_duplicate
-            && let Some((_existing_id, existing_entry)) = registry
+        if is_duplicate {
+            let existing_label = registry
                 .keys
                 .iter()
                 .find(|(_, entry)| self.get_public_key(entry) == key_metadata.public_key)
-        {
-            warnings.push(
-                ImportWarning::DuplicateKey {
-                    existing_label: existing_entry.label().to_string(),
-                }
-                .to_string(),
+                .map(|(_, entry)| entry.label().to_string())
+                .unwrap_or("unknown".to_string());
+
+            error!(
+                public_key = %key_metadata.public_key,
+                existing_label = %existing_label,
+                "Import blocked: key with same public key already exists"
             );
+
+            return Err(ImportError::DuplicateKey(format!(
+                "This key already exists in your registry as '{}'. A key with the same public key cannot be imported twice. Delete the existing key first if you want to replace it.",
+                existing_label
+            )));
         }
 
         // Step 7: Check file age
@@ -307,10 +316,10 @@ impl KeyImportService {
             );
         }
 
-        // Prepare validation status
+        // Prepare validation status (if we got here, not a duplicate)
         let validation_status = ValidationStatus {
             is_valid: true,
-            is_duplicate,
+            is_duplicate: false, // Always false here (duplicates are blocked above)
             original_metadata: Some(KeyMetadata {
                 label: key_metadata.label.clone(),
                 created_at: key_metadata.created_at,

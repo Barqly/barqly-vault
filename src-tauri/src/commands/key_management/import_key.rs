@@ -190,6 +190,10 @@ pub async fn import_key_file(
                     ErrorCode::InvalidInput,
                     Some("The file size is invalid for a key file. Ensure you selected the correct file.".to_string()),
                 ),
+                crate::services::key_management::shared::application::services::ImportError::DuplicateKey(_) => (
+                    ErrorCode::InvalidInput,
+                    Some("This key already exists in your registry. Delete the existing key first if you want to replace it.".to_string()),
+                ),
                 _ => (
                     ErrorCode::UnknownError,
                     Some("An unexpected error occurred during import".to_string()),
