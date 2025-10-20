@@ -19,6 +19,7 @@ pub mod key_menu_commands;
 pub mod passphrase;
 pub mod restore_key;
 pub mod unified_keys;
+pub mod update_global_key_label;
 pub mod yubikey;
 
 // Re-export command functions - avoiding glob imports to prevent name conflicts
@@ -56,3 +57,7 @@ pub use delete_key::{DeleteKeyRequest, DeleteKeyResponse, delete_key};
 pub use export_key::{ExportKeyRequest, ExportKeyResponse, export_key};
 
 pub use restore_key::{RestoreKeyRequest, RestoreKeyResponse, restore_key};
+
+pub use update_global_key_label::{
+    UpdateGlobalKeyLabelRequest, UpdateGlobalKeyLabelResponse, update_global_key_label,
+};

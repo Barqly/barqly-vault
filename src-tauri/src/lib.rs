@@ -41,6 +41,7 @@ use commands::{
             get_vault_keys, list_unified_keys, remove_key_from_vault, test_unified_keys,
             update_key_label,
         },
+        update_global_key_label::update_global_key_label,
         yubikey::{
             init_yubikey, init_yubikey_for_vault, list_yubikeys, register_yubikey,
             register_yubikey_for_vault, yubikey_decrypt_file,
@@ -115,6 +116,7 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         delete_key,
         export_key,
         restore_key,
+        update_global_key_label,
         // File commands
         select_files,
         select_directory,
@@ -203,6 +205,7 @@ pub fn run_app() {
             delete_key,
             export_key,
             restore_key,
+            update_global_key_label,
             // File commands
             select_files,
             select_directory,

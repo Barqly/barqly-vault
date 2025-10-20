@@ -257,6 +257,34 @@ async restoreKey(request: RestoreKeyRequest) : Promise<Result<RestoreKeyResponse
 }
 },
 /**
+ * Update a key's label in the global registry
+ * 
+ * This command updates the label for keys in the global registry.
+ * **CRITICAL SAFETY:** Only allows updates for keys that are NOT in Active state.
+ * 
+ * Active keys have their labels embedded in vault manifests. Renaming them would
+ * cause manifest desynchronization issues.
+ * 
+ * **Allowed lifecycle states:**
+ * - PreActivation (never attached or never used)
+ * - Suspended (detached from all vaults)
+ * - Deactivated (in grace period)
+ * 
+ * **Blocked lifecycle states:**
+ * - Active (embedded in vault manifests - cannot rename safely)
+ * 
+ * **Note:** This only updates the registry. For Active keys, user must delete and
+ * create a new key with the desired label.
+ */
+async updateGlobalKeyLabel(request: UpdateGlobalKeyLabelRequest) : Promise<Result<UpdateGlobalKeyLabelResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_global_key_label", { request }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Select files or folder for encryption
  */
 async selectFiles(selectionType: SelectionType) : Promise<Result<FileSelection, CommandError>> {
@@ -1141,6 +1169,30 @@ export type UnlockCredentials = { Passphrase: { key_label: string; passphrase: s
  * Unlock methods available for decryption
  */
 export type UnlockMethod = "Passphrase" | "YubiKey"
+/**
+ * Request to update a key's label in the global registry
+ */
+export type UpdateGlobalKeyLabelRequest = { 
+/**
+ * The key ID to update
+ */
+key_id: string; 
+/**
+ * The new label for the key
+ */
+new_label: string }
+/**
+ * Response from global key label update
+ */
+export type UpdateGlobalKeyLabelResponse = { success: boolean; 
+/**
+ * The key ID that was updated
+ */
+key_id: string; 
+/**
+ * The new label
+ */
+updated_label: string }
 /**
  * Input for updating key label
  */
