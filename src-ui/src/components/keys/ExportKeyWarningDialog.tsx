@@ -1,5 +1,5 @@
 import React from 'react';
-import { Key, X } from 'lucide-react';
+import { Key, X, AlertCircle } from 'lucide-react';
 
 interface ExportKeyWarningDialogProps {
   isOpen: boolean;
@@ -83,13 +83,16 @@ export const ExportKeyWarningDialog: React.FC<ExportKeyWarningDialogProps> = ({
             <div
               className="rounded-lg p-4 mb-4"
               style={{
-                backgroundColor: 'rgba(234, 179, 8, 0.05)',
-                border: '1px solid rgba(234, 179, 8, 0.2)',
+                backgroundColor: 'rgba(15, 118, 110, 0.05)',
+                border: '1px solid rgba(15, 118, 110, 0.2)',
               }}
             >
-              <p className="text-sm font-medium mb-2" style={{ color: 'rgb(var(--text-primary))' }}>
-                ⚠️ Security Considerations:
-              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-4 w-4" style={{ color: '#13897F' }} />
+                <p className="text-sm font-medium" style={{ color: 'rgb(var(--text-primary))' }}>
+                  Security Considerations:
+                </p>
+              </div>
               <ul className="text-sm space-y-1.5" style={{ color: 'rgb(var(--text-secondary))' }}>
                 <li>• This file is encrypted but remains sensitive</li>
                 <li>• Anyone with this file and your passphrase can decrypt your vaults</li>
