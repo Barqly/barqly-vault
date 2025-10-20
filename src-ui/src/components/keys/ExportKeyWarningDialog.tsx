@@ -33,7 +33,7 @@ export const ExportKeyWarningDialog: React.FC<ExportKeyWarningDialogProps> = ({
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
         <div
-          className="relative w-full max-w-md rounded-lg shadow-xl"
+          className="relative w-full max-w-lg rounded-lg shadow-xl"
           style={{
             backgroundColor: 'rgb(var(--surface-elevated))',
             border: '1px solid #B7E1DD',
@@ -94,9 +94,9 @@ export const ExportKeyWarningDialog: React.FC<ExportKeyWarningDialogProps> = ({
                 </p>
               </div>
               <ul className="text-sm space-y-1.5" style={{ color: 'rgb(var(--text-secondary))' }}>
-                <li>• This file is encrypted but remains sensitive</li>
-                <li>• Anyone with this file and your passphrase can decrypt your vaults</li>
-                <li>• Store it in a secure location separate from your passphrase</li>
+                <li>• This file remains sensitive despite being encrypted</li>
+                <li>• Possession of this file plus your passphrase grants vault access</li>
+                <li>• Store separately from your passphrase in a secure location</li>
               </ul>
             </div>
 
