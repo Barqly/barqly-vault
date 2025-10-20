@@ -31,13 +31,17 @@ export const ExportKeyWarningDialog: React.FC<ExportKeyWarningDialogProps> = ({
       />
 
       {/* Dialog */}
-      <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
+      <div
+        className="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none"
+        onClick={onCancel}
+      >
         <div
-          className="relative w-full max-w-lg rounded-lg shadow-xl"
+          className="relative w-full max-w-lg rounded-lg shadow-xl pointer-events-auto"
           style={{
             backgroundColor: 'rgb(var(--surface-elevated))',
             border: '1px solid #B7E1DD',
           }}
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
           <button
