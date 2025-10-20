@@ -109,6 +109,9 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
               let isDisabled = false;
               let tooltip = '';
 
+              // Check 1: Maximum 4 keys per vault policy
+              const hasReachedMaxKeys = vault.key_count >= 4;
+
               if (statsResult.status === 'ok' && statsResult.data.statistics) {
                 const encryptionCount = statsResult.data.statistics.encryption_count;
                 // encryption_count: 0 = never encrypted, >0 = encrypted
@@ -120,17 +123,26 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                   tooltip = isAttached
                     ? 'This vault has already been encrypted with this key.'
                     : 'Vault already encrypted — key set is sealed. To add or remove keys, create a new vault or re-encrypt existing data.';
+                } else if (hasReachedMaxKeys && !isAttached) {
+                  // Check 2: Max keys reached - can't attach new key
+                  isDisabled = true;
+                  tooltip = 'Maximum 4 keys reached. Remove a key to attach this one.';
                 } else {
-                  // Vault never encrypted - can attach or detach
+                  // Vault never encrypted and not at max - can attach or detach
                   tooltip = isAttached
                     ? 'Unlink key from vault (metadata only)'
                     : 'Attach this key to use it for encrypting this vault.';
                 }
               } else {
-                // Fallback if stats not available - allow operation
-                tooltip = isAttached
-                  ? 'Unlink key from vault'
-                  : 'Attach this key to use it for encrypting this vault.';
+                // Fallback if stats not available
+                if (hasReachedMaxKeys && !isAttached) {
+                  isDisabled = true;
+                  tooltip = 'Maximum 4 keys reached. Remove a key to attach this one.';
+                } else {
+                  tooltip = isAttached
+                    ? 'Unlink key from vault'
+                    : 'Attach this key to use it for encrypting this vault.';
+                }
               }
 
               return {
@@ -401,8 +413,13 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                       }`}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-main truncate">
-                        {state.vault.name}
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-medium text-main truncate">
+                          {state.vault.name}
+                        </div>
+                        <span className="text-xs text-muted flex-shrink-0">
+                          ({state.vault.key_count}/4 keys)
+                        </span>
                       </div>
                       {state.vault.description && (
                         <div className="text-xs text-secondary truncate">
