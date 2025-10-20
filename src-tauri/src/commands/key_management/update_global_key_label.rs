@@ -1,8 +1,7 @@
 //! Global Key Label Update Commands
 //!
-//! Commands for updating key labels in the global registry (for unused keys only)
+//! Commands for updating key labels in the global registry (for unattached keys only)
 
-use crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus;
 use crate::services::key_management::shared::infrastructure::KeyRegistry;
 use crate::types::{CommandError, CommandResponse, ErrorCode};
 use serde::{Deserialize, Serialize};
@@ -30,21 +29,24 @@ pub struct UpdateGlobalKeyLabelResponse {
 /// Update a key's label in the global registry
 ///
 /// This command updates the label for keys in the global registry.
-/// **CRITICAL SAFETY:** Only allows updates for keys that are NOT in Active state.
+/// **CRITICAL SAFETY:** Only allows updates for UNATTACHED keys.
 ///
-/// Active keys have their labels embedded in vault manifests. Renaming them would
-/// cause manifest desynchronization issues.
+/// Any key attached to a vault (regardless of lifecycle state) has its label
+/// embedded in the vault manifest. Renaming would cause registry ↔ manifest
+/// desynchronization.
 ///
-/// **Allowed lifecycle states:**
-/// - PreActivation (never attached or never used)
-/// - Suspended (detached from all vaults)
-/// - Deactivated (in grace period)
+/// **Label embedding happens at ATTACHMENT time, not encryption time!**
 ///
-/// **Blocked lifecycle states:**
-/// - Active (embedded in vault manifests - cannot rename safely)
+/// **Allowed:**
+/// - Unattached keys only (vault_associations = [])
 ///
-/// **Note:** This only updates the registry. For Active keys, user must delete and
-/// create a new key with the desired label.
+/// **Blocked:**
+/// - ANY attached key (vault_associations.length > 0)
+///   - Active keys (attached and in use)
+///   - Suspended keys (was attached, label still in some manifests possibly)
+///   - Deactivated keys (attached but deactivated, label still in manifests)
+///
+/// **Note:** This only updates the registry label, not vault manifests or filenames.
 #[tauri::command]
 #[specta::specta]
 pub async fn update_global_key_label(
@@ -125,25 +127,29 @@ pub async fn update_global_key_label(
     })?;
 
     let current_label = key_entry.label().to_string();
+    let vault_associations = key_entry.vault_associations();
 
-    // CRITICAL SAFETY CHECK: Only allow label updates for non-Active keys
-    // Active keys have their labels embedded in vault manifests
-    if key_entry.lifecycle_status() == KeyLifecycleStatus::Active {
+    // CRITICAL SAFETY CHECK: Only allow label updates for UNATTACHED keys
+    // Any key attached to a vault has its label embedded in the vault manifest
+    // Renaming would cause registry ↔ manifest desynchronization
+    if !vault_associations.is_empty() {
         error!(
             key_id = %request.key_id,
             current_label = %current_label,
-            lifecycle_status = ?key_entry.lifecycle_status(),
-            "Cannot rename Active key - label is embedded in vault manifests"
+            vault_count = vault_associations.len(),
+            vaults = ?vault_associations,
+            "Cannot rename attached key - label is embedded in vault manifests"
         );
         return Err(Box::new(CommandError {
             code: ErrorCode::InvalidKeyState,
-            message: "Cannot rename keys that are actively used in vaults".to_string(),
+            message: "Cannot rename keys that are attached to vaults".to_string(),
             details: Some(format!(
-                "Key '{}' is in Active state. Its label is embedded in vault manifests. Renaming would cause synchronization issues.",
-                current_label
+                "Key '{}' is attached to {} vault(s). Its label is embedded in vault manifests. Renaming would cause synchronization issues.",
+                current_label,
+                vault_associations.len()
             )),
             recovery_guidance: Some(
-                "Delete this key and create a new one with the desired label instead".to_string(),
+                "Only unattached keys can be renamed. Detach this key from all vaults first, or delete it and create a new key with the desired label.".to_string(),
             ),
             user_actionable: true,
             trace_id: None,
