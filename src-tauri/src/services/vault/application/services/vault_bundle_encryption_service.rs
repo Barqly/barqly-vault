@@ -98,15 +98,15 @@ impl VaultBundleEncryptionService {
             )
             .map_err(|e| VaultError::OperationFailed(format!("Failed to build manifest: {}", e)))?;
 
-        // If manifest exists, increment version; else it's v1 (new)
+        // If manifest exists, use its revision and increment for this encryption
         // IMPORTANT: Use sanitized_name to match the filename used when saving
+        // Works for both first encryption (0→1) and subsequent encryptions (n→n+1)
         if let Ok(existing) = self.metadata_service.load_or_create(
             &input.vault_id,
             &vault_metadata.vault.sanitized_name,
             vault.vault.description.clone(),
             &device_info,
-        ) && existing.encryption_revision() > 0
-        {
+        ) {
             vault_metadata.versioning.revision = existing.encryption_revision();
             vault_metadata.increment_version(&device_info);
         }
