@@ -367,39 +367,9 @@ export const ImportPassphraseKeyDialog: React.FC<ImportPassphraseKeyDialogProps>
             )}
           </div>
 
-          {/* Footer */}
-          <div className="flex justify-end gap-3 px-6 pb-6">
-            {/* Cancel Button */}
-            <button
-              onClick={handleClose}
-              disabled={isImporting}
-              className="
-                px-4 py-2 text-sm font-medium
-                border rounded-lg
-                transition-colors
-                disabled:opacity-50 disabled:cursor-not-allowed
-              "
-              style={{
-                borderColor: 'rgb(var(--border-default))',
-                color: 'rgb(var(--text-secondary))',
-              }}
-              onMouseEnter={(e) => {
-                if (!isImporting) {
-                  e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
-                  e.currentTarget.style.color = 'rgb(var(--text-primary))';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isImporting) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'rgb(var(--text-secondary))';
-                }
-              }}
-            >
-              Cancel
-            </button>
-
-            {/* Import Button */}
+          {/* Footer - Import button spans width, Cancel on right */}
+          <div className="flex gap-3 px-6 pb-6">
+            {/* Import Button - Primary action, spans width */}
             <button
               ref={lastFocusableRef}
               onClick={handleImport}
@@ -407,7 +377,7 @@ export const ImportPassphraseKeyDialog: React.FC<ImportPassphraseKeyDialogProps>
                 isImporting || !selectedFile || !label.trim() || !passphrase.trim() || !!labelError
               }
               className="
-                px-4 py-2 text-sm font-medium text-white
+                flex-1 px-4 py-2 text-sm font-medium text-white
                 rounded-lg transition-colors
                 disabled:opacity-50 disabled:cursor-not-allowed
               "
@@ -432,6 +402,37 @@ export const ImportPassphraseKeyDialog: React.FC<ImportPassphraseKeyDialogProps>
               }}
             >
               {isImporting ? 'Importing...' : 'Import Key'}
+            </button>
+
+            {/* Cancel Button - Skip in tab order */}
+            <button
+              onClick={handleClose}
+              disabled={isImporting}
+              tabIndex={-1}
+              className="
+                px-4 py-2 text-sm font-medium
+                border rounded-lg
+                transition-colors
+                disabled:opacity-50 disabled:cursor-not-allowed
+              "
+              style={{
+                borderColor: 'rgb(var(--border-default))',
+                color: 'rgb(var(--text-secondary))',
+              }}
+              onMouseEnter={(e) => {
+                if (!isImporting) {
+                  e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                  e.currentTarget.style.color = 'rgb(var(--text-primary))';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isImporting) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'rgb(var(--text-secondary))';
+                }
+              }}
+            >
+              Cancel
             </button>
           </div>
         </div>
