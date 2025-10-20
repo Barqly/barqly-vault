@@ -16,6 +16,7 @@ interface VaultCheckboxState {
   isDisabled: boolean;
   isLoading: boolean;
   tooltip: string;
+  disabledReason?: 'encrypted' | 'max-keys' | null;
 }
 
 export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
@@ -108,6 +109,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
 
               let isDisabled = false;
               let tooltip = '';
+              let disabledReason: 'encrypted' | 'max-keys' | null = null;
 
               // Check 1: Maximum 4 keys per vault policy
               const hasReachedMaxKeys = vault.key_count >= 4;
@@ -120,12 +122,14 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                 if (!isKeySetMutable) {
                   // Vault has been encrypted - keyset is sealed (immutable)
                   isDisabled = true;
+                  disabledReason = 'encrypted';
                   tooltip = isAttached
                     ? 'This vault has already been encrypted with this key.'
                     : 'Vault already encrypted — key set is sealed. To add or remove keys, create a new vault or re-encrypt existing data.';
                 } else if (hasReachedMaxKeys && !isAttached) {
                   // Check 2: Max keys reached - can't attach new key
                   isDisabled = true;
+                  disabledReason = 'max-keys';
                   tooltip = 'Maximum 4 keys reached. Remove a key to attach this one.';
                 } else {
                   // Vault never encrypted and not at max - can attach or detach
@@ -137,6 +141,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                 // Fallback if stats not available
                 if (hasReachedMaxKeys && !isAttached) {
                   isDisabled = true;
+                  disabledReason = 'max-keys';
                   tooltip = 'Maximum 4 keys reached. Remove a key to attach this one.';
                 } else {
                   tooltip = isAttached
@@ -151,6 +156,7 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
                 isDisabled,
                 isLoading: false,
                 tooltip,
+                disabledReason,
               };
             } catch (err) {
               logger.error('VaultAttachmentDialog', 'Error processing vault', err as Error);
@@ -165,15 +171,19 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
           .map((result) => (result as PromiseFulfilledResult<VaultCheckboxState>).value);
 
         // Filter to only show relevant vaults (reduce information overload):
-        // 1. Available vaults (not attached, not encrypted) - can attach
-        // 2. Attached vaults (not encrypted) - can detach
+        // 1. Available vaults (not attached, not encrypted, not at max) - can attach
+        // 2. Attached vaults (any state) - can detach
         // 3. Sealed vaults with this key (attached and encrypted) - historical reference, view-only
-        // HIDE: Sealed vaults without this key (not attached but encrypted) - irrelevant
+        // 4. Max capacity vaults (not attached, at 4 keys) - show disabled for transparency
+        // HIDE: Sealed vaults without this key (not attached AND encrypted) - irrelevant
         const relevantStates = allStates.filter((state) => {
           // Show all attached vaults (mutable or sealed)
           if (state.isAttached) return true;
 
-          // Show available vaults (not attached, not encrypted)
+          // Show vaults at max capacity (disabled but visible)
+          if (state.disabledReason === 'max-keys') return true;
+
+          // Show available vaults (not attached, not encrypted, not at max)
           if (!state.isDisabled) return true;
 
           // Hide: Not attached AND encrypted (irrelevant sealed vaults)
