@@ -631,7 +631,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           value={pin}
                           onChange={(e) => setPin(e.target.value)}
                           maxLength={8}
-                          className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main"
+                          className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main placeholder-gray-400"
                           placeholder="6-8 digits"
                         />
                         <button
@@ -656,7 +656,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           value={confirmPin}
                           onChange={(e) => setConfirmPin(e.target.value)}
                           maxLength={8}
-                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main"
+                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
                           style={
                             confirmPin
                               ? pin === confirmPin
@@ -708,7 +708,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           value={recoveryPin}
                           onChange={(e) => setRecoveryPin(e.target.value)}
                           maxLength={8}
-                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main"
+                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
                           style={
                             recoveryPin && pin
                               ? recoveryPin !== pin
@@ -759,7 +759,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           value={confirmRecoveryPin}
                           onChange={(e) => setConfirmRecoveryPin(e.target.value)}
                           maxLength={8}
-                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main"
+                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
                           style={
                             confirmRecoveryPin
                               ? recoveryPin === confirmRecoveryPin
