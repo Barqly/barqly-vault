@@ -9,6 +9,7 @@ import {
   Clock,
   Sparkles,
   AlertTriangle,
+  Pencil,
 } from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
@@ -25,6 +26,7 @@ interface KeyCardProps {
   onAttach?: (keyId: string) => void;
   onDelete?: (keyId: string) => void;
   onExport?: (keyId: string) => void;
+  onEditLabel?: (keyId: string, currentLabel: string) => void;
   onRefresh?: () => Promise<void>;
   vaultNames?: Map<string, string>;
 }
@@ -39,6 +41,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   onAttach,
   onDelete,
   onExport,
+  onEditLabel,
   onRefresh,
   vaultNames = new Map(),
 }) => {
@@ -48,6 +51,9 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const isPassphrase = keyRef.key_type.type === 'Passphrase';
   const isYubiKey = keyRef.key_type.type === 'YubiKey';
+
+  // Can edit label ONLY if key is not attached to any vault
+  const canEditLabel = keyRef.vault_associations.length === 0;
 
   /**
    * Determines if a key has been used in ANY encryption envelope
@@ -268,9 +274,31 @@ export const KeyCard: React.FC<KeyCardProps> = ({
         </div>
 
         {/* Label with tooltip for full text */}
-        <h3 className="font-semibold text-heading truncate" title={keyRef.label}>
-          {displayLabel}
-        </h3>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <h3 className="font-semibold text-heading truncate" title={keyRef.label}>
+            {displayLabel}
+          </h3>
+          {/* Edit icon - Only for non-Active keys */}
+          {canEditLabel && onEditLabel && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditLabel(keyRef.id, keyRef.label);
+              }}
+              className="flex-shrink-0 transition-colors"
+              style={{ color: 'rgb(var(--text-muted))' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = isPassphrase ? '#13897F' : '#F98B1C';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'rgb(var(--text-muted))';
+              }}
+              title="Edit key label"
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Row 2: Type Badge + Status Badge */}
