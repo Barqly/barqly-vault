@@ -182,6 +182,14 @@ pub async fn import_key_file(
                     ErrorCode::InvalidFileFormat,
                     Some("The key file failed security validation checks".to_string()),
                 ),
+                crate::services::key_management::shared::application::services::ImportError::KeyFileAlreadyExists(_) => (
+                    ErrorCode::InvalidInput,
+                    Some("A key file with this name already exists. Delete the existing key or use a different label.".to_string()),
+                ),
+                crate::services::key_management::shared::application::services::ImportError::FileSizeInvalid(_) => (
+                    ErrorCode::InvalidInput,
+                    Some("The file size is invalid for a key file. Ensure you selected the correct file.".to_string()),
+                ),
                 _ => (
                     ErrorCode::UnknownError,
                     Some("An unexpected error occurred during import".to_string()),

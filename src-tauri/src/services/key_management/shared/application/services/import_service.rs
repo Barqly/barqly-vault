@@ -114,6 +114,12 @@ pub enum ImportError {
 
     #[error("Security validation failed: {0}")]
     SecurityValidationFailed(String),
+
+    #[error("Key file already exists: {0}")]
+    KeyFileAlreadyExists(String),
+
+    #[error("File size validation failed: {0}")]
+    FileSizeInvalid(String),
 }
 
 impl KeyImportService {
@@ -147,6 +153,28 @@ impl KeyImportService {
         if !path.exists() {
             return Err(ImportError::FileNotFound(file_path.to_string()));
         }
+
+        // Step 1a: Validate file size (safety check for corrupted/wrong files)
+        let file_size = fs::metadata(path).map_err(ImportError::IoError)?.len();
+
+        const MIN_KEY_FILE_SIZE: u64 = 100; // 100 bytes minimum
+        const MAX_KEY_FILE_SIZE: u64 = 100_000; // 100 KB maximum
+
+        if file_size < MIN_KEY_FILE_SIZE {
+            return Err(ImportError::FileSizeInvalid(format!(
+                "File too small ({} bytes). Minimum expected size is {} bytes for a valid encrypted key.",
+                file_size, MIN_KEY_FILE_SIZE
+            )));
+        }
+
+        if file_size > MAX_KEY_FILE_SIZE {
+            return Err(ImportError::FileSizeInvalid(format!(
+                "File too large ({} bytes). Maximum expected size is {} bytes. This may not be a key file.",
+                file_size, MAX_KEY_FILE_SIZE
+            )));
+        }
+
+        debug!(file_size = file_size, "File size validation passed");
 
         // Step 2: Read and parse the .enc file
         let encrypted_content = fs::read(path)?;
@@ -327,8 +355,27 @@ impl KeyImportService {
                         .map_err(|e| ImportError::IoError(std::io::Error::other(e.to_string())))?;
                     let key_path = keys_dir.join(&key_filename);
 
-                    // Write the encrypted key
+                    // SAFETY CHECK: Never overwrite existing key files (matches recovery behavior)
+                    if key_path.exists() {
+                        error!(
+                            key_filename = %key_filename,
+                            key_path = ?key_path,
+                            "Import blocked: key file already exists"
+                        );
+                        return Err(ImportError::KeyFileAlreadyExists(format!(
+                            "Key file '{}' already exists. Delete the existing key first if you want to replace it, or use a different label.",
+                            key_filename
+                        )));
+                    }
+
+                    // Write the encrypted key (only if doesn't exist)
                     fs::write(&key_path, encrypted_data)?;
+
+                    info!(
+                        key_filename = %key_filename,
+                        key_path = ?key_path,
+                        "Key file written successfully"
+                    );
 
                     // Set restrictive permissions on Unix
                     #[cfg(unix)]
