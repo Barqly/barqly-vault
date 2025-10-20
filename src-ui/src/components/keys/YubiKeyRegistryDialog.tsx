@@ -433,21 +433,41 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   </div>
                 ) : yubikeys.length === 0 ? (
                   <>
+                    {/* Info Panel - Theme-aware */}
                     <div
-                      className={`${error ? 'bg-blue-50 border-blue-200' : 'bg-amber-50 border-amber-200'} border rounded-lg p-4`}
+                      className="border rounded-lg p-4"
+                      style={{
+                        backgroundColor: error
+                          ? 'rgb(var(--surface-hover))'
+                          : 'rgba(234, 179, 8, 0.1)',
+                        borderColor: error
+                          ? 'rgb(var(--border-default))'
+                          : 'rgba(234, 179, 8, 0.3)',
+                      }}
                     >
                       <div className="flex gap-3">
                         <AlertCircle
-                          className={`h-5 w-5 ${error ? 'text-blue-600' : 'text-amber-600'} flex-shrink-0 mt-0.5`}
+                          className="h-5 w-5 flex-shrink-0 mt-0.5"
+                          style={{
+                            color: error ? 'rgb(var(--text-secondary))' : '#D97706',
+                          }}
                         />
                         <div>
                           <p
-                            className={`text-sm ${error ? 'text-blue-800' : 'text-amber-800'} font-medium`}
+                            className="text-sm font-medium"
+                            style={{
+                              color: error ? 'rgb(var(--text-primary))' : '#F59E0B',
+                            }}
                           >
                             {error || 'No YubiKeys available for registration'}
                           </p>
                           {!error && (
-                            <p className="text-sm text-amber-700 mt-1">
+                            <p
+                              className="text-sm mt-1"
+                              style={{
+                                color: '#B45309',
+                              }}
+                            >
                               Insert your YubiKey to add it to the registry. The green light should
                               be blinking.
                             </p>
@@ -456,17 +476,41 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       </div>
                     </div>
 
+                    {/* Buttons - Refresh spans, Cancel compact */}
                     <div className="flex gap-3">
                       <button
                         onClick={detectYubiKeys}
-                        className="flex-1 px-4 py-2 bg-hover text-gray-800 rounded-lg hover:bg-gray-300"
+                        autoFocus
+                        className="flex-1 px-4 py-2 text-white rounded-lg transition-colors"
+                        style={{
+                          backgroundColor: '#1D4ED8',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#1E40AF';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#1D4ED8';
+                        }}
                       >
                         <RefreshCw className="h-4 w-4 inline mr-2" />
                         Refresh
                       </button>
                       <button
                         onClick={handleCancel}
-                        className="flex-1 px-4 py-2 bg-hover text-main rounded-lg hover:bg-hover"
+                        tabIndex={-1}
+                        className="px-4 py-2 border rounded-lg transition-colors"
+                        style={{
+                          borderColor: 'rgb(var(--border-default))',
+                          color: 'rgb(var(--text-secondary))',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                          e.currentTarget.style.color = 'rgb(var(--text-primary))';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.color = 'rgb(var(--text-secondary))';
+                        }}
                       >
                         Cancel
                       </button>
