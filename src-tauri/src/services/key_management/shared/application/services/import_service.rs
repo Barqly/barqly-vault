@@ -7,6 +7,7 @@ use crate::services::key_management::shared::domain::models::key_lifecycle::KeyL
 use crate::services::key_management::shared::domain::models::key_reference::VaultKey;
 use crate::services::key_management::shared::infrastructure::{KeyEntry, KeyRegistry};
 use crate::services::shared::infrastructure::path_management::get_keys_dir;
+use crate::services::shared::infrastructure::sanitize_label;
 use age::secrecy::SecretString;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -268,13 +269,15 @@ impl KeyImportService {
             )
         };
 
-        // Step 5: Sanitize label to prevent injection
-        let sanitized_label = Self::sanitize_label(&key_metadata.label);
-        if sanitized_label != key_metadata.label {
+        // Step 5: Sanitize label using shared function (matches normal key creation)
+        let sanitized = sanitize_label(&key_metadata.label)
+            .map_err(|e| ImportError::InvalidKeyData(format!("Failed to sanitize label: {}", e)))?;
+
+        if sanitized.sanitized != key_metadata.label {
             warnings.push(
                 ImportWarning::LabelSanitized {
                     original: key_metadata.label.clone(),
-                    sanitized: sanitized_label.clone(),
+                    sanitized: sanitized.sanitized.clone(),
                 }
                 .to_string(),
             );
@@ -344,7 +347,7 @@ impl KeyImportService {
                         }
                     }
                 },
-                label: sanitized_label.clone(),
+                label: sanitized.sanitized.clone(),
                 lifecycle_status: KeyLifecycleStatus::PreActivation,
                 created_at: key_metadata.created_at,
                 last_used: None,
@@ -353,13 +356,15 @@ impl KeyImportService {
             return Ok((key_ref, validation_status, warnings));
         }
 
-        // Step 8: Actually import the key
-        let key_id = self.generate_key_id(&sanitized_label);
+        // Step 8: Actually import the key (using shared sanitization pattern)
+        // key_id and filename use sanitized version (matches normal key creation)
+        let key_id = sanitized.sanitized.clone();
         let key_entry = match key_metadata.key_type {
             ImportedKeyType::Passphrase => {
                 // Save encrypted key file
                 if let Some(encrypted_data) = private_key_data {
-                    let key_filename = format!("{}.agekey.enc", sanitized_label);
+                    // Use sanitized label for filename (hyphens instead of spaces)
+                    let key_filename = format!("{}.agekey.enc", sanitized.sanitized);
                     let keys_dir = get_keys_dir()
                         .map_err(|e| ImportError::IoError(std::io::Error::other(e.to_string())))?;
                     let key_path = keys_dir.join(&key_filename);
@@ -396,7 +401,7 @@ impl KeyImportService {
                     }
 
                     KeyEntry::Passphrase {
-                        label: sanitized_label.clone(),
+                        label: key_metadata.label.clone(), // Original label (display version)
                         created_at: key_metadata.created_at,
                         last_used: None,
                         public_key: key_metadata.public_key.clone(),
@@ -428,7 +433,7 @@ impl KeyImportService {
                 firmware_version,
             } => {
                 KeyEntry::Yubikey {
-                    label: sanitized_label.clone(),
+                    label: key_metadata.label.clone(), // Original label (display version)
                     created_at: key_metadata.created_at,
                     last_used: None,
                     serial,
@@ -465,7 +470,7 @@ impl KeyImportService {
 
         info!(
             key_id = %key_id,
-            label = %sanitized_label,
+            label = %key_metadata.label,
             "Successfully imported key"
         );
 
@@ -525,22 +530,6 @@ impl KeyImportService {
             .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
             .and_then(|d| DateTime::from_timestamp(d.as_secs() as i64, 0))
             .unwrap_or_else(Utc::now)
-    }
-
-    /// Sanitize label to prevent injection attacks
-    fn sanitize_label(label: &str) -> String {
-        // Remove path separators and special characters
-        label
-            .chars()
-            .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_' || *c == ' ')
-            .collect::<String>()
-            .trim()
-            .to_string()
-    }
-
-    /// Generate a unique key ID
-    fn generate_key_id(&self, label: &str) -> String {
-        format!("keyref_{}", label.to_lowercase().replace(' ', "_"))
     }
 
     /// Check for duplicate keys by comparing public keys
