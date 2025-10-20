@@ -82,6 +82,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
   // Refs for focus trap
   const firstFocusableRef = useRef<HTMLInputElement>(null);
   const lastFocusableRef = useRef<HTMLButtonElement>(null);
+  const refreshButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -456,7 +457,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                           <p
                             className="text-sm font-medium"
                             style={{
-                              color: error ? 'rgb(var(--text-primary))' : '#F59E0B',
+                              color: error ? 'rgb(var(--text-primary))' : '#B45309',
                             }}
                           >
                             {error || 'No YubiKeys available for registration'}
@@ -477,8 +478,18 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     </div>
 
                     {/* Buttons - Refresh spans, Cancel compact */}
-                    <div className="flex gap-3">
+                    <div
+                      className="flex gap-3"
+                      onKeyDown={(e) => {
+                        // Focus trap for detect step - Tab stays on Refresh button
+                        if (e.key === 'Tab') {
+                          e.preventDefault();
+                          refreshButtonRef.current?.focus();
+                        }
+                      }}
+                    >
                       <button
+                        ref={refreshButtonRef}
                         onClick={detectYubiKeys}
                         autoFocus
                         className="flex-1 px-4 py-2 text-white rounded-lg transition-colors"
