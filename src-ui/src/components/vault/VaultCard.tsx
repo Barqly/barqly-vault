@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Archive, Key, FlipHorizontal, Clock, HardDrive, Files, Fingerprint } from 'lucide-react';
 import { VaultSummary, KeyReference, VaultStatistics, commands } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
-import { formatLastEncrypted, formatBytes, formatFileCount } from '../../lib/format-utils';
+import { formatBytes, formatFileCount } from '../../lib/format-utils';
 
 interface VaultCardProps {
   vault: VaultSummary;
@@ -110,99 +110,95 @@ const VaultCard: React.FC<VaultCardProps> = ({
         boxShadow: '0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)',
       }}
     >
-      {/* Card Content - flippable */}
-      <div
-        className="cursor-pointer"
-        onClick={onSelect}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-      >
-        {!isFlipped ? (
-          // FRONT SIDE - Formalized row structure (matches KeyCard)
-          <div className="pb-14">
-            {/* Rows 1-2: Icon spans both rows, with Title and Badges */}
-            <div className="flex gap-3 px-5 pt-3 pb-2">
-              {/* Vault Icon - Spans 2 rows, vertically centered */}
-              <div
-                className="rounded-lg p-2 flex-shrink-0 self-center"
-                style={{
-                  backgroundColor: 'rgba(29, 78, 216, 0.1)',
-                  border: '1px solid rgba(59, 130, 246, 0.3)',
+      {/* Card Content */}
+      <div className="pb-14" onClick={onSelect} onDragOver={handleDragOver} onDrop={handleDrop}>
+        {/* Rows 1-2: Header (Icon + Title + Badges) - NEVER FLIPS */}
+        <div className="flex gap-3 px-5 pt-3 pb-2">
+          {/* Vault Icon - Spans 2 rows, vertically centered */}
+          <div
+            className="rounded-lg p-2 flex-shrink-0 self-center"
+            style={{
+              backgroundColor: 'rgba(29, 78, 216, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+            }}
+          >
+            <Archive className="h-4 w-4" style={{ color: '#3B82F6' }} />
+          </div>
+
+          {/* Right side: Title + Badges stacked */}
+          <div className="flex-1 min-w-0">
+            {/* Row 1: Name + Flip button */}
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h3 className="font-semibold text-heading truncate" title={vault.name}>
+                {displayName}
+              </h3>
+
+              {/* Flip Button - Always in same position */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFlipped(!isFlipped);
                 }}
+                className="flex-shrink-0 p-1 rounded transition-colors"
+                style={{ color: 'rgb(var(--text-muted))' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                aria-label="Flip card"
               >
-                <Archive className="h-4 w-4" style={{ color: '#3B82F6' }} />
-              </div>
-
-              {/* Right side: Title + Badges stacked */}
-              <div className="flex-1 min-w-0">
-                {/* Row 1: Name + Flip button */}
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <h3 className="font-semibold text-heading truncate" title={vault.name}>
-                    {displayName}
-                  </h3>
-
-                  {/* Flip Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsFlipped(!isFlipped);
-                    }}
-                    className="flex-shrink-0 p-1 rounded transition-colors"
-                    style={{ color: 'rgb(var(--text-muted))' }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                    aria-label="Flip card"
-                  >
-                    <FlipHorizontal className="h-4 w-4" />
-                  </button>
-                </div>
-
-                {/* Row 2: Key Badges */}
-                <div className="flex items-center gap-2">
-                  {/* Passphrase Keys - Teal theme */}
-                  {passphraseKeys.length > 0 && (
-                    <span
-                      className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
-                      style={{
-                        backgroundColor: 'rgba(15, 118, 110, 0.1)',
-                        color: '#13897F',
-                        border: '1px solid #B7E1DD',
-                      }}
-                      title={`${passphraseKeys.length} Passphrase ${passphraseKeys.length === 1 ? 'key' : 'keys'}`}
-                    >
-                      <Key className="h-3 w-3" style={{ color: '#13897F' }} />
-                      {passphraseKeys.length}
-                    </span>
-                  )}
-
-                  {/* YubiKeys - Orange theme */}
-                  {yubiKeys.length > 0 && (
-                    <span
-                      className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
-                      style={{
-                        backgroundColor: 'rgba(249, 139, 28, 0.08)',
-                        color: '#F98B1C',
-                        border: '1px solid #ffd4a3',
-                      }}
-                      title={`${yubiKeys.length} YubiKey ${yubiKeys.length === 1 ? 'key' : 'keys'}`}
-                    >
-                      <Fingerprint className="h-3 w-3" style={{ color: '#F98B1C' }} />
-                      {yubiKeys.length}
-                    </span>
-                  )}
-
-                  {/* Show message if no keys */}
-                  {keys.length === 0 && (
-                    <span className="text-xs text-secondary">No keys configured</span>
-                  )}
-                </div>
-              </div>
+                <FlipHorizontal className="h-4 w-4" />
+              </button>
             </div>
 
+            {/* Row 2: Key Badges */}
+            <div className="flex items-center gap-2">
+              {/* Passphrase Keys - Teal theme */}
+              {passphraseKeys.length > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
+                  style={{
+                    backgroundColor: 'rgba(15, 118, 110, 0.1)',
+                    color: '#13897F',
+                    border: '1px solid #B7E1DD',
+                  }}
+                  title={`${passphraseKeys.length} Passphrase ${passphraseKeys.length === 1 ? 'key' : 'keys'}`}
+                >
+                  <Key className="h-3 w-3" style={{ color: '#13897F' }} />
+                  {passphraseKeys.length}
+                </span>
+              )}
+
+              {/* YubiKeys - Orange theme */}
+              {yubiKeys.length > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
+                  style={{
+                    backgroundColor: 'rgba(249, 139, 28, 0.08)',
+                    color: '#F98B1C',
+                    border: '1px solid #ffd4a3',
+                  }}
+                  title={`${yubiKeys.length} YubiKey ${yubiKeys.length === 1 ? 'key' : 'keys'}`}
+                >
+                  <Fingerprint className="h-3 w-3" style={{ color: '#F98B1C' }} />
+                  {yubiKeys.length}
+                </span>
+              )}
+
+              {/* Show message if no keys */}
+              {keys.length === 0 && (
+                <span className="text-xs text-secondary">No keys configured</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Rows 3-4: Content - Toggle between file info and description */}
+        {!isFlipped ? (
+          // SHOW FILE INFO
+          <>
             {/* Row 3: Size + File Count */}
             <div className="flex items-center gap-4 px-5 pt-2 pb-2">
               {isLoading ? (
@@ -244,38 +240,24 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 </span>
               </div>
             </div>
-          </div>
+          </>
         ) : (
-          // BACK SIDE - Description
-          <div className="p-6 pb-14">
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-sm font-semibold text-heading">Description</h3>
-
-              {/* Flip Back Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsFlipped(!isFlipped);
-                }}
-                className="p-1 rounded transition-colors"
-                style={{ color: 'rgb(var(--text-muted))' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                aria-label="Flip back"
-              >
-                <FlipHorizontal className="h-4 w-4" />
-              </button>
+          // SHOW DESCRIPTION
+          <>
+            {/* Row 3: Description text */}
+            <div className="flex items-center gap-4 px-5 pt-2 pb-2">
+              <p className="text-xs font-medium text-secondary">
+                {vault.description || 'No description provided'}
+              </p>
             </div>
-            <p className="text-sm text-main">{vault.description || 'No description provided'}</p>
-          </div>
+
+            {/* Row 4: Empty spacer (maintains height) */}
+            <div className="px-5 pt-0 pb-2" style={{ height: '24px' }}></div>
+          </>
         )}
       </div>
 
-      {/* Quick Actions - Fixed Footer */}
+      {/* Quick Actions - Fixed Footer - NEVER FLIPS */}
       <div className="absolute bottom-0 left-0 right-0 border-t border-subtle px-5 py-3 flex items-center justify-between gap-2 bg-card rounded-b-lg">
         {/* Delete Button - Left, ghost style (matches KeyCard) */}
         <button

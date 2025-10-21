@@ -106,7 +106,12 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
             className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
             placeholder="Brief description of what this vault contains..."
           />
-          <p className="mt-1 text-xs text-slate-500">{description.length}/70 characters</p>
+          <p
+            className="mt-1 text-xs"
+            style={{ color: description.length >= 70 ? '#B91C1C' : 'rgb(var(--text-muted))' }}
+          >
+            {description.length}/70 characters
+          </p>
         </div>
 
         {/* Action Buttons */}
