@@ -29,7 +29,7 @@ interface VaultCardProps {
 const VaultCard: React.FC<VaultCardProps> = ({
   vault,
   keys,
-  isActive,
+  isActive: _isActive,
   isDropTarget,
   statistics: propStatistics, // Receive statistics as prop
   onSelect,
@@ -119,107 +119,111 @@ const VaultCard: React.FC<VaultCardProps> = ({
         onDrop={handleDrop}
       >
         {!isFlipped ? (
-          // FRONT SIDE
+          // FRONT SIDE - Formalized row structure (matches KeyCard)
           <>
-            <div className="p-6 pb-3">
-              <div className="flex items-start justify-between">
-                {/* Vault Icon and Info */}
-                <div className="flex gap-3">
-                  <div
-                    className="p-2 rounded-lg"
-                    style={{
-                      backgroundColor: 'rgba(29, 78, 216, 0.1)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                    }}
-                  >
-                    <Archive className="h-4 w-4" style={{ color: '#3B82F6' }} />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-heading" title={vault.name}>
-                      {displayName}
-                    </h3>
+            {/* Row 1: Icon + Name + Flip button */}
+            <div className="flex items-center gap-3 px-5 pt-3 pb-2">
+              {/* Vault Icon */}
+              <div
+                className="rounded-lg p-2 flex-shrink-0"
+                style={{
+                  backgroundColor: 'rgba(29, 78, 216, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                }}
+              >
+                <Archive className="h-4 w-4" style={{ color: '#3B82F6' }} />
+              </div>
 
-                    {/* Key Badges - Teal for Passphrase, Orange for YubiKey (matches KeyCard) */}
-                    <div className="flex gap-2 mt-2">
-                      {/* Passphrase Keys - Teal theme */}
-                      {passphraseKeys.length > 0 && (
-                        <span
-                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full"
-                          style={{
-                            backgroundColor: 'rgba(15, 118, 110, 0.1)',
-                            color: '#13897F',
-                            border: '1px solid #B7E1DD',
-                          }}
-                        >
-                          <Key className="h-3 w-3" style={{ color: '#13897F' }} />
-                          {passphraseKeys.length}
-                        </span>
-                      )}
+              {/* Vault Name */}
+              <h3 className="font-semibold text-heading truncate flex-1" title={vault.name}>
+                {displayName}
+              </h3>
 
-                      {/* YubiKeys - Orange theme */}
-                      {yubiKeys.length > 0 && (
-                        <span
-                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full"
-                          style={{
-                            backgroundColor: 'rgba(249, 139, 28, 0.08)',
-                            color: '#F98B1C',
-                            border: '1px solid #ffd4a3',
-                          }}
-                        >
-                          <Fingerprint className="h-3 w-3" style={{ color: '#F98B1C' }} />
-                          {yubiKeys.length}
-                        </span>
-                      )}
+              {/* Flip Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFlipped(!isFlipped);
+                }}
+                className="flex-shrink-0 p-1 rounded transition-colors"
+                style={{ color: 'rgb(var(--text-muted))' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                aria-label="Flip card"
+              >
+                <FlipHorizontal className="h-4 w-4" />
+              </button>
+            </div>
 
-                      {/* Show message if no keys */}
-                      {keys.length === 0 && (
-                        <span className="text-xs text-secondary">No keys configured</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Flip Button */}
-                <button
-                  onClick={() => setIsFlipped(!isFlipped)}
-                  className="p-1 rounded transition-colors"
-                  style={{ color: 'rgb(var(--text-muted))' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+            {/* Row 2: Key Badges */}
+            <div className="flex items-center gap-2 px-5 py-2">
+              {/* Passphrase Keys - Teal theme */}
+              {passphraseKeys.length > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
+                  style={{
+                    backgroundColor: 'rgba(15, 118, 110, 0.1)',
+                    color: '#13897F',
+                    border: '1px solid #B7E1DD',
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                  aria-label="Flip card"
                 >
-                  <FlipHorizontal className="h-4 w-4" />
-                </button>
+                  <Key className="h-3 w-3" style={{ color: '#13897F' }} />
+                  {passphraseKeys.length}
+                </span>
+              )}
+
+              {/* YubiKeys - Orange theme */}
+              {yubiKeys.length > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
+                  style={{
+                    backgroundColor: 'rgba(249, 139, 28, 0.08)',
+                    color: '#F98B1C',
+                    border: '1px solid #ffd4a3',
+                  }}
+                >
+                  <Fingerprint className="h-3 w-3" style={{ color: '#F98B1C' }} />
+                  {yubiKeys.length}
+                </span>
+              )}
+
+              {/* Show message if no keys */}
+              {keys.length === 0 && (
+                <span className="text-xs text-secondary">No keys configured</span>
+              )}
+            </div>
+
+            {/* Row 3: Last Encrypted */}
+            <div className="flex items-center px-5 pt-2 pb-2">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-secondary">
+                <Clock className="h-3 w-3" />
+                <span>{formatLastEncrypted(statistics?.last_encrypted_at || null)}</span>
               </div>
             </div>
 
-            {/* Metadata Section */}
-            <div className="px-6 pb-4">
+            {/* Row 4: Size + File Count */}
+            <div className="flex items-center gap-4 px-5 pt-0 pb-2">
               {isLoading ? (
-                <div className="text-xs text-muted">Loading statistics...</div>
+                <div className="text-xs text-muted">Loading...</div>
               ) : error ? (
                 <div className="text-xs" style={{ color: '#B91C1C' }}>
                   {error}
                 </div>
               ) : (
-                <div className="flex items-center gap-4 text-xs text-secondary">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{formatLastEncrypted(statistics?.last_encrypted_at || null)}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
+                <>
+                  <div className="flex items-center gap-1 text-xs text-secondary">
                     <HardDrive className="h-3 w-3" />
                     <span>{formatBytes(statistics?.total_size_bytes || 0)}</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 text-xs text-secondary">
                     <Files className="h-3 w-3" />
                     <span>{formatFileCount(statistics?.file_count || 0)}</span>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </>
