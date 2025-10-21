@@ -126,13 +126,13 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 {/* Vault Icon and Info */}
                 <div className="flex gap-3">
                   <div
-                    className="p-3 rounded-lg"
+                    className="p-2 rounded-lg"
                     style={{
-                      backgroundColor: 'rgb(var(--surface-hover))',
-                      border: '1px solid rgb(var(--border-default))',
+                      backgroundColor: 'rgba(29, 78, 216, 0.1)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
                     }}
                   >
-                    <Archive className="h-8 w-8" style={{ color: 'rgb(var(--text-secondary))' }} />
+                    <Archive className="h-4 w-4" style={{ color: '#3B82F6' }} />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-heading" title={vault.name}>
@@ -253,7 +253,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
       </div>
 
       {/* Quick Actions - Fixed Footer */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-subtle px-5 py-3 flex items-center gap-2 bg-card rounded-b-lg">
+      <div className="absolute bottom-0 left-0 right-0 border-t border-subtle px-5 py-3 flex items-center justify-between gap-2 bg-card rounded-b-lg">
         {/* Delete Button - Left, ghost style (matches KeyCard) */}
         <button
           onClick={(e) => {
@@ -283,7 +283,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           Delete
         </button>
 
-        {/* Keys Button - Primary action, premium blue (matches KeyCard Vault button) */}
+        {/* Keys Button - Right aligned, premium blue (matches KeyCard Vault button) */}
         <button
           onClick={(e) => {
             e.stopPropagation();
