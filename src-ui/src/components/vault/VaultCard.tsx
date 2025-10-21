@@ -199,8 +199,8 @@ const VaultCard: React.FC<VaultCardProps> = ({
               )}
             </div>
 
-            {/* Row 3: Metadata (Time + Size + Files combined) */}
-            <div className="flex items-center px-5 pt-2 pb-2">
+            {/* Row 3: Size + File Count */}
+            <div className="flex items-center gap-4 px-5 pt-2 pb-2">
               {isLoading ? (
                 <div className="text-xs text-muted">Loading...</div>
               ) : error ? (
@@ -208,21 +208,37 @@ const VaultCard: React.FC<VaultCardProps> = ({
                   {error}
                 </div>
               ) : (
-                <div className="flex items-center gap-4 text-xs font-medium text-secondary">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{formatLastEncrypted(statistics?.last_encrypted_at || null)}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
+                <>
+                  <div className="flex items-center gap-1 text-xs font-medium text-secondary">
                     <HardDrive className="h-3 w-3" />
                     <span>{formatBytes(statistics?.total_size_bytes || 0)}</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 text-xs font-medium text-secondary">
                     <Files className="h-3 w-3" />
                     <span>{formatFileCount(statistics?.file_count || 0)}</span>
                   </div>
-                </div>
+                </>
               )}
+            </div>
+
+            {/* Row 4: Creation Date/Time */}
+            <div className="flex items-center px-5 pt-0 pb-2">
+              <div className="flex items-center gap-1 text-xs font-medium text-secondary">
+                <Clock className="h-3 w-3" />
+                <span>
+                  Created{' '}
+                  {new Date(vault.created_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}{' '}
+                  {new Date(vault.created_at).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  })}
+                </span>
+              </div>
             </div>
           </>
         ) : (
