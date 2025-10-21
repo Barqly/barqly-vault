@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Archive, Key, Shield, FlipHorizontal, Clock, HardDrive, Files } from 'lucide-react';
+import { Archive, Key, FlipHorizontal, Clock, HardDrive, Files, Fingerprint } from 'lucide-react';
 import { VaultSummary, KeyReference, VaultStatistics, commands } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
 import { formatLastEncrypted, formatBytes, formatFileCount } from '../../lib/format-utils';
@@ -103,15 +103,17 @@ const VaultCard: React.FC<VaultCardProps> = ({
   return (
     <div
       className={`
-        relative bg-white rounded-lg border-2 transition-all
-        ${
-          isActive
-            ? 'border-blue-600 bg-blue-50 shadow-lg'
-            : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
-        }
-        ${isDropTarget ? 'border-blue-400 border-dashed bg-blue-50' : ''}
+        relative rounded-lg border bg-card transition-all
+        ${isActive ? 'ring-2 border-2' : 'border-default hover:shadow-lg'}
+        ${isDropTarget ? 'border-blue-400 border-dashed' : ''}
       `}
-      style={{ height: '200px' }}
+      style={{
+        height: '200px',
+        boxShadow: isActive
+          ? '0 0 0 2px rgba(59, 130, 246, 0.5)'
+          : '0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)',
+        borderColor: isActive ? '#3B82F6' : undefined,
+      }}
     >
       {/* Card Content - flippable */}
       <div
@@ -128,45 +130,61 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 {/* Vault Icon and Info */}
                 <div className="flex gap-3">
                   <div
-                    className={`
-              p-3 rounded-lg
-              ${isActive ? 'bg-blue-100' : 'bg-slate-100'}
-            `}
+                    className="p-3 rounded-lg"
+                    style={{
+                      backgroundColor: isActive
+                        ? 'rgba(29, 78, 216, 0.1)'
+                        : 'rgb(var(--surface-hover))',
+                      border: isActive
+                        ? '1px solid #3B82F6'
+                        : '1px solid rgb(var(--border-default))',
+                    }}
                   >
                     <Archive
-                      className={`h-8 w-8 ${isActive ? 'text-blue-600' : 'text-slate-600'}`}
+                      className="h-8 w-8"
+                      style={{ color: isActive ? '#3B82F6' : 'rgb(var(--text-secondary))' }}
                     />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-slate-800" title={vault.name}>
+                    <h3 className="text-lg font-semibold text-heading" title={vault.name}>
                       {displayName}
                     </h3>
 
-                    {/* Key Badges - moved here from separate section */}
+                    {/* Key Badges - Teal for Passphrase, Orange for YubiKey (matches KeyCard) */}
                     <div className="flex gap-2 mt-2">
-                      {/* Passphrase Keys */}
+                      {/* Passphrase Keys - Teal theme */}
                       {passphraseKeys.length > 0 && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-green-100 rounded-full">
-                          <Key className="h-3.5 w-3.5 text-green-700" />
-                          <span className="text-xs font-medium text-green-700">
-                            {passphraseKeys.length}
-                          </span>
-                        </div>
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full"
+                          style={{
+                            backgroundColor: 'rgba(15, 118, 110, 0.1)',
+                            color: '#13897F',
+                            border: '1px solid #B7E1DD',
+                          }}
+                        >
+                          <Key className="h-3 w-3" style={{ color: '#13897F' }} />
+                          {passphraseKeys.length}
+                        </span>
                       )}
 
-                      {/* YubiKeys */}
+                      {/* YubiKeys - Orange theme */}
                       {yubiKeys.length > 0 && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-100 rounded-full">
-                          <Shield className="h-3.5 w-3.5 text-purple-700" />
-                          <span className="text-xs font-medium text-purple-700">
-                            {yubiKeys.length}
-                          </span>
-                        </div>
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full"
+                          style={{
+                            backgroundColor: 'rgba(249, 139, 28, 0.08)',
+                            color: '#F98B1C',
+                            border: '1px solid #ffd4a3',
+                          }}
+                        >
+                          <Fingerprint className="h-3 w-3" style={{ color: '#F98B1C' }} />
+                          {yubiKeys.length}
+                        </span>
                       )}
 
                       {/* Show message if no keys */}
                       {keys.length === 0 && (
-                        <span className="text-xs text-slate-400">No keys configured</span>
+                        <span className="text-xs text-secondary">No keys configured</span>
                       )}
                     </div>
                   </div>
@@ -175,10 +193,17 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 {/* Flip Button */}
                 <button
                   onClick={() => setIsFlipped(!isFlipped)}
-                  className="p-1 rounded hover:bg-slate-100"
+                  className="p-1 rounded transition-colors"
+                  style={{ color: 'rgb(var(--text-muted))' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                   aria-label="Flip card"
                 >
-                  <FlipHorizontal className="h-4 w-4 text-slate-400" />
+                  <FlipHorizontal className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -186,11 +211,13 @@ const VaultCard: React.FC<VaultCardProps> = ({
             {/* Metadata Section */}
             <div className="px-6 pb-4">
               {isLoading ? (
-                <div className="text-xs text-slate-400">Loading statistics...</div>
+                <div className="text-xs text-muted">Loading statistics...</div>
               ) : error ? (
-                <div className="text-xs text-red-500">{error}</div>
+                <div className="text-xs" style={{ color: '#B91C1C' }}>
+                  {error}
+                </div>
               ) : (
-                <div className="flex items-center gap-4 text-xs text-slate-500">
+                <div className="flex items-center gap-4 text-xs text-secondary">
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     <span>{formatLastEncrypted(statistics?.last_encrypted_at || null)}</span>
@@ -211,18 +238,25 @@ const VaultCard: React.FC<VaultCardProps> = ({
           // BACK SIDE - Description
           <div className="p-6">
             <div className="flex items-start justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-700">Description</h3>
+              <h3 className="text-sm font-semibold text-heading">Description</h3>
 
               {/* Flip Back Button */}
               <button
                 onClick={() => setIsFlipped(!isFlipped)}
-                className="p-1 rounded hover:bg-slate-100"
+                className="p-1 rounded transition-colors"
+                style={{ color: 'rgb(var(--text-muted))' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
                 aria-label="Flip back"
               >
-                <FlipHorizontal className="h-4 w-4 text-slate-400" />
+                <FlipHorizontal className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-sm text-slate-700 pb-12">
+            <p className="text-sm text-main pb-12">
               {vault.description || 'No description provided'}
             </p>
           </div>
@@ -230,7 +264,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
       </div>
 
       {/* Quick Actions - Fixed Footer */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 px-5 py-3 flex items-center gap-2 bg-white rounded-b-lg">
+      <div className="absolute bottom-0 left-0 right-0 border-t border-subtle px-5 py-3 flex items-center gap-2 bg-card rounded-b-lg">
         {/* Delete Button - Left, ghost style (matches KeyCard) */}
         <button
           onClick={(e) => {
