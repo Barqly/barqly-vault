@@ -121,11 +121,11 @@ const VaultCard: React.FC<VaultCardProps> = ({
         {!isFlipped ? (
           // FRONT SIDE - Formalized row structure (matches KeyCard)
           <>
-            {/* Row 1: Icon + Name + Flip button */}
-            <div className="flex items-center gap-3 px-5 pt-3 pb-2">
-              {/* Vault Icon */}
+            {/* Rows 1-2: Icon spans both rows, with Title and Badges */}
+            <div className="flex gap-3 px-5 pt-3 pb-2">
+              {/* Vault Icon - Spans 2 rows, vertically centered */}
               <div
-                className="rounded-lg p-2 flex-shrink-0"
+                className="rounded-lg p-2 flex-shrink-0 self-center"
                 style={{
                   backgroundColor: 'rgba(29, 78, 216, 0.1)',
                   border: '1px solid rgba(59, 130, 246, 0.3)',
@@ -134,69 +134,74 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 <Archive className="h-4 w-4" style={{ color: '#3B82F6' }} />
               </div>
 
-              {/* Vault Name */}
-              <h3 className="font-semibold text-heading truncate flex-1" title={vault.name}>
-                {displayName}
-              </h3>
+              {/* Right side: Title + Badges stacked */}
+              <div className="flex-1 min-w-0">
+                {/* Row 1: Name + Flip button */}
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <h3 className="font-semibold text-heading truncate" title={vault.name}>
+                    {displayName}
+                  </h3>
 
-              {/* Flip Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsFlipped(!isFlipped);
-                }}
-                className="flex-shrink-0 p-1 rounded transition-colors"
-                style={{ color: 'rgb(var(--text-muted))' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                aria-label="Flip card"
-              >
-                <FlipHorizontal className="h-4 w-4" />
-              </button>
-            </div>
+                  {/* Flip Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsFlipped(!isFlipped);
+                    }}
+                    className="flex-shrink-0 p-1 rounded transition-colors"
+                    style={{ color: 'rgb(var(--text-muted))' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                    aria-label="Flip card"
+                  >
+                    <FlipHorizontal className="h-4 w-4" />
+                  </button>
+                </div>
 
-            {/* Row 2: Key Badges */}
-            <div className="flex items-center gap-2 px-5 py-2">
-              {/* Passphrase Keys - Teal theme */}
-              {passphraseKeys.length > 0 && (
-                <span
-                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
-                  style={{
-                    backgroundColor: 'rgba(15, 118, 110, 0.1)',
-                    color: '#13897F',
-                    border: '1px solid #B7E1DD',
-                  }}
-                  title={`${passphraseKeys.length} Passphrase ${passphraseKeys.length === 1 ? 'key' : 'keys'}`}
-                >
-                  <Key className="h-3 w-3" style={{ color: '#13897F' }} />
-                  {passphraseKeys.length}
-                </span>
-              )}
+                {/* Row 2: Key Badges */}
+                <div className="flex items-center gap-2">
+                  {/* Passphrase Keys - Teal theme */}
+                  {passphraseKeys.length > 0 && (
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
+                      style={{
+                        backgroundColor: 'rgba(15, 118, 110, 0.1)',
+                        color: '#13897F',
+                        border: '1px solid #B7E1DD',
+                      }}
+                      title={`${passphraseKeys.length} Passphrase ${passphraseKeys.length === 1 ? 'key' : 'keys'}`}
+                    >
+                      <Key className="h-3 w-3" style={{ color: '#13897F' }} />
+                      {passphraseKeys.length}
+                    </span>
+                  )}
 
-              {/* YubiKeys - Orange theme */}
-              {yubiKeys.length > 0 && (
-                <span
-                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
-                  style={{
-                    backgroundColor: 'rgba(249, 139, 28, 0.08)',
-                    color: '#F98B1C',
-                    border: '1px solid #ffd4a3',
-                  }}
-                  title={`${yubiKeys.length} YubiKey ${yubiKeys.length === 1 ? 'key' : 'keys'}`}
-                >
-                  <Fingerprint className="h-3 w-3" style={{ color: '#F98B1C' }} />
-                  {yubiKeys.length}
-                </span>
-              )}
+                  {/* YubiKeys - Orange theme */}
+                  {yubiKeys.length > 0 && (
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
+                      style={{
+                        backgroundColor: 'rgba(249, 139, 28, 0.08)',
+                        color: '#F98B1C',
+                        border: '1px solid #ffd4a3',
+                      }}
+                      title={`${yubiKeys.length} YubiKey ${yubiKeys.length === 1 ? 'key' : 'keys'}`}
+                    >
+                      <Fingerprint className="h-3 w-3" style={{ color: '#F98B1C' }} />
+                      {yubiKeys.length}
+                    </span>
+                  )}
 
-              {/* Show message if no keys */}
-              {keys.length === 0 && (
-                <span className="text-xs text-secondary">No keys configured</span>
-              )}
+                  {/* Show message if no keys */}
+                  {keys.length === 0 && (
+                    <span className="text-xs text-secondary">No keys configured</span>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Row 3: Size + File Count */}
