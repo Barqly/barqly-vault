@@ -119,7 +119,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
       >
         {!isFlipped ? (
           // FRONT SIDE - Formalized row structure (matches KeyCard)
-          <>
+          <div className="pb-14">
             {/* Rows 1-2: Icon spans both rows, with Title and Badges */}
             <div className="flex gap-3 px-5 pt-3 pb-2">
               {/* Vault Icon - Spans 2 rows, vertically centered */}
@@ -244,7 +244,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 </span>
               </div>
             </div>
-          </>
+          </div>
         ) : (
           // BACK SIDE - Description
           <div className="p-6">
