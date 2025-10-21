@@ -81,12 +81,6 @@ const VaultHub: React.FC = () => {
     }
   }, [vaults.length]);
 
-  // Handle quick encrypt action
-  const handleQuickEncrypt = (vaultId: string) => {
-    handleVaultSelect(vaultId);
-    navigate('/encrypt');
-  };
-
   // Handle manage keys action
   const handleManageKeys = (vaultId: string) => {
     handleVaultSelect(vaultId);
@@ -161,7 +155,7 @@ const VaultHub: React.FC = () => {
           ) : !isCreatingVault ? (
             <>
               {/* Vault Grid - Responsive 1-3 columns */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {vaults.map((vault) => {
                   const isActive = vault.id === currentVault?.id;
                   // Get keys from cache for this vault (instant, no async)
@@ -177,7 +171,6 @@ const VaultHub: React.FC = () => {
                       statistics={statistics}
                       isActive={isActive}
                       onSelect={() => handleVaultSelect(vault.id)}
-                      onEncrypt={() => handleQuickEncrypt(vault.id)}
                       onManageKeys={() => handleManageKeys(vault.id)}
                       onDelete={() => handleDeleteClick(vault.id, vault.name)}
                     />

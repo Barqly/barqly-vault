@@ -1,15 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Archive,
-  Key,
-  Shield,
-  Lock,
-  Plus,
-  FlipHorizontal,
-  Clock,
-  HardDrive,
-  Files,
-} from 'lucide-react';
+import { Archive, Key, Shield, FlipHorizontal, Clock, HardDrive, Files } from 'lucide-react';
 import { VaultSummary, KeyReference, VaultStatistics, commands } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
 import { formatLastEncrypted, formatBytes, formatFileCount } from '../../lib/format-utils';
@@ -21,7 +11,6 @@ interface VaultCardProps {
   isDropTarget?: boolean;
   statistics?: VaultStatistics | null; // Optional prop for cached statistics
   onSelect: () => void;
-  onEncrypt: () => void;
   onManageKeys: () => void;
   onDelete: () => void;
   onKeyDrop?: (keyId: string) => void;
@@ -44,7 +33,6 @@ const VaultCard: React.FC<VaultCardProps> = ({
   isDropTarget,
   statistics: propStatistics, // Receive statistics as prop
   onSelect,
-  onEncrypt,
   onManageKeys,
   onDelete,
   onKeyDrop,
@@ -242,52 +230,59 @@ const VaultCard: React.FC<VaultCardProps> = ({
       </div>
 
       {/* Quick Actions - Fixed Footer */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 px-4 py-2 flex items-center gap-2 bg-white rounded-b-lg">
-        {/* Show Encrypt button only if vault has keys (not orphaned) */}
-        {statistics?.status !== 'orphaned' && keys.length > 0 ? (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEncrypt();
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-          >
-            <Lock className="h-3.5 w-3.5" />
-            Encrypt
-          </button>
-        ) : (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onManageKeys();
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-md transition-colors"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Keys
-          </button>
-        )}
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onManageKeys();
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-        >
-          <Key className="h-3.5 w-3.5" />
-          Keys
-        </button>
-
+      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 px-5 py-3 flex items-center gap-2 bg-white rounded-b-lg">
+        {/* Delete Button - Left, ghost style (matches KeyCard) */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
-          className="ml-auto px-2 py-1.5 text-sm text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+          className="
+            flex items-center justify-center gap-1 px-3 py-1.5
+            text-xs font-medium rounded-md transition-all border
+          "
+          style={{
+            borderColor: 'rgb(var(--border-default))',
+            color: 'rgb(var(--text-secondary))',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+            e.currentTarget.style.color = 'rgb(var(--heading-primary))';
+            e.currentTarget.style.borderColor = 'rgb(var(--border-strong))';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'rgb(var(--text-secondary))';
+            e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+          }}
           aria-label="Delete vault"
         >
           Delete
+        </button>
+
+        {/* Keys Button - Primary action, premium blue (matches KeyCard Vault button) */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onManageKeys();
+          }}
+          className="
+            flex items-center justify-center gap-1 px-3 py-1.5
+            text-xs font-medium text-white
+            rounded-md transition-colors
+          "
+          style={{
+            backgroundColor: '#1D4ED8',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#1E40AF';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#1D4ED8';
+          }}
+        >
+          <Key className="h-3 w-3" />
+          Keys
         </button>
       </div>
     </div>
