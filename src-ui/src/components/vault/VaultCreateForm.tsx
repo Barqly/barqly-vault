@@ -96,17 +96,17 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
           >
             Description <span className="text-slate-400">(optional)</span>
           </label>
-          <textarea
+          <input
+            type="text"
             id="vault-description"
             value={description}
             onChange={(e) => onDescriptionChange(e.target.value)}
             disabled={isSubmitting}
-            maxLength={200}
-            rows={2}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500 resize-none"
+            maxLength={70}
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
             placeholder="Brief description of what this vault contains..."
           />
-          <p className="mt-1 text-xs text-slate-500">{description.length}/200 characters</p>
+          <p className="mt-1 text-xs text-slate-500">{description.length}/70 characters</p>
         </div>
 
         {/* Action Buttons */}

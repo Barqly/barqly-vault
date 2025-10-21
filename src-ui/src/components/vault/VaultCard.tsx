@@ -226,7 +226,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
             </div>
 
             {/* Row 4: Creation Date/Time */}
-            <div className="flex items-center px-5 pt-0 pb-1">
+            <div className="flex items-center px-5 pt-0 pb-2">
               <div className="flex items-center gap-1 text-xs font-medium text-secondary">
                 <Clock className="h-3 w-3" />
                 <span>
@@ -247,13 +247,16 @@ const VaultCard: React.FC<VaultCardProps> = ({
           </div>
         ) : (
           // BACK SIDE - Description
-          <div className="p-6">
+          <div className="p-6 pb-14">
             <div className="flex items-start justify-between mb-4">
               <h3 className="text-sm font-semibold text-heading">Description</h3>
 
               {/* Flip Back Button */}
               <button
-                onClick={() => setIsFlipped(!isFlipped)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFlipped(!isFlipped);
+                }}
                 className="p-1 rounded transition-colors"
                 style={{ color: 'rgb(var(--text-muted))' }}
                 onMouseEnter={(e) => {
@@ -267,9 +270,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 <FlipHorizontal className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-sm text-main pb-12">
-              {vault.description || 'No description provided'}
-            </p>
+            <p className="text-sm text-main">{vault.description || 'No description provided'}</p>
           </div>
         )}
       </div>
