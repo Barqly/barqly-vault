@@ -103,16 +103,12 @@ const VaultCard: React.FC<VaultCardProps> = ({
   return (
     <div
       className={`
-        relative rounded-lg border bg-card transition-all
-        ${isActive ? 'ring-2 border-2' : 'border-default hover:shadow-lg'}
+        relative rounded-lg border bg-card transition-all border-default hover:shadow-lg
         ${isDropTarget ? 'border-blue-400 border-dashed' : ''}
       `}
       style={{
         height: '200px',
-        boxShadow: isActive
-          ? '0 0 0 2px rgba(59, 130, 246, 0.5)'
-          : '0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)',
-        borderColor: isActive ? '#3B82F6' : undefined,
+        boxShadow: '0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)',
       }}
     >
       {/* Card Content - flippable */}
@@ -132,18 +128,11 @@ const VaultCard: React.FC<VaultCardProps> = ({
                   <div
                     className="p-3 rounded-lg"
                     style={{
-                      backgroundColor: isActive
-                        ? 'rgba(29, 78, 216, 0.1)'
-                        : 'rgb(var(--surface-hover))',
-                      border: isActive
-                        ? '1px solid #3B82F6'
-                        : '1px solid rgb(var(--border-default))',
+                      backgroundColor: 'rgb(var(--surface-hover))',
+                      border: '1px solid rgb(var(--border-default))',
                     }}
                   >
-                    <Archive
-                      className="h-8 w-8"
-                      style={{ color: isActive ? '#3B82F6' : 'rgb(var(--text-secondary))' }}
-                    />
+                    <Archive className="h-8 w-8" style={{ color: 'rgb(var(--text-secondary))' }} />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-heading" title={vault.name}>
