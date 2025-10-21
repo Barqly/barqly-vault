@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Upload } from 'lucide-react';
+import { Shield, Upload, Plus as PlusIcon } from 'lucide-react';
 import { useVault } from '../contexts/VaultContext';
 import { useVaultHubWorkflow } from '../hooks/useVaultHubWorkflow';
 import { logger } from '../lib/logger';
@@ -206,11 +206,13 @@ const VaultHub: React.FC = () => {
       {/* Floating Action Button - Show when vaults exist */}
       {vaults.length > 0 && !isCreatingVault && (
         <FloatingActionButton
-          primaryAction={{
-            label: 'Create New Vault',
-            onClick: toggleCreateForm,
-          }}
-          secondaryActions={[
+          actions={[
+            {
+              id: 'create',
+              label: 'Create New Vault',
+              icon: <PlusIcon className="h-4 w-4" />,
+              onClick: toggleCreateForm,
+            },
             {
               id: 'import',
               label: 'Import Vault',
