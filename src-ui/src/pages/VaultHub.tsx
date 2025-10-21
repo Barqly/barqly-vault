@@ -199,7 +199,7 @@ const VaultHub: React.FC = () => {
           )}
 
           {/* Help section */}
-          <CollapsibleHelp triggerText="Understanding Vaults" context="vault-management" />
+          <CollapsibleHelp triggerText="Understanding Vaults" context="vault-hub" />
         </div>
       </AppPrimaryContainer>
 

@@ -1,8 +1,6 @@
 import React from 'react';
 import { LucideIcon, Archive, AlertTriangle } from 'lucide-react';
-import { CompactPassphraseCard } from '../keys/CompactPassphraseCard';
-import { CompactYubiKeyCard } from '../keys/CompactYubiKeyCard';
-import { useVault } from '../../contexts/VaultContext';
+import { KeyMenuBar } from '../keys/KeyMenuBar';
 
 interface PageHeaderProps {
   /** The title to display (e.g., "Encrypt Vault", "Decrypt Vault") */
@@ -23,7 +21,7 @@ interface PageHeaderProps {
   vaultName?: string;
   /** Variant: 'normal' (blue) or 'recovery' (yellow) */
   vaultVariant?: 'normal' | 'recovery';
-  /** Vault ID for displaying keys from cache */
+  /** Vault ID - Only show keys when vaultId is provided (prevents showing wrong vault's keys) */
   vaultId?: string | null;
 
   // Custom actions (for Manage Keys page)
@@ -50,8 +48,6 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   vaultId,
   actions,
 }) => {
-  const { keyCache } = useVault();
-
   return (
     <header className={`bg-card border-b border-default ${className}`}>
       {/* Skip Navigation Link - Hidden until focused */}
@@ -123,70 +119,15 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               )}
 
               {/* Separator between vault badge and keys */}
-              {showVaultBadge && <span className="text-muted text-lg">|</span>}
+              {showVaultBadge && vaultVariant === 'normal' && (
+                <span className="text-muted text-lg">|</span>
+              )}
 
-              {/* Key Status Badges (readonly) - Only show when showVaultBadge is true */}
-              {showVaultBadge && (
+              {/* Key Status Badges (readonly) - Delegated to KeyMenuBar for DRY principle */}
+              {/* KeyMenuBar is vault-aware: shows real keys if vaultId provided, placeholders if null */}
+              {showVaultBadge && vaultVariant === 'normal' && (
                 <div className="hidden md:block">
-                  {vaultId && vaultVariant === 'normal' ? (
-                    // Show keys from cache for this vault
-                    (() => {
-                      const cachedKeys = keyCache.get(vaultId) || [];
-                      const passphraseKey = cachedKeys.find((k) => k.type === 'Passphrase');
-                      const yubiKeys = cachedKeys.filter((k) => k.type === 'YubiKey');
-
-                      return (
-                        <div className="flex items-center gap-1">
-                          <CompactPassphraseCard
-                            isConfigured={!!passphraseKey}
-                            label={passphraseKey?.label}
-                            isInteractive={false}
-                          />
-                          <span className="text-muted text-xs mx-1">|</span>
-                          <CompactYubiKeyCard
-                            index={0}
-                            state={yubiKeys[0] ? 'active' : 'empty'}
-                            serial={
-                              yubiKeys[0]?.type === 'YubiKey' ? yubiKeys[0].data.serial : undefined
-                            }
-                            label={yubiKeys[0]?.label}
-                            isInteractive={false}
-                          />
-                          <span className="text-muted text-xs mx-1">|</span>
-                          <CompactYubiKeyCard
-                            index={1}
-                            state={yubiKeys[1] ? 'active' : 'empty'}
-                            serial={
-                              yubiKeys[1]?.type === 'YubiKey' ? yubiKeys[1].data.serial : undefined
-                            }
-                            label={yubiKeys[1]?.label}
-                            isInteractive={false}
-                          />
-                          <span className="text-muted text-xs mx-1">|</span>
-                          <CompactYubiKeyCard
-                            index={2}
-                            state={yubiKeys[2] ? 'active' : 'empty'}
-                            serial={
-                              yubiKeys[2]?.type === 'YubiKey' ? yubiKeys[2].data.serial : undefined
-                            }
-                            label={yubiKeys[2]?.label}
-                            isInteractive={false}
-                          />
-                        </div>
-                      );
-                    })()
-                  ) : (
-                    // No vault or recovery mode - show empty slots
-                    <div className="flex items-center gap-1">
-                      <CompactPassphraseCard isConfigured={false} isInteractive={false} />
-                      <span className="text-muted text-xs mx-1">|</span>
-                      <CompactYubiKeyCard index={0} state="empty" isInteractive={false} />
-                      <span className="text-muted text-xs mx-1">|</span>
-                      <CompactYubiKeyCard index={1} state="empty" isInteractive={false} />
-                      <span className="text-muted text-xs mx-1">|</span>
-                      <CompactYubiKeyCard index={2} state="empty" isInteractive={false} />
-                    </div>
-                  )}
+                  <KeyMenuBar vaultId={vaultId} />
                 </div>
               )}
             </>
