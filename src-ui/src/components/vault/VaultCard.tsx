@@ -107,7 +107,6 @@ const VaultCard: React.FC<VaultCardProps> = ({
         ${isDropTarget ? 'border-blue-400 border-dashed' : ''}
       `}
       style={{
-        height: '200px',
         boxShadow: '0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)',
       }}
     >
@@ -227,7 +226,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
             </div>
 
             {/* Row 4: Creation Date/Time */}
-            <div className="flex items-center px-5 pt-0 pb-2">
+            <div className="flex items-center px-5 pt-0 pb-1">
               <div className="flex items-center gap-1 text-xs font-medium text-secondary">
                 <Clock className="h-3 w-3" />
                 <span>
