@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Plus } from 'lucide-react';
+import { Shield, Upload } from 'lucide-react';
 import { useVault } from '../contexts/VaultContext';
 import { useVaultHubWorkflow } from '../hooks/useVaultHubWorkflow';
 import { logger } from '../lib/logger';
 import PageHeader from '../components/common/PageHeader';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
+import FloatingActionButton from '../components/common/FloatingActionButton';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import { ErrorMessage } from '../components/ui/error-message';
 import DeleteVaultDialog from '../components/vault/DeleteVaultDialog';
@@ -130,8 +131,8 @@ const VaultHub: React.FC = () => {
             <ErrorMessage error={error} showRecoveryGuidance={false} onClose={clearError} />
           )}
 
-          {/* Inline Create Form or Create Button */}
-          {isCreatingVault ? (
+          {/* Inline Create Form */}
+          {isCreatingVault && (
             <VaultCreateForm
               name={name}
               description={description}
@@ -143,33 +144,21 @@ const VaultHub: React.FC = () => {
               onCancel={toggleCreateForm}
               onClear={handleClear}
             />
-          ) : (
-            <button
-              onClick={toggleCreateForm}
-              className="w-full p-6 border-2 border-dashed border-slate-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all group"
-            >
-              <div className="flex items-center justify-center gap-3">
-                <Plus className="h-6 w-6 text-slate-400 group-hover:text-blue-600" />
-                <span className="text-base font-medium text-slate-600 group-hover:text-blue-600">
-                  Create New Vault
-                </span>
-              </div>
-            </button>
           )}
 
           {/* Vaults Display */}
-          {isLoading && vaults.length === 0 ? (
+          {!isCreatingVault && isLoading && vaults.length === 0 ? (
             <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
               <div className="inline-flex items-center gap-2 text-slate-600">
                 <div className="h-4 w-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
                 Loading vaults...
               </div>
             </div>
-          ) : vaults.length === 0 ? (
+          ) : vaults.length === 0 && !isCreatingVault ? (
             <div className="bg-white rounded-lg border border-slate-200">
               <VaultEmptyState onCreateClick={toggleCreateForm} />
             </div>
-          ) : (
+          ) : !isCreatingVault ? (
             <>
               {/* Vault Grid - Responsive 1-3 columns */}
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -196,7 +185,7 @@ const VaultHub: React.FC = () => {
                 })}
               </div>
             </>
-          )}
+          ) : null}
 
           {/* Help section */}
           <CollapsibleHelp triggerText="Understanding Vaults" context="vault-hub" />
@@ -211,6 +200,27 @@ const VaultHub: React.FC = () => {
           vaultId={vaultToDelete.id}
           onConfirm={handleDeleteConfirm}
           onCancel={cancelDeleteVault}
+        />
+      )}
+
+      {/* Floating Action Button - Show when vaults exist */}
+      {vaults.length > 0 && !isCreatingVault && (
+        <FloatingActionButton
+          primaryAction={{
+            label: 'Create New Vault',
+            onClick: toggleCreateForm,
+          }}
+          secondaryActions={[
+            {
+              id: 'import',
+              label: 'Import Vault',
+              icon: <Upload className="h-4 w-4" />,
+              onClick: () => {
+                // TODO: Implement import vault
+                console.log('Import vault clicked');
+              },
+            },
+          ]}
         />
       )}
     </div>
