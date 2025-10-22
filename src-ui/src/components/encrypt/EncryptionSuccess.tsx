@@ -83,7 +83,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
 
       {/* Compact success header - responsive height */}
       <div
-        className="bg-white px-6 py-3 text-center relative"
+        className="bg-white px-6 py-4 text-center relative"
         style={{ height: responsiveStyles['--success-panel-header-height'] }}
       >
         <div className="relative z-10 flex items-center justify-center gap-3">
@@ -104,7 +104,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
         className="flex-1"
         style={{ maxHeight: responsiveStyles['--success-panel-content-height'] }}
       >
-        <div className="p-4 space-y-4">
+        <div className="p-6">
           {/* Encryption Summary - shows what was encrypted */}
           <EncryptionSummary
             vaultName={vaultName}
@@ -117,7 +117,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
           />
 
           {/* Fixed action buttons at bottom */}
-          <div className="flex justify-between items-center pt-3 border-t border-slate-200 bg-white sticky bottom-0 gap-3">
+          <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200 bg-white sticky bottom-0 gap-3">
             {/* Left: Encrypt More (ghost style) */}
             <button
               onClick={onEncryptMore}

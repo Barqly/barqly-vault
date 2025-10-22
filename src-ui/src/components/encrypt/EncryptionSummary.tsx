@@ -39,13 +39,13 @@ const EncryptionSummary: React.FC<EncryptionSummaryProps> = ({
   };
 
   return (
-    <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="bg-slate-50 rounded-lg border border-slate-200 p-3">
+      <div className="flex items-center gap-2 mb-2">
         <FileText className="w-5 h-5 text-slate-600" />
         <h3 className="text-sm font-semibold text-slate-800">Encryption Summary</h3>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-center justify-between text-sm">
           <span className="text-slate-600">Vault:</span>
           <span className="font-medium text-slate-800">{vaultName}</span>
@@ -75,7 +75,7 @@ const EncryptionSummary: React.FC<EncryptionSummaryProps> = ({
           </div>
         )}
 
-        <div className="pt-2 border-t border-slate-200 mt-2">
+        <div className="pt-1.5 border-t border-slate-200 mt-1.5">
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-600">Output:</span>
             <span className="font-mono text-xs text-slate-800">{outputFileName}</span>
