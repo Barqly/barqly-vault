@@ -58,30 +58,44 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
     }
   };
 
+  // Handle Enter key to submit form
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && isConfirmationValid && !isDeleting) {
+      e.preventDefault();
+      handleConfirm();
+    }
+  };
+
   // Focus trap: cycle focus within modal
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== 'Tab') return;
 
     const isRemoveEnabled = isConfirmationValid && !isDeleting;
 
-    // If going backwards (Shift+Tab) from first field
+    // If going backwards (Shift+Tab) from input field
     if (e.shiftKey && document.activeElement === firstFocusableRef.current) {
       e.preventDefault();
       if (isRemoveEnabled && lastFocusableRef.current) {
         lastFocusableRef.current.focus();
       } else {
+        // Stay on input if button is disabled
         firstFocusableRef.current?.focus();
       }
     }
-    // If going forward (Tab) from last enabled element
-    else if (!e.shiftKey) {
-      if (isRemoveEnabled && document.activeElement === lastFocusableRef.current) {
-        e.preventDefault();
-        firstFocusableRef.current?.focus();
-      } else if (!isRemoveEnabled && document.activeElement === firstFocusableRef.current) {
-        e.preventDefault();
-        firstFocusableRef.current?.focus();
-      }
+    // If going forward (Tab) from Remove button
+    else if (!e.shiftKey && document.activeElement === lastFocusableRef.current) {
+      e.preventDefault();
+      firstFocusableRef.current?.focus();
+    }
+    // If going forward (Tab) from input and button is disabled
+    else if (
+      !e.shiftKey &&
+      document.activeElement === firstFocusableRef.current &&
+      !isRemoveEnabled
+    ) {
+      e.preventDefault();
+      // Stay on input field if button is disabled
+      firstFocusableRef.current?.focus();
     }
   };
 
@@ -164,9 +178,11 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
                 type="text"
                 value={confirmationText}
                 onChange={(e) => setConfirmationText(e.target.value)}
+                onKeyPress={handleKeyPress}
                 disabled={isDeleting}
                 placeholder={expectedText}
                 className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main disabled:opacity-50"
+                autoComplete="off"
               />
             </div>
           </div>
