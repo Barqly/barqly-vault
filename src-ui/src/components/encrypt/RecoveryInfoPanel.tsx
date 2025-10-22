@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface RecoveryInfoPanelProps {
   fileCount: number;
@@ -37,10 +37,7 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-blue-50/50 px-5 py-4 border-b border-slate-200">
-        <div className="flex items-center gap-2">
-          <Package className="w-5 h-5 text-blue-600" />
-          <h3 className="text-base font-semibold text-slate-800">What's Included for Recovery</h3>
-        </div>
+        <h3 className="text-base font-semibold text-slate-800">What's Included for Recovery:</h3>
       </div>
 
       {/* Content */}
