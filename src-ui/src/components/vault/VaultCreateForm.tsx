@@ -14,14 +14,15 @@ interface VaultCreateFormProps {
 }
 
 /**
- * VaultCreateForm Component - R2 Phase 3 Inline Creation
+ * VaultCreateForm Component - Centered Modal with Blur Backdrop
  *
- * Collapsible inline form for creating new vaults
+ * Modal form for creating new vaults
  * Features:
+ * - Centered on screen with blur backdrop
+ * - Click outside to close
  * - Auto-focus on expand
  * - Validation feedback
- * - Clear/Create buttons
- * - Compact design
+ * - Theme-aware styling
  */
 const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
   name,
@@ -42,109 +43,130 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
   }, []);
 
   return (
-    <div className="bg-white rounded-lg border-2 border-blue-200 shadow-sm">
-      {/* Form Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-blue-50">
-        <div className="flex items-center gap-2">
-          <Plus className="h-5 w-5 text-blue-600" />
-          <h3 className="text-base font-semibold text-slate-800">Create New Vault</h3>
-        </div>
-        <button
-          onClick={onCancel}
-          className="p-1 rounded hover:bg-blue-100 transition-colors"
-          aria-label="Close form"
-        >
-          <X className="h-4 w-4 text-slate-500" />
-        </button>
-      </div>
+    <>
+      {/* Backdrop with blur */}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={onCancel} />
 
-      {/* Form Content */}
-      <form onSubmit={onSubmit} className="p-6 space-y-4">
-        {/* Error Display */}
-        {error && (
-          <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm text-red-700">{error}</p>
+      {/* Centered Modal Container */}
+      <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
+        <div className="bg-elevated rounded-lg shadow-xl max-w-2xl w-full pointer-events-auto">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-6 border-b border-default">
+            <h2 className="text-xl font-semibold text-main flex items-center gap-2">
+              <Plus className="h-5 w-5" style={{ color: '#1D4ED8' }} />
+              Create New Vault
+            </h2>
+            <button
+              onClick={onCancel}
+              className="text-muted hover:text-secondary transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-        )}
 
-        {/* Name Field */}
-        <div>
-          <label htmlFor="vault-name" className="block text-sm font-medium text-slate-700 mb-1.5">
-            Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            ref={nameInputRef}
-            id="vault-name"
-            type="text"
-            value={name}
-            onChange={(e) => onNameChange(e.target.value)}
-            disabled={isSubmitting}
-            maxLength={24}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
-            placeholder="e.g., Personal Documents"
-          />
-          <p className={`mt-1 text-xs ${name.length >= 24 ? 'text-red-600' : 'text-slate-500'}`}>
-            {name.length}/24 characters
-          </p>
-        </div>
-
-        {/* Description Field */}
-        <div>
-          <label
-            htmlFor="vault-description"
-            className="block text-sm font-medium text-slate-700 mb-1.5"
-          >
-            Description <span className="text-slate-400">(optional)</span>
-          </label>
-          <input
-            type="text"
-            id="vault-description"
-            value={description}
-            onChange={(e) => onDescriptionChange(e.target.value)}
-            disabled={isSubmitting}
-            maxLength={70}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
-            placeholder="Brief description of what this vault contains..."
-          />
-          <p
-            className="mt-1 text-xs"
-            style={{ color: description.length >= 70 ? '#B91C1C' : 'rgb(var(--text-muted))' }}
-          >
-            {description.length}/70 characters
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-2">
-          <button
-            type="button"
-            onClick={onClear}
-            disabled={isSubmitting || (!name && !description)}
-            className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Clear
-          </button>
-
-          <button
-            type="submit"
-            disabled={isSubmitting || !name.trim()}
-            className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4" />
-                Create Vault
-              </>
+          {/* Form Content */}
+          <form onSubmit={onSubmit} className="p-6 space-y-4">
+            {/* Error Display */}
+            {error && (
+              <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
             )}
-          </button>
+
+            {/* Name Field */}
+            <div>
+              <label htmlFor="vault-name" className="block text-sm font-medium text-main mb-1.5">
+                Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                ref={nameInputRef}
+                id="vault-name"
+                type="text"
+                value={name}
+                onChange={(e) => onNameChange(e.target.value)}
+                disabled={isSubmitting}
+                maxLength={24}
+                className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main disabled:opacity-50"
+                placeholder="e.g., Personal Documents"
+              />
+              <p className={`mt-1 text-xs ${name.length >= 24 ? 'text-red-600' : 'text-muted'}`}>
+                {name.length}/24 characters
+              </p>
+            </div>
+
+            {/* Description Field */}
+            <div>
+              <label
+                htmlFor="vault-description"
+                className="block text-sm font-medium text-main mb-1.5"
+              >
+                Description <span className="text-muted">(optional)</span>
+              </label>
+              <input
+                type="text"
+                id="vault-description"
+                value={description}
+                onChange={(e) => onDescriptionChange(e.target.value)}
+                disabled={isSubmitting}
+                maxLength={70}
+                className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main disabled:opacity-50"
+                placeholder="Brief description of what this vault contains..."
+              />
+              <p
+                className={`mt-1 text-xs ${description.length >= 70 ? 'text-red-600' : 'text-muted'}`}
+              >
+                {description.length}/70 characters
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-between items-center pt-2">
+              <button
+                type="button"
+                onClick={onClear}
+                disabled={isSubmitting || (!name && !description)}
+                className="px-4 py-2 text-sm font-medium text-secondary bg-hover rounded-lg hover:opacity-80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Clear
+              </button>
+
+              <button
+                type="submit"
+                disabled={isSubmitting || !name.trim()}
+                className="px-6 py-2 text-sm font-medium text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                style={{
+                  backgroundColor:
+                    isSubmitting || !name.trim() ? 'rgb(var(--text-muted))' : '#1D4ED8',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSubmitting && name.trim()) {
+                    e.currentTarget.style.backgroundColor = '#1E40AF';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSubmitting && name.trim()) {
+                    e.currentTarget.style.backgroundColor = '#1D4ED8';
+                  }
+                }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    Create Vault
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
-    </div>
+      </div>
+    </>
   );
 };
 
