@@ -81,19 +81,24 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               {showVaultBadge && (
                 <>
                   {!vaultName ? (
-                    // No vault selected - show placeholder
+                    // No vault selected - theme-aware placeholder
                     <div
-                      className="inline-flex items-center gap-2 px-4 py-1.5 border border-dashed border-gray-300 rounded-full bg-gray-50 text-sm text-gray-400"
-                      style={{ height: '32px', width: '200px' }}
+                      className="inline-flex items-center gap-2 px-4 py-1.5 border border-dashed rounded-full text-sm text-muted"
+                      style={{
+                        height: '32px',
+                        width: '200px',
+                        backgroundColor: 'rgb(var(--surface-hover))',
+                        borderColor: 'rgb(var(--border-default))',
+                      }}
                       title="No vault selected"
                     >
-                      <Archive className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                      <Archive className="h-3.5 w-3.5 flex-shrink-0" />
                       <span className="font-medium">No Vault</span>
                     </div>
                   ) : vaultVariant === 'recovery' ? (
-                    // Recovery mode - yellow badge
+                    // Recovery mode - yellow warning badge (state-based, not theme-aware)
                     <div
-                      className="inline-flex items-center gap-2 px-4 py-1.5 border border-yellow-200 rounded-full bg-yellow-50 text-sm text-slate-700 whitespace-nowrap"
+                      className="inline-flex items-center gap-2 px-4 py-1.5 border border-yellow-200 rounded-full bg-yellow-50 text-sm whitespace-nowrap text-main"
                       style={{ height: '32px', width: '200px' }}
                       title="Vault manifest not found - recovery mode"
                     >
@@ -103,13 +108,18 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                       </span>
                     </div>
                   ) : (
-                    // Normal mode - blue badge
+                    // Normal mode - blue badge with brand colors and theme-aware text
                     <div
-                      className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-200 rounded-full bg-blue-50 text-sm text-slate-700 whitespace-nowrap"
-                      style={{ height: '32px', width: '200px' }}
+                      className="inline-flex items-center gap-2 px-4 py-1.5 border rounded-full text-sm whitespace-nowrap text-main"
+                      style={{
+                        height: '32px',
+                        width: '200px',
+                        backgroundColor: 'rgba(29, 78, 216, 0.1)',
+                        borderColor: 'rgba(59, 130, 246, 0.3)',
+                      }}
                       title={vaultName}
                     >
-                      <Archive className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                      <Archive className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#3B82F6' }} />
                       <span className="font-medium overflow-hidden text-ellipsis">
                         {vaultName.length > 20 ? vaultName.substring(0, 20) + '...' : vaultName}
                       </span>

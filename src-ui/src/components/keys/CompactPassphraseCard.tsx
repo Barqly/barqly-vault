@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Circle } from 'lucide-react';
+import { Key, Circle } from 'lucide-react';
 
 interface CompactPassphraseSlotProps {
   vaultId?: string;
@@ -22,23 +22,37 @@ export const CompactPassphraseCard: React.FC<CompactPassphraseSlotProps> = ({
   isInteractive = true, // Default to interactive for backward compatibility
   className = '',
 }) => {
-  // Fixed width and height slot with responsive styling
+  // Fixed width and height slot with brand colors and theme-awareness
   const getSlotStyles = () => {
     const baseStyles =
       'w-32 h-8 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all duration-200';
 
-    if (!isInteractive && !isConfigured) {
-      // Non-interactive empty slot (on non-Manage Keys pages)
-      return `${baseStyles} bg-gray-50 border-gray-200 cursor-default`;
-    }
-
     if (isConfigured) {
-      // Configured slot (always shows as active)
-      return `${baseStyles} bg-green-50 ${isInteractive ? 'hover:bg-green-100 cursor-pointer' : 'cursor-default'} border-green-200`;
+      // Configured slot - Teal brand colors (fixed, theme-independent)
+      return `${baseStyles} ${isInteractive ? 'hover:opacity-90 cursor-pointer' : 'cursor-default'}`;
     }
 
-    // Empty interactive slot (on Manage Keys page)
-    return `${baseStyles} bg-slate-50 hover:bg-slate-100 border-slate-200 cursor-pointer`;
+    // Empty slot - Theme-aware (adapts to light/dark mode)
+    return `${baseStyles} ${isInteractive ? 'hover:opacity-90 cursor-pointer' : 'cursor-default'}`;
+  };
+
+  // Inline styles for brand colors (Passphrase = Teal)
+  const getInlineStyles = () => {
+    if (isConfigured) {
+      // Brand teal colors (from styleguide)
+      return {
+        backgroundColor: 'rgba(15, 118, 110, 0.1)',
+        color: '#13897F',
+        border: '1px solid #B7E1DD',
+      };
+    }
+
+    // Empty state - Theme-aware using CSS variables
+    return {
+      backgroundColor: 'rgb(var(--surface-hover))',
+      borderColor: 'rgb(var(--border-default))',
+      color: 'rgb(var(--text-muted))',
+    };
   };
 
   // Truncate label for display with fixed character count
@@ -60,13 +74,7 @@ export const CompactPassphraseCard: React.FC<CompactPassphraseSlotProps> = ({
     return label || 'Passphrase configured';
   };
 
-  // Determine text color based on state
-  const getTextStyles = () => {
-    if (!isConfigured && !isInteractive) {
-      return 'text-gray-400'; // Grey for non-interactive empty slots
-    }
-    return isConfigured ? 'text-slate-700' : 'text-slate-500';
-  };
+  // Text styles handled by inline styles (brand colors or theme variables)
 
   const handleClick = () => {
     if (isInteractive && onClick) {
@@ -79,35 +87,19 @@ export const CompactPassphraseCard: React.FC<CompactPassphraseSlotProps> = ({
       onClick={handleClick}
       disabled={!isInteractive}
       className={`${getSlotStyles()} ${className}`}
+      style={getInlineStyles()}
       aria-label={isConfigured ? `Passphrase: ${label || 'Configured'}` : 'Add passphrase'}
       title={getTooltipText()}
     >
-      {/* Icon with status indicator */}
-      <div className="relative flex-shrink-0">
-        {isConfigured ? (
-          <>
-            <span className="text-base" role="img" aria-label="Lock">
-              🔐
-            </span>
-            <CheckCircle className="h-2.5 w-2.5 text-green-600 absolute -top-1 -right-1 bg-white rounded-full" />
-          </>
-        ) : (
-          <>
-            {isInteractive ? (
-              <span className="text-base" role="img" aria-label="Key">
-                🗝️
-              </span>
-            ) : (
-              <span className="text-base text-gray-400" role="img" aria-label="Empty">
-                ○
-              </span>
-            )}
-          </>
-        )}
-      </div>
+      {/* Icon - Brand teal Key icon for configured, empty circle for empty */}
+      {isConfigured ? (
+        <Key className="h-3 w-3 flex-shrink-0" style={{ color: '#13897F' }} />
+      ) : (
+        <Circle className="h-3 w-3 flex-shrink-0" />
+      )}
 
       {/* Label with truncation */}
-      <span className={`text-xs font-medium truncate ${getTextStyles()}`}>{getDisplayLabel()}</span>
+      <span className="text-xs font-medium truncate">{getDisplayLabel()}</span>
     </button>
   );
 };

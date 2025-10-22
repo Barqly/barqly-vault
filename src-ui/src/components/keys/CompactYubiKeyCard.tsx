@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, AlertCircle, Info, Circle } from 'lucide-react';
+import { Fingerprint, Circle } from 'lucide-react';
 
 export type YubiKeySlotState = 'empty' | 'active' | 'registered' | 'orphaned';
 
@@ -28,51 +28,40 @@ export const CompactYubiKeyCard: React.FC<CompactYubiKeySlotProps> = ({
   isInteractive = true, // Default to interactive for backward compatibility
   className = '',
 }) => {
-  // Fixed width and height slot with responsive styling
+  // Fixed width and height slot with brand colors and theme-awareness
   const getSlotStyles = () => {
     const baseStyles =
       'w-32 h-8 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all duration-200';
 
-    if (!isInteractive && state === 'empty') {
-      // Non-interactive empty slot (on non-Manage Keys pages)
-      return `${baseStyles} bg-gray-50 border-gray-200 cursor-default`;
+    if (state !== 'empty') {
+      // All configured states use same orange styling (no state-based colors)
+      return `${baseStyles} ${isInteractive ? 'hover:opacity-90 cursor-pointer' : 'cursor-default'}`;
     }
 
-    // State-based styling for configured or interactive slots
-    switch (state) {
-      case 'active':
-        return `${baseStyles} bg-green-50 ${isInteractive ? 'hover:bg-green-100 cursor-pointer' : 'cursor-default'} border-green-200`;
-      case 'registered':
-        return `${baseStyles} bg-blue-50 ${isInteractive ? 'hover:bg-blue-100 cursor-pointer' : 'cursor-default'} border-blue-200`;
-      case 'orphaned':
-        return `${baseStyles} bg-yellow-50 ${isInteractive ? 'hover:bg-yellow-100 cursor-pointer' : 'cursor-default'} border-yellow-200`;
-      default:
-        // Empty interactive slot
-        return `${baseStyles} bg-slate-50 ${isInteractive ? 'hover:bg-slate-100 cursor-pointer' : 'cursor-default'} border-slate-200`;
-    }
+    // Empty slot - Theme-aware (adapts to light/dark mode)
+    return `${baseStyles} ${isInteractive ? 'hover:opacity-90 cursor-pointer' : 'cursor-default'}`;
   };
 
-  // Status indicator for configured keys
-  const getStatusIcon = () => {
-    if (state === 'empty') return null;
-
-    switch (state) {
-      case 'active':
-        return (
-          <CheckCircle className="h-2.5 w-2.5 text-green-600 absolute -top-1 -right-1 bg-white rounded-full" />
-        );
-      case 'registered':
-        return (
-          <Info className="h-2.5 w-2.5 text-blue-600 absolute -top-1 -right-1 bg-white rounded-full" />
-        );
-      case 'orphaned':
-        return (
-          <AlertCircle className="h-2.5 w-2.5 text-yellow-600 absolute -top-1 -right-1 bg-white rounded-full" />
-        );
-      default:
-        return null;
+  // Inline styles for brand colors (YubiKey = Orange)
+  const getInlineStyles = () => {
+    if (state !== 'empty') {
+      // Brand orange colors for all configured states (from styleguide)
+      return {
+        backgroundColor: 'rgba(249, 139, 28, 0.08)',
+        color: '#F98B1C',
+        border: '1px solid #ffd4a3',
+      };
     }
+
+    // Empty state - Theme-aware using CSS variables
+    return {
+      backgroundColor: 'rgb(var(--surface-hover))',
+      borderColor: 'rgb(var(--border-default))',
+      color: 'rgb(var(--text-muted))',
+    };
   };
+
+  // Status icon overlays removed - state only affects tooltip text
 
   // Truncate label for display with fixed character count
   const getDisplayLabel = () => {
@@ -93,30 +82,29 @@ export const CompactYubiKeyCard: React.FC<CompactYubiKeySlotProps> = ({
     return displayText.length > 8 ? `${displayText.substring(0, 5)}...` : displayText;
   };
 
-  // Full tooltip text with all details
+  // Tooltip text includes state info (no visual icon, just tooltip)
   const getTooltipText = () => {
     if (state === 'empty') {
-      return isInteractive
-        ? `Click to add YubiKey ${index + 1}`
-        : `YubiKey slot ${index + 1} empty`;
+      return isInteractive ? 'Click to add YubiKey' : 'No key configured';
     }
-
-    const statusText =
-      state === 'active' ? 'Active' : state === 'registered' ? 'Registered' : 'Recovery needed';
 
     const keyName = label || `YubiKey ${index + 1}`;
-    const serialInfo = serial ? ` (Serial: ${serial})` : '';
+    const serialInfo = serial ? ` (S/N: ${serial})` : '';
 
-    return `${keyName} - ${statusText}${serialInfo}`;
-  };
-
-  // Determine text color based on state and interactivity
-  const getTextStyles = () => {
-    if (state === 'empty' && !isInteractive) {
-      return 'text-gray-400'; // Grey for non-interactive empty slots
+    // State-specific suffix (informational only)
+    switch (state) {
+      case 'active':
+        return `${keyName}${serialInfo}`;
+      case 'registered':
+        return `${keyName} - New YubiKey${serialInfo}`;
+      case 'orphaned':
+        return `${keyName} - Disconnected${serialInfo}`;
+      default:
+        return `${keyName}${serialInfo}`;
     }
-    return state !== 'empty' ? 'text-slate-700' : 'text-slate-500';
   };
+
+  // Text styles handled by inline styles (brand colors or theme variables)
 
   const handleClick = () => {
     if (isInteractive && onClick) {
@@ -129,31 +117,19 @@ export const CompactYubiKeyCard: React.FC<CompactYubiKeySlotProps> = ({
       onClick={handleClick}
       disabled={!isInteractive}
       className={`${getSlotStyles()} ${className}`}
+      style={getInlineStyles()}
       aria-label={`YubiKey slot ${index + 1}: ${state}`}
       title={getTooltipText()}
     >
-      {/* Icon with status indicator */}
-      <div className="relative flex-shrink-0">
-        {state === 'empty' && !isInteractive ? (
-          <span className="text-base text-gray-400" role="img" aria-label="Empty">
-            ○
-          </span>
-        ) : (
-          <>
-            <span
-              className="text-base"
-              role="img"
-              aria-label={state === 'empty' ? 'Key' : 'YubiKey'}
-            >
-              {state === 'empty' ? '🗝️' : '🔑'}
-            </span>
-            {state !== 'empty' && getStatusIcon()}
-          </>
-        )}
-      </div>
+      {/* Icon - Brand orange Fingerprint icon for configured, empty circle for empty */}
+      {state !== 'empty' ? (
+        <Fingerprint className="h-3 w-3 flex-shrink-0" style={{ color: '#F98B1C' }} />
+      ) : (
+        <Circle className="h-3 w-3 flex-shrink-0" />
+      )}
 
       {/* Label with truncation */}
-      <span className={`text-xs font-medium truncate ${getTextStyles()}`}>{getDisplayLabel()}</span>
+      <span className="text-xs font-medium truncate">{getDisplayLabel()}</span>
     </button>
   );
 };
