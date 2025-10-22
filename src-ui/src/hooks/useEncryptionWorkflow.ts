@@ -222,7 +222,7 @@ export const useEncryptionWorkflow = () => {
       });
 
       // Refresh statistics cache after successful encryption
-      await refreshVaultStatistics(workflowVault.name);
+      await refreshVaultStatistics(workflowVault.id);
 
       // Check if there's an overwrite warning
       if (response.file_exists_warning) {

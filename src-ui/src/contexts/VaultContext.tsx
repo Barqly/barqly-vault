@@ -53,7 +53,7 @@ interface VaultContextType {
   refreshGlobalKeys: () => Promise<void>;
   removeKeyFromVault: (keyId: string) => Promise<void>;
   refreshAllStatistics: () => Promise<void>;
-  refreshVaultStatistics: (vaultName: string) => Promise<void>;
+  refreshVaultStatistics: (vaultId: string) => Promise<void>;
 }
 
 const VaultContext = createContext<VaultContextType | undefined>(undefined);
@@ -132,15 +132,15 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   // Refresh statistics for a single vault
-  const refreshVaultStatistics = useCallback(async (vaultName: string) => {
+  const refreshVaultStatistics = useCallback(async (vaultId: string) => {
     setIsLoadingStatistics(true);
     setError(null);
 
     try {
-      logger.info('VaultContext', 'Fetching statistics for vault', { vaultName });
+      logger.info('VaultContext', 'Fetching statistics for vault', { vaultId });
 
       const result = await commands.getVaultStatistics({
-        vault_name: vaultName,
+        vault_id: vaultId,
       });
 
       if (result.status === 'error') {
