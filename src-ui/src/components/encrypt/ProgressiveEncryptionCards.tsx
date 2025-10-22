@@ -141,7 +141,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
         });
 
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Vault Selection */}
             <div>
               <label className="block text-sm font-medium text-main mb-2">

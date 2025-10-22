@@ -41,8 +41,8 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <p className="text-sm text-slate-600 mb-3">
+      <div className="px-5 py-3">
+        <p className="text-sm text-slate-600 mb-2">
           Your encrypted bundle includes everything needed for complete recovery:
         </p>
 
