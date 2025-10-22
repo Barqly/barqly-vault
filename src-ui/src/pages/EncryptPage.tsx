@@ -113,8 +113,8 @@ const EncryptPage: React.FC = () => {
           )}
 
           {/* Success display with animation */}
-          <AnimatedTransition show={!!success} duration={400}>
-            {success && encryptionResult && (
+          <AnimatedTransition show={!!encryptionResult && !isEncrypting} duration={400}>
+            {encryptionResult && !isEncrypting && (
               <EncryptionSuccess
                 {...encryptionResult}
                 onEncryptMore={handleEncryptAnother}
@@ -124,7 +124,7 @@ const EncryptPage: React.FC = () => {
           </AnimatedTransition>
 
           {/* Progress display - show immediately when encrypting starts */}
-          <AnimatedTransition show={!success && isEncrypting} duration={300}>
+          <AnimatedTransition show={!encryptionResult && isEncrypting} duration={300}>
             <EncryptionProgress
               progress={
                 progress || {
@@ -139,8 +139,8 @@ const EncryptPage: React.FC = () => {
           </AnimatedTransition>
 
           {/* Main form - hidden during success/progress with smooth transition */}
-          <AnimatedTransition show={!success && !isEncrypting} duration={300}>
-            {!success && !isEncrypting && (
+          <AnimatedTransition show={!encryptionResult && !isEncrypting} duration={300}>
+            {!encryptionResult && !isEncrypting && (
               <>
                 {/* Progressive Card System - Steps 1 and 2 */}
                 <ProgressiveEncryptionCards

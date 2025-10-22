@@ -239,8 +239,6 @@ export const useEncryptionWorkflow = () => {
         setShowOverwriteDialog(true);
         return; // Don't set success yet, wait for user confirmation
       }
-
-      // Success panel provides comprehensive feedback
     } catch (err) {
       console.error('[EncryptionWorkflow] Multi-key encryption error:', err);
       const commandError =
