@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Check, Info } from 'lucide-react';
+import { Package, Check } from 'lucide-react';
 
 interface RecoveryInfoPanelProps {
   fileCount: number;
@@ -46,7 +46,7 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
       {/* Content */}
       <div className="p-5">
         <p className="text-sm text-slate-600 mb-4">
-          Your encrypted bundle will contain everything needed for recovery:
+          Your encrypted bundle includes everything needed for complete recovery:
         </p>
 
         {/* Checklist of included items */}
@@ -91,20 +91,6 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
             <div className="flex-1">
               <div className="text-sm font-medium text-slate-800">RECOVERY.txt</div>
               <div className="text-xs text-slate-500">Step-by-step recovery instructions</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Info box */}
-        <div className="mt-5 p-3 bg-blue-50 rounded-lg border border-blue-100">
-          <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <div className="text-sm font-medium text-blue-800 mb-1">Recovery Ready</div>
-              <p className="text-xs text-blue-700 leading-relaxed">
-                This bundle can be decrypted on any device with your key. All necessary recovery
-                information is included automatically.
-              </p>
             </div>
           </div>
         </div>
