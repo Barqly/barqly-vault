@@ -242,18 +242,13 @@ const VaultCard: React.FC<VaultCardProps> = ({
             </div>
           </>
         ) : (
-          // SHOW DESCRIPTION
-          <>
-            {/* Row 3: Description text */}
-            <div className="flex items-center gap-4 px-5 pt-2 pb-2">
-              <p className="text-xs font-medium text-secondary">
-                {vault.description || 'No description provided'}
-              </p>
-            </div>
-
-            {/* Row 4: Empty spacer (maintains height) */}
-            <div className="px-5 pt-0 pb-2" style={{ height: '24px' }}></div>
-          </>
+          // SHOW DESCRIPTION - Single container matching combined front rows 3+4 padding
+          <div className="px-5 pt-2" style={{ paddingBottom: '16px' }}>
+            <p className="text-xs text-secondary line-clamp-2">
+              <span className="font-semibold">Description:</span>{' '}
+              {vault.description || 'No description provided'}
+            </p>
+          </div>
         )}
       </div>
 
