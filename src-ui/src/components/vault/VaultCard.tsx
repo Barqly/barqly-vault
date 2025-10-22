@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Archive, Key, FlipHorizontal, Clock, HardDrive, Files, Fingerprint } from 'lucide-react';
-import { VaultSummary, KeyReference, VaultStatistics, commands } from '../../bindings';
+import { VaultSummary, VaultKey, VaultStatistics, commands } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
 import { formatBytes, formatFileCount } from '../../lib/format-utils';
 
 interface VaultCardProps {
   vault: VaultSummary;
-  keys: KeyReference[];
+  keys: VaultKey[];
   isActive: boolean;
   isDropTarget?: boolean;
   statistics?: VaultStatistics | null; // Optional prop for cached statistics
@@ -57,9 +57,9 @@ const VaultCard: React.FC<VaultCardProps> = ({
       setError(null);
 
       try {
-        // Use vault.name (which is the sanitized filesystem-safe name) for the API
+        // Use vault.id for the API
         const result = await commands.getVaultStatistics({
-          vault_name: vault.name,
+          vault_id: vault.id,
         });
 
         if (result.status === 'ok' && result.data.success && result.data.statistics) {
