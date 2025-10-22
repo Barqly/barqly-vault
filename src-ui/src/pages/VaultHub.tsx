@@ -156,26 +156,29 @@ const VaultHub: React.FC = () => {
             <>
               {/* Vault Grid - Responsive 1-3 columns */}
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {vaults.map((vault) => {
-                  const isActive = vault.id === currentVault?.id;
-                  // Get keys from cache for this vault (instant, no async)
-                  const keys = keyCache.get(vault.id) || [];
-                  // Get statistics from cache for this vault (instant, no async)
-                  const statistics = getVaultStatistics(vault.id);
+                {vaults
+                  .slice()
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((vault) => {
+                    const isActive = vault.id === currentVault?.id;
+                    // Get keys from cache for this vault (instant, no async)
+                    const keys = keyCache.get(vault.id) || [];
+                    // Get statistics from cache for this vault (instant, no async)
+                    const statistics = getVaultStatistics(vault.id);
 
-                  return (
-                    <VaultCard
-                      key={vault.id}
-                      vault={vault}
-                      keys={keys}
-                      statistics={statistics}
-                      isActive={isActive}
-                      onSelect={() => handleVaultSelect(vault.id)}
-                      onManageKeys={() => handleManageKeys(vault.id)}
-                      onDelete={() => handleDeleteClick(vault.id, vault.name)}
-                    />
-                  );
-                })}
+                    return (
+                      <VaultCard
+                        key={vault.id}
+                        vault={vault}
+                        keys={keys}
+                        statistics={statistics}
+                        isActive={isActive}
+                        onSelect={() => handleVaultSelect(vault.id)}
+                        onManageKeys={() => handleManageKeys(vault.id)}
+                        onDelete={() => handleDeleteClick(vault.id, vault.name)}
+                      />
+                    );
+                  })}
               </div>
             </>
           ) : null}

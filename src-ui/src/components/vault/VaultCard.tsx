@@ -199,7 +199,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
         {!isFlipped ? (
           // SHOW FILE INFO
           <>
-            {/* Row 3: Size + File Count */}
+            {/* Row 3: File Count + Size */}
             <div className="flex items-center gap-4 px-5 pt-2 pb-2">
               {isLoading ? (
                 <div className="text-xs text-muted">Loading...</div>
@@ -210,12 +210,12 @@ const VaultCard: React.FC<VaultCardProps> = ({
               ) : (
                 <>
                   <div className="flex items-center gap-1 text-xs font-medium text-secondary">
-                    <HardDrive className="h-3 w-3" />
-                    <span>{formatBytes(statistics?.total_size_bytes || 0)}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs font-medium text-secondary">
                     <Files className="h-3 w-3" />
                     <span>{formatFileCount(statistics?.file_count || 0)}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs font-medium text-secondary">
+                    <HardDrive className="h-3 w-3" />
+                    <span>{formatBytes(statistics?.total_size_bytes || 0)}</span>
                   </div>
                 </>
               )}
