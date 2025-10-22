@@ -35,12 +35,40 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
   onCancel,
   onClear,
 }) => {
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const firstFocusableRef = useRef<HTMLInputElement>(null);
+  const lastFocusableRef = useRef<HTMLButtonElement>(null);
 
   // Auto-focus name input when form opens
   useEffect(() => {
-    nameInputRef.current?.focus();
+    firstFocusableRef.current?.focus();
   }, []);
+
+  // Focus trap: cycle focus within modal
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+
+    const isSubmitEnabled = !isSubmitting && name.trim();
+
+    // If going backwards (Shift+Tab) from first field
+    if (e.shiftKey && document.activeElement === firstFocusableRef.current) {
+      e.preventDefault();
+      if (isSubmitEnabled && lastFocusableRef.current) {
+        lastFocusableRef.current.focus();
+      } else {
+        firstFocusableRef.current?.focus();
+      }
+    }
+    // If going forward (Tab) from last enabled element
+    else if (!e.shiftKey) {
+      if (isSubmitEnabled && document.activeElement === lastFocusableRef.current) {
+        e.preventDefault();
+        firstFocusableRef.current?.focus();
+      } else if (!isSubmitEnabled && document.activeElement?.id === 'vault-description') {
+        e.preventDefault();
+        firstFocusableRef.current?.focus();
+      }
+    }
+  };
 
   return (
     <>
@@ -66,7 +94,7 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
           </div>
 
           {/* Form Content */}
-          <form onSubmit={onSubmit} className="p-6 space-y-4">
+          <form onSubmit={onSubmit} onKeyDown={handleKeyDown} className="p-6 space-y-4">
             {/* Error Display */}
             {error && (
               <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-md">
@@ -80,7 +108,7 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
                 Name <span className="text-red-500">*</span>
               </label>
               <input
-                ref={nameInputRef}
+                ref={firstFocusableRef}
                 id="vault-name"
                 type="text"
                 value={name}
@@ -121,31 +149,28 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-between items-center pt-2">
-              <button
-                type="button"
-                onClick={onClear}
-                disabled={isSubmitting || (!name && !description)}
-                className="px-4 py-2 text-sm font-medium text-secondary bg-hover rounded-lg hover:opacity-80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Clear
-              </button>
-
+            <div className="flex gap-3 pt-2">
               <button
                 type="submit"
+                ref={lastFocusableRef}
                 disabled={isSubmitting || !name.trim()}
-                className="px-6 py-2 text-sm font-medium text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                style={{
-                  backgroundColor:
-                    isSubmitting || !name.trim() ? 'rgb(var(--text-muted))' : '#1D4ED8',
-                }}
+                className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
+                style={
+                  !isSubmitting && name.trim()
+                    ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
+                    : {
+                        backgroundColor: 'rgb(var(--surface-hover))',
+                        color: 'rgb(var(--text-muted))',
+                        borderColor: 'rgb(var(--border-default))',
+                      }
+                }
                 onMouseEnter={(e) => {
-                  if (!isSubmitting && name.trim()) {
+                  if (!e.currentTarget.disabled) {
                     e.currentTarget.style.backgroundColor = '#1E40AF';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isSubmitting && name.trim()) {
+                  if (!e.currentTarget.disabled) {
                     e.currentTarget.style.backgroundColor = '#1D4ED8';
                   }
                 }}
@@ -153,7 +178,7 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
                 {isSubmitting ? (
                   <>
                     <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Creating...
+                    Creating Vault...
                   </>
                 ) : (
                   <>
@@ -161,6 +186,15 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
                     Create Vault
                   </>
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={isSubmitting}
+                tabIndex={-1}
+                className="px-4 py-2 text-main bg-transparent border border-default rounded-lg hover:bg-hover transition-colors disabled:opacity-50"
+              >
+                Cancel
               </button>
             </div>
           </form>
