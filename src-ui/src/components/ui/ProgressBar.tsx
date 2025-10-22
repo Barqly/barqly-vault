@@ -84,7 +84,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                       status === 'current'
                         ? 'bg-blue-50 text-blue-600 font-semibold border border-blue-600'
                         : status === 'completed'
-                          ? 'text-green-600'
+                          ? 'text-green-600 font-medium'
                           : status === 'visited'
                             ? 'text-blue-600'
                             : 'text-slate-500'
@@ -92,8 +92,15 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                     onClick={() => isClickable && onStepClick?.(step.id)}
                     disabled={!isClickable}
                   >
-                    <span className="text-sm font-medium">
-                      {status === 'completed' ? <Check className="w-4 h-4" /> : step.id}
+                    <span className="text-sm font-medium flex items-center gap-1">
+                      {status === 'completed' ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>{step.id}</span>
+                        </>
+                      ) : (
+                        step.id
+                      )}
                     </span>
                     <span className="text-sm">{step.label}</span>
                   </button>

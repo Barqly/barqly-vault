@@ -99,7 +99,14 @@ const EncryptPage: React.FC = () => {
         <ProgressBar
           steps={ENCRYPTION_STEPS}
           currentStep={currentStep}
-          completedSteps={new Set(Array.from({ length: currentStep - 1 }, (_, i) => i + 1))}
+          completedSteps={
+            new Set(
+              Array.from({ length: currentStep - 1 }, (_, i) => i + 1).concat(
+                // Mark step 3 as completed when encryption is successful
+                encryptionResult && !isEncrypting ? [3] : [],
+              ),
+            )
+          }
           onStepClick={undefined}
           isClickable={false}
           variant="compact"
