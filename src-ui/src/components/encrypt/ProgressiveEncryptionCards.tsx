@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { ChevronLeft, Archive, Lock } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { ChevronLeft, Archive, Lock, ChevronDown, Check, Database } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import RecoveryInfoPanel from './RecoveryInfoPanel';
 import { useVault } from '../../contexts/VaultContext';
@@ -52,7 +52,8 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
 }) => {
   const { vaults, keyCache } = useVault();
   const continueButtonRef = useRef<HTMLButtonElement>(null);
-  const vaultSelectorRef = useRef<HTMLSelectElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const canGoToPreviousStep = currentStep > 1;
 
   // Define continue conditions for each step
@@ -66,6 +67,23 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
         return false;
     }
   })();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   const handlePrevious = () => {
     if (canGoToPreviousStep) {
@@ -129,65 +147,109 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
               <label className="block text-sm font-medium text-main mb-2">
                 Select vault for these files:
               </label>
-              <div className="relative">
-                <select
-                  ref={vaultSelectorRef}
-                  className="w-full px-4 py-3 border rounded-lg bg-card text-main transition-colors focus:outline-none focus:ring-2 appearance-none cursor-pointer"
+              <div className="relative" ref={dropdownRef}>
+                {/* Custom Dropdown Button */}
+                <button
+                  type="button"
+                  className="w-full px-4 py-3 border rounded-lg bg-card text-main transition-colors focus:outline-none focus:ring-2 appearance-none cursor-pointer flex items-center justify-between"
                   style={{
                     borderColor: workflowVault ? '#3B82F6' : 'rgb(var(--border-default))',
                     boxShadow: workflowVault ? '0 0 0 2px rgba(59, 130, 246, 0.1)' : 'none',
                   }}
-                  value={workflowVault?.id || ''}
-                  onChange={(e) => {
-                    onVaultChange(e.target.value);
-                  }}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   disabled={vaultsWithKeys.length === 0}
                   autoFocus={currentStep === 2}
-                  onFocus={(e) => {
-                    if (!workflowVault) {
-                      e.currentTarget.style.borderColor = '#3B82F6';
-                      e.currentTarget.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
-                    }
-                  }}
-                  onBlur={(e) => {
-                    if (!workflowVault) {
-                      e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
-                      e.currentTarget.style.boxShadow = 'none';
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setIsDropdownOpen(!isDropdownOpen);
+                    } else if (e.key === 'Escape' && isDropdownOpen) {
+                      setIsDropdownOpen(false);
+                    } else if (e.key === 'ArrowDown' && !isDropdownOpen) {
+                      e.preventDefault();
+                      setIsDropdownOpen(true);
                     }
                   }}
                 >
-                  <option value="" disabled>
-                    {vaultsWithKeys.length === 0 ? 'No vaults available' : 'Choose vault...'}
-                  </option>
-                  {vaultsWithKeys
-                    .slice()
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((vault) => {
-                      const keys = keyCache.get(vault.id) || [];
-                      return (
-                        <option key={vault.id} value={vault.id}>
-                          {vault.name} ({keys.length} {keys.length === 1 ? 'key' : 'keys'})
-                        </option>
-                      );
-                    })}
-                </select>
-                {/* Custom dropdown arrow */}
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg
-                    className="h-5 w-5"
+                  <span className="flex items-center gap-2">
+                    {workflowVault ? (
+                      <>
+                        <Database className="h-4 w-4" style={{ color: '#3B82F6' }} />
+                        <span>{workflowVault.name}</span>
+                        <span style={{ color: 'rgb(var(--text-secondary))' }} className="text-sm">
+                          ({keyCache.get(workflowVault.id)?.length || 0}{' '}
+                          {keyCache.get(workflowVault.id)?.length === 1 ? 'key' : 'keys'})
+                        </span>
+                      </>
+                    ) : (
+                      <span style={{ color: 'rgb(var(--text-secondary))' }}>
+                        {vaultsWithKeys.length === 0 ? 'No vaults available' : 'Choose vault...'}
+                      </span>
+                    )}
+                  </span>
+                  <ChevronDown
+                    className={`h-5 w-5 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
                     style={{ color: 'rgb(var(--text-secondary))' }}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                  />
+                </button>
+
+                {/* Custom Dropdown Menu */}
+                {isDropdownOpen && vaultsWithKeys.length > 0 && (
+                  <div
+                    className="absolute z-10 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-64 overflow-auto"
+                    style={{ borderColor: 'rgb(var(--border-default))' }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
+                    {vaultsWithKeys
+                      .slice()
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map((vault) => {
+                        const keys = keyCache.get(vault.id) || [];
+                        const isSelected = vault.id === workflowVault?.id;
+                        return (
+                          <button
+                            key={vault.id}
+                            type="button"
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-between"
+                            style={{
+                              backgroundColor: isSelected
+                                ? 'rgba(59, 130, 246, 0.1)'
+                                : 'transparent',
+                            }}
+                            onClick={() => {
+                              onVaultChange(vault.id);
+                              setIsDropdownOpen(false);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                onVaultChange(vault.id);
+                                setIsDropdownOpen(false);
+                              } else if (e.key === 'Escape') {
+                                setIsDropdownOpen(false);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Database
+                                className={`h-4 w-4 ${
+                                  isSelected ? 'text-blue-600' : 'text-gray-400'
+                                }`}
+                              />
+                              <span className="font-medium">{vault.name}</span>
+                              <span
+                                className="text-sm"
+                                style={{ color: 'rgb(var(--text-secondary))' }}
+                              >
+                                ({keys.length} {keys.length === 1 ? 'key' : 'keys'})
+                              </span>
+                            </div>
+                            {isSelected && <Check className="h-4 w-4 text-blue-600" />}
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
+
                 {vaultsWithKeys.length === 0 && (
                   <p className="text-xs mt-2" style={{ color: '#EAB308' }}>
                     ⚠️ No vaults with keys available. Create a vault and add keys first.

@@ -259,22 +259,25 @@ async restoreKey(request: RestoreKeyRequest) : Promise<Result<RestoreKeyResponse
 /**
  * Update a key's label in the global registry
  * 
- * This command updates the label for keys in the global registry.
- * **CRITICAL SAFETY:** Only allows updates for keys that are NOT in Active state.
+ * For UNATTACHED keys, performs FULL rename:
+ * - Registry HashMap key (key_id): Derived from sanitized new label
+ * - Display label: New label (original with spaces)
+ * - Filename field (key_filename): Derived from sanitized new label
+ * - Disk file: Renamed to match new filename
  * 
- * Active keys have their labels embedded in vault manifests. Renaming them would
- * cause manifest desynchronization issues.
+ * This matches the Create/Import pattern where all three components are derived
+ * from the label.
  * 
- * **Allowed lifecycle states:**
- * - PreActivation (never attached or never used)
- * - Suspended (detached from all vaults)
- * - Deactivated (in grace period)
+ * **CRITICAL SAFETY:** Only allows updates for UNATTACHED keys.
  * 
- * **Blocked lifecycle states:**
- * - Active (embedded in vault manifests - cannot rename safely)
+ * Any key attached to a vault has its key_id embedded in the vault manifest.
+ * Changing key_id would break manifest lookups.
  * 
- * **Note:** This only updates the registry. For Active keys, user must delete and
- * create a new key with the desired label.
+ * **Allowed:**
+ * - Unattached keys only (vault_associations = [])
+ * 
+ * **Blocked:**
+ * - ANY attached key (vault_associations.length > 0)
  */
 async updateGlobalKeyLabel(request: UpdateGlobalKeyLabelRequest) : Promise<Result<UpdateGlobalKeyLabelResponse, CommandError>> {
     try {
@@ -1186,7 +1189,7 @@ new_label: string }
  */
 export type UpdateGlobalKeyLabelResponse = { success: boolean; 
 /**
- * The key ID that was updated
+ * The new key ID (may be different from request if full rename occurred)
  */
 key_id: string; 
 /**
