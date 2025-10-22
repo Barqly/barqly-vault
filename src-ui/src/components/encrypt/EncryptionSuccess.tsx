@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle, Copy, FolderOpen, RotateCcw, HardDrive, Unlock } from 'lucide-react';
+import { CheckCircle, RotateCcw, Unlock } from 'lucide-react';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
+import EncryptionSummary from './EncryptionSummary';
 
 interface EncryptionSuccessProps {
   outputPath: string;
   fileName: string;
   fileCount: number;
+  originalSize: number;
   encryptedSize: number;
-  recoveryItemsIncluded?: string[]; // New prop for recovery items
+  vaultName: string;
+  recipientCount: number;
+  archiveName?: string | null;
+  recoveryItemsIncluded?: string[];
   onEncryptMore: () => void;
   onNavigateToDecrypt?: () => void;
 }
@@ -17,12 +22,15 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
   outputPath,
   fileName,
   fileCount,
+  originalSize,
   encryptedSize,
+  vaultName,
+  recipientCount,
+  archiveName,
   recoveryItemsIncluded,
   onEncryptMore,
   onNavigateToDecrypt,
 }) => {
-  const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
   const primaryActionButtonRef = useRef<HTMLButtonElement>(null);
   const responsiveStyles = useSuccessPanelSizing();
@@ -44,24 +52,6 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
       return () => clearTimeout(timeoutId);
     }
   }, []);
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
-  const handleCopyPath = async () => {
-    try {
-      const fullPath = `${outputPath}/${fileName}`;
-      // Use the navigator.clipboard API
-      await navigator.clipboard.writeText(fullPath);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy path:', error);
-    }
-  };
 
   return (
     <div
@@ -115,68 +105,16 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
         style={{ maxHeight: responsiveStyles['--success-panel-content-height'] }}
       >
         <div className="p-4 space-y-4">
-          {/* Inline stats - horizontal layout saves vertical space */}
-          <div className="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-2">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <CheckCircle className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-slate-900">
-                  {fileCount} {fileCount === 1 ? 'file' : 'files'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <HardDrive className="w-4 h-4 text-slate-500" />
-                <span className="text-sm text-slate-600">{formatFileSize(encryptedSize)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Vault Location - more compact */}
-          <div className="bg-slate-50 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                <FolderOpen className="w-4 h-4" />
-                Vault Files Created:
-              </span>
-              <button
-                onClick={handleCopyPath}
-                className="px-2 py-1 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded hover:bg-slate-50 transition-colors flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                tabIndex={2}
-              >
-                <Copy className="w-3 h-3" />
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
-            <div className="space-y-1">
-              <p className="font-mono text-xs text-slate-800 break-all bg-white rounded px-2 py-1 border border-slate-200">
-                {outputPath}/{fileName}
-              </p>
-              <p className="font-mono text-xs text-slate-600 break-all bg-white rounded px-2 py-1 border border-slate-200">
-                {outputPath}/{fileName.replace('.age', '.manifest')}
-              </p>
-            </div>
-            <p className="text-sm text-slate-500 mt-2">
-              External manifest provides readable vault contents for verification
-            </p>
-          </div>
-
-          {/* Recovery Items Included - new section */}
-          {recoveryItemsIncluded && recoveryItemsIncluded.length > 0 && (
-            <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800">Recovery items included:</span>
-              </div>
-              <ul className="space-y-1 ml-6">
-                {recoveryItemsIncluded.map((item, index) => (
-                  <li key={index} className="text-xs text-green-700 flex items-center gap-1">
-                    <span className="text-green-600">•</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {/* Encryption Summary - shows what was encrypted */}
+          <EncryptionSummary
+            vaultName={vaultName}
+            fileCount={fileCount}
+            totalSize={originalSize}
+            recipientCount={recipientCount}
+            outputFileName={archiveName ? `${archiveName}.age` : fileName}
+            outputPath={outputPath}
+            hasRecoveryItems={true}
+          />
 
           {/* Fixed action buttons at bottom */}
           <div className="flex justify-between items-center pt-3 border-t border-slate-200 bg-white sticky bottom-0 gap-3">

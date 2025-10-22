@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import { ChevronLeft, Archive, Lock } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import RecoveryInfoPanel from './RecoveryInfoPanel';
-import EncryptionSummary from './EncryptionSummary';
 import { useVault } from '../../contexts/VaultContext';
 
 interface ProgressiveEncryptionCardsProps {
@@ -168,29 +167,15 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
               </div>
             </div>
 
-            {/* Show summary only after vault is selected */}
+            {/* Show recovery preview only after vault is selected */}
             {workflowVault && bundleContents && (
-              <>
-                {/* Encryption Summary */}
-                <EncryptionSummary
-                  vaultName={workflowVault.name}
-                  fileCount={selectedFiles.file_count}
-                  totalSize={selectedFiles.total_size}
-                  recipientCount={(keyCache.get(workflowVault.id) || []).length}
-                  outputFileName={archiveName ? `${archiveName}.age` : 'Auto-generated filename'}
-                  outputPath={outputPath || '~/Documents/Barqly-Vaults'}
-                  hasRecoveryItems={true}
-                />
-
-                {/* Recovery Info Panel */}
-                <RecoveryInfoPanel
-                  fileCount={selectedFiles.file_count}
-                  totalSize={selectedFiles.total_size}
-                  hasPassphraseKeys={bundleContents.passphraseKeys > 0}
-                  passphraseKeyCount={bundleContents.passphraseKeys}
-                  vaultName={workflowVault.name}
-                />
-              </>
+              <RecoveryInfoPanel
+                fileCount={selectedFiles.file_count}
+                totalSize={selectedFiles.total_size}
+                hasPassphraseKeys={bundleContents.passphraseKeys > 0}
+                passphraseKeyCount={bundleContents.passphraseKeys}
+                vaultName={workflowVault.name}
+              />
             )}
           </div>
         );

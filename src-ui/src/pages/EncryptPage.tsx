@@ -114,9 +114,12 @@ const EncryptPage: React.FC = () => {
 
           {/* Success display with animation */}
           <AnimatedTransition show={!!encryptionResult && !isEncrypting} duration={400}>
-            {encryptionResult && !isEncrypting && (
+            {encryptionResult && !isEncrypting && workflowVault && (
               <EncryptionSuccess
                 {...encryptionResult}
+                vaultName={workflowVault.name}
+                recipientCount={(keyCache.get(workflowVault.id) || []).length}
+                archiveName={archiveName}
                 onEncryptMore={handleEncryptAnother}
                 onNavigateToDecrypt={handleNavigateToDecrypt}
               />
