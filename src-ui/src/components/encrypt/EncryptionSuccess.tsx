@@ -117,7 +117,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
           />
 
           {/* Fixed action buttons at bottom */}
-          <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-200 bg-white sticky bottom-0 gap-3">
+          <div className="flex justify-between items-center mt-6 bg-white sticky bottom-0 gap-3">
             {/* Left: Encrypt More (ghost style) */}
             <button
               onClick={onEncryptMore}

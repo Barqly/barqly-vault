@@ -17,7 +17,7 @@ import OverwriteConfirmationDialog from '../components/ui/OverwriteConfirmationD
 
 const ENCRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Files', description: 'Choose what to encrypt' },
-  { id: 2, label: 'Review & Vault', description: 'Select vault and verify bundle' },
+  { id: 2, label: 'Select Vault', description: 'Select vault and verify bundle' },
   { id: 3, label: 'Encrypt', description: 'Ready to encrypt' },
 ];
 
