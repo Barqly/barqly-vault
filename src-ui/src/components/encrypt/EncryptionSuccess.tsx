@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RotateCcw, Unlock } from 'lucide-react';
-import { useSuccessPanelSizing } from '../../utils/viewport';
-import ScrollHint from '../ui/ScrollHint';
 import EncryptionSummary from './EncryptionSummary';
-import CollapsibleHelp from '../ui/CollapsibleHelp';
 
 interface EncryptionSuccessProps {
   outputPath: string;
@@ -34,7 +31,6 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
 }) => {
   const [showConfetti, setShowConfetti] = useState(true);
   const primaryActionButtonRef = useRef<HTMLButtonElement>(null);
-  const responsiveStyles = useSuccessPanelSizing();
 
   useEffect(() => {
     // Hide confetti after 2 seconds
@@ -55,14 +51,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
   }, []);
 
   return (
-    <div
-      className="relative bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden"
-      style={{
-        ...responsiveStyles,
-        maxHeight: responsiveStyles['--success-panel-max-height'],
-        minHeight: responsiveStyles['--success-panel-min-height'],
-      }}
-    >
+    <div className="relative bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
       {/* Minimal success animation */}
       {showConfetti && (
         <div className="absolute inset-0 pointer-events-none">
@@ -82,11 +71,8 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
         </div>
       )}
 
-      {/* Compact success header - responsive height */}
-      <div
-        className="bg-white px-6 py-4 text-center relative"
-        style={{ height: responsiveStyles['--success-panel-header-height'] }}
-      >
+      {/* Compact success header */}
+      <div className="bg-white px-6 py-4 text-center relative">
         <div className="relative z-10">
           <h2 className="text-xl font-semibold text-slate-900">
             Your vault is ready — securely encrypted.
@@ -97,50 +83,44 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
         </div>
       </div>
 
-      <ScrollHint
-        className="flex-1"
-        style={{ maxHeight: responsiveStyles['--success-panel-content-height'] }}
-      >
-        <div className="px-6 pt-6 pb-3">
-          {/* Encryption Summary - shows what was encrypted */}
-          <EncryptionSummary
-            vaultName={vaultName}
-            fileCount={fileCount}
-            totalSize={originalSize}
-            recipientCount={recipientCount}
-            outputFileName={archiveName ? `${archiveName}.age` : fileName}
-            outputPath={outputPath}
-            hasRecoveryItems={true}
-          />
+      <div className="px-6 pt-6 pb-3">
+        {/* Encryption Summary - shows what was encrypted */}
+        <EncryptionSummary
+          vaultName={vaultName}
+          fileCount={fileCount}
+          totalSize={originalSize}
+          recipientCount={recipientCount}
+          outputFileName={archiveName ? `${archiveName}.age` : fileName}
+          outputPath={outputPath}
+          hasRecoveryItems={true}
+        />
 
-          {/* Fixed action buttons at bottom */}
-          <div className="flex justify-between items-center mt-6 bg-white sticky bottom-0 gap-3">
-            {/* Left: Encrypt More (ghost style) */}
-            <button
-              onClick={onEncryptMore}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
-              tabIndex={2}
-            >
-              <RotateCcw className="w-4 h-4" />
-              Encrypt More
-            </button>
+        {/* Fixed action buttons at bottom */}
+        <div className="flex justify-between items-center mt-6 bg-white sticky bottom-0 gap-3">
+          {/* Left: Encrypt More (ghost style) */}
+          <button
+            onClick={onEncryptMore}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+            tabIndex={2}
+          >
+            <RotateCcw className="w-4 h-4" />
+            Encrypt More
+          </button>
 
-            {/* Right: Decrypt (premium blue) */}
-            <button
-              ref={primaryActionButtonRef}
-              onClick={
-                onNavigateToDecrypt ||
-                (() => console.warn('No decrypt navigation handler provided'))
-              }
-              className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
-              tabIndex={1}
-            >
-              <Unlock className="w-4 h-4" />
-              Decrypt
-            </button>
-          </div>
+          {/* Right: Decrypt (premium blue) */}
+          <button
+            ref={primaryActionButtonRef}
+            onClick={
+              onNavigateToDecrypt || (() => console.warn('No decrypt navigation handler provided'))
+            }
+            className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+            tabIndex={1}
+          >
+            <Unlock className="w-4 h-4" />
+            Decrypt
+          </button>
         </div>
-      </ScrollHint>
+      </div>
     </div>
   );
 };
