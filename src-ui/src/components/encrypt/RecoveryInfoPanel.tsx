@@ -36,18 +36,18 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-blue-50/50 px-5 py-4 border-b border-slate-200">
+      <div className="bg-gradient-to-r from-blue-50 to-blue-50/50 px-5 py-3 border-b border-slate-200">
         <h3 className="text-base font-semibold text-slate-800">What's Included for Recovery:</h3>
       </div>
 
       {/* Content */}
-      <div className="p-5">
-        <p className="text-sm text-slate-600 mb-4">
+      <div className="p-4">
+        <p className="text-sm text-slate-600 mb-3">
           Your encrypted bundle includes everything needed for complete recovery:
         </p>
 
         {/* Checklist of included items */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* User Files */}
           <div className="flex items-start gap-2">
             <Check className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
