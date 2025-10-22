@@ -19,10 +19,10 @@ const EncryptionSummary: React.FC<EncryptionSummaryProps> = ({
   vaultName,
   fileCount,
   totalSize,
-  recipientCount,
-  outputFileName,
+  recipientCount: _recipientCount,
+  outputFileName: _outputFileName,
   outputPath,
-  hasRecoveryItems,
+  hasRecoveryItems: _hasRecoveryItems,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -54,27 +54,27 @@ const EncryptionSummary: React.FC<EncryptionSummaryProps> = ({
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
       {/* Header with blue background like RecoveryInfoPanel */}
       <div className="bg-gradient-to-r from-blue-50 to-blue-50/50 px-5 py-3 border-b border-slate-200">
-        <h3 className="text-base font-semibold text-slate-800">Encryption Summary</h3>
+        <h3 className="text-base font-semibold text-slate-800">Encryption Summary:</h3>
       </div>
 
       {/* Content with white background */}
       <div className="px-5 py-3 bg-white">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-600">Vault:</span>
-            <span className="font-medium text-slate-800">{vaultName}</span>
+        <div className="space-y-2" style={{ marginLeft: '180px' }}>
+          <div className="flex items-center text-sm">
+            <span className="text-slate-600" style={{ width: '100px' }}>Vault:</span>
+            <span className="text-slate-800">{vaultName}</span>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-600">Files:</span>
-            <span className="font-medium text-slate-800">
+          <div className="flex items-center text-sm">
+            <span className="text-slate-600" style={{ width: '100px' }}>Files:</span>
+            <span className="text-slate-800">
               {fileCount} {fileCount === 1 ? 'item' : 'items'} ({formatFileSize(totalSize)})
             </span>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-600">Location:</span>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center text-sm">
+            <span className="text-slate-600" style={{ width: '100px' }}>Location:</span>
+            <div className="flex items-center gap-2 flex-1">
               <span className="font-mono text-xs text-slate-700">{formatPath(outputPath)}</span>
               <button
                 onClick={handleCopyLocation}

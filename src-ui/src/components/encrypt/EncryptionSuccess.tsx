@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle, RotateCcw, Unlock } from 'lucide-react';
+import { RotateCcw, Unlock } from 'lucide-react';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
 import EncryptionSummary from './EncryptionSummary';
@@ -86,17 +86,13 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
         className="bg-white px-6 py-4 text-center relative"
         style={{ height: responsiveStyles['--success-panel-header-height'] }}
       >
-        <div className="relative z-10 flex items-center justify-center gap-3">
-          <CheckCircle className="w-8 h-8 text-green-600" />
-          <div className="text-left">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Your vault is ready — securely encrypted.
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Encryption verified — your vault is securely protected and ready for storage or
-              sharing
-            </p>
-          </div>
+        <div className="relative z-10">
+          <h2 className="text-xl font-semibold text-slate-900">
+            Your vault is ready — securely encrypted.
+          </h2>
+          <p className="text-sm text-slate-600 mt-1">
+            Encryption verified — your vault is securely protected and ready for storage or sharing
+          </p>
         </div>
       </div>
 
