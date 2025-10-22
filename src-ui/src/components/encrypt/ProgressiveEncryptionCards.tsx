@@ -285,15 +285,13 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
       {/* Card Content */}
-      <div className="p-6">
-        <div
-          className={`${currentStep === 2 ? 'min-h-[400px]' : 'min-h-[200px] max-h-[350px]'} mb-3`}
-        >
+      <div className="p-5">
+        <div className={`${currentStep === 2 ? '' : 'min-h-[200px] max-h-[350px]'} mb-2`}>
           {renderStepContent()}
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center justify-between pt-1">
           {canGoToPreviousStep && (
             <button
               onClick={handlePrevious}
