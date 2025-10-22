@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AlertTriangle, X, Loader2 } from 'lucide-react';
+import { Archive, X, Loader2, AlertTriangle } from 'lucide-react';
 
 interface DeleteVaultDialogProps {
   isOpen: boolean;
@@ -98,7 +98,16 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-default">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="h-6 w-6 text-red-500" />
+              {/* Vault icon with brand blue (matches Delete Key pattern) */}
+              <div
+                className="rounded-lg p-2 flex-shrink-0"
+                style={{
+                  backgroundColor: 'rgba(29, 78, 216, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                }}
+              >
+                <Archive className="h-5 w-5" style={{ color: '#3B82F6' }} />
+              </div>
               <h2 className="text-xl font-semibold text-main">Delete Vault</h2>
             </div>
             <button
@@ -120,20 +129,34 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
               action cannot be undone.
             </p>
 
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-red-800 font-medium mb-2 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                Important:
-              </p>
-              <p className="text-sm text-red-700">
-                All data in this vault will be permanently lost. Make sure you have backups if
-                needed.
-              </p>
+            {/* Warning Box - Deep red styling (matches Delete Key modal) */}
+            <div
+              className="rounded-lg p-4 mb-4"
+              style={{
+                borderColor: 'rgba(239, 68, 68, 0.3)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+              }}
+            >
+              <div className="flex gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-main">This action cannot be undone</p>
+                  <p className="text-sm text-secondary mt-1">
+                    All data in this vault will be permanently lost. Make sure you have backups if
+                    needed.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="confirmation" className="block text-sm font-medium text-main">
-                Type <span className="font-mono text-red-600">{expectedText}</span> to confirm:
+                Type{' '}
+                <code className="px-1.5 py-0.5 bg-hover rounded text-xs font-mono text-main">
+                  {expectedText}
+                </code>{' '}
+                to confirm:
               </label>
               <input
                 ref={firstFocusableRef}
@@ -143,7 +166,7 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
                 onChange={(e) => setConfirmationText(e.target.value)}
                 disabled={isDeleting}
                 placeholder={expectedText}
-                className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-input text-main disabled:opacity-50"
+                className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main disabled:opacity-50"
               />
             </div>
           </div>
@@ -154,20 +177,24 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
               ref={lastFocusableRef}
               onClick={handleConfirm}
               disabled={!isConfirmationValid || isDeleting}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2"
-              style={{
-                backgroundColor:
-                  !isConfirmationValid || isDeleting ? 'rgb(var(--surface-hover))' : '#DC2626',
-                color: !isConfirmationValid || isDeleting ? 'rgb(var(--text-muted))' : '#ffffff',
-              }}
+              className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
+              style={
+                !(isDeleting || !isConfirmationValid)
+                  ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
+                  : {
+                      backgroundColor: 'rgb(var(--surface-hover))',
+                      color: 'rgb(var(--text-muted))',
+                      borderColor: 'rgb(var(--border-default))',
+                    }
+              }
               onMouseEnter={(e) => {
                 if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#B91C1C';
+                  e.currentTarget.style.backgroundColor = '#1E40AF';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#DC2626';
+                  e.currentTarget.style.backgroundColor = '#1D4ED8';
                 }
               }}
             >
@@ -185,7 +212,7 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
               onClick={handleCancel}
               disabled={isDeleting}
               tabIndex={-1}
-              className="px-4 py-2 text-main bg-transparent border border-default rounded-lg hover:bg-hover transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-main bg-hover rounded-lg hover:bg-elevated transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
