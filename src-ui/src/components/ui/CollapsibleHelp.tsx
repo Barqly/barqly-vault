@@ -131,7 +131,7 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
         id="help-content"
         className={`
           overflow-hidden transition-all duration-300 ease-in-out
-          ${isOpen ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'}
+          ${isOpen ? 'max-h-96 opacity-100 mt-4 mb-4' : 'max-h-0 opacity-0'}
         `}
         aria-hidden={!isOpen}
       >
