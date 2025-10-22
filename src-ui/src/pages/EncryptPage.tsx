@@ -124,30 +124,38 @@ const EncryptPage: React.FC = () => {
           {/* Success display with animation */}
           <AnimatedTransition show={!!encryptionResult && !isEncrypting} duration={400}>
             {encryptionResult && !isEncrypting && workflowVault && (
-              <EncryptionSuccess
-                {...encryptionResult}
-                vaultName={workflowVault.name}
-                recipientCount={(keyCache.get(workflowVault.id) || []).length}
-                archiveName={archiveName}
-                onEncryptMore={handleEncryptAnother}
-                onNavigateToDecrypt={handleNavigateToDecrypt}
-              />
+              <>
+                <EncryptionSuccess
+                  {...encryptionResult}
+                  vaultName={workflowVault.name}
+                  recipientCount={(keyCache.get(workflowVault.id) || []).length}
+                  archiveName={archiveName}
+                  onEncryptMore={handleEncryptAnother}
+                  onNavigateToDecrypt={handleNavigateToDecrypt}
+                />
+                {/* Help section - also shown on success */}
+                <CollapsibleHelp triggerText="How Encryption Works" context="encrypt" />
+              </>
             )}
           </AnimatedTransition>
 
           {/* Progress display - show immediately when encrypting starts */}
           <AnimatedTransition show={!encryptionResult && isEncrypting} duration={300}>
-            <EncryptionProgress
-              progress={
-                progress || {
-                  operation_id: 'encrypt-init',
-                  progress: 0,
-                  message: 'Initializing encryption...',
-                  timestamp: new Date().toISOString(),
+            <>
+              <EncryptionProgress
+                progress={
+                  progress || {
+                    operation_id: 'encrypt-init',
+                    progress: 0,
+                    message: 'Initializing encryption...',
+                    timestamp: new Date().toISOString(),
+                  }
                 }
-              }
-              onCancel={!progress || progress.progress < 90 ? handleReset : undefined}
-            />
+                onCancel={!progress || progress.progress < 90 ? handleReset : undefined}
+              />
+              {/* Help section - also shown during encryption */}
+              <CollapsibleHelp triggerText="How Encryption Works" context="encrypt" />
+            </>
           </AnimatedTransition>
 
           {/* Main form - hidden during success/progress with smooth transition */}

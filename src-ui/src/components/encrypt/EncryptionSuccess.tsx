@@ -3,6 +3,7 @@ import { RotateCcw, Unlock } from 'lucide-react';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
 import EncryptionSummary from './EncryptionSummary';
+import CollapsibleHelp from '../ui/CollapsibleHelp';
 
 interface EncryptionSuccessProps {
   outputPath: string;
@@ -100,7 +101,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
         className="flex-1"
         style={{ maxHeight: responsiveStyles['--success-panel-content-height'] }}
       >
-        <div className="p-6">
+        <div className="px-6 pt-6 pb-3">
           {/* Encryption Summary - shows what was encrypted */}
           <EncryptionSummary
             vaultName={vaultName}
