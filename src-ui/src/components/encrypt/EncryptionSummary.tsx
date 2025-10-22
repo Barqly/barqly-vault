@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Users, CheckCircle, Folder } from 'lucide-react';
+import { FileText, CheckCircle } from 'lucide-react';
 
 interface EncryptionSummaryProps {
   vaultName: string;

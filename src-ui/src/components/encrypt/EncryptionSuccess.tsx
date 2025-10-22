@@ -23,11 +23,11 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
   fileName,
   fileCount,
   originalSize,
-  encryptedSize,
+  encryptedSize: _encryptedSize,
   vaultName,
   recipientCount,
   archiveName,
-  recoveryItemsIncluded,
+  recoveryItemsIncluded: _recoveryItemsIncluded,
   onEncryptMore,
   onNavigateToDecrypt,
 }) => {

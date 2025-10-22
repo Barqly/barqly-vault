@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Key, Fingerprint, Grid3x3, List, RefreshCcw, Shield, Upload } from 'lucide-react';
+import { Key, Fingerprint, Grid3x3, List, Shield, Upload } from 'lucide-react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { join, downloadDir } from '@tauri-apps/api/path';
 import { useVault } from '../contexts/VaultContext';
@@ -27,13 +27,13 @@ import { commands, GlobalKey, VaultStatistics } from '../bindings';
 const ManageKeysPage: React.FC = () => {
   const { vaults, currentVault, refreshKeysForVault } = useVault();
   const {
-    filterType,
+    filterType: _filterType,
     keyViewMode,
     isDetectingYubiKey,
     error,
     allKeys,
     getKeyVaultAttachments,
-    setFilterType,
+    setFilterType: _setFilterType,
     setKeyViewMode,
     setIsCreatingKey,
     setIsDetectingYubiKey,
@@ -59,7 +59,7 @@ const ManageKeysPage: React.FC = () => {
 
   // Vault statistics for deactivation eligibility checks
   const [vaultStats, setVaultStats] = useState<Map<string, VaultStatistics>>(new Map());
-  const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [_isLoadingStats, setIsLoadingStats] = useState(false);
 
   // Build vault name map for display
   const vaultNameMap = React.useMemo(() => {
@@ -277,7 +277,7 @@ const ManageKeysPage: React.FC = () => {
    * Only called for non-Active keys (backend enforces safety)
    */
   const handleEditLabel = useCallback(
-    (keyId: string, currentLabel: string) => {
+    (keyId: string, _currentLabel: string) => {
       const keyInfo = allKeys.find((k) => k.id === keyId);
       if (!keyInfo) {
         logger.error(

@@ -30,7 +30,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
   onAttach,
   onExport,
   onRefresh,
-  vaultNames = new Map(),
+  vaultNames: _vaultNames = new Map(),
 }) => {
   const [sortBy, setSortBy] = useState<'label' | 'type'>('label');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');

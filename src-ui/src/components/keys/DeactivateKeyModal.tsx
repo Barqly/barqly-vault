@@ -35,7 +35,7 @@ export const DeactivateKeyModal: React.FC<DeactivateKeyModalProps> = ({
   const expectedConfirmation = `DELETE ${keyRef.label}`;
   const isConfirmationValid = confirmationText === expectedConfirmation;
   const isPassphrase = keyRef.key_type.type === 'Passphrase';
-  const isYubiKey = keyRef.key_type.type === 'YubiKey';
+  const _isYubiKey = keyRef.key_type.type === 'YubiKey';
 
   const handleDeactivate = async () => {
     // Frontend validation for delete immediately

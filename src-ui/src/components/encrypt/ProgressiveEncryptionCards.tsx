@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ChevronLeft, Archive, Lock, ChevronDown, Check, Database } from 'lucide-react';
+import { ChevronLeft, Archive, Lock, ChevronDown, Check } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import RecoveryInfoPanel from './RecoveryInfoPanel';
 import { useVault } from '../../contexts/VaultContext';
@@ -45,8 +45,8 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   onStepChange,
   onVaultChange,
   onEncrypt,
-  outputPath,
-  archiveName,
+  outputPath: _outputPath,
+  archiveName: _archiveName,
   bundleContents,
   workflowVault,
 }) => {
@@ -174,7 +174,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                   <span className="flex items-center gap-2">
                     {workflowVault ? (
                       <>
-                        <Database className="h-4 w-4" style={{ color: '#3B82F6' }} />
+                        <Archive className="h-4 w-4" style={{ color: '#3B82F6' }} />
                         <span>{workflowVault.name}</span>
                         <span style={{ color: 'rgb(var(--text-secondary))' }} className="text-sm">
                           ({keyCache.get(workflowVault.id)?.length || 0}{' '}
@@ -230,7 +230,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                             }}
                           >
                             <div className="flex items-center gap-2">
-                              <Database
+                              <Archive
                                 className={`h-4 w-4 ${
                                   isSelected ? 'text-blue-600' : 'text-gray-400'
                                 }`}

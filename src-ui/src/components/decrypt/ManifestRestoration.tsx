@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Key, Check, Archive } from 'lucide-react';
+import { Check, Archive } from 'lucide-react';
 
 interface ManifestRestorationProps {
   vaultName?: string | null;

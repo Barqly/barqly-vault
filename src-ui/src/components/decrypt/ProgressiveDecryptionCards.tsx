@@ -3,10 +3,9 @@ import { ChevronLeft } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
 import PassphraseInput from '../forms/PassphraseInput';
-import { KeyReference } from '../../bindings';
+import { VaultKey } from '../../bindings';
 import VaultRecognition from './VaultRecognition';
 import KeyDiscovery from './KeyDiscovery';
-import ManifestRestoration from './ManifestRestoration';
 
 interface ProgressiveDecryptionCardsProps {
   currentStep: number;
@@ -26,8 +25,8 @@ interface ProgressiveDecryptionCardsProps {
   isKnownVault?: boolean | null;
   detectedVaultName?: string | null;
   isRecoveryMode?: boolean;
-  availableKeysForDiscovery?: KeyReference[];
-  suggestedKeys?: KeyReference[];
+  availableKeysForDiscovery?: VaultKey[];
+  suggestedKeys?: VaultKey[];
   keyAttempts?: Map<string, boolean>;
   willRestoreManifest?: boolean;
   onImportKey?: () => void;
@@ -60,16 +59,16 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   availableKeysForDiscovery = [],
   suggestedKeys = [],
   keyAttempts = new Map(),
-  willRestoreManifest = false,
+  willRestoreManifest: _willRestoreManifest = false,
   onImportKey = () => {},
   onDetectYubiKey,
-  onConfirmRestoration = () => {},
+  onConfirmRestoration: _onConfirmRestoration = () => {},
 }) => {
   const canGoToPreviousStep = currentStep > 1;
   const continueButtonRef = useRef<HTMLButtonElement>(null);
   const [isValidatingPassphrase, setIsValidatingPassphrase] = useState(false);
-  const [availableKeys, setAvailableKeys] = useState<KeyReference[]>([]);
-  const [selectedKey, setSelectedKey] = useState<KeyReference | null>(null);
+  const [availableKeys, setAvailableKeys] = useState<VaultKey[]>([]);
+  const [selectedKey, setSelectedKey] = useState<VaultKey | null>(null);
 
   // Update selected key when selectedKeyId changes
   useEffect(() => {

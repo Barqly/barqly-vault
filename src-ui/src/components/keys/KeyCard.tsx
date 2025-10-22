@@ -34,12 +34,12 @@ interface KeyCardProps {
 export const KeyCard: React.FC<KeyCardProps> = ({
   keyRef,
   vaultAttachments,
-  isOrphan,
+  isOrphan: _isOrphan,
   vaultStats,
   isSelected = false,
   onSelect,
   onAttach,
-  onDelete,
+  onDelete: _onDelete,
   onExport,
   onEditLabel,
   onRefresh,
@@ -105,7 +105,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
     : 'Deactivate this key. It will be permanently deleted after 30 days unless restored.';
 
   // Get vault names for display
-  const attachedVaultNames = vaultAttachments.map((id) => vaultNames.get(id) || id);
+  const _attachedVaultNames = vaultAttachments.map((id) => vaultNames.get(id) || id);
   const vaultCount = vaultAttachments.length;
   const isUnattached = vaultCount === 0;
 

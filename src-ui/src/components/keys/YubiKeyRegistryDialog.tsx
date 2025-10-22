@@ -4,7 +4,6 @@ import {
   Fingerprint,
   Loader2,
   AlertCircle,
-  CheckCircle2,
   Info,
   RefreshCw,
   Copy,
@@ -286,7 +285,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
-      logger.error('YubiKeyRegistryDialog', 'Failed to copy public key', err);
+      logger.error('YubiKeyRegistryDialog', 'Failed to copy public key', err as Error);
     }
   };
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDecryptionWorkflow } from '../hooks/useDecryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
-import type { ErrorCode, CommandError } from '../bindings';
+import type { CommandError } from '../bindings';
 import { Unlock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import PageHeader from '../components/common/PageHeader';
@@ -41,7 +41,7 @@ const DecryptPage: React.FC = () => {
     detectedVaultId,
 
     // Key discovery state
-    isDiscoveringKeys,
+    isDiscoveringKeys: _isDiscoveringKeys,
     availableKeys,
     suggestedKeys,
     keyAttempts,
@@ -49,7 +49,7 @@ const DecryptPage: React.FC = () => {
     // Recovery state
     isRecoveryMode,
     willRestoreManifest,
-    willRestoreKeys,
+    willRestoreKeys: _willRestoreKeys,
     recoveredItems,
 
     // From useFileDecryption
@@ -77,8 +77,8 @@ const DecryptPage: React.FC = () => {
     handleStepNavigation,
 
     // Setters
-    setAvailableKeys,
-    setIsDiscoveringKeys,
+    setAvailableKeys: _setAvailableKeys,
+    setIsDiscoveringKeys: _setIsDiscoveringKeys,
   } = useDecryptionWorkflow();
 
   return (
