@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { ChevronLeft, Archive } from 'lucide-react';
+import { ChevronLeft, Archive, Lock } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import RecoveryInfoPanel from './RecoveryInfoPanel';
 import EncryptionSummary from './EncryptionSummary';
@@ -16,6 +16,7 @@ interface ProgressiveEncryptionCardsProps {
   onKeyChange: (keyId: string) => void;
   onStepChange: (step: number) => void;
   onVaultChange: (vaultId: string) => void;
+  onEncrypt?: () => void; // New prop for encryption handler
   outputPath?: string;
   archiveName?: string;
   bundleContents?: {
@@ -44,6 +45,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   onKeyChange: _onKeyChange,
   onStepChange,
   onVaultChange,
+  onEncrypt,
   outputPath,
   archiveName,
   bundleContents,
@@ -74,7 +76,12 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
 
   const handleContinue = () => {
     if (canContinue) {
-      onStepChange(currentStep + 1);
+      // In step 2, trigger encryption instead of going to step 3
+      if (currentStep === 2 && onEncrypt) {
+        onEncrypt();
+      } else {
+        onStepChange(currentStep + 1);
+      }
     }
   };
 
@@ -227,7 +234,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
             <button
               ref={continueButtonRef}
               onClick={handleContinue}
-              className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 ${
                 canContinue
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-slate-100 text-slate-400 cursor-not-allowed'
@@ -235,7 +242,8 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
               disabled={isLoading || !canContinue}
               tabIndex={canContinue ? 1 : -1}
             >
-              Continue
+              {currentStep === 2 && <Lock className="w-4 h-4" />}
+              {currentStep === 2 ? 'Encrypt Now' : 'Continue'}
             </button>
           )}
         </div>

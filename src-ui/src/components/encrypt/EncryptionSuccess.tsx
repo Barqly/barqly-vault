@@ -1,13 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  CheckCircle,
-  Copy,
-  FolderOpen,
-  BookOpen,
-  RotateCcw,
-  HardDrive,
-  Unlock,
-} from 'lucide-react';
+import { CheckCircle, Copy, FolderOpen, RotateCcw, HardDrive, Unlock } from 'lucide-react';
 import { useSuccessPanelSizing } from '../../utils/viewport';
 import ScrollHint from '../ui/ScrollHint';
 
@@ -19,7 +11,6 @@ interface EncryptionSuccessProps {
   recoveryItemsIncluded?: string[]; // New prop for recovery items
   onEncryptMore: () => void;
   onNavigateToDecrypt?: () => void;
-  onViewGuide?: () => void;
 }
 
 const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
@@ -30,7 +21,6 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
   recoveryItemsIncluded,
   onEncryptMore,
   onNavigateToDecrypt,
-  onViewGuide,
 }) => {
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
@@ -189,7 +179,8 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
           )}
 
           {/* Fixed action buttons at bottom */}
-          <div className="flex justify-between items-center pt-3 border-t border-slate-200 bg-white sticky bottom-0">
+          <div className="flex justify-between items-center pt-3 border-t border-slate-200 bg-white sticky bottom-0 gap-3">
+            {/* Left: Encrypt More (ghost style) */}
             <button
               onClick={onEncryptMore}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
@@ -198,29 +189,20 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
               <RotateCcw className="w-4 h-4" />
               Encrypt More
             </button>
-            {onNavigateToDecrypt ? (
-              <button
-                ref={primaryActionButtonRef}
-                onClick={onNavigateToDecrypt}
-                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
-                tabIndex={1}
-              >
-                <Unlock className="w-4 h-4" />
-                Decrypt Your Vault
-              </button>
-            ) : (
-              onViewGuide && (
-                <button
-                  ref={primaryActionButtonRef}
-                  onClick={onViewGuide}
-                  className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  tabIndex={1}
-                >
-                  <BookOpen className="w-4 h-4" />
-                  View Decryption Guide
-                </button>
-              )
-            )}
+
+            {/* Right: Decrypt (premium blue) */}
+            <button
+              ref={primaryActionButtonRef}
+              onClick={
+                onNavigateToDecrypt ||
+                (() => console.warn('No decrypt navigation handler provided'))
+              }
+              className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+              tabIndex={1}
+            >
+              <Unlock className="w-4 h-4" />
+              Decrypt
+            </button>
           </div>
         </div>
       </ScrollHint>

@@ -8,7 +8,6 @@ import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import PageHeader from '../components/common/PageHeader';
 import ProgressBar, { ProgressStep } from '../components/ui/ProgressBar';
 import ProgressiveEncryptionCards from '../components/encrypt/ProgressiveEncryptionCards';
-import EncryptionReadyPanel from '../components/encrypt/EncryptionReadyPanel';
 import EncryptionProgress from '../components/encrypt/EncryptionProgress';
 import EncryptionSuccess from '../components/encrypt/EncryptionSuccess';
 import AnimatedTransition from '../components/ui/AnimatedTransition';
@@ -17,8 +16,8 @@ import OverwriteConfirmationDialog from '../components/ui/OverwriteConfirmationD
 
 const ENCRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Files', description: 'Choose what to encrypt' },
-  { id: 2, label: 'Review Bundle', description: 'Check recovery items' },
-  { id: 3, label: 'Encrypt Vault', description: 'Set output and start' },
+  { id: 2, label: 'Review & Vault', description: 'Select vault and verify bundle' },
+  { id: 3, label: 'Encrypt', description: 'Ready to encrypt' },
 ];
 
 /**
@@ -32,8 +31,6 @@ const EncryptPage: React.FC = () => {
     selectedFiles,
     outputPath,
     archiveName,
-    showAdvancedOptions,
-    setShowAdvancedOptions,
     isEncrypting,
     showOverwriteDialog,
     pendingOverwriteFile,
@@ -48,8 +45,6 @@ const EncryptPage: React.FC = () => {
     progress,
     clearError,
     clearSelection,
-    setOutputPath,
-    setArchiveName,
 
     // Computed
     currentStep,
@@ -171,27 +166,12 @@ const EncryptPage: React.FC = () => {
                   onKeyChange={handleKeyChange}
                   onStepChange={handleStepNavigation}
                   onVaultChange={handleVaultChange}
+                  onEncrypt={handleEncryption}
                   outputPath={outputPath}
                   archiveName={archiveName}
                   bundleContents={bundleContents}
                   workflowVault={workflowVault}
                 />
-
-                {/* Ready to encrypt panel - Step 3 */}
-                {currentStep === 3 && selectedFiles && (
-                  <EncryptionReadyPanel
-                    outputPath={outputPath}
-                    archiveName={archiveName}
-                    showAdvancedOptions={showAdvancedOptions}
-                    isLoading={isLoading}
-                    onPathChange={setOutputPath}
-                    onArchiveNameChange={setArchiveName}
-                    onToggleAdvanced={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                    onEncrypt={handleEncryption}
-                    onPrevious={() => handleStepNavigation(2)}
-                    autoFocus={currentStep === 3}
-                  />
-                )}
 
                 {/* Help section */}
                 <CollapsibleHelp triggerText="How Encryption Works" context="encrypt" />

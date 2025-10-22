@@ -174,6 +174,7 @@ export const useEncryptionWorkflow = () => {
 
     // Set encrypting state immediately for instant UI feedback
     setIsEncrypting(true);
+    setCurrentStep(3); // Move to step 3 to show encrypt is active in stepper
 
     // Small delay to ensure UI updates before heavy operation
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -222,7 +223,13 @@ export const useEncryptionWorkflow = () => {
       });
 
       // Refresh statistics cache after successful encryption
+      console.log(
+        '[DEBUG] Refreshing vault statistics for vault:',
+        workflowVault.id,
+        workflowVault.name,
+      );
       await refreshVaultStatistics(workflowVault.id);
+      console.log('[DEBUG] Vault statistics refresh completed');
 
       // Check if there's an overwrite warning
       if (response.file_exists_warning) {
