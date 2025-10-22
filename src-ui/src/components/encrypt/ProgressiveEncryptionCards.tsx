@@ -150,14 +150,17 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                   <option value="" disabled>
                     {vaultsWithKeys.length === 0 ? 'No vaults available' : 'Choose vault...'}
                   </option>
-                  {vaultsWithKeys.map((vault) => {
-                    const keys = keyCache.get(vault.id) || [];
-                    return (
-                      <option key={vault.id} value={vault.id}>
-                        {vault.name} ({keys.length} key{keys.length !== 1 ? 's' : ''})
-                      </option>
-                    );
-                  })}
+                  {vaultsWithKeys
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((vault) => {
+                      const keys = keyCache.get(vault.id) || [];
+                      return (
+                        <option key={vault.id} value={vault.id}>
+                          {vault.name} ({keys.length} key{keys.length !== 1 ? 's' : ''})
+                        </option>
+                      );
+                    })}
                 </select>
                 {vaultsWithKeys.length === 0 && (
                   <p className="text-sm text-orange-600 mt-2 absolute left-0">
