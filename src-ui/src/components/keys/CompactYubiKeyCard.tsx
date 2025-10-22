@@ -42,20 +42,20 @@ export const CompactYubiKeyCard: React.FC<CompactYubiKeySlotProps> = ({
     return `${baseStyles} ${isInteractive ? 'hover:opacity-90 cursor-pointer' : 'cursor-default'}`;
   };
 
-  // Inline styles for brand colors (YubiKey = Orange)
+  // Inline styles for brand colors (YubiKey = Orange) - Transparent with light borders
   const getInlineStyles = () => {
     if (state !== 'empty') {
-      // Brand orange colors for all configured states (from styleguide)
+      // Transparent background with light orange border (matches KeyCard)
       return {
-        backgroundColor: 'rgba(249, 139, 28, 0.08)',
+        backgroundColor: 'transparent',
         color: '#F98B1C',
-        border: '1px solid #ffd4a3',
+        border: '1px solid #ffd4a3', // Light orange border (from styleguide)
       };
     }
 
     // Empty state - Theme-aware using CSS variables
     return {
-      backgroundColor: 'rgb(var(--surface-hover))',
+      backgroundColor: 'transparent',
       borderColor: 'rgb(var(--border-default))',
       color: 'rgb(var(--text-muted))',
     };

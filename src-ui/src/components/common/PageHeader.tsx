@@ -108,14 +108,15 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                       </span>
                     </div>
                   ) : (
-                    // Normal mode - blue badge with brand colors and theme-aware text
+                    // Normal mode - transparent with soft blue border
                     <div
-                      className="inline-flex items-center gap-2 px-4 py-1.5 border rounded-full text-sm whitespace-nowrap text-main"
+                      className="inline-flex items-center gap-2 px-4 py-1.5 border rounded-full text-sm whitespace-nowrap"
                       style={{
                         height: '32px',
                         width: '200px',
-                        backgroundColor: 'rgba(29, 78, 216, 0.1)',
-                        borderColor: 'rgba(59, 130, 246, 0.3)',
+                        backgroundColor: 'transparent',
+                        borderColor: 'rgba(59, 130, 246, 0.3)', // Soft blue border (from styleguide)
+                        color: '#3B82F6',
                       }}
                       title={vaultName}
                     >

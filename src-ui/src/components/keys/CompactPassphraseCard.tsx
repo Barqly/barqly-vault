@@ -36,20 +36,20 @@ export const CompactPassphraseCard: React.FC<CompactPassphraseSlotProps> = ({
     return `${baseStyles} ${isInteractive ? 'hover:opacity-90 cursor-pointer' : 'cursor-default'}`;
   };
 
-  // Inline styles for brand colors (Passphrase = Teal)
+  // Inline styles for brand colors (Passphrase = Teal) - Transparent with light borders
   const getInlineStyles = () => {
     if (isConfigured) {
-      // Brand teal colors (from styleguide)
+      // Transparent background with soft teal border (matches KeyCard)
       return {
-        backgroundColor: 'rgba(15, 118, 110, 0.1)',
+        backgroundColor: 'transparent',
         color: '#13897F',
-        border: '1px solid #B7E1DD',
+        border: '1px solid #B7E1DD', // Soft teal border (from styleguide)
       };
     }
 
     // Empty state - Theme-aware using CSS variables
     return {
-      backgroundColor: 'rgb(var(--surface-hover))',
+      backgroundColor: 'transparent',
       borderColor: 'rgb(var(--border-default))',
       color: 'rgb(var(--text-muted))',
     };
