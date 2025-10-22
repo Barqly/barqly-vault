@@ -30,7 +30,7 @@ interface BundleContents {
  * Mirrors useDecryptionWorkflow architecture exactly for consistency
  */
 export const useEncryptionWorkflow = () => {
-  const { vaults, keyCache } = useVault();
+  const { vaults, keyCache, refreshVaultStatistics } = useVault();
   const fileEncryptionHook = useFileEncryption();
   const {
     selectFiles,
@@ -220,6 +220,9 @@ export const useEncryptionWorkflow = () => {
         keyUsed: response.keys_used.join(', '),
         recoveryItemsIncluded,
       });
+
+      // Refresh statistics cache after successful encryption
+      await refreshVaultStatistics(workflowVault.name);
 
       // Check if there's an overwrite warning
       if (response.file_exists_warning) {
