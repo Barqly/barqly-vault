@@ -125,26 +125,35 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
         return (
           <div className="space-y-6">
             {/* Vault Selection */}
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">
+            <div>
+              <label className="block text-sm font-medium text-main mb-2">
                 Select vault for these files:
               </label>
-              <div className="relative flex-1" style={{ maxWidth: '400px' }}>
-                <Archive className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600 pointer-events-none z-10" />
+              <div className="relative">
                 <select
                   ref={vaultSelectorRef}
-                  className="w-full pl-11 pr-10 py-2.5 border border-slate-300 rounded-lg bg-white text-sm font-medium text-slate-700 hover:border-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+                  className="w-full px-4 py-3 border rounded-lg bg-card text-main transition-colors focus:outline-none focus:ring-2 appearance-none cursor-pointer"
+                  style={{
+                    borderColor: workflowVault ? '#3B82F6' : 'rgb(var(--border-default))',
+                    boxShadow: workflowVault ? '0 0 0 2px rgba(59, 130, 246, 0.1)' : 'none',
+                  }}
                   value={workflowVault?.id || ''}
                   onChange={(e) => {
                     onVaultChange(e.target.value);
                   }}
                   disabled={vaultsWithKeys.length === 0}
                   autoFocus={currentStep === 2}
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 0.75rem center',
-                    backgroundSize: '16px 16px',
+                  onFocus={(e) => {
+                    if (!workflowVault) {
+                      e.currentTarget.style.borderColor = '#3B82F6';
+                      e.currentTarget.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.1)';
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (!workflowVault) {
+                      e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }
                   }}
                 >
                   <option value="" disabled>
@@ -157,14 +166,31 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                       const keys = keyCache.get(vault.id) || [];
                       return (
                         <option key={vault.id} value={vault.id}>
-                          {vault.name} ({keys.length} key{keys.length !== 1 ? 's' : ''})
+                          {vault.name} ({keys.length} {keys.length === 1 ? 'key' : 'keys'})
                         </option>
                       );
                     })}
                 </select>
+                {/* Custom dropdown arrow */}
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg
+                    className="h-5 w-5"
+                    style={{ color: 'rgb(var(--text-secondary))' }}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
                 {vaultsWithKeys.length === 0 && (
-                  <p className="text-sm text-orange-600 mt-2 absolute left-0">
-                    ⚠️ No vaults with keys available. Please create a vault and add keys first.
+                  <p className="text-xs mt-2" style={{ color: '#EAB308' }}>
+                    ⚠️ No vaults with keys available. Create a vault and add keys first.
                   </p>
                 )}
               </div>
