@@ -135,26 +135,39 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
         `}
         aria-hidden={!isOpen}
       >
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 md:p-6">
-          <h3 className="mb-4 text-base font-semibold text-blue-800">{title}</h3>
+        <div
+          className="rounded-xl border p-5 md:p-6"
+          style={{
+            borderColor: 'rgb(var(--border-default))',
+            backgroundColor: 'rgb(var(--info-panel-bg))',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
+          }}
+        >
+          <h3 className="mb-4 text-base font-semibold text-heading">{title}</h3>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
             {steps.map((step) => (
               <div key={step.number}>
                 <div className="mb-1 flex items-center gap-2">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-semibold text-blue-800 ring-1 ring-slate-200">
+                  <span
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border"
+                    style={{
+                      backgroundColor: 'rgb(var(--surface-card))',
+                      borderColor: 'rgb(var(--border-default))',
+                    }}
+                  >
                     {step.number}
                   </span>
-                  <span className="text-sm md:text-base font-semibold text-blue-800">
+                  <span className="text-sm md:text-base font-semibold text-heading">
                     {step.title}
                   </span>
                 </div>
-                <p className="text-sm text-slate-700 leading-relaxed">{step.description}</p>
+                <p className="text-sm text-secondary leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
 
-          <p className="mt-4 border-t border-slate-200 pt-3 text-xs text-slate-500 italic">
+          <p className="mt-4 border-t border-default pt-3 text-xs text-secondary italic">
             <span className="font-semibold">Security Note:</span> Your private key never leaves this
             device. Share your public key only with trusted individuals.
           </p>

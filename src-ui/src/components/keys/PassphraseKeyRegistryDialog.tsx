@@ -429,7 +429,7 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                   className="rounded-xl border p-4"
                   style={{
                     borderColor: 'rgb(var(--border-default))',
-                    backgroundColor: 'rgba(var(--info-panel-bg))',
+                    backgroundColor: 'rgb(var(--info-panel-bg))',
                     boxShadow:
                       '0 1px 3px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
                   }}
