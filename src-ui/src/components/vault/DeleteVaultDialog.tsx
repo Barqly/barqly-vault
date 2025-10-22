@@ -59,42 +59,42 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
   };
 
   // Handle Enter key to submit form
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && isConfirmationValid && !isDeleting) {
       e.preventDefault();
       handleConfirm();
     }
   };
 
-  // Focus trap: cycle focus within modal
+  // Focus trap: cycle focus within modal (matches DeleteKeyModal pattern)
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== 'Tab') return;
 
-    const isRemoveEnabled = isConfirmationValid && !isDeleting;
+    const isDeleteEnabled = isConfirmationValid && !isDeleting;
 
     // If going backwards (Shift+Tab) from input field
     if (e.shiftKey && document.activeElement === firstFocusableRef.current) {
       e.preventDefault();
-      if (isRemoveEnabled && lastFocusableRef.current) {
+      if (isDeleteEnabled && lastFocusableRef.current) {
         lastFocusableRef.current.focus();
       } else {
-        // Stay on input if button is disabled
+        // Stay on input if delete button is disabled
         firstFocusableRef.current?.focus();
       }
     }
-    // If going forward (Tab) from Remove button
+    // If going forward (Tab) from delete button
     else if (!e.shiftKey && document.activeElement === lastFocusableRef.current) {
       e.preventDefault();
       firstFocusableRef.current?.focus();
     }
-    // If going forward (Tab) from input and button is disabled
+    // If going forward (Tab) from input and delete is disabled
     else if (
       !e.shiftKey &&
       document.activeElement === firstFocusableRef.current &&
-      !isRemoveEnabled
+      !isDeleteEnabled
     ) {
       e.preventDefault();
-      // Stay on input field if button is disabled
+      // Stay on input field if delete button is disabled
       firstFocusableRef.current?.focus();
     }
   };
@@ -108,7 +108,10 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
 
       {/* Centered Modal Container */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4 pointer-events-none">
-        <div className="bg-elevated rounded-lg shadow-xl max-w-md w-full pointer-events-auto">
+        <div
+          className="bg-elevated rounded-lg shadow-xl max-w-md w-full pointer-events-auto"
+          onKeyDown={handleKeyDown}
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-default">
             <div className="flex items-center gap-3">
@@ -134,7 +137,7 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
           </div>
 
           {/* Content */}
-          <div className="p-6" onKeyDown={handleKeyDown}>
+          <div className="p-6">
             <p className="text-main mb-4">
               You are about to delete <span className="font-medium text-main">"{vaultName}"</span>.
             </p>
@@ -178,7 +181,7 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
                 type="text"
                 value={confirmationText}
                 onChange={(e) => setConfirmationText(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleInputKeyDown}
                 disabled={isDeleting}
                 placeholder={expectedText}
                 className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main disabled:opacity-50"
@@ -220,7 +223,7 @@ const DeleteVaultDialog: React.FC<DeleteVaultDialogProps> = ({
                   Deleting...
                 </>
               ) : (
-                'Remove Vault'
+                'Delete Vault'
               )}
             </button>
             <button
