@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useVault } from '../contexts/VaultContext';
 import { useEncryptionWorkflow } from '../hooks/useEncryptionWorkflow';
 import { ErrorMessage } from '../components/ui/error-message';
 import type { CommandError } from '../bindings';
@@ -26,6 +27,7 @@ const ENCRYPTION_STEPS: ProgressStep[] = [
  */
 const EncryptPage: React.FC = () => {
   const navigate = useNavigate();
+  const { keyCache } = useVault();
   const {
     // State
     selectedFiles,
