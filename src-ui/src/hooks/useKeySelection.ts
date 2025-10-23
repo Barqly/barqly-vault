@@ -3,6 +3,11 @@ import React from 'react';
 import { KeyReference } from '../bindings';
 import { useVault } from '../contexts/VaultContext';
 
+// Extended KeyReference with availability status from global key registry
+export interface KeyReferenceWithAvailability extends KeyReference {
+  is_available: boolean;
+}
+
 export interface UseKeySelectionOptions {
   onKeysLoaded?: (keys: KeyReference[]) => void;
   onLoadingChange?: (loading: boolean) => void;
@@ -11,7 +16,7 @@ export interface UseKeySelectionOptions {
 }
 
 export interface UseKeySelectionResult {
-  keys: KeyReference[];
+  keys: KeyReferenceWithAvailability[];
   loading: boolean;
   error: string;
   isOpen: boolean;
@@ -34,7 +39,7 @@ export function useKeySelection(
   options: UseKeySelectionOptions = {},
 ): UseKeySelectionResult {
   const { onKeysLoaded, onLoadingChange, includeAllKeys = false, vaultId: overrideVaultId } = options;
-  const { currentVault, keyCache, isInitialized } = useVault();
+  const { currentVault, keyCache, globalKeyCache, isInitialized } = useVault();
 
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string>('');
@@ -84,13 +89,27 @@ export function useKeySelection(
       ? allKeys // Include all keys for decryption
       : allKeys.filter((key) => key.lifecycle_status === 'active');
 
-    console.log('useKeySelection: Filtered keys', {
-      filteredCount: filteredKeys.length,
-      filtered: filteredKeys.map((k) => ({ id: k.id, type: k.type, label: k.label })),
+    // Merge availability status from globalKeyCache
+    const keysWithAvailability: KeyReferenceWithAvailability[] = filteredKeys.map((key) => {
+      const globalKey = globalKeyCache.find((gk) => gk.id === key.id);
+      return {
+        ...key,
+        is_available: globalKey?.is_available ?? false, // Default to false if not found
+      };
     });
 
-    return filteredKeys;
-  }, [targetVaultId, keyCache, includeAllKeys]);
+    console.log('useKeySelection: Filtered keys with availability', {
+      filteredCount: keysWithAvailability.length,
+      filtered: keysWithAvailability.map((k) => ({
+        id: k.id,
+        type: k.type,
+        label: k.label,
+        is_available: k.is_available,
+      })),
+    });
+
+    return keysWithAvailability;
+  }, [targetVaultId, keyCache, globalKeyCache, includeAllKeys]);
 
   // Loading state based on VaultContext initialization
   const loading = !isInitialized;

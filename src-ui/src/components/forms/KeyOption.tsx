@@ -1,9 +1,9 @@
 import React from 'react';
-import { Key, Fingerprint } from 'lucide-react';
-import { KeyReference } from '../../bindings';
+import { Key, Fingerprint, Check, X } from 'lucide-react';
+import { KeyReferenceWithAvailability } from '../../hooks/useKeySelection';
 
 export interface KeyOptionProps {
-  keyData: KeyReference;
+  keyData: KeyReferenceWithAvailability;
   isSelected: boolean;
   isFocused?: boolean;
   onSelect: (keyId: string) => void;
@@ -47,25 +47,13 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
         )}
         <div className="min-w-0 flex-1">
           <div className="font-medium truncate">{keyData.label}</div>
-          {/* Show status badges for non-active keys */}
-          {keyData.lifecycle_status !== 'active' && (
-            <div className="flex items-center gap-2 text-xs">
-              {keyData.lifecycle_status === 'pre_activation' && (
-                <span className="text-orange-600 dark:text-orange-500 font-medium">
-                  Not Available
-                </span>
-              )}
-              {keyData.lifecycle_status === 'suspended' && (
-                <span className="text-yellow-600 dark:text-yellow-500 font-medium">Suspended</span>
-              )}
-              {(keyData.lifecycle_status === 'deactivated' ||
-                keyData.lifecycle_status === 'destroyed' ||
-                keyData.lifecycle_status === 'compromised') && (
-                <span className="text-red-600 dark:text-red-500 font-medium">Unavailable</span>
-              )}
-            </div>
-          )}
         </div>
+        {/* Availability indicator on the right */}
+        {keyData.is_available ? (
+          <Check className="h-4 w-4 text-green-600 dark:text-green-500 flex-shrink-0" />
+        ) : (
+          <X className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+        )}
       </div>
     </li>
   );
