@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { documentDir, join } from '@tauri-apps/api/path';
-import { exists, remove } from '@tauri-apps/plugin-fs';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import { useFileEncryption } from './useFileEncryption';
 import type { CommandError, VaultSummary } from '../bindings';
@@ -163,6 +162,45 @@ export const useEncryptionWorkflow = () => {
     [selectFiles, clearFileError],
   );
 
+  // Helper to process successful encryption response
+  const processSuccessfulEncryption = useCallback(
+    async (response: any) => {
+      const duration = Math.round((Date.now() - startTime) / 1000);
+
+      // Build list of recovery items included
+      const recoveryItemsIncluded: string[] = ['Vault manifest'];
+      const keys = keyCache.get(workflowVault!.id) || [];
+      const passphraseKeyCount = keys.filter((key) => key.type === 'Passphrase').length;
+      if (passphraseKeyCount > 0) {
+        recoveryItemsIncluded.push(
+          `${passphraseKeyCount} passphrase key${passphraseKeyCount > 1 ? 's' : ''} (.enc)`,
+        );
+      }
+      recoveryItemsIncluded.push('RECOVERY.txt guide');
+
+      setEncryptionResult({
+        outputPath: response.encrypted_file_path,
+        fileName: response.encrypted_file_path.split('/').pop() || 'encrypted-file.age',
+        fileCount: selectedFiles!.file_count,
+        originalSize: selectedFiles!.total_size,
+        encryptedSize: Math.round(selectedFiles!.total_size * 0.75),
+        duration,
+        keyUsed: response.keys_used.join(', '),
+        recoveryItemsIncluded,
+      });
+
+      // Refresh statistics cache after successful encryption
+      console.log(
+        '[DEBUG] Refreshing vault statistics for vault:',
+        workflowVault!.id,
+        workflowVault!.name,
+      );
+      await refreshVaultStatistics(workflowVault!.id);
+      console.log('[DEBUG] Vault statistics refresh completed');
+    },
+    [selectedFiles, workflowVault, keyCache, startTime, refreshVaultStatistics],
+  );
+
   // Handle encryption using new multi-key command
   const handleEncryption = useCallback(async () => {
     if (!selectedFiles) {
@@ -196,39 +234,6 @@ export const useEncryptionWorkflow = () => {
       console.log('[DEBUG] Starting multi-key encryption, isEncrypting=true');
       setStartTime(Date.now());
 
-      // Determine the output file path
-      const fileName = archiveName ? `${archiveName}.age` : `${workflowVault.name}.age`;
-      const outputDir = outputPath || (await getDefaultOutputPath());
-      const fullOutputPath = await join(outputDir, fileName);
-
-      console.log('[DEBUG] Checking if file exists:', fullOutputPath);
-
-      // Check if the file already exists BEFORE calling the backend
-      if (await exists(fullOutputPath)) {
-        console.log('[DEBUG] File exists, showing native dialog');
-
-        // Use native Tauri dialog for confirmation
-        const shouldOverwrite = await confirm(
-          `A file named "${fileName}" already exists in the destination folder.\n\nDo you want to replace the existing file? This action cannot be undone.`,
-          {
-            title: 'File Already Exists',
-            kind: 'warning',
-          },
-        );
-
-        if (shouldOverwrite) {
-          console.log('[DEBUG] User confirmed overwrite, deleting existing file');
-          // Delete the existing file
-          await remove(fullOutputPath);
-          console.log('[DEBUG] Existing file deleted');
-        } else {
-          console.log('[DEBUG] User cancelled overwrite');
-          setIsEncrypting(false);
-          return;
-        }
-      }
-
-      // Now proceed with encryption (file doesn't exist or was deleted)
       const input: EncryptFilesMultiInput = {
         vault_id: workflowVault.id,
         in_file_paths: selectedFiles.paths,
@@ -241,41 +246,42 @@ export const useEncryptionWorkflow = () => {
         throw result.error;
       }
 
-      console.log('[DEBUG] Multi-key encryption completed, setting result');
+      console.log('[DEBUG] Multi-key encryption completed, checking result');
       const response = result.data;
 
-      const duration = Math.round((Date.now() - startTime) / 1000);
+      // Check if backend returned a file exists warning
+      if (response.file_exists_warning) {
+        const fileName = response.encrypted_file_path.split('/').pop() || 'encrypted-file.age';
+        console.log('[DEBUG] File exists warning received, showing native dialog');
 
-      // Build list of recovery items included
-      const recoveryItemsIncluded: string[] = ['Vault manifest'];
-      const keys = keyCache.get(workflowVault.id) || [];
-      const passphraseKeyCount = keys.filter((key) => key.type === 'Passphrase').length;
-      if (passphraseKeyCount > 0) {
-        recoveryItemsIncluded.push(
-          `${passphraseKeyCount} passphrase key${passphraseKeyCount > 1 ? 's' : ''} (.enc)`,
+        // Use native Tauri dialog for confirmation
+        const shouldOverwrite = await confirm(
+          `A file named "${fileName}" already exists in the destination folder.\n\nDo you want to replace the existing file? This action cannot be undone.`,
+          {
+            title: 'File Already Exists',
+            kind: 'warning',
+          },
         );
+
+        if (shouldOverwrite) {
+          console.log('[DEBUG] User confirmed overwrite, calling backend again');
+          // Call the backend again - it will overwrite this time
+          const retryResult = await commands.encryptFilesMulti(input);
+          if (retryResult.status === 'error') {
+            throw retryResult.error;
+          }
+          // Use the retry response
+          const retryResponse = retryResult.data;
+          processSuccessfulEncryption(retryResponse);
+        } else {
+          console.log('[DEBUG] User cancelled overwrite');
+          setIsEncrypting(false);
+          return;
+        }
+      } else {
+        // No file exists warning, process normally
+        processSuccessfulEncryption(response);
       }
-      recoveryItemsIncluded.push('RECOVERY.txt guide');
-
-      setEncryptionResult({
-        outputPath: response.encrypted_file_path,
-        fileName: response.encrypted_file_path.split('/').pop() || 'encrypted-file.age',
-        fileCount: selectedFiles.file_count,
-        originalSize: selectedFiles.total_size,
-        encryptedSize: Math.round(selectedFiles.total_size * 0.75),
-        duration,
-        keyUsed: response.keys_used.join(', '),
-        recoveryItemsIncluded,
-      });
-
-      // Refresh statistics cache after successful encryption
-      console.log(
-        '[DEBUG] Refreshing vault statistics for vault:',
-        workflowVault.id,
-        workflowVault.name,
-      );
-      await refreshVaultStatistics(workflowVault.id);
-      console.log('[DEBUG] Vault statistics refresh completed');
     } catch (err) {
       console.error('[EncryptionWorkflow] Multi-key encryption error:', err);
       const commandError =
@@ -291,15 +297,7 @@ export const useEncryptionWorkflow = () => {
       console.log('[DEBUG] Finally block: setting isEncrypting=false');
       setIsEncrypting(false);
     }
-  }, [
-    selectedFiles,
-    archiveName,
-    outputPath,
-    workflowVault,
-    keyCache,
-    startTime,
-    getDefaultOutputPath,
-  ]);
+  }, [selectedFiles, archiveName, outputPath, workflowVault, processSuccessfulEncryption]);
 
   // Set default output path when files are selected
   useEffect(() => {
