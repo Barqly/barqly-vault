@@ -59,11 +59,18 @@ Light Blue (Hover bg): #dbeafe
 ### Brand Teal (Passphrase Identity)
 ```css
 Brighter Teal: #13897F
+Teal-600 (Progress States): #0F766E  /* Used for completed steps */
+Teal-500 (Dark Mode): #14B8A6      /* Dark mode variant */
 ```
 
 **Visual Intent:** Software-based security with vibrant, confident feel
 
 **Why brighter teal:** Better visual weight balance with orange. More alive and vibrant while maintaining software-based security identity.
+
+**Additional Usage:**
+- Progress bar completed steps (`bg-teal-600`)
+- Success checkmarks in steppers
+- Completed state indicators
 
 ### Bitcoin Orange (YubiKey Identity)
 ```css
