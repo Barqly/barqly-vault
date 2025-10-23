@@ -210,12 +210,43 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
         logger.info('KeyAttachmentDialog', 'Key attached successfully');
       }
 
-      // Clear loading spinner after backend sync
-      setKeyStates((prev) =>
-        prev.map((state) =>
-          state.key.id === keyId ? { ...state, isLoading: false } : state,
-        ),
-      );
+      // Clear loading spinner and recalculate disabled states after backend sync
+      setKeyStates((prev) => {
+        // Count currently attached keys
+        const attachedCount = prev.filter((s) => s.isAttached).length;
+        const hasReachedMax = attachedCount >= 4;
+
+        return prev.map((state) => {
+          if (state.key.id === keyId) {
+            // Clear loading for the toggled key
+            return { ...state, isLoading: false };
+          }
+
+          // Update disabled state for other keys based on new max status
+          if (!isVaultMutable) {
+            // Vault immutable - keep disabled
+            return state;
+          } else if (hasReachedMax && !state.isAttached) {
+            // Max reached - disable non-attached keys
+            return {
+              ...state,
+              isDisabled: true,
+              disabledReason: 'max-keys' as const,
+              tooltip: 'Maximum 4 keys reached. Detach a key to attach this one.',
+            };
+          } else if (state.disabledReason === 'max-keys' && !hasReachedMax) {
+            // Max no longer reached - re-enable previously disabled keys
+            return {
+              ...state,
+              isDisabled: false,
+              disabledReason: null,
+              tooltip: 'Click to attach key to vault',
+            };
+          }
+
+          return state;
+        });
+      });
 
       // Notify parent to refresh cache (async, non-blocking)
       onSuccess();
@@ -276,17 +307,10 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
             </div>
           )}
 
-          {/* Key info */}
+          {/* Policy info - always visible */}
           <div className="mb-3 text-sm text-slate-400">
             <p>Select 2-4 keys for this vault (preferably hardware keys).</p>
           </div>
-
-          {/* Error display */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <p className="text-sm text-red-300">{error}</p>
-            </div>
-          )}
 
           {/* Key list */}
           {keyStates.length > 0 && (
