@@ -28,7 +28,6 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
 }) => {
   const { globalKeyCache, keyCache, statisticsCache } = useVault();
   const [keyStates, setKeyStates] = useState<KeyCheckboxState[]>([]);
-  const [isLoadingKeys, setIsLoadingKeys] = useState(false); // Start false since we use cache
   const [error, setError] = useState<string | null>(null);
   const [isVaultMutable, setIsVaultMutable] = useState(true);
 
@@ -162,15 +161,18 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
 
   const handleToggleKey = async (keyId: string, currentlyAttached: boolean) => {
     try {
-      // Update loading state for this specific key
+      // OPTIMISTIC UPDATE: Update UI immediately for instant feedback
       setKeyStates((prev) =>
-        prev.map((state) =>
-          state.key.id === keyId ? { ...state, isLoading: true } : state,
-        ),
+        prev.map((state) => {
+          if (state.key.id === keyId) {
+            return { ...state, isLoading: true, isAttached: !currentlyAttached };
+          }
+          return state;
+        }),
       );
 
+      // Then sync with backend in background
       if (currentlyAttached) {
-        // Detach key
         logger.info('KeyAttachmentDialog', 'Detaching key from vault', {
           keyId,
           vaultId: vaultInfo.id,
@@ -185,12 +187,8 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
           throw new Error(result.error.message || 'Failed to detach key');
         }
 
-        logger.info('KeyAttachmentDialog', 'Key detached successfully', {
-          keyId,
-          vaultId: vaultInfo.id,
-        });
+        logger.info('KeyAttachmentDialog', 'Key detached successfully');
       } else {
-        // Attach key
         logger.info('KeyAttachmentDialog', 'Attaching key to vault', {
           keyId,
           vaultId: vaultInfo.id,
@@ -205,23 +203,28 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
           throw new Error(result.error.message || 'Failed to attach key');
         }
 
-        logger.info('KeyAttachmentDialog', 'Key attached successfully', {
-          keyId,
-          vaultId: vaultInfo.id,
-        });
+        logger.info('KeyAttachmentDialog', 'Key attached successfully');
       }
 
-      // Notify parent to refresh cache
-      // The useEffect will automatically re-run when keyCache updates
+      // Clear loading spinner after backend sync
+      setKeyStates((prev) =>
+        prev.map((state) =>
+          state.key.id === keyId ? { ...state, isLoading: false } : state,
+        ),
+      );
+
+      // Notify parent to refresh cache (async, non-blocking)
       onSuccess();
     } catch (err: any) {
       logger.error('KeyAttachmentDialog', 'Toggle key failed', err);
       setError(err.message || 'Failed to update key attachment');
 
-      // Reset loading state
+      // ROLLBACK: Revert optimistic update on error
       setKeyStates((prev) =>
         prev.map((state) =>
-          state.key.id === keyId ? { ...state, isLoading: false } : state,
+          state.key.id === keyId
+            ? { ...state, isLoading: false, isAttached: currentlyAttached }
+            : state,
         ),
       );
     }
@@ -281,15 +284,8 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
             </div>
           )}
 
-          {/* Loading state */}
-          {isLoadingKeys && (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
-            </div>
-          )}
-
           {/* Key list */}
-          {!isLoadingKeys && keyStates.length > 0 && (
+          {keyStates.length > 0 && (
             <div className="space-y-2">
               {keyStates.map((state) => (
                 <label
@@ -335,23 +331,19 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
                     </div>
                   </div>
 
-                  {/* Availability indicator */}
-                  <div className="flex-shrink-0">
-                    {state.isLoading ? (
+                  {/* Loading indicator (only when toggling this specific key) */}
+                  {state.isLoading && (
+                    <div className="flex-shrink-0">
                       <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-                    ) : state.key.is_available ? (
-                      <CheckIcon className="w-4 h-4 text-teal-600" />
-                    ) : (
-                      <X className="w-4 h-4 text-slate-500" />
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </label>
               ))}
             </div>
           )}
 
           {/* Empty state */}
-          {!isLoadingKeys && keyStates.length === 0 && (
+          {keyStates.length === 0 && (
             <div className="text-center py-8 text-slate-400">
               <p className="text-sm">No keys available.</p>
               <p className="text-xs mt-1">Create keys in Manage Keys page.</p>
