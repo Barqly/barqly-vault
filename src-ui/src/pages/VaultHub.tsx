@@ -149,7 +149,7 @@ const VaultHub: React.FC = () => {
               </div>
             </div>
           ) : vaults.length === 0 && !isCreatingVault ? (
-            <div className="bg-white rounded-lg border border-slate-200">
+            <div className="bg-white dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 mt-6">
               <VaultEmptyState onCreateClick={toggleCreateForm} />
             </div>
           ) : !isCreatingVault ? (
