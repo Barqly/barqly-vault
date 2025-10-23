@@ -174,7 +174,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-4">
+          <>
             <FileDropZone
               onFilesSelected={onFileSelected}
               selectedFiles={
@@ -200,14 +200,16 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
 
             {/* Show vault recognition after file selection */}
             {selectedFile && isKnownVault !== null && (
-              <VaultRecognition
-                file={selectedFile}
-                isKnown={isKnownVault}
-                vaultName={detectedVaultName}
-                onContinue={() => onStepChange(2)}
-              />
+              <div className="mt-4">
+                <VaultRecognition
+                  file={selectedFile}
+                  isKnown={isKnownVault}
+                  vaultName={detectedVaultName}
+                  onContinue={() => onStepChange(2)}
+                />
+              </div>
             )}
-          </div>
+          </>
         );
 
       case 2:
@@ -303,18 +305,18 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm">
       {/* Card Content */}
       <div className="p-6">
-        <div className="min-h-[200px] max-h-[350px] mb-6">{renderStepContent()}</div>
+        <div className="mb-6">{renderStepContent()}</div>
 
         {/* Navigation Buttons - Only show if there's something to display */}
         {(canGoToPreviousStep || currentStep === 2) && (
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
             {canGoToPreviousStep && (
               <button
                 onClick={handlePrevious}
-                className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
+                className="h-10 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1 transition-colors"
                 disabled={isLoading}
                 tabIndex={2}
               >
@@ -328,15 +330,28 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               <button
                 ref={continueButtonRef}
                 onClick={handleContinue}
-                className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                   canContinue && !isValidatingPassphrase
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    ? 'text-white'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                 } ${!canGoToPreviousStep ? 'ml-auto' : ''}`}
+                style={{
+                  backgroundColor: canContinue && !isValidatingPassphrase ? '#1D4ED8' : '',
+                }}
+                onMouseEnter={(e) => {
+                  if (canContinue && !isValidatingPassphrase) {
+                    e.currentTarget.style.backgroundColor = '#1E40AF';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (canContinue && !isValidatingPassphrase) {
+                    e.currentTarget.style.backgroundColor = '#1D4ED8';
+                  }
+                }}
                 disabled={isLoading || !canContinue || isValidatingPassphrase}
                 tabIndex={canContinue ? 1 : -1}
               >
-                {isValidatingPassphrase ? 'Validating...' : 'Continue'}
+                {isValidatingPassphrase ? 'Validating...' : 'Decrypt Vault'}
               </button>
             )}
           </div>

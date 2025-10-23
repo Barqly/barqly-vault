@@ -75,7 +75,7 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
 
   return (
     <div
-      className={`relative bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden transition-opacity duration-300 ${
+      className={`relative bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-600 overflow-hidden transition-opacity duration-300 ${
         isContentReady ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
@@ -90,7 +90,7 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce"
+              className="absolute w-1.5 h-1.5 bg-teal-500 rounded-full animate-bounce"
               style={{
                 left: `${25 + i * 25}%`,
                 top: '20px',
@@ -105,14 +105,14 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
 
       {/* Compact success header - responsive height */}
       <div
-        className="bg-white px-6 py-3 text-center relative"
+        className="bg-white dark:bg-slate-800 px-6 py-3 text-center relative"
         style={{ height: responsiveStyles['--success-panel-header-height'] }}
       >
         <div className="relative z-10 flex items-center justify-center gap-3">
-          <CheckCircle className="w-8 h-8 text-green-600" />
+          <CheckCircle className="w-8 h-8 text-teal-600" />
           <div className="text-left">
-            <h2 className="text-xl font-semibold text-slate-900">Vault decrypted successfully.</h2>
-            <p className="text-sm text-slate-600 mt-1">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Vault decrypted successfully.</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
               Vault integrity verified - your files are authentic and unmodified
             </p>
           </div>
@@ -126,33 +126,33 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
         <div className="p-4 space-y-4">
           {/* Recovery information (if in recovery mode) */}
           {isRecoveryMode && recoveredItems && (
-            <div className="bg-green-50 rounded-lg border border-green-200 p-4 mb-4">
-              <div className="flex items-center gap-2 text-green-800 font-medium mb-3">
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 p-4 mb-4">
+              <div className="flex items-center gap-2 text-green-800 dark:text-green-300 font-medium mb-3">
                 <Archive className="w-5 h-5" />
                 Vault Recovery Complete
               </div>
               <div className="space-y-2">
                 {recoveredItems.files && (
-                  <div className="flex items-center gap-2 text-sm text-green-700">
+                  <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
                     <CheckCircle className="w-4 h-4" />
                     <span>{recoveredItems.files.length} files extracted</span>
                   </div>
                 )}
                 {recoveredItems.manifest && (
-                  <div className="flex items-center gap-2 text-sm text-green-700">
+                  <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
                     <CheckCircle className="w-4 h-4" />
                     <span>Vault manifest restored</span>
                   </div>
                 )}
                 {recoveredItems.keys && recoveredItems.keys.length > 0 && (
-                  <div className="flex items-center gap-2 text-sm text-green-700">
+                  <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
                     <CheckCircle className="w-4 h-4" />
                     <span>Passphrase key imported</span>
                   </div>
                 )}
               </div>
               {vaultName && (
-                <p className="text-sm text-green-700 mt-3 pt-3 border-t border-green-200">
+                <p className="text-sm text-green-700 dark:text-green-400 mt-3 pt-3 border-t border-green-200 dark:border-green-700">
                   The <span className="font-medium">{vaultName}</span> vault is now available in
                   your Vault Hub
                 </p>
@@ -161,18 +161,18 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
           )}
 
           {/* Summary strip (chips) */}
-          <div className="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-2">
+          <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-700 rounded-lg px-4 py-2">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
-                <FileText className="w-4 h-4 text-blue-600" />
-                <span className="text-sm text-slate-700 font-medium">
+              <div className="flex items-center gap-2 rounded-full bg-slate-100 dark:bg-slate-600 px-3 py-1">
+                <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">
                   {result.extracted_files.length}{' '}
                   {result.extracted_files.length === 1 ? 'file' : 'files'}
                 </span>
               </div>
-              <div className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
-                <HardDrive className="w-4 h-4 text-slate-500" />
-                <span className="text-sm text-slate-700">
+              <div className="flex items-center gap-2 rounded-full bg-slate-100 dark:bg-slate-600 px-3 py-1">
+                <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <span className="text-sm text-slate-700 dark:text-slate-300">
                   {formatFileSize(result.extracted_files)}
                 </span>
               </div>
@@ -184,8 +184,8 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
                 <div
                   className={`rounded-full px-3 py-1 text-xs font-medium ${
                     result.manifest_verified
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-amber-100 text-amber-800'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                      : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
                   }`}
                 >
                   {result.manifest_verified ? 'Verified' : 'Unverified'}
@@ -195,32 +195,32 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
           </div>
 
           {/* Saved-to path section */}
-          <div className="bg-slate-50 rounded-lg p-3">
+          <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <FolderOpen className="w-4 h-4" />
                 Saved to:
               </span>
               <button
                 onClick={handleCopyPath}
-                className="px-2 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="px-2 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-600 hover:bg-slate-200 dark:hover:bg-slate-500 rounded-md transition-colors flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
                 tabIndex={2}
               >
                 <Copy className="w-3 h-3" />
                 {copiedPath ? 'Copied!' : 'Copy'}
               </button>
             </div>
-            <p className="font-mono text-xs text-slate-700 break-all bg-white rounded-lg px-2 py-1 border border-slate-200">
+            <p className="font-mono text-xs text-slate-700 dark:text-slate-300 break-all bg-white dark:bg-slate-800 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-600">
               {result.output_dir}
             </p>
           </div>
 
           {/* Final CTA */}
-          <div className="flex justify-center gap-3 pt-6 border-t border-slate-200 bg-white sticky bottom-0">
+          <div className="flex justify-center gap-3 pt-6 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 sticky bottom-0">
             {isRecoveryMode && (
               <button
                 onClick={() => navigate('/')}
-                className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 flex items-center gap-2 transition-colors"
                 tabIndex={2}
               >
                 <Home className="w-4 h-4" />
@@ -231,7 +231,10 @@ const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
               <button
                 ref={decryptMoreButtonRef}
                 onClick={onDecryptAnother}
-                className="h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2"
+                className="h-10 rounded-xl px-5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 transition-colors"
+                style={{ backgroundColor: '#1D4ED8' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1E40AF'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1D4ED8'}
                 tabIndex={1}
               >
                 Decrypt More
