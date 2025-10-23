@@ -16,6 +16,7 @@ import { CreateKeyModal } from '../components/keys/CreateKeyModal';
 import { ExportKeyWarningDialog } from '../components/keys/ExportKeyWarningDialog';
 import { ImportPassphraseKeyDialog } from '../components/keys/ImportPassphraseKeyDialog';
 import { EditKeyLabelDialog } from '../components/keys/EditKeyLabelDialog';
+import VaultFilterDropdown, { VaultFilterValue } from '../components/keys/VaultFilterDropdown';
 import ToastContainer from '../components/ui/ToastContainer';
 import { logger } from '../lib/logger';
 import { commands, GlobalKey, VaultStatistics } from '../bindings';
@@ -53,6 +54,7 @@ const ManageKeysPage: React.FC = () => {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showEditLabelDialog, setShowEditLabelDialog] = useState(false);
   const [selectedKeyForEdit, setSelectedKeyForEdit] = useState<GlobalKey | null>(null);
+  const [vaultFilter, setVaultFilter] = useState<VaultFilterValue>('all');
 
   // Toast notifications
   const { toasts, removeToast, showSuccess, showError } = useToast();
@@ -69,6 +71,18 @@ const ManageKeysPage: React.FC = () => {
     });
     return map;
   }, [vaults]);
+
+  // Filter keys based on vault filter selection
+  const filteredKeys = React.useMemo(() => {
+    if (vaultFilter === 'all') {
+      return allKeys;
+    } else if (vaultFilter === 'unattached') {
+      return allKeys.filter((key) => key.vault_associations.length === 0);
+    } else {
+      // Filter by specific vault ID
+      return allKeys.filter((key) => key.vault_associations.includes(vaultFilter));
+    }
+  }, [allKeys, vaultFilter]);
 
   // Fetch vault statistics for deactivation eligibility checks
   const fetchVaultStatistics = useCallback(async () => {
@@ -352,6 +366,13 @@ const ManageKeysPage: React.FC = () => {
               Import Key
             </button>
 
+            {/* Vault Filter Dropdown */}
+            <VaultFilterDropdown
+              value={vaultFilter}
+              onChange={setVaultFilter}
+              vaults={vaults}
+            />
+
             {/* View Toggle */}
             <div className="flex border border-default rounded-lg overflow-hidden">
               <button
@@ -550,16 +571,20 @@ const ManageKeysPage: React.FC = () => {
         {/* Key Display */}
         {keyViewMode === 'cards' ? (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {allKeys.length === 0 ? (
+            {filteredKeys.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 <Key className="h-12 w-12 text-muted mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-secondary mb-2">No keys found</h3>
+                <h3 className="text-lg font-medium text-secondary mb-2">
+                  {vaultFilter === 'all' ? 'No keys found' : 'No keys match this filter'}
+                </h3>
                 <p className="text-sm text-secondary">
-                  Create a new passphrase key or detect a YubiKey to get started
+                  {vaultFilter === 'all'
+                    ? 'Create a new passphrase key or detect a YubiKey to get started'
+                    : 'Try selecting a different vault or "All Keys"'}
                 </p>
               </div>
             ) : (
-              allKeys.map((key) => {
+              filteredKeys.map((key) => {
                 const attachments = getKeyVaultAttachments(key.id);
                 const isSuspended = attachments.length === 0;
 
@@ -587,7 +612,7 @@ const ManageKeysPage: React.FC = () => {
         ) : (
           <div className="mt-6">
             <KeyTable
-              keys={allKeys}
+              keys={filteredKeys}
               vaultAttachments={getKeyVaultAttachments}
               vaultStats={vaultStats}
               onAttach={handleAttachKey}
