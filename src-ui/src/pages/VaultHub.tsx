@@ -26,7 +26,7 @@ import VaultEmptyState from '../components/vault/VaultEmptyState';
  */
 const VaultHub: React.FC = () => {
   const navigate = useNavigate();
-  const { keyCache, refreshKeysForVault, getVaultStatistics } = useVault();
+  const { keyCache, refreshKeysForVault, refreshGlobalKeys, getVaultStatistics } = useVault();
   const {
     // Form state
     name,
@@ -177,8 +177,12 @@ const VaultHub: React.FC = () => {
                         onManageKeys={() => handleManageKeys(vault.id)}
                         onDelete={() => handleDeleteClick(vault.id, vault.name)}
                         onKeysUpdated={async () => {
-                          // Refresh keys for this vault after attach/detach
-                          await refreshKeysForVault(vault.id);
+                          // Refresh both vault-specific keys AND global key cache
+                          // Global cache update is critical for vault_associations filtering
+                          await Promise.all([
+                            refreshKeysForVault(vault.id),
+                            refreshGlobalKeys(),
+                          ]);
                         }}
                       />
                     );
