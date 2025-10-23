@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2, Key, Fingerprint, Check as CheckIcon, Lock } from 'lucide-react';
 import { commands, VaultSummary, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
+import { useVault } from '../../contexts/VaultContext';
 
 interface KeyAttachmentDialogProps {
   isOpen: boolean;
@@ -25,87 +26,67 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
   vaultInfo,
   onSuccess,
 }) => {
+  const { globalKeyCache, keyCache, statisticsCache } = useVault();
   const [keyStates, setKeyStates] = useState<KeyCheckboxState[]>([]);
-  const [isLoadingKeys, setIsLoadingKeys] = useState(true);
+  const [isLoadingKeys, setIsLoadingKeys] = useState(false); // Start false since we use cache
   const [error, setError] = useState<string | null>(null);
   const [isVaultMutable, setIsVaultMutable] = useState(true);
 
-  // Load keys and determine checkbox states
+  // Load keys and determine checkbox states using CACHE-FIRST
   useEffect(() => {
     if (!isOpen) return;
 
-    const loadKeys = async () => {
+    const loadKeys = () => {
       try {
-        setIsLoadingKeys(true);
         setError(null);
 
-        logger.info('KeyAttachmentDialog', 'Loading keys for vault', {
+        logger.info('KeyAttachmentDialog', 'Loading keys from cache', {
           vaultId: vaultInfo.id,
           vaultName: vaultInfo.name,
         });
 
-        // Check vault mutability first
-        const statsResult = await commands.getVaultStatistics({
-          vault_id: vaultInfo.id,
-        });
-
+        // Check vault mutability from cache (instant)
+        const stats = statisticsCache.get(vaultInfo.id);
         let vaultMutable = true;
-        if (statsResult.status === 'ok' && statsResult.data.statistics) {
-          const encryptionCount = statsResult.data.statistics.encryption_count;
+        if (stats) {
+          const encryptionCount = stats.encryption_count;
           vaultMutable = encryptionCount === 0;
           setIsVaultMutable(vaultMutable);
 
-          logger.info('KeyAttachmentDialog', 'Vault mutability check', {
+          logger.info('KeyAttachmentDialog', 'Vault mutability from cache', {
             vaultId: vaultInfo.id,
             encryptionCount,
             isMutable: vaultMutable,
           });
         }
 
-        // Get all keys from global registry
-        const keysResult = await commands.listUnifiedKeys({ type: 'All' });
+        // Get all keys from global cache (instant)
+        const allKeys = globalKeyCache;
 
-        if (keysResult.status === 'error') {
-          logger.error(
-            'KeyAttachmentDialog',
-            'Failed to load keys',
-            new Error(keysResult.error.message),
-          );
-          setError('Failed to load keys');
-          setIsLoadingKeys(false);
-          return;
-        }
-
-        const allKeys = keysResult.data;
-        logger.info('KeyAttachmentDialog', 'Keys loaded', {
+        logger.info('KeyAttachmentDialog', 'Keys from global cache', {
           count: allKeys.length,
         });
 
         if (allKeys.length === 0) {
           setKeyStates([]);
-          setIsLoadingKeys(false);
           return;
         }
 
-        // Get current vault keys to determine attachment status
-        const vaultKeysResult = await commands.getKeyMenuData({
-          vault_id: vaultInfo.id,
-        });
-
-        const currentVaultKeyIds =
-          vaultKeysResult.status === 'ok' ? vaultKeysResult.data.keys.map((k) => k.id) : [];
+        // Get current vault keys from cache (instant)
+        const currentVaultKeys = keyCache.get(vaultInfo.id) || [];
+        const currentVaultKeyIds = currentVaultKeys.map((k) => k.id);
 
         const currentKeyCount = currentVaultKeyIds.length;
         const hasReachedMaxKeys = currentKeyCount >= 4;
 
-        logger.info('KeyAttachmentDialog', 'Current vault keys', {
+        logger.info('KeyAttachmentDialog', 'Current vault keys from cache', {
           vaultId: vaultInfo.id,
           currentKeyCount,
           hasReachedMaxKeys,
           keyIds: currentVaultKeyIds,
         });
 
-        // Process each key
+        // Process each key (all synchronous, instant)
         const states: KeyCheckboxState[] = allKeys.map((key) => {
           const isAttached = currentVaultKeyIds.includes(key.id);
           let isDisabled = false;
@@ -170,16 +151,14 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
         });
 
         setKeyStates(sortedStates);
-        setIsLoadingKeys(false);
       } catch (err) {
-        logger.error('KeyAttachmentDialog', 'Error loading keys', err as Error);
+        logger.error('KeyAttachmentDialog', 'Error loading keys from cache', err as Error);
         setError('Failed to load keys');
-        setIsLoadingKeys(false);
       }
     };
 
     loadKeys();
-  }, [isOpen, vaultInfo.id]);
+  }, [isOpen, vaultInfo.id, globalKeyCache, keyCache, statisticsCache]);
 
   const handleToggleKey = async (keyId: string, currentlyAttached: boolean) => {
     try {
@@ -232,72 +211,9 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
         });
       }
 
-      // Reload keys to get updated state
-      const keysResult = await commands.listUnifiedKeys({ type: 'All' });
-      const vaultKeysResult = await commands.getKeyMenuData({
-        vault_id: vaultInfo.id,
-      });
-
-      if (keysResult.status === 'ok' && vaultKeysResult.status === 'ok') {
-        const allKeys = keysResult.data;
-        const currentVaultKeyIds = vaultKeysResult.data.keys.map((k) => k.id);
-        const currentKeyCount = currentVaultKeyIds.length;
-        const hasReachedMaxKeys = currentKeyCount >= 4;
-
-        // Recalculate states
-        const updatedStates: KeyCheckboxState[] = allKeys.map((key) => {
-          const isAttached = currentVaultKeyIds.includes(key.id);
-          let isDisabled = false;
-          let tooltip = '';
-          let disabledReason: 'immutable-vault' | 'max-keys' | 'unavailable' | null = null;
-
-          if (!isVaultMutable) {
-            isDisabled = true;
-            disabledReason = 'immutable-vault';
-            tooltip = 'Vault already encrypted — key set is sealed';
-          } else if (!key.is_available) {
-            isDisabled = !isAttached;
-            disabledReason = 'unavailable';
-            tooltip = isAttached
-              ? 'Key not available (click to detach)'
-              : key.key_type.type === 'YubiKey'
-                ? 'YubiKey not plugged in'
-                : 'Key file not found';
-          } else if (hasReachedMaxKeys && !isAttached) {
-            isDisabled = true;
-            disabledReason = 'max-keys';
-            tooltip = 'Maximum 4 keys reached. Detach a key to attach this one.';
-          } else {
-            tooltip = isAttached ? 'Click to detach key from vault' : 'Click to attach key to vault';
-          }
-
-          return {
-            key,
-            isAttached,
-            isDisabled,
-            isLoading: false,
-            tooltip,
-            disabledReason,
-          };
-        });
-
-        // Re-sort
-        const sortedStates = updatedStates.sort((a, b) => {
-          const aIsYubiKey = a.key.key_type.type === 'YubiKey';
-          const bIsYubiKey = b.key.key_type.type === 'YubiKey';
-
-          if (aIsYubiKey && !bIsYubiKey) return -1;
-          if (!aIsYubiKey && bIsYubiKey) return 1;
-
-          if (!a.isAttached && b.isAttached) return -1;
-          if (a.isAttached && !b.isAttached) return 1;
-
-          return (a.key.label || '').localeCompare(b.key.label || '');
-        });
-
-        setKeyStates(sortedStates);
-        onSuccess(); // Notify parent to refresh
-      }
+      // Notify parent to refresh cache
+      // The useEffect will automatically re-run when keyCache updates
+      onSuccess();
     } catch (err: any) {
       logger.error('KeyAttachmentDialog', 'Toggle key failed', err);
       setError(err.message || 'Failed to update key attachment');
