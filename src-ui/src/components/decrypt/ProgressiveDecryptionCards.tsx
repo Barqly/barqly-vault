@@ -69,6 +69,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   const [isValidatingPassphrase, setIsValidatingPassphrase] = useState(false);
   const [availableKeys, setAvailableKeys] = useState<VaultKey[]>([]);
   const [selectedKey, setSelectedKey] = useState<VaultKey | null>(null);
+  const [hasNavigatedBack, setHasNavigatedBack] = useState(false);
 
   // Update selected key when selectedKeyId changes
   useEffect(() => {
@@ -94,12 +95,20 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
 
   const handlePrevious = () => {
     if (canGoToPreviousStep) {
+      setHasNavigatedBack(true);
       onStepChange(currentStep - 1);
     }
   };
 
   const handleContinue = async () => {
     if (canContinue) {
+      // For step 1, when returning from step 2, just continue to step 2
+      if (currentStep === 1) {
+        setHasNavigatedBack(false);
+        onStepChange(2);
+        return;
+      }
+
       // For step 2, validate the passphrase with the selected key before proceeding
       if (currentStep === 2 && selectedKeyId && passphrase && selectedFile) {
         setIsValidatingPassphrase(true);
@@ -186,7 +195,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                     }
                   : null
               }
-              onClearFiles={onClearFiles}
+              onClearFiles={hasNavigatedBack ? undefined : onClearFiles}  // Hide clear button when navigated back
               onError={onFileError}
               disabled={isLoading}
               mode="single"
@@ -195,11 +204,11 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               subtitle="All files in this vault will be restored to their original folder structure in the chosen recovery location."
               browseButtonText="Select Vault"
               icon="decrypt"
-              autoFocus={currentStep === 1}
+              autoFocus={currentStep === 1 && !hasNavigatedBack}
             />
 
-            {/* Show vault recognition after file selection */}
-            {selectedFile && isKnownVault !== null && (
+            {/* Only show vault recognition if NOT navigated back - auto-advance on first selection */}
+            {selectedFile && isKnownVault !== null && !hasNavigatedBack && (
               <div className="mt-4">
                 <VaultRecognition
                   file={selectedFile}
@@ -310,10 +319,26 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
       <div className="p-6">
         <div className="mb-6">{renderStepContent()}</div>
 
-        {/* Navigation Buttons - Only show if there's something to display */}
-        {(canGoToPreviousStep || currentStep === 2) && (
+        {/* Navigation Buttons - Show different buttons based on state */}
+        {((canGoToPreviousStep && currentStep !== 1) || currentStep === 2 || (currentStep === 1 && hasNavigatedBack && selectedFile)) && (
           <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
-            {canGoToPreviousStep && (
+            {/* Step 1 with hasNavigatedBack - show Clear button on left */}
+            {currentStep === 1 && hasNavigatedBack && selectedFile && (
+              <button
+                onClick={() => {
+                  onClearFiles();
+                  setHasNavigatedBack(false);
+                }}
+                className="h-10 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                disabled={isLoading}
+                tabIndex={2}
+              >
+                Clear
+              </button>
+            )}
+
+            {/* Step 2 - show Previous button */}
+            {canGoToPreviousStep && currentStep !== 1 && (
               <button
                 onClick={handlePrevious}
                 className="h-10 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1 transition-colors"
@@ -325,7 +350,24 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               </button>
             )}
 
-            {/* Only show Continue button on Step 2 (not Step 1, as file selection auto-advances) */}
+            {/* Step 1 with hasNavigatedBack - show Continue button on right */}
+            {currentStep === 1 && hasNavigatedBack && selectedFile && (
+              <button
+                ref={continueButtonRef}
+                onClick={handleContinue}
+                className="h-10 rounded-xl px-5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ml-auto"
+                style={{ backgroundColor: '#1D4ED8' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1E40AF'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1D4ED8'}
+                disabled={isLoading}
+                tabIndex={1}
+                autoFocus
+              >
+                Continue
+              </button>
+            )}
+
+            {/* Step 2 - show Decrypt Vault button */}
             {currentStep === 2 && (
               <button
                 ref={continueButtonRef}

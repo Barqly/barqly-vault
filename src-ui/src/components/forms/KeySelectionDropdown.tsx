@@ -140,7 +140,7 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
     <div className={`space-y-2 ${className}`}>
       {/* Label */}
       <div className="flex items-center gap-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -165,7 +165,7 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
         {isOpen && (
           <div
             ref={dropdownRef}
-            className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-auto"
+            className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto"
           >
             {keys.length === 0 ? (
               <div className="px-3 py-2 text-sm text-slate-500">
