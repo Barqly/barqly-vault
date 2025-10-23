@@ -48,6 +48,13 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
     (e: React.KeyboardEvent) => {
       if (disabled) return;
 
+      // Don't handle keyboard events that originated from buttons
+      // Buttons should handle their own click events
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'BUTTON') {
+        return;
+      }
+
       // Trigger file selection on Enter or Space key
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -77,9 +84,9 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
     <div
       ref={dropZoneRef}
       {...handlers}
-      tabIndex={disabled ? -1 : 0}
-      role="button"
-      aria-label={mode === 'single' ? 'Select a file' : 'Select files'}
+      tabIndex={-1}
+      role="region"
+      aria-label={mode === 'single' ? 'File selection area' : 'Files selection area'}
       onKeyDown={handleKeyDown}
       className={`
         relative min-h-[160px] border-2 border-dashed rounded-lg
