@@ -190,33 +190,45 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log('🔍 VaultContext: Vaults loaded', vaultsResponse.vaults);
       setVaults(vaultsResponse.vaults);
 
-      // Get current vault
-      console.log('🔍 VaultContext: Calling getCurrentVault...');
-      const currentResult = await commands.getCurrentVault();
-      console.log('🔍 VaultContext: getCurrentVault response', currentResult);
+      // Restore current vault from localStorage (deprecated backend API)
+      console.log('🔍 VaultContext: Restoring vault selection from localStorage...');
 
-      if (currentResult.status === 'error') {
-        console.error('🚨 VaultContext: getCurrentVault returned error', currentResult.error);
-        throw new Error(currentResult.error.message || 'Failed to get current vault');
-      }
-      const currentResponse = currentResult.data;
+      if (vaultsResponse.vaults.length > 0) {
+        let selectedVault = null;
 
-      if (currentResponse.vault) {
-        console.log('🔍 VaultContext: Setting current vault from backend', currentResponse.vault);
-        setCurrentVaultState(currentResponse.vault);
-      } else if (vaultsResponse.vaults.length > 0) {
-        console.log(
-          '🔍 VaultContext: No current vault, setting first one',
-          vaultsResponse.vaults[0],
-        );
-        // If no current vault but vaults exist, set the first one
-        setCurrentVaultState(vaultsResponse.vaults[0]);
-        // Persist to backend in background
-        const request: SetCurrentVaultRequest = { vault_id: vaultsResponse.vaults[0].id };
-        commands.setCurrentVault(request).catch((err) => {
-          console.error('🚨 VaultContext: Failed to persist initial vault selection', err);
-          logger.error('VaultContext', 'Failed to persist initial vault selection', err);
-        });
+        // Try to restore from localStorage
+        try {
+          const savedVaultId = localStorage.getItem('barqly_current_vault_id');
+          if (savedVaultId) {
+            selectedVault = vaultsResponse.vaults.find((v) => v.id === savedVaultId);
+            console.log('🔍 VaultContext: Found saved vault in localStorage', {
+              savedVaultId,
+              found: !!selectedVault,
+            });
+          }
+        } catch (err) {
+          console.error('🚨 VaultContext: Failed to read localStorage', err);
+        }
+
+        // Fallback: First vault alphabetically (deterministic)
+        if (!selectedVault) {
+          const sortedVaults = [...vaultsResponse.vaults].sort((a, b) =>
+            a.name.localeCompare(b.name),
+          );
+          selectedVault = sortedVaults[0];
+          console.log('🔍 VaultContext: No saved vault, using first alphabetically', {
+            vaultName: selectedVault.name,
+          });
+        }
+
+        setCurrentVaultState(selectedVault);
+
+        // Persist to localStorage
+        try {
+          localStorage.setItem('barqly_current_vault_id', selectedVault.id);
+        } catch (err) {
+          console.error('🚨 VaultContext: Failed to write localStorage', err);
+        }
       }
       console.log('✅ VaultContext: refreshVaults completed successfully');
     } catch (err: any) {
@@ -329,7 +341,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // NEW: Synchronous vault switching - reads from cache, no backend call for keys
+  // NEW: Synchronous vault switching - reads from cache, persists to localStorage
   const setCurrentVault = (vaultId: string) => {
     setError(null);
 
@@ -348,24 +360,14 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Update local state immediately (sync)
     setCurrentVaultState(vault);
 
-    // Update backend in background (don't wait)
-    const request: SetCurrentVaultRequest = { vault_id: vaultId };
-    commands
-      .setCurrentVault(request)
-      .then((result) => {
-        if (result.status === 'error') {
-          logger.error(
-            'VaultContext',
-            `Failed to persist current vault: ${result.error.message}`,
-            new Error(result.error.message),
-          );
-        }
-      })
-      .catch((err) => {
-        logger.error('VaultContext', 'Failed to set current vault', err as Error);
-      });
+    // Persist to localStorage for session continuity
+    try {
+      localStorage.setItem('barqly_current_vault_id', vaultId);
+    } catch (err) {
+      logger.error('VaultContext', 'Failed to persist vault to localStorage', err as Error);
+    }
 
-    logger.info('VaultContext', 'Switched to vault (sync)', {
+    logger.info('VaultContext', 'Switched to vault (localStorage)', {
       vaultId,
       cachedKeyCount: (keyCache.get(vaultId) || []).length,
     });
