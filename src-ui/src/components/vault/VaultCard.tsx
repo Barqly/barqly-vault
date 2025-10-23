@@ -31,7 +31,7 @@ interface VaultCardProps {
 const VaultCard: React.FC<VaultCardProps> = ({
   vault,
   keys,
-  isActive: _isActive,
+  isActive,
   isDropTarget,
   statistics: propStatistics, // Receive statistics as prop
   onSelect,
@@ -107,11 +107,13 @@ const VaultCard: React.FC<VaultCardProps> = ({
   return (
     <div
       className={`
-        relative rounded-lg border bg-card transition-all border-default hover:shadow-lg
-        ${isDropTarget ? 'border-blue-400 border-dashed' : ''}
+        relative rounded-lg border bg-card transition-all hover:shadow-lg
+        ${isDropTarget ? 'border-blue-400 border-dashed' : isActive ? 'border-blue-500 ring-2 ring-blue-500/50' : 'border-default'}
       `}
       style={{
-        boxShadow: '0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)',
+        boxShadow: isActive
+          ? '0 4px 6px rgba(59, 130, 246, 0.15), 0 2px 4px rgba(59, 130, 246, 0.1)'
+          : '0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)',
       }}
     >
       {/* Card Content */}
