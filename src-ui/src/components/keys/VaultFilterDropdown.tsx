@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Filter } from 'lucide-react';
+import { ChevronDown, Filter, Key, Archive } from 'lucide-react';
 
 export type VaultFilterValue = 'all' | 'unattached' | string; // 'all', 'unattached', or vault ID
 
@@ -72,7 +72,7 @@ export const VaultFilterDropdown: React.FC<VaultFilterDropdownProps> = ({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
-        <Filter className="w-4 h-4 text-slate-400" />
+        <Filter className="w-4 h-4" style={{ color: '#1D4ED8' }} />
         <span className="font-medium">{selectedOption.label}</span>
         <ChevronDown
           className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -94,7 +94,7 @@ export const VaultFilterDropdown: React.FC<VaultFilterDropdownProps> = ({
           <button
             onClick={() => handleSelect('all')}
             className={`
-              w-full px-4 py-2.5 text-left text-sm transition-colors
+              w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center gap-2
               ${
                 value === 'all'
                   ? 'bg-blue-500/20 text-blue-300 font-medium'
@@ -104,6 +104,7 @@ export const VaultFilterDropdown: React.FC<VaultFilterDropdownProps> = ({
             role="option"
             aria-selected={value === 'all'}
           >
+            <Key className="w-4 h-4 text-slate-500" />
             All Keys
           </button>
 
@@ -116,7 +117,7 @@ export const VaultFilterDropdown: React.FC<VaultFilterDropdownProps> = ({
               key={vault.id}
               onClick={() => handleSelect(vault.id)}
               className={`
-                w-full px-4 py-2.5 text-left text-sm transition-colors truncate
+                w-full px-4 py-2.5 text-left text-sm transition-colors truncate flex items-center gap-2
                 ${
                   value === vault.id
                     ? 'bg-blue-500/20 text-blue-300 font-medium'
@@ -127,7 +128,8 @@ export const VaultFilterDropdown: React.FC<VaultFilterDropdownProps> = ({
               aria-selected={value === vault.id}
               title={vault.name}
             >
-              {vault.name}
+              <Archive className="w-4 h-4 flex-shrink-0" style={{ color: '#3B82F6' }} />
+              <span className="truncate">{vault.name}</span>
             </button>
           ))}
 
@@ -138,7 +140,7 @@ export const VaultFilterDropdown: React.FC<VaultFilterDropdownProps> = ({
           <button
             onClick={() => handleSelect('unattached')}
             className={`
-              w-full px-4 py-2.5 text-left text-sm transition-colors
+              w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center gap-2
               ${
                 value === 'unattached'
                   ? 'bg-blue-500/20 text-blue-300 font-medium'
@@ -148,6 +150,7 @@ export const VaultFilterDropdown: React.FC<VaultFilterDropdownProps> = ({
             role="option"
             aria-selected={value === 'unattached'}
           >
+            <Key className="w-4 h-4 text-slate-500" />
             Unattached Keys
           </button>
         </div>
