@@ -241,9 +241,21 @@ export const useEncryptionWorkflow = () => {
         out_encrypted_file_path: outputPath || null,
       };
 
+      // Track when encryption actually starts
+      const encryptionStartTime = Date.now();
+
       const result = await commands.encryptFilesMulti(input);
       if (result.status === 'error') {
         throw result.error;
+      }
+
+      // Calculate how long the encryption took
+      const encryptionDuration = Date.now() - encryptionStartTime;
+
+      // Ensure progress is shown for at least 1.5 seconds for better UX
+      const minimumProgressTime = 1500;
+      if (encryptionDuration < minimumProgressTime) {
+        await new Promise((resolve) => setTimeout(resolve, minimumProgressTime - encryptionDuration));
       }
 
       console.log('[DEBUG] Multi-key encryption completed, checking result');
