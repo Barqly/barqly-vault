@@ -64,7 +64,7 @@ export const VaultFilterDropdown: React.FC<VaultFilterDropdownProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         className="
           flex items-center gap-2 px-3 py-2 rounded-lg border
-          bg-slate-700 border-slate-600 text-slate-200
+          bg-slate-700 border-slate-600
           hover:bg-slate-600 hover:border-slate-500
           focus:outline-none focus:ring-2 focus:ring-blue-500
           transition-colors text-sm
@@ -72,8 +72,8 @@ export const VaultFilterDropdown: React.FC<VaultFilterDropdownProps> = ({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
-        <Filter className="w-4 h-4" style={{ color: '#1D4ED8' }} />
-        <span className="font-medium">{selectedOption.label}</span>
+        <Filter className="w-4 h-4 text-slate-400" />
+        <span className="font-medium text-slate-400">{selectedOption.label}</span>
         <ChevronDown
           className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
