@@ -63,20 +63,29 @@ export const VaultFilterDropdown: React.FC<VaultFilterDropdownProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="
-          flex items-center gap-2 px-3 py-2 rounded-lg border
-          bg-slate-700 border-slate-600
-          hover:bg-slate-600 hover:border-slate-500
-          focus:outline-none focus:ring-2 focus:ring-blue-500
-          transition-colors text-sm
+          flex items-center gap-2 px-4 py-2 rounded-lg border
+          transition-colors text-sm font-medium
         "
+        style={{
+          borderColor: 'rgb(var(--border-default))',
+          color: 'rgb(var(--text-secondary))',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+          e.currentTarget.style.color = 'rgb(var(--text-primary))';
+          e.currentTarget.style.borderColor = 'rgb(var(--border-strong))';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+          e.currentTarget.style.color = 'rgb(var(--text-secondary))';
+          e.currentTarget.style.borderColor = 'rgb(var(--border-default))';
+        }}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
-        <Filter className="w-4 h-4 text-slate-400" />
-        <span className="font-medium text-slate-400">{selectedOption.label}</span>
-        <ChevronDown
-          className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
+        <Filter className="w-4 h-4" />
+        <span>{selectedOption.label}</span>
+        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Menu */}
