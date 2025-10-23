@@ -157,7 +157,10 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
     };
 
     loadKeys();
-  }, [isOpen, vaultInfo.id, globalKeyCache, keyCache, statisticsCache]);
+    // Only run when dialog opens, not when cache changes
+    // This preserves the sort order and prevents re-rendering during toggles
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, vaultInfo.id]);
 
   const handleToggleKey = async (keyId: string, currentlyAttached: boolean) => {
     try {
