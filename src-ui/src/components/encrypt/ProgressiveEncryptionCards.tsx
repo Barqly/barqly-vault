@@ -151,7 +151,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                 {/* Custom Dropdown Button */}
                 <button
                   type="button"
-                  className="w-full px-4 py-3 border rounded-lg bg-card text-main transition-colors focus:outline-none focus:ring-2 appearance-none cursor-pointer flex items-center justify-between"
+                  className="w-full px-4 py-3 border rounded-lg bg-white dark:bg-slate-800 text-main transition-colors focus:outline-none focus:ring-2 appearance-none cursor-pointer flex items-center justify-between"
                   style={{
                     borderColor: workflowVault ? '#3B82F6' : 'rgb(var(--border-default))',
                     boxShadow: workflowVault ? '0 0 0 2px rgba(59, 130, 246, 0.1)' : 'none',
@@ -196,7 +196,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                 {/* Custom Dropdown Menu */}
                 {isDropdownOpen && vaultsWithKeys.length > 0 && (
                   <div
-                    className="absolute z-10 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-64 overflow-auto"
+                    className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border rounded-lg shadow-lg max-h-64 overflow-auto"
                     style={{ borderColor: 'rgb(var(--border-default))' }}
                   >
                     {vaultsWithKeys
@@ -283,7 +283,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm">
       {/* Card Content */}
       <div className="p-5">
         <div className={`${currentStep === 2 ? '' : 'min-h-[200px] max-h-[350px]'} mb-2`}>
@@ -295,7 +295,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
           {canGoToPreviousStep && (
             <button
               onClick={handlePrevious}
-              className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
+              className="h-10 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
               disabled={isLoading}
               tabIndex={2}
             >
@@ -304,20 +304,20 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
             </button>
           )}
 
-          {(currentStep === 1 || currentStep === 2) && (
+          {currentStep === 2 && (
             <button
               ref={continueButtonRef}
               onClick={handleContinue}
               className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 ${
                 canContinue
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
               } ${!canGoToPreviousStep ? 'ml-auto' : ''}`}
               disabled={isLoading || !canContinue}
               tabIndex={canContinue ? 1 : -1}
             >
-              {currentStep === 2 && <Lock className="w-4 h-4" />}
-              {currentStep === 2 ? 'Encrypt Now' : 'Continue'}
+              <Lock className="w-4 h-4" />
+              Encrypt Now
             </button>
           )}
         </div>

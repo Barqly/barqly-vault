@@ -68,7 +68,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
 
   if (variant === 'compact') {
     return (
-      <div className={`bg-white border-b ${className}`}>
+      <div className={`bg-white dark:bg-slate-800 border-b dark:border-slate-700 ${className}`}>
         <div className="max-w-4xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => {
@@ -82,12 +82,12 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                       isClickable ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
                     } ${
                       status === 'current'
-                        ? 'bg-blue-50 text-blue-600 font-semibold border border-blue-600'
+                        ? 'bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 font-semibold border border-blue-600 dark:border-blue-500'
                         : status === 'completed'
-                          ? 'text-green-600 font-medium'
+                          ? 'text-green-600 dark:text-green-500 font-medium'
                           : status === 'visited'
-                            ? 'text-blue-600'
-                            : 'text-slate-500'
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-slate-500 dark:text-slate-400'
                     }`}
                     onClick={() => isClickable && onStepClick?.(step.id)}
                     disabled={!isClickable}
@@ -107,9 +107,9 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
 
                   {index < steps.length - 1 && (
                     <div className="flex-1 mx-2">
-                      <div className="h-0.5 bg-slate-200 rounded-full">
+                      <div className="h-0.5 bg-slate-200 dark:bg-slate-600 rounded-full">
                         <div
-                          className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                          className="h-full bg-blue-600 dark:bg-blue-500 rounded-full transition-all duration-500"
                           style={{
                             width: `${status === 'completed' || status === 'visited' ? 100 : 0}%`,
                           }}

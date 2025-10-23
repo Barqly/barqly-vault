@@ -51,14 +51,14 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
   }, []);
 
   return (
-    <div className="relative bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+    <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-600 overflow-hidden">
       {/* Minimal success animation */}
       {showConfetti && (
         <div className="absolute inset-0 pointer-events-none">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce"
+              className="absolute w-1.5 h-1.5 bg-green-400 dark:bg-green-500 rounded-full animate-bounce"
               style={{
                 left: `${25 + i * 25}%`,
                 top: '20px',
@@ -72,12 +72,12 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
       )}
 
       {/* Compact success header */}
-      <div className="bg-white px-6 py-4 text-center relative">
+      <div className="bg-white dark:bg-slate-800 px-6 py-4 text-center relative">
         <div className="relative z-10">
-          <h2 className="text-xl font-semibold text-slate-900">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
             Your vault is ready — securely encrypted.
           </h2>
-          <p className="text-sm text-slate-600 mt-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Encryption verified — your vault is securely protected and ready for storage or sharing
           </p>
         </div>
@@ -96,24 +96,24 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
         />
 
         {/* Fixed action buttons at bottom */}
-        <div className="flex justify-between items-center mt-6 bg-white sticky bottom-0 gap-3">
+        <div className="flex justify-between items-center mt-6 bg-white dark:bg-slate-800 sticky bottom-0 gap-3">
           {/* Left: Encrypt More (ghost style) */}
           <button
             onClick={onEncryptMore}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-500"
             tabIndex={2}
           >
             <RotateCcw className="w-4 h-4" />
             Encrypt More
           </button>
 
-          {/* Right: Decrypt (premium blue) */}
+          {/* Right: Decrypt (premium blue - stays the same in dark mode) */}
           <button
             ref={primaryActionButtonRef}
             onClick={
               onNavigateToDecrypt || (() => console.warn('No decrypt navigation handler provided'))
             }
-            className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-500"
             tabIndex={1}
           >
             <Unlock className="w-4 h-4" />

@@ -88,9 +88,9 @@ const FileDropZone: React.FC<FileDropZoneProps> = ({
         ${
           isDragging
             ? icon === 'decrypt'
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-blue-500 bg-blue-50'
-            : 'border-slate-300 hover:border-slate-400'
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+              : 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+            : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500'
         }
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         ${className}

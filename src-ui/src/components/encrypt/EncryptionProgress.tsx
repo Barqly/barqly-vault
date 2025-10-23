@@ -65,12 +65,12 @@ const EncryptionProgress: React.FC<EncryptionProgressProps> = ({ progress, onCan
 
   return (
     <div
-      className="bg-white rounded-lg border border-slate-200 p-6"
+      className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 p-6"
       data-testid="encryption-progress"
     >
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-2">Creating Your Encrypted Vault</h3>
-        <p className="text-sm text-slate-600">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Creating Your Encrypted Vault</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           Your files are being securely encrypted. This process typically takes under 60 seconds.
         </p>
       </div>
@@ -84,13 +84,13 @@ const EncryptionProgress: React.FC<EncryptionProgressProps> = ({ progress, onCan
           className={`h-3 ${isInitializing ? 'animate-pulse' : ''}`}
         />
         <div className="flex justify-between items-center mt-2">
-          <span className="text-sm text-slate-500">
+          <span className="text-sm text-slate-500 dark:text-slate-400">
             {isInitializing
               ? 'Starting encryption process...'
               : progress.message || 'Processing...'}
           </span>
           {!isInitializing && estimatedTimeRemaining > 0 && (
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-slate-500 dark:text-slate-400">
               About {estimatedTimeRemaining} seconds remaining
             </span>
           )}
@@ -127,7 +127,7 @@ const EncryptionProgress: React.FC<EncryptionProgressProps> = ({ progress, onCan
         <div className="flex justify-center">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
           >
             Cancel
           </button>

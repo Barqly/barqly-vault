@@ -53,13 +53,13 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
         }`}
       />
 
-      {title && <p className="text-base font-medium text-slate-700 mb-2">{title}</p>}
+      {title && <p className="text-base font-medium text-slate-700 dark:text-slate-300 mb-2">{title}</p>}
 
-      <p className="text-base text-slate-600 mb-2">{dropText}</p>
+      <p className="text-base text-slate-600 dark:text-slate-400 mb-2">{dropText}</p>
 
-      {subtitle && <p className="text-sm text-slate-500 mb-3">{subtitle}</p>}
+      {subtitle && <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{subtitle}</p>}
 
-      <p className="text-sm text-slate-500 mb-1">- or -</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">- or -</p>
 
       {/* Side-by-side buttons with unified styling for cohesion */}
       <div className={`flex items-center justify-center mt-3 ${showFolderButton ? 'gap-3' : ''}`}>
@@ -74,12 +74,12 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
           className={`
             inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium
             transition-colors duration-150 ease-in-out focus:outline-none
-            focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2
+            focus-visible:ring-2 focus-visible:ring-blue-300 dark:focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-800
             ${showFolderButton ? 'w-32' : 'w-auto'}
             ${
               !disabled
-                ? 'border border-blue-600 text-blue-600 bg-white hover:bg-blue-50/50 hover:border-blue-700 active:bg-blue-50/80'
-                : 'border border-slate-300 text-slate-400 bg-white cursor-not-allowed'
+                ? 'border border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-700 hover:bg-blue-50/50 dark:hover:bg-slate-600 hover:border-blue-700 dark:hover:border-blue-400 active:bg-blue-50/80 dark:active:bg-slate-600'
+                : 'border border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-700 cursor-not-allowed'
             }
           `}
         >
@@ -97,11 +97,11 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
             className={`
               inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium w-32
               transition-colors duration-150 ease-in-out focus:outline-none
-              focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2
+              focus-visible:ring-2 focus-visible:ring-blue-300 dark:focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-800
               ${
                 !disabled
-                  ? 'border border-blue-600 text-blue-600 bg-white hover:bg-blue-50/50 hover:border-blue-700 active:bg-blue-50/80'
-                  : 'border border-slate-300 text-slate-400 bg-white cursor-not-allowed'
+                  ? 'border border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-700 hover:bg-blue-50/50 dark:hover:bg-slate-600 hover:border-blue-700 dark:hover:border-blue-400 active:bg-blue-50/80 dark:active:bg-slate-600'
+                  : 'border border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-700 cursor-not-allowed'
               }
             `}
           >
