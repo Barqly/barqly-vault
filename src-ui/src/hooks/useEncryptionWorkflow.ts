@@ -256,10 +256,12 @@ export const useEncryptionWorkflow = () => {
 
         // Use native Tauri dialog for confirmation
         const shouldOverwrite = await confirm(
-          `A file named "${fileName}" already exists in the destination folder.\n\nDo you want to replace the existing file? This action cannot be undone.`,
+          `The file "${fileName}" already exists.\n\nWould you like to replace it with the new encrypted vault?`,
           {
-            title: 'File Already Exists',
+            title: 'Replace Existing File?',
             kind: 'warning',
+            okLabel: 'Replace',
+            cancelLabel: 'Keep Original',
           },
         );
 
