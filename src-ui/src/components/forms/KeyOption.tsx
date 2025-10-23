@@ -45,14 +45,12 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
         ) : (
           <Key className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
         )}
-        <div className="min-w-0 flex-1">
-          <div className="font-medium truncate">{keyData.label}</div>
-        </div>
-        {/* Availability indicator on the right */}
+        <div className="font-medium truncate">{keyData.label}</div>
+        {/* Availability indicator next to label */}
         {keyData.is_available ? (
-          <Check className="h-4 w-4 text-green-600 dark:text-green-500 flex-shrink-0" />
+          <Check className="h-3.5 w-3.5 text-teal-600 dark:text-teal-500 flex-shrink-0" />
         ) : (
-          <X className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+          <X className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
         )}
       </div>
     </li>

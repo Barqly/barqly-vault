@@ -22,7 +22,7 @@ interface KeyMenuBarProps {
  * Vault-aware: Shows empty placeholders when vaultId is null (smooth UX for Encrypt/Decrypt workflows)
  */
 export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ vaultId, onKeySelect, className = '' }) => {
-  const { currentVault, keyCache } = useVault();
+  const { currentVault, keyCache, globalKeyCache } = useVault();
   const location = useLocation();
 
   // Determine if we're on the Manage Keys page for interactive behavior
@@ -66,15 +66,28 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ vaultId, onKeySelect, cl
     // Combine: YubiKeys first, then Passphrase keys
     const sorted = [...yubiKeys, ...passphraseKeys];
 
-    console.log('KeyMenuBar: Sorted keys:', {
-      yubiKeyCount: yubiKeys.length,
-      passphraseCount: passphraseKeys.length,
-      totalSorted: sorted.length,
-      order: sorted.map((k) => `${k.type}: ${k.label}`),
+    // Merge availability status from globalKeyCache
+    const sortedWithAvailability = sorted.map((key) => {
+      const globalKey = globalKeyCache.find((gk) => gk.id === key.id);
+      return {
+        ...key,
+        is_available: globalKey?.is_available ?? false,
+      };
     });
 
-    return sorted;
-  }, [targetVaultId, keyCache]);
+    console.log('KeyMenuBar: Sorted keys with availability:', {
+      yubiKeyCount: yubiKeys.length,
+      passphraseCount: passphraseKeys.length,
+      totalSorted: sortedWithAvailability.length,
+      keys: sortedWithAvailability.map((k) => ({
+        type: k.type,
+        label: k.label,
+        is_available: k.is_available,
+      })),
+    });
+
+    return sortedWithAvailability;
+  }, [targetVaultId, keyCache, globalKeyCache]);
 
   // Generic click handler for any key slot
   const handleKeyClick = (slotIndex: number) => {
@@ -144,6 +157,7 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ vaultId, onKeySelect, cl
           isConfigured={true}
           label={key.label}
           isInteractive={isManageKeysPage}
+          isAvailable={key.is_available}
         />
       );
     }
@@ -163,6 +177,7 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ vaultId, onKeySelect, cl
           serial={key.data.serial}
           label={key.label}
           isInteractive={isManageKeysPage}
+          isAvailable={key.is_available}
         />
       );
     }

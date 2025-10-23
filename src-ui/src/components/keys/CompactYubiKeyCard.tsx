@@ -1,5 +1,5 @@
 import React from 'react';
-import { Fingerprint, Circle } from 'lucide-react';
+import { Fingerprint, Circle, Check, X } from 'lucide-react';
 
 export type YubiKeySlotState = 'empty' | 'active' | 'registered' | 'orphaned';
 
@@ -11,6 +11,7 @@ interface CompactYubiKeySlotProps {
   label?: string;
   onClick?: () => void;
   isInteractive?: boolean; // NEW: Control whether slot is clickable
+  isAvailable?: boolean; // NEW: Availability status from global key cache
   className?: string;
 }
 
@@ -26,6 +27,7 @@ export const CompactYubiKeyCard: React.FC<CompactYubiKeySlotProps> = ({
   label,
   onClick,
   isInteractive = true, // Default to interactive for backward compatibility
+  isAvailable,
   className = '',
 }) => {
   // Fixed width and height slot with brand colors and theme-awareness
@@ -116,20 +118,33 @@ export const CompactYubiKeyCard: React.FC<CompactYubiKeySlotProps> = ({
     <button
       onClick={handleClick}
       disabled={!isInteractive}
-      className={`${getSlotStyles()} ${className}`}
+      className={`${getSlotStyles()} ${className} justify-between`}
       style={getInlineStyles()}
       aria-label={`YubiKey slot ${index + 1}: ${state}`}
       title={getTooltipText()}
     >
-      {/* Icon - Brand orange Fingerprint icon for configured, empty circle for empty */}
-      {state !== 'empty' ? (
-        <Fingerprint className="h-3 w-3 flex-shrink-0" style={{ color: '#F98B1C' }} />
-      ) : (
-        <Circle className="h-3 w-3 flex-shrink-0" />
-      )}
+      <div className="flex items-center gap-1.5 min-w-0">
+        {/* Icon - Brand orange Fingerprint icon for configured, empty circle for empty */}
+        {state !== 'empty' ? (
+          <Fingerprint className="h-3 w-3 flex-shrink-0" style={{ color: '#F98B1C' }} />
+        ) : (
+          <Circle className="h-3 w-3 flex-shrink-0" />
+        )}
 
-      {/* Label with truncation */}
-      <span className="text-xs font-medium truncate">{getDisplayLabel()}</span>
+        {/* Label with truncation */}
+        <span className="text-xs font-medium truncate">{getDisplayLabel()}</span>
+      </div>
+
+      {/* Availability indicator on the right (only for configured keys) */}
+      {state !== 'empty' && isAvailable !== undefined && (
+        <div className="flex-shrink-0">
+          {isAvailable ? (
+            <Check className="h-3 w-3 text-teal-600" />
+          ) : (
+            <X className="h-3 w-3 text-slate-400" />
+          )}
+        </div>
+      )}
     </button>
   );
 };
