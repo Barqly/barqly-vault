@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { Upload, Lock } from 'lucide-react';
 
 interface DropZoneUIProps {
@@ -32,6 +32,7 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
 }) => {
   const IconComponent = icon === 'decrypt' ? Lock : Upload;
   const browseButtonRef = useRef<HTMLButtonElement>(null);
+  const browseFolderButtonRef = useRef<HTMLButtonElement>(null);
 
   // Auto-focus the browse button when requested and component is enabled
   useEffect(() => {
@@ -44,6 +45,35 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
       return () => clearTimeout(timeoutId);
     }
   }, [autoFocus, disabled]);
+
+  // Handle keyboard navigation for focus trap between the two buttons
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, isFirstButton: boolean) => {
+      if (!showFolderButton || disabled) return;
+
+      if (e.key === 'Tab') {
+        // If we have two buttons, trap focus between them
+        if (isFirstButton && !e.shiftKey) {
+          // Tab from first button -> go to second button
+          e.preventDefault();
+          browseFolderButtonRef.current?.focus();
+        } else if (!isFirstButton && e.shiftKey) {
+          // Shift+Tab from second button -> go to first button
+          e.preventDefault();
+          browseButtonRef.current?.focus();
+        } else if (!isFirstButton && !e.shiftKey) {
+          // Tab from second button -> wrap back to first button
+          e.preventDefault();
+          browseButtonRef.current?.focus();
+        } else if (isFirstButton && e.shiftKey) {
+          // Shift+Tab from first button -> wrap to second button
+          e.preventDefault();
+          browseFolderButtonRef.current?.focus();
+        }
+      }
+    },
+    [showFolderButton, disabled]
+  );
 
   return (
     <>
@@ -69,6 +99,7 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
             e.stopPropagation();
             onBrowseFiles();
           }}
+          onKeyDown={(e) => handleKeyDown(e, true)}
           disabled={disabled}
           aria-label={showFolderButton ? 'Select one or more files to encrypt' : browseButtonText}
           className={`
@@ -88,10 +119,12 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
 
         {showFolderButton && (
           <button
+            ref={browseFolderButtonRef}
             onClick={(e) => {
               e.stopPropagation();
               onBrowseFolder();
             }}
+            onKeyDown={(e) => handleKeyDown(e, false)}
             disabled={disabled}
             aria-label="Select an entire folder to encrypt"
             className={`
