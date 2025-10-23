@@ -158,6 +158,10 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
 
   const handlePrevious = () => {
     if (canGoToPreviousStep) {
+      // Clear the file selection when going back to step 1
+      if (currentStep === 2) {
+        onClearFiles();
+      }
       onStepChange(currentStep - 1);
     }
   };
