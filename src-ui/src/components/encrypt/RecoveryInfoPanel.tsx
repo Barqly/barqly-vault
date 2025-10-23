@@ -52,7 +52,7 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
         <div className="space-y-2">
           {/* User Files */}
           <div className="flex items-start gap-2">
-            <Check className="w-5 h-5 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
+            <Check className="w-5 h-5 text-teal-600 dark:text-teal-500 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
                 Your Files
@@ -65,7 +65,7 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
 
           {/* Vault Manifest */}
           <div className="flex items-start gap-2">
-            <Check className="w-5 h-5 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
+            <Check className="w-5 h-5 text-teal-600 dark:text-teal-500 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
                 Vault Manifest
@@ -79,7 +79,7 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
           {/* Passphrase Keys */}
           {hasPassphraseKeys && (
             <div className="flex items-start gap-2">
-              <Check className="w-5 h-5 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
+              <Check className="w-5 h-5 text-teal-600 dark:text-teal-500 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
                 <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
                   Passphrase Keys
@@ -94,7 +94,7 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
 
           {/* Recovery Instructions */}
           <div className="flex items-start gap-2">
-            <Check className="w-5 h-5 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
+            <Check className="w-5 h-5 text-teal-600 dark:text-teal-500 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
                 RECOVERY.txt
