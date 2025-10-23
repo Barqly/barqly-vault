@@ -13,7 +13,7 @@ import EncryptionProgress from '../components/encrypt/EncryptionProgress';
 import EncryptionSuccess from '../components/encrypt/EncryptionSuccess';
 import AnimatedTransition from '../components/ui/AnimatedTransition';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
-import OverwriteConfirmationDialog from '../components/ui/OverwriteConfirmationDialog';
+// Removed OverwriteConfirmationDialog - using native Tauri dialog instead
 
 const ENCRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Files', description: 'Choose what to encrypt' },
@@ -34,8 +34,6 @@ const EncryptPage: React.FC = () => {
     outputPath,
     archiveName,
     isEncrypting,
-    showOverwriteDialog,
-    pendingOverwriteFile,
     bundleContents,
     workflowVault,
     sessionVaultId,
@@ -63,10 +61,6 @@ const EncryptPage: React.FC = () => {
     // Navigation handlers
     handleStepNavigation,
     encryptionResult,
-
-    // Overwrite confirmation handlers
-    handleOverwriteConfirm,
-    handleOverwriteCancel,
   } = useEncryptionWorkflow();
 
   // Navigation handler for decrypt flow
@@ -200,14 +194,6 @@ const EncryptPage: React.FC = () => {
           </AnimatedTransition>
         </div>
       </AppPrimaryContainer>
-
-      {/* Overwrite Confirmation Dialog */}
-      <OverwriteConfirmationDialog
-        isOpen={showOverwriteDialog}
-        fileName={pendingOverwriteFile}
-        onConfirm={handleOverwriteConfirm}
-        onCancel={handleOverwriteCancel}
-      />
     </div>
   );
 };

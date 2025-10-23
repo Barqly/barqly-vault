@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { documentDir, join } from '@tauri-apps/api/path';
+import { exists, remove } from '@tauri-apps/plugin-fs';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { useFileEncryption } from './useFileEncryption';
 import type { CommandError, VaultSummary } from '../bindings';
 import { createCommandError } from '../lib/errors/command-error';
@@ -53,8 +55,7 @@ export const useEncryptionWorkflow = () => {
   const [fileValidationError, setFileValidationError] = useState<CommandError | null>(null);
   const [encryptionResult, setEncryptionResult] = useState<EncryptionResult | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
-  const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
-  const [pendingOverwriteFile, setPendingOverwriteFile] = useState<string>('');
+  // Removed showOverwriteDialog and pendingOverwriteFile - using native dialog instead
   const [bundleContents, setBundleContents] = useState<BundleContents | null>(null);
   const [sessionVaultId, setSessionVaultId] = useState<string | null>(null); // Track vault selected in THIS session
   const [workflowVault, setWorkflowVault] = useState<VaultSummary | null>(null); // Local vault selection for this workflow
@@ -121,6 +122,18 @@ export const useEncryptionWorkflow = () => {
     [canNavigateToStep],
   );
 
+  // Generate default output path
+  const getDefaultOutputPath = useCallback(async () => {
+    try {
+      const docsPath = await documentDir();
+      const vaultsPath = await join(docsPath, 'Barqly-Vaults');
+      return vaultsPath;
+    } catch (error) {
+      console.error('Error getting default path:', error);
+      return '~/Documents/Barqly-Vaults';
+    }
+  }, []);
+
   // Handle file selection
   const handleFilesSelected = useCallback(
     async (paths: string[], selectionType: 'Files' | 'Folder') => {
@@ -183,6 +196,39 @@ export const useEncryptionWorkflow = () => {
       console.log('[DEBUG] Starting multi-key encryption, isEncrypting=true');
       setStartTime(Date.now());
 
+      // Determine the output file path
+      const fileName = archiveName ? `${archiveName}.age` : `${workflowVault.name}.age`;
+      const outputDir = outputPath || (await getDefaultOutputPath());
+      const fullOutputPath = await join(outputDir, fileName);
+
+      console.log('[DEBUG] Checking if file exists:', fullOutputPath);
+
+      // Check if the file already exists BEFORE calling the backend
+      if (await exists(fullOutputPath)) {
+        console.log('[DEBUG] File exists, showing native dialog');
+
+        // Use native Tauri dialog for confirmation
+        const shouldOverwrite = await confirm(
+          `A file named "${fileName}" already exists in the destination folder.\n\nDo you want to replace the existing file? This action cannot be undone.`,
+          {
+            title: 'File Already Exists',
+            kind: 'warning',
+          },
+        );
+
+        if (shouldOverwrite) {
+          console.log('[DEBUG] User confirmed overwrite, deleting existing file');
+          // Delete the existing file
+          await remove(fullOutputPath);
+          console.log('[DEBUG] Existing file deleted');
+        } else {
+          console.log('[DEBUG] User cancelled overwrite');
+          setIsEncrypting(false);
+          return;
+        }
+      }
+
+      // Now proceed with encryption (file doesn't exist or was deleted)
       const input: EncryptFilesMultiInput = {
         vault_id: workflowVault.id,
         in_file_paths: selectedFiles.paths,
@@ -230,15 +276,6 @@ export const useEncryptionWorkflow = () => {
       );
       await refreshVaultStatistics(workflowVault.id);
       console.log('[DEBUG] Vault statistics refresh completed');
-
-      // Check if there's an overwrite warning
-      if (response.file_exists_warning) {
-        // Show overwrite confirmation dialog
-        const fileName = response.encrypted_file_path.split('/').pop() || 'encrypted-file.age';
-        setPendingOverwriteFile(fileName);
-        setShowOverwriteDialog(true);
-        return; // Don't set success yet, wait for user confirmation
-      }
     } catch (err) {
       console.error('[EncryptionWorkflow] Multi-key encryption error:', err);
       const commandError =
@@ -254,19 +291,15 @@ export const useEncryptionWorkflow = () => {
       console.log('[DEBUG] Finally block: setting isEncrypting=false');
       setIsEncrypting(false);
     }
-  }, [selectedFiles, archiveName, outputPath, workflowVault, keyCache, startTime]);
-
-  // Generate default output path
-  const getDefaultOutputPath = useCallback(async () => {
-    try {
-      const docsPath = await documentDir();
-      const vaultsPath = await join(docsPath, 'Barqly-Vaults');
-      return vaultsPath;
-    } catch (error) {
-      console.error('Error getting default path:', error);
-      return '~/Documents/Barqly-Vaults';
-    }
-  }, []);
+  }, [
+    selectedFiles,
+    archiveName,
+    outputPath,
+    workflowVault,
+    keyCache,
+    startTime,
+    getDefaultOutputPath,
+  ]);
 
   // Set default output path when files are selected
   useEffect(() => {
@@ -282,21 +315,7 @@ export const useEncryptionWorkflow = () => {
     }
   }, [workflowVault, archiveName]);
 
-  // Handle overwrite confirmation
-  const handleOverwriteConfirm = useCallback(() => {
-    setShowOverwriteDialog(false);
-    setPendingOverwriteFile('');
-    // For now, just proceed with success since the file was already created
-    // In a full implementation, we'd call the backend again with overwrite=true
-    console.log('[DEBUG] User confirmed overwrite, proceeding with success');
-  }, []);
-
-  const handleOverwriteCancel = useCallback(() => {
-    setShowOverwriteDialog(false);
-    setPendingOverwriteFile('');
-    setIsEncrypting(false);
-    console.log('[DEBUG] User cancelled overwrite, resetting encryption state');
-  }, []);
+  // Overwrite confirmation is now handled directly in handleEncryption using native dialog
 
   // Handle reset
   const handleReset = useCallback(() => {
@@ -367,8 +386,6 @@ export const useEncryptionWorkflow = () => {
     showAdvancedOptions,
     setShowAdvancedOptions,
     encryptionResult,
-    showOverwriteDialog,
-    pendingOverwriteFile,
     bundleContents, // Recovery bundle contents
     workflowVault, // Local vault selection for this workflow
     sessionVaultId, // Track if vault was selected in THIS session (for display logic)
@@ -401,9 +418,5 @@ export const useEncryptionWorkflow = () => {
     // Navigation handlers
     handleStepNavigation,
     canNavigateToStep,
-
-    // Overwrite confirmation handlers
-    handleOverwriteConfirm,
-    handleOverwriteCancel,
   };
 };
