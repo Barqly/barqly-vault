@@ -162,6 +162,7 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
   const handleToggleKey = async (keyId: string, currentlyAttached: boolean) => {
     try {
       // OPTIMISTIC UPDATE: Update UI immediately for instant feedback
+      // Don't re-sort - preserve the initial display order
       setKeyStates((prev) =>
         prev.map((state) => {
           if (state.key.id === keyId) {
@@ -325,10 +326,6 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
                   {/* Key info */}
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-slate-200 truncate">{state.key.label}</div>
-                    <div className="text-xs text-slate-400">
-                      {state.key.key_type.type === 'YubiKey' ? 'YubiKey' : 'Passphrase'}
-                      {state.isAttached && ' • Attached'}
-                    </div>
                   </div>
 
                   {/* Loading indicator (only when toggling this specific key) */}
