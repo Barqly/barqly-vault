@@ -267,6 +267,10 @@ export const useEncryptionWorkflow = () => {
 
         if (shouldOverwrite) {
           console.log('[DEBUG] User confirmed overwrite, calling backend again');
+          // Keep the progress view visible during retry
+          // Add a small delay for visual continuity
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
           // Call the backend again - it will overwrite this time
           const retryResult = await commands.encryptFilesMulti(input);
           if (retryResult.status === 'error') {
@@ -274,6 +278,9 @@ export const useEncryptionWorkflow = () => {
           }
           // Use the retry response
           const retryResponse = retryResult.data;
+
+          // Add small delay before showing success for smoother transition
+          await new Promise((resolve) => setTimeout(resolve, 200));
           processSuccessfulEncryption(retryResponse);
         } else {
           console.log('[DEBUG] User chose to keep original file');
