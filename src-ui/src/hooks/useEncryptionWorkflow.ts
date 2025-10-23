@@ -276,7 +276,9 @@ export const useEncryptionWorkflow = () => {
           const retryResponse = retryResult.data;
           processSuccessfulEncryption(retryResponse);
         } else {
-          console.log('[DEBUG] User cancelled overwrite');
+          console.log('[DEBUG] User chose to keep original file');
+          // Go back to Step 2 so user can change filename or vault
+          setCurrentStep(2);
           setIsEncrypting(false);
           return;
         }
