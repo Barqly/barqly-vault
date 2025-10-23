@@ -28,36 +28,36 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
       aria-selected={isSelected}
       tabIndex={0}
       className={`
-        px-3 py-2 cursor-pointer hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:border-l-2 focus:border-blue-400
-        ${isSelected ? 'bg-blue-100 text-blue-900' : 'text-slate-800'}
+        px-3 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 focus:bg-slate-50 dark:focus:bg-slate-700 focus:outline-none border-b border-slate-100 dark:border-slate-700 last:border-b-0
+        ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200'}
       `}
       onClick={() => onSelect(keyData.id)}
       onKeyDown={handleKeyDown}
     >
       <div className="flex items-center gap-2">
         {keyData.type === 'YubiKey' ? (
-          <Usb className="h-4 w-4 text-green-600 flex-shrink-0" />
+          <Usb className="h-4 w-4 text-green-600 dark:text-green-500 flex-shrink-0" />
         ) : (
-          <Key className="h-4 w-4 text-blue-600 flex-shrink-0" />
+          <Key className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
         )}
         <div className="min-w-0 flex-1">
           <div className="font-medium truncate">{keyData.label}</div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <Calendar className="h-3 w-3" />
             <span>{formatDate(keyData.created_at)}</span>
             {keyData.type === 'YubiKey' && (
-              <span className="text-green-600 font-medium">• YubiKey</span>
+              <span className="text-green-600 dark:text-green-500 font-medium">• YubiKey</span>
             )}
             {keyData.lifecycle_status === 'pre_activation' && (
-              <span className="text-orange-600 font-medium">• Not Available</span>
+              <span className="text-orange-600 dark:text-orange-500 font-medium">• Not Available</span>
             )}
             {keyData.lifecycle_status === 'suspended' && (
-              <span className="text-yellow-600 font-medium">• Suspended</span>
+              <span className="text-yellow-600 dark:text-yellow-500 font-medium">• Suspended</span>
             )}
             {(keyData.lifecycle_status === 'deactivated' ||
               keyData.lifecycle_status === 'destroyed' ||
               keyData.lifecycle_status === 'compromised') && (
-              <span className="text-red-600 font-medium">• Unavailable</span>
+              <span className="text-red-600 dark:text-red-500 font-medium">• Unavailable</span>
             )}
           </div>
         </div>
