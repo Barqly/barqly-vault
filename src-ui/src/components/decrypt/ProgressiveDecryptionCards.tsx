@@ -69,7 +69,6 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   const [isValidatingPassphrase, setIsValidatingPassphrase] = useState(false);
   const [availableKeys, setAvailableKeys] = useState<VaultKey[]>([]);
   const [selectedKey, setSelectedKey] = useState<VaultKey | null>(null);
-  const [hasNavigatedBack, setHasNavigatedBack] = useState(false);
 
   // Update selected key when selectedKeyId changes
   useEffect(() => {
@@ -95,20 +94,16 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
 
   const handlePrevious = () => {
     if (canGoToPreviousStep) {
-      setHasNavigatedBack(true);
+      // Clear the file selection when going back to step 1
+      if (currentStep === 2) {
+        onClearFiles();
+      }
       onStepChange(currentStep - 1);
     }
   };
 
   const handleContinue = async () => {
     if (canContinue) {
-      // For step 1, when returning from step 2, just continue to step 2
-      if (currentStep === 1) {
-        setHasNavigatedBack(false);
-        onStepChange(2);
-        return;
-      }
-
       // For step 2, validate the passphrase with the selected key before proceeding
       if (currentStep === 2 && selectedKeyId && passphrase && selectedFile) {
         setIsValidatingPassphrase(true);
@@ -195,7 +190,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                     }
                   : null
               }
-              onClearFiles={hasNavigatedBack ? undefined : onClearFiles}  // Hide clear button when navigated back
+              onClearFiles={onClearFiles}
               onError={onFileError}
               disabled={isLoading}
               mode="single"
@@ -204,11 +199,11 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               subtitle="All files in this vault will be restored to their original folder structure in the chosen recovery location."
               browseButtonText="Select Vault"
               icon="decrypt"
-              autoFocus={currentStep === 1 && !hasNavigatedBack}
+              autoFocus={currentStep === 1}
             />
 
-            {/* Only show vault recognition if NOT navigated back - auto-advance on first selection */}
-            {selectedFile && isKnownVault !== null && !hasNavigatedBack && (
+            {/* Show vault recognition after file selection - it will auto-advance */}
+            {selectedFile && isKnownVault !== null && (
               <div className="mt-4">
                 <VaultRecognition
                   file={selectedFile}
@@ -319,83 +314,47 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
       <div className="p-6">
         <div className="mb-6">{renderStepContent()}</div>
 
-        {/* Navigation Buttons - Show different buttons based on state */}
-        {((canGoToPreviousStep && currentStep !== 1) || currentStep === 2 || (currentStep === 1 && hasNavigatedBack && selectedFile)) && (
+        {/* Navigation Buttons - Only show on Step 2 */}
+        {currentStep === 2 && (
           <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
-            {/* Step 1 with hasNavigatedBack - show Clear button on left */}
-            {currentStep === 1 && hasNavigatedBack && selectedFile && (
-              <button
-                onClick={() => {
-                  onClearFiles();
-                  setHasNavigatedBack(false);
-                }}
-                className="h-10 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                disabled={isLoading}
-                tabIndex={2}
-              >
-                Clear
-              </button>
-            )}
+            {/* Previous button */}
+            <button
+              onClick={handlePrevious}
+              className="h-10 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1 transition-colors"
+              disabled={isLoading}
+              tabIndex={2}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </button>
 
-            {/* Step 2 - show Previous button */}
-            {canGoToPreviousStep && currentStep !== 1 && (
-              <button
-                onClick={handlePrevious}
-                className="h-10 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1 transition-colors"
-                disabled={isLoading}
-                tabIndex={2}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
-              </button>
-            )}
-
-            {/* Step 1 with hasNavigatedBack - show Continue button on right */}
-            {currentStep === 1 && hasNavigatedBack && selectedFile && (
-              <button
-                ref={continueButtonRef}
-                onClick={handleContinue}
-                className="h-10 rounded-xl px-5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ml-auto"
-                style={{ backgroundColor: '#1D4ED8' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1E40AF'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1D4ED8'}
-                disabled={isLoading}
-                tabIndex={1}
-                autoFocus
-              >
-                Continue
-              </button>
-            )}
-
-            {/* Step 2 - show Decrypt Vault button */}
-            {currentStep === 2 && (
-              <button
-                ref={continueButtonRef}
-                onClick={handleContinue}
-                className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                  canContinue && !isValidatingPassphrase
-                    ? 'text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                } ${!canGoToPreviousStep ? 'ml-auto' : ''}`}
-                style={{
-                  backgroundColor: canContinue && !isValidatingPassphrase ? '#1D4ED8' : '',
-                }}
-                onMouseEnter={(e) => {
-                  if (canContinue && !isValidatingPassphrase) {
-                    e.currentTarget.style.backgroundColor = '#1E40AF';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (canContinue && !isValidatingPassphrase) {
-                    e.currentTarget.style.backgroundColor = '#1D4ED8';
-                  }
-                }}
-                disabled={isLoading || !canContinue || isValidatingPassphrase}
-                tabIndex={canContinue ? 1 : -1}
-              >
-                {isValidatingPassphrase ? 'Validating...' : 'Decrypt Vault'}
-              </button>
-            )}
+            {/* Decrypt Vault button */}
+            <button
+              ref={continueButtonRef}
+              onClick={handleContinue}
+              className={`h-10 rounded-xl px-5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                canContinue && !isValidatingPassphrase
+                  ? 'text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              }`}
+              style={{
+                backgroundColor: canContinue && !isValidatingPassphrase ? '#1D4ED8' : '',
+              }}
+              onMouseEnter={(e) => {
+                if (canContinue && !isValidatingPassphrase) {
+                  e.currentTarget.style.backgroundColor = '#1E40AF';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (canContinue && !isValidatingPassphrase) {
+                  e.currentTarget.style.backgroundColor = '#1D4ED8';
+                }
+              }}
+              disabled={isLoading || !canContinue || isValidatingPassphrase}
+              tabIndex={canContinue ? 1 : -1}
+            >
+              {isValidatingPassphrase ? 'Validating...' : 'Decrypt Vault'}
+            </button>
           </div>
         )}
       </div>
