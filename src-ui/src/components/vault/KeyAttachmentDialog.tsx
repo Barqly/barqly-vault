@@ -1,0 +1,460 @@
+import React, { useState, useEffect } from 'react';
+import { X, Loader2, Key, Fingerprint, Check as CheckIcon, Lock } from 'lucide-react';
+import { commands, VaultSummary, GlobalKey } from '../../bindings';
+import { logger } from '../../lib/logger';
+
+interface KeyAttachmentDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  vaultInfo: VaultSummary;
+  onSuccess: () => void;
+}
+
+interface KeyCheckboxState {
+  key: GlobalKey;
+  isAttached: boolean;
+  isDisabled: boolean;
+  isLoading: boolean;
+  tooltip: string;
+  disabledReason?: 'immutable-vault' | 'max-keys' | 'unavailable' | null;
+}
+
+export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
+  isOpen,
+  onClose,
+  vaultInfo,
+  onSuccess,
+}) => {
+  const [keyStates, setKeyStates] = useState<KeyCheckboxState[]>([]);
+  const [isLoadingKeys, setIsLoadingKeys] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isVaultMutable, setIsVaultMutable] = useState(true);
+
+  // Load keys and determine checkbox states
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadKeys = async () => {
+      try {
+        setIsLoadingKeys(true);
+        setError(null);
+
+        logger.info('KeyAttachmentDialog', 'Loading keys for vault', {
+          vaultId: vaultInfo.id,
+          vaultName: vaultInfo.name,
+        });
+
+        // Check vault mutability first
+        const statsResult = await commands.getVaultStatistics({
+          vault_id: vaultInfo.id,
+        });
+
+        let vaultMutable = true;
+        if (statsResult.status === 'ok' && statsResult.data.statistics) {
+          const encryptionCount = statsResult.data.statistics.encryption_count;
+          vaultMutable = encryptionCount === 0;
+          setIsVaultMutable(vaultMutable);
+
+          logger.info('KeyAttachmentDialog', 'Vault mutability check', {
+            vaultId: vaultInfo.id,
+            encryptionCount,
+            isMutable: vaultMutable,
+          });
+        }
+
+        // Get all keys from global registry
+        const keysResult = await commands.listUnifiedKeys({ type: 'All' });
+
+        if (keysResult.status === 'error') {
+          logger.error(
+            'KeyAttachmentDialog',
+            'Failed to load keys',
+            new Error(keysResult.error.message),
+          );
+          setError('Failed to load keys');
+          setIsLoadingKeys(false);
+          return;
+        }
+
+        const allKeys = keysResult.data;
+        logger.info('KeyAttachmentDialog', 'Keys loaded', {
+          count: allKeys.length,
+        });
+
+        if (allKeys.length === 0) {
+          setKeyStates([]);
+          setIsLoadingKeys(false);
+          return;
+        }
+
+        // Get current vault keys to determine attachment status
+        const vaultKeysResult = await commands.getKeyMenuData({
+          vault_id: vaultInfo.id,
+        });
+
+        const currentVaultKeyIds =
+          vaultKeysResult.status === 'ok' ? vaultKeysResult.data.keys.map((k) => k.id) : [];
+
+        const currentKeyCount = currentVaultKeyIds.length;
+        const hasReachedMaxKeys = currentKeyCount >= 4;
+
+        logger.info('KeyAttachmentDialog', 'Current vault keys', {
+          vaultId: vaultInfo.id,
+          currentKeyCount,
+          hasReachedMaxKeys,
+          keyIds: currentVaultKeyIds,
+        });
+
+        // Process each key
+        const states: KeyCheckboxState[] = allKeys.map((key) => {
+          const isAttached = currentVaultKeyIds.includes(key.id);
+          let isDisabled = false;
+          let tooltip = '';
+          let disabledReason: 'immutable-vault' | 'max-keys' | 'unavailable' | null = null;
+
+          if (!vaultMutable) {
+            // Vault is immutable - all keys disabled
+            isDisabled = true;
+            disabledReason = 'immutable-vault';
+            tooltip = isAttached
+              ? 'This vault is sealed - key set cannot be modified'
+              : 'Vault already encrypted — key set is sealed';
+          } else if (!key.is_available) {
+            // Key not available (YubiKey unplugged / .enc file missing)
+            isDisabled = !isAttached; // Allow detach of unavailable keys, but not attach
+            disabledReason = 'unavailable';
+            tooltip = isAttached
+              ? 'Key is not currently available (click to detach)'
+              : key.key_type.type === 'YubiKey'
+                ? 'YubiKey not plugged in'
+                : 'Key file not found';
+          } else if (hasReachedMaxKeys && !isAttached) {
+            // Vault at max capacity - can't attach new keys
+            isDisabled = true;
+            disabledReason = 'max-keys';
+            tooltip = 'Maximum 4 keys reached. Detach a key to attach this one.';
+          } else {
+            // Normal state - can attach or detach
+            tooltip = isAttached
+              ? 'Click to detach key from vault'
+              : 'Click to attach key to vault';
+          }
+
+          return {
+            key,
+            isAttached,
+            isDisabled,
+            isLoading: false,
+            tooltip,
+            disabledReason,
+          };
+        });
+
+        // Sort keys as requested:
+        // 1. YubiKeys first, then Passphrase
+        // 2. Within each type: Available (not attached) → Attached
+        const sortedStates = states.sort((a, b) => {
+          // Primary sort: YubiKey before Passphrase
+          const aIsYubiKey = a.key.key_type.type === 'YubiKey';
+          const bIsYubiKey = b.key.key_type.type === 'YubiKey';
+
+          if (aIsYubiKey && !bIsYubiKey) return -1;
+          if (!aIsYubiKey && bIsYubiKey) return 1;
+
+          // Secondary sort within type: Available (not attached) before Attached
+          if (!a.isAttached && b.isAttached) return -1;
+          if (a.isAttached && !b.isAttached) return 1;
+
+          // Tertiary sort: Alphabetically by label
+          return (a.key.label || '').localeCompare(b.key.label || '');
+        });
+
+        setKeyStates(sortedStates);
+        setIsLoadingKeys(false);
+      } catch (err) {
+        logger.error('KeyAttachmentDialog', 'Error loading keys', err as Error);
+        setError('Failed to load keys');
+        setIsLoadingKeys(false);
+      }
+    };
+
+    loadKeys();
+  }, [isOpen, vaultInfo.id]);
+
+  const handleToggleKey = async (keyId: string, currentlyAttached: boolean) => {
+    try {
+      // Update loading state for this specific key
+      setKeyStates((prev) =>
+        prev.map((state) =>
+          state.key.id === keyId ? { ...state, isLoading: true } : state,
+        ),
+      );
+
+      if (currentlyAttached) {
+        // Detach key
+        logger.info('KeyAttachmentDialog', 'Detaching key from vault', {
+          keyId,
+          vaultId: vaultInfo.id,
+        });
+
+        const result = await commands.removeKeyFromVault({
+          vault_id: vaultInfo.id,
+          key_id: keyId,
+        });
+
+        if (result.status === 'error') {
+          throw new Error(result.error.message || 'Failed to detach key');
+        }
+
+        logger.info('KeyAttachmentDialog', 'Key detached successfully', {
+          keyId,
+          vaultId: vaultInfo.id,
+        });
+      } else {
+        // Attach key
+        logger.info('KeyAttachmentDialog', 'Attaching key to vault', {
+          keyId,
+          vaultId: vaultInfo.id,
+        });
+
+        const result = await commands.attachKeyToVault({
+          vault_id: vaultInfo.id,
+          key_id: keyId,
+        });
+
+        if (result.status === 'error') {
+          throw new Error(result.error.message || 'Failed to attach key');
+        }
+
+        logger.info('KeyAttachmentDialog', 'Key attached successfully', {
+          keyId,
+          vaultId: vaultInfo.id,
+        });
+      }
+
+      // Reload keys to get updated state
+      const keysResult = await commands.listUnifiedKeys({ type: 'All' });
+      const vaultKeysResult = await commands.getKeyMenuData({
+        vault_id: vaultInfo.id,
+      });
+
+      if (keysResult.status === 'ok' && vaultKeysResult.status === 'ok') {
+        const allKeys = keysResult.data;
+        const currentVaultKeyIds = vaultKeysResult.data.keys.map((k) => k.id);
+        const currentKeyCount = currentVaultKeyIds.length;
+        const hasReachedMaxKeys = currentKeyCount >= 4;
+
+        // Recalculate states
+        const updatedStates: KeyCheckboxState[] = allKeys.map((key) => {
+          const isAttached = currentVaultKeyIds.includes(key.id);
+          let isDisabled = false;
+          let tooltip = '';
+          let disabledReason: 'immutable-vault' | 'max-keys' | 'unavailable' | null = null;
+
+          if (!isVaultMutable) {
+            isDisabled = true;
+            disabledReason = 'immutable-vault';
+            tooltip = 'Vault already encrypted — key set is sealed';
+          } else if (!key.is_available) {
+            isDisabled = !isAttached;
+            disabledReason = 'unavailable';
+            tooltip = isAttached
+              ? 'Key not available (click to detach)'
+              : key.key_type.type === 'YubiKey'
+                ? 'YubiKey not plugged in'
+                : 'Key file not found';
+          } else if (hasReachedMaxKeys && !isAttached) {
+            isDisabled = true;
+            disabledReason = 'max-keys';
+            tooltip = 'Maximum 4 keys reached. Detach a key to attach this one.';
+          } else {
+            tooltip = isAttached ? 'Click to detach key from vault' : 'Click to attach key to vault';
+          }
+
+          return {
+            key,
+            isAttached,
+            isDisabled,
+            isLoading: false,
+            tooltip,
+            disabledReason,
+          };
+        });
+
+        // Re-sort
+        const sortedStates = updatedStates.sort((a, b) => {
+          const aIsYubiKey = a.key.key_type.type === 'YubiKey';
+          const bIsYubiKey = b.key.key_type.type === 'YubiKey';
+
+          if (aIsYubiKey && !bIsYubiKey) return -1;
+          if (!aIsYubiKey && bIsYubiKey) return 1;
+
+          if (!a.isAttached && b.isAttached) return -1;
+          if (a.isAttached && !b.isAttached) return 1;
+
+          return (a.key.label || '').localeCompare(b.key.label || '');
+        });
+
+        setKeyStates(sortedStates);
+        onSuccess(); // Notify parent to refresh
+      }
+    } catch (err: any) {
+      logger.error('KeyAttachmentDialog', 'Toggle key failed', err);
+      setError(err.message || 'Failed to update key attachment');
+
+      // Reset loading state
+      setKeyStates((prev) =>
+        prev.map((state) =>
+          state.key.id === keyId ? { ...state, isLoading: false } : state,
+        ),
+      );
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop with blur */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Dialog */}
+      <div className="relative bg-slate-800 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-slate-600">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-600">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-700 rounded-lg">
+              <Key className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-100">Attach Keys</h2>
+              <p className="text-sm text-slate-400">{vaultInfo.name}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-700 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 py-4 max-h-96 overflow-y-auto">
+          {/* Vault mutability status */}
+          {!isVaultMutable && (
+            <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg flex items-start gap-2">
+              <Lock className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-300">
+                This vault is <strong>sealed</strong> - the key set cannot be modified after
+                encryption.
+              </div>
+            </div>
+          )}
+
+          {/* Key info */}
+          <div className="mb-3 text-sm text-slate-400">
+            <p>Select 2-4 keys for this vault (preferably hardware keys).</p>
+          </div>
+
+          {/* Error display */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-sm text-red-300">{error}</p>
+            </div>
+          )}
+
+          {/* Loading state */}
+          {isLoadingKeys && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
+            </div>
+          )}
+
+          {/* Key list */}
+          {!isLoadingKeys && keyStates.length > 0 && (
+            <div className="space-y-2">
+              {keyStates.map((state) => (
+                <label
+                  key={state.key.id}
+                  className={`
+                    flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer
+                    ${
+                      state.isDisabled
+                        ? 'bg-slate-700/30 border-slate-600/50 cursor-not-allowed opacity-60'
+                        : state.isAttached
+                          ? 'bg-blue-500/10 border-blue-500/50 hover:bg-blue-500/20'
+                          : 'bg-slate-700/50 border-slate-600 hover:bg-slate-700'
+                    }
+                  `}
+                  title={state.tooltip}
+                >
+                  {/* Checkbox */}
+                  <div className="flex-shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={state.isAttached}
+                      disabled={state.isDisabled || state.isLoading}
+                      onChange={() => handleToggleKey(state.key.id, state.isAttached)}
+                      className="w-4 h-4 rounded border-slate-500 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 disabled:opacity-50"
+                    />
+                  </div>
+
+                  {/* Key icon */}
+                  <div className="flex-shrink-0">
+                    {state.key.key_type.type === 'YubiKey' ? (
+                      <Fingerprint className="w-4 h-4" style={{ color: '#F98B1C' }} />
+                    ) : (
+                      <Key className="w-4 h-4 text-teal-600" />
+                    )}
+                  </div>
+
+                  {/* Key info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-slate-200 truncate">{state.key.label}</div>
+                    <div className="text-xs text-slate-400">
+                      {state.key.key_type.type === 'YubiKey' ? 'YubiKey' : 'Passphrase'}
+                      {state.isAttached && ' • Attached'}
+                    </div>
+                  </div>
+
+                  {/* Availability indicator */}
+                  <div className="flex-shrink-0">
+                    {state.isLoading ? (
+                      <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                    ) : state.key.is_available ? (
+                      <CheckIcon className="w-4 h-4 text-teal-600" />
+                    ) : (
+                      <X className="w-4 h-4 text-slate-500" />
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!isLoadingKeys && keyStates.length === 0 && (
+            <div className="text-center py-8 text-slate-400">
+              <p className="text-sm">No keys available.</p>
+              <p className="text-xs mt-1">Create keys in Manage Keys page.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-600 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors text-sm font-medium"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default KeyAttachmentDialog;

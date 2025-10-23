@@ -176,6 +176,10 @@ const VaultHub: React.FC = () => {
                         onSelect={() => handleVaultSelect(vault.id)}
                         onManageKeys={() => handleManageKeys(vault.id)}
                         onDelete={() => handleDeleteClick(vault.id, vault.name)}
+                        onKeysUpdated={async () => {
+                          // Refresh keys for this vault after attach/detach
+                          await refreshKeysForVault(vault.id);
+                        }}
                       />
                     );
                   })}

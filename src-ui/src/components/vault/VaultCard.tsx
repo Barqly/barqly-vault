@@ -3,6 +3,7 @@ import { Archive, Key, FlipHorizontal, Clock, HardDrive, Files, Fingerprint } fr
 import { VaultSummary, VaultKey, VaultStatistics, commands } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
 import { formatBytes, formatFileCount } from '../../lib/format-utils';
+import KeyAttachmentDialog from './KeyAttachmentDialog';
 
 interface VaultCardProps {
   vault: VaultSummary;
@@ -14,6 +15,7 @@ interface VaultCardProps {
   onManageKeys: () => void;
   onDelete: () => void;
   onKeyDrop?: (keyId: string) => void;
+  onKeysUpdated?: () => void; // Callback when keys are attached/detached
 }
 
 /**
@@ -33,14 +35,16 @@ const VaultCard: React.FC<VaultCardProps> = ({
   isDropTarget,
   statistics: propStatistics, // Receive statistics as prop
   onSelect,
-  onManageKeys,
+  onManageKeys: _onManageKeys,
   onDelete,
   onKeyDrop,
+  onKeysUpdated,
 }) => {
   const [localStatistics, setLocalStatistics] = useState<VaultStatistics | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showKeyDialog, setShowKeyDialog] = useState(false);
 
   // Use prop statistics if provided, otherwise fetch locally
   const statistics = propStatistics !== undefined ? propStatistics : localStatistics;
@@ -287,7 +291,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onManageKeys();
+            setShowKeyDialog(true);
           }}
           className="
             flex items-center justify-center gap-1 px-3 py-1.5
@@ -308,6 +312,19 @@ const VaultCard: React.FC<VaultCardProps> = ({
           Keys
         </button>
       </div>
+
+      {/* Key Attachment Dialog */}
+      <KeyAttachmentDialog
+        isOpen={showKeyDialog}
+        onClose={() => setShowKeyDialog(false)}
+        vaultInfo={vault}
+        onSuccess={() => {
+          // Refresh keys for this vault
+          if (onKeysUpdated) {
+            onKeysUpdated();
+          }
+        }}
+      />
     </div>
   );
 };
