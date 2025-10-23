@@ -48,7 +48,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
 
     switch (status) {
       case 'completed':
-        return `${baseClasses} bg-green-500 text-white`;
+        return `${baseClasses} bg-teal-600 text-white`;
       case 'current':
         return `${baseClasses} bg-blue-600 text-white ring-4 ring-blue-100`;
       case 'visited':
@@ -84,7 +84,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                       status === 'current'
                         ? 'bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 font-semibold border border-blue-600 dark:border-blue-500'
                         : status === 'completed'
-                          ? 'text-green-600 dark:text-green-500 font-medium'
+                          ? 'text-teal-600 dark:text-teal-500 font-medium'
                           : status === 'visited'
                             ? 'text-blue-600 dark:text-blue-400'
                             : 'text-slate-500 dark:text-slate-400'

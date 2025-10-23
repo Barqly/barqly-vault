@@ -53,8 +53,16 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
   const { vaults, keyCache } = useVault();
   const continueButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownButtonRef = useRef<HTMLButtonElement>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const canGoToPreviousStep = currentStep > 1;
+
+  // Get vaults with keys for dropdown
+  const vaultsWithKeys = vaults.filter((v) => {
+    const keys = keyCache.get(v.id) || [];
+    return keys.length > 0;
+  });
 
   // Define continue conditions for each step
   const canContinue = (() => {
@@ -73,6 +81,7 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+        setFocusedIndex(-1);
       }
     };
 
@@ -84,6 +93,68 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isDropdownOpen]);
+
+  // Handle keyboard navigation in dropdown
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const sortedVaults = vaultsWithKeys.slice().sort((a, b) => a.name.localeCompare(b.name));
+      const maxIndex = sortedVaults.length - 1;
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          // If nothing is focused yet, focus the first item
+          if (focusedIndex === -1) {
+            setFocusedIndex(0);
+          } else {
+            setFocusedIndex((prev) => (prev < maxIndex ? prev + 1 : 0));
+          }
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          // If nothing is focused yet, focus the last item
+          if (focusedIndex === -1) {
+            setFocusedIndex(maxIndex);
+          } else {
+            setFocusedIndex((prev) => (prev > 0 ? prev - 1 : maxIndex));
+          }
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          // Only select if an item is actually focused (not -1)
+          if (focusedIndex >= 0 && focusedIndex <= maxIndex) {
+            const selectedVault = sortedVaults[focusedIndex];
+            onVaultChange(selectedVault.id);
+            setIsDropdownOpen(false);
+            setFocusedIndex(-1);
+            // Focus the Encrypt Now button after selection
+            setTimeout(() => {
+              continueButtonRef.current?.focus();
+            }, 50);
+          }
+          // If no item is focused yet (focusedIndex === -1), do nothing
+          // This prevents auto-selecting first item when just opening dropdown
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setIsDropdownOpen(false);
+          setFocusedIndex(-1);
+          dropdownButtonRef.current?.focus();
+          break;
+        case 'Tab':
+          // Close dropdown on tab
+          setIsDropdownOpen(false);
+          setFocusedIndex(-1);
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isDropdownOpen, focusedIndex, vaultsWithKeys, onVaultChange]);
 
   const handlePrevious = () => {
     if (canGoToPreviousStep) {
@@ -134,12 +205,6 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
           return null;
         }
 
-        // Get vaults with keys for dropdown
-        const vaultsWithKeys = vaults.filter((v) => {
-          const keys = keyCache.get(v.id) || [];
-          return keys.length > 0;
-        });
-
         return (
           <div className="space-y-4">
             {/* Vault Selection */}
@@ -150,24 +215,38 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
               <div className="relative" ref={dropdownRef}>
                 {/* Custom Dropdown Button */}
                 <button
+                  ref={dropdownButtonRef}
                   type="button"
                   className="w-full px-4 py-3 border rounded-lg bg-white dark:bg-slate-800 text-main transition-colors focus:outline-none focus:ring-2 appearance-none cursor-pointer flex items-center justify-between"
                   style={{
                     borderColor: workflowVault ? '#3B82F6' : 'rgb(var(--border-default))',
                     boxShadow: workflowVault ? '0 0 0 2px rgba(59, 130, 246, 0.1)' : 'none',
                   }}
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  onClick={() => {
+                    setIsDropdownOpen(!isDropdownOpen);
+                    // Don't auto-focus any item when opening
+                    setFocusedIndex(-1);
+                  }}
                   disabled={vaultsWithKeys.length === 0}
                   autoFocus={currentStep === 2}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       setIsDropdownOpen(!isDropdownOpen);
+                      // Don't auto-focus any item when opening
+                      setFocusedIndex(-1);
                     } else if (e.key === 'Escape' && isDropdownOpen) {
                       setIsDropdownOpen(false);
-                    } else if (e.key === 'ArrowDown' && !isDropdownOpen) {
+                      setFocusedIndex(-1);
+                    } else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !isDropdownOpen) {
                       e.preventDefault();
                       setIsDropdownOpen(true);
+                      // Start with the first item focused when opening with arrow key
+                      // This is intentional for better UX when using arrow keys
+                      setFocusedIndex(e.key === 'ArrowDown' ? 0 : vaultsWithKeys.length - 1);
+                    } else if (e.key === 'Tab' && workflowVault && canContinue) {
+                      // Let Tab naturally move to the Encrypt Now button if vault is selected
+                      setIsDropdownOpen(false);
                     }
                   }}
                 >
@@ -202,30 +281,47 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                     {vaultsWithKeys
                       .slice()
                       .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((vault) => {
+                      .map((vault, index) => {
                         const keys = keyCache.get(vault.id) || [];
                         const isSelected = vault.id === workflowVault?.id;
+                        const isFocused = index === focusedIndex;
                         return (
                           <button
                             key={vault.id}
                             type="button"
-                            className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-between"
+                            className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-between ${
+                              isFocused ? 'ring-2 ring-blue-500 ring-inset' : ''
+                            }`}
                             style={{
                               backgroundColor: isSelected
                                 ? 'rgba(59, 130, 246, 0.1)'
-                                : 'transparent',
+                                : isFocused
+                                  ? 'rgba(59, 130, 246, 0.05)'
+                                  : 'transparent',
                             }}
                             onClick={() => {
                               onVaultChange(vault.id);
                               setIsDropdownOpen(false);
+                              setFocusedIndex(-1);
+                              // Focus the Encrypt Now button after selection
+                              setTimeout(() => {
+                                continueButtonRef.current?.focus();
+                              }, 50);
                             }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
                                 onVaultChange(vault.id);
                                 setIsDropdownOpen(false);
+                                setFocusedIndex(-1);
+                                // Focus the Encrypt Now button after selection
+                                setTimeout(() => {
+                                  continueButtonRef.current?.focus();
+                                }, 50);
                               } else if (e.key === 'Escape') {
                                 setIsDropdownOpen(false);
+                                setFocusedIndex(-1);
+                                dropdownButtonRef.current?.focus();
                               }
                             }}
                           >
