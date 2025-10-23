@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import React from 'react';
-import { commands, KeyReference, GetKeyMenuDataRequest } from '../bindings';
+import { KeyReference } from '../bindings';
 import { useVault } from '../contexts/VaultContext';
 
 export interface UseKeySelectionOptions {
   onKeysLoaded?: (keys: KeyReference[]) => void;
   onLoadingChange?: (loading: boolean) => void;
   includeAllKeys?: boolean; // If true, include all keys (passphrase + YubiKey), otherwise only passphrase
+  vaultId?: string | null; // Optional: override vault ID (for decryption with detectedVaultId)
 }
 
 export interface UseKeySelectionResult {
@@ -32,54 +33,91 @@ export function useKeySelection(
   showPublicKey = true,
   options: UseKeySelectionOptions = {},
 ): UseKeySelectionResult {
-  const { onKeysLoaded, onLoadingChange, includeAllKeys = false } = options;
-  const { currentVault } = useVault();
+  const { onKeysLoaded, onLoadingChange, includeAllKeys = false, vaultId: overrideVaultId } = options;
+  const { currentVault, keyCache, isInitialized } = useVault();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [keys, setKeys] = useState<KeyReference[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showPublicKeyPreview, setShowPublicKeyPreview] = useState(showPublicKey);
 
-  // Load available keys from current vault
+  // Determine which vault ID to use:
+  // 1. If overrideVaultId is provided (for decryption), use it
+  // 2. Otherwise, use currentVault.id from context
+  const targetVaultId = overrideVaultId !== undefined ? overrideVaultId : currentVault?.id;
+
+  // Use cache-first architecture - get keys from VaultContext cache
+  // Access keyCache directly like KeyMenuBar does to avoid memoization issues
+  const keysFromCache = useMemo(() => {
+    if (!targetVaultId) {
+      return [];
+    }
+
+    // Get keys from cache (instant, no async) - access cache directly
+    const allKeys = (keyCache.get(targetVaultId) || []) as KeyReference[];
+
+    // Debug: Check what's in the cache
+    console.log('useKeySelection: Cache debug', {
+      vaultId: targetVaultId,
+      overrideVaultId,
+      currentVaultId: currentVault?.id,
+      cacheSize: keyCache.size,
+      cacheKeys: Array.from(keyCache.keys()),
+      keysForThisVault: allKeys.length,
+    });
+
+    console.log('useKeySelection: Keys from cache', {
+      vaultId: targetVaultId,
+      totalKeys: allKeys.length,
+      includeAllKeys,
+      keys: allKeys.map((k) => ({
+        id: k.id,
+        type: k.type,
+        label: k.label,
+        status: k.lifecycle_status,
+      })),
+    });
+
+    // Filter keys based on includeAllKeys parameter
+    // For decryption, we want all keys regardless of status
+    // For encryption, we typically want only active keys
+    const filteredKeys = includeAllKeys
+      ? allKeys // Include all keys for decryption
+      : allKeys.filter((key) => key.lifecycle_status === 'active');
+
+    console.log('useKeySelection: Filtered keys', {
+      filteredCount: filteredKeys.length,
+      filtered: filteredKeys.map((k) => ({ id: k.id, type: k.type, label: k.label })),
+    });
+
+    return filteredKeys;
+  }, [targetVaultId, keyCache, includeAllKeys]);
+
+  // Loading state based on VaultContext initialization
+  const loading = !isInitialized;
+
+  // Update error state when no vault is selected
   useEffect(() => {
-    const loadKeys = async () => {
-      if (!currentVault) {
-        setKeys([]);
-        setError('No vault selected');
-        return;
-      }
-
-      setLoading(true);
-      onLoadingChange?.(true);
+    if (!targetVaultId) {
+      setError('No vault selected');
+    } else {
       setError('');
+    }
+  }, [targetVaultId]);
 
-      try {
-        const menuRequest: GetKeyMenuDataRequest = { vault_id: currentVault.id };
-        const menuResult = await commands.getKeyMenuData(menuRequest);
+  // Notify parent component when keys are loaded
+  useEffect(() => {
+    if (!loading && keysFromCache.length >= 0) {
+      onKeysLoaded?.(keysFromCache);
+    }
+  }, [keysFromCache, loading, onKeysLoaded]);
 
-        if (menuResult.status === 'error') {
-          throw new Error(menuResult.error.message || 'Failed to load key menu data');
-        }
-
-        // Filter for active keys only (for decryption dropdown)
-        const activeKeys = menuResult.data.keys.filter((key) => key.lifecycle_status === 'active');
-
-        setKeys(activeKeys);
-        onKeysLoaded?.(activeKeys);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load keys');
-      } finally {
-        setLoading(false);
-        onLoadingChange?.(false);
-      }
-    };
-
-    loadKeys();
-  }, [currentVault, includeAllKeys, onKeysLoaded, onLoadingChange]);
+  // Notify parent component about loading state changes
+  useEffect(() => {
+    onLoadingChange?.(loading);
+  }, [loading, onLoadingChange]);
 
   // Get selected key data
-  const selectedKey = keys.find((key) => key.id === value);
+  const selectedKey = keysFromCache.find((key) => key.id === value);
 
   // Format creation date
   const formatDate = useCallback((dateString: string) => {
@@ -130,7 +168,7 @@ export function useKeySelection(
   );
 
   return {
-    keys,
+    keys: keysFromCache,
     loading,
     error,
     isOpen,

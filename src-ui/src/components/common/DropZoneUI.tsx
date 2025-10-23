@@ -72,7 +72,7 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
         }
       }
     },
-    [showFolderButton, disabled]
+    [showFolderButton, disabled],
   );
 
   return (
@@ -83,7 +83,9 @@ const DropZoneUI: React.FC<DropZoneUIProps> = ({
         }`}
       />
 
-      {title && <p className="text-base font-medium text-slate-700 dark:text-slate-300 mb-2">{title}</p>}
+      {title && (
+        <p className="text-base font-medium text-slate-700 dark:text-slate-300 mb-2">{title}</p>
+      )}
 
       <p className="text-base text-slate-600 dark:text-slate-400 mb-2">{dropText}</p>
 

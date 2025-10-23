@@ -255,7 +255,9 @@ export const useEncryptionWorkflow = () => {
       // Ensure progress is shown for at least 1.5 seconds for better UX
       const minimumProgressTime = 1500;
       if (encryptionDuration < minimumProgressTime) {
-        await new Promise((resolve) => setTimeout(resolve, minimumProgressTime - encryptionDuration));
+        await new Promise((resolve) =>
+          setTimeout(resolve, minimumProgressTime - encryptionDuration),
+        );
       }
 
       console.log('[DEBUG] Multi-key encryption completed, checking result');

@@ -68,7 +68,9 @@ export const DropdownButton: React.FC<DropdownButtonProps> = ({
           ) : selectedKey ? (
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Key className="h-4 w-4 text-blue-600 flex-shrink-0" />
-              <span className="truncate text-slate-800 dark:text-slate-200 font-medium">{selectedKey.label}</span>
+              <span className="truncate text-slate-800 dark:text-slate-200 font-medium">
+                {selectedKey.label}
+              </span>
             </div>
           ) : (
             <div className="flex items-center gap-2">

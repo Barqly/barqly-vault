@@ -175,9 +175,10 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
             className={`
               block w-full px-3 py-2 border rounded-lg shadow-sm placeholder-slate-500
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-              disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed
-              ${displayError ? 'border-red-500' : 'border-slate-300'}
-              ${disabled ? 'bg-slate-50' : 'bg-white'}
+              disabled:bg-slate-50 dark:disabled:bg-slate-700 disabled:text-slate-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed
+              ${displayError ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}
+              ${disabled ? 'bg-slate-50 dark:bg-slate-700' : 'bg-white dark:bg-slate-800'}
+              text-slate-900 dark:text-slate-100
               pr-10
             `}
             aria-describedby={displayError ? `${id || 'passphrase-input'}-error` : undefined}

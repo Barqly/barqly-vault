@@ -24,9 +24,9 @@ const PassphraseVisibilityToggle: React.FC<PassphraseVisibilityToggleProps> = ({
       aria-label={isVisible ? 'Hide password' : 'Show password'}
     >
       {isVisible ? (
-        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400" />
       ) : (
-        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400" />
       )}
     </button>
   );

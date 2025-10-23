@@ -180,6 +180,7 @@ const DecryptPage: React.FC = () => {
                   // Recovery props
                   isKnownVault={isKnownVault}
                   detectedVaultName={detectedVaultName}
+                  detectedVaultId={detectedVaultId}
                   isRecoveryMode={isRecoveryMode}
                   availableKeysForDiscovery={availableKeys}
                   suggestedKeys={suggestedKeys}
@@ -194,6 +195,7 @@ const DecryptPage: React.FC = () => {
                     console.log('Detect YubiKey requested');
                   }}
                   onConfirmRestoration={handleDecryption}
+                  onDecrypt={handleDecryption}
                 />
 
                 {/* Ready to decrypt panel or Manifest Restoration - Step 3 */}

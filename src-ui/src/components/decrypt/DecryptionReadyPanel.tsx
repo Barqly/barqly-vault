@@ -63,14 +63,20 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm border-l-4 border-l-teal-600">
       <div className="p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">Ready to Decrypt Your Vault</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
+          Ready to Decrypt Your Vault
+        </h3>
 
         {/* Recovery path row */}
         <div className="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-3 mb-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Files will be recovered to:</p>
-              <p className="text-sm font-mono text-slate-700 dark:text-slate-300">{formatPathDisplay(outputPath)}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                Files will be recovered to:
+              </p>
+              <p className="text-sm font-mono text-slate-700 dark:text-slate-300">
+                {formatPathDisplay(outputPath)}
+              </p>
             </div>
             <button
               onClick={onToggleAdvanced}
@@ -128,7 +134,7 @@ const DecryptionReadyPanel: React.FC<DecryptionReadyPanelProps> = ({
             onClick={handleDecrypt}
             className="h-10 rounded-xl px-5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              backgroundColor: isLoading || isDecrypting ? '#94a3b8' : '#1D4ED8'
+              backgroundColor: isLoading || isDecrypting ? '#94a3b8' : '#1D4ED8',
             }}
             onMouseEnter={(e) => {
               if (!isLoading && !isDecrypting) {

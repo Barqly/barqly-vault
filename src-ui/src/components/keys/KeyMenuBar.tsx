@@ -41,6 +41,15 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ vaultId, onKeySelect, cl
     }
 
     const currentKeys = (keyCache.get(targetVaultId) || []) as VaultKey[];
+
+    // Debug: Check what's in the cache
+    console.log('KeyMenuBar: Cache debug', {
+      targetVaultId,
+      cacheSize: keyCache.size,
+      cacheKeys: Array.from(keyCache.keys()),
+      keysForThisVault: currentKeys.length,
+    });
+
     console.log('KeyMenuBar: Processing keys from cache', {
       keyCount: currentKeys.length,
       keys: currentKeys.map((k) => ({ type: k.type, label: k.label })),

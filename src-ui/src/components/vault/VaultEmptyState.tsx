@@ -23,7 +23,9 @@ const VaultEmptyState: React.FC<VaultEmptyStateProps> = ({ onCreateClick }) => {
       </div>
 
       {/* Title */}
-      <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">No vaults yet</h3>
+      <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
+        No vaults yet
+      </h3>
 
       {/* Description */}
       <p className="text-center text-slate-500 dark:text-slate-400 max-w-sm mb-6">
@@ -35,8 +37,8 @@ const VaultEmptyState: React.FC<VaultEmptyStateProps> = ({ onCreateClick }) => {
         onClick={onCreateClick}
         className="flex items-center gap-2 px-6 py-3 text-white font-medium rounded-lg transition-colors shadow-sm"
         style={{ backgroundColor: '#1D4ED8' }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1E40AF'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1D4ED8'}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1E40AF')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
       >
         <Plus className="h-5 w-5" />
         Create First Vault

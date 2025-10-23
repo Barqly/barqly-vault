@@ -24,6 +24,7 @@ interface ProgressiveDecryptionCardsProps {
   // New props for recovery
   isKnownVault?: boolean | null;
   detectedVaultName?: string | null;
+  detectedVaultId?: string | null;
   isRecoveryMode?: boolean;
   availableKeysForDiscovery?: VaultKey[];
   suggestedKeys?: VaultKey[];
@@ -32,6 +33,7 @@ interface ProgressiveDecryptionCardsProps {
   onImportKey?: () => void;
   onDetectYubiKey?: () => void;
   onConfirmRestoration?: () => void;
+  onDecrypt?: () => void;
 }
 
 /**
@@ -55,6 +57,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   // Recovery props
   isKnownVault = null,
   detectedVaultName = null,
+  detectedVaultId = null,
   isRecoveryMode = false,
   availableKeysForDiscovery = [],
   suggestedKeys = [],
@@ -63,6 +66,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   onImportKey = () => {},
   onDetectYubiKey,
   onConfirmRestoration: _onConfirmRestoration = () => {},
+  onDecrypt,
 }) => {
   const canGoToPreviousStep = currentStep > 1;
   const continueButtonRef = useRef<HTMLButtonElement>(null);
@@ -132,8 +136,14 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
           // Clear any previous errors since validation succeeded
           onClearError();
 
-          // If we get here, passphrase is correct, proceed to next step
-          onStepChange(currentStep + 1);
+          // If we get here, passphrase is correct, trigger decryption directly
+          // Skip step 3 (Ready to Decrypt panel) and go straight to decryption
+          if (onDecrypt) {
+            onDecrypt();
+          } else {
+            // Fallback to step navigation if onDecrypt not provided
+            onStepChange(currentStep + 1);
+          }
         } catch (error: any) {
           // Clear the passphrase field so user can retype without manual clearing
           onPassphraseChange('');
@@ -235,9 +245,9 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                   <PassphraseInput
                     value={passphrase}
                     onChange={onPassphraseChange}
-                    label={selectedKey?.type === 'yubikey' ? 'PIN' : 'Passphrase'}
+                    label={selectedKey?.type === 'YubiKey' ? 'PIN' : 'Passphrase'}
                     placeholder={
-                      selectedKey?.type === 'yubikey'
+                      selectedKey?.type === 'YubiKey'
                         ? 'Enter your YubiKey PIN'
                         : 'Enter your key passphrase'
                     }
@@ -268,6 +278,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                 onKeySelected={handleKeySelected}
                 onKeysLoaded={setAvailableKeys}
                 includeAllKeys={true}
+                vaultId={detectedVaultId}
               />
             </div>
 
@@ -277,9 +288,9 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                   <PassphraseInput
                     value={passphrase}
                     onChange={onPassphraseChange}
-                    label={selectedKey?.type === 'yubikey' ? 'PIN' : 'Passphrase'}
+                    label={selectedKey?.type === 'YubiKey' ? 'PIN' : 'Passphrase'}
                     placeholder={
-                      selectedKey?.type === 'yubikey'
+                      selectedKey?.type === 'YubiKey'
                         ? 'Enter your YubiKey PIN'
                         : 'Enter your key passphrase'
                     }

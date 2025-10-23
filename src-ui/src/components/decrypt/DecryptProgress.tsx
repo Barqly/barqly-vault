@@ -64,10 +64,12 @@ const DecryptProgress: React.FC<DecryptProgressProps> = ({ progress, onCancel })
   const estimatedTimeRemaining = Math.max(0, Math.round((100 - progress.progress) * 0.3)); // Rough estimate
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-600 p-6">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Decrypting Your Vault</h3>
-        <p className="text-sm text-gray-600">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          Decrypting Your Vault
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Your files are being securely recovered. This process typically takes under 60 seconds.
         </p>
       </div>
@@ -81,13 +83,13 @@ const DecryptProgress: React.FC<DecryptProgressProps> = ({ progress, onCancel })
           className={`h-3 ${isInitializing ? 'animate-pulse' : ''}`}
         />
         <div className="flex justify-between items-center mt-2">
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             {isInitializing
               ? 'Starting decryption process...'
               : progress.message || 'Processing...'}
           </span>
           {!isInitializing && estimatedTimeRemaining > 0 && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               About {estimatedTimeRemaining} seconds remaining
             </span>
           )}
@@ -101,15 +103,15 @@ const DecryptProgress: React.FC<DecryptProgressProps> = ({ progress, onCancel })
             key={index}
             className={`flex items-center gap-3 text-sm transition-all duration-300 ${
               phase.status === 'completed'
-                ? 'text-green-600'
+                ? 'text-green-600 dark:text-green-400'
                 : phase.status === 'active'
-                  ? 'text-blue-600 font-medium'
-                  : 'text-gray-400'
+                  ? 'text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-gray-400 dark:text-gray-500'
             }`}
           >
             <div className="flex-shrink-0">
               {phase.status === 'completed' ? (
-                <CheckCircle className="w-4 h-4 text-green-600" />
+                <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
               ) : (
                 phase.icon
               )}
@@ -124,7 +126,7 @@ const DecryptProgress: React.FC<DecryptProgressProps> = ({ progress, onCancel })
         <div className="flex justify-center">
           <button
             onClick={onCancel}
-            className="h-10 rounded-xl border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="h-10 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Cancel
           </button>

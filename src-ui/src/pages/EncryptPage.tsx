@@ -154,41 +154,41 @@ const EncryptPage: React.FC = () => {
 
           {/* Main form - show without animation for instant transition */}
           {!encryptionResult && !isEncrypting && (
-              <>
-                {/* Progressive Card System - Steps 1 and 2 */}
-                <ProgressiveEncryptionCards
-                  currentStep={currentStep}
-                  selectedFiles={selectedFiles}
-                  selectedKeyId={null}
-                  isLoading={isLoading}
-                  onFilesSelected={handleFilesSelected}
-                  onClearFiles={clearSelection}
-                  onFileError={(error) => {
-                    // Create inline error for file validation failures
-                    const commandError: CommandError = {
-                      code: 'INVALID_INPUT',
-                      message: error.message,
-                      details: null,
-                      recovery_guidance: 'Please select valid files and try again',
-                      user_actionable: true,
-                      trace_id: null,
-                      span_id: null,
-                    };
-                    handleFileValidationError(commandError);
-                  }}
-                  onKeyChange={handleKeyChange}
-                  onStepChange={handleStepNavigation}
-                  onVaultChange={handleVaultChange}
-                  onEncrypt={handleEncryption}
-                  outputPath={outputPath}
-                  archiveName={archiveName}
-                  bundleContents={bundleContents}
-                  workflowVault={workflowVault}
-                />
+            <>
+              {/* Progressive Card System - Steps 1 and 2 */}
+              <ProgressiveEncryptionCards
+                currentStep={currentStep}
+                selectedFiles={selectedFiles}
+                selectedKeyId={null}
+                isLoading={isLoading}
+                onFilesSelected={handleFilesSelected}
+                onClearFiles={clearSelection}
+                onFileError={(error) => {
+                  // Create inline error for file validation failures
+                  const commandError: CommandError = {
+                    code: 'INVALID_INPUT',
+                    message: error.message,
+                    details: null,
+                    recovery_guidance: 'Please select valid files and try again',
+                    user_actionable: true,
+                    trace_id: null,
+                    span_id: null,
+                  };
+                  handleFileValidationError(commandError);
+                }}
+                onKeyChange={handleKeyChange}
+                onStepChange={handleStepNavigation}
+                onVaultChange={handleVaultChange}
+                onEncrypt={handleEncryption}
+                outputPath={outputPath}
+                archiveName={archiveName}
+                bundleContents={bundleContents}
+                workflowVault={workflowVault}
+              />
 
-                {/* Help section */}
-                <CollapsibleHelp triggerText="How Encryption Works" context="encrypt" />
-              </>
+              {/* Help section */}
+              <CollapsibleHelp triggerText="How Encryption Works" context="encrypt" />
+            </>
           )}
         </div>
       </AppPrimaryContainer>

@@ -69,7 +69,9 @@ const EncryptionProgress: React.FC<EncryptionProgressProps> = ({ progress, onCan
       data-testid="encryption-progress"
     >
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Creating Your Encrypted Vault</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+          Creating Your Encrypted Vault
+        </h3>
         <p className="text-sm text-slate-600 dark:text-slate-400">
           Your files are being securely encrypted. This process typically takes under 60 seconds.
         </p>

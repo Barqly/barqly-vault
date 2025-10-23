@@ -40,7 +40,9 @@ const VaultRecognition: React.FC<VaultRecognitionProps> = ({
         <div className="flex items-start gap-3">
           <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-1">Vault Recognized</h3>
+            <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-1">
+              Vault Recognized
+            </h3>
             {vaultName && (
               <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
                 Vault: <span className="font-medium">{vaultName}</span>
@@ -50,8 +52,8 @@ const VaultRecognition: React.FC<VaultRecognitionProps> = ({
               onClick={onContinue}
               className="mt-3 h-10 px-5 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               style={{ backgroundColor: '#1D4ED8' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1E40AF'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1D4ED8'}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1E40AF')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
             >
               Continue to Decryption →
             </button>
@@ -96,8 +98,8 @@ const VaultRecognition: React.FC<VaultRecognitionProps> = ({
               onClick={onContinue}
               className="mt-4 h-10 px-5 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 transition-colors"
               style={{ backgroundColor: '#1D4ED8' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1E40AF'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1D4ED8'}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1E40AF')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
             >
               Continue to Key Discovery →
             </button>

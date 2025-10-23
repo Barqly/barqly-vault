@@ -34,6 +34,8 @@ export interface KeySelectionDropdownProps {
   onKeySelected?: () => void;
   /** Include all key types (passphrase + YubiKey) for decrypt operations */
   includeAllKeys?: boolean;
+  /** Optional vault ID override (for decryption with detectedVaultId) */
+  vaultId?: string | null;
 }
 
 export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
@@ -51,6 +53,7 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
   autoFocus = false,
   onKeySelected,
   includeAllKeys = false,
+  vaultId,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const {
@@ -70,6 +73,7 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
     onKeysLoaded,
     onLoadingChange,
     includeAllKeys,
+    vaultId,
   });
 
   const errorMessage = error || loadError;
