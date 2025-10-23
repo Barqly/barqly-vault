@@ -5,6 +5,7 @@ import { KeyReference } from '../../bindings';
 export interface KeyOptionProps {
   keyData: KeyReference;
   isSelected: boolean;
+  isFocused?: boolean;
   onSelect: (keyId: string) => void;
   formatDate: (dateString: string) => string;
 }
@@ -12,6 +13,7 @@ export interface KeyOptionProps {
 export const KeyOption: React.FC<KeyOptionProps> = ({
   keyData,
   isSelected,
+  isFocused = false,
   onSelect,
   formatDate,
 }) => {
@@ -26,10 +28,13 @@ export const KeyOption: React.FC<KeyOptionProps> = ({
     <li
       role="option"
       aria-selected={isSelected}
-      tabIndex={0}
+      tabIndex={-1}
       className={`
-        px-3 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 focus:bg-slate-50 dark:focus:bg-slate-700 focus:outline-none border-b border-slate-100 dark:border-slate-700 last:border-b-0
-        ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200'}
+        px-3 py-3 cursor-pointer border-b border-slate-100 dark:border-slate-700 last:border-b-0 transition-colors
+        text-slate-800 dark:text-slate-200
+        hover:bg-slate-50 dark:hover:bg-slate-700
+        focus:bg-slate-50 dark:focus:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset
+        ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 !text-blue-900 dark:!text-blue-300' : ''}
       `}
       onClick={() => onSelect(keyData.id)}
       onKeyDown={handleKeyDown}

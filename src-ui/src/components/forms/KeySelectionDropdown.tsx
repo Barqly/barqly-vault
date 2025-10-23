@@ -89,14 +89,24 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        // Move to next option (wrap to first if at end)
-        const nextIndex = currentIndex >= focusableElements.length - 1 ? 0 : currentIndex + 1;
-        (focusableElements[nextIndex] as HTMLElement)?.focus();
+        // If no item is focused yet, focus the first one
+        if (currentIndex === -1) {
+          (focusableElements[0] as HTMLElement)?.focus();
+        } else {
+          // Move to next option (wrap to first if at end)
+          const nextIndex = currentIndex >= focusableElements.length - 1 ? 0 : currentIndex + 1;
+          (focusableElements[nextIndex] as HTMLElement)?.focus();
+        }
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        // Move to previous option (wrap to last if at beginning)
-        const nextIndex = currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1;
-        (focusableElements[nextIndex] as HTMLElement)?.focus();
+        // If no item is focused yet, focus the last one
+        if (currentIndex === -1) {
+          (focusableElements[focusableElements.length - 1] as HTMLElement)?.focus();
+        } else {
+          // Move to previous option (wrap to last if at beginning)
+          const nextIndex = currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1;
+          (focusableElements[nextIndex] as HTMLElement)?.focus();
+        }
       } else if (e.key === 'Tab') {
         e.preventDefault();
         // Tab also moves through options (same as arrow keys for consistency)
@@ -119,15 +129,25 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleToggle]);
 
-  // Auto-focus first option when dropdown opens
+  // Handle click outside to close dropdown
   useEffect(() => {
-    if (isOpen && keys.length > 0) {
-      const firstOption = dropdownRef.current?.querySelector('[role="option"]') as HTMLElement;
-      if (firstOption) {
-        setTimeout(() => firstOption.focus(), 50);
+    if (!isOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      // Check if click is outside the dropdown container
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
+        // Also check if it's not the dropdown button itself
+        const button = document.querySelector('[aria-expanded]');
+        if (button && !button.contains(target)) {
+          handleToggle(); // Close the dropdown
+        }
       }
-    }
-  }, [isOpen, keys.length]);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen, handleToggle]);
 
   // Custom key select handler that includes focus management
   const handleKeySelectWithFocus = (keyLabel: string) => {
