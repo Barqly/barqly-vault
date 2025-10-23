@@ -123,9 +123,10 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
           break;
         case 'Enter':
         case ' ':
-          e.preventDefault();
           // Only select if an item is actually focused (not -1)
           if (focusedIndex >= 0 && focusedIndex <= maxIndex) {
+            e.preventDefault();
+            e.stopPropagation(); // Stop the event from bubbling
             const selectedVault = sortedVaults[focusedIndex];
             onVaultChange(selectedVault.id);
             setIsDropdownOpen(false);
@@ -135,8 +136,6 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
               continueButtonRef.current?.focus();
             }, 50);
           }
-          // If no item is focused yet (focusedIndex === -1), do nothing
-          // This prevents auto-selecting first item when just opening dropdown
           break;
         case 'Escape':
           e.preventDefault();
@@ -152,8 +151,9 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    // Use capture phase to intercept events before they bubble
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [isDropdownOpen, focusedIndex, vaultsWithKeys, onVaultChange]);
 
   const handlePrevious = () => {
@@ -230,24 +230,20 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                   disabled={vaultsWithKeys.length === 0}
                   autoFocus={currentStep === 2}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setIsDropdownOpen(!isDropdownOpen);
-                      // Don't auto-focus any item when opening
-                      setFocusedIndex(-1);
-                    } else if (e.key === 'Escape' && isDropdownOpen) {
-                      setIsDropdownOpen(false);
-                      setFocusedIndex(-1);
-                    } else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !isDropdownOpen) {
-                      e.preventDefault();
-                      setIsDropdownOpen(true);
-                      // Start with the first item focused when opening with arrow key
-                      // This is intentional for better UX when using arrow keys
-                      setFocusedIndex(e.key === 'ArrowDown' ? 0 : vaultsWithKeys.length - 1);
-                    } else if (e.key === 'Tab' && workflowVault && canContinue) {
-                      // Let Tab naturally move to the Encrypt Now button if vault is selected
-                      setIsDropdownOpen(false);
+                    // Only handle keyboard events when dropdown is closed
+                    if (!isDropdownOpen) {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setIsDropdownOpen(true);
+                        setFocusedIndex(-1);
+                      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setIsDropdownOpen(true);
+                        // Start with the first/last item focused when opening with arrow key
+                        setFocusedIndex(e.key === 'ArrowDown' ? 0 : vaultsWithKeys.length - 1);
+                      }
                     }
+                    // Let the document handler handle events when dropdown is open
                   }}
                 >
                   <span className="flex items-center gap-2">
@@ -309,20 +305,9 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                               }, 50);
                             }}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                onVaultChange(vault.id);
-                                setIsDropdownOpen(false);
-                                setFocusedIndex(-1);
-                                // Focus the Encrypt Now button after selection
-                                setTimeout(() => {
-                                  continueButtonRef.current?.focus();
-                                }, 50);
-                              } else if (e.key === 'Escape') {
-                                setIsDropdownOpen(false);
-                                setFocusedIndex(-1);
-                                dropdownButtonRef.current?.focus();
-                              }
+                              // Remove individual item keyboard handlers
+                              // Let the document-level handler manage all keyboard navigation
+                              e.stopPropagation();
                             }}
                           >
                             <div className="flex items-center gap-2">
