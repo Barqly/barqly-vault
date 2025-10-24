@@ -26,6 +26,7 @@ pub struct DecryptionInput<'a> {
     pub key_id: &'a str,
     pub passphrase: SecretString,
     pub custom_output_dir: Option<PathBuf>, // Optional custom override
+    pub force_overwrite: bool, // NEW - for user confirmation
 }
 
 /// Result of decryption orchestration
@@ -90,8 +91,26 @@ impl DecryptionOrchestrationService {
             vault_name = %vault_name,
             output_dir = %output_dir.display(),
             output_exists = output_exists,
+            force_overwrite = input.force_overwrite,
             "Determined output directory for decryption"
         );
+
+        // CRITICAL: Stop if output exists and no force flag
+        if output_exists && !input.force_overwrite {
+            info!(
+                output_dir = %output_dir.display(),
+                "Output directory exists and force_overwrite is false - returning conflict response"
+            );
+
+            // Return early with conflict info - DON'T decrypt yet
+            return Ok(DecryptionOutput {
+                extracted_files: vec![], // Empty - nothing decrypted yet
+                output_dir,
+                output_exists: true,     // Signal conflict to frontend
+                manifest_verified: false,
+                external_manifest_restored: None,
+            });
+        }
 
         // Step 1: Load key from registry
         progress_manager.set_progress(PROGRESS_DECRYPT_KEY_LOAD, "Loading encryption key...");

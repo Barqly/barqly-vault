@@ -14,11 +14,21 @@ use tempfile::TempDir;
 #[test]
 fn should_validate_decrypt_input_with_non_existent_directory() {
     // Given: A DecryptDataInput with non-existent output directory
-    let temp_dir = TempDir::new().unwrap();
-    let encrypted_file = temp_dir.path().join("test.age");
+    use directories::UserDirs;
+    let home = UserDirs::new()
+        .expect("Cannot get UserDirs")
+        .home_dir()
+        .to_path_buf();
+
+    // Create test directory in home
+    let test_base = home.join("test-barqly-decrypt-nonexist");
+    let _ = fs::remove_dir_all(&test_base); // Clean up any previous test
+    fs::create_dir_all(&test_base).unwrap();
+
+    let encrypted_file = test_base.join("test.age");
     fs::write(&encrypted_file, b"encrypted data").unwrap();
 
-    let non_existent_dir = temp_dir.path().join("non_existent").join("nested");
+    let non_existent_dir = test_base.join("non_existent").join("nested");
     assert!(!non_existent_dir.exists(), "Directory should not exist");
 
     let input = DecryptDataInput {
@@ -26,6 +36,7 @@ fn should_validate_decrypt_input_with_non_existent_directory() {
         key_id: "test_key".to_string(),
         passphrase: "TestPass123!@#".to_string(),
         output_dir: Some(non_existent_dir.to_string_lossy().to_string()),
+        force_overwrite: None,
     };
 
     // When: Validating the input
@@ -36,16 +47,29 @@ fn should_validate_decrypt_input_with_non_existent_directory() {
         result.is_ok(),
         "Validation should succeed with non-existent output directory"
     );
+
+    // Cleanup
+    let _ = fs::remove_dir_all(&test_base);
 }
 
 #[test]
 fn should_validate_decrypt_input_with_existing_directory() {
     // Given: A DecryptDataInput with existing output directory
-    let temp_dir = TempDir::new().unwrap();
-    let encrypted_file = temp_dir.path().join("test.age");
+    use directories::UserDirs;
+    let home = UserDirs::new()
+        .expect("Cannot get UserDirs")
+        .home_dir()
+        .to_path_buf();
+
+    // Create test directory in home
+    let test_base = home.join("test-barqly-decrypt-exist");
+    let _ = fs::remove_dir_all(&test_base); // Clean up any previous test
+    fs::create_dir_all(&test_base).unwrap();
+
+    let encrypted_file = test_base.join("test.age");
     fs::write(&encrypted_file, b"encrypted data").unwrap();
 
-    let existing_dir = temp_dir.path().join("existing");
+    let existing_dir = test_base.join("existing");
     fs::create_dir_all(&existing_dir).unwrap();
     assert!(existing_dir.exists(), "Directory should exist");
 
@@ -54,6 +78,7 @@ fn should_validate_decrypt_input_with_existing_directory() {
         key_id: "test_key".to_string(),
         passphrase: "TestPass123!@#".to_string(),
         output_dir: Some(existing_dir.to_string_lossy().to_string()),
+        force_overwrite: None,
     };
 
     // When: Validating the input
@@ -64,19 +89,32 @@ fn should_validate_decrypt_input_with_existing_directory() {
         result.is_ok(),
         "Validation should succeed with existing output directory"
     );
+
+    // Cleanup
+    let _ = fs::remove_dir_all(&test_base);
 }
 
 #[test]
 fn should_fail_validation_when_encrypted_file_missing() {
     // Given: A DecryptDataInput with non-existent encrypted file
-    let temp_dir = TempDir::new().unwrap();
-    let non_existent_file = temp_dir.path().join("missing.age");
+    use directories::UserDirs;
+    let home = UserDirs::new()
+        .expect("Cannot get UserDirs")
+        .home_dir()
+        .to_path_buf();
+
+    let test_base = home.join("test-barqly-decrypt-missing");
+    let _ = fs::remove_dir_all(&test_base);
+    fs::create_dir_all(&test_base).unwrap();
+
+    let non_existent_file = test_base.join("missing.age");
 
     let input = DecryptDataInput {
         encrypted_file: non_existent_file.to_string_lossy().to_string(),
         key_id: "test_key".to_string(),
         passphrase: "TestPass123!@#".to_string(),
-        output_dir: Some(temp_dir.path().to_string_lossy().to_string()),
+        output_dir: Some(test_base.to_string_lossy().to_string()),
+        force_overwrite: None,
     };
 
     // When: Validating the input
@@ -87,20 +125,33 @@ fn should_fail_validation_when_encrypted_file_missing() {
         result.is_err(),
         "Validation should fail when encrypted file doesn't exist"
     );
+
+    // Cleanup
+    let _ = fs::remove_dir_all(&test_base);
 }
 
 #[test]
 fn should_fail_validation_when_encrypted_file_is_directory() {
     // Given: A DecryptDataInput where encrypted file path is actually a directory
-    let temp_dir = TempDir::new().unwrap();
-    let dir_path = temp_dir.path().join("not_a_file");
+    use directories::UserDirs;
+    let home = UserDirs::new()
+        .expect("Cannot get UserDirs")
+        .home_dir()
+        .to_path_buf();
+
+    let test_base = home.join("test-barqly-decrypt-isdir");
+    let _ = fs::remove_dir_all(&test_base);
+    fs::create_dir_all(&test_base).unwrap();
+
+    let dir_path = test_base.join("not_a_file");
     fs::create_dir_all(&dir_path).unwrap();
 
     let input = DecryptDataInput {
         encrypted_file: dir_path.to_string_lossy().to_string(),
         key_id: "test_key".to_string(),
         passphrase: "TestPass123!@#".to_string(),
-        output_dir: Some(temp_dir.path().to_string_lossy().to_string()),
+        output_dir: Some(test_base.to_string_lossy().to_string()),
+        force_overwrite: None,
     };
 
     // When: Validating the input
@@ -111,6 +162,9 @@ fn should_fail_validation_when_encrypted_file_is_directory() {
         result.is_err(),
         "Validation should fail when encrypted file is a directory"
     );
+
+    // Cleanup
+    let _ = fs::remove_dir_all(&test_base);
 }
 
 // ============================================================================
@@ -315,18 +369,27 @@ fn test_validate_output_directory_rejects_file_as_directory() {
 fn test_decrypt_matches_encrypt_validation_behavior() {
     // This test ensures that DecryptDataInput validation behaves consistently
     // with EncryptDataInput when it comes to output directories
+    use directories::UserDirs;
+    let home = UserDirs::new()
+        .expect("Cannot get UserDirs")
+        .home_dir()
+        .to_path_buf();
 
-    let temp_dir = TempDir::new().unwrap();
-    let encrypted_file = temp_dir.path().join("test.age");
+    let test_base = home.join("test-barqly-decrypt-behavior");
+    let _ = fs::remove_dir_all(&test_base);
+    fs::create_dir_all(&test_base).unwrap();
+
+    let encrypted_file = test_base.join("test.age");
     fs::write(&encrypted_file, b"encrypted").unwrap();
 
     // Test 1: Non-existent directory should pass validation
-    let non_existent = temp_dir.path().join("not_yet_created");
+    let non_existent = test_base.join("not_yet_created");
     let decrypt_input = DecryptDataInput {
         encrypted_file: encrypted_file.to_string_lossy().to_string(),
         key_id: "key".to_string(),
         passphrase: "pass".to_string(),
         output_dir: Some(non_existent.to_string_lossy().to_string()),
+        force_overwrite: None,
     };
 
     assert!(
@@ -335,31 +398,43 @@ fn test_decrypt_matches_encrypt_validation_behavior() {
     );
 
     // Test 2: Existing directory should pass validation
-    let existing = temp_dir.path().join("existing");
+    let existing = test_base.join("existing");
     fs::create_dir_all(&existing).unwrap();
     let decrypt_input2 = DecryptDataInput {
         encrypted_file: encrypted_file.to_string_lossy().to_string(),
         key_id: "key".to_string(),
         passphrase: "pass".to_string(),
         output_dir: Some(existing.to_string_lossy().to_string()),
+        force_overwrite: None,
     };
 
     assert!(
         decrypt_input2.validate().is_ok(),
         "Decrypt should allow existing output directory"
     );
+
+    // Cleanup
+    let _ = fs::remove_dir_all(&test_base);
 }
 
 #[test]
 fn test_timestamp_based_directory_pattern() {
     // Test the common frontend pattern: Barqly-Recovery/YYYY-MM-DD_HHMMSS
-    let temp_dir = TempDir::new().unwrap();
-    let encrypted_file = temp_dir.path().join("test.age");
+    use directories::UserDirs;
+    let home = UserDirs::new()
+        .expect("Cannot get UserDirs")
+        .home_dir()
+        .to_path_buf();
+
+    let test_base = home.join("test-barqly-decrypt-timestamp");
+    let _ = fs::remove_dir_all(&test_base);
+    fs::create_dir_all(&test_base).unwrap();
+
+    let encrypted_file = test_base.join("test.age");
     fs::write(&encrypted_file, b"encrypted").unwrap();
 
     let timestamp = chrono::Utc::now().format("%Y-%m-%d_%H%M%S");
-    let recovery_dir = temp_dir
-        .path()
+    let recovery_dir = test_base
         .join("Barqly-Recovery")
         .join(timestamp.to_string());
 
@@ -368,6 +443,7 @@ fn test_timestamp_based_directory_pattern() {
         key_id: "key".to_string(),
         passphrase: "pass".to_string(),
         output_dir: Some(recovery_dir.to_string_lossy().to_string()),
+        force_overwrite: None,
     };
 
     // Should validate successfully even though directory doesn't exist
@@ -375,4 +451,7 @@ fn test_timestamp_based_directory_pattern() {
         input.validate().is_ok(),
         "Should validate timestamp-based recovery directory pattern"
     );
+
+    // Cleanup
+    let _ = fs::remove_dir_all(&test_base);
 }

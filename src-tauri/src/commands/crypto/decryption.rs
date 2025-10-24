@@ -20,6 +20,7 @@ pub struct DecryptDataInput {
     pub key_id: String,
     pub passphrase: String,
     pub output_dir: Option<String>, // Optional - backend generates default if not provided
+    pub force_overwrite: Option<bool>, // NEW - for user confirmation to overwrite
 }
 
 /// Result of decryption operation
@@ -89,6 +90,7 @@ pub async fn decrypt_data(
     let manager = CryptoManager::new();
 
     let custom_output = input.output_dir.as_ref().map(std::path::PathBuf::from);
+    let force_overwrite = input.force_overwrite.unwrap_or(false);
 
     let output = manager
         .decrypt_data(
@@ -96,6 +98,7 @@ pub async fn decrypt_data(
             &input.key_id,
             SecretString::from(input.passphrase),
             custom_output, // Pass Option<PathBuf>
+            force_overwrite,
             &mut progress_manager,
         )
         .await

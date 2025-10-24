@@ -111,6 +111,7 @@ impl CryptoManager {
         key_id: &str,
         passphrase: age::secrecy::SecretString,
         custom_output_dir: Option<PathBuf>, // Changed from &Path
+        force_overwrite: bool,
         progress_manager: &mut ProgressManager,
     ) -> CryptoResult<super::services::DecryptionOutput> {
         let input = super::services::DecryptionInput {
@@ -118,6 +119,7 @@ impl CryptoManager {
             key_id,
             passphrase,
             custom_output_dir, // Pass Option<PathBuf>
+            force_overwrite,
         };
 
         self.decryption_orchestration

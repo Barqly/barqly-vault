@@ -173,10 +173,19 @@ mod crypto_validation_tests {
 
     #[test]
     fn test_decrypt_data_input_validation_success() {
-        // Create temporary files for testing
-        let temp_dir = tempfile::tempdir().unwrap();
-        let encrypted_file = temp_dir.path().join("test.encrypted");
-        let output_dir = temp_dir.path().join("output");
+        // Create temporary files for testing in user home directory
+        use directories::UserDirs;
+        let home = UserDirs::new()
+            .expect("Cannot get UserDirs")
+            .home_dir()
+            .to_path_buf();
+
+        let test_base = home.join("test-barqly-decrypt-unit1");
+        let _ = std::fs::remove_dir_all(&test_base); // Clean up any previous test
+        std::fs::create_dir_all(&test_base).unwrap();
+
+        let encrypted_file = test_base.join("test.encrypted");
+        let output_dir = test_base.join("output");
 
         // Create the encrypted file
         std::fs::write(&encrypted_file, "test data").unwrap();
@@ -189,10 +198,14 @@ mod crypto_validation_tests {
             key_id: "test-key-id".to_string(),
             passphrase: "strong-passphrase-123".to_string(),
             output_dir: Some(output_dir.to_string_lossy().to_string()),
+            force_overwrite: None,
         };
 
         let result = input.validate();
         assert!(result.is_ok(), "Valid input should pass validation");
+
+        // Cleanup
+        let _ = std::fs::remove_dir_all(&test_base);
     }
 
     #[test]
@@ -202,6 +215,7 @@ mod crypto_validation_tests {
             key_id: "test-key-id".to_string(),
             passphrase: "strong-passphrase-123".to_string(),
             output_dir: Some("/path/to/output".to_string()),
+            force_overwrite: None,
         };
 
         let result = input.validate();
@@ -225,6 +239,7 @@ mod crypto_validation_tests {
             key_id: "".to_string(),
             passphrase: "strong-passphrase-123".to_string(),
             output_dir: Some("/path/to/output".to_string()),
+            force_overwrite: None,
         };
 
         let result = input.validate();
@@ -245,6 +260,7 @@ mod crypto_validation_tests {
             key_id: "test-key-id".to_string(),
             passphrase: "".to_string(),
             output_dir: Some("/path/to/output".to_string()),
+            force_overwrite: None,
         };
 
         let result = input.validate();
@@ -265,6 +281,7 @@ mod crypto_validation_tests {
             key_id: "test-key-id".to_string(),
             passphrase: "strong-passphrase-123".to_string(),
             output_dir: Some("".to_string()),
+            force_overwrite: None,
         };
 
         let result = input.validate();
@@ -1160,6 +1177,7 @@ mod task_3_4_command_tests {
             key_id: "test-key".to_string(),
             passphrase: "test-passphrase".to_string(),
             output_dir: Some("/tmp/output".to_string()),
+            force_overwrite: None,
         };
         assert!(input.validate().is_err());
     }
@@ -1171,6 +1189,7 @@ mod task_3_4_command_tests {
             key_id: "".to_string(),
             passphrase: "test-passphrase".to_string(),
             output_dir: Some("/tmp/output".to_string()),
+            force_overwrite: None,
         };
         assert!(input.validate().is_err());
     }
@@ -1182,6 +1201,7 @@ mod task_3_4_command_tests {
             key_id: "test-key".to_string(),
             passphrase: "".to_string(),
             output_dir: Some("/tmp/output".to_string()),
+            force_overwrite: None,
         };
         assert!(input.validate().is_err());
     }
@@ -1193,16 +1213,26 @@ mod task_3_4_command_tests {
             key_id: "test-key".to_string(),
             passphrase: "test-passphrase".to_string(),
             output_dir: Some("".to_string()),
+            force_overwrite: None,
         };
         assert!(input.validate().is_err());
     }
 
     #[test]
     fn test_decrypt_data_input_validation_success() {
-        // Create temporary files for testing
-        let temp_dir = tempfile::tempdir().unwrap();
-        let encrypted_file = temp_dir.path().join("test.encrypted");
-        let output_dir = temp_dir.path().join("output");
+        // Create temporary files for testing in user home directory
+        use directories::UserDirs;
+        let home = UserDirs::new()
+            .expect("Cannot get UserDirs")
+            .home_dir()
+            .to_path_buf();
+
+        let test_base = home.join("test-barqly-decrypt-unit2");
+        let _ = std::fs::remove_dir_all(&test_base);
+        std::fs::create_dir_all(&test_base).unwrap();
+
+        let encrypted_file = test_base.join("test.encrypted");
+        let output_dir = test_base.join("output");
 
         // Create the encrypted file
         std::fs::write(&encrypted_file, "test data").unwrap();
@@ -1215,16 +1245,29 @@ mod task_3_4_command_tests {
             key_id: "test-key".to_string(),
             passphrase: "test-passphrase".to_string(),
             output_dir: Some(output_dir.to_string_lossy().to_string()),
+            force_overwrite: None,
         };
         assert!(input.validate().is_ok());
+
+        // Cleanup
+        let _ = std::fs::remove_dir_all(&test_base);
     }
 
     #[test]
     fn test_decrypt_data_input_unicode_paths() {
-        // Create temporary files for testing with unicode paths
-        let temp_dir = tempfile::tempdir().unwrap();
-        let encrypted_file = temp_dir.path().join("文件.age");
-        let output_dir = temp_dir.path().join("输出");
+        // Create temporary files for testing with unicode paths in user home
+        use directories::UserDirs;
+        let home = UserDirs::new()
+            .expect("Cannot get UserDirs")
+            .home_dir()
+            .to_path_buf();
+
+        let test_base = home.join("test-barqly-decrypt-unicode");
+        let _ = std::fs::remove_dir_all(&test_base);
+        std::fs::create_dir_all(&test_base).unwrap();
+
+        let encrypted_file = test_base.join("文件.age");
+        let output_dir = test_base.join("输出");
 
         // Create the encrypted file
         std::fs::write(&encrypted_file, "test data").unwrap();
@@ -1237,8 +1280,12 @@ mod task_3_4_command_tests {
             key_id: "test-key".to_string(),
             passphrase: "test-passphrase".to_string(),
             output_dir: Some(output_dir.to_string_lossy().to_string()),
+            force_overwrite: None,
         };
         assert!(input.validate().is_ok());
+
+        // Cleanup
+        let _ = std::fs::remove_dir_all(&test_base);
     }
 
     #[test]
