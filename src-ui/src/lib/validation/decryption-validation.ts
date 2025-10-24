@@ -52,15 +52,8 @@ export const validateDecryptionInputs = (inputs: DecryptionInputs): DecryptionVa
     };
   }
 
-  if (!inputs.outputPath) {
-    return {
-      isValid: false,
-      error: createValidationError(
-        'Output directory',
-        'Please select where to save the decrypted files',
-      ),
-    };
-  }
+  // output_dir is optional - backend generates default path if not provided
+  // No validation needed
 
   return { isValid: true };
 };
@@ -71,11 +64,12 @@ export const validateDecryptionInputs = (inputs: DecryptionInputs): DecryptionVa
  */
 export const prepareDecryptionInput = (inputs: DecryptionInputs) => {
   // Backend expects snake_case fields
+  // output_dir is optional - null triggers backend default path generation
   return {
     encrypted_file: inputs.selectedFile!,
     key_id: inputs.selectedKeyId || '',
     passphrase: inputs.passphrase,
-    output_dir: inputs.outputPath || '',
+    output_dir: inputs.outputPath || null, // Backend generates default if null
   };
 };
 
@@ -113,9 +107,8 @@ export const validateDecryptionField = (
       break;
 
     case 'outputPath':
-      if (!value) {
-        return 'Please select an output directory';
-      }
+      // outputPath is optional - backend generates default if not provided
+      // No validation needed
       break;
   }
 

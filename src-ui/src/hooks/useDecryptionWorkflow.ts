@@ -221,15 +221,16 @@ export const useDecryptionWorkflow = () => {
 
   // Handle decryption
   const handleDecryption = useCallback(async () => {
-    if (!selectedKeyId || !passphrase || !outputPath) {
+    if (!selectedKeyId || !passphrase) {
       const error = createCommandError(
         ErrorCode.MISSING_PARAMETER,
         'Missing information',
-        'Please complete all required fields before decrypting',
+        'Please select a key and enter your passphrase',
       );
       setFileValidationError(error);
       return;
     }
+    // outputPath is optional - backend generates default if null
 
     // Set decrypting state immediately for instant UI feedback
     setIsDecrypting(true);
@@ -292,25 +293,8 @@ export const useDecryptionWorkflow = () => {
   ]);
 
   // Generate default output path
-  const getDefaultOutputPath = useCallback(async () => {
-    try {
-      const docsPath = await documentDir();
-      const date = new Date().toISOString().split('T')[0];
-      const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '');
-      const recoveryPath = await join(docsPath, 'Barqly-Recovery', `${date}_${time}`);
-      return recoveryPath;
-    } catch (error) {
-      console.error('Error getting default path:', error);
-      return `~/Documents/Barqly-Recovery/${new Date().toISOString().split('T')[0]}`;
-    }
-  }, []);
-
-  // Set default output path when file is selected
-  useEffect(() => {
-    if (selectedFile && !outputPath) {
-      getDefaultOutputPath().then(setOutputPath);
-    }
-  }, [selectedFile, outputPath, setOutputPath, getDefaultOutputPath]);
+  // Path generation removed - backend now handles default paths
+  // Backend generates: ~/Documents/Barqly-Recovery/{vault_name}/
 
   // Handle reset
   const handleReset = useCallback(() => {
