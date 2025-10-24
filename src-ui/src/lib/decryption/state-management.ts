@@ -13,6 +13,7 @@ export interface FileDecryptionState {
   selectedKeyId: string | null;
   passphrase: string;
   outputPath: string | null;
+  forceOverwrite?: boolean | null; // For conflict resolution
 }
 
 /**
@@ -27,6 +28,7 @@ export const createInitialDecryptionState = (): FileDecryptionState => ({
   selectedKeyId: null,
   passphrase: '',
   outputPath: null,
+  forceOverwrite: null,
 });
 
 /**
@@ -114,6 +116,14 @@ export const decryptionStateUpdates = {
     ...prev,
     outputPath: path,
     error: null,
+  }),
+
+  /**
+   * Set force overwrite flag
+   */
+  setForceOverwrite: (prev: FileDecryptionState, force: boolean | null): FileDecryptionState => ({
+    ...prev,
+    forceOverwrite: force,
   }),
 
   /**

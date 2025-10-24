@@ -38,7 +38,12 @@ export function useKeySelection(
   showPublicKey = true,
   options: UseKeySelectionOptions = {},
 ): UseKeySelectionResult {
-  const { onKeysLoaded, onLoadingChange, includeAllKeys = false, vaultId: overrideVaultId } = options;
+  const {
+    onKeysLoaded,
+    onLoadingChange,
+    includeAllKeys = false,
+    vaultId: overrideVaultId,
+  } = options;
   const { currentVault, keyCache, globalKeyCache, isInitialized } = useVault();
 
   const [isOpen, setIsOpen] = useState(false);

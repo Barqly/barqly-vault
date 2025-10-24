@@ -121,7 +121,6 @@ const DecryptPage: React.FC = () => {
                 result={success}
                 onDecryptAnother={handleDecryptAnother}
                 isRecoveryMode={isRecoveryMode}
-                recoveredItems={recoveredItems}
                 vaultName={detectedVaultName}
               />
             )}
@@ -161,6 +160,10 @@ const DecryptPage: React.FC = () => {
                       code: 'INVALID_INPUT',
                       message: error.message,
                       user_actionable: true,
+                      details: null,
+                      recovery_guidance: null,
+                      trace_id: null,
+                      span_id: null,
                     };
                     handleFileValidationError(commandError);
                   }}
@@ -172,6 +175,10 @@ const DecryptPage: React.FC = () => {
                       code: 'WRONG_PASSPHRASE',
                       message: error.message,
                       user_actionable: true,
+                      details: null,
+                      recovery_guidance: null,
+                      trace_id: null,
+                      span_id: null,
                     };
                     handleFileValidationError(commandError);
                   }}

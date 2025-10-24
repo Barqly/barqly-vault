@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { documentDir, join } from '@tauri-apps/api/path';
 import { useFileDecryption } from './useFileDecryption';
 import type { ErrorCode, CommandError, KeyReference } from '../bindings';
 import { createCommandError } from '../lib/errors/command-error';
-import { useVault } from '../contexts/VaultContext';
 import { commands } from '../bindings';
+import { confirm } from '@tauri-apps/plugin-dialog';
+import { executeDecryptionWithProgress } from '../lib/decryption/decryption-workflow';
+import { prepareDecryptionInput } from '../lib/validation/decryption-validation';
 
 interface VaultMetadata {
   creationDate?: string;
@@ -23,17 +24,17 @@ interface RecoveredItems {
  */
 export const useDecryptionWorkflow = () => {
   const fileDecryptionHook = useFileDecryption();
-  const { vaults } = useVault();
 
   const {
     setSelectedFile,
     setKeyId,
     setPassphrase,
     setOutputPath,
+    setForceOverwrite,
     decryptFile,
     isLoading,
     error,
-    success,
+    success: decryptionSuccess,
     progress,
     selectedFile,
     selectedKeyId,
@@ -51,6 +52,7 @@ export const useDecryptionWorkflow = () => {
   const [vaultMetadata, setVaultMetadata] = useState<VaultMetadata>({});
   const [currentStep, setCurrentStep] = useState(1);
   const [fileValidationError, setFileValidationError] = useState<CommandError | null>(null);
+  const [conflictResolveSuccess, setConflictResolveSuccess] = useState<any>(null); // Track successful retry after conflict
 
   // Vault recognition state
   const [isKnownVault, setIsKnownVault] = useState<boolean | null>(null);
@@ -239,7 +241,101 @@ export const useDecryptionWorkflow = () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     try {
-      const result = await decryptFile();
+      // Call backend API directly to intercept conflict response before it becomes "success"
+      const decryptionInput = prepareDecryptionInput({
+        selectedFile,
+        selectedKeyId,
+        passphrase,
+        outputPath,
+        forceOverwrite: null, // First attempt - let backend detect conflict
+      });
+
+      const result = await executeDecryptionWithProgress(
+        decryptionInput,
+        (progress) => {
+          console.log('[DecryptionWorkflow] Decryption progress:', progress);
+        },
+      );
+
+      // Check for conflict: output_exists is true but no files extracted
+      if (result && result.output_exists && result.extracted_files.length === 0) {
+        console.log('[DecryptionWorkflow] Conflict detected, showing native dialog');
+
+        // Show conflict dialog: Replace or Cancel
+        const shouldReplace = await confirm(
+          `The folder for "${detectedVaultName || 'vault'}" already exists.\n\nWould you like to replace it with the newly decrypted files?`,
+          {
+            title: 'Folder Already Exists',
+            kind: 'warning',
+            okLabel: 'Replace Existing',
+            cancelLabel: 'Cancel',
+          },
+        );
+
+        if (!shouldReplace) {
+          // User cancelled - stay on decrypt page
+          console.log('[DecryptionWorkflow] User cancelled conflict resolution');
+          setIsDecrypting(false);
+          return;
+        }
+
+        // User chose Replace - retry with force_overwrite: true
+        console.log('[DecryptionWorkflow] User chose to replace existing folder');
+
+        // Clear any existing success state to show progress view
+        setConflictResolveSuccess(null);
+        setIsDecrypting(true);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        try {
+          // Prepare decryption input with force_overwrite explicitly set to true
+          const decryptionInput = prepareDecryptionInput({
+            selectedFile,
+            selectedKeyId,
+            passphrase,
+            outputPath,
+            forceOverwrite: true, // Explicitly set to true for replacement
+          });
+
+          console.log('[DecryptionWorkflow] Retrying decryption with force_overwrite: true');
+
+          // Call backend API directly with explicit parameters
+          const retryResult = await executeDecryptionWithProgress(
+            decryptionInput,
+            (progress) => {
+              // Update progress if needed
+              console.log('[DecryptionWorkflow] Retry progress:', progress);
+            },
+          );
+
+          console.log('[DecryptionWorkflow] Retry succeeded:', retryResult);
+
+          // Update state to reflect success
+          setForceOverwrite(true);
+          setConflictResolveSuccess(retryResult);
+
+          // Check if recovery items were restored (backend automatically does this)
+          if (isRecoveryMode && retryResult) {
+            setRecoveredItems({
+              manifest: detectedVaultName ? { name: detectedVaultName } : undefined,
+              keys: ['passphrase key'], // Backend will have imported these
+              files: retryResult.extracted_files || [],
+            });
+            setWillRestoreManifest(true);
+            setWillRestoreKeys(true);
+          }
+        } catch (err) {
+          console.error('[DecryptionWorkflow] Retry decryption error:', err);
+          // Error handling continues below
+        } finally {
+          setIsDecrypting(false);
+        }
+        return;
+      }
+
+      // No conflict - successful decryption
+      console.log('[DecryptionWorkflow] Decryption succeeded without conflict:', result);
+      setConflictResolveSuccess(result);
 
       // Check if recovery items were restored (backend automatically does this)
       if (isRecoveryMode && result) {
@@ -250,7 +346,7 @@ export const useDecryptionWorkflow = () => {
         setRecoveredItems({
           manifest: detectedVaultName ? { name: detectedVaultName } : undefined,
           keys: ['passphrase key'], // Backend will have imported these
-          files: success?.extracted_files || [],
+          files: result.extracted_files || [],
         });
         setWillRestoreManifest(true);
         setWillRestoreKeys(true);
@@ -289,7 +385,8 @@ export const useDecryptionWorkflow = () => {
     decryptFile,
     isRecoveryMode,
     detectedVaultName,
-    success,
+    setForceOverwrite,
+    setOutputPath,
   ]);
 
   // Generate default output path
@@ -305,6 +402,7 @@ export const useDecryptionWorkflow = () => {
     setCurrentStep(1);
     setPrevSelectedFile(null);
     setFileValidationError(null);
+    setConflictResolveSuccess(null);
     // Reset recovery state
     setIsKnownVault(null);
     setDetectedVaultName(null);
@@ -317,7 +415,8 @@ export const useDecryptionWorkflow = () => {
     setWillRestoreManifest(false);
     setWillRestoreKeys(false);
     setRecoveredItems(null);
-  }, [reset]);
+    setForceOverwrite(null);
+  }, [reset, setForceOverwrite]);
 
   // Handle decrypt another
   const handleDecryptAnother = useCallback(() => {
@@ -374,7 +473,7 @@ export const useDecryptionWorkflow = () => {
     // From useFileDecryption
     isLoading,
     error: fileValidationError || error, // File validation errors take precedence
-    success,
+    success: conflictResolveSuccess || decryptionSuccess, // Use conflict resolution success if available
     progress,
     clearError: () => {
       clearError();

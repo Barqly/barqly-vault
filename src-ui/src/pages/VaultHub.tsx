@@ -179,10 +179,7 @@ const VaultHub: React.FC = () => {
                         onKeysUpdated={async () => {
                           // Refresh both vault-specific keys AND global key cache
                           // Global cache update is critical for vault_associations filtering
-                          await Promise.all([
-                            refreshKeysForVault(vault.id),
-                            refreshGlobalKeys(),
-                          ]);
+                          await Promise.all([refreshKeysForVault(vault.id), refreshGlobalKeys()]);
                         }}
                       />
                     );

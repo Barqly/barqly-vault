@@ -716,7 +716,7 @@ deletion_scheduled_at: string | null }
 /**
  * Input for decryption command
  */
-export type DecryptDataInput = { encrypted_file: string; key_id: string; passphrase: string; output_dir: string | null }
+export type DecryptDataInput = { encrypted_file: string; key_id: string; passphrase: string; output_dir: string | null; force_overwrite: boolean | null }
 /**
  * Result of decryption operation
  */

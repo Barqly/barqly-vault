@@ -367,11 +367,7 @@ const ManageKeysPage: React.FC = () => {
             </button>
 
             {/* Vault Filter Dropdown */}
-            <VaultFilterDropdown
-              value={vaultFilter}
-              onChange={setVaultFilter}
-              vaults={vaults}
-            />
+            <VaultFilterDropdown value={vaultFilter} onChange={setVaultFilter} vaults={vaults} />
 
             {/* View Toggle */}
             <div className="flex border border-default rounded-lg overflow-hidden">

@@ -22,7 +22,8 @@ export interface FileDecryptionActions {
   setKeyId: (keyId: string) => void;
   setPassphrase: (passphrase: string) => void;
   setOutputPath: (path: string) => void;
-  decryptFile: () => Promise<void>;
+  setForceOverwrite: (force: boolean | null) => void;
+  decryptFile: () => Promise<any>; // Returns DecryptionResult for conflict detection
   reset: () => void;
   clearError: () => void;
   clearSelection: () => void;
@@ -113,7 +114,11 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
     setState((prev) => decryptionStateUpdates.setOutputPath(prev, path));
   }, []);
 
-  const decryptFile = useCallback(async (): Promise<void> => {
+  const setForceOverwrite = useCallback((force: boolean | null) => {
+    setState((prev) => decryptionStateUpdates.setForceOverwrite(prev, force));
+  }, []);
+
+  const decryptFile = useCallback(async (): Promise<any> => {
     // Validate all required inputs
     const validation = validateDecryptionInputs(state);
 
@@ -136,6 +141,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
       );
 
       setState((prev) => decryptionStateUpdates.setSuccess(prev, result));
+      return result; // Return result for conflict detection
     } catch (error) {
       // Handle errors - they're already properly formatted by executeDecryption
       const commandError =
@@ -172,6 +178,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
     setKeyId: (keyId: string) => setKeyId(keyId),
     setPassphrase: (passphrase: string) => setPassphrase(passphrase),
     setOutputPath: (path: string) => setOutputPath(path),
+    setForceOverwrite: (force: boolean | null) => setForceOverwrite(force),
     decryptFile,
     reset,
     clearError,

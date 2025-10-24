@@ -10,6 +10,7 @@ export interface DecryptionInputs {
   selectedKeyId: string | null;
   passphrase: string;
   outputPath: string | null;
+  forceOverwrite?: boolean | null; // For conflict resolution
 }
 
 export interface DecryptionValidationResult {
@@ -65,11 +66,13 @@ export const validateDecryptionInputs = (inputs: DecryptionInputs): DecryptionVa
 export const prepareDecryptionInput = (inputs: DecryptionInputs) => {
   // Backend expects snake_case fields
   // output_dir is optional - null triggers backend default path generation
+  // force_overwrite is for conflict resolution (Replace scenario)
   return {
     encrypted_file: inputs.selectedFile!,
     key_id: inputs.selectedKeyId || '',
     passphrase: inputs.passphrase,
     output_dir: inputs.outputPath || null, // Backend generates default if null
+    force_overwrite: inputs.forceOverwrite || null, // User confirmation to overwrite
   };
 };
 
