@@ -188,6 +188,64 @@ impl ValidationHelper {
         Ok(())
     }
 
+    /// Validate path is within safe user directories
+    /// Prevents path traversal and restricts to user Documents and home directories
+    pub fn validate_safe_user_path(path: &str) -> Result<(), Box<CommandError>> {
+        use std::path::PathBuf;
+
+        let path_buf = PathBuf::from(path);
+        let canonical_path = path_buf.canonicalize().unwrap_or_else(|_| path_buf.clone());
+
+        // Get allowed directories - user's home and Documents
+        let home_dir = directories::UserDirs::new()
+            .and_then(|dirs| dirs.home_dir().to_str().map(String::from))
+            .ok_or_else(|| {
+                Box::new(CommandError::validation(
+                    "Cannot determine user home directory".to_string(),
+                ))
+            })?;
+
+        let _documents_dir = directories::UserDirs::new()
+            .and_then(|dirs| {
+                dirs.document_dir()
+                    .and_then(|d| d.to_str().map(String::from))
+            })
+            .unwrap_or_else(|| format!("{}/Documents", home_dir));
+
+        let path_str = canonical_path.to_string_lossy();
+
+        // Check if path is within allowed directories
+        if !path_str.starts_with(&home_dir) {
+            return Err(Box::new(
+                CommandError::operation(
+                    ErrorCode::InvalidInput,
+                    "Path must be within user home directory".to_string(),
+                )
+                .with_recovery_guidance(
+                    "Choose a location within your home directory or Documents folder",
+                ),
+            ));
+        }
+
+        // Warn against system directories even within home
+        const DANGEROUS_PATHS: &[&str] = &["/etc", "/System", "/Library", "/.config", "/.ssh"];
+        for dangerous in DANGEROUS_PATHS {
+            if path_str.contains(dangerous) {
+                return Err(Box::new(
+                    CommandError::operation(
+                        ErrorCode::InvalidInput,
+                        format!("Cannot use system directory: {}", dangerous),
+                    )
+                    .with_recovery_guidance(
+                        "Choose a location in your Documents folder or other personal directory",
+                    ),
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
     /// Validate passphrase strength
     pub fn validate_passphrase_strength(passphrase: &str) -> Result<(), Box<CommandError>> {
         if passphrase.len() < MIN_PASSPHRASE_LENGTH_BASIC {

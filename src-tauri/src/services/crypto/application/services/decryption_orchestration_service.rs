@@ -17,7 +17,7 @@ use crate::services::shared::infrastructure::{get_keys_dir, get_vault_manifest_p
 use crate::services::vault::application::services::VersionComparisonService;
 use crate::services::vault::infrastructure::persistence::metadata::VaultMetadata;
 use age::secrecy::{ExposeSecret, SecretString};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Input for decryption orchestration
 #[derive(Debug)]
@@ -25,13 +25,15 @@ pub struct DecryptionInput<'a> {
     pub encrypted_file: &'a str,
     pub key_id: &'a str,
     pub passphrase: SecretString,
-    pub output_dir: &'a Path,
+    pub custom_output_dir: Option<PathBuf>, // Optional custom override
 }
 
 /// Result of decryption orchestration
 #[derive(Debug)]
 pub struct DecryptionOutput {
     pub extracted_files: Vec<file_operations::FileInfo>,
+    pub output_dir: PathBuf, // Actual path used
+    pub output_exists: bool, // NEW - conflict detection
     pub manifest_verified: bool,
     pub external_manifest_restored: Option<bool>,
 }
@@ -67,8 +69,28 @@ impl DecryptionOrchestrationService {
         info!(
             encrypted_file = %input.encrypted_file,
             key_id = %input.key_id,
-            output_dir = %input.output_dir.display(),
+            custom_output_dir = ?input.custom_output_dir,
             "Starting decryption orchestration"
+        );
+
+        // Extract vault name from encrypted filename
+        let vault_name = self.extract_vault_name_from_file(input.encrypted_file)?;
+
+        // Determine output directory
+        let output_dir = if let Some(custom) = input.custom_output_dir {
+            custom
+        } else {
+            self.generate_default_output_path(&vault_name)?
+        };
+
+        // Check if output already exists (for frontend conflict dialog)
+        let output_exists = self.check_output_exists(&output_dir);
+
+        info!(
+            vault_name = %vault_name,
+            output_dir = %output_dir.display(),
+            output_exists = output_exists,
+            "Determined output directory for decryption"
         );
 
         // Step 1: Load key from registry
@@ -148,7 +170,7 @@ impl DecryptionOrchestrationService {
 
         let extracted_files = self
             .archive_extraction
-            .extract_archive(&decrypted_data, input.output_dir)?;
+            .extract_archive(&decrypted_data, &output_dir)?;
 
         info!(
             extracted_files_count = extracted_files.len(),
@@ -159,7 +181,7 @@ impl DecryptionOrchestrationService {
         progress_manager.set_progress(PROGRESS_DECRYPT_CLEANUP, "Processing vault manifest...");
 
         let (manifest_updated, encryption_revision) =
-            self.process_vault_manifest(&extracted_files, input.output_dir)?;
+            self.process_vault_manifest(&extracted_files, &output_dir)?;
 
         // Step 6: Restore .agekey.enc files from bundle to keys directory
         let enc_files_restored = self.restore_encryption_keys(&extracted_files)?;
@@ -176,7 +198,7 @@ impl DecryptionOrchestrationService {
 
         let manifest_verified = self
             .manifest_verification
-            .verify_manifest(&extracted_files, input.output_dir);
+            .verify_manifest(&extracted_files, &output_dir);
 
         info!(
             manifest_verified = manifest_verified,
@@ -188,6 +210,8 @@ impl DecryptionOrchestrationService {
 
         Ok(DecryptionOutput {
             extracted_files,
+            output_dir,
+            output_exists,
             manifest_verified,
             external_manifest_restored: Some(manifest_updated),
         })
@@ -324,6 +348,61 @@ impl DecryptionOrchestrationService {
         }
 
         Ok(restored_count)
+    }
+
+    /// Extract vault name from encrypted filename
+    ///
+    /// Parses filenames like "Sam-Family-Vault-2025-01-13.age" or "Sam-Family-Vault.age"
+    /// Returns the sanitized vault name portion
+    fn extract_vault_name_from_file(&self, encrypted_file_path: &str) -> CryptoResult<String> {
+        use regex::Regex;
+
+        let file_path = Path::new(encrypted_file_path);
+        let filename = file_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| CryptoError::InvalidInput("Could not extract filename".to_string()))?;
+
+        // Regex pattern: capture vault name, optional date, then .age extension
+        // Pattern: ^(vault-name)(?:-(\d{4}-\d{2}-\d{2}))?\.age$
+        let pattern = r"^([^-]+(?:-[^-]+)*?)(?:-(\d{4}-\d{2}-\d{2}))?\.age$";
+        let re = Regex::new(pattern)
+            .map_err(|e| CryptoError::InvalidInput(format!("Regex compilation failed: {}", e)))?;
+
+        let captures = re.captures(filename).ok_or_else(|| {
+            CryptoError::InvalidInput(format!(
+                "Filename does not match expected vault format: '{}'",
+                filename
+            ))
+        })?;
+
+        let vault_name = captures
+            .get(1)
+            .map(|m| m.as_str().to_string())
+            .ok_or_else(|| {
+                CryptoError::InvalidInput("Could not extract vault name from filename".to_string())
+            })?;
+
+        Ok(vault_name)
+    }
+
+    /// Generate default output path for decryption
+    ///
+    /// Creates path like: ~/Documents/Barqly-Recovery/{vault_name}/
+    fn generate_default_output_path(&self, vault_name: &str) -> CryptoResult<PathBuf> {
+        use crate::services::shared::infrastructure::path_management::get_recovery_directory;
+
+        let recovery_dir = get_recovery_directory().map_err(|e| {
+            CryptoError::InvalidInput(format!("Cannot access recovery directory: {}", e))
+        })?;
+
+        let vault_output = recovery_dir.join(vault_name);
+        Ok(vault_output)
+    }
+
+    /// Check if output directory already exists
+    fn check_output_exists(&self, path: &Path) -> bool {
+        path.exists() && path.is_dir()
     }
 }
 

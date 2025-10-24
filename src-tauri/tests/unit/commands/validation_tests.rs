@@ -188,7 +188,7 @@ mod crypto_validation_tests {
             encrypted_file: encrypted_file.to_string_lossy().to_string(),
             key_id: "test-key-id".to_string(),
             passphrase: "strong-passphrase-123".to_string(),
-            output_dir: output_dir.to_string_lossy().to_string(),
+            output_dir: Some(output_dir.to_string_lossy().to_string()),
         };
 
         let result = input.validate();
@@ -201,7 +201,7 @@ mod crypto_validation_tests {
             encrypted_file: "".to_string(),
             key_id: "test-key-id".to_string(),
             passphrase: "strong-passphrase-123".to_string(),
-            output_dir: "/path/to/output".to_string(),
+            output_dir: Some("/path/to/output".to_string()),
         };
 
         let result = input.validate();
@@ -224,7 +224,7 @@ mod crypto_validation_tests {
             encrypted_file: "/path/to/encrypted.file".to_string(),
             key_id: "".to_string(),
             passphrase: "strong-passphrase-123".to_string(),
-            output_dir: "/path/to/output".to_string(),
+            output_dir: Some("/path/to/output".to_string()),
         };
 
         let result = input.validate();
@@ -244,7 +244,7 @@ mod crypto_validation_tests {
             encrypted_file: "/path/to/encrypted.file".to_string(),
             key_id: "test-key-id".to_string(),
             passphrase: "".to_string(),
-            output_dir: "/path/to/output".to_string(),
+            output_dir: Some("/path/to/output".to_string()),
         };
 
         let result = input.validate();
@@ -264,7 +264,7 @@ mod crypto_validation_tests {
             encrypted_file: "/path/to/encrypted.file".to_string(),
             key_id: "test-key-id".to_string(),
             passphrase: "strong-passphrase-123".to_string(),
-            output_dir: "".to_string(),
+            output_dir: Some("".to_string()),
         };
 
         let result = input.validate();
@@ -1159,7 +1159,7 @@ mod task_3_4_command_tests {
             encrypted_file: "".to_string(),
             key_id: "test-key".to_string(),
             passphrase: "test-passphrase".to_string(),
-            output_dir: "/tmp/output".to_string(),
+            output_dir: Some("/tmp/output".to_string()),
         };
         assert!(input.validate().is_err());
     }
@@ -1170,7 +1170,7 @@ mod task_3_4_command_tests {
             encrypted_file: "/path/to/encrypted.age".to_string(),
             key_id: "".to_string(),
             passphrase: "test-passphrase".to_string(),
-            output_dir: "/tmp/output".to_string(),
+            output_dir: Some("/tmp/output".to_string()),
         };
         assert!(input.validate().is_err());
     }
@@ -1181,7 +1181,7 @@ mod task_3_4_command_tests {
             encrypted_file: "/path/to/encrypted.age".to_string(),
             key_id: "test-key".to_string(),
             passphrase: "".to_string(),
-            output_dir: "/tmp/output".to_string(),
+            output_dir: Some("/tmp/output".to_string()),
         };
         assert!(input.validate().is_err());
     }
@@ -1192,7 +1192,7 @@ mod task_3_4_command_tests {
             encrypted_file: "/path/to/encrypted.age".to_string(),
             key_id: "test-key".to_string(),
             passphrase: "test-passphrase".to_string(),
-            output_dir: "".to_string(),
+            output_dir: Some("".to_string()),
         };
         assert!(input.validate().is_err());
     }
@@ -1214,7 +1214,7 @@ mod task_3_4_command_tests {
             encrypted_file: encrypted_file.to_string_lossy().to_string(),
             key_id: "test-key".to_string(),
             passphrase: "test-passphrase".to_string(),
-            output_dir: output_dir.to_string_lossy().to_string(),
+            output_dir: Some(output_dir.to_string_lossy().to_string()),
         };
         assert!(input.validate().is_ok());
     }
@@ -1236,7 +1236,7 @@ mod task_3_4_command_tests {
             encrypted_file: encrypted_file.to_string_lossy().to_string(),
             key_id: "test-key".to_string(),
             passphrase: "test-passphrase".to_string(),
-            output_dir: output_dir.to_string_lossy().to_string(),
+            output_dir: Some(output_dir.to_string_lossy().to_string()),
         };
         assert!(input.validate().is_ok());
     }

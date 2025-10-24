@@ -716,11 +716,11 @@ deletion_scheduled_at: string | null }
 /**
  * Input for decryption command
  */
-export type DecryptDataInput = { encrypted_file: string; key_id: string; passphrase: string; output_dir: string }
+export type DecryptDataInput = { encrypted_file: string; key_id: string; passphrase: string; output_dir: string | null }
 /**
  * Result of decryption operation
  */
-export type DecryptionResult = { extracted_files: string[]; output_dir: string; manifest_verified: boolean; external_manifest_restored?: boolean | null }
+export type DecryptionResult = { extracted_files: string[]; output_dir: string; manifest_verified: boolean; external_manifest_restored?: boolean | null; output_exists: boolean }
 /**
  * Request to delete a key permanently
  */

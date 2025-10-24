@@ -12,7 +12,7 @@ use crate::services::shared::infrastructure::progress::ProgressManager;
 use crate::services::vault::application::services::{
     VaultBundleEncryptionInput, VaultBundleEncryptionService,
 };
-use std::path::Path;
+use std::path::PathBuf;
 
 pub struct CryptoManager {
     encryption_service: EncryptionService,
@@ -110,14 +110,14 @@ impl CryptoManager {
         encrypted_file: &str,
         key_id: &str,
         passphrase: age::secrecy::SecretString,
-        output_dir: &Path,
+        custom_output_dir: Option<PathBuf>, // Changed from &Path
         progress_manager: &mut ProgressManager,
     ) -> CryptoResult<super::services::DecryptionOutput> {
         let input = super::services::DecryptionInput {
             encrypted_file,
             key_id,
             passphrase,
-            output_dir,
+            custom_output_dir, // Pass Option<PathBuf>
         };
 
         self.decryption_orchestration

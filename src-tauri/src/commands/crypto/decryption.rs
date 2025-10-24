@@ -11,7 +11,6 @@ use crate::constants::*;
 use crate::prelude::*;
 use crate::services::crypto::CryptoManager;
 use age::secrecy::SecretString;
-use std::path::Path;
 use tauri::Window;
 
 /// Input for decryption command
@@ -20,7 +19,7 @@ pub struct DecryptDataInput {
     pub encrypted_file: String,
     pub key_id: String,
     pub passphrase: String,
-    pub output_dir: String,
+    pub output_dir: Option<String>, // Optional - backend generates default if not provided
 }
 
 /// Result of decryption operation
@@ -31,6 +30,7 @@ pub struct DecryptionResult {
     pub manifest_verified: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub external_manifest_restored: Option<bool>,
+    pub output_exists: bool, // NEW - for conflict dialog
 }
 
 impl ValidateInput for DecryptDataInput {
@@ -38,7 +38,13 @@ impl ValidateInput for DecryptDataInput {
         ValidationHelper::validate_not_empty(&self.encrypted_file, "Encrypted file path")?;
         ValidationHelper::validate_not_empty(&self.key_id, "Key ID")?;
         ValidationHelper::validate_not_empty(&self.passphrase, "Passphrase")?;
-        ValidationHelper::validate_not_empty(&self.output_dir, "Output directory")?;
+
+        // If custom output_dir provided, validate it's safe
+        if let Some(ref dir) = self.output_dir {
+            ValidationHelper::validate_not_empty(dir, "Output directory")?;
+            // Validate it's within safe directories (Documents, home)
+            ValidationHelper::validate_safe_user_path(dir)?;
+        }
 
         // Validate encrypted file exists and is a file
         ValidationHelper::validate_path_exists(&self.encrypted_file, "Encrypted file")?;
@@ -68,7 +74,7 @@ pub async fn decrypt_data(
     info!(
         encrypted_file = %input.encrypted_file,
         key_id = %input.key_id,
-        output_dir = %input.output_dir,
+        output_dir = ?input.output_dir,
         "Starting decryption operation"
     );
 
@@ -82,12 +88,14 @@ pub async fn decrypt_data(
     // Use CryptoManager following Command → Manager → Service pattern
     let manager = CryptoManager::new();
 
+    let custom_output = input.output_dir.as_ref().map(std::path::PathBuf::from);
+
     let output = manager
         .decrypt_data(
             &input.encrypted_file,
             &input.key_id,
             SecretString::from(input.passphrase),
-            Path::new(&input.output_dir),
+            custom_output, // Pass Option<PathBuf>
             &mut progress_manager,
         )
         .await
@@ -118,8 +126,9 @@ pub async fn decrypt_data(
 
     Ok(DecryptionResult {
         extracted_files: extracted_file_paths,
-        output_dir: input.output_dir,
+        output_dir: output.output_dir.to_string_lossy().to_string(),
         manifest_verified: output.manifest_verified,
         external_manifest_restored: output.external_manifest_restored,
+        output_exists: output.output_exists, // NEW
     })
 }

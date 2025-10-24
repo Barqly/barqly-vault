@@ -25,7 +25,7 @@ fn should_validate_decrypt_input_with_non_existent_directory() {
         encrypted_file: encrypted_file.to_string_lossy().to_string(),
         key_id: "test_key".to_string(),
         passphrase: "TestPass123!@#".to_string(),
-        output_dir: non_existent_dir.to_string_lossy().to_string(),
+        output_dir: Some(non_existent_dir.to_string_lossy().to_string()),
     };
 
     // When: Validating the input
@@ -53,7 +53,7 @@ fn should_validate_decrypt_input_with_existing_directory() {
         encrypted_file: encrypted_file.to_string_lossy().to_string(),
         key_id: "test_key".to_string(),
         passphrase: "TestPass123!@#".to_string(),
-        output_dir: existing_dir.to_string_lossy().to_string(),
+        output_dir: Some(existing_dir.to_string_lossy().to_string()),
     };
 
     // When: Validating the input
@@ -76,7 +76,7 @@ fn should_fail_validation_when_encrypted_file_missing() {
         encrypted_file: non_existent_file.to_string_lossy().to_string(),
         key_id: "test_key".to_string(),
         passphrase: "TestPass123!@#".to_string(),
-        output_dir: temp_dir.path().to_string_lossy().to_string(),
+        output_dir: Some(temp_dir.path().to_string_lossy().to_string()),
     };
 
     // When: Validating the input
@@ -100,7 +100,7 @@ fn should_fail_validation_when_encrypted_file_is_directory() {
         encrypted_file: dir_path.to_string_lossy().to_string(),
         key_id: "test_key".to_string(),
         passphrase: "TestPass123!@#".to_string(),
-        output_dir: temp_dir.path().to_string_lossy().to_string(),
+        output_dir: Some(temp_dir.path().to_string_lossy().to_string()),
     };
 
     // When: Validating the input
@@ -326,7 +326,7 @@ fn test_decrypt_matches_encrypt_validation_behavior() {
         encrypted_file: encrypted_file.to_string_lossy().to_string(),
         key_id: "key".to_string(),
         passphrase: "pass".to_string(),
-        output_dir: non_existent.to_string_lossy().to_string(),
+        output_dir: Some(non_existent.to_string_lossy().to_string()),
     };
 
     assert!(
@@ -341,7 +341,7 @@ fn test_decrypt_matches_encrypt_validation_behavior() {
         encrypted_file: encrypted_file.to_string_lossy().to_string(),
         key_id: "key".to_string(),
         passphrase: "pass".to_string(),
-        output_dir: existing.to_string_lossy().to_string(),
+        output_dir: Some(existing.to_string_lossy().to_string()),
     };
 
     assert!(
@@ -367,7 +367,7 @@ fn test_timestamp_based_directory_pattern() {
         encrypted_file: encrypted_file.to_string_lossy().to_string(),
         key_id: "key".to_string(),
         passphrase: "pass".to_string(),
-        output_dir: recovery_dir.to_string_lossy().to_string(),
+        output_dir: Some(recovery_dir.to_string_lossy().to_string()),
     };
 
     // Should validate successfully even though directory doesn't exist
