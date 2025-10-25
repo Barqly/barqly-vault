@@ -173,13 +173,6 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
       <div className="pt-4 border-t border-slate-200 dark:border-slate-600">
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Don't see your key?</p>
         <div className="flex gap-3">
-          <button
-            onClick={onImportKey}
-            className="flex-1 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
-          >
-            <Key className="w-4 h-4" style={{ color: '#13897F' }} />
-            Import Passphrase Key
-          </button>
           {onDetectYubiKey && (
             <button
               onClick={onDetectYubiKey}
@@ -189,6 +182,13 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
               Detect YubiKey
             </button>
           )}
+          <button
+            onClick={onImportKey}
+            className="flex-1 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
+          >
+            <Key className="w-4 h-4" style={{ color: '#13897F' }} />
+            Import Passphrase Key
+          </button>
         </div>
       </div>
     </div>
