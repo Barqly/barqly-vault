@@ -30,6 +30,14 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
 }) => {
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
 
+  // Debug logging to track key availability
+  console.log('[KeyDiscovery] Component rendered with:', {
+    availableKeysCount: availableKeys.length,
+    suggestedKeysCount: suggestedKeys.length,
+    isRecoveryMode,
+    availableKeys,
+  });
+
   const handleKeySelect = (keyId: string) => {
     setSelectedKeyId(keyId);
     onKeySelected(keyId);
@@ -64,37 +72,41 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className={`rounded-lg border p-4 ${
-        isRecoveryMode
-          ? 'bg-slate-50 dark:bg-slate-800 border-orange-200 dark:border-orange-700/50'
-          : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50'
-      }`}>
-        <div className={`flex items-center gap-2 font-medium mb-2 ${
+      <div
+        className={`rounded-lg border p-4 ${
           isRecoveryMode
-            ? 'text-orange-200 dark:text-orange-700/50'
-            : 'text-blue-800 dark:text-blue-300'
-        }`}>
-          {isRecoveryMode ? (
-            <ShieldAlert className="w-5 h-5" />
-          ) : (
-            <Key className="w-5 h-5" />
-          )}
+            ? 'bg-slate-50 dark:bg-slate-800 border-orange-200 dark:border-orange-700/50'
+            : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50'
+        }`}
+      >
+        <div
+          className={`flex items-center gap-2 font-medium mb-2 ${
+            isRecoveryMode
+              ? 'text-orange-200 dark:text-orange-700/50'
+              : 'text-blue-800 dark:text-blue-300'
+          }`}
+        >
+          {isRecoveryMode ? <ShieldAlert className="w-5 h-5" /> : <Key className="w-5 h-5" />}
           {isRecoveryMode ? 'Recovery Mode' : 'Select Decryption Key'}
         </div>
-        <p className={`text-sm ${
-          isRecoveryMode
-            ? 'text-slate-600 dark:text-slate-400'
-            : 'text-blue-700 dark:text-blue-400'
-        }`}>
+        <p
+          className={`text-sm ${
+            isRecoveryMode
+              ? 'text-slate-600 dark:text-slate-400'
+              : 'text-blue-700 dark:text-blue-400'
+          }`}
+        >
           {isRecoveryMode
             ? "This vault's manifest is missing. Go to Manage Keys to register your YubiKey or import a passphrase key, then return here to decrypt."
-            : 'Choose the key that was used to encrypt this vault. If you don\'t see your key, you can import it below.'}
+            : "Choose the key that was used to encrypt this vault. If you don't see your key, you can import it below."}
         </p>
       </div>
 
       {/* Available keys list */}
       <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Available keys on this device:</h4>
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          Available keys on this device:
+        </h4>
 
         {availableKeys.length === 0 ? (
           <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 text-center">
@@ -133,7 +145,9 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
                         ) : (
                           <span className="text-lg">🔑</span>
                         )}
-                        <span className="font-medium text-slate-800 dark:text-slate-200">{key.label || key.id}</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200">
+                          {key.label || key.id}
+                        </span>
                         {getKeyStatusIcon(key.id)}
                       </div>
                       <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -163,7 +177,9 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
 
                   {selectedKeyId === key.id && !isDisabled && (
                     <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600">
-                      <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">Try This Key</span>
+                      <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                        Try This Key
+                      </span>
                     </div>
                   )}
                 </button>

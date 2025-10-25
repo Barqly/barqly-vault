@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useFileDecryption } from './useFileDecryption';
-import type { ErrorCode, CommandError, KeyReference } from '../bindings';
+import type { CommandError } from '../bindings';
 import { createCommandError } from '../lib/errors/command-error';
 import { commands } from '../bindings';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import { executeDecryptionWithProgress } from '../lib/decryption/decryption-workflow';
 import { prepareDecryptionInput } from '../lib/validation/decryption-validation';
+import { useVault } from '../contexts/VaultContext';
 
 interface VaultMetadata {
   creationDate?: string;
@@ -24,6 +25,7 @@ interface RecoveredItems {
  */
 export const useDecryptionWorkflow = () => {
   const fileDecryptionHook = useFileDecryption();
+  const { getGlobalKeys, isInitialized: vaultContextInitialized } = useVault();
 
   const {
     setSelectedFile,
@@ -137,10 +139,20 @@ export const useDecryptionWorkflow = () => {
         setAvailableKeys(vaultInfo.associated_keys);
         setSuggestedKeys(vaultInfo.associated_keys);
       } else if (vaultInfo.is_recovery_mode) {
-        // Recovery mode: Get all registered keys (even if unattached to vaults)
-        const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
-        if (allKeysResult.status === 'ok') {
-          const registeredKeys = allKeysResult.data.map((keyInfo) => ({
+        // Recovery mode: Use global key cache from VaultContext (cache-first approach)
+        console.log('[DecryptionWorkflow] Recovery mode - checking global key cache...');
+
+        // First, try to get keys from the global cache (instant)
+        const globalKeys = getGlobalKeys();
+        console.log('[DecryptionWorkflow] Global keys from cache:', {
+          keyCount: globalKeys.length,
+          keys: globalKeys,
+          vaultContextInitialized,
+        });
+
+        if (globalKeys.length > 0) {
+          // Transform GlobalKey to KeyReference format
+          const registeredKeys = globalKeys.map((keyInfo) => ({
             id: keyInfo.id,
             label: keyInfo.label,
             type: keyInfo.key_type.type,
@@ -151,8 +163,32 @@ export const useDecryptionWorkflow = () => {
           }));
           setAvailableKeys(registeredKeys);
           setSuggestedKeys(registeredKeys);
+        } else if (!vaultContextInitialized) {
+          // VaultContext might still be loading, fall back to direct API call
+          console.log(
+            '[DecryptionWorkflow] VaultContext not initialized, falling back to API call...',
+          );
+          const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
+          if (allKeysResult.status === 'ok') {
+            const registeredKeys = allKeysResult.data.map((keyInfo) => ({
+              id: keyInfo.id,
+              label: keyInfo.label,
+              type: keyInfo.key_type.type,
+              data: keyInfo.key_type.data,
+              lifecycle_status: keyInfo.lifecycle_status,
+              created_at: keyInfo.created_at,
+              last_used: keyInfo.last_used,
+            }));
+            setAvailableKeys(registeredKeys);
+            setSuggestedKeys(registeredKeys);
+          } else {
+            // No keys in registry
+            setAvailableKeys([]);
+            setSuggestedKeys([]);
+          }
         } else {
-          // No keys in registry
+          // VaultContext is initialized but cache is empty
+          console.log('[DecryptionWorkflow] No keys in global cache');
           setAvailableKeys([]);
           setSuggestedKeys([]);
         }
@@ -172,34 +208,38 @@ export const useDecryptionWorkflow = () => {
     }
   }, []);
 
-  // Refresh recovery keys when in recovery mode (e.g., after importing in Manage Keys)
+  // Sync recovery keys with global cache when in recovery mode
   useEffect(() => {
-    const refreshRecoveryKeys = async () => {
-      if (isRecoveryMode && selectedFile) {
-        const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
-        if (allKeysResult.status === 'ok') {
-          const registeredKeys = allKeysResult.data.map((keyInfo) => ({
-            id: keyInfo.id,
-            label: keyInfo.label,
-            type: keyInfo.key_type.type,
-            data: keyInfo.key_type.data,
-            lifecycle_status: keyInfo.lifecycle_status,
-            created_at: keyInfo.created_at,
-            last_used: keyInfo.last_used,
-          }));
-          setAvailableKeys(registeredKeys);
-          setSuggestedKeys(registeredKeys);
-        }
+    if (isRecoveryMode && selectedFile && vaultContextInitialized) {
+      console.log('[DecryptionWorkflow] Syncing recovery keys with global cache...');
+
+      // Get keys from global cache (reactive to cache updates)
+      const globalKeys = getGlobalKeys();
+      console.log('[DecryptionWorkflow] Global keys update:', {
+        keyCount: globalKeys.length,
+        keys: globalKeys,
+      });
+
+      if (globalKeys.length > 0) {
+        // Transform GlobalKey to KeyReference format
+        const registeredKeys = globalKeys.map((keyInfo) => ({
+          id: keyInfo.id,
+          label: keyInfo.label,
+          type: keyInfo.key_type.type,
+          data: keyInfo.key_type.data,
+          lifecycle_status: keyInfo.lifecycle_status,
+          created_at: keyInfo.created_at,
+          last_used: keyInfo.last_used,
+        }));
+        setAvailableKeys(registeredKeys);
+        setSuggestedKeys(registeredKeys);
+      } else {
+        // Cache is empty
+        setAvailableKeys([]);
+        setSuggestedKeys([]);
       }
-    };
-
-    // Refresh on mount and when window regains focus (returning from Manage Keys)
-    refreshRecoveryKeys();
-
-    const handleFocus = () => refreshRecoveryKeys();
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [isRecoveryMode, selectedFile]);
+    }
+  }, [isRecoveryMode, selectedFile, vaultContextInitialized, getGlobalKeys]);
 
   // Handle file selection
   const handleFileSelected = useCallback(
@@ -280,12 +320,9 @@ export const useDecryptionWorkflow = () => {
         forceOverwrite: null, // First attempt - let backend detect conflict
       });
 
-      const result = await executeDecryptionWithProgress(
-        decryptionInput,
-        (progress) => {
-          console.log('[DecryptionWorkflow] Decryption progress:', progress);
-        },
-      );
+      const result = await executeDecryptionWithProgress(decryptionInput, (progress) => {
+        console.log('[DecryptionWorkflow] Decryption progress:', progress);
+      });
 
       // Check for conflict: output_exists is true but no files extracted
       if (result && result.output_exists && result.extracted_files.length === 0) {
@@ -330,13 +367,10 @@ export const useDecryptionWorkflow = () => {
           console.log('[DecryptionWorkflow] Retrying decryption with force_overwrite: true');
 
           // Call backend API directly with explicit parameters
-          const retryResult = await executeDecryptionWithProgress(
-            decryptionInput,
-            (progress) => {
-              // Update progress if needed
-              console.log('[DecryptionWorkflow] Retry progress:', progress);
-            },
-          );
+          const retryResult = await executeDecryptionWithProgress(decryptionInput, (progress) => {
+            // Update progress if needed
+            console.log('[DecryptionWorkflow] Retry progress:', progress);
+          });
 
           console.log('[DecryptionWorkflow] Retry succeeded:', retryResult);
 

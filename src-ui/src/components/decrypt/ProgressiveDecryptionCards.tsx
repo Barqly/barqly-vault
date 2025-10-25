@@ -218,12 +218,21 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
         );
 
       case 2:
-        // In recovery mode, show key discovery with message to use Manage Keys
+        // In recovery mode, show key discovery with available global keys
         if (isRecoveryMode) {
+          console.log(
+            '[ProgressiveDecryptionCards] Recovery mode - passing keys to KeyDiscovery:',
+            {
+              availableKeysCount: availableKeysForDiscovery.length,
+              suggestedKeysCount: suggestedKeys.length,
+              availableKeys: availableKeysForDiscovery,
+            },
+          );
+
           return (
             <KeyDiscovery
-              availableKeys={[]}
-              suggestedKeys={[]}
+              availableKeys={availableKeysForDiscovery}
+              suggestedKeys={suggestedKeys}
               keyAttempts={keyAttempts}
               onKeySelected={onKeyChange}
               onImportKey={onImportKey}

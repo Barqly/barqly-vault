@@ -26,7 +26,7 @@ pub struct DecryptionInput<'a> {
     pub key_id: &'a str,
     pub passphrase: SecretString,
     pub custom_output_dir: Option<PathBuf>, // Optional custom override
-    pub force_overwrite: bool, // NEW - for user confirmation
+    pub force_overwrite: bool,              // NEW - for user confirmation
 }
 
 /// Result of decryption orchestration
@@ -106,7 +106,7 @@ impl DecryptionOrchestrationService {
             return Ok(DecryptionOutput {
                 extracted_files: vec![], // Empty - nothing decrypted yet
                 output_dir,
-                output_exists: true,     // Signal conflict to frontend
+                output_exists: true, // Signal conflict to frontend
                 manifest_verified: false,
                 external_manifest_restored: None,
             });
