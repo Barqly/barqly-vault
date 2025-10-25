@@ -421,21 +421,14 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
 
     const loadAllVaultData = async () => {
-      // If no vaults, we're fully initialized (nothing to cache)
-      if (vaults.length === 0) {
-        console.log('🔍 VaultContext: No vaults to cache, marking as initialized');
-        setIsInitialized(true);
-        return;
-      }
-
-      console.log('🔍 VaultContext: Starting cache population for all vaults...');
-      logger.info('VaultContext', 'Populating cache for all vaults', {
+      console.log('🔍 VaultContext: Starting cache population...');
+      logger.info('VaultContext', 'Populating cache', {
         vaultCount: vaults.length,
       });
 
       // Load data in parallel: vault keys + global keys + statistics
       const loadPromises = [
-        // Load keys for all vaults
+        // Load keys for all vaults (if any)
         ...vaults.map(async (vault) => {
           try {
             await refreshKeysForVault(vault.id);
@@ -447,7 +440,8 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             );
           }
         }),
-        // Load global key registry
+        // ALWAYS load global key registry (even with 0 vaults)
+        // Critical for recovery mode where vaults are missing but keys exist
         (async () => {
           try {
             await refreshGlobalKeys();
@@ -455,10 +449,12 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             logger.error('VaultContext', 'Failed to cache global keys', err as Error);
           }
         })(),
-        // Load statistics for all vaults
+        // Load statistics for all vaults (if any)
         (async () => {
           try {
-            await refreshAllStatistics();
+            if (vaults.length > 0) {
+              await refreshAllStatistics();
+            }
           } catch (err) {
             logger.error('VaultContext', 'Failed to load statistics for all vaults', err as Error);
           }
@@ -469,9 +465,10 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       logger.info('VaultContext', 'Cache population complete', {
         cachedVaultCount: vaults.length,
+        globalKeysLoaded: true,
       });
 
-      // NOW we're fully initialized - vaults loaded AND keys cached
+      // NOW we're fully initialized - global keys always loaded
       console.log('🔍 VaultContext: All data loaded and cached, marking as initialized');
       setIsInitialized(true);
     };
