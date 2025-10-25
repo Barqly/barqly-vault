@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, Lock, Upload, Search, Check, X, ShieldAlert } from 'lucide-react';
+import { Key, Lock, Check, X, ShieldAlert, Fingerprint } from 'lucide-react';
 import { VaultKey } from '../../bindings';
 
 // KeyReference is VaultKey (for backward compatibility)
@@ -175,17 +175,17 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
         <div className="flex gap-3">
           <button
             onClick={onImportKey}
-            className="h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
+            className="flex-1 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
           >
-            <Upload className="w-4 h-4" />
-            Import .enc
+            <Key className="w-4 h-4" style={{ color: '#13897F' }} />
+            Import Passphrase Key
           </button>
           {onDetectYubiKey && (
             <button
               onClick={onDetectYubiKey}
-              className="h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
+              className="flex-1 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
             >
-              <Search className="w-4 h-4" />
+              <Fingerprint className="w-4 h-4" style={{ color: '#F98B1C' }} />
               Detect YubiKey
             </button>
           )}
