@@ -9,6 +9,7 @@ interface KeyDiscoveryProps {
   onKeySelected: (keyId: string) => void;
   onImportKey: () => void;
   onDetectYubiKey?: () => void;
+  isRecoveryMode?: boolean; // NEW: Indicates vault manifest is missing
 }
 
 /**
@@ -22,6 +23,7 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
   onKeySelected,
   onImportKey,
   onDetectYubiKey,
+  isRecoveryMode = false,
 }) => {
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
 
@@ -62,11 +64,12 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50 p-4">
         <div className="flex items-center gap-2 text-blue-800 dark:text-blue-300 font-medium mb-2">
           <Key className="w-5 h-5" />
-          Select Decryption Key
+          {isRecoveryMode ? 'Recovery Mode' : 'Select Decryption Key'}
         </div>
         <p className="text-sm text-blue-700 dark:text-blue-400">
-          Choose the key that was used to encrypt this vault. If you don't see your key, you can
-          import it below.
+          {isRecoveryMode
+            ? "This vault's manifest is missing. Select or import the key that was used to encrypt this vault."
+            : 'Choose the key that was used to encrypt this vault. If you don\'t see your key, you can import it below.'}
         </p>
       </div>
 

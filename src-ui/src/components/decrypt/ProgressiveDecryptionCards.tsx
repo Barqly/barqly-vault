@@ -226,6 +226,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                 onKeySelected={onKeyChange}
                 onImportKey={onImportKey}
                 onDetectYubiKey={onDetectYubiKey}
+                isRecoveryMode={isRecoveryMode}
               />
 
               {selectedKeyId && (

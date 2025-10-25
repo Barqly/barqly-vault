@@ -90,7 +90,7 @@ const DecryptPage: React.FC = () => {
         skipNavTarget="#main-content"
         showVaultBadge={true}
         vaultName={selectedFile && detectedVaultName ? detectedVaultName : undefined}
-        vaultVariant={isRecoveryMode ? 'recovery' : 'normal'}
+        vaultVariant="normal"
         vaultId={detectedVaultId}
       />
 
