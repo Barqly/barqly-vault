@@ -71,7 +71,7 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
       }`}>
         <div className={`flex items-center gap-2 font-medium mb-2 ${
           isRecoveryMode
-            ? 'text-orange-200 dark:text-orange-700'
+            ? 'text-orange-200 dark:text-orange-700/50'
             : 'text-blue-800 dark:text-blue-300'
         }`}>
           {isRecoveryMode ? (
