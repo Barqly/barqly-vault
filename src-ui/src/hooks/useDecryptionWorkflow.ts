@@ -137,9 +137,25 @@ export const useDecryptionWorkflow = () => {
         setAvailableKeys(vaultInfo.associated_keys);
         setSuggestedKeys(vaultInfo.associated_keys);
       } else if (vaultInfo.is_recovery_mode) {
-        // Recovery mode: Show empty keys - user must register keys in Manage Keys first
-        setAvailableKeys([]);
-        setSuggestedKeys([]);
+        // Recovery mode: Get all registered keys (even if unattached to vaults)
+        const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
+        if (allKeysResult.status === 'ok') {
+          const registeredKeys = allKeysResult.data.map((keyInfo) => ({
+            id: keyInfo.id,
+            label: keyInfo.label,
+            type: keyInfo.key_type.type,
+            data: keyInfo.key_type.data,
+            lifecycle_status: keyInfo.lifecycle_status,
+            created_at: keyInfo.created_at,
+            last_used: keyInfo.last_used,
+          }));
+          setAvailableKeys(registeredKeys);
+          setSuggestedKeys(registeredKeys);
+        } else {
+          // No keys in registry
+          setAvailableKeys([]);
+          setSuggestedKeys([]);
+        }
       }
 
       // Extract creation date from analysis
@@ -155,6 +171,35 @@ export const useDecryptionWorkflow = () => {
       setIsRecoveryMode(true);
     }
   }, []);
+
+  // Refresh recovery keys when in recovery mode (e.g., after importing in Manage Keys)
+  useEffect(() => {
+    const refreshRecoveryKeys = async () => {
+      if (isRecoveryMode && selectedFile) {
+        const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
+        if (allKeysResult.status === 'ok') {
+          const registeredKeys = allKeysResult.data.map((keyInfo) => ({
+            id: keyInfo.id,
+            label: keyInfo.label,
+            type: keyInfo.key_type.type,
+            data: keyInfo.key_type.data,
+            lifecycle_status: keyInfo.lifecycle_status,
+            created_at: keyInfo.created_at,
+            last_used: keyInfo.last_used,
+          }));
+          setAvailableKeys(registeredKeys);
+          setSuggestedKeys(registeredKeys);
+        }
+      }
+    };
+
+    // Refresh on mount and when window regains focus (returning from Manage Keys)
+    refreshRecoveryKeys();
+
+    const handleFocus = () => refreshRecoveryKeys();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isRecoveryMode, selectedFile]);
 
   // Handle file selection
   const handleFileSelected = useCallback(
