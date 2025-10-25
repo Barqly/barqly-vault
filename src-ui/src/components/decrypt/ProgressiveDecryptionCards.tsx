@@ -77,13 +77,16 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
 
   // Update selected key when selectedKeyId changes
   useEffect(() => {
-    if (selectedKeyId && availableKeys.length > 0) {
-      const foundKey = availableKeys.find((key) => key.id === selectedKeyId);
+    if (selectedKeyId) {
+      // Check both normal keys and recovery keys
+      const foundKey =
+        availableKeys.find((key) => key.id === selectedKeyId) ||
+        availableKeysForDiscovery.find((key) => key.id === selectedKeyId);
       setSelectedKey(foundKey || null);
     } else {
       setSelectedKey(null);
     }
-  }, [selectedKeyId, availableKeys]);
+  }, [selectedKeyId, availableKeys, availableKeysForDiscovery]);
 
   // Define continue conditions for each step
   const canContinue = (() => {
@@ -224,7 +227,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
               <div className="space-y-4">
                 {/* Recovery Mode Banner */}
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg border border-orange-200 dark:border-orange-700/50 p-4">
-                  <div className="flex items-center gap-2 font-medium mb-2 text-orange-800 dark:text-orange-300">
+                  <div className="flex items-center gap-2 font-medium mb-2 text-orange-200 dark:text-orange-700">
                     <ShieldAlert className="w-5 h-5" />
                     Recovery Mode
                   </div>
