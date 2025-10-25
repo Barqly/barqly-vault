@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Key, Lock, Upload, Search, Check, X, ShieldAlert } from 'lucide-react';
-import { KeyReference } from '../../bindings';
+import { VaultKey } from '../../bindings';
+
+// KeyReference is VaultKey (for backward compatibility)
+type KeyReference = VaultKey;
 
 interface KeyDiscoveryProps {
   availableKeys: KeyReference[];
@@ -68,7 +71,7 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
       }`}>
         <div className={`flex items-center gap-2 font-medium mb-2 ${
           isRecoveryMode
-            ? 'text-orange-600 dark:text-orange-400'
+            ? 'text-orange-800 dark:text-orange-300'
             : 'text-blue-800 dark:text-blue-300'
         }`}>
           {isRecoveryMode ? (
