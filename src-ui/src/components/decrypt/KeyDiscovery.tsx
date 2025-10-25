@@ -87,7 +87,7 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
             : 'text-blue-700 dark:text-blue-400'
         }`}>
           {isRecoveryMode
-            ? "This vault's manifest is missing. Select or import the key that was used to encrypt this vault."
+            ? "This vault's manifest is missing. Go to Manage Keys to register your YubiKey or import a passphrase key, then return here to decrypt."
             : 'Choose the key that was used to encrypt this vault. If you don\'t see your key, you can import it below.'}
         </p>
       </div>
@@ -100,7 +100,11 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
           <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 text-center">
             <Lock className="w-8 h-8 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
             <p className="text-slate-600 dark:text-slate-300">No keys found on this device</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Import your key to continue</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {isRecoveryMode
+                ? 'Go to Manage Keys to register your keys'
+                : 'Import your key to continue'}
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -169,28 +173,30 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
         )}
       </div>
 
-      {/* Import options */}
-      <div className="pt-4 border-t border-slate-200 dark:border-slate-600">
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Don't see your key?</p>
-        <div className="flex gap-3">
-          {onDetectYubiKey && (
+      {/* Import options - Only show in non-recovery mode */}
+      {!isRecoveryMode && (
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Don't see your key?</p>
+          <div className="flex gap-3">
+            {onDetectYubiKey && (
+              <button
+                onClick={onDetectYubiKey}
+                className="flex-1 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
+              >
+                <Fingerprint className="w-4 h-4" style={{ color: '#F98B1C' }} />
+                Detect YubiKey
+              </button>
+            )}
             <button
-              onClick={onDetectYubiKey}
+              onClick={onImportKey}
               className="flex-1 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
             >
-              <Fingerprint className="w-4 h-4" style={{ color: '#F98B1C' }} />
-              Detect YubiKey
+              <Key className="w-4 h-4" style={{ color: '#13897F' }} />
+              Import Passphrase Key
             </button>
-          )}
-          <button
-            onClick={onImportKey}
-            className="flex-1 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
-          >
-            <Key className="w-4 h-4" style={{ color: '#13897F' }} />
-            Import Passphrase Key
-          </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

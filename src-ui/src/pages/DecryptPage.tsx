@@ -13,7 +13,6 @@ import DecryptProgress from '../components/decrypt/DecryptProgress';
 import DecryptSuccess from '../components/decrypt/DecryptSuccess';
 import AnimatedTransition from '../components/ui/AnimatedTransition';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
-import { ImportPassphraseKeyDialog } from '../components/keys/ImportPassphraseKeyDialog';
 
 const DECRYPTION_STEPS: ProgressStep[] = [
   { id: 1, label: 'Select Vault', description: 'Choose vault to decrypt' },
@@ -73,16 +72,9 @@ const DecryptPage: React.FC = () => {
     handleDecryptAnother,
     handleKeyChange,
     handleFileValidationError,
-    handleDetectYubiKey,
-    handleImportKey,
-    handleImportSuccess,
 
     // Navigation handlers
     handleStepNavigation,
-
-    // Recovery dialog state
-    showImportKeyDialog,
-    setShowImportKeyDialog,
 
     // Setters
     setAvailableKeys: _setAvailableKeys,
@@ -201,8 +193,8 @@ const DecryptPage: React.FC = () => {
                   suggestedKeys={suggestedKeys}
                   keyAttempts={keyAttempts}
                   willRestoreManifest={willRestoreManifest}
-                  onImportKey={handleImportKey}
-                  onDetectYubiKey={handleDetectYubiKey}
+                  onImportKey={() => {}}
+                  onDetectYubiKey={() => {}}
                   onConfirmRestoration={handleDecryption}
                   onDecrypt={handleDecryption}
                 />
@@ -239,13 +231,6 @@ const DecryptPage: React.FC = () => {
           </AnimatedTransition>
         </div>
       </AppPrimaryContainer>
-
-      {/* Import Passphrase Key Dialog (Recovery Mode) */}
-      <ImportPassphraseKeyDialog
-        isOpen={showImportKeyDialog}
-        onClose={() => setShowImportKeyDialog(false)}
-        onSuccess={handleImportSuccess}
-      />
     </div>
   );
 };

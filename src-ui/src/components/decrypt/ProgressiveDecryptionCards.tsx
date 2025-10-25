@@ -1,12 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ChevronLeft, ShieldAlert, Key, Fingerprint } from 'lucide-react';
+import { ChevronLeft, Key, Fingerprint } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
 import PassphraseInput from '../forms/PassphraseInput';
 import { VaultKey } from '../../bindings';
 import VaultRecognition from './VaultRecognition';
 import KeyDiscovery from './KeyDiscovery';
-import RecoveryKeySelector from './RecoveryKeySelector';
 
 interface ProgressiveDecryptionCardsProps {
   currentStep: number;
@@ -219,97 +218,18 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
         );
 
       case 2:
-        // In recovery mode, show dropdown if keys available, otherwise show key discovery
+        // In recovery mode, show key discovery with message to use Manage Keys
         if (isRecoveryMode) {
-          // If keys are available, show dropdown + passphrase field
-          if (availableKeysForDiscovery.length > 0) {
-            return (
-              <div className="space-y-4">
-                {/* Recovery Mode Banner */}
-                <div className="bg-slate-50 dark:bg-slate-800 rounded-lg border border-orange-200 dark:border-orange-700/50 p-4">
-                  <div className="flex items-center gap-2 font-medium mb-2 text-orange-200 dark:text-orange-700/50">
-                    <ShieldAlert className="w-5 h-5" />
-                    Recovery Mode
-                  </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    This vault's manifest is missing. Select or import the key that was used to encrypt this vault.
-                  </p>
-                </div>
-
-                {/* Key Selection Dropdown */}
-                <div>
-                  <RecoveryKeySelector
-                    keys={availableKeysForDiscovery}
-                    value={selectedKeyId}
-                    onChange={onKeyChange}
-                    label="Recovery Keys"
-                    placeholder="Select recovery key"
-                  />
-                </div>
-
-                {/* PIN/Passphrase Field - Right below dropdown */}
-                {selectedKeyId && (
-                  <div>
-                    <PassphraseInput
-                      value={passphrase}
-                      onChange={onPassphraseChange}
-                      label={selectedKey?.type === 'YubiKey' ? 'PIN' : 'Passphrase'}
-                      placeholder={
-                        selectedKey?.type === 'YubiKey'
-                          ? 'Enter your YubiKey PIN'
-                          : 'Enter your key passphrase'
-                      }
-                      showStrength={false}
-                      autoFocus={true}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && canContinue) {
-                          e.preventDefault();
-                          handleContinue();
-                        }
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* Import/Detect Buttons - Below passphrase */}
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-600">
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Don't see your key?</p>
-                  <div className="flex gap-3">
-                    {onDetectYubiKey && (
-                      <button
-                        onClick={onDetectYubiKey}
-                        className="flex-1 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
-                      >
-                        <Fingerprint className="w-4 h-4" style={{ color: '#F98B1C' }} />
-                        Detect YubiKey
-                      </button>
-                    )}
-                    <button
-                      onClick={onImportKey}
-                      className="flex-1 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center gap-2"
-                    >
-                      <Key className="w-4 h-4" style={{ color: '#13897F' }} />
-                      Import Passphrase Key
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          }
-
-          // No keys available - show KeyDiscovery with empty state + import buttons
           return (
-            <div className="space-y-4">
-              <KeyDiscovery
-                availableKeys={[]}
-                suggestedKeys={[]}
-                keyAttempts={keyAttempts}
-                onKeySelected={onKeyChange}
-                onImportKey={onImportKey}
-                onDetectYubiKey={onDetectYubiKey}
-                isRecoveryMode={isRecoveryMode}
-              />
-            </div>
+            <KeyDiscovery
+              availableKeys={[]}
+              suggestedKeys={[]}
+              keyAttempts={keyAttempts}
+              onKeySelected={onKeyChange}
+              onImportKey={onImportKey}
+              onDetectYubiKey={onDetectYubiKey}
+              isRecoveryMode={isRecoveryMode}
+            />
           );
         }
 
