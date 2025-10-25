@@ -70,6 +70,7 @@ export const useDecryptionWorkflow = () => {
   const [willRestoreManifest, setWillRestoreManifest] = useState(false);
   const [willRestoreKeys, setWillRestoreKeys] = useState(false);
   const [recoveredItems, setRecoveredItems] = useState<RecoveredItems | null>(null);
+  const [showImportKeyDialog, setShowImportKeyDialog] = useState(false);
 
   // Steps are controlled by explicit user navigation only
   // No automatic transitions based on data
@@ -137,12 +138,13 @@ export const useDecryptionWorkflow = () => {
         setAvailableKeys(vaultInfo.associated_keys);
         setSuggestedKeys(vaultInfo.associated_keys);
       } else if (vaultInfo.is_recovery_mode) {
-        // Recovery mode: Get ALL available keys
-        const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
+        // Recovery mode: Auto-detect YubiKeys + get any passphrase keys from registry
+        const recoveryKeys: KeyReference[] = [];
 
+        // 1. Get any existing passphrase keys from registry (might have some)
+        const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
         if (allKeysResult.status === 'ok') {
-          // Convert KeyInfo to KeyReference format
-          const keyReferences: KeyReference[] = allKeysResult.data.map((keyInfo) => ({
+          const registeredKeys = allKeysResult.data.map((keyInfo) => ({
             id: keyInfo.id,
             label: keyInfo.label,
             type: keyInfo.key_type.type,
@@ -151,10 +153,28 @@ export const useDecryptionWorkflow = () => {
             created_at: keyInfo.created_at,
             last_used: keyInfo.last_used,
           }));
-
-          setAvailableKeys(keyReferences);
-          setSuggestedKeys(keyReferences);
+          recoveryKeys.push(...registeredKeys);
         }
+
+        // 2. Auto-detect YubiKeys (even if unregistered)
+        const yubikeysResult = await commands.listYubikeys();
+        if (yubikeysResult.status === 'ok') {
+          const detectedYubiKeys = yubikeysResult.data
+            .filter((yk) => yk.recipient) // Only include if has recipient (usable)
+            .map((yk) => ({
+              id: `YubiKey-${yk.serial}`,
+              label: yk.label || `YubiKey-${yk.serial}`,
+              type: 'YubiKey' as const,
+              data: { serial: yk.serial, firmware_version: yk.firmware_version },
+              lifecycle_status: yk.lifecycle_status,
+              created_at: yk.created_at,
+              last_used: yk.last_used,
+            }));
+          recoveryKeys.push(...detectedYubiKeys);
+        }
+
+        setAvailableKeys(recoveryKeys);
+        setSuggestedKeys(recoveryKeys);
       }
 
       // Extract creation date from analysis
@@ -441,6 +461,55 @@ export const useDecryptionWorkflow = () => {
     setFileValidationError(error);
   }, []);
 
+  // Handle YubiKey detection (manual rescan in recovery mode)
+  const handleDetectYubiKey = useCallback(async () => {
+    const yubikeysResult = await commands.listYubikeys();
+    if (yubikeysResult.status === 'ok') {
+      const detectedYubiKeys = yubikeysResult.data
+        .filter((yk) => yk.recipient)
+        .map((yk) => ({
+          id: `YubiKey-${yk.serial}`,
+          label: yk.label || `YubiKey-${yk.serial}`,
+          type: 'YubiKey' as const,
+          data: { serial: yk.serial, firmware_version: yk.firmware_version },
+          lifecycle_status: yk.lifecycle_status,
+          created_at: yk.created_at,
+          last_used: yk.last_used,
+        }));
+
+      // Merge with existing keys (remove duplicates by ID)
+      setAvailableKeys((prev) => {
+        const existingIds = new Set(prev.map((k) => k.id));
+        const newKeys = detectedYubiKeys.filter((k) => !existingIds.has(k.id));
+        return [...prev, ...newKeys];
+      });
+    }
+  }, []);
+
+  // Handle opening import key dialog (recovery mode)
+  const handleImportKey = useCallback(() => {
+    setShowImportKeyDialog(true);
+  }, []);
+
+  // Handle successful key import - refresh available keys
+  const handleImportSuccess = useCallback(async () => {
+    setShowImportKeyDialog(false);
+    // Refresh keys from registry
+    const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
+    if (allKeysResult.status === 'ok') {
+      const registeredKeys = allKeysResult.data.map((keyInfo) => ({
+        id: keyInfo.id,
+        label: keyInfo.label,
+        type: keyInfo.key_type.type,
+        data: keyInfo.key_type.data,
+        lifecycle_status: keyInfo.lifecycle_status,
+        created_at: keyInfo.created_at,
+        last_used: keyInfo.last_used,
+      }));
+      setAvailableKeys(registeredKeys);
+    }
+  }, []);
+
   return {
     // State
     selectedFile,
@@ -493,10 +562,17 @@ export const useDecryptionWorkflow = () => {
     handleDecryptAnother,
     handleKeyChange,
     handleFileValidationError,
+    handleDetectYubiKey,
+    handleImportKey,
+    handleImportSuccess,
 
     // Navigation handlers
     handleStepNavigation,
     canNavigateToStep,
+
+    // Recovery dialog state
+    showImportKeyDialog,
+    setShowImportKeyDialog,
 
     // Setters for components
     setAvailableKeys,
