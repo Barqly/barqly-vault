@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, Lock, Upload, Search, Check, X } from 'lucide-react';
+import { Key, Lock, Upload, Search, Check, X, ShieldAlert } from 'lucide-react';
 import { KeyReference } from '../../bindings';
 
 interface KeyDiscoveryProps {
@@ -61,12 +61,28 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50 p-4">
-        <div className="flex items-center gap-2 text-blue-800 dark:text-blue-300 font-medium mb-2">
-          <Key className="w-5 h-5" />
+      <div className={`rounded-lg border p-4 ${
+        isRecoveryMode
+          ? 'bg-slate-50 dark:bg-slate-800 border-orange-200 dark:border-orange-700/50'
+          : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50'
+      }`}>
+        <div className={`flex items-center gap-2 font-medium mb-2 ${
+          isRecoveryMode
+            ? 'text-orange-600 dark:text-orange-400'
+            : 'text-blue-800 dark:text-blue-300'
+        }`}>
+          {isRecoveryMode ? (
+            <ShieldAlert className="w-5 h-5" />
+          ) : (
+            <Key className="w-5 h-5" />
+          )}
           {isRecoveryMode ? 'Recovery Mode' : 'Select Decryption Key'}
         </div>
-        <p className="text-sm text-blue-700 dark:text-blue-400">
+        <p className={`text-sm ${
+          isRecoveryMode
+            ? 'text-slate-600 dark:text-slate-400'
+            : 'text-blue-700 dark:text-blue-400'
+        }`}>
           {isRecoveryMode
             ? "This vault's manifest is missing. Select or import the key that was used to encrypt this vault."
             : 'Choose the key that was used to encrypt this vault. If you don\'t see your key, you can import it below.'}
