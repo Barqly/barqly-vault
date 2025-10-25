@@ -102,19 +102,20 @@ pub async fn vault_exists(vault_id: &str) -> bool {
 pub async fn delete_vault_by_name(
     vault_name: &str,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let path = get_vault_path_by_name(vault_name)?;
+    let manifest_path = get_vault_path_by_name(vault_name)?;
 
-    if path.exists() {
-        // Create backup before deletion
-        let backup_path = path.with_extension("bak");
-        async_fs::copy(&path, &backup_path).await?;
+    if manifest_path.exists() {
+        // Delete the vault manifest file (no backup creation)
+        async_fs::remove_file(&manifest_path).await?;
 
-        // Delete the vault manifest file
-        async_fs::remove_file(&path).await?;
+        // Delete the corresponding .age file from Barqly-Vaults directory if it exists
+        use crate::services::shared::infrastructure::path_management::get_vaults_directory;
 
-        // Also delete the corresponding .age file if it exists
-        let age_path = path.with_extension("").with_extension("age");
+        let vaults_dir = get_vaults_directory()?;
+        let age_path = vaults_dir.join(format!("{}.age", vault_name));
+
         if age_path.exists() {
+            info!("Deleting encrypted vault file: {}", age_path.display());
             async_fs::remove_file(age_path).await?;
         }
     }
