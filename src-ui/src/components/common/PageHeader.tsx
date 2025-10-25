@@ -96,13 +96,13 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                       <span className="font-medium">No Vault</span>
                     </div>
                   ) : vaultVariant === 'recovery' ? (
-                    // Recovery mode - yellow warning badge (state-based, not theme-aware)
+                    // Recovery mode - yellow warning badge (theme-aware)
                     <div
-                      className="inline-flex items-center gap-2 px-4 py-1.5 border border-yellow-200 rounded-full bg-yellow-50 text-sm whitespace-nowrap text-main"
+                      className="inline-flex items-center gap-2 px-4 py-1.5 border border-yellow-200 dark:border-yellow-700/50 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-sm whitespace-nowrap text-main"
                       style={{ height: '32px', width: '200px' }}
                       title="Vault manifest not found - recovery mode"
                     >
-                      <AlertTriangle className="h-3.5 w-3.5 text-yellow-600 flex-shrink-0" />
+                      <AlertTriangle className="h-3.5 w-3.5 text-yellow-600 dark:text-yellow-500 flex-shrink-0" />
                       <span className="font-medium overflow-hidden text-ellipsis">
                         {vaultName.length > 20 ? vaultName.substring(0, 20) + '...' : vaultName}
                       </span>
