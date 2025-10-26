@@ -143,48 +143,40 @@ impl VaultStatisticsService {
     pub fn get_all_vault_statistics(
         &self,
     ) -> Result<GlobalVaultStatistics, Box<dyn std::error::Error + Send + Sync>> {
-        let vaults_dir = get_vaults_directory()?;
+        use crate::services::vault::infrastructure::VaultRepository;
 
-        // Find all .age archives and manifest files
-        let mut vault_names = std::collections::HashSet::new();
+        // Use VaultRepository to get all manifests (same source as listVaults)
+        let repository = VaultRepository::new();
+        let manifests = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                repository.list_vaults().await
+            })
+        })?;
 
-        // Scan for .age archives
-        if vaults_dir.exists() {
-            for entry in std::fs::read_dir(&vaults_dir)? {
-                let entry = entry?;
-                let path = entry.path();
-                if path.extension().and_then(|s| s.to_str()) == Some("age")
-                    && let Some(name) = path.file_stem().and_then(|s| s.to_str())
-                {
-                    vault_names.insert(name.to_string());
-                }
-            }
-        }
+        debug!(
+            manifest_count = manifests.len(),
+            "Found vault manifests for statistics"
+        );
 
-        // Scan for manifest files
-        let non_sync_dir = vaults_dir.join("..").join("non-sync");
-        if non_sync_dir.exists() {
-            for entry in std::fs::read_dir(&non_sync_dir)? {
-                let entry = entry?;
-                let path = entry.path();
-                if path.is_dir() {
-                    let manifest_path = path.join("vault-manifest.json");
-                    if manifest_path.exists()
-                        && let Some(name) = path.file_name().and_then(|s| s.to_str())
-                    {
-                        vault_names.insert(name.to_string());
-                    }
-                }
-            }
-        }
-
-        // Collect statistics for each vault
+        // Collect statistics for each vault using sanitized_name
         let mut vault_statistics = Vec::new();
-        for vault_name in vault_names {
-            match self.get_vault_statistics(&vault_name) {
-                Ok(stats) => vault_statistics.push(stats),
+        for manifest in manifests {
+            let vault_name = &manifest.vault.sanitized_name;
+            match self.get_vault_statistics(vault_name) {
+                Ok(stats) => {
+                    debug!(
+                        vault_name = %vault_name,
+                        file_count = stats.file_count,
+                        "Retrieved vault statistics"
+                    );
+                    vault_statistics.push(stats);
+                }
                 Err(e) => {
-                    warn!(vault_name = %vault_name, error = %e, "Failed to get vault statistics");
+                    warn!(
+                        vault_name = %vault_name,
+                        error = %e,
+                        "Failed to get vault statistics, skipping"
+                    );
                 }
             }
         }
