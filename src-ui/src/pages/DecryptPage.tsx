@@ -114,13 +114,8 @@ const DecryptPage: React.FC = () => {
       {/* Main content - Centered Container */}
       <AppPrimaryContainer id="main-content">
         <div className="mt-6 space-y-6">
-          {/* Error display - old banner style (keeping for file validation errors) */}
-          {error && !isDecrypting && !success && currentStep < 3 && (
-            <ErrorMessage error={error} showRecoveryGuidance={true} onClose={clearError} />
-          )}
-
-          {/* Error view - shown after decryption fails (matches success view pattern) */}
-          <AnimatedTransition show={!!error && !isDecrypting && !success && currentStep >= 3} duration={400}>
+          {/* Error view - shown after decryption attempt fails (full view like success) */}
+          <AnimatedTransition show={!!error && !isDecrypting && !success} duration={400}>
             {error && !success && (
               <DecryptError
                 error={error}
@@ -157,9 +152,9 @@ const DecryptPage: React.FC = () => {
             />
           </AnimatedTransition>
 
-          {/* Main form - hidden during success/progress with smooth transition */}
-          <AnimatedTransition show={!success && !isDecrypting} duration={300}>
-            {!success && !isDecrypting && (
+          {/* Main form - hidden during success/progress/error with smooth transition */}
+          <AnimatedTransition show={!success && !isDecrypting && !error} duration={300}>
+            {!success && !isDecrypting && !error && (
               <>
                 {/* Progressive Card System - Steps 1 & 2 */}
                 <ProgressiveDecryptionCards
