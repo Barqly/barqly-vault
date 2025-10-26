@@ -38,6 +38,8 @@ export interface PassphraseInputProps {
   // Focus management props
   autoFocus?: boolean;
   tabIndex?: number;
+  // Decrypt mode - disable validation (backend validates)
+  disableValidation?: boolean;
 }
 
 const PassphraseInput: React.FC<PassphraseInputProps> = ({
@@ -61,6 +63,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
   originalPassphrase = '',
   autoFocus = false,
   tabIndex,
+  disableValidation = false,
 }) => {
   const [internalValue, setInternalValue] = useState('');
   const [showPassphrase, setShowPassphrase] = useState(false);
@@ -116,8 +119,11 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
 
   // Handle blur
   const handleBlur = () => {
-    const error = validateCurrentPassphrase(value);
-    setValidationError(error);
+    // Skip validation if disabled (decrypt mode lets backend validate)
+    if (!disableValidation) {
+      const error = validateCurrentPassphrase(value);
+      setValidationError(error);
+    }
 
     if (onBlur) {
       onBlur();

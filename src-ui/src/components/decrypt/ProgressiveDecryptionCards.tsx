@@ -263,6 +263,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                       }
                       showStrength={false}
                       autoFocus={true}
+                      disableValidation={true}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && canContinue) {
                           e.preventDefault();
@@ -319,6 +320,7 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                     }
                     showStrength={false}
                     autoFocus={true}
+                    disableValidation={true}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && canContinue) {
                         e.preventDefault();
