@@ -26,7 +26,13 @@ import VaultEmptyState from '../components/vault/VaultEmptyState';
  */
 const VaultHub: React.FC = () => {
   const navigate = useNavigate();
-  const { keyCache, refreshKeysForVault, refreshGlobalKeys, getVaultStatistics } = useVault();
+  const {
+    keyCache,
+    refreshKeysForVault,
+    refreshGlobalKeys,
+    getVaultStatistics,
+    refreshAllStatistics,
+  } = useVault();
   const {
     // Form state
     name,
@@ -59,10 +65,14 @@ const VaultHub: React.FC = () => {
     refreshVaults,
   } = useVaultHubWorkflow();
 
-  // Load vaults on mount
+  // Load vaults and statistics on mount (mutation screen pattern)
   useEffect(() => {
-    refreshVaults();
-  }, []);
+    const loadData = async () => {
+      await refreshVaults();
+      await refreshAllStatistics();
+    };
+    loadData();
+  }, [refreshVaults, refreshAllStatistics]);
 
   // Refresh keys for all vaults periodically to ensure cache is fresh
   useEffect(() => {
