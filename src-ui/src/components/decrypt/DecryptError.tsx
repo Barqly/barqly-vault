@@ -36,8 +36,8 @@ const DecryptError: React.FC<DecryptErrorProps> = ({ error, passphraseAttempts, 
       <div className="bg-white dark:bg-slate-800 px-6 py-4 text-center relative">
         <div className="relative z-10">
           {/* Error icon */}
-          <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4">
-            <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+          <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(185, 28, 28, 0.15)' }}>
+            <AlertCircle className="w-8 h-8" style={{ color: '#991B1B' }} />
           </div>
 
           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">

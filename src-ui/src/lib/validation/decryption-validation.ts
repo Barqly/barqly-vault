@@ -43,18 +43,9 @@ export const validateDecryptionInputs = (inputs: DecryptionInputs): DecryptionVa
     };
   }
 
-  if (!inputs.passphrase.trim()) {
-    return {
-      isValid: false,
-      error: createValidationError(
-        'Passphrase',
-        'Please enter the passphrase for the selected key',
-      ),
-    };
-  }
-
-  // output_dir is optional - backend generates default path if not provided
-  // No validation needed
+  // Passphrase/PIN validation removed - backend will validate
+  // Ensures consistent UX (no pre-validation for either passphrase or PIN)
+  // User sees progress → backend validates → error view if incorrect
 
   return { isValid: true };
 };
@@ -101,12 +92,8 @@ export const validateDecryptionField = (
       break;
 
     case 'passphrase':
-      if (!value || !value.trim()) {
-        return 'Please enter a passphrase';
-      }
-      if (value.length < 8) {
-        return 'Passphrase must be at least 8 characters';
-      }
+      // No client-side validation - backend will validate
+      // Ensures consistent UX with PIN (no pre-validation)
       break;
 
     case 'outputPath':
