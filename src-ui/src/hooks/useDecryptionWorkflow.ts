@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useFileDecryption } from './useFileDecryption';
-import type { CommandError } from '../bindings';
-import { createCommandError, ErrorCode } from '../lib/errors/command-error';
+import type { CommandError, ErrorCode } from '../bindings';
+import { createCommandError } from '../lib/errors/command-error';
 import { commands } from '../bindings';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import { executeDecryptionWithProgress } from '../lib/decryption/decryption-workflow';
