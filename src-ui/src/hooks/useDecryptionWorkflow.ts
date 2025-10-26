@@ -142,10 +142,12 @@ export const useDecryptionWorkflow = () => {
           setSuggestedKeys(vaultInfo.associated_keys);
         } else if (vaultInfo.is_recovery_mode) {
           // Recovery mode: Use global key cache from VaultContext (cache-first approach)
+          // Filter out destroyed keys (not usable)
+          const usableKeys = globalKeyCache.filter((k) => k.lifecycle_status !== 'destroyed');
 
-          if (globalKeyCache.length > 0) {
+          if (usableKeys.length > 0) {
             // Transform GlobalKey to KeyReference format
-            const registeredKeys = globalKeyCache.map((keyInfo) => ({
+            const registeredKeys = usableKeys.map((keyInfo) => ({
               id: keyInfo.id,
               label: keyInfo.label,
               type: keyInfo.key_type.type,
@@ -160,7 +162,10 @@ export const useDecryptionWorkflow = () => {
             // VaultContext might still be loading, fall back to direct API call
             const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
             if (allKeysResult.status === 'ok') {
-              const registeredKeys = allKeysResult.data.map((keyInfo) => ({
+              const usableGlobalKeys = allKeysResult.data.filter(
+                (k) => k.lifecycle_status !== 'destroyed',
+              );
+              const registeredKeys = usableGlobalKeys.map((keyInfo) => ({
                 id: keyInfo.id,
                 label: keyInfo.label,
                 type: keyInfo.key_type.type,
@@ -203,10 +208,12 @@ export const useDecryptionWorkflow = () => {
   useEffect(() => {
     if (isRecoveryMode && selectedFile && vaultContextInitialized) {
       // Use globalKeyCache directly (reactive to cache updates)
+      // Filter out destroyed keys (not usable for recovery)
+      const usableKeys = globalKeyCache.filter((k) => k.lifecycle_status !== 'destroyed');
 
-      if (globalKeyCache.length > 0) {
+      if (usableKeys.length > 0) {
         // Transform GlobalKey to KeyReference format
-        const registeredKeys = globalKeyCache.map((keyInfo) => ({
+        const registeredKeys = usableKeys.map((keyInfo) => ({
           id: keyInfo.id,
           label: keyInfo.label,
           type: keyInfo.key_type.type,
