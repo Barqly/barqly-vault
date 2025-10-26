@@ -531,24 +531,16 @@ impl KeyRegistryService {
                     }
                 }
                 MergeStrategy::ReplaceIfDuplicate => {
-                    // Recovery: Replace if same public_key with different key_id
+                    // Recovery: Replace if same public_key exists (bundle is authoritative)
                     if let Some(existing_id) = self.find_by_public_key(&recipient.public_key)? {
-                        if existing_id != key_id {
-                            info!(
-                                existing_key = %existing_id,
-                                bundle_key = %key_id,
-                                "Replacing duplicate key with bundle key (recovery strategy)"
-                            );
-                            registry.keys.remove(&existing_id);
-                        } else {
-                            // Same key_id exists, skip
-                            debug!(
-                                key_id = %key_id,
-                                "Same key already in registry (recovery strategy), skipping"
-                            );
-                            continue;
-                        }
+                        info!(
+                            existing_key = %existing_id,
+                            bundle_key = %key_id,
+                            "Replacing key with bundle version (bundle is authoritative)"
+                        );
+                        registry.keys.remove(&existing_id);
                     }
+                    // Continue to add bundle version (whether replacing or new)
                 }
             }
 
