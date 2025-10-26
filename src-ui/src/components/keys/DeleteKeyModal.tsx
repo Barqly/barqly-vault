@@ -178,7 +178,10 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
               }}
             >
               <div className="flex gap-3">
-                <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#DC2626' }} />
+                <AlertTriangle
+                  className="h-5 w-5 flex-shrink-0 mt-0.5"
+                  style={{ color: '#DC2626' }}
+                />
                 <div>
                   <p className="text-sm font-semibold text-main">This action cannot be undone</p>
                   <p className="text-sm text-secondary mt-1">
@@ -214,7 +217,9 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
                 autoFocus
               />
               {confirmationText && !isConfirmationValid && (
-                <p className="text-xs mt-1" style={{ color: '#DC2626' }}>Text must match exactly</p>
+                <p className="text-xs mt-1" style={{ color: '#DC2626' }}>
+                  Text must match exactly
+                </p>
               )}
             </div>
 

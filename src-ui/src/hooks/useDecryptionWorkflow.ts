@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useFileDecryption } from './useFileDecryption';
-import type { CommandError, ErrorCode } from '../bindings';
-import { createCommandError } from '../lib/errors/command-error';
+import type { CommandError } from '../bindings';
 import { commands } from '../bindings';
+import { createCommandError } from '../lib/errors/command-error';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import { executeDecryptionWithProgress } from '../lib/decryption/decryption-workflow';
 import { prepareDecryptionInput } from '../lib/validation/decryption-validation';
@@ -235,15 +235,13 @@ export const useDecryptionWorkflow = () => {
   // Handle file selection
   const handleFileSelected = useCallback(
     async (paths: string[]) => {
-      console.log('[DecryptionWorkflow] File selected:', paths);
-
       // Clear any previous file validation errors
       setFileValidationError(null);
       clearError(); // Clear any existing errors from useFileDecryption
 
       if (paths.length !== 1) {
         const error = createCommandError(
-          ErrorCode.INVALID_INPUT,
+          'INVALID_INPUT',
           'Invalid file selection',
           'Please select only one encrypted .age file',
         );
@@ -254,7 +252,7 @@ export const useDecryptionWorkflow = () => {
       const filePath = paths[0];
       if (!filePath.toLowerCase().endsWith('.age')) {
         const error = createCommandError(
-          ErrorCode.INVALID_INPUT,
+          'INVALID_INPUT',
           'Invalid file format. Please select .age files only.',
           'Only encrypted .age files are supported for decryption',
         );
@@ -272,7 +270,7 @@ export const useDecryptionWorkflow = () => {
       } catch (error) {
         console.error('[DecryptionWorkflow] File selection error:', error);
         const commandError = createCommandError(
-          ErrorCode.INTERNAL_ERROR,
+          'INTERNAL_ERROR',
           'File selection failed',
           error instanceof Error ? error.message : 'Please try again',
         );
@@ -286,7 +284,7 @@ export const useDecryptionWorkflow = () => {
   const handleDecryption = useCallback(async () => {
     if (!selectedKeyId || !passphrase) {
       const error = createCommandError(
-        ErrorCode.MISSING_PARAMETER,
+        'MISSING_PARAMETER',
         'Missing information',
         'Please select a key and enter your passphrase',
       );
@@ -312,13 +310,11 @@ export const useDecryptionWorkflow = () => {
       });
 
       const result = await executeDecryptionWithProgress(decryptionInput, (progress) => {
-        console.log('[DecryptionWorkflow] Decryption progress:', progress);
+        // Progress callback - no-op as progress is handled via state
       });
 
       // Check for conflict: output_exists is true but no files extracted
       if (result && result.output_exists && result.extracted_files.length === 0) {
-        console.log('[DecryptionWorkflow] Conflict detected, showing native dialog');
-
         // Show conflict dialog: Replace or Cancel
         const shouldReplace = await confirm(
           `The folder for "${detectedVaultName || 'vault'}" already exists.\n\nWould you like to replace it with the newly decrypted files?`,
@@ -332,13 +328,11 @@ export const useDecryptionWorkflow = () => {
 
         if (!shouldReplace) {
           // User cancelled - stay on decrypt page
-          console.log('[DecryptionWorkflow] User cancelled conflict resolution');
           setIsDecrypting(false);
           return;
         }
 
         // User chose Replace - retry with force_overwrite: true
-        console.log('[DecryptionWorkflow] User chose to replace existing folder');
 
         // Clear any existing success state to show progress view
         setConflictResolveSuccess(null);
@@ -355,15 +349,10 @@ export const useDecryptionWorkflow = () => {
             forceOverwrite: true, // Explicitly set to true for replacement
           });
 
-          console.log('[DecryptionWorkflow] Retrying decryption with force_overwrite: true');
-
           // Call backend API directly with explicit parameters
           const retryResult = await executeDecryptionWithProgress(decryptionInput, (progress) => {
-            // Update progress if needed
-            console.log('[DecryptionWorkflow] Retry progress:', progress);
+            // Progress callback - no-op as progress is handled via state
           });
-
-          console.log('[DecryptionWorkflow] Retry succeeded:', retryResult);
 
           // Update state to reflect success
           setForceOverwrite(true);
@@ -381,7 +370,20 @@ export const useDecryptionWorkflow = () => {
           }
         } catch (err) {
           console.error('[DecryptionWorkflow] Retry decryption error:', err);
-          // Error handling continues below
+
+          // Set error state for retry failures too
+          const commandError =
+            err && typeof err === 'object' && 'code' in err
+              ? (err as CommandError)
+              : createCommandError(
+                  'DECRYPTION_FAILED',
+                  'Decryption failed',
+                  err instanceof Error ? err.message : 'An error occurred during decryption',
+                );
+
+          setFileValidationError(commandError);
+          setIsDecrypting(false);
+          return;
         } finally {
           setIsDecrypting(false);
         }
@@ -389,7 +391,6 @@ export const useDecryptionWorkflow = () => {
       }
 
       // No conflict - successful decryption
-      console.log('[DecryptionWorkflow] Decryption succeeded without conflict:', result);
       setConflictResolveSuccess(result);
 
       // Check if recovery items were restored (backend automatically does this)
@@ -431,7 +432,7 @@ export const useDecryptionWorkflow = () => {
         err && typeof err === 'object' && 'code' in err
           ? (err as CommandError)
           : createCommandError(
-              ErrorCode.DECRYPTION_FAILED,
+              'DECRYPTION_FAILED',
               'Decryption failed',
               err instanceof Error ? err.message : 'An error occurred during decryption',
             );

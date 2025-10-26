@@ -231,7 +231,8 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                     Recovery Mode
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    This vault's manifest is missing. Select the key that was used to encrypt this vault.
+                    This vault's manifest is missing. Select the key that was used to encrypt this
+                    vault.
                   </p>
                 </div>
 
