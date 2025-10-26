@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ChevronLeft, Key, Fingerprint } from 'lucide-react';
+import { ChevronLeft, Key, Fingerprint, ShieldAlert } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
 import PassphraseInput from '../forms/PassphraseInput';
@@ -218,21 +218,73 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
         );
 
       case 2:
-        // In recovery mode, show key discovery with available global keys
-        if (isRecoveryMode) {
-          console.log(
-            '[ProgressiveDecryptionCards] Recovery mode - passing keys to KeyDiscovery:',
-            {
-              availableKeysCount: availableKeysForDiscovery.length,
-              suggestedKeysCount: suggestedKeys.length,
-              availableKeys: availableKeysForDiscovery,
-            },
-          );
+        // In recovery mode with keys available, show dropdown
+        if (isRecoveryMode && availableKeysForDiscovery.length > 0) {
+          return (
+            <div className="space-y-4">
+              {/* Recovery Mode Banner */}
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg border border-orange-200 dark:border-orange-700/50 p-4">
+                <div className="flex items-center gap-2 font-medium mb-2 text-orange-200 dark:text-orange-700/50">
+                  <ShieldAlert className="w-5 h-5" />
+                  Recovery Mode
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  This vault's manifest is missing. Select the key that was used to encrypt this vault.
+                </p>
+              </div>
 
+              {/* Simple key dropdown - no cache dependency */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Recovery Keys
+                </label>
+                <select
+                  value={selectedKeyId || ''}
+                  onChange={(e) => onKeyChange(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select recovery key</option>
+                  {availableKeysForDiscovery.map((key) => (
+                    <option key={key.id} value={key.id}>
+                      {key.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* PIN/Passphrase Field */}
+              {selectedKeyId && (
+                <div>
+                  <PassphraseInput
+                    value={passphrase}
+                    onChange={onPassphraseChange}
+                    label={selectedKey?.type === 'YubiKey' ? 'PIN' : 'Passphrase'}
+                    placeholder={
+                      selectedKey?.type === 'YubiKey'
+                        ? 'Enter your YubiKey PIN'
+                        : 'Enter your key passphrase'
+                    }
+                    showStrength={false}
+                    autoFocus={true}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && canContinue) {
+                        e.preventDefault();
+                        handleContinue();
+                      }
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // In recovery mode with NO keys, show KeyDiscovery empty state
+        if (isRecoveryMode) {
           return (
             <KeyDiscovery
-              availableKeys={availableKeysForDiscovery}
-              suggestedKeys={suggestedKeys}
+              availableKeys={[]}
+              suggestedKeys={[]}
               keyAttempts={keyAttempts}
               onKeySelected={onKeyChange}
               onImportKey={onImportKey}
