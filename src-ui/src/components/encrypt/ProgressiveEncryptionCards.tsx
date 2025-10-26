@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ChevronLeft, Archive, Lock, ChevronDown, Check } from 'lucide-react';
+import { ChevronLeft, Archive, Lock, ChevronDown, Check, AlertTriangle } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import RecoveryInfoPanel from './RecoveryInfoPanel';
 import { useVault } from '../../contexts/VaultContext';
@@ -336,9 +336,12 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                 )}
 
                 {vaultsWithKeys.length === 0 && (
-                  <p className="text-xs mt-2" style={{ color: '#EAB308' }}>
-                    ⚠️ No vaults with keys available. Create a vault and add keys first.
-                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" style={{ color: '#DC2626' }} />
+                    <p className="text-xs" style={{ color: '#DC2626' }}>
+                      No vaults with keys available. Create a vault and add keys first.
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
