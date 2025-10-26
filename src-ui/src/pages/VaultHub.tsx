@@ -65,14 +65,16 @@ const VaultHub: React.FC = () => {
     refreshVaults,
   } = useVaultHubWorkflow();
 
-  // Load vaults and statistics on mount (mutation screen pattern)
+  // Refresh vaults and statistics when screen is accessed
   useEffect(() => {
     const loadData = async () => {
       await refreshVaults();
+      // After vaults refresh, also refresh statistics
       await refreshAllStatistics();
     };
     loadData();
-  }, [refreshVaults, refreshAllStatistics]);
+    // Empty dependency array - run on every mount (when navigating to this page)
+  }, []);
 
   // Refresh keys for all vaults periodically to ensure cache is fresh
   useEffect(() => {
