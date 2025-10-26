@@ -411,7 +411,7 @@ export const useDecryptionWorkflow = () => {
     } catch (err) {
       console.error('[DecryptionWorkflow] Decryption error:', err);
 
-      // Special error handling
+      // Increment passphrase attempts for tracking
       if (
         err &&
         typeof err === 'object' &&
@@ -420,16 +420,23 @@ export const useDecryptionWorkflow = () => {
       ) {
         const message = (err as any).message.toLowerCase();
 
-        if (message.includes('directory not found')) {
-          // This error will be handled by the main error handling mechanism
-          // via the error state in the component
-          return;
-        }
-
-        if (message.includes('passphrase')) {
+        if (message.includes('passphrase') || message.includes('pin')) {
           setPassphraseAttempts((prev) => prev + 1);
         }
       }
+
+      // Set error state so DecryptError view can display it
+      // The error is already a CommandError from executeDecryptionWithProgress
+      const commandError =
+        err && typeof err === 'object' && 'code' in err
+          ? (err as CommandError)
+          : createCommandError(
+              ErrorCode.DECRYPTION_FAILED,
+              'Decryption failed',
+              err instanceof Error ? err.message : 'An error occurred during decryption',
+            );
+
+      setFileValidationError(commandError);
     } finally {
       setIsDecrypting(false);
     }
@@ -478,6 +485,17 @@ export const useDecryptionWorkflow = () => {
     handleReset();
     // UI reset to step 1 provides clear visual feedback
   }, [handleReset]);
+
+  // Handle try again after error (go back to key selection, keep file)
+  const handleTryAgain = useCallback(() => {
+    // Clear error and passphrase
+    setFileValidationError(null);
+    clearError();
+    setPassphrase('');
+    setKeyId('');
+    // Go back to step 2 (Choose Key) - keep the selected file
+    handleStepNavigation(2);
+  }, [setPassphrase, setKeyId, clearError, handleStepNavigation]);
 
   // Handle key selection
   const handleKeyChange = useCallback(
@@ -546,12 +564,16 @@ export const useDecryptionWorkflow = () => {
     handleDecryption,
     handleReset,
     handleDecryptAnother,
+    handleTryAgain,
     handleKeyChange,
     handleFileValidationError,
 
     // Navigation handlers
     handleStepNavigation,
     canNavigateToStep,
+
+    // Attempt tracking
+    passphraseAttempts,
 
     // Setters for components
     setAvailableKeys,

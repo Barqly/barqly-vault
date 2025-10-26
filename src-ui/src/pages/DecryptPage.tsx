@@ -11,6 +11,7 @@ import DecryptionReadyPanel from '../components/decrypt/DecryptionReadyPanel';
 import ManifestRestoration from '../components/decrypt/ManifestRestoration';
 import DecryptProgress from '../components/decrypt/DecryptProgress';
 import DecryptSuccess from '../components/decrypt/DecryptSuccess';
+import DecryptError from '../components/decrypt/DecryptError';
 import AnimatedTransition from '../components/ui/AnimatedTransition';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
 
@@ -70,11 +71,15 @@ const DecryptPage: React.FC = () => {
     handleDecryption,
     handleReset,
     handleDecryptAnother,
+    handleTryAgain,
     handleKeyChange,
     handleFileValidationError,
 
     // Navigation handlers
     handleStepNavigation,
+
+    // Attempt tracking
+    passphraseAttempts,
 
     // Setters
     setAvailableKeys: _setAvailableKeys,
@@ -109,10 +114,21 @@ const DecryptPage: React.FC = () => {
       {/* Main content - Centered Container */}
       <AppPrimaryContainer id="main-content">
         <div className="mt-6 space-y-6">
-          {/* Error display */}
-          {error && !isDecrypting && (
+          {/* Error display - old banner style (keeping for file validation errors) */}
+          {error && !isDecrypting && !success && currentStep < 3 && (
             <ErrorMessage error={error} showRecoveryGuidance={true} onClose={clearError} />
           )}
+
+          {/* Error view - shown after decryption fails (matches success view pattern) */}
+          <AnimatedTransition show={!!error && !isDecrypting && !success && currentStep >= 3} duration={400}>
+            {error && !success && (
+              <DecryptError
+                error={error}
+                passphraseAttempts={passphraseAttempts}
+                onTryAgain={handleTryAgain}
+              />
+            )}
+          </AnimatedTransition>
 
           {/* Success display with animation */}
           <AnimatedTransition show={!!success} duration={400}>
