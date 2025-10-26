@@ -178,7 +178,7 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
               }}
             >
               <div className="flex gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#DC2626' }} />
                 <div>
                   <p className="text-sm font-semibold text-main">This action cannot be undone</p>
                   <p className="text-sm text-secondary mt-1">
@@ -208,17 +208,13 @@ export const DeleteKeyModal: React.FC<DeleteKeyModalProps> = ({
                 }}
                 onKeyPress={handleKeyPress}
                 disabled={isProcessing}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main ${
-                  confirmationText && !isConfirmationValid
-                    ? 'border-red-300 focus:ring-red-500'
-                    : 'border-default focus:ring-blue-500'
-                }`}
+                className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main"
                 placeholder={expectedConfirmation}
                 autoComplete="off"
                 autoFocus
               />
               {confirmationText && !isConfirmationValid && (
-                <p className="text-xs text-red-600 mt-1">Text must match exactly</p>
+                <p className="text-xs mt-1" style={{ color: '#DC2626' }}>Text must match exactly</p>
               )}
             </div>
 
