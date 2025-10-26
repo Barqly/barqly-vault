@@ -30,14 +30,6 @@ const KeyDiscovery: React.FC<KeyDiscoveryProps> = ({
 }) => {
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
 
-  // Debug logging to track key availability
-  console.log('[KeyDiscovery] Component rendered with:', {
-    availableKeysCount: availableKeys.length,
-    suggestedKeysCount: suggestedKeys.length,
-    isRecoveryMode,
-    availableKeys,
-  });
-
   const handleKeySelect = (keyId: string) => {
     setSelectedKeyId(keyId);
     onKeySelected(keyId);
