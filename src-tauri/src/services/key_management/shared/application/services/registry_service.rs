@@ -10,11 +10,17 @@
 //! - Comprehensive error handling and logging
 
 use crate::prelude::*;
+use crate::services::key_management::shared::domain::models::key_lifecycle::{
+    KeyLifecycleStatus, StatusHistoryEntry,
+};
 use crate::services::key_management::shared::infrastructure::{
     KeyEntry, KeyInfo, KeyRegistry, list_keys as list_key_files,
 };
 use crate::services::shared;
 use crate::services::vault;
+use crate::services::vault::infrastructure::persistence::metadata::{
+    RecipientInfo, RecipientType, VaultMetadata,
+};
 
 /// Error types for key registry operations
 #[derive(Debug, thiserror::Error)]
@@ -48,6 +54,15 @@ pub enum KeyManagementError {
 }
 
 pub type Result<T> = std::result::Result<T, KeyManagementError>;
+
+/// Merge strategy for handling duplicate public keys
+#[derive(Debug, Clone, Copy)]
+pub enum MergeStrategy {
+    /// Skip if key_id exists (bootstrap: additive only)
+    Additive,
+    /// Replace if same public_key with different key_id (recovery: authoritative)
+    ReplaceIfDuplicate,
+}
 
 /// Key Registry Service - application layer for key management
 #[derive(Debug)]
@@ -405,6 +420,171 @@ impl KeyRegistryService {
 
         info!(key_id = %key_id, "Key permanently deleted");
         Ok(())
+    }
+
+    //
+    // SHARED UTILITIES FOR REGISTRY-MANIFEST SYNCHRONIZATION
+    //
+
+    /// Convert vault RecipientInfo to KeyEntry for registry
+    /// Shared utility used by both bootstrap and recovery flows
+    pub fn recipient_to_key_entry(recipient: &RecipientInfo) -> KeyEntry {
+        match &recipient.recipient_type {
+            RecipientType::Passphrase { key_filename } => KeyEntry::Passphrase {
+                label: recipient.label.clone(),
+                created_at: recipient.created_at,
+                last_used: None,
+                public_key: recipient.public_key.clone(),
+                key_filename: key_filename.clone(),
+                lifecycle_status: KeyLifecycleStatus::Active, // From manifest means it's active
+                status_history: vec![StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Active,
+                    "Imported from vault manifest",
+                    "system",
+                )],
+                vault_associations: vec![], // Will be populated by higher level
+                deactivated_at: None,
+                previous_lifecycle_status: None,
+            },
+            RecipientType::YubiKey {
+                serial,
+                slot,
+                piv_slot,
+                identity_tag,
+                model,
+                firmware_version,
+            } => KeyEntry::Yubikey {
+                label: recipient.label.clone(),
+                created_at: recipient.created_at,
+                last_used: None,
+                serial: serial.clone(),
+                slot: *slot,
+                piv_slot: *piv_slot,
+                recipient: recipient.public_key.clone(),
+                identity_tag: identity_tag.clone(),
+                model: model.clone(),
+                firmware_version: firmware_version.clone(),
+                recovery_code_hash: String::new(), // Not available from manifest
+                lifecycle_status: KeyLifecycleStatus::Active, // From manifest means it's active
+                status_history: vec![StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Active,
+                    "Imported from vault manifest",
+                    "system",
+                )],
+                vault_associations: vec![], // Will be populated by higher level
+                deactivated_at: None,
+                previous_lifecycle_status: None,
+            },
+        }
+    }
+
+    /// Find key by public key (returns key_id if exists)
+    #[instrument(skip(self))]
+    pub fn find_by_public_key(&self, public_key: &str) -> Result<Option<String>> {
+        let registry = self.load_registry()?;
+
+        for (key_id, entry) in registry.keys.iter() {
+            match entry {
+                KeyEntry::Passphrase { public_key: pk, .. } if pk == public_key => {
+                    return Ok(Some(key_id.clone()));
+                }
+                KeyEntry::Yubikey { recipient, .. } if recipient == public_key => {
+                    return Ok(Some(key_id.clone()));
+                }
+                _ => continue,
+            }
+        }
+
+        Ok(None)
+    }
+
+    /// Generate key_id from recipient (matches BootstrapService logic)
+    fn generate_key_id_from_recipient(recipient: &RecipientInfo) -> String {
+        // Use the key_id field directly from RecipientInfo
+        recipient.key_id.clone()
+    }
+
+    /// Merge keys from vault manifest into registry
+    #[instrument(skip(self, manifest))]
+    pub fn merge_keys_from_manifest(
+        &self,
+        manifest: &VaultMetadata,
+        vault_id: &str,
+        strategy: MergeStrategy,
+    ) -> Result<usize> {
+        let mut registry = self.load_registry()?;
+        let mut keys_added = 0;
+
+        for recipient in manifest.recipients() {
+            let key_id = Self::generate_key_id_from_recipient(recipient);
+
+            // Handle duplicates based on strategy
+            match strategy {
+                MergeStrategy::Additive => {
+                    // Bootstrap: Skip if key_id exists
+                    if registry.keys.contains_key(&key_id) {
+                        debug!(
+                            key_id = %key_id,
+                            "Key already in registry (additive strategy), skipping"
+                        );
+                        continue;
+                    }
+                }
+                MergeStrategy::ReplaceIfDuplicate => {
+                    // Recovery: Replace if same public_key with different key_id
+                    if let Some(existing_id) = self.find_by_public_key(&recipient.public_key)? {
+                        if existing_id != key_id {
+                            info!(
+                                existing_key = %existing_id,
+                                bundle_key = %key_id,
+                                "Replacing duplicate key with bundle key (recovery strategy)"
+                            );
+                            registry.keys.remove(&existing_id);
+                        } else {
+                            // Same key_id exists, skip
+                            debug!(
+                                key_id = %key_id,
+                                "Same key already in registry (recovery strategy), skipping"
+                            );
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            // Create key entry
+            let mut key_entry = Self::recipient_to_key_entry(recipient);
+
+            // Add vault association
+            key_entry.add_vault_association(vault_id.to_string());
+
+            // Insert into registry
+            registry.keys.insert(key_id.clone(), key_entry);
+            keys_added += 1;
+
+            info!(
+                key_id = %key_id,
+                label = %recipient.label,
+                vault = %manifest.label(),
+                strategy = ?strategy,
+                "Added key from manifest to registry"
+            );
+        }
+
+        // Save registry
+        registry.save().map_err(|e| {
+            error!(error = %e, "Failed to save registry after merging keys");
+            KeyManagementError::RegistrySaveFailed(e.to_string())
+        })?;
+
+        info!(
+            keys_added = keys_added,
+            vault = %manifest.label(),
+            strategy = ?strategy,
+            "Registry merge completed"
+        );
+
+        Ok(keys_added)
     }
 }
 

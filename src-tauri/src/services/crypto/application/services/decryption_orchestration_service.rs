@@ -199,7 +199,7 @@ impl DecryptionOrchestrationService {
         // Step 5: Process vault manifest from extracted files
         progress_manager.set_progress(PROGRESS_DECRYPT_CLEANUP, "Processing vault manifest...");
 
-        let (manifest_updated, encryption_revision) =
+        let (manifest_updated, encryption_revision, bundle_manifest) =
             self.process_vault_manifest(&extracted_files, &output_dir)?;
 
         // Step 6: Restore .agekey.enc files from bundle to keys directory
@@ -212,7 +212,18 @@ impl DecryptionOrchestrationService {
             );
         }
 
-        // Step 7: Verify manifest if exists
+        // Step 7: Restore Key Registry from vault manifest (RECOVERY FLOW)
+        if manifest_updated && bundle_manifest.is_some() {
+            // If manifest was restored from bundle, also restore registry
+            let bundle_manifest = bundle_manifest.unwrap();
+            let keys_restored = self.restore_key_registry_from_manifest(&bundle_manifest)?;
+            info!(
+                keys_restored,
+                "Restored keys to registry from vault manifest"
+            );
+        }
+
+        // Step 8: Verify manifest if exists
         progress_manager.set_progress(PROGRESS_DECRYPT_VERIFY, "Verifying manifest...");
 
         let manifest_verified = self
@@ -241,12 +252,12 @@ impl DecryptionOrchestrationService {
     /// Reads manifest from bundle, compares with local, and handles version conflicts.
     ///
     /// # Returns
-    /// (manifest_was_updated, encryption_revision)
+    /// (manifest_was_updated, encryption_revision, bundle_manifest)
     fn process_vault_manifest(
         &self,
         extracted_files: &[file_operations::FileInfo],
         output_dir: &Path,
-    ) -> CryptoResult<(bool, Option<u32>)> {
+    ) -> CryptoResult<(bool, Option<u32>, Option<VaultMetadata>)> {
         // Look for vault manifest in extracted files (e.g., "Vault-001.manifest" or "*.manifest")
         let manifest_file = extracted_files.iter().find(|file| {
             file.path.extension().is_some_and(|ext| ext == "manifest")
@@ -258,7 +269,7 @@ impl DecryptionOrchestrationService {
 
         let Some(manifest_info) = manifest_file else {
             info!("No vault manifest found in bundle, skipping version comparison");
-            return Ok((false, None));
+            return Ok((false, None, None));
         };
 
         // Read manifest from extracted files
@@ -312,7 +323,31 @@ impl DecryptionOrchestrationService {
             info!(message = %msg, "Version comparison result");
         }
 
-        Ok((was_updated, Some(bundle_manifest.encryption_revision())))
+        Ok((
+            was_updated,
+            Some(bundle_manifest.encryption_revision()),
+            Some(bundle_manifest),
+        ))
+    }
+
+    /// Restore Key Registry from vault manifest
+    fn restore_key_registry_from_manifest(&self, manifest: &VaultMetadata) -> CryptoResult<usize> {
+        use crate::services::key_management::shared::application::services::registry_service::{
+            KeyRegistryService, MergeStrategy,
+        };
+
+        let registry_service = KeyRegistryService::new();
+
+        // Use Replace strategy for recovery (bundle is authoritative)
+        registry_service
+            .merge_keys_from_manifest(
+                manifest,
+                manifest.vault_id(),
+                MergeStrategy::ReplaceIfDuplicate,
+            )
+            .map_err(|e| {
+                CryptoError::DecryptionFailed(format!("Failed to restore registry: {}", e))
+            })
     }
 
     /// Restore .agekey.enc files from bundle to keys directory

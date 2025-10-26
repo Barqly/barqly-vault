@@ -5,13 +5,12 @@
 
 use crate::error::StorageError;
 use crate::prelude::*;
-use crate::services::key_management::shared::domain::models::key_lifecycle::{
-    KeyLifecycleStatus, StatusHistoryEntry,
+use crate::services::key_management::shared::KeyRegistry;
+use crate::services::key_management::shared::application::services::registry_service::{
+    KeyRegistryService, MergeStrategy,
 };
-use crate::services::key_management::shared::{KeyEntry, KeyRegistry};
 use crate::services::shared::infrastructure::{DeviceInfo, get_vaults_manifest_dir};
-use crate::services::vault::infrastructure::persistence::metadata::{RecipientType, VaultMetadata};
-use std::collections::HashSet;
+use crate::services::vault::infrastructure::persistence::metadata::VaultMetadata;
 
 /// Bootstrap service for app initialization
 #[derive(Debug)]
@@ -149,117 +148,33 @@ impl BootstrapService {
         registry: &mut KeyRegistry,
         manifests: &[VaultMetadata],
     ) -> Result<MergeStatistics, StorageError> {
-        let mut keys_added = 0;
-        let mut manifests_processed = 0;
-
-        // Track which keys we've seen to avoid duplicates within same run
-        let mut seen_keys = HashSet::new();
+        let registry_service = KeyRegistryService::new();
+        let mut total_keys_added = 0;
 
         for manifest in manifests {
-            manifests_processed += 1;
-
-            for recipient in manifest.recipients() {
-                // Generate key ID for this recipient
-                let key_id = self.generate_key_id_from_recipient(recipient);
-
-                // Skip if already processed in this run
-                if seen_keys.contains(&key_id) {
-                    continue;
-                }
-                seen_keys.insert(key_id.clone());
-
-                // Check if key already exists in registry
-                if registry.keys.contains_key(&key_id) {
-                    debug!(
-                        key_id = %key_id,
-                        vault = %manifest.label(),
-                        "Key already in registry, skipping"
-                    );
-                    continue;
-                }
-
-                // Add key to registry (additive only)
-                let key_entry = self.recipient_to_key_entry(recipient);
-                registry.keys.insert(key_id.clone(), key_entry);
-                keys_added += 1;
-
-                info!(
-                    key_id = %key_id,
-                    label = %recipient.label,
-                    vault = %manifest.label(),
-                    "Added key from manifest to registry"
-                );
-            }
+            let keys_added = registry_service
+                .merge_keys_from_manifest(
+                    manifest,
+                    manifest.vault_id(),
+                    MergeStrategy::Additive, // Bootstrap uses additive strategy
+                )
+                .map_err(|e| {
+                    error!(error = %e, "Failed to merge keys from manifest");
+                    StorageError::InvalidMetadata(format!("Failed to merge keys: {}", e))
+                })?;
+            total_keys_added += keys_added;
         }
+
+        // Reload registry to update the passed-in registry reference
+        *registry = registry_service.load_registry().map_err(|e| {
+            error!(error = %e, "Failed to reload registry after merge");
+            StorageError::InvalidMetadata(format!("Failed to reload registry: {}", e))
+        })?;
 
         Ok(MergeStatistics {
-            manifests_processed,
-            keys_added,
+            manifests_processed: manifests.len(),
+            keys_added: total_keys_added,
         })
-    }
-
-    /// Generate key ID from recipient (matches registry convention)
-    fn generate_key_id_from_recipient(
-        &self,
-        recipient: &crate::services::vault::infrastructure::persistence::metadata::RecipientInfo,
-    ) -> String {
-        // Now that RecipientInfo has key_id field, we can use it directly
-        recipient.key_id.clone()
-    }
-
-    /// Convert RecipientInfo to KeyEntry for registry
-    fn recipient_to_key_entry(
-        &self,
-        recipient: &crate::services::vault::infrastructure::persistence::metadata::RecipientInfo,
-    ) -> KeyEntry {
-        match &recipient.recipient_type {
-            RecipientType::Passphrase { key_filename } => KeyEntry::Passphrase {
-                label: recipient.label.clone(),
-                created_at: recipient.created_at,
-                last_used: None,
-                public_key: recipient.public_key.clone(),
-                key_filename: key_filename.clone(),
-                lifecycle_status: KeyLifecycleStatus::Active, // From manifest means it's active
-                status_history: vec![StatusHistoryEntry::new(
-                    KeyLifecycleStatus::Active,
-                    "Imported from vault manifest",
-                    "system",
-                )],
-                vault_associations: vec![], // Will be populated by higher level
-                deactivated_at: None,
-                previous_lifecycle_status: None,
-            },
-            RecipientType::YubiKey {
-                serial,
-                slot,
-                piv_slot,
-                identity_tag,
-                model,
-                firmware_version,
-                ..
-            } => KeyEntry::Yubikey {
-                label: recipient.label.clone(),
-                created_at: recipient.created_at,
-                last_used: None,
-                serial: serial.clone(),
-                slot: *slot,
-                piv_slot: *piv_slot,
-                recipient: recipient.public_key.clone(),
-                identity_tag: identity_tag.clone(),
-                model: model.clone(),
-                firmware_version: firmware_version.clone(),
-                recovery_code_hash: String::new(), // Not available from manifest
-                lifecycle_status: KeyLifecycleStatus::Active, // From manifest means it's active
-                status_history: vec![StatusHistoryEntry::new(
-                    KeyLifecycleStatus::Active,
-                    "Imported from vault manifest",
-                    "system",
-                )],
-                vault_associations: vec![], // Will be populated by higher level
-                deactivated_at: None,
-                previous_lifecycle_status: None,
-            },
-        }
     }
 }
 
@@ -295,69 +210,5 @@ mod tests {
         let _service = BootstrapService::new();
     }
 
-    #[test]
-    fn test_generate_key_id_passphrase() {
-        use crate::services::vault::infrastructure::persistence::metadata::RecipientInfo;
-
-        let service = BootstrapService::new();
-        let recipient = RecipientInfo::new_passphrase(
-            "my-key".to_string(),
-            "age1test".to_string(),
-            "my-key".to_string(),
-            "my-key.agekey.enc".to_string(),
-        );
-
-        let key_id = service.generate_key_id_from_recipient(&recipient);
-        assert_eq!(key_id, "my-key");
-    }
-
-    #[test]
-    fn test_generate_key_id_yubikey() {
-        use crate::services::vault::infrastructure::persistence::metadata::RecipientInfo;
-
-        let service = BootstrapService::new();
-        let recipient = RecipientInfo::new_yubikey(
-            "keyref_123451".to_string(),
-            "age1yubikey".to_string(),
-            "YubiKey-12345".to_string(),
-            "12345".to_string(),
-            1,
-            0x82,
-            "YubiKey 5".to_string(),
-            "AGE-PLUGIN-TEST".to_string(),
-            Some("5.7.1".to_string()),
-        );
-
-        let key_id = service.generate_key_id_from_recipient(&recipient);
-        assert_eq!(key_id, "keyref_123451");
-    }
-
-    #[test]
-    fn test_recipient_to_key_entry_passphrase() {
-        use crate::services::vault::infrastructure::persistence::metadata::RecipientInfo;
-
-        let service = BootstrapService::new();
-        let recipient = RecipientInfo::new_passphrase(
-            "test-key".to_string(),
-            "age1test".to_string(),
-            "test-key".to_string(),
-            "test-key.agekey.enc".to_string(),
-        );
-
-        let key_entry = service.recipient_to_key_entry(&recipient);
-
-        match key_entry {
-            KeyEntry::Passphrase {
-                label,
-                public_key,
-                key_filename,
-                ..
-            } => {
-                assert_eq!(label, "test-key");
-                assert_eq!(public_key, "age1test");
-                assert_eq!(key_filename, "test-key.agekey.enc");
-            }
-            _ => panic!("Expected Passphrase key entry"),
-        }
-    }
+    // NOTE: Tests for generate_key_id and recipient_to_key_entry moved to KeyRegistryService tests
 }
