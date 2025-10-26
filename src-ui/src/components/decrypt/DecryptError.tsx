@@ -25,10 +25,10 @@ const DecryptError: React.FC<DecryptErrorProps> = ({ error, passphraseAttempts, 
     }
   }, []);
 
-  const isPassphraseError =
-    error.message?.toLowerCase().includes('passphrase') ||
-    error.message?.toLowerCase().includes('pin') ||
-    error.code === 'WRONG_PASSPHRASE';
+  // User-friendly generic message (works for both passphrase and PIN, hides technical details)
+  const getUserMessage = () => {
+    return 'The passphrase or PIN you entered is incorrect. Please check and try again.';
+  };
 
   return (
     <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-600 overflow-hidden">
@@ -48,9 +48,7 @@ const DecryptError: React.FC<DecryptErrorProps> = ({ error, passphraseAttempts, 
           </h2>
 
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-            {isPassphraseError
-              ? 'The passphrase or PIN you entered is incorrect.'
-              : error.message || 'An error occurred during decryption.'}
+            {getUserMessage()}
           </p>
 
           {passphraseAttempts > 1 && (
@@ -62,13 +60,6 @@ const DecryptError: React.FC<DecryptErrorProps> = ({ error, passphraseAttempts, 
       </div>
 
       <div className="px-6 pt-4 pb-6">
-        {/* Error details if available */}
-        {error.recovery_guidance && (
-          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50">
-            <p className="text-sm text-blue-800 dark:text-blue-300">{error.recovery_guidance}</p>
-          </div>
-        )}
-
         {/* Action button */}
         <div className="flex justify-center">
           <button
