@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ChevronLeft, Key, Fingerprint, ShieldAlert } from 'lucide-react';
+import { ChevronLeft, Key, Fingerprint, ShieldAlert, ChevronDown, Check } from 'lucide-react';
 import FileDropZone from '../common/FileDropZone';
 import { KeySelectionDropdown } from '../forms/KeySelectionDropdown';
 import PassphraseInput from '../forms/PassphraseInput';
@@ -73,6 +73,8 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   const [isValidatingPassphrase, setIsValidatingPassphrase] = useState(false);
   const [availableKeys, setAvailableKeys] = useState<VaultKey[]>([]);
   const [selectedKey, setSelectedKey] = useState<VaultKey | null>(null);
+  const [isRecoveryDropdownOpen, setIsRecoveryDropdownOpen] = useState(false);
+  const recoveryDropdownRef = useRef<HTMLDivElement>(null);
 
   // Update selected key when selectedKeyId changes
   useEffect(() => {
@@ -86,6 +88,20 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
       setSelectedKey(null);
     }
   }, [selectedKeyId, availableKeys, availableKeysForDiscovery]);
+
+  // Close recovery dropdown when clicking outside
+  useEffect(() => {
+    if (!isRecoveryDropdownOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (recoveryDropdownRef.current && !recoveryDropdownRef.current.contains(e.target as Node)) {
+        setIsRecoveryDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isRecoveryDropdownOpen]);
 
   // Define continue conditions for each step
   const canContinue = (() => {
@@ -233,23 +249,77 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                 </p>
               </div>
 
-              {/* Simple key dropdown - no cache dependency */}
+              {/* Custom recovery key dropdown matching Encrypt vault selector */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="block text-sm font-medium text-main">
                   Recovery Keys
                 </label>
-                <select
-                  value={selectedKeyId || ''}
-                  onChange={(e) => onKeyChange(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select recovery key</option>
-                  {availableKeysForDiscovery.map((key) => (
-                    <option key={key.id} value={key.id}>
-                      {key.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative" ref={recoveryDropdownRef}>
+                  <button
+                    type="button"
+                    className="w-full px-4 py-3 border rounded-lg bg-white dark:bg-slate-800 text-main transition-colors focus:outline-none focus:ring-2 flex items-center justify-between"
+                    style={{
+                      borderColor: selectedKey ? '#3B82F6' : 'rgb(var(--border-default))',
+                      boxShadow: selectedKey ? '0 0 0 2px rgba(59, 130, 246, 0.1)' : 'none',
+                    }}
+                    onClick={() => setIsRecoveryDropdownOpen(!isRecoveryDropdownOpen)}
+                  >
+                    <span className="flex items-center gap-2">
+                      {selectedKey ? (
+                        <>
+                          {selectedKey.type === 'YubiKey' ? (
+                            <Fingerprint className="h-4 w-4" style={{ color: '#F98B1C' }} />
+                          ) : (
+                            <Key className="h-4 w-4" style={{ color: '#13897F' }} />
+                          )}
+                          <span>{selectedKey.label}</span>
+                        </>
+                      ) : (
+                        <span style={{ color: 'rgb(var(--text-secondary))' }}>Select recovery key</span>
+                      )}
+                    </span>
+                    <ChevronDown
+                      className={`h-5 w-5 transition-transform ${isRecoveryDropdownOpen ? 'rotate-180' : ''}`}
+                      style={{ color: 'rgb(var(--text-secondary))' }}
+                    />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isRecoveryDropdownOpen && (
+                    <div
+                      className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border rounded-lg shadow-lg max-h-64 overflow-auto"
+                      style={{ borderColor: 'rgb(var(--border-default))' }}
+                    >
+                      {availableKeysForDiscovery.map((key) => {
+                        const isSelected = key.id === selectedKeyId;
+                        return (
+                          <button
+                            key={key.id}
+                            type="button"
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-between"
+                            style={{
+                              backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                            }}
+                            onClick={() => {
+                              onKeyChange(key.id);
+                              setIsRecoveryDropdownOpen(false);
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              {key.type === 'YubiKey' ? (
+                                <Fingerprint className="h-4 w-4" style={{ color: '#F98B1C' }} />
+                              ) : (
+                                <Key className="h-4 w-4" style={{ color: '#13897F' }} />
+                              )}
+                              <span className="font-medium">{key.label}</span>
+                            </div>
+                            {isSelected && <Check className="h-4 w-4 text-blue-600" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* PIN/Passphrase Field */}
