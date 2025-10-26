@@ -1,9 +1,10 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { KeyReference } from '../../bindings';
-import { useKeySelection } from '../../hooks/useKeySelection';
+import { useKeySelection, KeyReferenceWithAvailability } from '../../hooks/useKeySelection';
 import { KeyOption } from './KeyOption';
 import { DropdownButton } from './DropdownButton';
 import { ErrorMessage } from './ErrorMessage';
+import { useVault } from '../../contexts/VaultContext';
 
 export interface KeySelectionDropdownProps {
   /** Currently selected key ID */
@@ -36,6 +37,10 @@ export interface KeySelectionDropdownProps {
   includeAllKeys?: boolean;
   /** Optional vault ID override (for decryption with detectedVaultId) */
   vaultId?: string | null;
+  /** Optional: Pass keys directly for recovery mode (bypasses cache) */
+  recoveryKeys?: KeyReference[];
+  /** Optional: Recovery mode styling and behavior */
+  isRecoveryMode?: boolean;
 }
 
 export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
@@ -54,12 +59,39 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
   onKeySelected,
   includeAllKeys = false,
   vaultId,
+  recoveryKeys,
+  isRecoveryMode = false,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { globalKeyCache } = useVault();
+
+  // Use recovery keys if provided, otherwise use useKeySelection hook
+  const hookResult = useKeySelection(value, onChange, disabled, showPublicKey, {
+    onKeysLoaded,
+    onLoadingChange,
+    includeAllKeys,
+    vaultId,
+  });
+
+  // Transform recovery keys to include availability from globalKeyCache
+  const keysWithAvailability = useMemo(() => {
+    if (!recoveryKeys) return hookResult.keys;
+
+    // Merge availability status from globalKeyCache
+    return recoveryKeys.map((key) => {
+      const globalKey = globalKeyCache.find((gk) => gk.id === key.id);
+      return {
+        ...key,
+        is_available: globalKey?.is_available ?? false,
+      } as KeyReferenceWithAvailability;
+    });
+  }, [recoveryKeys, hookResult.keys, globalKeyCache]);
+
+  // Override keys with recovery keys if provided
+  const keys = keysWithAvailability;
+  const loading = recoveryKeys ? false : hookResult.loading;
+  const loadError = recoveryKeys ? '' : hookResult.error;
   const {
-    keys,
-    loading,
-    error: loadError,
     isOpen,
     selectedKey,
     showPublicKeyPreview: _showPublicKeyPreview,
@@ -69,12 +101,7 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
     handleKeyDown,
     formatDate,
     truncatePublicKey: _truncatePublicKey,
-  } = useKeySelection(value, onChange, disabled, showPublicKey, {
-    onKeysLoaded,
-    onLoadingChange,
-    includeAllKeys,
-    vaultId,
-  });
+  } = hookResult;
 
   const errorMessage = error || loadError;
 
