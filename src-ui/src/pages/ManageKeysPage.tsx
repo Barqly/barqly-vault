@@ -26,7 +26,7 @@ import { commands, GlobalKey, VaultStatistics } from '../bindings';
  * Users can create, import, and manage keys across all vaults
  */
 const ManageKeysPage: React.FC = () => {
-  const { vaults, currentVault, refreshKeysForVault } = useVault();
+  const { vaults, currentVault, refreshKeysForVault, refreshGlobalKeys } = useVault();
   const {
     filterType: _filterType,
     keyViewMode,
@@ -117,6 +117,11 @@ const ManageKeysPage: React.FC = () => {
       setIsLoadingStats(false);
     }
   }, [vaults]);
+
+  // Refresh global keys on mount (mutation screen pattern per cache-first architecture)
+  useEffect(() => {
+    refreshGlobalKeys();
+  }, [refreshGlobalKeys]);
 
   // Refresh vault statistics when vaults change
   useEffect(() => {
