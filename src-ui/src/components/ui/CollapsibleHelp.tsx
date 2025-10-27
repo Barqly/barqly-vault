@@ -146,12 +146,12 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '2',
       title: 'Attach Keys',
-      description: 'Add passphrase or YubiKey for access.',
+      description: 'Add 2-4 keys per vault (YubiKey or Passphrase) for redundancy.',
     },
     {
       number: '3',
       title: 'Encrypt & Decrypt',
-      description: 'Use vaults to protect your files.',
+      description: 'Encrypted vaults saved to Barqly-Vaults. Decrypted files go to Barqly-Recovery.',
     },
   ];
 
