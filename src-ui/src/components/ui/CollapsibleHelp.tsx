@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Info, ChevronDown } from 'lucide-react';
+import { Info, ChevronDown, Fingerprint, Key } from 'lucide-react';
 
 interface CollapsibleHelpProps {
   /** Custom trigger text */
@@ -115,7 +115,8 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '3',
       title: 'Store Vault File',
-      description: 'Encrypted vault saved to Barqly-Vaults in your Documents. Safe to store anywhere.',
+      description:
+        'Encrypted vault saved to Barqly-Vaults in your Documents. Safe to store anywhere.',
     },
   ];
 
@@ -151,7 +152,8 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '3',
       title: 'Encrypt & Decrypt',
-      description: 'Encrypted vaults saved to Barqly-Vaults. Decrypted files go to Barqly-Recovery.',
+      description:
+        'Encrypted vaults saved to Barqly-Vaults. Decrypted files go to Barqly-Recovery.',
     },
   ];
 
@@ -159,13 +161,15 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '1',
       title: 'YubiKey (Hardware)',
-      description:
-        'Physical security key - most secure option. Requires device touch for every operation.',
+      description: 'Physical security key - most secure option. Requires device touch to decrypt.',
+      icon: <Fingerprint className="h-4 w-4" style={{ color: '#F98B1C' }} />,
     },
     {
       number: '2',
       title: 'Passphrase Key (Software)',
-      description: 'Password-protected key stored on device. Convenient for regular use.',
+      description:
+        'Password-protected key stored on device. Convenient but vulnerable if computer is compromised.',
+      icon: <Key className="h-4 w-4" style={{ color: '#13897F' }} />,
     },
     {
       number: '3',
@@ -239,8 +243,9 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
                   >
                     {step.number}
                   </span>
-                  <span className="text-sm md:text-base font-semibold text-heading">
+                  <span className="text-sm md:text-base font-semibold text-heading flex items-center gap-2">
                     {step.title}
+                    {'icon' in step && step.icon}
                   </span>
                 </div>
                 <p className="text-sm text-secondary leading-relaxed">{step.description}</p>
