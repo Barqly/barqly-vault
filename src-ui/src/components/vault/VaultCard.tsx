@@ -159,8 +159,24 @@ const VaultCard: React.FC<VaultCardProps> = ({
               </button>
             </div>
 
-            {/* Row 2: Key Badges */}
+            {/* Row 2: Key Badges (YubiKeys first to encourage hardware key usage) */}
             <div className="flex items-center gap-2">
+              {/* YubiKeys - Orange theme (Hardware keys first!) */}
+              {yubiKeys.length > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
+                  style={{
+                    backgroundColor: 'rgba(249, 139, 28, 0.08)',
+                    color: '#F98B1C',
+                    border: '1px solid #ffd4a3',
+                  }}
+                  title={`${yubiKeys.length} YubiKey ${yubiKeys.length === 1 ? 'key' : 'keys'}`}
+                >
+                  <Fingerprint className="h-3 w-3" style={{ color: '#F98B1C' }} />
+                  {yubiKeys.length}
+                </span>
+              )}
+
               {/* Passphrase Keys - Teal theme */}
               {passphraseKeys.length > 0 && (
                 <span
@@ -174,22 +190,6 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 >
                   <Key className="h-3 w-3" style={{ color: '#13897F' }} />
                   {passphraseKeys.length}
-                </span>
-              )}
-
-              {/* YubiKeys - Orange theme */}
-              {yubiKeys.length > 0 && (
-                <span
-                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full"
-                  style={{
-                    backgroundColor: 'rgba(249, 139, 28, 0.08)',
-                    color: '#F98B1C',
-                    border: '1px solid #ffd4a3',
-                  }}
-                  title={`${yubiKeys.length} YubiKey ${yubiKeys.length === 1 ? 'key' : 'keys'}`}
-                >
-                  <Fingerprint className="h-3 w-3" style={{ color: '#F98B1C' }} />
-                  {yubiKeys.length}
                 </span>
               )}
 
