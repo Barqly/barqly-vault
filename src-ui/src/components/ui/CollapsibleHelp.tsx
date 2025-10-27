@@ -14,17 +14,63 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const previousScrollTop = useRef<number>(0);
 
-  // Auto-scroll into view when expanded
+  // Find the scroll container on mount
   useEffect(() => {
-    if (isOpen && containerRef.current) {
+    if (containerRef.current) {
+      // Find the parent main element that has overflow-auto
+      let parent = containerRef.current.parentElement;
+      while (parent) {
+        const overflowY = window.getComputedStyle(parent).overflowY;
+        if (overflowY === 'auto' || overflowY === 'scroll') {
+          scrollContainerRef.current = parent as HTMLElement;
+          break;
+        }
+        parent = parent.parentElement;
+      }
+    }
+  }, []);
+
+  // Smart scroll behavior on expand/collapse
+  useEffect(() => {
+    if (!containerRef.current || !scrollContainerRef.current) return;
+
+    if (isOpen) {
+      // Save current scroll position
+      previousScrollTop.current = scrollContainerRef.current.scrollTop;
+
       // Small delay to allow expand animation to start
       setTimeout(() => {
-        containerRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
+        if (!containerRef.current || !scrollContainerRef.current) return;
+
+        const container = containerRef.current;
+        const scrollContainer = scrollContainerRef.current;
+        const rect = container.getBoundingClientRect();
+        const scrollRect = scrollContainer.getBoundingClientRect();
+
+        // Check if content will be cut off at bottom
+        const contentBottom = rect.bottom;
+        const viewportBottom = scrollRect.bottom;
+        const isContentBelowFold = contentBottom > viewportBottom;
+
+        // Only scroll if content extends below viewport
+        if (isContentBelowFold) {
+          container.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }
       }, 150);
+    } else {
+      // When collapsed, scroll back to top
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+      }
     }
   }, [isOpen]);
 
