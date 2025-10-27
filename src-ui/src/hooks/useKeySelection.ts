@@ -103,9 +103,25 @@ export function useKeySelection(
       };
     });
 
-    console.log('useKeySelection: Filtered keys with availability', {
-      filteredCount: keysWithAvailability.length,
-      filtered: keysWithAvailability.map((k) => ({
+    // Sort keys: Available first (YubiKey → Passphrase), then Unavailable (YubiKey → Passphrase)
+    const sortedKeys = keysWithAvailability.sort((a, b) => {
+      // Primary sort: Available keys before unavailable
+      if (a.is_available && !b.is_available) return -1;
+      if (!a.is_available && b.is_available) return 1;
+
+      // Secondary sort: YubiKey before Passphrase (within same availability group)
+      const aIsYubiKey = a.type === 'YubiKey';
+      const bIsYubiKey = b.type === 'YubiKey';
+      if (aIsYubiKey && !bIsYubiKey) return -1;
+      if (!aIsYubiKey && bIsYubiKey) return 1;
+
+      // Tertiary sort: Alphabetically by label
+      return (a.label || '').localeCompare(b.label || '');
+    });
+
+    console.log('useKeySelection: Sorted keys with availability', {
+      filteredCount: sortedKeys.length,
+      filtered: sortedKeys.map((k) => ({
         id: k.id,
         type: k.type,
         label: k.label,
@@ -113,7 +129,7 @@ export function useKeySelection(
       })),
     });
 
-    return keysWithAvailability;
+    return sortedKeys;
   }, [targetVaultId, keyCache, globalKeyCache, includeAllKeys]);
 
   // Loading state based on VaultContext initialization
