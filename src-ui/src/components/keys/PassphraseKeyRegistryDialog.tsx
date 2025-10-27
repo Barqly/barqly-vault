@@ -310,24 +310,14 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
                 value={confirmPassphrase}
                 onChange={(e) => setConfirmPassphrase(e.target.value)}
                 disabled={isCreating}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 disabled:opacity-50 bg-input text-main ${
-                  confirmPassphrase
-                    ? passphrase === confirmPassphrase
-                      ? 'border-default'
-                      : 'border-default'
-                    : 'border-default focus:ring-blue-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none disabled:opacity-50 bg-input text-main ${
+                  confirmPassphrase && passphrase !== confirmPassphrase
+                    ? '' // Error state: no focus ring, just red border
+                    : 'focus:ring-2 focus:ring-blue-300' // Default: blue focus ring
                 }`}
                 style={
-                  confirmPassphrase
-                    ? passphrase === confirmPassphrase
-                      ? ({
-                          borderColor: '#B7E1DD',
-                          '--tw-ring-color': '#13897F',
-                        } as React.CSSProperties)
-                      : ({
-                          borderColor: '#FCA5A5',
-                          '--tw-ring-color': '#B91C1C',
-                        } as React.CSSProperties)
+                  confirmPassphrase && passphrase !== confirmPassphrase
+                    ? ({ borderColor: '#B91C1C' } as React.CSSProperties) // Deep red border only
                     : undefined
                 }
                 placeholder="Re-enter passphrase"

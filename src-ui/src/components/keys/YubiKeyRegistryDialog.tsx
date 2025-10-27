@@ -36,10 +36,15 @@ const getYubiKeyBadge = (state: YubiKeyState) => {
   }
 
   // All other states (new, reused, orphaned) = ready to register
+  // Use premium blue CTA styling for clear call-to-action
   return {
     label: 'Register',
-    bgClass: 'bg-blue-100',
-    textClass: 'text-blue-700',
+    bgClass: '', // Custom inline style
+    textClass: '', // Custom inline style
+    customStyle: {
+      backgroundColor: '#1D4ED8',
+      color: '#ffffff',
+    },
   };
 };
 
@@ -82,12 +87,26 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
   const firstFocusableRef = useRef<HTMLInputElement>(null);
   const lastFocusableRef = useRef<HTMLButtonElement>(null);
   const refreshButtonRef = useRef<HTMLButtonElement>(null);
+  const firstYubiKeyButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       detectYubiKeys();
     }
   }, [isOpen]);
+
+  // Auto-focus appropriate element after detection completes
+  useEffect(() => {
+    if (!isLoading && step === 'detect') {
+      if (yubikeys.length > 0 && firstYubiKeyButtonRef.current) {
+        // Focus first YubiKey button if available
+        firstYubiKeyButtonRef.current.focus();
+      } else if (yubikeys.length === 0 && refreshButtonRef.current) {
+        // Focus Refresh button if no YubiKeys found
+        refreshButtonRef.current.focus();
+      }
+    }
+  }, [isLoading, step, yubikeys.length]);
 
   // Auto-focus first field when setup step is shown
   useEffect(() => {
@@ -532,13 +551,21 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       Select a YubiKey to add to the registry:
                     </p>
                     <div className="space-y-2">
-                      {yubikeys.map((yk) => (
+                      {yubikeys.map((yk, index) => (
                         <button
                           key={yk.serial}
+                          ref={index === 0 ? firstYubiKeyButtonRef : null}
                           onClick={() => {
                             setSelectedKey(yk);
                             setLabel(yk.label || `YubiKey-${yk.serial}`);
                             setStep('setup');
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              setSelectedKey(yk);
+                              setLabel(yk.label || `YubiKey-${yk.serial}`);
+                              setStep('setup');
+                            }
                           }}
                           className="w-full p-3 border rounded-lg text-left transition-colors"
                           style={{
@@ -575,7 +602,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                               const badge = getYubiKeyBadge(yk.state);
                               return (
                                 <span
-                                  className={`text-xs px-2 py-1 rounded ${badge.bgClass} ${badge.textClass}`}
+                                  className={`text-xs px-2 py-1 rounded font-medium ${badge.bgClass} ${badge.textClass}`}
+                                  style={badge.customStyle}
                                 >
                                   {badge.label}
                                 </span>
