@@ -80,7 +80,7 @@ pub async fn get_vault_statistics(
 
     match service.get_vault_statistics(sanitized_name) {
         Ok(statistics) => {
-            info!(
+            debug!(
                 vault_id = %request.vault_id,
                 status = ?statistics.status,
                 key_count = statistics.key_statistics.total_keys,
@@ -176,7 +176,7 @@ pub async fn get_all_vault_statistics(
                 }
             }
 
-            info!(
+            debug!(
                 total_vaults = statistics.total_vaults,
                 active_vaults = statistics.active_vaults,
                 orphaned_vaults = statistics.orphaned_vaults,

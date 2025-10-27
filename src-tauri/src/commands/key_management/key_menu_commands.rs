@@ -34,7 +34,7 @@ pub struct GetKeyMenuDataResponse {
 pub async fn get_key_menu_data(
     input: GetKeyMenuDataRequest,
 ) -> CommandResponse<GetKeyMenuDataResponse> {
-    info!(vault_id = %input.vault_id, "Getting key menu data for UI");
+    debug!(vault_id = %input.vault_id, "Getting key menu data for UI");
 
     // Load vault to get key order
     let vault = vault::get_vault(&input.vault_id).await.map_err(|e| {
@@ -167,7 +167,7 @@ pub async fn get_key_menu_data(
         }
     }
 
-    info!(
+    debug!(
         vault_id = %input.vault_id,
         keys_count = key_menu_items.len(),
         "Key menu data prepared successfully"
