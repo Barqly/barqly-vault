@@ -529,18 +529,13 @@
         </div>
 
         <div class="section">
-          <h2>Prerequisites</h2>
+          <h2>What You Need</h2>
           <p>Before starting recovery, ensure you have:</p>
           <div class="checklist">
             <ul>
               <li><strong>Barqly Vault installed</strong> - <a href="../downloads/">Download here</a></li>
               <li><strong>Your encrypted .age file</strong> - Usually in <code>~/Documents/Barqly-Vaults/</code></li>
-              <li><strong>At least ONE key</strong> from your vault:
-                <ul style="margin-top: 0.5rem; list-style: disc;">
-                  <li>A YubiKey that was attached to the vault, OR</li>
-                  <li>A passphrase key file (<code>.agekey.enc</code>)</li>
-                </ul>
-              </li>
+              <li><strong>At least ONE key</strong> from your vault (see your RECOVERY.txt file)</li>
             </ul>
           </div>
           <div class="info-box">
@@ -549,283 +544,82 @@
         </div>
 
         <div class="section">
-          <h2>Quick Start</h2>
+          <h2>YubiKey Recovery</h2>
           <ol>
-            <li><strong>Find your RECOVERY.txt file</strong> - Saved alongside your encrypted <code>.age</code> file</li>
-            <li><strong>Check which keys were used</strong> - Listed in RECOVERY.txt</li>
-            <li><strong>Follow the appropriate recovery method below</strong> - YubiKey or Passphrase</li>
+            <li><strong>Connect YubiKey</strong> to your computer</li>
+            <li><strong>Open Barqly Vault</strong> → Decrypt</li>
+            <li><strong>Select your encrypted .age file</strong></li>
+            <li><strong>Choose YubiKey</strong> from dropdown, enter PIN</li>
+            <li><strong>Touch YubiKey</strong> when the green light blinks</li>
+            <li><strong>Done!</strong> Files recovered to <code>Documents/Barqly-Recovery/{vault-name}/</code></li>
           </ol>
+
+          <div class="info-box" style="margin-top: 1.5rem;">
+            <strong>If YubiKey not registered:</strong>
+            <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+              <li>Go to Manage Keys → + New Key → Detect YubiKey first</li>
+              <li>Enter PIN to verify ownership</li>
+              <li>Then follow steps above</li>
+            </ul>
+          </div>
         </div>
 
         <div class="section">
-          <h2>Method 1: YubiKey Recovery</h2>
+          <h2>Passphrase Key Recovery</h2>
 
-          <h3>If Your YubiKey is Already Registered</h3>
           <ol>
-            <li><strong>Connect your YubiKey</strong> to your computer</li>
-            <li><strong>Open Barqly Vault</strong></li>
-            <li><strong>Go to Decrypt</strong> page (left sidebar)</li>
-            <li><strong>Select your encrypted <code>.age</code> file</strong>
+            <li><strong>Import your key file:</strong>
               <ul style="margin-top: 0.5rem;">
-                <li>Click "Select Files" or drag-and-drop</li>
-                <li>Navigate to <code>~/Documents/Barqly-Vaults/</code></li>
+                <li>Open Barqly Vault → Manage Keys → Import Key</li>
+                <li>Select your <code>.agekey.enc</code> file, enter passphrase</li>
               </ul>
             </li>
-            <li><strong>Choose your YubiKey</strong> from the dropdown</li>
-            <li><strong>Enter your YubiKey PIN</strong></li>
-            <li><strong>Touch your YubiKey</strong> when the green light blinks</li>
-            <li><strong>Files recovered!</strong> Check <code>~/Documents/Barqly-Recovery/{vault-name}/</code></li>
-          </ol>
-
-          <h3>If Your YubiKey is Not Registered</h3>
-          <ol>
-            <li><strong>Connect your YubiKey</strong> to your computer</li>
-            <li><strong>Open Barqly Vault</strong></li>
-            <li><strong>Go to Manage Keys</strong> page (left sidebar)</li>
-            <li><strong>Click "+ New Key"</strong> → <strong>Detect YubiKey</strong></li>
-            <li><strong>YubiKey should appear</strong> in the detection list</li>
-            <li><strong>Enter your label</strong> (or use the default)</li>
-            <li><strong>Enter your YubiKey PIN</strong> to verify ownership</li>
-            <li><strong>Click "Add to Registry"</strong></li>
-            <li><strong>Now follow the steps above</strong> ("If Your YubiKey is Already Registered")</li>
-          </ol>
-        </div>
-
-        <div class="section">
-          <h2>Method 2: Passphrase Key Recovery</h2>
-
-          <h3>Step 1: Import Your Passphrase Key</h3>
-          <ol>
-            <li><strong>Locate your passphrase key file</strong>
+            <li><strong>Decrypt your vault:</strong>
               <ul style="margin-top: 0.5rem;">
-                <li>Filename: <code>{key-label}.agekey.enc</code> (e.g., <code>MBP-2024-Family-Key.agekey.enc</code>)</li>
-                <li>Check your backups or wherever you saved it</li>
+                <li>Go to Decrypt → Select your <code>.age</code> file</li>
+                <li>Choose imported key, enter passphrase</li>
               </ul>
             </li>
-            <li><strong>Open Barqly Vault</strong></li>
-            <li><strong>Go to Manage Keys</strong> page (left sidebar)</li>
-            <li><strong>Click "Import Key"</strong></li>
-            <li><strong>Select the <code>.agekey.enc</code> file</strong></li>
-            <li><strong>Enter the passphrase</strong> that protects this key</li>
-            <li><strong>Key imported successfully!</strong></li>
+            <li><strong>Done!</strong> Files recovered to <code>Documents/Barqly-Recovery/{vault-name}/</code></li>
           </ol>
-
-          <h3>Step 2: Decrypt Your Vault</h3>
-          <ol>
-            <li><strong>Go to Decrypt</strong> page (left sidebar)</li>
-            <li><strong>Select your encrypted <code>.age</code> file</strong>
-              <ul style="margin-top: 0.5rem;">
-                <li>Click "Select Files" or drag-and-drop</li>
-                <li>Navigate to <code>~/Documents/Barqly-Vaults/</code></li>
-              </ul>
-            </li>
-            <li><strong>Choose your imported passphrase key</strong> from the dropdown</li>
-            <li><strong>Enter your passphrase</strong></li>
-            <li><strong>Click "Decrypt Vault"</strong></li>
-            <li><strong>Files recovered!</strong> Check <code>~/Documents/Barqly-Recovery/{vault-name}/</code></li>
-          </ol>
-        </div>
-
-        <div class="section">
-          <h2>Recovery Output Location</h2>
-          <p>Decrypted files are always recovered to:</p>
-          <ul>
-            <li><strong>macOS:</strong> <code>~/Documents/Barqly-Recovery/{vault-name}/</code></li>
-            <li><strong>Windows:</strong> <code>C:\Users\{username}\Documents\Barqly-Recovery\{vault-name}\</code></li>
-            <li><strong>Linux:</strong> <code>/home/{username}/Documents/Barqly-Recovery/{vault-name}/</code></li>
-          </ul>
-          <p>Files are organized in their original folder structure.</p>
-        </div>
-
-        <div class="section">
-          <h2>Understanding Your RECOVERY.txt File</h2>
-          <p>Each encrypted vault has an accompanying <code>{vault-name}-RECOVERY.txt</code> file that lists:</p>
-          <ul>
-            <li><strong>Vault name and creation date</strong></li>
-            <li><strong>All keys that can decrypt this vault</strong> (you only need ONE)
-              <ul style="margin-top: 0.5rem;">
-                <li>YubiKeys: Last 4 digits of serial (e.g., "ending in ...3715")</li>
-                <li>Passphrase keys: Label and filename</li>
-              </ul>
-            </li>
-            <li><strong>File count and total size</strong> (to verify correct vault)</li>
-            <li><strong>Recovery output location</strong></li>
-          </ul>
-
-          <p><strong>Example:</strong></p>
-          <div class="code-block">
-✓ 3 YubiKey(s):
-  - YubiKey ending in ...3715 (Label: YubiKey-15903715)
-  - YubiKey ending in ...0420 (Label: YubiKey-31310420)
-
-✓ 1 Passphrase Key(s):
-  - Label: MBP 2024 Family Key
-    Key file: MBP-2024-Family-Key.agekey.enc
-          </div>
-        </div>
-
-        <div class="section">
-          <h2>Troubleshooting</h2>
-
-          <div class="instruction-card">
-            <h4>"YubiKey not detected"</h4>
-            <p><strong>Solution:</strong></p>
-            <ul>
-              <li>Ensure YubiKey is properly connected</li>
-              <li>Try unplugging and reconnecting</li>
-              <li>Click "Refresh" in the detection dialog</li>
-              <li>Check YubiKey works (green light blinks when touched)</li>
-            </ul>
-          </div>
-
-          <div class="instruction-card">
-            <h4>"Incorrect PIN"</h4>
-            <p><strong>Solution:</strong></p>
-            <ul>
-              <li>Double-check your PIN (6-8 digits)</li>
-              <li>Refer to your password manager where you stored it</li>
-              <li><strong>Warning:</strong> After 3 incorrect attempts, PIN will be blocked</li>
-              <li>If blocked, you'll need your Recovery PIN to unlock</li>
-            </ul>
-          </div>
-
-          <div class="instruction-card">
-            <h4>"YubiKey touch not detected"</h4>
-            <p><strong>Solution:</strong></p>
-            <ul>
-              <li>Watch for the green light to blink on your YubiKey</li>
-              <li>Touch the gold contact when it blinks</li>
-              <li>Don't wait too long (30 second timeout)</li>
-              <li>Try again if timeout occurs</li>
-            </ul>
-          </div>
-
-          <div class="instruction-card">
-            <h4>"Incorrect passphrase"</h4>
-            <p><strong>Solution:</strong></p>
-            <ul>
-              <li>Verify you're using the correct passphrase</li>
-              <li>Check your password manager</li>
-              <li>Try copy-pasting to avoid typos</li>
-              <li>Passphrases are case-sensitive</li>
-            </ul>
-          </div>
-
-          <div class="instruction-card">
-            <h4>"Key file not found" or "Can't import .agekey.enc"</h4>
-            <p><strong>Solution:</strong></p>
-            <ul>
-              <li>Verify the file is actually a <code>.agekey.enc</code> file</li>
-              <li>Check file hasn't been corrupted</li>
-              <li>Try locating it in your backups</li>
-              <li>Ensure you have the correct passphrase for this key file</li>
-            </ul>
-          </div>
-
-          <div class="instruction-card">
-            <h4>"Wrong YubiKey" or "Failed to decrypt"</h4>
-            <p><strong>Solution:</strong></p>
-            <ul>
-              <li>Check your RECOVERY.txt file</li>
-              <li>Verify you're using one of the listed YubiKeys (check last 4 digits)</li>
-              <li>Try a different YubiKey if you have multiple</li>
-              <li>Ensure the YubiKey was actually attached to this vault</li>
-            </ul>
-          </div>
         </div>
 
         <div class="section">
           <h2>Lost All Your Keys?</h2>
-          <p>If you've lost <strong>all</strong> the keys that were attached to your vault:</p>
 
           <div class="warning-box">
-            <p><strong>Unfortunately, your files cannot be recovered.</strong></p>
+            <p><strong>If you've lost ALL keys attached to your vault, your files cannot be recovered.</strong></p>
           </div>
 
-          <p>Barqly Vault uses strong encryption (age encryption). This means:</p>
-          <ul>
-            <li>Without at least one valid key, decryption is cryptographically impossible</li>
-            <li>This is by design - it's what makes your data secure</li>
-            <li>Even Barqly cannot help (we don't have your keys)</li>
-          </ul>
+          <p>Encryption is designed to be unbreakable without keys. Even Barqly cannot help.</p>
 
-          <p><strong>Prevention for the future:</strong></p>
+          <p><strong>Prevent this in the future:</strong></p>
           <ul>
-            <li><strong>Use 2-4 keys per vault</strong> (redundancy!)</li>
-            <li><strong>Mix key types:</strong> YubiKeys (hardware) + Passphrase keys (software)</li>
-            <li><strong>Backup passphrase key files</strong> securely (password manager, safe location)</li>
-            <li><strong>Keep YubiKeys in separate physical locations</strong></li>
-            <li><strong>Document which keys go with which vaults</strong> (RECOVERY.txt helps with this)</li>
+            <li>Use 2-4 keys per vault (redundancy!)</li>
+            <li>Mix YubiKeys (hardware) and Passphrase keys (software)</li>
+            <li>Backup passphrase key files securely</li>
+            <li>Keep YubiKeys in separate physical locations</li>
           </ul>
         </div>
 
         <div class="section">
-          <h2>Recovery Mode (Disaster Recovery)</h2>
-          <p>If your vault manifest and key registry were deleted (system crash, reinstall):</p>
+          <h2>Need Help?</h2>
 
-          <h3>What is Recovery Mode?</h3>
-          <p>When Barqly Vault detects an encrypted <code>.age</code> file without a corresponding vault manifest, it enters <strong>Recovery Mode</strong>.</p>
+          <p><strong>Email:</strong> <a href="mailto:support@barqly.com">support@barqly.com</a></p>
 
-          <div class="recovery-mode-banner">
-            <span class="icon">🛡️</span>
-            <span>Recovery Mode automatically restores your vault configuration</span>
-          </div>
-
-          <h3>How Recovery Mode Works:</h3>
-          <ol>
-            <li><strong>Select the orphaned <code>.age</code> file</strong> on Decrypt page</li>
-            <li><strong>You'll see a Recovery Mode banner</strong> (orange ShieldAlert icon)</li>
-            <li><strong>Import or detect your key</strong> (if not already in Manage Keys)</li>
-            <li><strong>Decrypt as normal</strong></li>
-            <li><strong>Everything is automatically restored:</strong>
-              <ul style="margin-top: 0.5rem;">
-                <li>Vault manifest</li>
-                <li>Key registry</li>
-                <li>Your files</li>
-              </ul>
-            </li>
-          </ol>
-
-          <p><strong>After recovery:</strong> Your vault appears in Vault Hub and works normally!</p>
-        </div>
-
-        <div class="section">
-          <h2>Still Need Help?</h2>
-          <p><strong>Email Support:</strong> <a href="mailto:support@barqly.com">support@barqly.com</a></p>
-
-          <p><strong>Include in your message:</strong></p>
+          <p>Include:</p>
           <ul>
             <li>Brief description of the issue</li>
             <li>Which recovery method you tried (YubiKey or Passphrase)</li>
-            <li>Any error messages you saw</li>
+            <li>Any error messages</li>
             <li>Operating system (macOS, Windows, Linux)</li>
           </ul>
 
           <p>We typically respond within 24 hours.</p>
         </div>
 
-        <div class="section">
-          <h2>Related Resources</h2>
-          <ul>
-            <li><a href="../downloads/">Download Barqly Vault</a></li>
-            <li><a href="../">Main Website</a></li>
-            <li><a href="https://github.com/barqly/barqly-vault" target="_blank">GitHub Repository</a></li>
-          </ul>
-        </div>
-
         <div class="footer">
           <p>Built with ❤️ for the Bitcoin community</p>
-          <p style="margin-top: 1rem;">
-            <a href="https://github.com/barqly/barqly-vault/issues" target="_blank" class="footer-link">
-              💬 Contribute Feedback
-            </a>
-            <a href="https://github.com/barqly/barqly-vault" target="_blank" class="footer-link" style="margin-left: 1rem;">
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 0.5rem; vertical-align: text-bottom;">
-                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
-              </svg>
-              GitHub
-            </a>
-          </p>
           <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
             Last updated: October 27, 2025
           </p>
