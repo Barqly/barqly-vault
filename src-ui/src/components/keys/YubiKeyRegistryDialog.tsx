@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
+  AlertTriangle,
 } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { commands, YubiKeyStateInfo, YubiKeyState } from '../../bindings';
@@ -82,6 +83,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
   const [showSecurityTips, setShowSecurityTips] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [showRecoveryPin, setShowRecoveryPin] = useState(false);
+  const [showTouchPrompt, setShowTouchPrompt] = useState(false);
 
   // Refs for focus trap
   const firstFocusableRef = useRef<HTMLInputElement>(null);
@@ -163,6 +165,47 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
     }
   };
 
+  /**
+   * Convert backend errors into user-friendly messages
+   */
+  const getUserFriendlyError = (errorMessage: string): string => {
+    const lowerError = errorMessage.toLowerCase();
+
+    // PIN blocked - critical error requiring recovery PIN
+    if (lowerError.includes('pin is blocked') || lowerError.includes('pin blocked')) {
+      return 'PIN is blocked due to too many incorrect attempts. Use your Recovery PIN to unblock it, or reset the YubiKey.';
+    }
+
+    // Wrong PIN (still has attempts left)
+    if (lowerError.includes('pin verification failed')) {
+      return 'Incorrect PIN. Please check your PIN and try again.';
+    }
+
+    // Touch timeout errors
+    if (
+      lowerError.includes('touch') ||
+      lowerError.includes('timeout') ||
+      lowerError.includes('pty operation failed') ||
+      lowerError.includes('authentication error') ||
+      lowerError.includes('communicating with yubikey')
+    ) {
+      return 'YubiKey touch not detected. Please touch your YubiKey when the light blinks and try again.';
+    }
+
+    // Device not found
+    if (lowerError.includes('device not found') || lowerError.includes('no yubikey')) {
+      return 'YubiKey not found. Please ensure your YubiKey is connected and try again.';
+    }
+
+    // Wrong PIN (fallback patterns)
+    if (lowerError.includes('incorrect pin') || lowerError.includes('wrong pin')) {
+      return 'Incorrect PIN. Please check your PIN and try again.';
+    }
+
+    // Generic fallback
+    return errorMessage;
+  };
+
   const validatePin = (): string | null => {
     if (!label.trim()) {
       return 'Label is required';
@@ -217,6 +260,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
     }
 
     setIsSetupInProgress(true);
+    setShowTouchPrompt(true); // Show touch prompt immediately
     setError(null);
 
     try {
@@ -261,9 +305,11 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
       }
     } catch (err: any) {
       logger.error('YubiKeyRegistryDialog', 'Failed to setup YubiKey', err);
-      setError(err.message || 'Failed to setup YubiKey');
+      const friendlyError = getUserFriendlyError(err.message || 'Failed to setup YubiKey');
+      setError(friendlyError);
     } finally {
       setIsSetupInProgress(false);
+      setShowTouchPrompt(false); // Hide touch prompt when done
     }
   };
 
@@ -692,8 +738,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                                     '--tw-ring-color': 'rgb(59, 130, 246)',
                                   } as React.CSSProperties)
                                 : ({
-                                    borderColor: '#FCA5A5',
-                                    '--tw-ring-color': '#B91C1C',
+                                    borderColor: '#991B1B',
+                                    '--tw-ring-color': '#991B1B',
                                   } as React.CSSProperties)
                               : ({
                                   borderColor: 'rgb(var(--border-default))',
@@ -715,7 +761,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       {confirmPin && (
                         <p
                           className="text-xs mt-1"
-                          style={{ color: pin === confirmPin ? 'inherit' : '#B91C1C' }}
+                          style={{ color: pin === confirmPin ? 'inherit' : '#991B1B' }}
                         >
                           {pin === confirmPin ? '' : 'PINs do not match'}
                         </p>
@@ -744,8 +790,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                                     '--tw-ring-color': 'rgb(59, 130, 246)',
                                   } as React.CSSProperties)
                                 : ({
-                                    borderColor: '#FCA5A5',
-                                    '--tw-ring-color': '#B91C1C',
+                                    borderColor: '#991B1B',
+                                    '--tw-ring-color': '#991B1B',
                                   } as React.CSSProperties)
                               : ({
                                   borderColor: 'rgb(var(--border-default))',
@@ -769,7 +815,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                         </button>
                       </div>
                       {recoveryPin && pin && recoveryPin === pin && (
-                        <p className="text-xs mt-1" style={{ color: '#B91C1C' }}>
+                        <p className="text-xs mt-1" style={{ color: '#991B1B' }}>
                           Cannot be same as PIN
                         </p>
                       )}
@@ -795,8 +841,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                                     '--tw-ring-color': 'rgb(59, 130, 246)',
                                   } as React.CSSProperties)
                                 : ({
-                                    borderColor: '#FCA5A5',
-                                    '--tw-ring-color': '#B91C1C',
+                                    borderColor: '#991B1B',
+                                    '--tw-ring-color': '#991B1B',
                                   } as React.CSSProperties)
                               : ({
                                   borderColor: 'rgb(var(--border-default))',
@@ -823,7 +869,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                         <p
                           className="text-xs mt-1"
                           style={{
-                            color: recoveryPin === confirmRecoveryPin ? 'inherit' : '#B91C1C',
+                            color: recoveryPin === confirmRecoveryPin ? 'inherit' : '#991B1B',
                           }}
                         >
                           {recoveryPin === confirmRecoveryPin ? '' : 'Recovery PINs do not match'}
@@ -917,9 +963,49 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     </div>
                   </div>
 
+                  {/* Touch YubiKey Prompt */}
+                  {showTouchPrompt && (
+                    <div
+                      className="p-4 rounded-lg border-2 animate-pulse"
+                      style={{
+                        backgroundColor: 'rgba(249, 139, 28, 0.1)',
+                        borderColor: '#F98B1C',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Fingerprint
+                          className="h-6 w-6 flex-shrink-0"
+                          style={{ color: '#F98B1C' }}
+                        />
+                        <div>
+                          <p className="text-sm font-semibold" style={{ color: '#F98B1C' }}>
+                            Touch your YubiKey now
+                          </p>
+                          <p className="text-xs text-secondary mt-0.5">
+                            The green light should be blinking
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {error && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-sm text-red-800">{error}</p>
+                    <div
+                      className="p-4 rounded-lg border"
+                      style={{
+                        backgroundColor: 'rgba(185, 28, 28, 0.15)',
+                        borderColor: '#991B1B',
+                      }}
+                    >
+                      <div className="flex gap-3">
+                        <AlertTriangle
+                          className="h-5 w-5 flex-shrink-0 mt-0.5"
+                          style={{ color: '#991B1B' }}
+                        />
+                        <p className="text-sm" style={{ color: '#FCA5A5' }}>
+                          {error}
+                        </p>
+                      </div>
                     </div>
                   )}
 
@@ -1068,9 +1154,46 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   />
                 </div>
 
+                {/* Touch YubiKey Prompt - Orphaned */}
+                {showTouchPrompt && (
+                  <div
+                    className="p-4 rounded-lg border-2 animate-pulse"
+                    style={{
+                      backgroundColor: 'rgba(249, 139, 28, 0.1)',
+                      borderColor: '#F98B1C',
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Fingerprint className="h-6 w-6 flex-shrink-0" style={{ color: '#F98B1C' }} />
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: '#F98B1C' }}>
+                          Touch your YubiKey now
+                        </p>
+                        <p className="text-xs text-secondary mt-0.5">
+                          The green light should be blinking
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-800">{error}</p>
+                  <div
+                    className="p-4 rounded-lg border"
+                    style={{
+                      backgroundColor: 'rgba(185, 28, 28, 0.15)',
+                      borderColor: '#991B1B',
+                    }}
+                  >
+                    <div className="flex gap-3">
+                      <AlertTriangle
+                        className="h-5 w-5 flex-shrink-0 mt-0.5"
+                        style={{ color: '#991B1B' }}
+                      />
+                      <p className="text-sm" style={{ color: '#FCA5A5' }}>
+                        {error}
+                      </p>
+                    </div>
                   </div>
                 )}
 
