@@ -258,12 +258,12 @@ impl YkmanDeviceService {
 #[async_trait]
 impl DeviceService for YkmanDeviceService {
     async fn list_connected_devices(&self) -> YubiKeyResult<Vec<YubiKeyDevice>> {
-        info!("Listing connected YubiKey devices");
+        debug!("Listing connected YubiKey devices");
 
         let output = self.run_ykman_command(vec!["list".to_string()]).await?;
         let devices = self.parse_device_list(&output)?;
 
-        info!("Found {} connected YubiKey devices", devices.len());
+        debug!("Found {} connected YubiKey devices", devices.len());
         Ok(devices)
     }
 
