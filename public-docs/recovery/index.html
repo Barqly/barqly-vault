@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recovery Guide - Barqly Vault</title>
+    <meta
+      name="description"
+      content="Recover your encrypted files using Barqly Vault. Step-by-step guide for YubiKey and passphrase key recovery."
+    />
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
+    <style>
+      :root {
+        --bitcoin-orange: #ff8a00;
+        --brand-gray: #565555;
+        --primary-blue: #2563EB;
+        --dark-gray: #1E293B;
+        --medium-gray: #64748B;
+        --light-gray: #F8FAFC;
+        --white: #FFFFFF;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.15);
+        --border-color: rgba(226, 232, 240, 0.5);
+        --link-color: #2563EB;
+        --link-hover-color: #1D4ED8;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        line-height: 1.6;
+        color: var(--brand-gray);
+        background: linear-gradient(135deg, #F8FAFC 0%, #F0F9FF 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      /* Dark Mode Styles */
+      [data-theme="dark"] {
+        --bitcoin-orange: #ff8a00;
+        --brand-gray: #9CA3AF;
+        --primary-blue: #60A5FA;
+        --dark-gray: #F9FAFB;
+        --medium-gray: #D1D5DB;
+        --light-gray: #1F2937;
+        --white: #111827;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.2);
+        --border-color: rgba(75, 85, 99, 0.3);
+        --link-color: #60A5FA;
+        --link-hover-color: #93C5FD;
+      }
+
+      [data-theme="dark"] body {
+        background: linear-gradient(135deg, #111827 0%, #1F2937 100%);
+        color: var(--medium-gray);
+      }
+
+      [data-theme="dark"] .navbar {
+        background: rgba(17, 24, 39, 0.95);
+        border-bottom: 1px solid rgba(255, 138, 0, 0.2);
+      }
+
+      [data-theme="dark"] .header {
+        background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+        border-top-color: var(--bitcoin-orange);
+      }
+
+      [data-theme="dark"] .section {
+        background: var(--white);
+        border-color: var(--border-color);
+      }
+
+      [data-theme="dark"] .instruction-card {
+        background: var(--white);
+        border-color: var(--border-color);
+      }
+
+      [data-theme="dark"] .code-block {
+        background: rgba(31, 41, 55, 0.8);
+        border-color: var(--border-color);
+      }
+
+      .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(248, 250, 252, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        z-index: 1000;
+        padding: 1rem 0;
+        transition: all 0.3s ease;
+      }
+
+      .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 2rem;
+      }
+
+      .nav-logo {
+        height: 40px;
+        width: auto;
+        transition: transform 0.2s ease;
+      }
+
+      .nav-logo:hover {
+        transform: scale(1.05);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--medium-gray);
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        color: var(--bitcoin-orange);
+        background: rgba(255, 138, 0, 0.1);
+      }
+
+      .nav-links a.active {
+        color: var(--bitcoin-orange);
+        background: rgba(255, 138, 0, 0.1);
+      }
+
+      .nav-links .download-btn {
+        background: linear-gradient(135deg, var(--bitcoin-orange) 0%, #FF7A00 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        box-shadow: 0 2px 10px rgba(255, 138, 0, 0.3);
+      }
+
+      .nav-links .download-btn:hover {
+        background: linear-gradient(135deg, #FF7A00 0%, var(--bitcoin-orange) 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(255, 138, 0, 0.4);
+      }
+
+      .theme-toggle {
+        background: var(--bitcoin-orange);
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin-left: 1rem;
+      }
+
+      .theme-toggle:hover {
+        transform: scale(1.05);
+        background: #FF7A00;
+      }
+
+      .main-content {
+        margin-top: 80px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, var(--white) 0%, #FFF9F5 100%);
+        border-radius: 20px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        border-top: 4px solid var(--bitcoin-orange);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--bitcoin-orange), transparent);
+        opacity: 0.6;
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .logo {
+        height: 80px;
+        width: auto;
+        transition: transform 0.3s ease;
+      }
+
+      .logo:hover {
+        transform: scale(1.05);
+      }
+
+      .header h1 {
+        color: var(--dark-gray);
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .header .tagline {
+        font-size: 1.2rem;
+        color: var(--brand-gray);
+        font-weight: 400;
+        max-width: 600px;
+        margin: 0.25rem auto 0;
+        line-height: 1.6;
+      }
+
+      .section {
+        background: var(--white);
+        margin-bottom: 2rem;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+      }
+
+      .section:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--hover-shadow);
+      }
+
+      .section h2 {
+        color: var(--brand-gray);
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--bitcoin-orange);
+        padding-bottom: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .section h3 {
+        color: var(--brand-gray);
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+
+      .section p {
+        margin-bottom: 1rem;
+        color: var(--brand-gray);
+        line-height: 1.8;
+      }
+
+      .section ul {
+        margin: 1rem 0 1rem 1.5rem;
+        color: var(--brand-gray);
+      }
+
+      .section ul li {
+        margin-bottom: 0.5rem;
+        line-height: 1.8;
+      }
+
+      .section ol {
+        margin: 1rem 0 1rem 1.5rem;
+        color: var(--brand-gray);
+      }
+
+      .section ol li {
+        margin-bottom: 0.75rem;
+        line-height: 1.8;
+      }
+
+      .instruction-card {
+        padding: 1.5rem;
+        background: var(--white);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        margin-bottom: 1.5rem;
+      }
+
+      .instruction-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(255, 138, 0, 0.12);
+      }
+
+      .instruction-card h4 {
+        color: var(--brand-gray);
+        margin-bottom: 0.75rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+
+      .instruction-card ul {
+        margin-left: 1rem;
+      }
+
+      .instruction-card ul li {
+        margin-bottom: 0.5rem;
+        color: var(--brand-gray);
+      }
+
+      .instruction-card code,
+      .section code {
+        background: rgba(86, 85, 85, 0.1);
+        color: var(--brand-gray);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .code-block {
+        background: rgba(248, 250, 252, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: var(--brand-gray);
+      }
+
+      .checklist {
+        background: rgba(255, 138, 0, 0.05);
+        border-left: 4px solid var(--bitcoin-orange);
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+      }
+
+      .checklist li {
+        list-style: none;
+        position: relative;
+        padding-left: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .checklist li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: var(--bitcoin-orange);
+        font-weight: bold;
+      }
+
+      .warning-box {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        color: #DC2626;
+      }
+
+      .info-box {
+        background: rgba(37, 99, 235, 0.1);
+        border: 1px solid rgba(37, 99, 235, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        color: var(--primary-blue);
+      }
+
+      .recovery-mode-banner {
+        background: rgba(255, 138, 0, 0.1);
+        border: 1px solid var(--bitcoin-orange);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .recovery-mode-banner .icon {
+        color: var(--bitcoin-orange);
+        font-size: 1.2rem;
+      }
+
+      /* General link styles for accessibility */
+      a {
+        color: var(--link-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+      }
+
+      a:hover {
+        text-decoration: underline;
+        color: var(--link-hover-color);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 2rem;
+        color: var(--medium-gray);
+        font-style: italic;
+        font-size: 1.1rem;
+      }
+
+      /* Footer links use theme-appropriate colors */
+      .footer-link {
+        color: var(--link-color) !important;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+
+      .footer-link:hover {
+        color: var(--link-hover-color) !important;
+        text-decoration: underline;
+      }
+
+      .footer a {
+        color: var(--bitcoin-orange);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+
+      @media (max-width: 768px) {
+        .nav-container {
+          padding: 0 1rem;
+        }
+
+        .nav-links {
+          gap: 1rem;
+        }
+
+        .nav-links a {
+          padding: 0.5rem 0.75rem;
+          font-size: 0.9rem;
+        }
+
+        .nav-links .download-btn {
+          padding: 0.6rem 1rem;
+        }
+
+        .theme-toggle {
+          padding: 0.4rem;
+          margin-left: 0.5rem;
+        }
+
+        .container {
+          padding: 1rem;
+        }
+
+        .header {
+          padding: 2rem 1.5rem;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .section {
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="../" onclick="scrollToTop()">
+          <img src="../assets/barqly-vault-logo-dark.svg" alt="Barqly Vault" class="nav-logo" id="nav-logo">
+        </a>
+
+        <div class="nav-links">
+          <a href="../">Home</a>
+          <a href="../downloads/">Download</a>
+          <a href="./" class="active">Recovery</a>
+          <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+            ☀️
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="main-content">
+      <div class="container">
+        <div class="header">
+          <div class="logo-container">
+            <img src="../assets/barqly-vault-logo-dark.svg" alt="Barqly Vault" class="logo">
+          </div>
+          <h1>Recovery Guide</h1>
+          <p class="tagline">
+            Recover your encrypted files using your vault keys
+          </p>
+        </div>
+
+        <div class="section">
+          <h2>Prerequisites</h2>
+          <p>Before starting recovery, ensure you have:</p>
+          <div class="checklist">
+            <ul>
+              <li><strong>Barqly Vault installed</strong> - <a href="../downloads/">Download here</a></li>
+              <li><strong>Your encrypted .age file</strong> - Usually in <code>~/Documents/Barqly-Vaults/</code></li>
+              <li><strong>At least ONE key</strong> from your vault:
+                <ul style="margin-top: 0.5rem; list-style: disc;">
+                  <li>A YubiKey that was attached to the vault, OR</li>
+                  <li>A passphrase key file (<code>.agekey.enc</code>)</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <div class="info-box">
+            <strong>Important:</strong> Your vault was encrypted to 2-4 keys. You only need <strong>ANY ONE</strong> of them to decrypt.
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Quick Start</h2>
+          <ol>
+            <li><strong>Find your RECOVERY.txt file</strong> - Saved alongside your encrypted <code>.age</code> file</li>
+            <li><strong>Check which keys were used</strong> - Listed in RECOVERY.txt</li>
+            <li><strong>Follow the appropriate recovery method below</strong> - YubiKey or Passphrase</li>
+          </ol>
+        </div>
+
+        <div class="section">
+          <h2>Method 1: YubiKey Recovery</h2>
+
+          <h3>If Your YubiKey is Already Registered</h3>
+          <ol>
+            <li><strong>Connect your YubiKey</strong> to your computer</li>
+            <li><strong>Open Barqly Vault</strong></li>
+            <li><strong>Go to Decrypt</strong> page (left sidebar)</li>
+            <li><strong>Select your encrypted <code>.age</code> file</strong>
+              <ul style="margin-top: 0.5rem;">
+                <li>Click "Select Files" or drag-and-drop</li>
+                <li>Navigate to <code>~/Documents/Barqly-Vaults/</code></li>
+              </ul>
+            </li>
+            <li><strong>Choose your YubiKey</strong> from the dropdown</li>
+            <li><strong>Enter your YubiKey PIN</strong></li>
+            <li><strong>Touch your YubiKey</strong> when the green light blinks</li>
+            <li><strong>Files recovered!</strong> Check <code>~/Documents/Barqly-Recovery/{vault-name}/</code></li>
+          </ol>
+
+          <h3>If Your YubiKey is Not Registered</h3>
+          <ol>
+            <li><strong>Connect your YubiKey</strong> to your computer</li>
+            <li><strong>Open Barqly Vault</strong></li>
+            <li><strong>Go to Manage Keys</strong> page (left sidebar)</li>
+            <li><strong>Click "+ New Key"</strong> → <strong>Detect YubiKey</strong></li>
+            <li><strong>YubiKey should appear</strong> in the detection list</li>
+            <li><strong>Enter your label</strong> (or use the default)</li>
+            <li><strong>Enter your YubiKey PIN</strong> to verify ownership</li>
+            <li><strong>Click "Add to Registry"</strong></li>
+            <li><strong>Now follow the steps above</strong> ("If Your YubiKey is Already Registered")</li>
+          </ol>
+        </div>
+
+        <div class="section">
+          <h2>Method 2: Passphrase Key Recovery</h2>
+
+          <h3>Step 1: Import Your Passphrase Key</h3>
+          <ol>
+            <li><strong>Locate your passphrase key file</strong>
+              <ul style="margin-top: 0.5rem;">
+                <li>Filename: <code>{key-label}.agekey.enc</code> (e.g., <code>MBP-2024-Family-Key.agekey.enc</code>)</li>
+                <li>Check your backups or wherever you saved it</li>
+              </ul>
+            </li>
+            <li><strong>Open Barqly Vault</strong></li>
+            <li><strong>Go to Manage Keys</strong> page (left sidebar)</li>
+            <li><strong>Click "Import Key"</strong></li>
+            <li><strong>Select the <code>.agekey.enc</code> file</strong></li>
+            <li><strong>Enter the passphrase</strong> that protects this key</li>
+            <li><strong>Key imported successfully!</strong></li>
+          </ol>
+
+          <h3>Step 2: Decrypt Your Vault</h3>
+          <ol>
+            <li><strong>Go to Decrypt</strong> page (left sidebar)</li>
+            <li><strong>Select your encrypted <code>.age</code> file</strong>
+              <ul style="margin-top: 0.5rem;">
+                <li>Click "Select Files" or drag-and-drop</li>
+                <li>Navigate to <code>~/Documents/Barqly-Vaults/</code></li>
+              </ul>
+            </li>
+            <li><strong>Choose your imported passphrase key</strong> from the dropdown</li>
+            <li><strong>Enter your passphrase</strong></li>
+            <li><strong>Click "Decrypt Vault"</strong></li>
+            <li><strong>Files recovered!</strong> Check <code>~/Documents/Barqly-Recovery/{vault-name}/</code></li>
+          </ol>
+        </div>
+
+        <div class="section">
+          <h2>Recovery Output Location</h2>
+          <p>Decrypted files are always recovered to:</p>
+          <ul>
+            <li><strong>macOS:</strong> <code>~/Documents/Barqly-Recovery/{vault-name}/</code></li>
+            <li><strong>Windows:</strong> <code>C:\Users\{username}\Documents\Barqly-Recovery\{vault-name}\</code></li>
+            <li><strong>Linux:</strong> <code>/home/{username}/Documents/Barqly-Recovery/{vault-name}/</code></li>
+          </ul>
+          <p>Files are organized in their original folder structure.</p>
+        </div>
+
+        <div class="section">
+          <h2>Understanding Your RECOVERY.txt File</h2>
+          <p>Each encrypted vault has an accompanying <code>{vault-name}-RECOVERY.txt</code> file that lists:</p>
+          <ul>
+            <li><strong>Vault name and creation date</strong></li>
+            <li><strong>All keys that can decrypt this vault</strong> (you only need ONE)
+              <ul style="margin-top: 0.5rem;">
+                <li>YubiKeys: Last 4 digits of serial (e.g., "ending in ...3715")</li>
+                <li>Passphrase keys: Label and filename</li>
+              </ul>
+            </li>
+            <li><strong>File count and total size</strong> (to verify correct vault)</li>
+            <li><strong>Recovery output location</strong></li>
+          </ul>
+
+          <p><strong>Example:</strong></p>
+          <div class="code-block">
+✓ 3 YubiKey(s):
+  - YubiKey ending in ...3715 (Label: YubiKey-15903715)
+  - YubiKey ending in ...0420 (Label: YubiKey-31310420)
+
+✓ 1 Passphrase Key(s):
+  - Label: MBP 2024 Family Key
+    Key file: MBP-2024-Family-Key.agekey.enc
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Troubleshooting</h2>
+
+          <div class="instruction-card">
+            <h4>"YubiKey not detected"</h4>
+            <p><strong>Solution:</strong></p>
+            <ul>
+              <li>Ensure YubiKey is properly connected</li>
+              <li>Try unplugging and reconnecting</li>
+              <li>Click "Refresh" in the detection dialog</li>
+              <li>Check YubiKey works (green light blinks when touched)</li>
+            </ul>
+          </div>
+
+          <div class="instruction-card">
+            <h4>"Incorrect PIN"</h4>
+            <p><strong>Solution:</strong></p>
+            <ul>
+              <li>Double-check your PIN (6-8 digits)</li>
+              <li>Refer to your password manager where you stored it</li>
+              <li><strong>Warning:</strong> After 3 incorrect attempts, PIN will be blocked</li>
+              <li>If blocked, you'll need your Recovery PIN to unlock</li>
+            </ul>
+          </div>
+
+          <div class="instruction-card">
+            <h4>"YubiKey touch not detected"</h4>
+            <p><strong>Solution:</strong></p>
+            <ul>
+              <li>Watch for the green light to blink on your YubiKey</li>
+              <li>Touch the gold contact when it blinks</li>
+              <li>Don't wait too long (30 second timeout)</li>
+              <li>Try again if timeout occurs</li>
+            </ul>
+          </div>
+
+          <div class="instruction-card">
+            <h4>"Incorrect passphrase"</h4>
+            <p><strong>Solution:</strong></p>
+            <ul>
+              <li>Verify you're using the correct passphrase</li>
+              <li>Check your password manager</li>
+              <li>Try copy-pasting to avoid typos</li>
+              <li>Passphrases are case-sensitive</li>
+            </ul>
+          </div>
+
+          <div class="instruction-card">
+            <h4>"Key file not found" or "Can't import .agekey.enc"</h4>
+            <p><strong>Solution:</strong></p>
+            <ul>
+              <li>Verify the file is actually a <code>.agekey.enc</code> file</li>
+              <li>Check file hasn't been corrupted</li>
+              <li>Try locating it in your backups</li>
+              <li>Ensure you have the correct passphrase for this key file</li>
+            </ul>
+          </div>
+
+          <div class="instruction-card">
+            <h4>"Wrong YubiKey" or "Failed to decrypt"</h4>
+            <p><strong>Solution:</strong></p>
+            <ul>
+              <li>Check your RECOVERY.txt file</li>
+              <li>Verify you're using one of the listed YubiKeys (check last 4 digits)</li>
+              <li>Try a different YubiKey if you have multiple</li>
+              <li>Ensure the YubiKey was actually attached to this vault</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Lost All Your Keys?</h2>
+          <p>If you've lost <strong>all</strong> the keys that were attached to your vault:</p>
+
+          <div class="warning-box">
+            <p><strong>Unfortunately, your files cannot be recovered.</strong></p>
+          </div>
+
+          <p>Barqly Vault uses strong encryption (age encryption). This means:</p>
+          <ul>
+            <li>Without at least one valid key, decryption is cryptographically impossible</li>
+            <li>This is by design - it's what makes your data secure</li>
+            <li>Even Barqly cannot help (we don't have your keys)</li>
+          </ul>
+
+          <p><strong>Prevention for the future:</strong></p>
+          <ul>
+            <li><strong>Use 2-4 keys per vault</strong> (redundancy!)</li>
+            <li><strong>Mix key types:</strong> YubiKeys (hardware) + Passphrase keys (software)</li>
+            <li><strong>Backup passphrase key files</strong> securely (password manager, safe location)</li>
+            <li><strong>Keep YubiKeys in separate physical locations</strong></li>
+            <li><strong>Document which keys go with which vaults</strong> (RECOVERY.txt helps with this)</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h2>Recovery Mode (Disaster Recovery)</h2>
+          <p>If your vault manifest and key registry were deleted (system crash, reinstall):</p>
+
+          <h3>What is Recovery Mode?</h3>
+          <p>When Barqly Vault detects an encrypted <code>.age</code> file without a corresponding vault manifest, it enters <strong>Recovery Mode</strong>.</p>
+
+          <div class="recovery-mode-banner">
+            <span class="icon">🛡️</span>
+            <span>Recovery Mode automatically restores your vault configuration</span>
+          </div>
+
+          <h3>How Recovery Mode Works:</h3>
+          <ol>
+            <li><strong>Select the orphaned <code>.age</code> file</strong> on Decrypt page</li>
+            <li><strong>You'll see a Recovery Mode banner</strong> (orange ShieldAlert icon)</li>
+            <li><strong>Import or detect your key</strong> (if not already in Manage Keys)</li>
+            <li><strong>Decrypt as normal</strong></li>
+            <li><strong>Everything is automatically restored:</strong>
+              <ul style="margin-top: 0.5rem;">
+                <li>Vault manifest</li>
+                <li>Key registry</li>
+                <li>Your files</li>
+              </ul>
+            </li>
+          </ol>
+
+          <p><strong>After recovery:</strong> Your vault appears in Vault Hub and works normally!</p>
+        </div>
+
+        <div class="section">
+          <h2>Still Need Help?</h2>
+          <p><strong>Email Support:</strong> <a href="mailto:support@barqly.com">support@barqly.com</a></p>
+
+          <p><strong>Include in your message:</strong></p>
+          <ul>
+            <li>Brief description of the issue</li>
+            <li>Which recovery method you tried (YubiKey or Passphrase)</li>
+            <li>Any error messages you saw</li>
+            <li>Operating system (macOS, Windows, Linux)</li>
+          </ul>
+
+          <p>We typically respond within 24 hours.</p>
+        </div>
+
+        <div class="section">
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="../downloads/">Download Barqly Vault</a></li>
+            <li><a href="../">Main Website</a></li>
+            <li><a href="https://github.com/barqly/barqly-vault" target="_blank">GitHub Repository</a></li>
+          </ul>
+        </div>
+
+        <div class="footer">
+          <p>Built with ❤️ for the Bitcoin community</p>
+          <p style="margin-top: 1rem;">
+            <a href="https://github.com/barqly/barqly-vault/issues" target="_blank" class="footer-link">
+              💬 Contribute Feedback
+            </a>
+            <a href="https://github.com/barqly/barqly-vault" target="_blank" class="footer-link" style="margin-left: 1rem;">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 0.5rem; vertical-align: text-bottom;">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+              </svg>
+              GitHub
+            </a>
+          </p>
+          <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
+            Last updated: October 27, 2025
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Navigation functionality
+      function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Theme toggle functionality
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        document.documentElement.setAttribute('data-theme', newTheme);
+
+        // Update logos
+        const logo = document.querySelector('.logo');
+        const navLogo = document.querySelector('.nav-logo');
+        if (newTheme === 'dark') {
+          logo.src = '../assets/barqly-vault-logo-dark.svg';
+          navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+          document.querySelector('.theme-toggle').textContent = '☀️';
+        } else {
+          logo.src = '../assets/barqly-vault-logo-light.svg';
+          navLogo.src = '../assets/barqly-vault-logo-light.svg';
+          document.querySelector('.theme-toggle').textContent = '🌙';
+        }
+
+        // Save preference
+        localStorage.setItem('theme', newTheme);
+      }
+
+      // Initialize theme on page load
+      function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        // If no saved preference, default to dark
+        const defaultTheme = savedTheme || 'dark';
+
+        document.documentElement.setAttribute('data-theme', defaultTheme);
+
+        // Update logos based on the actual theme
+        const logo = document.querySelector('.logo');
+        const navLogo = document.querySelector('.nav-logo');
+        if (defaultTheme === 'dark') {
+          logo.src = '../assets/barqly-vault-logo-dark.svg';
+          navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+          document.querySelector('.theme-toggle').textContent = '☀️';
+        } else {
+          logo.src = '../assets/barqly-vault-logo-light.svg';
+          navLogo.src = '../assets/barqly-vault-logo-light.svg';
+          document.querySelector('.theme-toggle').textContent = '🌙';
+        }
+      }
+
+      // Initialize theme when page loads
+      document.addEventListener('DOMContentLoaded', initTheme);
+
+      // Listen for system theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('theme')) {
+          const newTheme = e.matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', newTheme);
+
+          const logo = document.querySelector('.logo');
+          const navLogo = document.querySelector('.nav-logo');
+          if (newTheme === 'dark') {
+            logo.src = '../assets/barqly-vault-logo-dark.svg';
+            navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+            document.querySelector('.theme-toggle').textContent = '☀️';
+          } else {
+            logo.src = '../assets/barqly-vault-logo-light.svg';
+            navLogo.src = '../assets/barqly-vault-logo-light.svg';
+            document.querySelector('.theme-toggle').textContent = '🌙';
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
