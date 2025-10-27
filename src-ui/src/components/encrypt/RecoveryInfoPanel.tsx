@@ -95,8 +95,8 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
 
         {/* Note about RECOVERY.txt saved separately */}
         <p className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600 text-xs text-slate-500 dark:text-slate-400 italic">
-          <span className="font-semibold">Recovery guide:</span> A {vaultName}-RECOVERY.txt file
-          will be saved alongside your encrypted vault for easy reference.
+          <span className="font-semibold">Recovery guide:</span> A RECOVERY.txt file will be saved
+          alongside your encrypted vault for easy reference.
         </p>
       </div>
     </div>
