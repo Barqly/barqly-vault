@@ -14,10 +14,12 @@ interface DecryptErrorProps {
 const getUserFriendlyError = (errorMessage: string): string => {
   const lowerError = errorMessage.toLowerCase();
 
-  // Touch timeout errors (YubiKey)
+  // Touch timeout errors (YubiKey) - Multiple patterns from backend
   if (
     lowerError.includes('touch') ||
     lowerError.includes('timeout') ||
+    lowerError.includes('failed to decrypt yubikey stanza') || // age CLI error
+    lowerError.includes('yubikey plugin') || // age plugin error
     lowerError.includes('pty operation failed') ||
     lowerError.includes('authentication error') ||
     lowerError.includes('communicating with yubikey')
@@ -25,14 +27,19 @@ const getUserFriendlyError = (errorMessage: string): string => {
     return 'YubiKey touch not detected. Please touch your YubiKey when the light blinks and try again.';
   }
 
+  // PIN blocked (YubiKey)
+  if (lowerError.includes('pin is blocked') || lowerError.includes('pin blocked')) {
+    return 'PIN is blocked due to too many incorrect attempts. Use your Recovery PIN to unblock it, or reset the YubiKey.';
+  }
+
   // PIN verification failed (YubiKey wrong PIN)
   if (lowerError.includes('pin verification failed')) {
     return 'Incorrect PIN. Please check your PIN and try again.';
   }
 
-  // PIN blocked (YubiKey)
-  if (lowerError.includes('pin is blocked') || lowerError.includes('pin blocked')) {
-    return 'PIN is blocked due to too many incorrect attempts. Use your Recovery PIN to unblock it, or reset the YubiKey.';
+  // Device not found (YubiKey unplugged during decrypt)
+  if (lowerError.includes('device not found') || lowerError.includes('no yubikey')) {
+    return 'YubiKey not found. Please ensure your YubiKey is connected and try again.';
   }
 
   // Generic passphrase/PIN error (fallback)
@@ -42,11 +49,6 @@ const getUserFriendlyError = (errorMessage: string): string => {
     lowerError.includes('invalid')
   ) {
     return 'The passphrase or PIN you entered is incorrect. Please check and try again.';
-  }
-
-  // Device not found (YubiKey unplugged during decrypt)
-  if (lowerError.includes('device not found') || lowerError.includes('no yubikey')) {
-    return 'YubiKey not found. Please ensure your YubiKey is connected and try again.';
   }
 
   // Generic fallback
@@ -73,7 +75,15 @@ const DecryptError: React.FC<DecryptErrorProps> = ({ error, passphraseAttempts, 
   // User-friendly message with backend error detection
   const getUserMessage = () => {
     const errorMessage = error?.message || '';
-    return getUserFriendlyError(errorMessage);
+
+    // Debug: Log the error to help with pattern matching
+    console.log('DecryptError: Raw error object', error);
+    console.log('DecryptError: Error message for pattern matching', errorMessage);
+
+    const friendlyMessage = getUserFriendlyError(errorMessage);
+    console.log('DecryptError: Friendly message result', friendlyMessage);
+
+    return friendlyMessage;
   };
 
   return (

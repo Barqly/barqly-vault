@@ -181,10 +181,12 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
       return 'Incorrect PIN. Please check your PIN and try again.';
     }
 
-    // Touch timeout errors
+    // Touch timeout errors - Multiple patterns from backend
     if (
       lowerError.includes('touch') ||
       lowerError.includes('timeout') ||
+      lowerError.includes('failed to decrypt yubikey stanza') || // age CLI error
+      lowerError.includes('yubikey plugin') || // age plugin error
       lowerError.includes('pty operation failed') ||
       lowerError.includes('authentication error') ||
       lowerError.includes('communicating with yubikey')
