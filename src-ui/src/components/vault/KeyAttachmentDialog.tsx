@@ -17,7 +17,7 @@ interface KeyCheckboxState {
   isDisabled: boolean;
   isLoading: boolean;
   tooltip: string;
-  disabledReason?: 'immutable-vault' | 'max-keys' | 'unavailable' | null;
+  disabledReason?: 'immutable-vault' | 'max-keys' | null;
 }
 
 export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
@@ -99,15 +99,6 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
             tooltip = isAttached
               ? 'This vault is sealed - key set cannot be modified'
               : 'Vault already encrypted — key set is sealed';
-          } else if (!key.is_available) {
-            // Key not available (YubiKey unplugged / .enc file missing)
-            isDisabled = !isAttached; // Allow detach of unavailable keys, but not attach
-            disabledReason = 'unavailable';
-            tooltip = isAttached
-              ? 'Key is not currently available (click to detach)'
-              : key.key_type.type === 'YubiKey'
-                ? 'YubiKey not plugged in'
-                : 'Key file not found';
           } else if (hasReachedMaxKeys && !isAttached) {
             // Vault at max capacity - can't attach new keys
             isDisabled = true;
@@ -115,6 +106,8 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
             tooltip = 'Maximum 4 keys reached. Detach a key to attach this one.';
           } else {
             // Normal state - can attach or detach
+            // Note: Availability check removed - users can attach any registered key
+            // Availability only matters during actual encrypt/decrypt operations
             tooltip = isAttached
               ? 'Click to detach key from vault'
               : 'Click to attach key to vault';
