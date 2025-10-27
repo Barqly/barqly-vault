@@ -74,13 +74,22 @@ const DecryptError: React.FC<DecryptErrorProps> = ({ error, passphraseAttempts, 
 
   // User-friendly message with backend error detection
   const getUserMessage = () => {
+    // Try multiple sources for the error message
     const errorMessage = error?.message || '';
+    const errorDetails = error?.details || '';
+    const recoveryGuidance = error?.recovery_guidance || '';
 
-    // Debug: Log the error to help with pattern matching
-    console.log('DecryptError: Raw error object', error);
-    console.log('DecryptError: Error message for pattern matching', errorMessage);
+    // Debug: Log all error fields
+    console.log('DecryptError: Full error object', error);
+    console.log('DecryptError: message', errorMessage);
+    console.log('DecryptError: details', errorDetails);
+    console.log('DecryptError: recovery_guidance', recoveryGuidance);
 
-    const friendlyMessage = getUserFriendlyError(errorMessage);
+    // Combine all available error text for pattern matching
+    const combinedError = `${errorMessage} ${errorDetails} ${recoveryGuidance}`.toLowerCase();
+    console.log('DecryptError: Combined error text for matching', combinedError);
+
+    const friendlyMessage = getUserFriendlyError(combinedError);
     console.log('DecryptError: Friendly message result', friendlyMessage);
 
     return friendlyMessage;

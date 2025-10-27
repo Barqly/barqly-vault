@@ -4,7 +4,7 @@
 
 import { safeListen } from '../tauri-safe';
 import { commands, DecryptDataInput, DecryptionResult } from '../../bindings';
-import type { GetProgressResponse, CommandError, ErrorCode } from '../../bindings';
+import type { GetProgressResponse, CommandError } from '../../bindings';
 import { logger } from '../logger';
 import { toCommandError } from '../errors/command-error';
 import { UnlistenFn } from '@tauri-apps/api/event';
@@ -46,10 +46,18 @@ export const executeDecryption = async (
     const result = await commands.decryptData(input);
 
     if (result.status === 'error') {
+      // Preserve the backend error message for pattern matching in getUserFriendlyError()
+      const backendMessage = result.error.message || 'Decryption failed';
+
+      logger.error('decryption-workflow', 'Backend returned error', {
+        code: result.error.code,
+        message: backendMessage,
+      });
+
       throw toCommandError(
-        new Error(result.error.message || 'Decryption failed'),
-        ErrorCode.DECRYPTION_FAILED,
-        'File decryption failed',
+        new Error(backendMessage),
+        'DECRYPTION_FAILED',
+        backendMessage, // Use backend message, not generic override
         'Please check your key, passphrase, and file. If the problem persists, restart the application.',
       );
     }
@@ -60,7 +68,7 @@ export const executeDecryption = async (
     // Transform and re-throw the error with appropriate context
     throw toCommandError(
       error,
-      ErrorCode.DECRYPTION_FAILED,
+      'DECRYPTION_FAILED',
       'File decryption failed',
       'Please check your key, passphrase, and file. If the problem persists, restart the application.',
     );
