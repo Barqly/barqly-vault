@@ -91,20 +91,13 @@ const RecoveryInfoPanel: React.FC<RecoveryInfoPanelProps> = ({
               </div>
             </div>
           )}
-
-          {/* Recovery Instructions */}
-          <div className="flex items-start gap-2">
-            <Check className="w-5 h-5 text-teal-600 dark:text-teal-500 mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                RECOVERY.txt
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                Step-by-step recovery instructions
-              </div>
-            </div>
-          </div>
         </div>
+
+        {/* Note about RECOVERY.txt saved separately */}
+        <p className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600 text-xs text-slate-500 dark:text-slate-400 italic">
+          <span className="font-semibold">Recovery guide:</span> A {vaultName}-RECOVERY.txt file
+          will be saved alongside your encrypted vault for easy reference.
+        </p>
       </div>
     </div>
   );
