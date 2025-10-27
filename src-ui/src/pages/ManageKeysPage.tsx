@@ -72,16 +72,31 @@ const ManageKeysPage: React.FC = () => {
     return map;
   }, [vaults]);
 
-  // Filter keys based on vault filter selection
+  // Filter and sort keys based on vault filter selection
   const filteredKeys = React.useMemo(() => {
+    let keys: typeof allKeys = [];
+
     if (vaultFilter === 'all') {
-      return allKeys;
+      keys = allKeys;
     } else if (vaultFilter === 'unattached') {
-      return allKeys.filter((key) => key.vault_associations.length === 0);
+      keys = allKeys.filter((key) => key.vault_associations.length === 0);
     } else {
       // Filter by specific vault ID
-      return allKeys.filter((key) => key.vault_associations.includes(vaultFilter));
+      keys = allKeys.filter((key) => key.vault_associations.includes(vaultFilter));
     }
+
+    // Sort: YubiKeys first (hardware keys prioritized), then Passphrase keys
+    return keys.sort((a, b) => {
+      const aIsYubiKey = a.key_type.type === 'YubiKey';
+      const bIsYubiKey = b.key_type.type === 'YubiKey';
+
+      // Primary sort: YubiKey before Passphrase
+      if (aIsYubiKey && !bIsYubiKey) return -1;
+      if (!aIsYubiKey && bIsYubiKey) return 1;
+
+      // Secondary sort: Alphabetically by label within same type
+      return (a.label || '').localeCompare(b.label || '');
+    });
   }, [allKeys, vaultFilter]);
 
   // Fetch vault statistics for deactivation eligibility checks
