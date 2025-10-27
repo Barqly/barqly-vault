@@ -133,7 +133,7 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '3',
       title: 'Recover Files',
-      description: 'Files are restored to their original folders.',
+      description: 'Files are extracted to Barqly-Recovery folder in your Documents.',
     },
   ];
 
