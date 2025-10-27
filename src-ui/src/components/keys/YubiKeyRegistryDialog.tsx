@@ -167,21 +167,33 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
   /**
    * Convert backend errors into user-friendly messages
+   * Order matters: Check specific errors before generic patterns
    */
   const getUserFriendlyError = (errorMessage: string): string => {
     const lowerError = errorMessage.toLowerCase();
 
-    // PIN blocked - critical error requiring recovery PIN
+    // PIN blocked - critical error requiring recovery PIN (Check FIRST)
     if (lowerError.includes('pin is blocked') || lowerError.includes('pin blocked')) {
       return 'PIN is blocked due to too many incorrect attempts. Use your Recovery PIN to unblock it, or reset the YubiKey.';
     }
 
-    // Wrong PIN (still has attempts left)
-    if (lowerError.includes('pin verification failed')) {
+    // Wrong PIN - Check BEFORE touch timeout (more specific)
+    if (
+      lowerError.includes('invalid pin') ||
+      lowerError.includes('incorrect pin') ||
+      lowerError.includes('wrong pin') ||
+      lowerError.includes('pin verification failed') ||
+      lowerError.includes('tries remaining')
+    ) {
       return 'Incorrect PIN. Please check your PIN and try again.';
     }
 
-    // Touch timeout errors - Multiple patterns from backend
+    // Device not found
+    if (lowerError.includes('device not found') || lowerError.includes('no yubikey')) {
+      return 'YubiKey not found. Please ensure your YubiKey is connected and try again.';
+    }
+
+    // Touch timeout errors - Check AFTER PIN errors (less specific)
     if (
       lowerError.includes('touch') ||
       lowerError.includes('timeout') ||
@@ -192,16 +204,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
       lowerError.includes('communicating with yubikey')
     ) {
       return 'YubiKey touch not detected. Please touch your YubiKey when the light blinks and try again.';
-    }
-
-    // Device not found
-    if (lowerError.includes('device not found') || lowerError.includes('no yubikey')) {
-      return 'YubiKey not found. Please ensure your YubiKey is connected and try again.';
-    }
-
-    // Wrong PIN (fallback patterns)
-    if (lowerError.includes('incorrect pin') || lowerError.includes('wrong pin')) {
-      return 'Incorrect PIN. Please check your PIN and try again.';
     }
 
     // Generic fallback

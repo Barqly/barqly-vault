@@ -378,8 +378,8 @@ export const useDecryptionWorkflow = () => {
               ? (err as CommandError)
               : createCommandError(
                   'DECRYPTION_FAILED',
-                  'Decryption failed',
-                  err instanceof Error ? err.message : 'An error occurred during decryption',
+                  err instanceof Error ? err.message : 'Decryption failed',
+                  'Please check your key and try again',
                 );
 
           setFileValidationError(commandError);
@@ -434,8 +434,8 @@ export const useDecryptionWorkflow = () => {
           ? (err as CommandError)
           : createCommandError(
               'DECRYPTION_FAILED',
-              'Decryption failed',
-              err instanceof Error ? err.message : 'An error occurred during decryption',
+              err instanceof Error ? err.message : 'Decryption failed',
+              'Please check your key and try again',
             );
 
       setFileValidationError(commandError);

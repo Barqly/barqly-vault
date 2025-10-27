@@ -10,11 +10,33 @@ interface DecryptErrorProps {
 
 /**
  * Convert backend errors into user-friendly messages
+ * Order matters: Check specific errors before generic patterns
  */
 const getUserFriendlyError = (errorMessage: string): string => {
   const lowerError = errorMessage.toLowerCase();
 
-  // Touch timeout errors (YubiKey) - Multiple patterns from backend
+  // PIN blocked (YubiKey) - Check FIRST (most specific)
+  if (lowerError.includes('pin is blocked') || lowerError.includes('pin blocked')) {
+    return 'PIN is blocked due to too many incorrect attempts. Use your Recovery PIN to unblock it, or reset the YubiKey.';
+  }
+
+  // Wrong PIN (YubiKey) - Check BEFORE touch timeout
+  if (
+    lowerError.includes('invalid pin') ||
+    lowerError.includes('incorrect pin') ||
+    lowerError.includes('wrong pin') ||
+    lowerError.includes('pin verification failed') ||
+    lowerError.includes('tries remaining')
+  ) {
+    return 'Incorrect PIN. Please check your PIN and try again.';
+  }
+
+  // Device not found (YubiKey unplugged)
+  if (lowerError.includes('device not found') || lowerError.includes('no yubikey')) {
+    return 'YubiKey not found. Please ensure your YubiKey is connected and try again.';
+  }
+
+  // Touch timeout errors (YubiKey) - Check AFTER PIN errors
   if (
     lowerError.includes('touch') ||
     lowerError.includes('timeout') ||
@@ -27,22 +49,7 @@ const getUserFriendlyError = (errorMessage: string): string => {
     return 'YubiKey touch not detected. Please touch your YubiKey when the light blinks and try again.';
   }
 
-  // PIN blocked (YubiKey)
-  if (lowerError.includes('pin is blocked') || lowerError.includes('pin blocked')) {
-    return 'PIN is blocked due to too many incorrect attempts. Use your Recovery PIN to unblock it, or reset the YubiKey.';
-  }
-
-  // PIN verification failed (YubiKey wrong PIN)
-  if (lowerError.includes('pin verification failed')) {
-    return 'Incorrect PIN. Please check your PIN and try again.';
-  }
-
-  // Device not found (YubiKey unplugged during decrypt)
-  if (lowerError.includes('device not found') || lowerError.includes('no yubikey')) {
-    return 'YubiKey not found. Please ensure your YubiKey is connected and try again.';
-  }
-
-  // Generic passphrase/PIN error (fallback)
+  // Generic passphrase error (fallback for Passphrase keys)
   if (
     lowerError.includes('passphrase') ||
     lowerError.includes('incorrect') ||
@@ -79,20 +86,10 @@ const DecryptError: React.FC<DecryptErrorProps> = ({ error, passphraseAttempts, 
     const errorDetails = error?.details || '';
     const recoveryGuidance = error?.recovery_guidance || '';
 
-    // Debug: Log all error fields
-    console.log('DecryptError: Full error object', error);
-    console.log('DecryptError: message', errorMessage);
-    console.log('DecryptError: details', errorDetails);
-    console.log('DecryptError: recovery_guidance', recoveryGuidance);
-
     // Combine all available error text for pattern matching
     const combinedError = `${errorMessage} ${errorDetails} ${recoveryGuidance}`.toLowerCase();
-    console.log('DecryptError: Combined error text for matching', combinedError);
 
-    const friendlyMessage = getUserFriendlyError(combinedError);
-    console.log('DecryptError: Friendly message result', friendlyMessage);
-
-    return friendlyMessage;
+    return getUserFriendlyError(combinedError);
   };
 
   return (
@@ -103,9 +100,9 @@ const DecryptError: React.FC<DecryptErrorProps> = ({ error, passphraseAttempts, 
           {/* Error icon */}
           <div
             className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4"
-            style={{ backgroundColor: 'rgba(185, 28, 28, 0.15)' }}
+            style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
           >
-            <AlertCircle className="w-8 h-8" style={{ color: '#991B1B' }} />
+            <AlertCircle className="w-8 h-8" style={{ color: '#EF4444' }} strokeWidth={1.5} />
           </div>
 
           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
