@@ -63,14 +63,14 @@ impl YubiKeyManager {
 
     /// Create new YubiKey manager with custom configuration
     pub async fn with_config(config: YubiKeyManagerConfig) -> YubiKeyResult<Self> {
-        info!("Initializing YubiKey Manager");
+        debug!("Initializing YubiKey Manager");
 
         let services = ServiceFactory::new().await?;
         services.initialize_all_services().await?;
 
         let manager = Self { services, config };
 
-        info!("YubiKey Manager initialized successfully");
+        debug!("YubiKey Manager initialized successfully");
         Ok(manager)
     }
 
@@ -93,7 +93,7 @@ impl YubiKeyManager {
             .list_connected_devices()
             .await?;
 
-        info!("Found {} connected YubiKey devices", devices.len());
+        debug!("Found {} connected YubiKey devices", devices.len());
         Ok(devices)
     }
 
@@ -268,7 +268,7 @@ impl YubiKeyManager {
             yubikeys.push(yubikey_info);
         }
 
-        info!("Found {} YubiKey devices with state", yubikeys.len());
+        debug!("Found {} YubiKey devices with state", yubikeys.len());
         Ok(yubikeys)
     }
 
@@ -618,11 +618,11 @@ impl YubiKeyManager {
 
     /// Shutdown manager and all services gracefully
     pub async fn shutdown(&self) -> YubiKeyResult<()> {
-        info!("Shutting down YubiKey Manager");
+        debug!("Shutting down YubiKey Manager");
 
         self.services.shutdown_all_services().await?;
 
-        info!("YubiKey Manager shutdown complete");
+        debug!("YubiKey Manager shutdown complete");
         Ok(())
     }
 
