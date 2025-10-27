@@ -109,13 +109,13 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     },
     {
       number: '2',
-      title: 'Lock with Key',
-      description: 'Encrypt so only your key + passphrase can open them.',
+      title: 'Lock with Keys',
+      description: 'Files are encrypted to all keys attached to your vault (2-4 keys).',
     },
     {
       number: '3',
-      title: 'Store Vault Securely',
-      description: 'Save the vault file anywhere, even in the cloud.',
+      title: 'Store Vault File',
+      description: 'Save the encrypted .age file anywhere - local storage or cloud backup.',
     },
   ];
 
@@ -123,17 +123,17 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '1',
       title: 'Select Vault',
-      description: 'Choose the encrypted file to open.',
+      description: 'Choose the encrypted .age file to open.',
     },
     {
       number: '2',
-      title: 'Unlock with Key',
-      description: 'Use your key + passphrase to decrypt.',
+      title: 'Unlock with Any Key',
+      description: "Use any one of the vault's keys to decrypt.",
     },
     {
       number: '3',
       title: 'Recover Files',
-      description: 'Restore them to their original folders.',
+      description: 'Files are restored to their original folders.',
     },
   ];
 
@@ -249,8 +249,9 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
           </div>
 
           <p className="mt-4 border-t border-default pt-3 text-xs text-secondary italic">
-            <span className="font-semibold">Security Note:</span> Your private key never leaves this
-            device. Share your public key only with trusted individuals.
+            <span className="font-semibold">Security Note:</span> Any one of your vault's keys can
+            decrypt the files. Passphrase keys are stored encrypted on this computer. YubiKey
+            private keys never leave the hardware device.
           </p>
         </div>
       </div>
