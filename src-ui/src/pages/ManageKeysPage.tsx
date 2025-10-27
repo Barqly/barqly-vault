@@ -18,6 +18,7 @@ import { ImportPassphraseKeyDialog } from '../components/keys/ImportPassphraseKe
 import { EditKeyLabelDialog } from '../components/keys/EditKeyLabelDialog';
 import VaultFilterDropdown, { VaultFilterValue } from '../components/keys/VaultFilterDropdown';
 import ToastContainer from '../components/ui/ToastContainer';
+import CollapsibleHelp from '../components/ui/CollapsibleHelp';
 import { logger } from '../lib/logger';
 import { commands, GlobalKey, VaultStatistics } from '../bindings';
 
@@ -583,6 +584,9 @@ const ManageKeysPage: React.FC = () => {
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
+
+        {/* Educational Content */}
+        <CollapsibleHelp triggerText="Understanding Key Types" context="manage-keys" />
 
         {/* Key Display */}
         {keyViewMode === 'cards' ? (

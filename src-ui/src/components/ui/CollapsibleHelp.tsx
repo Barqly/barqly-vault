@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Info, ChevronDown } from 'lucide-react';
 
 interface CollapsibleHelpProps {
   /** Custom trigger text */
   triggerText?: string;
   /** Context type to determine content */
-  context?: 'setup' | 'encrypt' | 'decrypt' | 'vault-hub';
+  context?: 'setup' | 'encrypt' | 'decrypt' | 'vault-hub' | 'manage-keys';
 }
 
 const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
@@ -13,6 +13,20 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
   context,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll into view when expanded
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      // Small delay to allow expand animation to start
+      setTimeout(() => {
+        containerRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 150);
+    }
+  }, [isOpen]);
 
   // Auto-detect context from trigger text if not explicitly provided
   const actualContext =
@@ -95,6 +109,25 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     },
   ];
 
+  const manageKeysSteps = [
+    {
+      number: '1',
+      title: 'YubiKey (Hardware)',
+      description:
+        'Physical security key - most secure option. Requires device touch for every operation.',
+    },
+    {
+      number: '2',
+      title: 'Passphrase Key (Software)',
+      description: 'Password-protected key stored on device. Convenient for regular use.',
+    },
+    {
+      number: '3',
+      title: 'Best Practice',
+      description: 'Use YubiKeys for sensitive vaults. Mix key types for flexibility and security.',
+    },
+  ];
+
   const getStepsAndTitle = () => {
     switch (actualContext) {
       case 'setup':
@@ -102,7 +135,9 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
       case 'decrypt':
         return { steps: decryptSteps, title: 'How Decryption Works' };
       case 'vault-hub':
-        return { steps: vaultHubSteps, title: 'How Vault Hub Works' };
+        return { steps: vaultHubSteps, title: 'Understanding Vaults' };
+      case 'manage-keys':
+        return { steps: manageKeysSteps, title: 'Understanding Key Types' };
       case 'encrypt':
       default:
         return { steps: encryptSteps, title: 'How Encryption Works' };
@@ -112,7 +147,7 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
   const { steps, title } = getStepsAndTitle();
 
   return (
-    <div className="mt-6">
+    <div ref={containerRef} className="mt-6">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-md"
