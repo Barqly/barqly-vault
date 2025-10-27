@@ -236,7 +236,7 @@ mod tests {
         // But we don't enforce it as a hard requirement
         if let Some(name) = hostname {
             assert!(!name.is_empty());
-            println!("Detected hostname: {}", name);
+            debug!("Detected hostname: {}", name);
         }
     }
 
