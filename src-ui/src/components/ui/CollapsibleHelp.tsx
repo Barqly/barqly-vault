@@ -115,7 +115,7 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '3',
       title: 'Store Vault File',
-      description: 'Save the encrypted .age file anywhere - local storage or cloud backup.',
+      description: 'Encrypted vault saved to Barqly-Vaults in your Documents. Safe to store anywhere.',
     },
   ];
 
