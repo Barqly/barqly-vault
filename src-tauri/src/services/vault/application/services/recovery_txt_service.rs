@@ -77,8 +77,7 @@ impl RecoveryTxtService {
             for recipient in passphrase_recipients {
                 if let RecipientType::Passphrase { key_filename } = &recipient.recipient_type {
                     content.push_str(&format!("  - Label: {}\n", recipient.label));
-                    content.push_str(&format!("    Key file: {}\n", key_filename));
-                    content.push_str("    Location: Check Barqly-Vaults folder or your backup\n\n");
+                    content.push_str(&format!("    Key file: {}\n\n", key_filename));
                 }
             }
         }
@@ -99,35 +98,15 @@ impl RecoveryTxtService {
             metadata.vault.sanitized_name
         ));
 
-        // Contents section
+        // Contents section (file count and size only - no filenames for privacy)
         content.push_str("───────────────────────────────────────────────\n");
         content.push_str(&format!(
-            "VAULT CONTENTS ({} file{}, {} total)\n",
+            "VAULT CONTENTS: {} file{}, {} total\n",
             metadata.file_count(),
             if metadata.file_count() == 1 { "" } else { "s" },
             Self::format_size(metadata.total_size())
         ));
-        content.push_str("───────────────────────────────────────────────\n\n");
-
-        // List files (limit to first 20 for readability)
-        let file_limit = 20;
-        for (i, file_entry) in metadata.content.files.iter().take(file_limit).enumerate() {
-            content.push_str(&format!(
-                "- {} ({})\n",
-                file_entry.path,
-                Self::format_size(file_entry.size)
-            ));
-            if i == file_limit - 1 && metadata.content.files.len() > file_limit {
-                content.push_str(&format!(
-                    "... and {} more files\n",
-                    metadata.content.files.len() - file_limit
-                ));
-            }
-        }
-
-        content.push_str("\n═══════════════════════════════════════════════\n");
-        content.push_str("Need help? support@barqly.com\n");
-        content.push_str("═══════════════════════════════════════════════\n");
+        content.push_str("───────────────────────────────────────────────\n");
 
         content
     }
@@ -220,8 +199,11 @@ mod tests {
         assert!(recovery_txt.contains("Passphrase Key"));
         assert!(recovery_txt.contains("my-backup-key.agekey.enc"));
         assert!(recovery_txt.contains("2 files"));
-        assert!(recovery_txt.contains("document.pdf"));
-        assert!(recovery_txt.contains("photo.jpg"));
+        assert!(recovery_txt.contains("3.0 KB")); // Total size
+        assert!(!recovery_txt.contains("document.pdf")); // Filenames should NOT be present
+        assert!(!recovery_txt.contains("photo.jpg")); // Filenames should NOT be present
+        assert!(!recovery_txt.contains("Location: Check")); // Location hint should NOT be present
+        assert!(!recovery_txt.contains("Need help?")); // Help section should NOT be present
         assert!(recovery_txt.contains("https://barqly.com/recovery"));
     }
 
