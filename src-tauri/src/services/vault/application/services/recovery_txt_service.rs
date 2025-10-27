@@ -19,55 +19,66 @@ impl RecoveryTxtService {
 
         // Header
         content.push_str("═══════════════════════════════════════════════\n");
-        content.push_str("BARQLY VAULT RECOVERY INSTRUCTIONS\n");
+        content.push_str("BARQLY VAULT RECOVERY GUIDE\n");
         content.push_str("═══════════════════════════════════════════════\n\n");
 
         // Vault info
-        content.push_str(&format!("Vault: {}\n", metadata.label()));
+        content.push_str(&format!("Vault Name: {}\n", metadata.label()));
         content.push_str(&format!(
-            "Encrypted: {} UTC\n",
-            metadata
-                .last_encrypted_at()
-                .unwrap_or(metadata.created_at())
-                .format("%Y-%m-%d %H:%M:%S")
+            "Created: {}\n",
+            metadata.created_at().format("%B %d, %Y")
         ));
-        content.push_str(&format!("Version: {}\n", metadata.encryption_revision()));
-
-        let (machine_label, machine_id) = metadata
-            .last_encrypted_by()
-            .map(|e| (e.machine_label.as_str(), e.machine_id.as_str()))
-            .unwrap_or(("unknown", "unknown"));
-
-        content.push_str(&format!("Machine: {} ({})\n\n", machine_label, machine_id));
+        content.push_str(&format!(
+            "Encrypted File: {}.age\n\n",
+            metadata.vault.sanitized_name
+        ));
 
         // Required keys section
         content.push_str("───────────────────────────────────────────────\n");
-        content.push_str("REQUIRED: You need at least ONE of these keys\n");
+        content.push_str("RECOVERY KEYS (Need ANY ONE)\n");
         content.push_str("───────────────────────────────────────────────\n\n");
 
-        // List all recipients
-        for recipient in metadata.recipients() {
-            match &recipient.recipient_type {
-                RecipientType::YubiKey {
-                    serial,
-                    slot,
-                    firmware_version,
-                    ..
-                } => {
-                    content.push_str(&format!("✓ YubiKey Serial: {} (Slot {})\n", serial, slot));
-                    content.push_str(&format!("  Label: {}\n", recipient.label));
-                    if let Some(fw) = firmware_version {
-                        content.push_str(&format!("  Firmware: {}\n", fw));
-                    }
-                    content.push('\n');
+        // Count YubiKeys and Passphrases
+        let yubikey_recipients: Vec<_> = metadata
+            .recipients()
+            .iter()
+            .filter(|r| matches!(r.recipient_type, RecipientType::YubiKey { .. }))
+            .collect();
+
+        let passphrase_recipients: Vec<_> = metadata
+            .recipients()
+            .iter()
+            .filter(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }))
+            .collect();
+
+        // List YubiKeys
+        if !yubikey_recipients.is_empty() {
+            content.push_str(&format!("✓ {} YubiKey(s):\n", yubikey_recipients.len()));
+            for recipient in yubikey_recipients {
+                if let RecipientType::YubiKey { serial, .. } = &recipient.recipient_type {
+                    // Show only last 4 digits of serial
+                    let last_4 = if serial.len() >= 4 {
+                        &serial[serial.len() - 4..]
+                    } else {
+                        serial
+                    };
+                    content.push_str(&format!("  - YubiKey ending in ...{}\n", last_4));
+                    content.push_str(&format!("    Label: {}\n\n", recipient.label));
                 }
-                RecipientType::Passphrase { key_filename } => {
-                    content.push_str("✓ Passphrase-Protected Key\n");
-                    content.push_str(&format!("  Label: {}\n", recipient.label));
-                    content.push_str(&format!(
-                        "  File: {} (included in this bundle)\n\n",
-                        key_filename
-                    ));
+            }
+        }
+
+        // List Passphrase keys
+        if !passphrase_recipients.is_empty() {
+            content.push_str(&format!(
+                "✓ {} Passphrase Key(s):\n",
+                passphrase_recipients.len()
+            ));
+            for recipient in passphrase_recipients {
+                if let RecipientType::Passphrase { key_filename } = &recipient.recipient_type {
+                    content.push_str(&format!("  - Label: {}\n", recipient.label));
+                    content.push_str(&format!("    Key file: {}\n", key_filename));
+                    content.push_str("    Location: Check Barqly-Vaults folder or your backup\n\n");
                 }
             }
         }
@@ -80,62 +91,23 @@ impl RecoveryTxtService {
         content.push_str("1. Install Barqly Vault\n");
         content.push_str("   Download: https://barqly.com/vault\n\n");
 
-        // Check if we have YubiKey recipients
-        let has_yubikey = metadata
-            .recipients()
-            .iter()
-            .any(|r| matches!(r.recipient_type, RecipientType::YubiKey { .. }));
+        content.push_str("2. Follow the recovery guide\n");
+        content.push_str("   Visit: https://barqly.com/recovery\n\n");
 
-        if has_yubikey {
-            content.push_str("2. OPTION A - YubiKey Recovery:\n");
-            if let Some(yubikey_recipient) = metadata
-                .recipients()
-                .iter()
-                .find(|r| matches!(r.recipient_type, RecipientType::YubiKey { .. }))
-                && let RecipientType::YubiKey { serial, .. } = &yubikey_recipient.recipient_type
-            {
-                content.push_str(&format!("   - Connect YubiKey (Serial: {})\n", serial));
-            }
-            content.push_str("   - Open Barqly Vault\n");
-            content.push_str("   - Import this .age file\n");
-            content.push_str("   - Enter YubiKey PIN when prompted\n\n");
-        }
-
-        // Check if we have passphrase recipients
-        let has_passphrase = metadata
-            .recipients()
-            .iter()
-            .any(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }));
-
-        if has_passphrase {
-            let option_label = if has_yubikey { "OPTION B" } else { "2" };
-            content.push_str(&format!("{}. Passphrase Recovery:\n", option_label));
-            content.push_str("   - Open Barqly Vault\n");
-
-            if let Some(passphrase_recipient) = metadata
-                .recipients()
-                .iter()
-                .find(|r| matches!(r.recipient_type, RecipientType::Passphrase { .. }))
-                && let RecipientType::Passphrase { key_filename } =
-                    &passphrase_recipient.recipient_type
-            {
-                content.push_str(&format!("   - Import {} from this bundle\n", key_filename));
-            }
-            content.push_str("   - Enter passphrase\n");
-            content.push_str("   - Import this .age file\n");
-            content.push_str("   - Decrypt\n\n");
-        }
-
-        content.push_str("3. Your files will appear in ~/Documents/Barqly-Recovery/\n\n");
+        content.push_str(&format!(
+            "3. Your files will be recovered to:\n   ~/Documents/Barqly-Recovery/{}/\n\n",
+            metadata.vault.sanitized_name
+        ));
 
         // Contents section
-        content.push_str("═══════════════════════════════════════════════\n");
+        content.push_str("───────────────────────────────────────────────\n");
         content.push_str(&format!(
-            "CONTENTS ({} files, {} total)\n",
+            "VAULT CONTENTS ({} file{}, {} total)\n",
             metadata.file_count(),
+            if metadata.file_count() == 1 { "" } else { "s" },
             Self::format_size(metadata.total_size())
         ));
-        content.push_str("═══════════════════════════════════════════════\n\n");
+        content.push_str("───────────────────────────────────────────────\n\n");
 
         // List files (limit to first 20 for readability)
         let file_limit = 20;
@@ -153,7 +125,9 @@ impl RecoveryTxtService {
             }
         }
 
-        content.push_str("\nSupport: support@barqly.com\n");
+        content.push_str("\n═══════════════════════════════════════════════\n");
+        content.push_str("Need help? support@barqly.com\n");
+        content.push_str("═══════════════════════════════════════════════\n");
 
         content
     }
@@ -241,13 +215,14 @@ mod tests {
         let service = RecoveryTxtService::new();
         let recovery_txt = service.generate(&metadata);
 
-        assert!(recovery_txt.contains("BARQLY VAULT RECOVERY INSTRUCTIONS"));
+        assert!(recovery_txt.contains("BARQLY VAULT RECOVERY GUIDE"));
         assert!(recovery_txt.contains("Test Vault"));
-        assert!(recovery_txt.contains("Passphrase-Protected Key"));
+        assert!(recovery_txt.contains("Passphrase Key"));
         assert!(recovery_txt.contains("my-backup-key.agekey.enc"));
         assert!(recovery_txt.contains("2 files"));
         assert!(recovery_txt.contains("document.pdf"));
         assert!(recovery_txt.contains("photo.jpg"));
+        assert!(recovery_txt.contains("https://barqly.com/recovery"));
     }
 
     #[test]
@@ -287,9 +262,9 @@ mod tests {
         let service = RecoveryTxtService::new();
         let recovery_txt = service.generate(&metadata);
 
-        assert!(recovery_txt.contains("YubiKey Serial: 31310420"));
-        assert!(recovery_txt.contains("Firmware: 5.7.1"));
-        assert!(recovery_txt.contains("OPTION A - YubiKey Recovery"));
+        assert!(recovery_txt.contains("YubiKey ending in ...0420"));
+        assert!(!recovery_txt.contains("Firmware: 5.7.1")); // Firmware should NOT be present
+        assert!(recovery_txt.contains("https://barqly.com/recovery"));
     }
 
     #[test]
@@ -346,9 +321,10 @@ mod tests {
         let service = RecoveryTxtService::new();
         let recovery_txt = service.generate(&metadata);
 
-        assert!(recovery_txt.contains("OPTION A - YubiKey"));
-        assert!(recovery_txt.contains("OPTION B"));
-        assert!(recovery_txt.contains("Passphrase Recovery"));
+        assert!(recovery_txt.contains("1 YubiKey"));
+        assert!(recovery_txt.contains("1 Passphrase Key"));
+        assert!(recovery_txt.contains("YubiKey ending in")); // Check for partial serial
         assert!(recovery_txt.contains("backup-key.agekey.enc"));
+        assert!(recovery_txt.contains("https://barqly.com/recovery"));
     }
 }

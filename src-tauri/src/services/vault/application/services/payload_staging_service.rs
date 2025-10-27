@@ -82,15 +82,8 @@ impl PayloadStagingService {
             "Added encryption key files to payload"
         );
 
-        // Step 4: Generate and add RECOVERY.txt
-        let recovery_txt = self.recovery_service.generate(vault_metadata);
-        staging
-            .add_file_content("RECOVERY.txt", recovery_txt.as_bytes())
-            .map_err(|e| {
-                VaultError::OperationFailed(format!("Failed to add RECOVERY.txt: {}", e))
-            })?;
-
-        info!("Added RECOVERY.txt to payload");
+        // Step 4: RECOVERY.txt is no longer bundled inside the encrypted archive
+        // It will be written separately alongside the .age file
 
         // Step 5: Create TAR from complete staging
         let config = FileOpsConfig::default();
@@ -114,6 +107,39 @@ impl PayloadStagingService {
         );
 
         Ok(operation)
+    }
+
+    /// Write RECOVERY.txt file alongside encrypted vault
+    ///
+    /// Creates plaintext recovery instructions in same folder as .age file
+    /// This is written OUTSIDE the encrypted bundle for accessibility
+    pub fn write_recovery_file(
+        &self,
+        vault_metadata: &VaultMetadata,
+        age_file_path: &Path,
+    ) -> Result<()> {
+        // Generate recovery content with updated format
+        let recovery_txt = self.recovery_service.generate(vault_metadata);
+
+        // Determine output path: {vault-name}-RECOVERY.txt
+        let age_file_dir = age_file_path
+            .parent()
+            .ok_or_else(|| VaultError::OperationFailed("Invalid age file path".to_string()))?;
+
+        let recovery_filename = format!("{}-RECOVERY.txt", vault_metadata.vault.sanitized_name);
+        let recovery_path = age_file_dir.join(&recovery_filename);
+
+        // Write plaintext file
+        std::fs::write(&recovery_path, recovery_txt).map_err(|e| {
+            VaultError::OperationFailed(format!("Failed to write RECOVERY.txt: {}", e))
+        })?;
+
+        info!(
+            recovery_file = %recovery_path.display(),
+            "Created recovery instructions file"
+        );
+
+        Ok(())
     }
 
     /// Add passphrase encryption key files to staging
@@ -221,6 +247,6 @@ mod tests {
         assert!(result.is_ok());
         let operation = result.unwrap();
         assert!(operation.archive_path.exists());
-        assert!(operation.file_count >= 1); // At least user file + manifest + RECOVERY.txt
+        assert!(operation.file_count >= 1); // At least user file + manifest (RECOVERY.txt is no longer bundled)
     }
 }

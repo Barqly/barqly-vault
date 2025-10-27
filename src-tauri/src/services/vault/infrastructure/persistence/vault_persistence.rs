@@ -118,6 +118,17 @@ pub async fn delete_vault_by_name(
             info!("Deleting encrypted vault file: {}", age_path.display());
             async_fs::remove_file(age_path).await?;
         }
+
+        // Delete the corresponding RECOVERY.txt file if it exists
+        let recovery_path = vaults_dir.join(format!("{}-RECOVERY.txt", vault_name));
+
+        if recovery_path.exists() {
+            info!(
+                "Deleting recovery instructions file: {}",
+                recovery_path.display()
+            );
+            async_fs::remove_file(recovery_path).await?;
+        }
     }
 
     Ok(())

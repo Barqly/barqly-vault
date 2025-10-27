@@ -148,9 +148,7 @@ impl VaultStatisticsService {
         // Use VaultRepository to get all manifests (same source as listVaults)
         let repository = VaultRepository::new();
         let manifests = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async {
-                repository.list_vaults().await
-            })
+            tokio::runtime::Handle::current().block_on(async { repository.list_vaults().await })
         })?;
 
         debug!(

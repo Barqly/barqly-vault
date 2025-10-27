@@ -169,12 +169,20 @@ impl VaultBundleEncryptionService {
             "Encrypted vault bundle"
         );
 
-        // Step 11: Save VaultMetadata to non-sync storage
+        // Step 11: Write RECOVERY.txt alongside .age file (non-fatal if fails)
+        if let Err(e) = self
+            .payload_staging
+            .write_recovery_file(&vault_metadata, &encrypted_path)
+        {
+            warn!("Failed to create RECOVERY.txt (non-fatal): {}", e);
+        }
+
+        // Step 12: Save VaultMetadata to non-sync storage
         self.metadata_service
             .save_manifest(&vault_metadata)
             .map_err(|e| VaultError::StorageError(format!("Failed to save manifest: {}", e)))?;
 
-        // Step 12: Securely delete temporary TAR file (overwrite + unlink)
+        // Step 13: Securely delete temporary TAR file (overwrite + unlink)
         secure_tar.secure_delete().map_err(|e| {
             VaultError::OperationFailed(format!("Failed to securely delete temp TAR: {}", e))
         })?;
