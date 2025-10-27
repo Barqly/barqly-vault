@@ -65,6 +65,7 @@ const DecryptPage: React.FC = () => {
 
     // Computed
     currentStep,
+    selectedKeyType, // For YubiKey touch prompt
 
     // Handlers
     handleFileSelected,
@@ -149,6 +150,7 @@ const DecryptPage: React.FC = () => {
                 }
               }
               onCancel={!progress || progress.progress < 90 ? handleReset : undefined}
+              selectedKeyType={selectedKeyType}
             />
           </AnimatedTransition>
 

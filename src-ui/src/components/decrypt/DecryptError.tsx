@@ -9,6 +9,51 @@ interface DecryptErrorProps {
 }
 
 /**
+ * Convert backend errors into user-friendly messages
+ */
+const getUserFriendlyError = (errorMessage: string): string => {
+  const lowerError = errorMessage.toLowerCase();
+
+  // Touch timeout errors (YubiKey)
+  if (
+    lowerError.includes('touch') ||
+    lowerError.includes('timeout') ||
+    lowerError.includes('pty operation failed') ||
+    lowerError.includes('authentication error') ||
+    lowerError.includes('communicating with yubikey')
+  ) {
+    return 'YubiKey touch not detected. Please touch your YubiKey when the light blinks and try again.';
+  }
+
+  // PIN verification failed (YubiKey wrong PIN)
+  if (lowerError.includes('pin verification failed')) {
+    return 'Incorrect PIN. Please check your PIN and try again.';
+  }
+
+  // PIN blocked (YubiKey)
+  if (lowerError.includes('pin is blocked') || lowerError.includes('pin blocked')) {
+    return 'PIN is blocked due to too many incorrect attempts. Use your Recovery PIN to unblock it, or reset the YubiKey.';
+  }
+
+  // Generic passphrase/PIN error (fallback)
+  if (
+    lowerError.includes('passphrase') ||
+    lowerError.includes('incorrect') ||
+    lowerError.includes('invalid')
+  ) {
+    return 'The passphrase or PIN you entered is incorrect. Please check and try again.';
+  }
+
+  // Device not found (YubiKey unplugged during decrypt)
+  if (lowerError.includes('device not found') || lowerError.includes('no yubikey')) {
+    return 'YubiKey not found. Please ensure your YubiKey is connected and try again.';
+  }
+
+  // Generic fallback
+  return 'The passphrase or PIN you entered is incorrect. Please check and try again.';
+};
+
+/**
  * Error view shown when decryption fails
  * Provides clear feedback and retry action
  */
@@ -25,9 +70,10 @@ const DecryptError: React.FC<DecryptErrorProps> = ({ error, passphraseAttempts, 
     }
   }, []);
 
-  // User-friendly generic message (works for both passphrase and PIN, hides technical details)
+  // User-friendly message with backend error detection
   const getUserMessage = () => {
-    return 'The passphrase or PIN you entered is incorrect. Please check and try again.';
+    const errorMessage = error?.message || '';
+    return getUserFriendlyError(errorMessage);
   };
 
   return (
@@ -47,9 +93,7 @@ const DecryptError: React.FC<DecryptErrorProps> = ({ error, passphraseAttempts, 
             Decryption Failed
           </h2>
 
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-            {getUserMessage()}
-          </p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">{getUserMessage()}</p>
 
           {passphraseAttempts > 1 && (
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">

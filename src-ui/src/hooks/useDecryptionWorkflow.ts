@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useFileDecryption } from './useFileDecryption';
 import type { CommandError } from '../bindings';
 import { commands } from '../bindings';
@@ -515,6 +516,25 @@ export const useDecryptionWorkflow = () => {
     setFileValidationError(error);
   }, []);
 
+  // Determine selected key type for touch prompt
+  const selectedKeyType = React.useMemo(() => {
+    if (!selectedKeyId) return null;
+
+    // First check in availableKeys (recovery mode)
+    const recoveryKey = availableKeys.find((k) => k.id === selectedKeyId);
+    if (recoveryKey) {
+      return recoveryKey.type; // 'YubiKey' or 'Passphrase'
+    }
+
+    // Then check in globalKeyCache (normal mode)
+    const globalKey = globalKeyCache.find((k) => k.id === selectedKeyId);
+    if (globalKey) {
+      return globalKey.key_type.type; // 'YubiKey' or 'Passphrase'
+    }
+
+    return null;
+  }, [selectedKeyId, availableKeys, globalKeyCache]);
+
   return {
     // State
     selectedFile,
@@ -559,6 +579,7 @@ export const useDecryptionWorkflow = () => {
 
     // Computed
     currentStep,
+    selectedKeyType, // For YubiKey touch prompt
 
     // Handlers
     handleFileSelected,
@@ -572,9 +593,6 @@ export const useDecryptionWorkflow = () => {
     // Navigation handlers
     handleStepNavigation,
     canNavigateToStep,
-
-    // Attempt tracking
-    passphraseAttempts,
 
     // Setters for components
     setAvailableKeys,

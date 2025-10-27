@@ -1,11 +1,12 @@
 import React from 'react';
-import { Shield, Lock, FolderOpen, CheckCircle, Loader2 } from 'lucide-react';
+import { Shield, Lock, FolderOpen, CheckCircle, Loader2, Fingerprint } from 'lucide-react';
 import { ProgressBar } from '../ui/progress-bar';
 import { ProgressUpdate } from '../../bindings';
 
 interface DecryptProgressProps {
   progress: ProgressUpdate;
   onCancel?: () => void;
+  selectedKeyType?: 'YubiKey' | 'Passphrase' | null;
 }
 
 interface Phase {
@@ -15,7 +16,11 @@ interface Phase {
   status: 'pending' | 'active' | 'completed';
 }
 
-const DecryptProgress: React.FC<DecryptProgressProps> = ({ progress, onCancel }) => {
+const DecryptProgress: React.FC<DecryptProgressProps> = ({
+  progress,
+  onCancel,
+  selectedKeyType,
+}) => {
   // Show initial loading animation for smooth transition
   const [isInitializing, setIsInitializing] = React.useState(progress.progress === 0);
 
@@ -24,6 +29,9 @@ const DecryptProgress: React.FC<DecryptProgressProps> = ({ progress, onCancel })
       setIsInitializing(false);
     }
   }, [progress.progress]);
+
+  // Show touch prompt for YubiKey operations
+  const shouldShowTouchPrompt = selectedKeyType === 'YubiKey';
 
   const getPhases = (currentProgress: number): Phase[] => {
     return [
@@ -95,6 +103,29 @@ const DecryptProgress: React.FC<DecryptProgressProps> = ({ progress, onCancel })
           )}
         </div>
       </div>
+
+      {/* YubiKey Touch Prompt - Above all phases */}
+      {shouldShowTouchPrompt && (
+        <div
+          className="mb-6 p-4 rounded-lg border-2 animate-pulse"
+          style={{
+            backgroundColor: 'rgba(249, 139, 28, 0.1)',
+            borderColor: '#F98B1C',
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <Fingerprint className="h-6 w-6 flex-shrink-0" style={{ color: '#F98B1C' }} />
+            <div>
+              <p className="text-sm font-semibold" style={{ color: '#F98B1C' }}>
+                Touch your YubiKey now
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                The green light should be blinking
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Phase indicators */}
       <div className="space-y-3 mb-6">
