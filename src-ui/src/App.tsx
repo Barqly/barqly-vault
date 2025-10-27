@@ -1,6 +1,7 @@
 import { type ReactElement, lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
+import ScrollReset from './components/layout/ScrollReset';
 import { LoadingSpinner } from './components/ui/loading-spinner';
 import { VaultProvider, useVault } from './contexts/VaultContext';
 import { UIProvider } from './contexts/UIContext';
@@ -123,6 +124,7 @@ function App(): ReactElement {
       <ThemeProvider>
         <UIProvider>
           <VaultProvider>
+            <ScrollReset />
             <AppRoutes />
           </VaultProvider>
         </UIProvider>

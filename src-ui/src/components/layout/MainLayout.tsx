@@ -1,5 +1,4 @@
-import React, { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useRef } from 'react';
 import SidebarNav from './SidebarNav';
 import AppHeader from './AppHeader';
 
@@ -9,14 +8,9 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const mainRef = useRef<HTMLElement>(null);
-  const { pathname } = useLocation();
 
-  // Scroll main content to top when route changes
-  useEffect(() => {
-    if (mainRef.current) {
-      mainRef.current.scrollTo(0, 0);
-    }
-  }, [pathname]);
+  // Note: Scroll reset is handled by the ScrollReset component in App.tsx
+  // This ensures a single, centralized approach to scroll management
 
   return (
     <div className="flex flex-col h-screen bg-app">
@@ -29,7 +23,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <SidebarNav />
 
         {/* Page Content */}
-        <main ref={mainRef} className="flex-1 overflow-auto">
+        <main ref={mainRef} id="main-scroll-container" className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">{children}</div>
         </main>
       </div>
