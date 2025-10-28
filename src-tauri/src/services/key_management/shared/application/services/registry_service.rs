@@ -531,16 +531,41 @@ impl KeyRegistryService {
                     }
                 }
                 MergeStrategy::ReplaceIfDuplicate => {
-                    // Recovery: Replace if same public_key exists (bundle is authoritative)
+                    // Recovery: Deactivate orphaned recovery key if same public_key exists
                     if let Some(existing_id) = self.find_by_public_key(&recipient.public_key)? {
-                        info!(
-                            existing_key = %existing_id,
-                            bundle_key = %key_id,
-                            "Replacing key with bundle version (bundle is authoritative)"
-                        );
-                        registry.keys.remove(&existing_id);
+
+                        // Get existing entry to check vault associations
+                        if let Some(existing_entry) = registry.keys.get_mut(&existing_id) {
+
+                            // Only deactivate if NOT attached to any vault (orphaned recovery key)
+                            if existing_entry.vault_associations().is_empty() {
+
+                                // Deactivate orphaned recovery key (safe - no file deletion)
+                                existing_entry.set_lifecycle_status(
+                                    KeyLifecycleStatus::Deactivated,
+                                    "Replaced by authoritative version from vault manifest during recovery".to_string(),
+                                    "system".to_string(),
+                                ).map_err(|e| {
+                                    warn!("Failed to deactivate recovery key: {}", e);
+                                    KeyManagementError::InvalidOperation(format!("Failed to deactivate key: {}", e))
+                                })?;
+
+                                info!(
+                                    existing_key = %existing_id,
+                                    bundle_key = %key_id,
+                                    "Deactivated orphaned recovery key (bundle version is authoritative)"
+                                );
+                            } else {
+                                // Key is attached to other vaults - keep it active
+                                debug!(
+                                    existing_key = %existing_id,
+                                    vault_count = existing_entry.vault_associations().len(),
+                                    "Key with matching public key attached to other vaults, keeping both entries"
+                                );
+                            }
+                        }
                     }
-                    // Continue to add bundle version (whether replacing or new)
+                    // Continue to add bundle version as new entry (creates duplicate temporarily)
                 }
             }
 
