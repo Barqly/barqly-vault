@@ -5,6 +5,8 @@
  * to determine if we're running in Tauri desktop or browser environment
  */
 
+import { logger } from '../logger';
+
 /**
  * Check if we're running in a browser environment (not Tauri desktop)
  * In test environment, we should use the real Tauri commands
@@ -29,7 +31,7 @@ export const isTauri = (): boolean => {
   // Log detailed window properties for debugging
   try {
     if (import.meta.env?.DEV) {
-      console.log('[Platform Detection] Window properties:', {
+      logger.debug('Platform', 'Window properties for Tauri detection', {
         __TAURI_INTERNALS__: !!windowAny?.__TAURI_INTERNALS__,
         isTauri: !!windowAny?.isTauri,
         __TAURI_IPC__: !!windowAny?.__TAURI_IPC__,
