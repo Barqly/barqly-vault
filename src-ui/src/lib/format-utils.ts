@@ -3,6 +3,7 @@
  */
 
 import { formatDistanceToNow } from 'date-fns';
+import { logger } from './logger';
 
 /**
  * Format bytes into human-readable file size
@@ -108,7 +109,7 @@ export const formatLastEncrypted = (date: string | null): string => {
   try {
     return formatDistanceToNow(new Date(date), { addSuffix: true });
   } catch (error) {
-    console.error('Error formatting date:', error);
+    logger.error('format-utils', 'Error formatting date', error as Error);
     return 'Unknown';
   }
 };

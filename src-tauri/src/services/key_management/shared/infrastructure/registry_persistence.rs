@@ -529,13 +529,13 @@ impl KeyRegistry {
             return Err(format!("Key with ID '{}' already exists", key_id));
         }
 
-        info!(
+        info!("Registering new key");
+        debug!(
             key_id = %key_id,
             key_type = ?entry,
             label = entry.label(),
             "Registering new key"
         );
-
         self.keys.insert(key_id, entry);
         Ok(())
     }

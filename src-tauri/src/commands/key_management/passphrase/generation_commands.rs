@@ -59,8 +59,10 @@ pub async fn generate_key(input: GenerateKeyInput) -> CommandResponse<GenerateKe
                 format!("Key generation failed: {}", e),
             ))
         })?;
-
-    info!(
+    
+    info!("Keypair generated and saved successfully");
+    
+    debug!(
         label = %input.label,
         saved_path = %generated.saved_path.display(),
         "Keypair generated and saved successfully"
