@@ -12,7 +12,7 @@
  */
 
 import { isTauri } from './environment/platform';
-import { CommandError, ErrorCode, Result } from '../bindings';
+import { CommandError, Result } from '../bindings';
 import { logger } from './logger';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 
@@ -38,8 +38,11 @@ export async function safeInvoke<T>(
     const error: CommandError = {
       code: 'INTERNAL_ERROR',
       message: 'This feature requires the desktop application',
+      details: null,
       recovery_guidance: 'Please use the desktop version of Barqly Vault to access this feature',
       user_actionable: true,
+      trace_id: null,
+      span_id: null,
     };
     logger.error('TauriSafe', 'Not in Tauri environment', new Error('Not in Tauri environment'), {
       cmd,
@@ -146,8 +149,11 @@ export async function safeInvokeCommand<T>(cmd: string, args?: any): Promise<T> 
     throw {
       code: 'INTERNAL_ERROR',
       message: 'This feature requires the desktop application',
+      details: null,
       recovery_guidance: 'Please use the desktop version of Barqly Vault to access this feature',
       user_actionable: true,
+      trace_id: null,
+      span_id: null,
     } as CommandError;
   }
 
