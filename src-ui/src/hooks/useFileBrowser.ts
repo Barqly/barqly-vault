@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { FileSelectionMode, FileSelectionType } from '../types/file-types';
+import { logger } from '../lib/logger';
 
 interface UseFileBrowserOptions {
   disabled?: boolean;
@@ -54,7 +55,7 @@ export const useFileBrowser = ({
         onFilesSelectedRef.current(paths, 'Files');
       }
     } catch (error) {
-      console.error('File selection error:', error);
+      logger.error('useFileBrowser', 'File selection error', error as Error);
       if (onError) {
         onError(new Error(`Failed to open file browser: ${error}`));
       }
@@ -76,7 +77,7 @@ export const useFileBrowser = ({
         onFilesSelectedRef.current(paths, 'Folder');
       }
     } catch (error) {
-      console.error('Folder selection error:', error);
+      logger.error('useFileBrowser', 'Folder selection error', error as Error);
       if (onError) {
         onError(new Error(`Failed to open folder browser: ${error}`));
       }
