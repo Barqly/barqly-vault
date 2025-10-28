@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import React from 'react';
-import { KeyReference } from '../bindings';
+import type { KeyReference } from '../lib/key-types';
 import { useVault } from '../contexts/VaultContext';
+import { logger } from '../lib/logger';
 
 // Extended KeyReference with availability status from global key registry
-export interface KeyReferenceWithAvailability extends KeyReference {
+export type KeyReferenceWithAvailability = KeyReference & {
   is_available: boolean;
-}
+};
 
 export interface UseKeySelectionOptions {
   onKeysLoaded?: (keys: KeyReference[]) => void;
@@ -66,16 +67,13 @@ export function useKeySelection(
     const allKeys = (keyCache.get(targetVaultId) || []) as KeyReference[];
 
     // Debug: Check what's in the cache
-    console.log('useKeySelection: Cache debug', {
+    logger.debug('useKeySelection', 'Cache state', {
       vaultId: targetVaultId,
-      overrideVaultId,
-      currentVaultId: currentVault?.id,
       cacheSize: keyCache.size,
-      cacheKeys: Array.from(keyCache.keys()),
       keysForThisVault: allKeys.length,
     });
 
-    console.log('useKeySelection: Keys from cache', {
+    logger.debug('useKeySelection', 'Keys from cache', {
       vaultId: targetVaultId,
       totalKeys: allKeys.length,
       includeAllKeys,
@@ -119,7 +117,7 @@ export function useKeySelection(
       return (a.label || '').localeCompare(b.label || '');
     });
 
-    console.log('useKeySelection: Sorted keys with availability', {
+    logger.debug('useKeySelection', 'Sorted keys with availability', {
       filteredCount: sortedKeys.length,
       filtered: sortedKeys.map((k) => ({
         id: k.id,
