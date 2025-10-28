@@ -1,3 +1,18 @@
+/**
+ * ⚠️ DEPRECATED - DO NOT USE ⚠️
+ *
+ * This file is not used anywhere in the codebase and should be removed.
+ *
+ * Replaced by: useYubiKeyWorkflow.ts (see comment in that file)
+ *
+ * Issues with this file:
+ * - 15+ TypeScript errors (ProtectionMode doesn't exist, undefined variables, wrong property names)
+ * - 28 console.log statements need conversion
+ * - Uses outdated API patterns (generateKeyMulti doesn't exist)
+ *
+ * TODO: Test that removing this file doesn't break anything, then delete it.
+ */
+
 import { useState, useCallback, useEffect } from 'react';
 import { useSetupWorkflow } from './useSetupWorkflow';
 // import { useKeyGeneration } from './useKeyGeneration'; // Commented out - not currently used
