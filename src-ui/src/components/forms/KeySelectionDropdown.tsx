@@ -93,7 +93,7 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
   const loadError = recoveryKeys ? '' : hookResult.error;
   const {
     isOpen,
-    selectedKey,
+    selectedKey: hookSelectedKey,
     showPublicKeyPreview: _showPublicKeyPreview,
     setShowPublicKeyPreview: _setShowPublicKeyPreview,
     handleToggle,
@@ -102,6 +102,11 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
     formatDate,
     truncatePublicKey: _truncatePublicKey,
   } = hookResult;
+
+  // Override selectedKey when using recoveryKeys (hook looks in wrong array)
+  const selectedKey = recoveryKeys
+    ? keys.find((key) => key.id === value)
+    : hookSelectedKey;
 
   const errorMessage = error || loadError;
 
