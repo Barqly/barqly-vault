@@ -6,6 +6,7 @@ import { CompactYubiKeyCard } from './CompactYubiKeyCard';
 import { useVault } from '../../contexts/VaultContext';
 import { KeyLifecycleStatus, type VaultKey } from '../../bindings';
 import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
+import { logger } from '../../lib/logger';
 
 interface KeyMenuBarProps {
   /** Optional vault ID - if provided, shows keys for this specific vault. If null, shows empty placeholders. */
@@ -42,15 +43,13 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ vaultId, onKeySelect, cl
 
     const currentKeys = (keyCache.get(targetVaultId) || []) as VaultKey[];
 
-    // Debug: Check what's in the cache
-    console.log('KeyMenuBar: Cache debug', {
+    logger.debug('KeyMenuBar', 'Cache state', {
       targetVaultId,
       cacheSize: keyCache.size,
-      cacheKeys: Array.from(keyCache.keys()),
       keysForThisVault: currentKeys.length,
     });
 
-    console.log('KeyMenuBar: Processing keys from cache', {
+    logger.debug('KeyMenuBar', 'Processing keys from cache', {
       keyCount: currentKeys.length,
       keys: currentKeys.map((k) => ({ type: k.type, label: k.label })),
     });
@@ -75,7 +74,7 @@ export const KeyMenuBar: React.FC<KeyMenuBarProps> = ({ vaultId, onKeySelect, cl
       };
     });
 
-    console.log('KeyMenuBar: Sorted keys with availability:', {
+    logger.debug('KeyMenuBar', 'Sorted keys with availability', {
       yubiKeyCount: yubiKeys.length,
       passphraseCount: passphraseKeys.length,
       totalSorted: sortedWithAvailability.length,
