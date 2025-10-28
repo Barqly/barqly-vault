@@ -554,39 +554,33 @@ impl KeyRegistryService {
                                             key_filename: existing_filename,
                                             ..
                                         } = &existing_entry
-                                        {
-                                            if let RecipientType::Passphrase {
+                                            && let RecipientType::Passphrase {
                                                 key_filename: bundle_filename,
                                             } = &recipient.recipient_type
-                                            {
-                                                // Safety check: Different filename AND same public key (already confirmed)
-                                                if existing_filename != bundle_filename {
-                                                    let keys_dir = get_keys_dir().map_err(|e| {
-                                                        KeyManagementError::StorageError(
-                                                            e.to_string(),
-                                                        )
-                                                    })?;
-                                                    let file_path =
-                                                        keys_dir.join(existing_filename);
+                                        {
+                                            // Safety check: Different filename AND same public key (already confirmed)
+                                            if existing_filename != bundle_filename {
+                                                let keys_dir = get_keys_dir().map_err(|e| {
+                                                    KeyManagementError::StorageError(e.to_string())
+                                                })?;
+                                                let file_path = keys_dir.join(existing_filename);
 
-                                                    // Additional safety: Verify file is in keys directory
-                                                    if file_path.exists()
-                                                        && file_path.starts_with(&keys_dir)
+                                                // Additional safety: Verify file is in keys directory
+                                                if file_path.exists()
+                                                    && file_path.starts_with(&keys_dir)
+                                                {
+                                                    if let Err(e) = std::fs::remove_file(&file_path)
                                                     {
-                                                        if let Err(e) =
-                                                            std::fs::remove_file(&file_path)
-                                                        {
-                                                            warn!(
-                                                                filename = %existing_filename,
-                                                                error = %e,
-                                                                "Failed to delete orphaned recovery key file (non-fatal)"
-                                                            );
-                                                        } else {
-                                                            info!(
-                                                                filename = %existing_filename,
-                                                                "Deleted orphaned recovery key file (bundle has authoritative version)"
-                                                            );
-                                                        }
+                                                        warn!(
+                                                            filename = %existing_filename,
+                                                            error = %e,
+                                                            "Failed to delete orphaned recovery key file (non-fatal)"
+                                                        );
+                                                    } else {
+                                                        info!(
+                                                            filename = %existing_filename,
+                                                            "Deleted orphaned recovery key file (bundle has authoritative version)"
+                                                        );
                                                     }
                                                 }
                                             }

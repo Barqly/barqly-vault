@@ -154,22 +154,22 @@ where
         }
 
         // 5. Write span context only for DEBUG/TRACE (too noisy for INFO/WARN/ERROR)
-        if matches!(*level, Level::DEBUG | Level::TRACE) {
-            if let Some(scope) = ctx.event_scope() {
-                let mut spans = Vec::new();
-                for span in scope.from_root() {
-                    let extensions = span.extensions();
-                    if let Some(fields) = extensions.get::<FormattedFields<N>>() {
-                        if !fields.is_empty() {
-                            spans.push(format!("{}[{}]", span.name(), fields));
-                        } else {
-                            spans.push(span.name().to_string());
-                        }
+        if matches!(*level, Level::DEBUG | Level::TRACE)
+            && let Some(scope) = ctx.event_scope()
+        {
+            let mut spans = Vec::new();
+            for span in scope.from_root() {
+                let extensions = span.extensions();
+                if let Some(fields) = extensions.get::<FormattedFields<N>>() {
+                    if !fields.is_empty() {
+                        spans.push(format!("{}[{}]", span.name(), fields));
+                    } else {
+                        spans.push(span.name().to_string());
                     }
                 }
-                if !spans.is_empty() {
-                    write!(writer, " | spans: {}", spans.join(" > "))?;
-                }
+            }
+            if !spans.is_empty() {
+                write!(writer, " | spans: {}", spans.join(" > "))?;
             }
         }
 

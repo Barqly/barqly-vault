@@ -198,7 +198,7 @@ export const useDecryptionWorkflow = () => {
           }));
         }
       } catch (error) {
-        console.error('[DecryptionWorkflow] Error checking vault recognition:', error);
+        logger.error('useDecryptionWorkflow', 'Error checking vault recognition', error as Error);
         setIsKnownVault(false);
         setIsRecoveryMode(true);
       }
@@ -371,7 +371,7 @@ export const useDecryptionWorkflow = () => {
             setWillRestoreKeys(true);
           }
         } catch (err) {
-          console.error('[DecryptionWorkflow] Retry decryption error:', err);
+          logger.error('useDecryptionWorkflow', 'Retry decryption error', err as Error);
 
           // Set error state for retry failures too
           const commandError =
@@ -412,7 +412,7 @@ export const useDecryptionWorkflow = () => {
 
       // Success panel provides comprehensive feedback
     } catch (err) {
-      console.error('[DecryptionWorkflow] Decryption error:', err);
+      logger.error('useDecryptionWorkflow', 'Decryption error', err as Error);
 
       // Increment passphrase attempts for tracking
       if (
