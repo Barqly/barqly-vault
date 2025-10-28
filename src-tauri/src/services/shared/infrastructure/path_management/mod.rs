@@ -1,9 +1,9 @@
 //! Cross-platform path handling for Barqly Vault storage.
 //!
 //! This module provides platform-specific directory paths using the `directories` crate:
-//! - **macOS**: `~/Library/Application Support/barqly-vault/`
-//! - **Windows**: `%APPDATA%\barqly-vault\`
-//! - **Linux**: `~/.config/barqly-vault/`
+//! - **macOS**: `~/Library/Application Support/com.barqly.vault/`
+//! - **Windows**: `%APPDATA%\com.barqly.vault\`
+//! - **Linux**: `~/.config/com.barqly.vault/`
 
 mod directories;
 mod key_paths;
