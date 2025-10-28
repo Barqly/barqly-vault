@@ -9,15 +9,14 @@ import React, {
 import {
   commands,
   VaultSummary,
-  KeyReference,
   CreateVaultRequest,
-  SetCurrentVaultRequest,
   RemoveKeyFromVaultRequest,
   GetKeyMenuDataRequest,
   VaultStatistics,
   GlobalKey,
 } from '../bindings';
 import { logger } from '../lib/logger';
+import type { KeyReference } from '../lib/key-types';
 
 interface VaultContextType {
   // Current vault state
@@ -172,26 +171,26 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   const refreshVaults = async () => {
-    console.log('🔍 VaultContext: refreshVaults called');
+    logger.debug('VaultContext', 'refreshVaults called');
     setIsLoading(true);
     setError(null);
 
     try {
       // Get all vaults
-      console.log('🔍 VaultContext: Calling listVaults...');
+      logger.debug('VaultContext', 'Calling listVaults');
       const vaultsResult = await commands.listVaults();
-      console.log('🔍 VaultContext: listVaults response', vaultsResult);
+      logger.debug('VaultContext', 'listVaults response', vaultsResult);
 
       if (vaultsResult.status === 'error') {
-        console.error('🚨 VaultContext: listVaults returned error', vaultsResult.error);
+        logger.error('VaultContext', 'listVaults returned error', vaultsResult.error);
         throw new Error(vaultsResult.error.message || 'Failed to list vaults');
       }
       const vaultsResponse = vaultsResult.data;
-      console.log('🔍 VaultContext: Vaults loaded', vaultsResponse.vaults);
+      logger.debug('VaultContext', 'Vaults loaded', { count: vaultsResponse.vaults.length });
       setVaults(vaultsResponse.vaults);
 
       // Restore current vault from localStorage (deprecated backend API)
-      console.log('🔍 VaultContext: Restoring vault selection from localStorage...');
+      logger.debug('VaultContext', 'Restoring vault selection from localStorage');
 
       if (vaultsResponse.vaults.length > 0) {
         let selectedVault = null;
@@ -201,13 +200,13 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           const savedVaultId = localStorage.getItem('barqly_current_vault_id');
           if (savedVaultId) {
             selectedVault = vaultsResponse.vaults.find((v) => v.id === savedVaultId);
-            console.log('🔍 VaultContext: Found saved vault in localStorage', {
+            logger.debug('VaultContext', 'Found saved vault in localStorage', {
               savedVaultId,
               found: !!selectedVault,
             });
           }
         } catch (err) {
-          console.error('🚨 VaultContext: Failed to read localStorage', err);
+          logger.error('VaultContext', 'Failed to read localStorage', err as Error);
         }
 
         // Fallback: First vault alphabetically (deterministic)
@@ -216,7 +215,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             a.name.localeCompare(b.name),
           );
           selectedVault = sortedVaults[0];
-          console.log('🔍 VaultContext: No saved vault, using first alphabetically', {
+          logger.debug('VaultContext', 'No saved vault, using first alphabetically', {
             vaultName: selectedVault.name,
           });
         }
@@ -227,13 +226,12 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         try {
           localStorage.setItem('barqly_current_vault_id', selectedVault.id);
         } catch (err) {
-          console.error('🚨 VaultContext: Failed to write localStorage', err);
+          logger.error('VaultContext', 'Failed to write localStorage', err as Error);
         }
       }
-      console.log('✅ VaultContext: refreshVaults completed successfully');
+      logger.info('VaultContext', 'refreshVaults completed successfully');
     } catch (err: any) {
-      console.error('🚨 VaultContext: Error in refreshVaults', err);
-      logger.error('VaultContext', 'Failed to refresh vaults', err);
+      logger.error('VaultContext', 'Error in refreshVaults', err);
       setError(err.message || 'Failed to load vaults');
     } finally {
       setIsLoading(false);
@@ -246,21 +244,21 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setError(null);
 
     try {
-      console.log('🔍 VaultContext: Starting getKeyMenuData call for vault:', vaultId);
+      logger.debug('VaultContext', 'Starting getKeyMenuData call', { vaultId });
 
       const menuRequest: GetKeyMenuDataRequest = { vault_id: vaultId };
-      console.log('🔍 VaultContext: Calling backend with request:', menuRequest);
+      logger.debug('VaultContext', 'Calling backend with request', menuRequest);
 
       const menuResult = await commands.getKeyMenuData(menuRequest);
-      console.log('🔍 VaultContext: Backend response received:', menuResult);
+      logger.debug('VaultContext', 'Backend response received', menuResult);
 
       if (menuResult.status === 'error') {
-        console.error('🚨 VaultContext: Backend returned error:', menuResult.error);
+        logger.error('VaultContext', 'Backend returned error', menuResult.error);
         throw new Error(menuResult.error.message || 'Failed to get key menu data');
       }
 
       const menuResponse = menuResult.data;
-      console.log('🔍 VaultContext: Processing menu response:', menuResponse);
+      logger.debug('VaultContext', 'Processing menu response', menuResponse);
 
       logger.info('VaultContext', 'Key menu data loaded for vault', {
         vaultId: vaultId,
@@ -315,26 +313,25 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   const createVault = async (name: string, description?: string | null) => {
-    console.log('🔍 VaultContext: createVault called', { name, description });
+    logger.debug('VaultContext', 'createVault called', { name, description });
     setError(null);
 
     try {
       const request: CreateVaultRequest = { name, description: description ?? null };
-      console.log('🔍 VaultContext: Calling backend createVault', request);
+      logger.debug('VaultContext', 'Calling backend createVault', request);
 
       const result = await commands.createVault(request);
-      console.log('🔍 VaultContext: Backend response received', result);
+      logger.debug('VaultContext', 'Backend response received', result);
 
       if (result.status === 'error') {
-        console.error('🚨 VaultContext: Backend returned error', result.error);
+        logger.error('VaultContext', 'Backend returned error', result.error);
         throw new Error(result.error.message || 'Failed to create vault');
       }
 
-      console.log('✅ VaultContext: Vault created successfully, refreshing vaults...');
+      logger.info('VaultContext', 'Vault created successfully, refreshing vaults');
       await refreshVaults();
-      console.log('✅ VaultContext: Vaults refreshed successfully');
+      logger.info('VaultContext', 'Vaults refreshed successfully');
     } catch (err: any) {
-      console.error('🚨 VaultContext: Error in createVault', err);
       logger.error('VaultContext', 'Failed to create vault', err);
       setError(err.message || 'Failed to create vault');
       throw err;
@@ -403,9 +400,9 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // Load vaults on mount
   useEffect(() => {
     const initializeData = async () => {
-      console.log('🔍 VaultContext: Starting initialization...');
+      logger.debug('VaultContext', 'Starting initialization');
       await refreshVaults();
-      console.log('🔍 VaultContext: Vaults loaded, marking hasLoadedVaults=true');
+      logger.debug('VaultContext', 'Vaults loaded, marking hasLoadedVaults=true');
       setHasLoadedVaults(true);
       // Don't set isInitialized here - wait for keys to be cached (or no vaults)
     };
@@ -416,12 +413,12 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   useEffect(() => {
     // Don't run until vaults have been loaded at least once
     if (!hasLoadedVaults) {
-      console.log('🔍 VaultContext: Waiting for initial vault load...');
+      logger.debug('VaultContext', 'Waiting for initial vault load');
       return;
     }
 
     const loadAllVaultData = async () => {
-      console.log('🔍 VaultContext: Starting cache population...');
+      logger.debug('VaultContext', 'Starting cache population');
       logger.info('VaultContext', 'Populating cache', {
         vaultCount: vaults.length,
       });
@@ -469,7 +466,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       });
 
       // NOW we're fully initialized - global keys always loaded
-      console.log('🔍 VaultContext: All data loaded and cached, marking as initialized');
+      logger.info('VaultContext', 'All data loaded and cached, marking as initialized');
       setIsInitialized(true);
     };
 
