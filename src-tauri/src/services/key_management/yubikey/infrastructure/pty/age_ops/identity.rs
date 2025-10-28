@@ -33,7 +33,7 @@ pub fn generate_age_identity_pty(
         slot_name.to_string(),
     ];
 
-    let cmd = format!("age-plugin-yubikey {}", args.join(" "));
+    // Security: Don't build command string - args may contain sensitive data
     debug!(command = %cmd, "Executing command");
     debug!(
         pin_type = if pin == "123456" { "DEFAULT" } else { "CUSTOM" },

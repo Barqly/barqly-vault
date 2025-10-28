@@ -67,11 +67,8 @@ impl YkmanDeviceService {
 
     /// Run ykman command with timeout
     async fn run_ykman_command(&self, args: Vec<String>) -> YubiKeyResult<String> {
-        debug!(
-            "Running ykman command: {} {}",
-            self.ykman_path,
-            args.join(" ")
-        );
+        // Security: Don't log args - may contain PIN/PUK
+        debug!("Running ykman command with {} args", args.len());
 
         let output = tokio::process::Command::new(&self.ykman_path)
             .args(&args)

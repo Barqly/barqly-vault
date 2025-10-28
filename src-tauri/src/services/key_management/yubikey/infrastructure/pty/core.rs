@@ -277,11 +277,7 @@ pub fn run_age_plugin_yubikey(
 
 /// Run ykman command through PTY
 pub fn run_ykman_command(args: Vec<String>, pin: Option<&str>) -> Result<String> {
-    debug!(
-        command = %format!("ykman {}", args.join(" ")),
-        pin_provided = pin.is_some(),
-        "Running ykman command"
-    );
+    // Security: No logging when PIN is in scope - maximum security
 
     let output = if pin.is_some() {
         // Use PTY for interactive commands
