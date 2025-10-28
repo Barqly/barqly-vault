@@ -15,9 +15,9 @@ use std::path::{Path, PathBuf};
 /// The directory is created if it doesn't exist.
 ///
 /// # Returns
-/// - **macOS**: `~/Library/Application Support/barqly-vault/`
-/// - **Windows**: `%APPDATA%\barqly-vault\`
-/// - **Linux**: `~/.config/barqly-vault/`
+/// - **macOS**: `~/Library/Application Support/com.barqly.vault/`
+/// - **Windows**: `%APPDATA%\com.barqly.vault\`
+/// - **Linux**: `~/.config/com.barqly.vault/`
 ///
 /// # Errors
 /// - `StorageError::DirectoryCreationFailed` if the directory cannot be created
