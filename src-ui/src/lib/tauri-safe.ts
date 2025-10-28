@@ -153,23 +153,23 @@ export async function safeInvokeCommand<T>(cmd: string, args?: any): Promise<T> 
 
   try {
     const { invoke } = await import('@tauri-apps/api/core');
-    console.log(`[DEBUG] Invoking command (Result): ${cmd}`, args);
+    logger.debug('tauri-safe', `Invoking command (Result): ${cmd}`);
     const result = await invoke<Result<T, CommandError>>(cmd, args);
-    console.log(`[DEBUG] Command ${cmd} result:`, result);
+    logger.debug('tauri-safe', `Command ${cmd} result received`, {
+      status: result.status,
+    });
 
     if (result.status === 'error') {
       throw result.error;
     }
 
-    console.log(`[DEBUG] Command ${cmd} succeeded:`, result.data);
+    logger.debug('tauri-safe', `Command ${cmd} succeeded`);
     return result.data;
   } catch (error) {
-    console.error(`[ERROR] Command ${cmd} failed:`, error);
-    console.error('[ERROR] Error details:', {
+    logger.error('tauri-safe', `Command ${cmd} failed`, error as Error);
+    logger.debug('tauri-safe', 'Error details', {
       type: typeof error,
       message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack trace',
-      fullError: error,
     });
     throw error;
   }
