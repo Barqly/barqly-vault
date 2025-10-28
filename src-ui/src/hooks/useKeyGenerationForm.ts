@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { GenerateKeyInput, GenerateKeyResponse } from '../bindings';
 import { validateKeyGenerationForm } from '../lib/validation/key-generation-validation';
+import { logger } from '../lib/logger';
 
 export interface KeyGenerationFormData {
   label: string;
@@ -145,7 +146,7 @@ export const useKeyGenerationForm = ({
         });
         setError(null);
       } catch (err) {
-        console.error('Key generation failed:', err);
+        logger.error('useKeyGenerationForm', 'Key generation failed', err as Error);
         setError(err instanceof Error ? err.message : 'Key generation failed');
       } finally {
         setIsLoading(false);
