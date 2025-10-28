@@ -9,6 +9,7 @@ import { executeDecryptionWithProgress } from '../lib/decryption/decryption-work
 import { prepareDecryptionInput } from '../lib/validation/decryption-validation';
 import { useVault } from '../contexts/VaultContext';
 import type { KeyReference } from '../lib/key-types';
+import { logger } from '../lib/logger';
 
 interface VaultMetadata {
   creationDate?: string;
@@ -269,7 +270,7 @@ export const useDecryptionWorkflow = () => {
 
         // Visual feedback from UI transition is sufficient
       } catch (error) {
-        console.error('[DecryptionWorkflow] File selection error:', error);
+        logger.error('useDecryptionWorkflow', 'File selection error', error as Error);
         const commandError = createCommandError(
           'INTERNAL_ERROR',
           'File selection failed',

@@ -182,6 +182,9 @@ export function useYubiKeyWorkflow(
 
     /**
      * Start device initialization with PIN and slot
+     *
+     * TODO: Unused code, should be removed. This entire hook (useYubiKeyWorkflow) is not used anywhere.
+     * Active YubiKey flows use YubiKeyRegistryDialog and YubiKeyStreamlined instead.
      */
     startInitialization: useCallback(
       async (pin: string, slot: number) => {
@@ -193,7 +196,14 @@ export function useYubiKeyWorkflow(
         dispatch({ type: 'START_INITIALIZATION', pin, slot });
 
         try {
-          await service.initializeDevice(context.selectedDevice.device_id, pin, slot);
+          // Fixed signature: initializeDevice requires (deviceId, pin, recoveryPin, label)
+          // TODO: Unused code - entire hook should be removed
+          await service.initializeDevice(
+            context.selectedDevice.device_id,
+            pin,
+            pin, // Use same PIN as recovery PIN (legacy behavior)
+            context.selectedDevice.label || 'YubiKey',
+          );
           dispatch({ type: 'INITIALIZATION_SUCCESS' });
         } catch (error: any) {
           dispatch({ type: 'INITIALIZATION_FAILED', error: error.message });

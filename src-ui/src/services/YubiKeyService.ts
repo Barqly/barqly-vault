@@ -182,6 +182,8 @@ export class YubiKeyService {
 
   /**
    * Initialize a YubiKey for use with the vault
+   *
+   * TODO: Unused code, should be removed. Only called from useYubiKeyWorkflow.ts which is dead code.
    */
   async initializeDevice(
     deviceId: string,
