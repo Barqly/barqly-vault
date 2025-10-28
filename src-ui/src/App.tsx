@@ -6,6 +6,7 @@ import { LoadingSpinner } from './components/ui/loading-spinner';
 import { VaultProvider, useVault } from './contexts/VaultContext';
 import { UIProvider } from './contexts/UIContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { logger } from './lib/logger';
 
 // Lazy load page components for better initial render performance
 const VaultHub = lazy(() => import('./pages/VaultHub'));
@@ -23,7 +24,7 @@ function SmartLanding(): ReactElement {
   const { vaults, keyCache, isInitialized } = useVault();
 
   useEffect(() => {
-    console.log('🎯 SmartLanding: Effect triggered', {
+    logger.debug('SmartLanding', 'Effect triggered', {
       isInitialized,
       vaultCount: vaults.length,
       keyCacheSize: keyCache.size,
@@ -35,26 +36,27 @@ function SmartLanding(): ReactElement {
 
     // Wait for initial data load to complete
     if (!isInitialized) {
-      console.log('🎯 SmartLanding: Not initialized yet, waiting...');
+      logger.debug('SmartLanding', 'Not initialized yet, waiting');
       return;
     }
 
     // Calculate total keys across all vaults
     const totalKeys = Array.from(keyCache.values()).reduce((acc, keys) => acc + keys.length, 0);
-    console.log('🎯 SmartLanding: ✅ INITIALIZATION COMPLETE!');
-    console.log('🎯 SmartLanding: Total keys:', totalKeys, 'Vaults:', vaults.length);
+    logger.info('SmartLanding', 'Initialization complete');
+    logger.debug('SmartLanding', 'Total keys and vaults', { totalKeys, vaultCount: vaults.length });
 
     // Landing logic: Guide through setup sequence
     if (totalKeys === 0) {
-      console.log('🎯 SmartLanding: No keys → Navigating to /keys');
+      logger.info('SmartLanding', 'Navigating to /keys (no keys found)');
       navigate('/keys', { replace: true });
     } else if (vaults.length === 0) {
-      console.log('🎯 SmartLanding: Has keys but no vaults → Navigating to /vault-hub');
+      logger.info('SmartLanding', 'Navigating to /vault-hub (has keys but no vaults)');
       navigate('/vault-hub', { replace: true });
     } else {
-      console.log(
-        '🎯 SmartLanding: ✅ Setup complete (has vaults & keys) → Navigating to /encrypt',
-      );
+      logger.info('SmartLanding', 'Navigating to /encrypt (setup complete)', {
+        totalKeys,
+        vaultCount: vaults.length,
+      });
       navigate('/encrypt', { replace: true });
     }
   }, [isInitialized, vaults, keyCache, navigate]); // Wait for initialization
