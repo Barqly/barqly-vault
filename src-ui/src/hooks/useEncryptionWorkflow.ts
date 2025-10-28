@@ -6,6 +6,7 @@ import type { CommandError, VaultSummary } from '../bindings';
 import { createCommandError } from '../lib/errors/command-error';
 import { useVault } from '../contexts/VaultContext';
 import { commands, EncryptFilesMultiInput } from '../bindings';
+import { logger } from '../lib/logger';
 
 interface EncryptionResult {
   outputPath: string;
@@ -128,7 +129,7 @@ export const useEncryptionWorkflow = () => {
       const vaultsPath = await join(docsPath, 'Barqly-Vaults');
       return vaultsPath;
     } catch (error) {
-      console.error('Error getting default path:', error);
+      logger.error('useEncryptionWorkflow', 'Error getting default path', error as Error);
       return '~/Documents/Barqly-Vaults';
     }
   }, []);
@@ -136,10 +137,9 @@ export const useEncryptionWorkflow = () => {
   // Handle file selection
   const handleFilesSelected = useCallback(
     async (paths: string[], selectionType: 'Files' | 'Folder') => {
-      console.log('[EncryptionWorkflow] Files selected:', {
-        paths,
+      logger.debug('useEncryptionWorkflow', 'Files selected', {
         selectionType,
-        timestamp: Date.now(),
+        pathCount: paths.length,
       });
 
       // Clear any previous file validation errors
@@ -150,7 +150,7 @@ export const useEncryptionWorkflow = () => {
         await selectFiles(paths, selectionType);
         // Visual feedback from UI transition is sufficient
       } catch (err) {
-        console.error('[EncryptionWorkflow] File selection error:', err);
+        logger.error('useEncryptionWorkflow', 'File selection error', err as Error);
         const commandError = createCommandError(
           'INTERNAL_ERROR',
           'File selection failed',
@@ -190,13 +190,12 @@ export const useEncryptionWorkflow = () => {
       });
 
       // Refresh statistics cache after successful encryption
-      console.log(
-        '[DEBUG] Refreshing vault statistics for vault:',
-        workflowVault!.id,
-        workflowVault!.name,
-      );
+      logger.debug('useEncryptionWorkflow', 'Refreshing vault statistics', {
+        vaultId: workflowVault!.id,
+        vaultName: workflowVault!.name,
+      });
       await refreshVaultStatistics(workflowVault!.id);
-      console.log('[DEBUG] Vault statistics refresh completed');
+      logger.debug('useEncryptionWorkflow', 'Vault statistics refresh completed');
     },
     [selectedFiles, workflowVault, keyCache, startTime, refreshVaultStatistics],
   );
@@ -231,7 +230,9 @@ export const useEncryptionWorkflow = () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     try {
-      console.log('[DEBUG] Starting multi-key encryption, isEncrypting=true');
+      logger.debug('useEncryptionWorkflow', 'Starting multi-key encryption', {
+        isEncrypting: true,
+      });
       setStartTime(Date.now());
 
       const input: EncryptFilesMultiInput = {
@@ -260,13 +261,16 @@ export const useEncryptionWorkflow = () => {
         );
       }
 
-      console.log('[DEBUG] Multi-key encryption completed, checking result');
+      logger.debug('useEncryptionWorkflow', 'Multi-key encryption completed, checking result');
       const response = result.data;
 
       // Check if backend returned a file exists warning
       if (response.file_exists_warning) {
         const fileName = response.encrypted_file_path.split('/').pop() || 'encrypted-file.age';
-        console.log('[DEBUG] File exists warning received, showing native dialog');
+        logger.debug(
+          'useEncryptionWorkflow',
+          'File exists warning received, showing native dialog',
+        );
 
         // Use native Tauri dialog for confirmation
         const shouldOverwrite = await confirm(
@@ -280,7 +284,7 @@ export const useEncryptionWorkflow = () => {
         );
 
         if (shouldOverwrite) {
-          console.log('[DEBUG] User confirmed overwrite, calling backend again');
+          logger.debug('useEncryptionWorkflow', 'User confirmed overwrite, calling backend again');
           // Keep the progress view visible during retry
           // Add a small delay for visual continuity
           await new Promise((resolve) => setTimeout(resolve, 100));
@@ -297,7 +301,7 @@ export const useEncryptionWorkflow = () => {
           await new Promise((resolve) => setTimeout(resolve, 200));
           processSuccessfulEncryption(retryResponse);
         } else {
-          console.log('[DEBUG] User chose to keep original file');
+          logger.debug('useEncryptionWorkflow', 'User chose to keep original file');
           // Go back to Step 2 so user can change filename or vault
           setCurrentStep(2);
           setIsEncrypting(false);
@@ -308,7 +312,7 @@ export const useEncryptionWorkflow = () => {
         processSuccessfulEncryption(response);
       }
     } catch (err) {
-      console.error('[EncryptionWorkflow] Multi-key encryption error:', err);
+      logger.error('useEncryptionWorkflow', 'Multi-key encryption error', err as Error);
       const commandError =
         err instanceof Object && 'code' in err
           ? (err as CommandError)
@@ -319,7 +323,7 @@ export const useEncryptionWorkflow = () => {
             );
       setFileValidationError(commandError);
     } finally {
-      console.log('[DEBUG] Finally block: setting isEncrypting=false');
+      logger.debug('useEncryptionWorkflow', 'Finally block: setting isEncrypting=false');
       setIsEncrypting(false);
     }
   }, [selectedFiles, archiveName, outputPath, workflowVault, processSuccessfulEncryption]);
@@ -351,8 +355,6 @@ export const useEncryptionWorkflow = () => {
     setPrevSelectedFiles(null);
     setFileValidationError(null);
     setEncryptionResult(null);
-    setShowOverwriteDialog(false);
-    setPendingOverwriteFile('');
     setSessionVaultId(null); // Clear session vault selection
     setWorkflowVault(null); // Clear workflow vault selection
   }, [reset]);
@@ -366,7 +368,7 @@ export const useEncryptionWorkflow = () => {
   // Handle key selection (no-op for multi-key encryption)
   const handleKeyChange = useCallback((keyId: string) => {
     // No longer needed since we encrypt to all vault keys
-    console.log('[EncryptionWorkflow] Key selection ignored in multi-key mode:', keyId);
+    logger.debug('useEncryptionWorkflow', 'Key selection ignored in multi-key mode', { keyId });
   }, []);
 
   // Handle file validation errors from FileDropZone
@@ -380,7 +382,7 @@ export const useEncryptionWorkflow = () => {
       // Find vault in the vaults list
       const selectedVault = vaults.find((v) => v.id === vaultId);
       if (!selectedVault) {
-        console.error('[EncryptionWorkflow] Vault not found:', vaultId);
+        logger.error('useEncryptionWorkflow', 'Vault not found', new Error(`Vault ID: ${vaultId}`));
         return;
       }
 
@@ -391,7 +393,7 @@ export const useEncryptionWorkflow = () => {
       // Reset archive name to match new vault
       setArchiveName('');
 
-      console.log('[EncryptionWorkflow] Vault selected in Step 2', {
+      logger.debug('useEncryptionWorkflow', 'Vault selected in Step 2', {
         vaultId,
         vaultName: selectedVault.name,
       });
