@@ -13,6 +13,7 @@ import EncryptionProgress from '../components/encrypt/EncryptionProgress';
 import EncryptionSuccess from '../components/encrypt/EncryptionSuccess';
 import AnimatedTransition from '../components/ui/AnimatedTransition';
 import AppPrimaryContainer from '../components/layout/AppPrimaryContainer';
+import { logger } from '../lib/logger';
 // Removed OverwriteConfirmationDialog - using native Tauri dialog instead
 
 const ENCRYPTION_STEPS: ProgressStep[] = [
@@ -69,7 +70,7 @@ const EncryptPage: React.FC = () => {
   };
 
   // Debug logging
-  console.log('[DEBUG] EncryptPage render:', {
+  logger.debug('EncryptPage', 'Component render state', {
     success: !!success,
     isEncrypting,
     hasEncryptionResult: !!encryptionResult,
