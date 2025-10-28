@@ -92,7 +92,7 @@ pub fn get_age_path() -> PathBuf {
                 "windows/age.exe"
             });
 
-    info!(path = %bundled.display(), "Using bundled age CLI");
+    debug!(path = %bundled.display(), "Using bundled age CLI");
     bundled
 }
 

@@ -7,7 +7,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use tempfile::{NamedTempFile, TempDir};
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 /// Staging area for temporary file operations
 pub struct StagingArea {
@@ -113,7 +113,7 @@ impl StagingArea {
         };
 
         self.staged_files.push(file_info.clone());
-        info!(
+        debug!(
             "Staged file: {} -> {}",
             source.display(),
             dest_path.display()
@@ -303,7 +303,7 @@ impl StagingArea {
 
         self.staged_files.push(file_info);
 
-        info!(
+        debug!(
             "Copied file to staging: {} -> {}",
             source.display(),
             dest_name
@@ -317,7 +317,7 @@ impl StagingArea {
             return Ok(());
         }
 
-        info!("Cleaning up staging area: {}", self.staging_path.display());
+        debug!("Cleaning up staging area: {}", self.staging_path.display());
 
         // The TempDir will automatically clean up when dropped
         // But we can also manually clean up if needed
