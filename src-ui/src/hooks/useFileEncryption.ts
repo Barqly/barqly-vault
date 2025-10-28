@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
-import type { CommandError, ErrorCode } from '../bindings';
+import type { CommandError } from '../bindings';
 import { toCommandError } from '../lib/errors/command-error';
 import { getFileInfoForEncryption } from '../lib/encryption/file-operations';
 import { executeEncryptionWithProgress } from '../lib/encryption/encryption-workflow';
+import { logger } from '../lib/logger';
 import {
   validateEncryptionInputs,
   prepareEncryptionInput,
@@ -41,10 +42,8 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
   const selectFiles = useCallback(
     async (paths: string[], selectionType: 'Files' | 'Folder'): Promise<void> => {
       // Comprehensive logging at entry point
-      console.log('[useFileEncryption] selectFiles called with:', {
-        paths,
+      logger.debug('useFileEncryption', 'selectFiles called', {
         selectionType,
-        timestamp: Date.now(),
         pathCount: paths.length,
         firstPath: paths[0],
       });
@@ -54,18 +53,16 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
       try {
         const fileSelection = await getFileInfoForEncryption(paths, selectionType);
         setState((prev) => encryptionStateUpdates.setSelectedFiles(prev, fileSelection));
-        console.log('[useFileEncryption] State updated successfully with selected files');
+        logger.debug('useFileEncryption', 'State updated successfully with selected files');
       } catch (error) {
-        console.error('[useFileEncryption] Error in selectFiles:', {
-          error,
+        logger.error('useFileEncryption', 'Error in selectFiles', error as Error, {
           errorType: typeof error,
           errorMessage: error instanceof Error ? error.message : String(error),
-          timestamp: Date.now(),
         });
 
         const commandError = toCommandError(
           error,
-          ErrorCode.INTERNAL_ERROR,
+          'INTERNAL_ERROR',
           'File selection failed',
           'Please try selecting files again. If the problem persists, restart the application.',
         );
@@ -110,7 +107,7 @@ export const useFileEncryption = (): UseFileEncryptionReturn => {
             ? (error as CommandError)
             : toCommandError(
                 error,
-                ErrorCode.INTERNAL_ERROR,
+                'INTERNAL_ERROR',
                 'File encryption failed',
                 'Please try again. If the problem persists, check your system.',
               );
