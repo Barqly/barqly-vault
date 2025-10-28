@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import { isTauri } from '../lib/environment/platform';
 import { FileSelectionMode, FileSelectionType } from '../types/file-types';
+import { logger } from '../lib/logger';
 
 interface UseDragAndDropOptions {
   disabled?: boolean;
@@ -35,18 +36,18 @@ export const useDragAndDrop = ({
 
     const setupListener = async () => {
       try {
-        console.log('[useDragAndDrop] Setting up Tauri v2 drag-drop listener...');
+        logger.debug('useDragAndDrop', 'Setting up Tauri v2 drag-drop listener');
 
         const webview = getCurrentWebview();
         unlisten = await webview.onDragDropEvent((event) => {
-          console.log('[useDragAndDrop] Drag-drop event:', event);
+          logger.debug('useDragAndDrop', 'Drag-drop event', event);
 
           if (event.payload.type === 'over') {
             setIsDragging(true);
           } else if (event.payload.type === 'drop') {
             const paths = event.payload.paths;
             if (paths && paths.length > 0) {
-              console.log('[useDragAndDrop] Files dropped:', paths);
+              logger.debug('useDragAndDrop', 'Files dropped', { paths });
 
               // Validate file formats if specified
               if (acceptedFormats.length > 0) {
@@ -90,9 +91,9 @@ export const useDragAndDrop = ({
           }
         });
 
-        console.log('[useDragAndDrop] Tauri drag-drop listener ready');
+        logger.debug('useDragAndDrop', 'Tauri drag-drop listener ready');
       } catch (error) {
-        console.error('Failed to setup Tauri drag-drop:', error);
+        logger.error('useDragAndDrop', 'Failed to setup Tauri drag-drop', error as Error);
       }
     };
 
@@ -121,7 +122,7 @@ export const useDragAndDrop = ({
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    console.log('[useDragAndDrop] HTML5 drop event - Tauri should handle natively');
+    logger.debug('useDragAndDrop', 'HTML5 drop event - Tauri should handle natively');
     setIsDragging(false);
   }, []);
 
