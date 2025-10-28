@@ -139,9 +139,13 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
       // Exclude: registered (already in registry)
       const availableKeys = allKeys.filter((k) => k.state !== 'registered');
 
-      logger.info('YubiKeyRegistryDialog', 'Available YubiKeys after filtering', {
+      logger.info(
+        'YubiKeyRegistryDialog',
+        `Found ${availableKeys.length} available YubiKey(s) after filtering`,
+      );
+      logger.debug('YubiKeyRegistryDialog', 'Available YubiKeys details', {
         count: availableKeys.length,
-        availableKeys: availableKeys,
+        keys: availableKeys,
       });
 
       setYubikeys(availableKeys);
@@ -290,7 +294,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
         handleSuccess();
       } else if (selectedKey.state === 'orphaned') {
         // Register orphaned YubiKey
-        logger.info('YubiKeyRegistryDialog', 'Registering orphaned YubiKey', {
+        logger.info('YubiKeyRegistryDialog', 'Registering orphaned YubiKey');
+        logger.debug('YubiKeyRegistryDialog', 'Orphaned YubiKey details', {
           serial: selectedKey.serial,
         });
 

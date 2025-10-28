@@ -131,7 +131,11 @@ export const PassphraseKeyRegistryDialog: React.FC<PassphraseKeyRegistryDialogPr
         throw new Error(result.error.message || 'Failed to create passphrase key');
       }
 
-      logger.info('PassphraseKeyRegistryDialog', 'Passphrase key created successfully', result);
+      logger.info('PassphraseKeyRegistryDialog', 'Passphrase key created successfully');
+      logger.debug('PassphraseKeyRegistryDialog', 'Created passphrase key details', {
+        status: result.status,
+        hasData: !!result.data,
+      });
 
       // Clear form
       setLabel('');

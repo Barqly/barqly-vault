@@ -86,12 +86,13 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
       // Also handle lowercase 'registered' due to backend inconsistency
       const availableKeys = keys.filter((k) => k.state !== 'registered');
 
-      logger.info('YubiKeySetupDialog', 'Available YubiKeys after filtering', {
+      logger.info(
+        'YubiKeySetupDialog',
+        `Found ${availableKeys.length} available YubiKey(s) after filtering`,
+      );
+      logger.debug('YubiKeySetupDialog', 'Available YubiKeys details', {
         count: availableKeys.length,
-        availableKeys: availableKeys,
-      });
-      logger.debug('YubiKeySetupDialog', 'Detected keys', {
-        keys: availableKeys.map((k) => ({ serial: k.serial, state: k.state })),
+        keys: availableKeys,
       });
 
       setYubikeys(availableKeys);
