@@ -34,7 +34,7 @@ pub fn generate_age_identity_pty(
     ];
 
     // Security: Don't build command string - args may contain sensitive data
-    
+
     debug!(
         pin_type = if pin == "123456" { "DEFAULT" } else { "CUSTOM" },
         pin_length = pin.len(),

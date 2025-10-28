@@ -262,7 +262,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       logger.info('VaultContext', 'Key menu data loaded for vault', {
         vaultId: vaultId,
         keyCount: menuResponse.keys.length,
-        keyTypes: menuResponse.keys.map(k => k.type), // Only log types, not sensitive data
+        keyTypes: menuResponse.keys.map((k) => k.type), // Only log types, not sensitive data
       });
 
       // Backend now returns KeyReference directly - no transformation needed!

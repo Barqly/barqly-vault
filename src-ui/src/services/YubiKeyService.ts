@@ -106,7 +106,7 @@ export class YubiKeyService {
     this.emit({ type: 'DETECTION_STARTED' });
 
     try {
-      console.log('🔍 YubiKeyService: About to call yubikey_list_devices backend command...');
+      logger.debug('YubiKeyService', 'About to call yubikey_list_devices backend command');
       logger.logComponentLifecycle('YubiKeyService', 'Starting YubiKey device detection');
 
       const result = await commands.listYubikeys();
@@ -115,9 +115,8 @@ export class YubiKeyService {
       }
       const devices = result.data;
 
-      console.log('✅ YubiKeyService: Backend command returned:', {
+      logger.debug('YubiKeyService', 'Backend command returned', {
         deviceCount: devices.length,
-        rawDevices: devices,
         isArray: Array.isArray(devices),
       });
 
@@ -129,18 +128,16 @@ export class YubiKeyService {
 
       logger.logComponentLifecycle('YubiKeyService', 'Device detection completed', {
         deviceCount: devices.length,
-        devices: devices.map((d) => ({ device_id: d.device_id, name: d.name })),
+        devices: devices.map((d) => ({ serial: d.serial, label: d.label })),
       });
 
       this.emit({ type: 'DETECTION_COMPLETED', devices });
       return devices;
     } catch (error: any) {
-      console.error('❌ YubiKeyService: Backend command failed:', {
-        error: error.message,
+      logger.error('YubiKeyService', 'Backend command failed', error as Error, {
         errorCode: error.code,
         errorDetails: error.details,
         recoveryGuidance: error.recovery_guidance,
-        fullError: error,
       });
 
       logger.logComponentLifecycle('YubiKeyService', 'Device detection failed', {
@@ -161,17 +158,21 @@ export class YubiKeyService {
    */
   async isAvailable(): Promise<boolean> {
     try {
-      console.log('🔍 YubiKeyService: Checking YubiKey availability...');
+      logger.debug('YubiKeyService', 'Checking YubiKey availability');
       // Use listYubikeys to check availability
       const result = await commands.listYubikeys();
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to check YubiKey availability');
       }
-      const available = result.data;
-      console.log('✅ YubiKeyService: Availability check result:', available);
-      return available;
+      const devices = result.data;
+      const isAvailable = devices.length > 0;
+      logger.debug('YubiKeyService', 'Availability check result', {
+        isAvailable,
+        deviceCount: devices.length,
+      });
+      return isAvailable;
     } catch (error: any) {
-      console.error('❌ YubiKeyService: Availability check failed:', error);
+      logger.error('YubiKeyService', 'Availability check failed', error as Error);
       logger.logComponentLifecycle('YubiKeyService', 'Availability check failed', {
         error: error.message,
       });
@@ -180,35 +181,22 @@ export class YubiKeyService {
   }
 
   /**
-   * Test connection to a specific YubiKey device
-   */
-  async testConnection(
-    deviceId: string,
-    pin: string,
-  ): Promise<{ success: boolean; error?: string }> {
-    try {
-      const result = await commands.checkYubikeyAvailability({ serial: deviceId });
-      if (result.status === 'error') {
-        throw new Error(result.error.message || 'Failed to test YubiKey connection');
-      }
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
    * Initialize a YubiKey for use with the vault
    */
-  async initializeDevice(deviceId: string, pin: string, slot: number): Promise<void> {
+  async initializeDevice(
+    deviceId: string,
+    pin: string,
+    recoveryPin: string,
+    label: string,
+  ): Promise<void> {
     try {
-      const result = await commands.initYubikey(deviceId, pin, 'Default Label');
+      const result = await commands.initYubikey(deviceId, pin, recoveryPin, label);
       if (result.status === 'error') {
         throw new Error(result.error.message || 'Failed to initialize YubiKey');
       }
       logger.logComponentLifecycle('YubiKeyService', 'Device initialized successfully', {
         device_id: deviceId,
-        slot,
+        label,
       });
     } catch (error: any) {
       logger.logComponentLifecycle('YubiKeyService', 'Device initialization failed', {

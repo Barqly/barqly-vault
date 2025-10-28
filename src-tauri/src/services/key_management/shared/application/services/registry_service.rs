@@ -534,13 +534,10 @@ impl KeyRegistryService {
                 MergeStrategy::ReplaceIfDuplicate => {
                     // Recovery: Handle duplicate public_key (bundle is authoritative)
                     if let Some(existing_id) = self.find_by_public_key(&recipient.public_key)? {
-
                         // Get existing entry to check vault associations and lifecycle status
                         if let Some(existing_entry) = registry.keys.get(&existing_id).cloned() {
-
                             // Only process if NOT attached to any vault (orphaned recovery key)
                             if existing_entry.vault_associations().is_empty() {
-
                                 let existing_lifecycle = existing_entry.lifecycle_status();
 
                                 match existing_lifecycle {
@@ -553,18 +550,32 @@ impl KeyRegistryService {
                                         );
 
                                         // SAFETY: Delete .agekey.enc file if different from bundle
-                                        if let KeyEntry::Passphrase { key_filename: existing_filename, .. } = &existing_entry {
-                                            if let RecipientType::Passphrase { key_filename: bundle_filename } = &recipient.recipient_type {
+                                        if let KeyEntry::Passphrase {
+                                            key_filename: existing_filename,
+                                            ..
+                                        } = &existing_entry
+                                        {
+                                            if let RecipientType::Passphrase {
+                                                key_filename: bundle_filename,
+                                            } = &recipient.recipient_type
+                                            {
                                                 // Safety check: Different filename AND same public key (already confirmed)
                                                 if existing_filename != bundle_filename {
                                                     let keys_dir = get_keys_dir().map_err(|e| {
-                                                        KeyManagementError::StorageError(e.to_string())
+                                                        KeyManagementError::StorageError(
+                                                            e.to_string(),
+                                                        )
                                                     })?;
-                                                    let file_path = keys_dir.join(existing_filename);
+                                                    let file_path =
+                                                        keys_dir.join(existing_filename);
 
                                                     // Additional safety: Verify file is in keys directory
-                                                    if file_path.exists() && file_path.starts_with(&keys_dir) {
-                                                        if let Err(e) = std::fs::remove_file(&file_path) {
+                                                    if file_path.exists()
+                                                        && file_path.starts_with(&keys_dir)
+                                                    {
+                                                        if let Err(e) =
+                                                            std::fs::remove_file(&file_path)
+                                                        {
                                                             warn!(
                                                                 filename = %existing_filename,
                                                                 error = %e,
@@ -587,7 +598,8 @@ impl KeyRegistryService {
 
                                     KeyLifecycleStatus::Active | KeyLifecycleStatus::Suspended => {
                                         // Was used before - deactivate with 30-day grace period
-                                        if let Some(entry_mut) = registry.keys.get_mut(&existing_id) {
+                                        if let Some(entry_mut) = registry.keys.get_mut(&existing_id)
+                                        {
                                             if let Err(e) = entry_mut.set_lifecycle_status(
                                                 KeyLifecycleStatus::Deactivated,
                                                 "Replaced by authoritative version from vault manifest during recovery".to_string(),
