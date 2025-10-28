@@ -7,7 +7,8 @@
  */
 
 import { useCallback, useEffect, useReducer } from 'react';
-import { ProtectionMode } from '../bindings';
+// TODO: Dead code - ProtectionMode no longer exists in bindings (removed in refactor)
+// import { ProtectionMode } from '../bindings';
 import { yubiKeyService, YubiKeyService, YubiKeyServiceEvent } from '../services/YubiKeyService';
 import {
   YubiKeyWorkflowState,
@@ -31,7 +32,7 @@ export interface UseYubiKeyWorkflowReturn {
 
   // Actions - these are the ONLY ways to interact with YubiKey functionality
   actions: {
-    selectProtectionMode: (mode: ProtectionMode) => void;
+    selectProtectionMode: (mode: any) => void; // TODO: Dead code - ProtectionMode type removed
     showRequirements: () => void;
     commitToYubiKey: () => void; // This is when hardware detection actually happens
     selectDevice: (device: any) => void;
@@ -133,7 +134,8 @@ export function useYubiKeyWorkflow(
      * Select protection mode - NO hardware detection happens here
      * This is purely UI state management
      */
-    selectProtectionMode: useCallback((mode: ProtectionMode) => {
+    selectProtectionMode: useCallback((mode: any) => {
+      // TODO: Dead code - ProtectionMode type removed
       logger.logComponentLifecycle('YubiKeyWorkflow', 'Protection mode selected', { mode });
       dispatch({ type: 'SELECT_MODE', mode });
     }, []),
@@ -199,7 +201,7 @@ export function useYubiKeyWorkflow(
           // Fixed signature: initializeDevice requires (deviceId, pin, recoveryPin, label)
           // TODO: Unused code - entire hook should be removed
           await service.initializeDevice(
-            context.selectedDevice.device_id,
+            context.selectedDevice.serial, // Fixed: YubiKeyStateInfo uses 'serial' not 'device_id'
             pin,
             pin, // Use same PIN as recovery PIN (legacy behavior)
             context.selectedDevice.label || 'YubiKey',
