@@ -31,7 +31,7 @@ pub const RUSTC_VERSION: &str = env!("BUILD_RUSTC_VERSION");
 
 /// Get the platform-specific log directory
 fn get_log_dir() -> Result<PathBuf, io::Error> {
-    let proj_dirs = ProjectDirs::from("com", "Barqly", "Vault").ok_or_else(|| {
+    let proj_dirs = ProjectDirs::from("com", "barqly", "vault").ok_or_else(|| {
         io::Error::new(
             io::ErrorKind::NotFound,
             "Could not determine project directories",
