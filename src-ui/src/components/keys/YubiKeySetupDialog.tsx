@@ -90,10 +90,9 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
         count: availableKeys.length,
         availableKeys: availableKeys,
       });
-      console.log(
-        '[YubiKey] Detected keys:',
-        availableKeys.map((k) => ({ serial: k.serial, state: k.state })),
-      );
+      logger.debug('YubiKeySetupDialog', 'Detected keys', {
+        keys: availableKeys.map((k) => ({ serial: k.serial, state: k.state })),
+      });
 
       setYubikeys(availableKeys);
 
@@ -302,7 +301,10 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                         <button
                           key={yk.serial}
                           onClick={() => {
-                            console.log('[YubiKey] Selected:', yk.serial, 'State:', yk.state);
+                            logger.debug('YubiKeySetupDialog', 'YubiKey selected', {
+                              serial: yk.serial,
+                              state: yk.state,
+                            });
                             setSelectedKey(yk);
                             setLabel(yk.label || `YubiKey-${yk.serial}`);
                             setStep('setup');
@@ -356,7 +358,6 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
             {/* Setup Step - Only for NEW YubiKeys */}
             {step === 'setup' && selectedKey && selectedKey.state === 'new' && (
               <>
-                {console.log('[YubiKey] Rendering NEW setup form')}
                 <div className="space-y-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <p className="text-sm text-blue-800">
