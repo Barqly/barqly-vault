@@ -73,7 +73,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
         is_available: key.is_available,
         state: key.yubikey_info?.yubikey_state || 'New',
         pin_status: key.yubikey_info?.pin_status || 'Set',
-      }));
+      })) as any[];
 
       logger.info('YubiKeySetupDialog', 'YubiKeys returned from backend', {
         count: keys.length,
@@ -101,7 +101,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
       if (availableKeys.length === 1) {
         const key = availableKeys[0];
         setSelectedKey(key);
-        setLabel(key.label || `YubiKey-${key.serial}`);
+        setLabel(key.name || `YubiKey-${key.serial}`);
       }
     } catch (err: any) {
       logger.error('YubiKeySetupDialog', 'Failed to detect YubiKeys', err);
@@ -553,7 +553,7 @@ export const YubiKeySetupDialog: React.FC<YubiKeySetupDialogProps> = ({
                             }
 
                             // Refresh keys to show the newly added YubiKey
-                            await refreshKeysForVault(currentVault.id);
+                            await refreshKeysForVault(currentVault!.id);
                             handleSuccess();
                           } catch (err: any) {
                             logger.error('YubiKeySetupDialog', 'Failed to register YubiKey', err);
