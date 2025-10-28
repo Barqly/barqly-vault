@@ -28,6 +28,21 @@ class Logger {
     error: 3,
   };
 
+  // Sensitive field names to auto-redact from logs
+  private readonly sensitiveFields = [
+    'serial',
+    'pin',
+    'passphrase',
+    'password',
+    'recovery_code',
+    'recovery_pin',
+    'private_key',
+    'secret',
+    'token',
+    'auth',
+    'credential',
+  ];
+
   private constructor() {
     // Check if debug mode is enabled via localStorage or environment
     if (typeof window !== 'undefined') {
@@ -52,12 +67,57 @@ class Logger {
     return this.enabled && this.levelPriority[level] >= this.levelPriority[this.logLevel];
   }
 
+  /**
+   * Sanitize sensitive data from logs
+   * Redacts sensitive fields to prevent accidental exposure
+   */
+  private sanitizeData(data: any): any {
+    if (data === null || data === undefined) return data;
+    if (typeof data !== 'object') return data;
+
+    // Handle arrays
+    if (Array.isArray(data)) {
+      return data.map((item) => this.sanitizeData(item));
+    }
+
+    // Handle objects
+    const sanitized: any = {};
+    for (const key in data) {
+      if (!Object.prototype.hasOwnProperty.call(data, key)) continue;
+
+      const lowerKey = key.toLowerCase();
+      const value = data[key];
+
+      // Check if field name matches sensitive patterns
+      const isSensitive = this.sensitiveFields.some((field) => lowerKey.includes(field));
+
+      if (isSensitive) {
+        // Special handling for serial numbers - show last 4 digits
+        if (lowerKey.includes('serial') && typeof value === 'string' && value.length >= 4) {
+          sanitized[key] = `***${value.slice(-4)}`;
+        } else {
+          // Full redaction for other sensitive fields
+          sanitized[key] = '***REDACTED***';
+        }
+      } else if (typeof value === 'object') {
+        // Recursively sanitize nested objects
+        sanitized[key] = this.sanitizeData(value);
+      } else {
+        // Keep non-sensitive data as-is
+        sanitized[key] = value;
+      }
+    }
+
+    return sanitized;
+  }
+
   private formatMessage(entry: LogEntry): string {
     const { timestamp, level, context, message, data } = entry;
     let formatted = `[${timestamp}] [${level.toUpperCase()}] [${context}] ${message}`;
 
     if (data !== undefined) {
-      formatted += ` | Data: ${JSON.stringify(data, null, 2)}`;
+      const sanitized = this.sanitizeData(data);
+      formatted += ` | Data: ${JSON.stringify(sanitized, null, 2)}`;
     }
 
     return formatted;
@@ -102,9 +162,10 @@ class Logger {
         break;
     }
 
-    // Log data object separately for better inspection
+    // Log data object separately for better inspection (sanitized)
     if (data !== undefined && level !== 'debug') {
-      console.log('Additional data:', data);
+      const sanitized = this.sanitizeData(data);
+      console.log('Additional data:', sanitized);
     }
   }
 
