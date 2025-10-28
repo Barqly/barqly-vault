@@ -17,6 +17,7 @@ use crate::services::key_management::shared::infrastructure::{
     KeyEntry, KeyInfo, KeyRegistry, list_keys as list_key_files,
 };
 use crate::services::shared;
+use crate::services::shared::infrastructure::get_keys_dir;
 use crate::services::vault;
 use crate::services::vault::infrastructure::persistence::metadata::{
     RecipientInfo, RecipientType, VaultMetadata,
@@ -531,30 +532,87 @@ impl KeyRegistryService {
                     }
                 }
                 MergeStrategy::ReplaceIfDuplicate => {
-                    // Recovery: Deactivate orphaned recovery key if same public_key exists
+                    // Recovery: Handle duplicate public_key (bundle is authoritative)
                     if let Some(existing_id) = self.find_by_public_key(&recipient.public_key)? {
 
-                        // Get existing entry to check vault associations
-                        if let Some(existing_entry) = registry.keys.get_mut(&existing_id) {
+                        // Get existing entry to check vault associations and lifecycle status
+                        if let Some(existing_entry) = registry.keys.get(&existing_id).cloned() {
 
-                            // Only deactivate if NOT attached to any vault (orphaned recovery key)
+                            // Only process if NOT attached to any vault (orphaned recovery key)
                             if existing_entry.vault_associations().is_empty() {
 
-                                // Deactivate orphaned recovery key (safe - no file deletion)
-                                existing_entry.set_lifecycle_status(
-                                    KeyLifecycleStatus::Deactivated,
-                                    "Replaced by authoritative version from vault manifest during recovery".to_string(),
-                                    "system".to_string(),
-                                ).map_err(|e| {
-                                    warn!("Failed to deactivate recovery key: {}", e);
-                                    KeyManagementError::InvalidOperation(format!("Failed to deactivate key: {}", e))
-                                })?;
+                                let existing_lifecycle = existing_entry.lifecycle_status();
 
-                                info!(
-                                    existing_key = %existing_id,
-                                    bundle_key = %key_id,
-                                    "Deactivated orphaned recovery key (bundle version is authoritative)"
-                                );
+                                match existing_lifecycle {
+                                    KeyLifecycleStatus::PreActivation => {
+                                        // Never attached to vault - safe to delete immediately
+                                        info!(
+                                            existing_key = %existing_id,
+                                            bundle_key = %key_id,
+                                            "Removing PreActivation recovery key (replaced by bundle version)"
+                                        );
+
+                                        // SAFETY: Delete .agekey.enc file if different from bundle
+                                        if let KeyEntry::Passphrase { key_filename: existing_filename, .. } = &existing_entry {
+                                            if let RecipientType::Passphrase { key_filename: bundle_filename } = &recipient.recipient_type {
+                                                // Safety check: Different filename AND same public key (already confirmed)
+                                                if existing_filename != bundle_filename {
+                                                    let keys_dir = get_keys_dir().map_err(|e| {
+                                                        KeyManagementError::StorageError(e.to_string())
+                                                    })?;
+                                                    let file_path = keys_dir.join(existing_filename);
+
+                                                    // Additional safety: Verify file is in keys directory
+                                                    if file_path.exists() && file_path.starts_with(&keys_dir) {
+                                                        if let Err(e) = std::fs::remove_file(&file_path) {
+                                                            warn!(
+                                                                filename = %existing_filename,
+                                                                error = %e,
+                                                                "Failed to delete orphaned recovery key file (non-fatal)"
+                                                            );
+                                                        } else {
+                                                            info!(
+                                                                filename = %existing_filename,
+                                                                "Deleted orphaned recovery key file (bundle has authoritative version)"
+                                                            );
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Remove from registry (PreActivation can be deleted)
+                                        registry.keys.remove(&existing_id);
+                                    }
+
+                                    KeyLifecycleStatus::Active | KeyLifecycleStatus::Suspended => {
+                                        // Was used before - deactivate with 30-day grace period
+                                        if let Some(entry_mut) = registry.keys.get_mut(&existing_id) {
+                                            if let Err(e) = entry_mut.set_lifecycle_status(
+                                                KeyLifecycleStatus::Deactivated,
+                                                "Replaced by authoritative version from vault manifest during recovery".to_string(),
+                                                "system".to_string(),
+                                            ) {
+                                                warn!("Failed to deactivate recovery key: {}", e);
+                                            } else {
+                                                info!(
+                                                    existing_key = %existing_id,
+                                                    bundle_key = %key_id,
+                                                    "Deactivated recovery key (30-day grace period)"
+                                                );
+                                            }
+                                        }
+                                    }
+
+                                    _ => {
+                                        // Already deactivated/destroyed - do nothing
+                                        debug!(
+                                            existing_key = %existing_id,
+                                            status = ?existing_lifecycle,
+                                            "Recovery key already in terminal state, skipping"
+                                        );
+                                    }
+                                }
                             } else {
                                 // Key is attached to other vaults - keep it active
                                 debug!(
@@ -565,7 +623,7 @@ impl KeyRegistryService {
                             }
                         }
                     }
-                    // Continue to add bundle version as new entry (creates duplicate temporarily)
+                    // Continue to add bundle version as new entry
                 }
             }
 
