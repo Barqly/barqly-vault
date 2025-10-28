@@ -182,7 +182,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       logger.debug('VaultContext', 'listVaults response', vaultsResult);
 
       if (vaultsResult.status === 'error') {
-        logger.error('VaultContext', 'listVaults returned error', vaultsResult.error);
+        logger.error('VaultContext', 'listVaults returned error', undefined, vaultsResult.error);
         throw new Error(vaultsResult.error.message || 'Failed to list vaults');
       }
       const vaultsResponse = vaultsResult.data;
@@ -253,7 +253,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       logger.debug('VaultContext', 'Backend response received', menuResult);
 
       if (menuResult.status === 'error') {
-        logger.error('VaultContext', 'Backend returned error', menuResult.error);
+        logger.error('VaultContext', 'Backend returned error', undefined, menuResult.error);
         throw new Error(menuResult.error.message || 'Failed to get key menu data');
       }
 
@@ -324,7 +324,7 @@ export const VaultProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       logger.debug('VaultContext', 'Backend response received', result);
 
       if (result.status === 'error') {
-        logger.error('VaultContext', 'Backend returned error', result.error);
+        logger.error('VaultContext', 'Backend returned error', undefined, result.error);
         throw new Error(result.error.message || 'Failed to create vault');
       }
 
