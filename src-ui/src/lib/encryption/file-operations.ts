@@ -9,7 +9,7 @@ import { logger } from '../logger';
 export const processFileInfoForEncryption = (
   fileInfos: FileInfo[],
 ): { totalSize: number; fileCount: number } => {
-  console.log('[processFileInfo] Processing file info for size calculation...');
+  logger.debug('file-operations', 'Processing file info for size calculation');
 
   let totalSize = 0;
   let fileCount = 0;
@@ -19,7 +19,7 @@ export const processFileInfoForEncryption = (
 
     if (fileInfo.is_file) {
       fileCount += 1;
-      console.log('[processFileInfo] Processing file:', {
+      logger.debug('file-operations', 'Processing file', {
         name: fileInfo.name,
         size: fileInfo.size,
         path: fileInfo.path,
@@ -27,7 +27,7 @@ export const processFileInfoForEncryption = (
     } else if (fileInfo.is_directory && fileInfo.file_count !== null) {
       // Use the actual file count from the backend for directories
       fileCount += fileInfo.file_count;
-      console.log('[processFileInfo] Processing directory with file count:', {
+      logger.debug('file-operations', 'Processing directory with file count', {
         name: fileInfo.name,
         size: fileInfo.size,
         fileCount: fileInfo.file_count,
@@ -37,7 +37,7 @@ export const processFileInfoForEncryption = (
       // Fallback: estimate if file_count is not provided
       const estimatedFiles = Math.max(1, Math.round(fileInfo.size / (100 * 1024)));
       fileCount += estimatedFiles;
-      console.log('[processFileInfo] Processing directory (estimated):', {
+      logger.debug('file-operations', 'Processing directory (estimated)', {
         name: fileInfo.name,
         size: fileInfo.size,
         estimatedFiles,
@@ -46,10 +46,10 @@ export const processFileInfoForEncryption = (
     }
   }
 
-  console.log('[processFileInfo] File info processing complete:', {
+  logger.info('file-operations', `Processed ${fileCount} file(s) for encryption`);
+  logger.debug('file-operations', 'File processing details', {
     totalSize,
     fileCount,
-    timestamp: Date.now(),
   });
 
   return { totalSize, fileCount };
@@ -62,7 +62,8 @@ export const getFileInfoForEncryption = async (
   paths: string[],
   selectionType: 'Files' | 'Folder',
 ): Promise<FileSelection> => {
-  console.log('[getFileInfo] Calling backend get_file_info with paths:', paths);
+  logger.info('file-operations', 'Getting file info from backend');
+  logger.debug('file-operations', 'File info request', { pathCount: paths.length });
   const startTime = Date.now();
 
   try {
@@ -75,11 +76,13 @@ export const getFileInfoForEncryption = async (
 
     const fileInfos = result.data;
     const backendTime = Date.now() - startTime;
-    console.log('[getFileInfo] Backend get_file_info response:', {
-      fileInfos,
-      responseTime: `${backendTime}ms`,
-      fileCount: fileInfos.length,
-      timestamp: Date.now(),
+    logger.info(
+      'file-operations',
+      `Backend returned ${fileInfos.length} file info(s) in ${backendTime}ms`,
+    );
+    logger.debug('file-operations', 'Backend response details', {
+      fileInfoCount: fileInfos.length,
+      responseTime: backendTime,
     });
 
     const { totalSize, fileCount } = processFileInfoForEncryption(fileInfos);
@@ -91,9 +94,10 @@ export const getFileInfoForEncryption = async (
       selection_type: selectionType,
     };
 
-    console.log('[getFileInfo] File selection result prepared:', {
-      result: fileSelection,
-      timestamp: Date.now(),
+    logger.debug('file-operations', 'File selection prepared', {
+      totalSize,
+      fileCount,
+      selectionType,
     });
 
     return fileSelection;
