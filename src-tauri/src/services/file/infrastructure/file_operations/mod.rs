@@ -72,7 +72,7 @@ impl Default for FileOpsConfig {
             max_file_size: MAX_FILE_SIZE,
             max_archive_size: MAX_TOTAL_ARCHIVE_SIZE,
             preserve_permissions: true,
-            compression_level: 3,  // Fast compression - optimized for speed over size
+            compression_level: 6,
         }
     }
 }

@@ -5,7 +5,6 @@ use std::io::Write;
 use std::iter;
 use std::process::{Command, Stdio};
 use std::str::FromStr;
-use std::sync::Arc;
 
 use super::{CryptoError, Result};
 use crate::prelude::*;
@@ -339,17 +338,16 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
 
     trace!("Writing data to age CLI stdin in separate thread");
 
-    // Use Arc to share data with thread (avoids copying large data)
-    let data_arc = Arc::new(data.to_vec());
-    let data_for_thread = Arc::clone(&data_arc);
+    // Clone data for the thread (age encryption typically handles reasonable file sizes)
+    let data_vec = data.to_vec();
 
     // Spawn thread to write stdin concurrently
     let stdin_thread = std::thread::spawn(move || -> Result<()> {
         let mut stdin = stdin;
-        stdin.write_all(&data_for_thread).map_err(|e| {
+        stdin.write_all(&data_vec).map_err(|e| {
             error!(
                 error = %e,
-                data_size = data_for_thread.len(),
+                data_size = data_vec.len(),
                 "Failed to write data to age CLI stdin"
             );
             CryptoError::IoError(e)
@@ -562,17 +560,16 @@ pub fn decrypt_data_cli(encrypted_data: &[u8]) -> Result<Vec<u8>> {
 
     trace!("Writing encrypted data to age CLI stdin in separate thread");
 
-    // Use Arc to share data with thread (avoids copying large data)
-    let data_arc = Arc::new(encrypted_data.to_vec());
-    let data_for_thread = Arc::clone(&data_arc);
+    // Clone data for the thread (age decryption typically handles reasonable file sizes)
+    let data_vec = encrypted_data.to_vec();
 
     // Spawn thread to write stdin concurrently
     let stdin_thread = std::thread::spawn(move || -> Result<()> {
         let mut stdin = stdin;
-        stdin.write_all(&data_for_thread).map_err(|e| {
+        stdin.write_all(&data_vec).map_err(|e| {
             error!(
                 error = %e,
-                encrypted_size = data_for_thread.len(),
+                encrypted_size = data_vec.len(),
                 "Failed to write encrypted data to age CLI stdin"
             );
             CryptoError::IoError(e)

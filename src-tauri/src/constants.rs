@@ -15,8 +15,8 @@ pub const MIN_PASSPHRASE_LENGTH_BASIC: usize = 8;
 /// Minimum length to check for sequential characters in passphrase
 pub const MIN_LENGTH_FOR_SEQUENCE_CHECK: usize = 3;
 
-/// Buffer size for I/O operations (256KB - optimized for modern SSDs)
-pub const IO_BUFFER_SIZE: usize = 256 * 1024;
+/// Buffer size for I/O operations (8KB)
+pub const IO_BUFFER_SIZE: usize = 8192;
 
 // ============================================================================
 // File Size Constants
