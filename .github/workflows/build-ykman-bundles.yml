@@ -1,0 +1,82 @@
+name: Build ykman Bundles
+
+# Manual trigger to build ykman for Linux and Windows
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'ykman version to build'
+        required: true
+        default: '5.8.0'
+
+jobs:
+  build-ykman:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: darwin
+            platform_name: darwin-universal
+          - os: ubuntu-22.04
+            platform: linux
+            platform_name: linux-x86_64
+          - os: windows-latest
+            platform: windows
+            platform_name: windows-x86_64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build ykman (macOS)
+        if: matrix.platform == 'darwin'
+        run: |
+          chmod +x scripts/yubikey/build-ykman.sh
+          ./scripts/yubikey/build-ykman.sh ${{ github.event.inputs.version }}
+
+      - name: Build ykman (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          chmod +x scripts/yubikey/build-ykman.sh
+          ./scripts/yubikey/build-ykman.sh ${{ github.event.inputs.version }}
+
+      - name: Build ykman (Windows)
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          # Adapt build script for Windows
+          echo "Building ykman on Windows..."
+
+          # Install dependencies
+          pip install pyinstaller yubikey-manager==${{ github.event.inputs.version }}
+
+          # Download spec file from Yubico
+          curl -L "https://raw.githubusercontent.com/Yubico/yubikey-manager/${{ github.event.inputs.version }}/ykman.spec" -o ykman.spec
+
+          # Build with PyInstaller
+          pyinstaller ykman.spec
+
+          # Create bundle directory structure
+          mkdir -p src-tauri/bin/windows/ykman-bundle
+          cp -r dist/ykman/* src-tauri/bin/windows/ykman-bundle/
+
+      - name: Package ykman bundle
+        shell: bash
+        run: |
+          cd src-tauri/bin/${{ matrix.platform }}
+          tar -czf ../../../ykman-${{ github.event.inputs.version }}-${{ matrix.platform_name }}.tar.gz ykman-bundle
+          cd ../../..
+          ls -lh ykman-*.tar.gz
+
+      - name: Upload ykman bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ykman-${{ matrix.platform_name }}
+          path: ykman-*.tar.gz
+          retention-days: 7

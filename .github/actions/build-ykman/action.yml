@@ -1,0 +1,57 @@
+name: 'Build YubiKey Manager'
+description: 'Build ykman from source using PyInstaller for the current platform'
+
+inputs:
+  version:
+    description: 'ykman version to build'
+    required: false
+    default: '5.8.0'
+
+outputs:
+  bundle-path:
+    description: 'Path to the created ykman bundle tarball'
+    value: ${{ steps.package.outputs.bundle-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Build ykman
+      shell: bash
+      run: |
+        echo "Building ykman v${{ inputs.version }} for $(uname -s)..."
+        chmod +x scripts/yubikey/build-ykman.sh
+        ./scripts/yubikey/build-ykman.sh ${{ inputs.version }}
+
+    - name: Package ykman bundle
+      id: package
+      shell: bash
+      run: |
+        # Detect platform
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+        case "$OS" in
+          darwin)
+            PLATFORM="darwin-universal"
+            BIN_DIR="src-tauri/bin/darwin"
+            ;;
+          linux)
+            PLATFORM="linux-x86_64"
+            BIN_DIR="src-tauri/bin/linux"
+            ;;
+          *)
+            echo "Unsupported platform: $OS"
+            exit 1
+            ;;
+        esac
+
+        # Create tarball
+        BUNDLE_NAME="ykman-${{ inputs.version }}-${PLATFORM}.tar.gz"
+        tar -czf "$BUNDLE_NAME" -C "$BIN_DIR" ykman-bundle
+
+        echo "bundle-path=$BUNDLE_NAME" >> $GITHUB_OUTPUT
+        echo "Created: $BUNDLE_NAME ($(du -h $BUNDLE_NAME | cut -f1))"
