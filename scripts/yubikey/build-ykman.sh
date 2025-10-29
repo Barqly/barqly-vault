@@ -10,9 +10,9 @@ set -e  # Exit on any error
 # Configuration
 YKMAN_VERSION="${1:-5.8.0}"  # Default to 5.8.0 if not specified
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-BUILD_DIR="$PROJECT_ROOT/build"
-BIN_DIR="$PROJECT_ROOT/bin"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+BUILD_DIR="$PROJECT_ROOT/scripts/build"
+BIN_DIR="$PROJECT_ROOT/src-tauri/bin"
 
 # Colors for output
 RED='\033[0;31m'
