@@ -64,10 +64,23 @@ detect_platform() {
         darwin)
             PLATFORM="darwin"
             PLATFORM_NAME="macOS"
+            VENV_ACTIVATE="venv/bin/activate"
+            CHECKSUM_CMD="shasum -a 256"
+            BINARY_EXT=""
             ;;
         linux)
             PLATFORM="linux"
             PLATFORM_NAME="Linux"
+            VENV_ACTIVATE="venv/bin/activate"
+            CHECKSUM_CMD="sha256sum"
+            BINARY_EXT=""
+            ;;
+        mingw*|msys*|cygwin*)
+            PLATFORM="windows"
+            PLATFORM_NAME="Windows"
+            VENV_ACTIVATE="venv/Scripts/activate"
+            CHECKSUM_CMD="sha256sum"
+            BINARY_EXT=".exe"
             ;;
         *)
             print_error "Unsupported OS: $os"
@@ -106,7 +119,7 @@ setup_venv() {
     python3 -m venv venv
 
     # Activate virtual environment
-    source venv/bin/activate
+    source "$VENV_ACTIVATE"
 
     # Upgrade pip
     pip install --upgrade pip setuptools wheel
@@ -150,9 +163,15 @@ build_ykman() {
 
     # Modify spec for ARM64 instead of universal2 (for Apple Silicon)
     local arch=$(uname -m)
-    if [ "$arch" = "arm64" ]; then
+    if [ "$PLATFORM" = "darwin" ] && [ "$arch" = "arm64" ]; then
         print_info "Modifying spec for ARM64 architecture..."
         sed -i.bak 's/target_arch="universal2"/target_arch="arm64"/' ykman.spec
+    fi
+
+    # Remove target_arch on Windows (not supported)
+    if [ "$PLATFORM" = "windows" ]; then
+        print_info "Removing target_arch for Windows build..."
+        sed -i.bak '/target_arch=/d' ykman.spec
     fi
 
     # Build with PyInstaller using official spec
@@ -170,7 +189,7 @@ test_binary() {
     print_info "Testing built binary..."
 
     # With official spec, binary is in dist/ykman/ directory
-    local binary_path="$BUILD_DIR/yubikey-manager/dist/ykman/ykman"
+    local binary_path="$BUILD_DIR/yubikey-manager/dist/ykman/ykman${BINARY_EXT}"
 
     if [ ! -f "$binary_path" ]; then
         print_error "Binary not found at expected location: $binary_path"
@@ -182,7 +201,7 @@ test_binary() {
     print_info "Built binary version: $version"
 
     # Calculate checksum
-    local checksum=$(shasum -a 256 "$binary_path" | cut -d' ' -f1)
+    local checksum=$($CHECKSUM_CMD "$binary_path" | cut -d' ' -f1)
     print_info "Binary SHA256: $checksum"
 
     BINARY_SHA256="$checksum"
@@ -216,15 +235,25 @@ install_binary() {
     print_info "Copying ykman bundle..."
     cp -R "$BUILD_DIR/yubikey-manager/dist/ykman" "$target_dir/ykman-bundle"
 
-    # Create a wrapper script that calls the actual binary
-    print_info "Creating wrapper script..."
-    cat > "$target_dir/ykman" << 'EOF'
+    # Create a platform-specific wrapper script that calls the actual binary
+    if [ "$PLATFORM" = "windows" ]; then
+        print_info "Creating Windows wrapper script..."
+        cat > "$target_dir/ykman.bat" << 'EOF'
+@echo off
+REM Wrapper script for ykman on Windows
+set SCRIPT_DIR=%~dp0
+"%SCRIPT_DIR%ykman-bundle\ykman.exe" %*
+EOF
+    else
+        print_info "Creating Unix wrapper script..."
+        cat > "$target_dir/ykman" << 'EOF'
 #!/bin/bash
 # Wrapper script for ykman
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 exec "$SCRIPT_DIR/ykman-bundle/ykman" "$@"
 EOF
-    chmod +x "$target_dir/ykman"
+        chmod +x "$target_dir/ykman"
+    fi
 
     print_info "Binary installed successfully"
 }
@@ -310,10 +339,18 @@ main() {
 
     # Test installed binary
     print_info "Testing installed binary..."
-    if "$BIN_DIR/$PLATFORM/ykman" --version; then
-        print_info "Installation verified successfully!"
+    if [ "$PLATFORM" = "windows" ]; then
+        if cmd //c "$BIN_DIR/$PLATFORM/ykman.bat" --version; then
+            print_info "Installation verified successfully!"
+        else
+            print_warning "Installed binary test failed - may need dependencies"
+        fi
     else
-        print_warning "Installed binary test failed - may need dependencies"
+        if "$BIN_DIR/$PLATFORM/ykman" --version; then
+            print_info "Installation verified successfully!"
+        else
+            print_warning "Installed binary test failed - may need dependencies"
+        fi
     fi
 }
 

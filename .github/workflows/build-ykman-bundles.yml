@@ -1,6 +1,6 @@
 name: Build ykman Bundles
 
-# Manual trigger to build ykman for Linux and Windows
+# Manual trigger to build ykman for all platforms (macOS, Linux, Windows)
 on:
   workflow_dispatch:
     inputs:
@@ -40,6 +40,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libpcsclite-dev swig
 
+      - name: Install Windows dependencies
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          # Git Bash is already available
+          # Python 3.12 is set up above
+          echo "Windows dependencies ready (Git Bash + Python)"
+
       - name: Build ykman (macOS)
         if: matrix.platform == 'darwin'
         run: |
@@ -56,21 +64,8 @@ jobs:
         if: matrix.platform == 'windows'
         shell: bash
         run: |
-          # Adapt build script for Windows
-          echo "Building ykman on Windows..."
-
-          # Install dependencies
-          pip install pyinstaller yubikey-manager==${{ github.event.inputs.version }}
-
-          # Download spec file from Yubico
-          curl -L "https://raw.githubusercontent.com/Yubico/yubikey-manager/${{ github.event.inputs.version }}/ykman.spec" -o ykman.spec
-
-          # Build with PyInstaller
-          pyinstaller ykman.spec
-
-          # Create bundle directory structure
-          mkdir -p src-tauri/bin/windows/ykman-bundle
-          cp -r dist/ykman/* src-tauri/bin/windows/ykman-bundle/
+          chmod +x scripts/yubikey/build-ykman.sh
+          ./scripts/yubikey/build-ykman.sh ${{ github.event.inputs.version }}
 
       - name: Package ykman bundle
         shell: bash

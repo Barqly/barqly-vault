@@ -18,14 +18,24 @@ This will:
 
 ### Build ykman from source
 ```bash
-# Activate the virtual environment
-source .venv-yubikey/bin/activate
+# Build ykman for current platform (macOS, Linux, or Windows)
+./scripts/yubikey/build-ykman.sh [version]
 
-# Build ykman
-./scripts/yubikey/build-ykman.sh
+# Example with specific version
+./scripts/yubikey/build-ykman.sh 5.8.0
 ```
 
-This creates a standalone ykman binary at `bin/darwin/ykman` (or appropriate platform).
+This script:
+- Auto-detects the current platform (macOS/Linux/Windows)
+- Clones the yubikey-manager repository
+- Builds a standalone binary using PyInstaller
+- Creates platform-appropriate wrapper (bash script or .bat file)
+- Places the bundle in `bin/{platform}/ykman-bundle/`
+
+**Platform Support:**
+- ✅ macOS (Intel & ARM64)
+- ✅ Linux (x86_64)
+- ✅ Windows (x86_64 via Git Bash)
 
 ### Download age-plugin-yubikey
 ```bash
@@ -49,9 +59,18 @@ bin/
 ├── darwin/
 │   ├── age                 # Downloaded age CLI binary
 │   ├── age-plugin-yubikey  # Downloaded binary
-│   ├── ykman               # Wrapper script
-│   └── ykman-bundle/       # PyInstaller bundle
-├── linux/                  # Linux binaries (when built)
+│   ├── ykman               # Wrapper script (bash)
+│   └── ykman-bundle/       # PyInstaller bundle directory
+├── linux/
+│   ├── age
+│   ├── age-plugin-yubikey
+│   ├── ykman               # Wrapper script (bash)
+│   └── ykman-bundle/
+├── windows/
+│   ├── age.exe
+│   ├── age-plugin-yubikey.exe
+│   ├── ykman.bat           # Wrapper script (batch)
+│   └── ykman-bundle/
 └── checksums.json          # SHA256 checksums for verification
 ```
 
@@ -96,9 +115,22 @@ For production releases, these binaries will be included in the Tauri bundle.
 
 ## CI/CD Integration
 
-GitHub Actions will use these scripts to build binaries for all platforms:
-- macOS (Intel & ARM64)
-- Windows (x64)
-- Linux (x64)
+GitHub Actions workflows automatically build binaries for all platforms:
 
-See `.github/workflows/build-binaries.yml` (to be created).
+### ykman Builds
+Workflow: `.github/workflows/build-ykman-bundles.yml`
+- Trigger: Manual workflow dispatch
+- Platforms: macOS, Linux (Ubuntu 22.04), Windows
+- Uses the unified `build-ykman.sh` script for all platforms
+
+### age & age-plugin-yubikey Downloads
+These are downloaded from official sources using platform-specific download scripts.
+
+**Testing Locally:**
+```bash
+# Test script syntax
+bash -n scripts/yubikey/build-ykman.sh
+
+# Test build on your platform
+./scripts/yubikey/build-ykman.sh 5.8.0
+```
