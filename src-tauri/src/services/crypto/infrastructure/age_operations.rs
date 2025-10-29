@@ -328,13 +328,26 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
             CryptoError::EncryptionFailed(format!("Failed to start age CLI: {e}"))
         })?;
 
-    // Write data to stdin
-    if let Some(mut stdin) = child.stdin.take() {
-        trace!("Writing data to age CLI stdin");
-        stdin.write_all(data).map_err(|e| {
+    // Write data to stdin in a separate thread to avoid deadlock
+    // This prevents the issue where writing > 65KB to stdin blocks while
+    // age CLI is trying to write to stdout, causing both to deadlock
+    let stdin = child.stdin.take().ok_or_else(|| {
+        error!("Failed to get stdin handle for age CLI process");
+        CryptoError::EncryptionFailed("Could not write to age CLI".to_string())
+    })?;
+
+    trace!("Writing data to age CLI stdin in separate thread");
+
+    // Clone data for the thread (age encryption typically handles reasonable file sizes)
+    let data_vec = data.to_vec();
+
+    // Spawn thread to write stdin concurrently
+    let stdin_thread = std::thread::spawn(move || -> Result<()> {
+        let mut stdin = stdin;
+        stdin.write_all(&data_vec).map_err(|e| {
             error!(
                 error = %e,
-                data_size = data.len(),
+                data_size = data_vec.len(),
                 "Failed to write data to age CLI stdin"
             );
             CryptoError::IoError(e)
@@ -342,14 +355,12 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
 
         // Close stdin to signal end of input
         drop(stdin);
-    } else {
-        error!("Failed to get stdin handle for age CLI process");
-        return Err(CryptoError::EncryptionFailed(
-            "Could not write to age CLI".to_string(),
-        ));
-    }
+        trace!("Stdin write completed and closed");
+        Ok(())
+    });
 
-    // Wait for process and collect output
+    // Wait for process and collect output while stdin is being written concurrently
+    // wait_with_output() internally reads stdout/stderr preventing deadlock
     let output = child.wait_with_output().map_err(|e| {
         error!(
             error = %e,
@@ -357,6 +368,18 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
         );
         CryptoError::EncryptionFailed(format!("Age CLI process failed: {e}"))
     })?;
+
+    // Ensure stdin write thread completed successfully
+    stdin_thread
+        .join()
+        .map_err(|_| CryptoError::EncryptionFailed("Stdin write thread panicked".to_string()))?
+        .map_err(|e| {
+            error!(
+                error = ?e,
+                "Stdin write thread failed"
+            );
+            e
+        })?;
 
     debug!(
         exit_status = %output.status,
@@ -527,13 +550,26 @@ pub fn decrypt_data_cli(encrypted_data: &[u8]) -> Result<Vec<u8>> {
             CryptoError::DecryptionFailed(format!("Failed to start age CLI: {e}"))
         })?;
 
-    // Write encrypted data to stdin
-    if let Some(mut stdin) = child.stdin.take() {
-        trace!("Writing encrypted data to age CLI stdin");
-        stdin.write_all(encrypted_data).map_err(|e| {
+    // Write encrypted data to stdin in a separate thread to avoid deadlock
+    // This prevents the issue where writing > 65KB to stdin blocks while
+    // age CLI is trying to write to stdout, causing both to deadlock
+    let stdin = child.stdin.take().ok_or_else(|| {
+        error!("Failed to get stdin handle for age CLI decryption process");
+        CryptoError::DecryptionFailed("Could not write to age CLI".to_string())
+    })?;
+
+    trace!("Writing encrypted data to age CLI stdin in separate thread");
+
+    // Clone data for the thread (age decryption typically handles reasonable file sizes)
+    let data_vec = encrypted_data.to_vec();
+
+    // Spawn thread to write stdin concurrently
+    let stdin_thread = std::thread::spawn(move || -> Result<()> {
+        let mut stdin = stdin;
+        stdin.write_all(&data_vec).map_err(|e| {
             error!(
                 error = %e,
-                encrypted_size = encrypted_data.len(),
+                encrypted_size = data_vec.len(),
                 "Failed to write encrypted data to age CLI stdin"
             );
             CryptoError::IoError(e)
@@ -541,14 +577,12 @@ pub fn decrypt_data_cli(encrypted_data: &[u8]) -> Result<Vec<u8>> {
 
         // Close stdin to signal end of input
         drop(stdin);
-    } else {
-        error!("Failed to get stdin handle for age CLI decryption process");
-        return Err(CryptoError::DecryptionFailed(
-            "Could not write to age CLI".to_string(),
-        ));
-    }
+        trace!("Stdin write completed and closed");
+        Ok(())
+    });
 
-    // Wait for process and collect output
+    // Wait for process and collect output while stdin is being written concurrently
+    // wait_with_output() internally reads stdout/stderr preventing deadlock
     let output = child.wait_with_output().map_err(|e| {
         error!(
             error = %e,
@@ -556,6 +590,18 @@ pub fn decrypt_data_cli(encrypted_data: &[u8]) -> Result<Vec<u8>> {
         );
         CryptoError::DecryptionFailed(format!("Age CLI decryption process failed: {e}"))
     })?;
+
+    // Ensure stdin write thread completed successfully
+    stdin_thread
+        .join()
+        .map_err(|_| CryptoError::DecryptionFailed("Stdin write thread panicked".to_string()))?
+        .map_err(|e| {
+            error!(
+                error = ?e,
+                "Stdin write thread failed"
+            );
+            e
+        })?;
 
     debug!(
         exit_status = %output.status,
