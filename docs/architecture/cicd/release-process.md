@@ -14,6 +14,17 @@ Barqly Vault follows semantic versioning with specific pre-release suffixes:
 - **Purpose**: Development checkpoints and milestones
 - **Triggers**: No builds, no CI/CD pipeline execution
 - **Use Case**: Internal testing, feature completion markers, commit snapshots
+- **Cost**: $0 (no automation)
+
+### Test Tags (CI/CD Validation Without Notarization)
+- **Format**: `v{MAJOR}.{MINOR}.{PATCH}-test.{INCREMENT}`
+- **Examples**: `v0.2.0-test.1`, `v0.2.0-test.2`
+- **Purpose**: Validate CI/CD pipeline and binary bundling without expensive notarization
+- **Triggers**: Full cross-platform builds (macOS, Windows, Linux)
+- **Skips**: macOS DMG notarization (saves $10-20 per build)
+- **Use Case**: Testing binary integration, CI/CD changes, platform-specific issues
+- **Cost**: ~20-25 minutes build time (no notarization overhead)
+- **Cleanup**: Delete after testing (`gh release delete v0.2.0-test.1 --yes`)
 
 ### Beta Tags (Full Build + Certification)
 - **Format**: `v{MAJOR}.{MINOR}.{PATCH}-beta.{INCREMENT}`
@@ -21,6 +32,7 @@ Barqly Vault follows semantic versioning with specific pre-release suffixes:
 - **Purpose**: Testing-ready releases with full platform builds
 - **Triggers**: Complete CI/CD pipeline including macOS DMG notarization
 - **Use Case**: User testing, QA validation, pre-production verification
+- **Cost**: ~30-35 minutes build time (includes notarization)
 
 ### Production Tags
 - **Format**: `v{MAJOR}.{MINOR}.{PATCH}`
@@ -28,6 +40,7 @@ Barqly Vault follows semantic versioning with specific pre-release suffixes:
 - **Purpose**: Public releases for end users
 - **Triggers**: Manual promotion from beta releases
 - **Use Case**: Official releases, public distribution
+- **Cost**: $0 (reuses beta artifacts)
 
 ## Standard Release Process (Method 1: Beta → Production Promotion)
 
@@ -155,10 +168,16 @@ The `make publish-prod` command automatically updates:
 ## Quick Reference Commands
 
 ```bash
-# Development checkpoint
+# Development checkpoint (no build)
 git tag v0.3.0-alpha.1 && git push origin v0.3.0-alpha.1
 
-# Create beta (triggers full build)
+# Test build (full build, skip notarization, saves costs)
+git tag v0.3.0-test.1 && git push origin v0.3.0-test.1
+gh run watch  # Monitor build
+gh release delete v0.3.0-test.1 --yes  # Cleanup after testing
+git push --delete origin v0.3.0-test.1
+
+# Beta build (full build with notarization)
 git tag v0.3.0-beta.1 && git push origin v0.3.0-beta.1
 
 # List available betas for promotion

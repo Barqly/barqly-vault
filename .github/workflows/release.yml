@@ -3,11 +3,13 @@ name: Release Pipeline
 on:
   push:
     tags:
-      - 'v*.*.*-beta.*'  # Incremental beta format: v1.0.0-beta.1, v1.0.0-beta.2, etc.
+      - 'v*.*.*-beta.*'  # Beta releases: v1.0.0-beta.1, v1.0.0-beta.2, etc.
+      - 'v*.*.*-test.*'  # Test builds: v1.0.0-test.1 (skips notarization, saves costs)
       # This ensures:
-      # - Alpha tags (checkpoints) don't trigger builds
-      # - Production tags (from promotion) don't trigger builds
-      # - Only intentional beta testing triggers CI/CD
+      # - Alpha tags (v*.*.*-alpha.*) don't trigger builds (checkpoints only)
+      # - Production tags (v*.*.*) don't trigger builds (manual promotion only)
+      # - Beta tags trigger full CI/CD with notarization
+      # - Test tags trigger full CI/CD WITHOUT notarization (for testing)
   
   workflow_dispatch:
     inputs:
@@ -161,58 +163,17 @@ jobs:
       - name: Check Platform Build Condition
         id: should_build
         run: |
-          # For tag pushes, check if it's a test tag with platform specifications
+          # For tag pushes, build all platforms (beta and test tags)
           if [[ "${{ github.event_name }}" == "push" ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
             echo "🏷️ Processing tag: $TAG"
-            
-            # Check if this is a beta tag with selective platforms
-            if [[ "$TAG" == *"-beta-"* ]]; then
-              echo "🧪 Beta tag with platform selection detected..."
-              
-              # Extract platform list after "-beta-" if present (new format doesn't support platform selection in tags)
-              if [[ "$TAG" =~ -beta-(.+)$ ]]; then
-                PLATFORMS="${BASH_REMATCH[1]}"
-                echo "📋 Specified platforms: $PLATFORMS"
-                
-                # Check if current platform is in the list
-                case "${{ matrix.platform_id }}" in
-                  macos_intel|macos_arm)
-                    if [[ "$PLATFORMS" == *"mac"* ]]; then
-                      echo "build=true" >> $GITHUB_OUTPUT
-                      echo "✅ Building macOS (specified in test tag)"
-                    else
-                      echo "build=false" >> $GITHUB_OUTPUT
-                      echo "⏭️ Skipping macOS (not specified in test tag)"
-                    fi
-                    ;;
-                  linux)
-                    if [[ "$PLATFORMS" == *"linux"* ]]; then
-                      echo "build=true" >> $GITHUB_OUTPUT
-                      echo "✅ Building Linux (specified in test tag)"
-                    else
-                      echo "build=false" >> $GITHUB_OUTPUT
-                      echo "⏭️ Skipping Linux (not specified in test tag)"
-                    fi
-                    ;;
-                  windows)
-                    if [[ "$PLATFORMS" == *"win"* ]]; then
-                      echo "build=true" >> $GITHUB_OUTPUT
-                      echo "✅ Building Windows (specified in test tag)"
-                    else
-                      echo "build=false" >> $GITHUB_OUTPUT
-                      echo "⏭️ Skipping Windows (not specified in test tag)"
-                    fi
-                    ;;
-                esac
-              else
-                # Beta tag without platform spec - build all platforms
-                echo "build=true" >> $GITHUB_OUTPUT
-                echo "✅ Building (beta release - all platforms)"
-              fi
+            echo "build=true" >> $GITHUB_OUTPUT
+
+            if [[ "$TAG" == *"-beta."* ]]; then
+              echo "✅ Building (beta release - all platforms with notarization)"
+            elif [[ "$TAG" == *"-test."* ]]; then
+              echo "✅ Building (test release - all platforms, skipping notarization)"
             else
-              # Regular tag - build everything
-              echo "build=true" >> $GITHUB_OUTPUT
               echo "✅ Building (production tag - all platforms)"
             fi
           # For workflow_dispatch, check selective build settings
@@ -338,7 +299,10 @@ jobs:
         shell: bash
       
       - name: Notarize macOS DMG
-        if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
+        if: |
+          matrix.platform == 'macos-latest' &&
+          steps.should_build.outputs.build == 'true' &&
+          !contains(github.ref, '-test.')
         uses: ./.github/actions/notarize-macos
         with:
           dmg-path: ${{ steps.find-dmg.outputs.dmg-path }}
