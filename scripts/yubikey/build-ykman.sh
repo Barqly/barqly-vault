@@ -258,59 +258,6 @@ EOF
     print_info "Binary installed successfully"
 }
 
-# Update checksums file
-update_checksums() {
-    print_info "Updating checksums.json..."
-
-    local checksums_file="$BIN_DIR/checksums.json"
-    local temp_file="$BIN_DIR/checksums.json.tmp"
-
-    # Read existing checksums if file exists
-    if [ -f "$checksums_file" ]; then
-        # Update existing file (keeping age-plugin-yubikey)
-        python3 -c "
-import json
-import sys
-
-try:
-    with open('$checksums_file', 'r') as f:
-        data = json.load(f)
-except:
-    data = {}
-
-# Add or update ykman entry
-data['ykman'] = {
-    'version': '$YKMAN_VERSION',
-    'updated': '$(date -u +%Y-%m-%dT%H:%M:%SZ)',
-    'build_method': 'pyinstaller',
-    'platform': '$PLATFORM',
-    'sha256': '$BINARY_SHA256',
-    'source_url': 'https://github.com/Yubico/yubikey-manager/tree/$YKMAN_VERSION'
-}
-
-with open('$temp_file', 'w') as f:
-    json.dump(data, f, indent=2)
-"
-        mv "$temp_file" "$checksums_file"
-    else
-        # Create new file
-        cat > "$checksums_file" << EOF
-{
-  "ykman": {
-    "version": "$YKMAN_VERSION",
-    "updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-    "build_method": "pyinstaller",
-    "platform": "$PLATFORM",
-    "sha256": "$BINARY_SHA256",
-    "source_url": "https://github.com/Yubico/yubikey-manager/tree/$YKMAN_VERSION"
-  }
-}
-EOF
-    fi
-
-    print_info "Checksums file updated"
-}
-
 # Cleanup
 cleanup() {
     print_info "Cleaning up build directory..."
@@ -329,8 +276,8 @@ main() {
     build_ykman
     test_binary
     install_binary
-    update_checksums
     cleanup
+    # Note: Checksums calculated during GitHub Release creation (download-all-binaries.sh)
 
     print_info "✅ Build and installation complete!"
     print_info "Binary location: $BIN_DIR/$PLATFORM/ykman"
