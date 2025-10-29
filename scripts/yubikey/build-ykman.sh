@@ -121,8 +121,8 @@ setup_venv() {
     # Activate virtual environment
     source "$VENV_ACTIVATE"
 
-    # Upgrade pip
-    pip install --upgrade pip setuptools wheel
+    # Upgrade pip (use python -m pip for better Windows compatibility)
+    python -m pip install --upgrade pip setuptools wheel
 
     print_info "Virtual environment ready"
 }
