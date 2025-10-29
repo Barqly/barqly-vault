@@ -210,7 +210,12 @@ impl ValidationHelper {
                 dirs.document_dir()
                     .and_then(|d| d.to_str().map(String::from))
             })
-            .unwrap_or_else(|| format!("{}/Documents", home_dir));
+            .unwrap_or_else(|| {
+                std::path::PathBuf::from(&home_dir)
+                    .join("Documents")
+                    .to_string_lossy()
+                    .to_string()
+            });
 
         let path_str = canonical_path.to_string_lossy();
 
