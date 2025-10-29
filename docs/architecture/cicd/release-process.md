@@ -1,8 +1,62 @@
 # Barqly Vault Release Process
 
-**Created**: 2025-09-02  
-**Status**: Active Process Documentation  
+**Created**: 2025-09-02
+**Updated**: 2025-10-29 (Added binary dependency management)
+**Status**: Active Process Documentation
 **Author**: Release Engineering
+
+## Binary Dependency Setup (One-Time per Version Update)
+
+Barqly Vault bundles external binaries (age, age-plugin-yubikey, ykman). These are created **once** and reused across all app releases.
+
+### When to Create Dependency Release
+
+- **Initial R2 setup**: First time bundling binaries
+- **Version updates**: When updating age/age-plugin/ykman versions (every 3-6 months)
+- **Platform additions**: When adding new platforms
+
+### Step-by-Step Process
+
+```bash
+# 1. Download age and age-plugin-yubikey for all platforms (2 minutes)
+./scripts/cicd/download-all-binaries.sh
+
+# 2. Build ykman for all platforms using CI (8-10 minutes)
+gh workflow run build-ykman-bundles.yml -f version=5.8.0
+gh run watch  # Monitor build
+
+# 3. Download ykman artifacts from CI
+gh run list --workflow=build-ykman-bundles.yml --limit 1  # Get run ID
+gh run download <run-id> --dir dist/binaries
+mv dist/binaries/*/*.tar.gz dist/binaries/  # Flatten structure
+
+# 4. Verify all binaries present (should have 9 files + checksums.txt)
+ls -lh dist/binaries/
+# Expected: 4 age, 4 age-plugin-yubikey, 3 ykman (one per platform)
+
+# 5. Create GitHub Release with all binaries
+cd dist/binaries
+gh release create barqly-vault-dependencies-r2 \
+  age-* age-plugin-yubikey-* ykman-* checksums.txt \
+  --title "Barqly Vault Binary Dependencies R2" \
+  --notes "Binary dependencies for R2 release.
+
+**Versions:**
+- age: v1.2.1
+- age-plugin-yubikey: v0.5.0
+- ykman: v5.8.0
+
+**Platforms:** macOS (Intel + ARM), Linux (x86_64), Windows (x86_64)
+
+**Verification:** See checksums.txt for SHA256 hashes.
+
+**Note:** This release is for CI/CD use only." \
+  --prerelease
+```
+
+**Result**: Release `barqly-vault-dependencies-r2` exists with all binaries. This is used by **every** app release going forward.
+
+---
 
 ## Release Naming Convention
 
