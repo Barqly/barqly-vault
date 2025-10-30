@@ -142,7 +142,10 @@ const DecryptPage: React.FC = () => {
                   operation_id: 'decrypt-init',
                   progress: 0,
                   message: 'Initializing decryption...',
+                  details: null,
                   timestamp: new Date().toISOString(),
+                  estimated_time_remaining: null,
+                  is_complete: false,
                 }
               }
               onCancel={!progress || progress.progress < 90 ? handleReset : undefined}

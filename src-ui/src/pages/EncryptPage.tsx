@@ -143,7 +143,10 @@ const EncryptPage: React.FC = () => {
                     operation_id: 'encrypt-init',
                     progress: 0,
                     message: 'Initializing encryption...',
+                    details: null,
                     timestamp: new Date().toISOString(),
+                    estimated_time_remaining: null,
+                    is_complete: false,
                   }
                 }
                 onCancel={!progress || progress.progress < 90 ? handleReset : undefined}
