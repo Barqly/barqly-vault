@@ -165,7 +165,10 @@ export const useDecryptionWorkflow = () => {
                   id: keyInfo.id,
                   label: keyInfo.label,
                   type: 'YubiKey',
-                  data: keyInfo.key_type.data as { serial: string; firmware_version?: string | null },
+                  data: keyInfo.key_type.data as {
+                    serial: string;
+                    firmware_version?: string | null;
+                  },
                   lifecycle_status: keyInfo.lifecycle_status,
                   created_at: keyInfo.created_at,
                   last_used: keyInfo.last_used,
@@ -197,7 +200,10 @@ export const useDecryptionWorkflow = () => {
                     id: keyInfo.id,
                     label: keyInfo.label,
                     type: 'YubiKey',
-                    data: keyInfo.key_type.data as { serial: string; firmware_version?: string | null },
+                    data: keyInfo.key_type.data as {
+                      serial: string;
+                      firmware_version?: string | null;
+                    },
                     lifecycle_status: keyInfo.lifecycle_status,
                     created_at: keyInfo.created_at,
                     last_used: keyInfo.last_used,

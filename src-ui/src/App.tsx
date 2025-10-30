@@ -13,7 +13,6 @@ const VaultHub = lazy(() => import('./pages/VaultHub'));
 const ManageKeysPage = lazy(() => import('./pages/ManageKeysPage'));
 const EncryptPage = lazy(() => import('./pages/EncryptPage'));
 const DecryptPage = lazy(() => import('./pages/DecryptPage'));
-const YubiKeySetupPage = lazy(() => import('./pages/YubiKeySetupPage'));
 
 /**
  * Smart Landing - Determines initial route based on setup state
@@ -101,14 +100,6 @@ function AppRoutes(): ReactElement {
           element={
             <MainLayout>
               <ManageKeysPage />
-            </MainLayout>
-          }
-        />
-        <Route
-          path="/yubikey-setup"
-          element={
-            <MainLayout>
-              <YubiKeySetupPage />
             </MainLayout>
           }
         />
