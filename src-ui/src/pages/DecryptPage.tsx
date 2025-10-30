@@ -44,7 +44,6 @@ const DecryptPage: React.FC = () => {
     // Key discovery state
     isDiscoveringKeys: _isDiscoveringKeys,
     availableKeys,
-    suggestedKeys,
     keyAttempts,
 
     // Recovery state
@@ -202,7 +201,6 @@ const DecryptPage: React.FC = () => {
                   detectedVaultId={detectedVaultId}
                   isRecoveryMode={isRecoveryMode}
                   availableKeysForDiscovery={availableKeys}
-                  suggestedKeys={suggestedKeys}
                   keyAttempts={keyAttempts}
                   willRestoreManifest={willRestoreManifest}
                   onImportKey={() => {}}

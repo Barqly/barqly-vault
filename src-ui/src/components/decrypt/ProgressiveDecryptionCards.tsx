@@ -27,7 +27,6 @@ interface ProgressiveDecryptionCardsProps {
   detectedVaultId?: string | null;
   isRecoveryMode?: boolean;
   availableKeysForDiscovery?: VaultKey[];
-  suggestedKeys?: VaultKey[];
   keyAttempts?: Map<string, boolean>;
   willRestoreManifest?: boolean;
   onImportKey?: () => void;
@@ -60,7 +59,6 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
   detectedVaultId = null,
   isRecoveryMode = false,
   availableKeysForDiscovery = [],
-  suggestedKeys = [],
   keyAttempts = new Map(),
   willRestoreManifest: _willRestoreManifest = false,
   onImportKey = () => {},
