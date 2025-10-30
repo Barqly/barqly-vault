@@ -75,6 +75,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
         const initResult = await commands.initYubikey(
           selectedKey.serial,
           pin,
+          pin, // recoveryPin - use same as PIN
           label || `YubiKey-${selectedKey.serial}`,
         );
         if (initResult.status === 'error') {
@@ -96,16 +97,10 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
         throw new Error('YubiKey is already registered');
       }
 
-      // Store result and recovery code for display if present
+      // Store result and mark complete
       setInitResult(result);
-      if (result.recovery_code) {
-        setRecoveryCode(result.recovery_code);
-        setShowRecoveryWarning(true);
-        setOperation('recovery');
-      } else {
-        setOperation('complete');
-        onComplete?.(result);
-      }
+      setOperation('complete');
+      onComplete?.(result);
     } catch (err: any) {
       logger.error('YubiKeyStreamlined', 'Failed to setup YubiKey', err as Error);
       setError(err.message || 'Failed to setup YubiKey');

@@ -244,7 +244,6 @@ const ProgressiveDecryptionCards: React.FC<ProgressiveDecryptionCardsProps> = ({
                     autoFocus={currentStep === 2}
                     includeAllKeys={true}
                     recoveryKeys={availableKeysForDiscovery}
-                    isRecoveryMode={true}
                   />
                 </div>
 

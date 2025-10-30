@@ -1403,9 +1403,9 @@ export type YubiKeyVaultResult = { success: boolean; key_reference: VaultKey; re
 
 /** tauri-specta globals **/
 
-// @ts-ignore - Unused imports in generated code
 import {
 	invoke as TAURI_INVOKE,
+	// @ts-expect-error - Unused import in generated code
 	Channel as TAURI_CHANNEL,
 } from "@tauri-apps/api/core";
 import * as TAURI_API_EVENT from "@tauri-apps/api/event";
