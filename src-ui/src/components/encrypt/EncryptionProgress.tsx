@@ -1,10 +1,10 @@
 import React from 'react';
 import { Shield, Lock, FolderOpen, CheckCircle, Loader2 } from 'lucide-react';
 import { ProgressBar } from '../ui/progress-bar';
-import { ProgressUpdate } from '../../bindings';
+import { GetProgressResponse } from '../../bindings';
 
 interface EncryptionProgressProps {
-  progress: ProgressUpdate;
+  progress: GetProgressResponse;
   onCancel?: () => void;
 }
 

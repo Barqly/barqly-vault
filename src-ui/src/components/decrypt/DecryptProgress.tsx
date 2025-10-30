@@ -1,10 +1,10 @@
 import React from 'react';
 import { Shield, Lock, FolderOpen, CheckCircle, Loader2, Fingerprint } from 'lucide-react';
 import { ProgressBar } from '../ui/progress-bar';
-import { ProgressUpdate } from '../../bindings';
+import { GetProgressResponse } from '../../bindings';
 
 interface DecryptProgressProps {
-  progress: ProgressUpdate;
+  progress: GetProgressResponse;
   onCancel?: () => void;
   selectedKeyType?: 'YubiKey' | 'Passphrase' | null;
 }
