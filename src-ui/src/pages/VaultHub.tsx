@@ -55,7 +55,6 @@ const VaultHub: React.FC = () => {
 
     // Handlers
     handleSubmit,
-    handleClear,
     clearError,
     handleVaultSelect,
     handleDeleteVault,

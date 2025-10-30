@@ -311,7 +311,7 @@ export const useDecryptionWorkflow = () => {
         forceOverwrite: null, // First attempt - let backend detect conflict
       });
 
-      const result = await executeDecryptionWithProgress(decryptionInput, (progress) => {
+      const result = await executeDecryptionWithProgress(decryptionInput, () => {
         // Progress callback - no-op as progress is handled via state
       });
 
@@ -352,7 +352,7 @@ export const useDecryptionWorkflow = () => {
           });
 
           // Call backend API directly with explicit parameters
-          const retryResult = await executeDecryptionWithProgress(decryptionInput, (progress) => {
+          const retryResult = await executeDecryptionWithProgress(decryptionInput, () => {
             // Progress callback - no-op as progress is handled via state
           });
 
