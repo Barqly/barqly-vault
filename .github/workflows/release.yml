@@ -262,7 +262,11 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
-      
+
+      - name: Run sccache
+        if: steps.should_build.outputs.build == 'true'
+        uses: mozilla-actions/sccache-action@v0.0.7
+
       - name: Install dependencies (Ubuntu only)
         if: contains(matrix.platform, 'ubuntu') && steps.should_build.outputs.build == 'true'
         run: |
@@ -330,6 +334,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
+          SCCACHE_GHA_ENABLED: "true"
+          RUSTC_WRAPPER: "sccache"
         with:
           args: ${{ matrix.args }}
       
