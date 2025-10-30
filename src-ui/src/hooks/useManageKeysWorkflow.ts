@@ -1,12 +1,11 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import { useUI } from '../contexts/UIContext';
-import type { GlobalKey } from '../bindings';
 
 export type FilterType = 'all' | 'passphrase' | 'yubikey' | 'suspended';
 
 export const useManageKeysWorkflow = () => {
-  const { getGlobalKeys, refreshGlobalKeys, vaults } = useVault();
+  const { getGlobalKeys, refreshGlobalKeys } = useVault();
   const { keyViewMode, setKeyViewMode } = useUI();
 
   // Local state
