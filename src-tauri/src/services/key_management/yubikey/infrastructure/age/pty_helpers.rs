@@ -132,21 +132,21 @@ pub(super) async fn poll_for_process_completion(
                                     debug!("🕵️ DETECTIVE: CRLF bytes [\\r\\n] written to PTY master");
                                 });
                             }
-                            Err(e) => {
+                            Err(_e) => {
                                 log_sensitive!(dev_only: {
-                                    debug!("⚠️ TRACER: CRLF nudge flush failed: {e}");
+                                    debug!("⚠️ TRACER: CRLF nudge flush failed: {_e}");
                                 });
                                 log_sensitive!(dev_only: {
-                                    debug!("🚨 DETECTIVE: FLUSH ERROR - PTY may be broken: {e}");
+                                    debug!("🚨 DETECTIVE: FLUSH ERROR - PTY may be broken: {_e}");
                                 });
                             }
                         },
-                        Err(e) => {
+                        Err(_e) => {
                             log_sensitive!(dev_only: {
-                                debug!("⚠️ TRACER: CRLF nudge write failed: {e}");
+                                debug!("⚠️ TRACER: CRLF nudge write failed: {_e}");
                             });
                             log_sensitive!(dev_only: {
-                                debug!("🚨 DETECTIVE: WRITE ERROR - PTY connection may be lost: {e}");
+                                debug!("🚨 DETECTIVE: WRITE ERROR - PTY connection may be lost: {_e}");
                             });
                         }
                     }
