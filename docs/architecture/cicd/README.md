@@ -70,7 +70,7 @@ gh release create barqly-vault-dependencies \
 | Document | Purpose |
 |----------|---------|
 | **[src-tauri/bin/README.md](../../../src-tauri/bin/README.md)** | Binary architecture and GitHub Releases |
-| **[dependency-versions.md](../dependency-versions.md)** | Version pinning and update process |
+| **[dependency-versions.md](../dependency-versions.md)** | ⭐ **Current versions, SHA256 checksums, update process** |
 | **[R2 Implementation Plan](../../engineering/R2/r2-binary-dependency-integration-plan.md)** | Complete R2 binary integration |
 
 ---
