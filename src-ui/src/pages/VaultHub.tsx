@@ -148,7 +148,6 @@ const VaultHub: React.FC = () => {
               onDescriptionChange={setDescription}
               onSubmit={handleSubmit}
               onCancel={toggleCreateForm}
-              onClear={handleClear}
             />
           )}
 

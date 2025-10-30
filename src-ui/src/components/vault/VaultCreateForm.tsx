@@ -10,7 +10,6 @@ interface VaultCreateFormProps {
   onDescriptionChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
-  onClear: () => void;
 }
 
 /**
@@ -33,7 +32,6 @@ const VaultCreateForm: React.FC<VaultCreateFormProps> = ({
   onDescriptionChange,
   onSubmit,
   onCancel,
-  onClear,
 }) => {
   const firstFocusableRef = useRef<HTMLInputElement>(null);
   const lastFocusableRef = useRef<HTMLButtonElement>(null);
