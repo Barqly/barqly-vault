@@ -22,9 +22,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const [label, setLabel] = useState('');
-  const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const [initResult, setInitResult] = useState<StreamlinedYubiKeyInitResult | null>(null);
-  const [showRecoveryWarning, setShowRecoveryWarning] = useState(false);
 
   // Operation state
   const [operation, setOperation] = useState<'detect' | 'setup' | 'recovery' | 'complete'>(
