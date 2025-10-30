@@ -1,9 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { ChevronDown, Key } from 'lucide-react';
-import { KeyMetadata } from '../../bindings';
 
 export interface DropdownButtonProps {
-  selectedKey?: KeyMetadata;
+  selectedKey?: { label: string };
   loading: boolean;
   disabled: boolean;
   isOpen: boolean;

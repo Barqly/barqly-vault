@@ -6,8 +6,8 @@ export type ErrorVariant = 'default' | 'warning' | 'info' | 'security';
 export interface ParsedErrorInfo {
   message: string;
   code: ErrorCode | null;
-  details?: string;
-  recovery_guidance?: string;
+  details?: string | null;
+  recovery_guidance?: string | null;
   user_actionable: boolean;
 }
 

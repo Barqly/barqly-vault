@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import React from 'react';
 import { useFileDecryption } from './useFileDecryption';
-import type { CommandError } from '../bindings';
+import type { CommandError, VaultKey } from '../bindings';
 import { commands } from '../bindings';
 import { createCommandError } from '../lib/errors/command-error';
 import { confirm } from '@tauri-apps/plugin-dialog';
@@ -148,16 +148,30 @@ export const useDecryptionWorkflow = () => {
           const usableKeys = globalKeyCache.filter((k) => k.lifecycle_status !== 'destroyed');
 
           if (usableKeys.length > 0) {
-            // Transform GlobalKey to KeyReference format
-            const registeredKeys = usableKeys.map((keyInfo) => ({
-              id: keyInfo.id,
-              label: keyInfo.label,
-              type: keyInfo.key_type.type,
-              data: keyInfo.key_type.data,
-              lifecycle_status: keyInfo.lifecycle_status,
-              created_at: keyInfo.created_at,
-              last_used: keyInfo.last_used,
-            }));
+            // Transform GlobalKey to KeyReference format with proper type narrowing
+            const registeredKeys = usableKeys.map((keyInfo): VaultKey => {
+              if (keyInfo.key_type.type === 'Passphrase') {
+                return {
+                  id: keyInfo.id,
+                  label: keyInfo.label,
+                  type: 'Passphrase',
+                  data: keyInfo.key_type.data as { key_id: string },
+                  lifecycle_status: keyInfo.lifecycle_status,
+                  created_at: keyInfo.created_at,
+                  last_used: keyInfo.last_used,
+                };
+              } else {
+                return {
+                  id: keyInfo.id,
+                  label: keyInfo.label,
+                  type: 'YubiKey',
+                  data: keyInfo.key_type.data as { serial: string; firmware_version?: string | null },
+                  lifecycle_status: keyInfo.lifecycle_status,
+                  created_at: keyInfo.created_at,
+                  last_used: keyInfo.last_used,
+                };
+              }
+            });
             setAvailableKeys(registeredKeys);
             setSuggestedKeys(registeredKeys);
           } else if (!vaultContextInitialized) {
@@ -167,15 +181,29 @@ export const useDecryptionWorkflow = () => {
               const usableGlobalKeys = allKeysResult.data.filter(
                 (k) => k.lifecycle_status !== 'destroyed',
               );
-              const registeredKeys = usableGlobalKeys.map((keyInfo) => ({
-                id: keyInfo.id,
-                label: keyInfo.label,
-                type: keyInfo.key_type.type,
-                data: keyInfo.key_type.data,
-                lifecycle_status: keyInfo.lifecycle_status,
-                created_at: keyInfo.created_at,
-                last_used: keyInfo.last_used,
-              }));
+              const registeredKeys = usableGlobalKeys.map((keyInfo): VaultKey => {
+                if (keyInfo.key_type.type === 'Passphrase') {
+                  return {
+                    id: keyInfo.id,
+                    label: keyInfo.label,
+                    type: 'Passphrase',
+                    data: keyInfo.key_type.data as { key_id: string },
+                    lifecycle_status: keyInfo.lifecycle_status,
+                    created_at: keyInfo.created_at,
+                    last_used: keyInfo.last_used,
+                  };
+                } else {
+                  return {
+                    id: keyInfo.id,
+                    label: keyInfo.label,
+                    type: 'YubiKey',
+                    data: keyInfo.key_type.data as { serial: string; firmware_version?: string | null },
+                    lifecycle_status: keyInfo.lifecycle_status,
+                    created_at: keyInfo.created_at,
+                    last_used: keyInfo.last_used,
+                  };
+                }
+              });
               setAvailableKeys(registeredKeys);
               setSuggestedKeys(registeredKeys);
             } else {
@@ -214,16 +242,30 @@ export const useDecryptionWorkflow = () => {
       const usableKeys = globalKeyCache.filter((k) => k.lifecycle_status !== 'destroyed');
 
       if (usableKeys.length > 0) {
-        // Transform GlobalKey to KeyReference format
-        const registeredKeys = usableKeys.map((keyInfo) => ({
-          id: keyInfo.id,
-          label: keyInfo.label,
-          type: keyInfo.key_type.type,
-          data: keyInfo.key_type.data,
-          lifecycle_status: keyInfo.lifecycle_status,
-          created_at: keyInfo.created_at,
-          last_used: keyInfo.last_used,
-        }));
+        // Transform GlobalKey to KeyReference format with proper type narrowing
+        const registeredKeys = usableKeys.map((keyInfo): VaultKey => {
+          if (keyInfo.key_type.type === 'Passphrase') {
+            return {
+              id: keyInfo.id,
+              label: keyInfo.label,
+              type: 'Passphrase',
+              data: keyInfo.key_type.data as { key_id: string },
+              lifecycle_status: keyInfo.lifecycle_status,
+              created_at: keyInfo.created_at,
+              last_used: keyInfo.last_used,
+            };
+          } else {
+            return {
+              id: keyInfo.id,
+              label: keyInfo.label,
+              type: 'YubiKey',
+              data: keyInfo.key_type.data as { serial: string; firmware_version?: string | null },
+              lifecycle_status: keyInfo.lifecycle_status,
+              created_at: keyInfo.created_at,
+              last_used: keyInfo.last_used,
+            };
+          }
+        });
         setAvailableKeys(registeredKeys);
         setSuggestedKeys(registeredKeys);
       } else {

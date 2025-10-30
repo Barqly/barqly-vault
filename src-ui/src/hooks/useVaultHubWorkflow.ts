@@ -182,7 +182,10 @@ export const useVaultHubWorkflow = () => {
 
       try {
         // Add key to vault via backend
-        await commands.addKeyToVault({ vault_id: vaultId, key_id: draggedKeyId });
+        const result = await commands.attachKeyToVault({ vault_id: vaultId, key_id: draggedKeyId });
+        if (result.status === 'error') {
+          throw new Error(result.error.message);
+        }
         // Refresh to update cache
         await refreshVaults();
       } catch (error) {

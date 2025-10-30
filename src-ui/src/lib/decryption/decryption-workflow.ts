@@ -49,9 +49,8 @@ export const executeDecryption = async (
       // Preserve the backend error message for pattern matching in getUserFriendlyError()
       const backendMessage = result.error.message || 'Decryption failed';
 
-      logger.error('decryption-workflow', 'Backend returned error', {
+      logger.error('decryption-workflow', 'Backend returned error', new Error(backendMessage), {
         code: result.error.code,
-        message: backendMessage,
       });
 
       throw toCommandError(

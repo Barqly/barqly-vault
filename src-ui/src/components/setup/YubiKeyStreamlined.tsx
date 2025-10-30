@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Key, Shield, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Key, Shield, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { commands, YubiKeyStateInfo, StreamlinedYubiKeyInitResult } from '../../bindings';
 import { logger } from '../../lib/logger';
 
@@ -21,11 +21,12 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
   // PIN entry state
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
+  const [recoveryPin, setRecoveryPin] = useState('');
+  const [recoveryPinConfirm, setRecoveryPinConfirm] = useState('');
   const [label, setLabel] = useState('');
-  const [initResult, setInitResult] = useState<StreamlinedYubiKeyInitResult | null>(null);
 
   // Operation state
-  const [operation, setOperation] = useState<'detect' | 'setup' | 'recovery' | 'complete'>(
+  const [operation, setOperation] = useState<'detect' | 'setup' | 'complete'>(
     'detect',
   );
 
@@ -60,7 +61,13 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
   };
 
   const handleInitialize = async () => {
-    if (!selectedKey || !pin || pin !== pinConfirm) return;
+    if (!selectedKey || !pin || pin !== pinConfirm || !recoveryPin || recoveryPin !== recoveryPinConfirm) return;
+
+    // Validate PINs are different
+    if (pin === recoveryPin) {
+      setError('PIN and Recovery PIN must be different for security');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -73,7 +80,7 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
         const initResult = await commands.initYubikey(
           selectedKey.serial,
           pin,
-          pin, // recoveryPin - use same as PIN
+          recoveryPin,
           label || `YubiKey-${selectedKey.serial}`,
         );
         if (initResult.status === 'error') {
@@ -95,8 +102,8 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
         throw new Error('YubiKey is already registered');
       }
 
-      // Store result and mark complete
-      setInitResult(result);
+      // Skip recovery state since we don't have a recovery code
+      // Recovery PIN is handled directly during initialization
       setOperation('complete');
       onComplete?.(result);
     } catch (err: any) {
@@ -139,7 +146,10 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
 
   const isPinValid = pin.length >= 6 && pin.length <= 8 && /^\d+$/.test(pin);
   const isPinMatch = pin === pinConfirm;
-  const canProceed = selectedKey && isPinValid && isPinMatch && label.trim();
+  const isRecoveryPinValid = !selectedKey || selectedKey.state !== 'new' || (recoveryPin.length >= 6 && recoveryPin.length <= 8 && /^\d+$/.test(recoveryPin));
+  const isRecoveryPinMatch = !selectedKey || selectedKey.state !== 'new' || recoveryPin === recoveryPinConfirm;
+  const arePinsDifferent = !selectedKey || selectedKey.state !== 'new' || pin !== recoveryPin;
+  const canProceed = selectedKey && isPinValid && isPinMatch && label.trim() && isRecoveryPinValid && isRecoveryPinMatch && arePinsDifferent;
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
@@ -296,10 +306,50 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
                 )}
               </div>
 
+              {selectedKey.state === 'new' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Create Recovery PIN
+                      <span className="text-gray-500 ml-2">(6-8 digits, must be different from PIN)</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={recoveryPin}
+                      onChange={(e) => setRecoveryPin(e.target.value)}
+                      maxLength={8}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="••••••"
+                    />
+                    {recoveryPin && recoveryPin.length < 6 && (
+                      <p className="text-sm text-red-600 mt-1">Recovery PIN must be 6-8 digits</p>
+                    )}
+                    {recoveryPin && pin && recoveryPin === pin && (
+                      <p className="text-sm text-red-600 mt-1">Recovery PIN must be different from PIN</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Recovery PIN</label>
+                    <input
+                      type="password"
+                      value={recoveryPinConfirm}
+                      onChange={(e) => setRecoveryPinConfirm(e.target.value)}
+                      maxLength={8}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="••••••"
+                    />
+                    {recoveryPinConfirm && recoveryPinConfirm !== recoveryPin && (
+                      <p className="text-sm text-red-600 mt-1">Recovery PINs do not match</p>
+                    )}
+                  </div>
+                </>
+              )}
+
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> We'll generate a secure recovery code for you. This code
-                  can unlock your PIN if you forget it.
+                  <strong>Note:</strong> The Recovery PIN is used to reset your regular PIN if you forget it.
+                  Keep it secure and separate from your regular PIN.
                 </p>
               </div>
 
@@ -340,61 +390,6 @@ export const YubiKeyStreamlined: React.FC<YubiKeyStreamlinedProps> = ({ onComple
           </>
         )}
 
-        {operation === 'recovery' && recoveryCode && (
-          <div className="space-y-4">
-            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-6 w-6 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div className="space-y-3 flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">Save Your Recovery Code</h3>
-                  <p className="text-sm text-gray-700">
-                    This recovery code can unlock your YubiKey PIN if you forget it.
-                    <strong className="block mt-2 text-red-600">
-                      This is the ONLY time you will see this code!
-                    </strong>
-                  </p>
-                  <div className="bg-white border border-gray-300 rounded-lg p-4 font-mono text-2xl text-center">
-                    {recoveryCode}
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(recoveryCode);
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Copy Code
-                    </button>
-                  </div>
-                  <ul className="text-sm text-gray-600 space-y-1 mt-3">
-                    <li>• Store this code in a safe place (password manager, safe, etc.)</li>
-                    <li>• Do NOT store it with your YubiKey</li>
-                    <li>• You will need this if you forget your PIN</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => {
-                  setOperation('complete');
-                  if (initResult) {
-                    onComplete?.(initResult);
-                  }
-                }}
-                disabled={!showRecoveryWarning}
-                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                  showRecoveryWarning
-                    ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                I Have Saved My Recovery Code
-              </button>
-            </div>
-          </div>
-        )}
 
         {operation === 'complete' && (
           <div className="text-center py-8">
