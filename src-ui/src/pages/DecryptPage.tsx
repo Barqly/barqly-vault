@@ -132,7 +132,6 @@ const DecryptPage: React.FC = () => {
               <DecryptSuccess
                 result={success}
                 onDecryptAnother={handleDecryptAnother}
-                isRecoveryMode={isRecoveryMode}
                 vaultName={detectedVaultName}
               />
             )}

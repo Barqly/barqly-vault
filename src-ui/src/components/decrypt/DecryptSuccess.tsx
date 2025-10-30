@@ -5,14 +5,12 @@ import VaultOperationSummary from '../common/VaultOperationSummary';
 interface DecryptSuccessProps {
   result: DecryptionResult;
   onDecryptAnother?: () => void;
-  isRecoveryMode?: boolean;
   vaultName?: string | null;
 }
 
 const DecryptSuccess: React.FC<DecryptSuccessProps> = ({
   result,
   onDecryptAnother,
-  isRecoveryMode = false,
   vaultName = null,
 }) => {
   const [showConfetti, setShowConfetti] = useState(true);
