@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Key, Fingerprint, Check as CheckIcon, Lock } from 'lucide-react';
+import { X, Loader2, Key, Fingerprint, Lock } from 'lucide-react';
 import { commands, VaultSummary, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
 import { useVault } from '../../contexts/VaultContext';
@@ -28,7 +28,6 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
 }) => {
   const { globalKeyCache, keyCache, statisticsCache } = useVault();
   const [keyStates, setKeyStates] = useState<KeyCheckboxState[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [isVaultMutable, setIsVaultMutable] = useState(true);
 
   // Load keys and determine checkbox states using CACHE-FIRST
@@ -37,8 +36,6 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
 
     const loadKeys = () => {
       try {
-        setError(null);
-
         logger.info('KeyAttachmentDialog', 'Loading keys from cache', {
           vaultId: vaultInfo.id,
           vaultName: vaultInfo.name,
@@ -145,7 +142,6 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
         setKeyStates(sortedStates);
       } catch (err) {
         logger.error('KeyAttachmentDialog', 'Error loading keys from cache', err as Error);
-        setError('Failed to load keys');
       }
     };
 
@@ -245,7 +241,6 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
       onSuccess();
     } catch (err: any) {
       logger.error('KeyAttachmentDialog', 'Toggle key failed', err);
-      setError(err.message || 'Failed to update key attachment');
 
       // ROLLBACK: Revert optimistic update on error
       setKeyStates((prev) =>
