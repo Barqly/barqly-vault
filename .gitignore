@@ -146,3 +146,9 @@ docs/ui-captures/sessions/
 scripts/*-temp.sh
 scripts/test-*.sh 
 scripts/test.md
+
+# Binary dependencies (downloaded from GitHub Release during build)
+src-tauri/bin/*
+!src-tauri/bin/.keep
+!src-tauri/bin/README.md
+!src-tauri/bin/binary-dependencies.json
