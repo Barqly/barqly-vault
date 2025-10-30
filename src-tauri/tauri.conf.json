@@ -41,20 +41,7 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "bin/darwin/**",
-      "bin/linux/**",
-      "bin/windows/**"
-    ],
-    "externalBin": [
-      "bin/darwin/age",
-      "bin/darwin/age-plugin-yubikey",
-      "bin/darwin/ykman",
-      "bin/linux/age",
-      "bin/linux/age-plugin-yubikey",
-      "bin/linux/ykman",
-      "bin/windows/age",
-      "bin/windows/age-plugin-yubikey",
-      "bin/windows/ykman"
+      "bin"
     ],
     "macOS": {
       "entitlements": "entitlements.plist",
