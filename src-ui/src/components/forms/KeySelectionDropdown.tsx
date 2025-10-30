@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { KeyReference } from '../../bindings';
+import type { KeyReference } from '../../lib/key-types';
 import { useKeySelection, KeyReferenceWithAvailability } from '../../hooks/useKeySelection';
 import { KeyOption } from './KeyOption';
 import { DropdownButton } from './DropdownButton';

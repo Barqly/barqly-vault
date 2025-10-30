@@ -620,7 +620,6 @@ const ManageKeysPage: React.FC = () => {
                       await refreshAllKeys();
                       await fetchVaultStatistics();
                     }}
-                    vaultNames={vaultNameMap}
                   />
                 );
               })

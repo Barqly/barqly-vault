@@ -245,7 +245,7 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
                   </span>
                   <span className="text-sm md:text-base font-semibold text-heading flex items-center gap-2">
                     {step.title}
-                    {'icon' in step && step.icon}
+                    {'icon' in step && (step.icon as React.ReactNode)}
                   </span>
                 </div>
                 <p className="text-sm text-secondary leading-relaxed">{step.description}</p>
