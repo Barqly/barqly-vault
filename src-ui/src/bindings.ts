@@ -1403,6 +1403,7 @@ export type YubiKeyVaultResult = { success: boolean; key_reference: VaultKey; re
 
 /** tauri-specta globals **/
 
+// @ts-ignore - Unused imports in generated code
 import {
 	invoke as TAURI_INVOKE,
 	Channel as TAURI_CHANNEL,
@@ -1426,6 +1427,7 @@ export type Result<T, E> =
 	| { status: "ok"; data: T }
 	| { status: "error"; error: E };
 
+// @ts-ignore - Unused function in generated code
 function __makeEvents__<T extends Record<string, any>>(
 	mappings: Record<keyof T, string>,
 ) {
