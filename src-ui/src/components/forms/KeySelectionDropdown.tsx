@@ -39,8 +39,6 @@ export interface KeySelectionDropdownProps {
   vaultId?: string | null;
   /** Optional: Pass keys directly for recovery mode (bypasses cache) */
   recoveryKeys?: KeyReference[];
-  /** Optional: Recovery mode styling and behavior */
-  isRecoveryMode?: boolean;
 }
 
 export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
@@ -60,7 +58,6 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
   includeAllKeys = false,
   vaultId,
   recoveryKeys,
-  isRecoveryMode = false,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { globalKeyCache } = useVault();
@@ -99,7 +96,6 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
     handleToggle,
     handleKeySelect,
     handleKeyDown,
-    formatDate,
     truncatePublicKey: _truncatePublicKey,
   } = hookResult;
 
