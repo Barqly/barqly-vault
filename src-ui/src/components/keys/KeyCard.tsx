@@ -28,7 +28,6 @@ interface KeyCardProps {
   onExport?: (keyId: string) => void;
   onEditLabel?: (keyId: string, currentLabel: string) => void;
   onRefresh?: () => Promise<void>;
-  vaultNames?: Map<string, string>;
 }
 
 export const KeyCard: React.FC<KeyCardProps> = ({
@@ -43,7 +42,6 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   onExport,
   onEditLabel,
   onRefresh,
-  vaultNames = new Map(),
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -104,8 +102,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
     ? "This key is part of a vault's encryption envelope and cannot be deactivated."
     : 'Deactivate this key. It will be permanently deleted after 30 days unless restored.';
 
-  // Get vault names for display
-  const _attachedVaultNames = vaultAttachments.map((id) => vaultNames.get(id) || id);
+  // Get vault count for display
   const vaultCount = vaultAttachments.length;
   const isUnattached = vaultCount === 0;
 

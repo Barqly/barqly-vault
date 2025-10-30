@@ -32,7 +32,6 @@ export const VaultAttachmentDialog: React.FC<VaultAttachmentDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const isPassphrase = keyInfo.key_type.type === 'Passphrase';
-  const _isYubiKey = keyInfo.key_type.type === 'YubiKey';
 
   // Load vaults and determine checkbox states
   useEffect(() => {
