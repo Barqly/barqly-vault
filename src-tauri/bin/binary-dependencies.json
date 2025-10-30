@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Binary dependencies for Barqly Vault - downloaded from GitHub Release during CI/CD build",
+  "release_tag": "barqly-vault-dependencies",
+  "release_url": "https://github.com/Barqly/barqly-vault/releases/tag/barqly-vault-dependencies",
+  "last_updated": "2025-10-29T22:00:00Z",
+
+  "dependencies": {
+    "age": {
+      "version": "1.2.1",
+      "upstream": "https://github.com/FiloSottile/age",
+      "platforms": {
+        "darwin-arm64": {
+          "filename": "age-1.2.1-darwin-arm64",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/age-1.2.1-darwin-arm64",
+          "sha256": "d2b0d4211fd9e364ea8dd1cb150653a7f21dfc08e96632de444aa209db5fc0d0",
+          "size": 5242880
+        },
+        "darwin-x86_64": {
+          "filename": "age-1.2.1-darwin-x86_64",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/age-1.2.1-darwin-x86_64",
+          "sha256": "f6b013850e8ec05da811300034d36da116333d49ea40c22f808298fb0cbb9588",
+          "size": 5452800
+        },
+        "linux-x86_64": {
+          "filename": "age-1.2.1-linux-x86_64",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/age-1.2.1-linux-x86_64",
+          "sha256": "aaec874ed903da4b02a9d503778ae05ee5005b2acc0f4a4cf10e5d0f17fd4384",
+          "size": 5554176
+        },
+        "windows-x86_64": {
+          "filename": "age-1.2.1-windows-x86_64.exe",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/age-1.2.1-windows-x86_64.exe",
+          "sha256": "5729bd8f90d5cdf0a69ccd10408f000877ad4ab4bec8e49f80fbd8bd15539cc7",
+          "size": 5870592
+        }
+      }
+    },
+    "age-plugin-yubikey": {
+      "version": "0.5.0",
+      "upstream": "https://github.com/str4d/age-plugin-yubikey",
+      "platforms": {
+        "darwin-arm64": {
+          "filename": "age-plugin-yubikey-0.5.0-darwin-arm64",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/age-plugin-yubikey-0.5.0-darwin-arm64",
+          "sha256": "006396d1524b9ef9ad96d084684ab81fe7893b1a0a179aea96829c7bbc95d903",
+          "size": 4087808
+        },
+        "darwin-x86_64": {
+          "filename": "age-plugin-yubikey-0.5.0-darwin-x86_64",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/age-plugin-yubikey-0.5.0-darwin-x86_64",
+          "sha256": "006396d1524b9ef9ad96d084684ab81fe7893b1a0a179aea96829c7bbc95d903",
+          "size": 4087808
+        },
+        "linux-x86_64": {
+          "filename": "age-plugin-yubikey-0.5.0-linux-x86_64",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/age-plugin-yubikey-0.5.0-linux-x86_64",
+          "sha256": "03efa118cbd2842a971abb03958e45d67789afd3d69bf66b28483c89ce195d56",
+          "size": 5032960
+        },
+        "windows-x86_64": {
+          "filename": "age-plugin-yubikey-0.5.0-windows-x86_64.exe",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/age-plugin-yubikey-0.5.0-windows-x86_64.exe",
+          "sha256": "34bdcddaec82174c3288859fd10284a0d92fa1151a7fc18f89ff58873e69d7e7",
+          "size": 3670016
+        }
+      }
+    },
+    "ykman": {
+      "version": "5.8.0",
+      "upstream": "https://github.com/Yubico/yubikey-manager",
+      "build_method": "pyinstaller",
+      "bundle_type": "tarball",
+      "platforms": {
+        "darwin-universal": {
+          "filename": "ykman-5.8.0-darwin-universal.tar.gz",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/ykman-5.8.0-darwin-universal.tar.gz",
+          "sha256": "523ffd1f6f3923abe57ac100537306ce647784df8f91a9c67cb2d97f1ad7ee7c",
+          "size": 14680064,
+          "note": "Universal binary works on both Intel and Apple Silicon"
+        },
+        "linux-x86_64": {
+          "filename": "ykman-5.8.0-linux-x86_64.tar.gz",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/ykman-5.8.0-linux-x86_64.tar.gz",
+          "sha256": "1b590d22ec43bf50dc6cfb838f2a3dd7a5ea6d6166723cb1729a42210d95b6ac",
+          "size": 30408704
+        },
+        "windows-x86_64": {
+          "filename": "ykman-5.8.0-windows-x86_64.tar.gz",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/ykman-5.8.0-windows-x86_64.tar.gz",
+          "sha256": "4e7f5c489a59b8662be0cae270bfed6d8ce5ff263b715eb9fc34bb2cf9d8894d",
+          "size": 19922944
+        }
+      }
+    }
+  }
+}
