@@ -200,6 +200,12 @@ pub fn run_app() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            // Initialize the global AppHandle for binary path resolution
+            use services::key_management::yubikey::infrastructure::pty::app_handle::init_app_handle;
+            init_app_handle(app.handle().clone());
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             // Crypto commands
             generate_key,

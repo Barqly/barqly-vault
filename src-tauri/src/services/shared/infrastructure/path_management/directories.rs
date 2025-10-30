@@ -1,18 +1,24 @@
 //! Directory management for Barqly Vault storage.
 //!
-//! This module provides platform-specific directory paths using the `directories` crate:
-//! - **macOS**: `~/Library/Application Support/barqly-vault/`
-//! - **Windows**: `%APPDATA%\barqly-vault\`
-//! - **Linux**: `~/.config/barqly-vault/`
+//! This module provides platform-specific directory paths using Tauri's path resolver
+//! to ensure consistent naming across all platforms:
+//! - **macOS**: `~/Library/Application Support/com.barqly.vault/`
+//! - **Windows**: `%APPDATA%\com.barqly.vault\`
+//! - **Linux**: `~/.config/com.barqly.vault/`
 
 use crate::error::StorageError;
+use crate::services::key_management::yubikey::infrastructure::pty::app_handle::get_app_handle;
 use directories::ProjectDirs;
 use std::path::{Path, PathBuf};
+use tauri::Manager;
 
 /// Get the platform-specific application directory
 ///
 /// Returns the main application directory where Barqly Vault stores its data.
 /// The directory is created if it doesn't exist.
+///
+/// Uses Tauri's path resolver when available for consistent naming across platforms.
+/// Falls back to manual construction for tests and non-Tauri contexts.
 ///
 /// # Returns
 /// - **macOS**: `~/Library/Application Support/com.barqly.vault/`
@@ -23,13 +29,39 @@ use std::path::{Path, PathBuf};
 /// - `StorageError::DirectoryCreationFailed` if the directory cannot be created
 /// - `StorageError::PermissionDenied` if the directory cannot be accessed
 pub fn get_app_dir() -> Result<PathBuf, StorageError> {
-    let project_dirs = ProjectDirs::from("com", "barqly", "vault")
-        .ok_or_else(|| StorageError::DirectoryCreationFailed(PathBuf::from("unknown")))?;
+    // Try to use Tauri's path resolver first (production)
+    if let Some(app_handle) = get_app_handle() {
+        let app_dir = app_handle.path().app_config_dir().map_err(|e| {
+            StorageError::DirectoryCreationFailed(PathBuf::from(format!(
+                "Failed to get app config dir: {}",
+                e
+            )))
+        })?;
 
-    let config_dir = project_dirs.config_dir();
-    ensure_dir_exists(config_dir)?;
+        ensure_dir_exists(&app_dir)?;
+        return Ok(app_dir);
+    }
 
-    Ok(config_dir.to_path_buf())
+    // Fallback for tests and development
+    // On Linux, manually construct com.barqly.vault path for consistency
+    #[cfg(target_os = "linux")]
+    {
+        let base_dirs = directories::BaseDirs::new()
+            .ok_or_else(|| StorageError::DirectoryCreationFailed(PathBuf::from("unknown")))?;
+        let app_dir = base_dirs.config_dir().join("com.barqly.vault");
+        ensure_dir_exists(&app_dir)?;
+        return Ok(app_dir);
+    }
+
+    // On other platforms, use ProjectDirs (already creates com.barqly.vault on macOS)
+    #[cfg(not(target_os = "linux"))]
+    {
+        let project_dirs = ProjectDirs::from("com", "barqly", "vault")
+            .ok_or_else(|| StorageError::DirectoryCreationFailed(PathBuf::from("unknown")))?;
+        let config_dir = project_dirs.config_dir();
+        ensure_dir_exists(config_dir)?;
+        Ok(config_dir.to_path_buf())
+    }
 }
 
 /// Get the keys subdirectory

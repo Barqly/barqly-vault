@@ -1,6 +1,7 @@
 /// PTY automation module for YubiKey operations
 /// Handles PIN entry and touch confirmation through pseudo-terminal
 pub mod age_ops;
+pub mod app_handle;
 pub mod core;
 pub mod ykman_ops;
 

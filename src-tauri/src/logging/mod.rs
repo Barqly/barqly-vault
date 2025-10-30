@@ -6,11 +6,13 @@
 mod formatter;
 pub mod redaction;
 
+use crate::services::key_management::yubikey::infrastructure::pty::app_handle::get_app_handle;
 use directories::ProjectDirs;
 use once_cell::sync::OnceCell;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
+use tauri::Manager;
 use tracing::Level;
 use tracing_subscriber::filter::EnvFilter;
 use tracing_subscriber::fmt;
@@ -30,22 +32,55 @@ pub const BUILD_TIMESTAMP: &str = env!("BUILD_TIMESTAMP");
 pub const RUSTC_VERSION: &str = env!("BUILD_RUSTC_VERSION");
 
 /// Get the platform-specific log directory
+/// Uses Tauri's path resolver for consistent naming across platforms
 fn get_log_dir() -> Result<PathBuf, io::Error> {
-    let proj_dirs = ProjectDirs::from("com", "barqly", "vault").ok_or_else(|| {
-        io::Error::new(
-            io::ErrorKind::NotFound,
-            "Could not determine project directories",
-        )
-    })?;
+    // Try Tauri's path resolver first (production)
+    if let Some(app_handle) = get_app_handle() {
+        let app_dir = app_handle.path().app_config_dir().map_err(|e| {
+            io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("Failed to get app config dir: {}", e),
+            )
+        })?;
 
-    let log_dir = proj_dirs.data_dir().join("logs");
-
-    // Create directory if it doesn't exist
-    if !log_dir.exists() {
-        fs::create_dir_all(&log_dir)?;
+        let log_dir = app_dir.join("logs");
+        if !log_dir.exists() {
+            fs::create_dir_all(&log_dir)?;
+        }
+        return Ok(log_dir);
     }
 
-    Ok(log_dir)
+    // Fallback for tests - use consistent naming on Linux
+    #[cfg(target_os = "linux")]
+    {
+        let base_dirs = directories::BaseDirs::new().ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::NotFound,
+                "Could not determine base directories",
+            )
+        })?;
+        let log_dir = base_dirs.config_dir().join("com.barqly.vault").join("logs");
+        if !log_dir.exists() {
+            fs::create_dir_all(&log_dir)?;
+        }
+        return Ok(log_dir);
+    }
+
+    // Other platforms fallback (macOS and Windows)
+    #[cfg(not(target_os = "linux"))]
+    {
+        let proj_dirs = ProjectDirs::from("com", "barqly", "vault").ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::NotFound,
+                "Could not determine project directories",
+            )
+        })?;
+        let log_dir = proj_dirs.config_dir().join("logs");
+        if !log_dir.exists() {
+            fs::create_dir_all(&log_dir)?;
+        }
+        Ok(log_dir)
+    }
 }
 
 /// Initialize the tracing subscriber with our custom configuration

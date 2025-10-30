@@ -1,3 +1,4 @@
+use super::app_handle::get_app_handle;
 /// Core PTY functionality for YubiKey operations
 /// Provides low-level PTY command execution
 use crate::prelude::*;
@@ -8,6 +9,7 @@ use std::process::Command;
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
+use tauri::Manager;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -46,7 +48,24 @@ pub enum PtyState {
 
 /// Get path to age-plugin-yubikey binary
 pub fn get_age_plugin_path() -> PathBuf {
-    // First try bundled binary
+    // Try to use runtime resource resolution if running in bundled app
+    if let Some(app_handle) = get_app_handle()
+        && let Ok(resource_path) = app_handle.path().resolve(
+            if cfg!(target_os = "macos") {
+                "bin/darwin/age-plugin-yubikey"
+            } else if cfg!(target_os = "linux") {
+                "bin/linux/age-plugin-yubikey"
+            } else {
+                "bin/windows/age-plugin-yubikey.exe"
+            },
+            tauri::path::BaseDirectory::Resource,
+        )
+    {
+        info!(path = %resource_path.display(), "Using bundled age-plugin-yubikey (runtime resolved)");
+        return resource_path;
+    }
+
+    // Fallback to compile-time path for development
     let bundled =
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("bin")
@@ -58,29 +77,65 @@ pub fn get_age_plugin_path() -> PathBuf {
                 "windows/age-plugin-yubikey.exe"
             });
 
-    // Use only bundled binary - no fallbacks to ensure consistent pinned versions
-    info!(path = %bundled.display(), "Using bundled age-plugin-yubikey");
+    info!(path = %bundled.display(), "Using bundled age-plugin-yubikey (development mode)");
     bundled
 }
 
 /// Get path to ykman binary (bundled only - no fallbacks)
 pub fn get_ykman_path() -> PathBuf {
-    // Use only bundled binary - no fallbacks to ensure consistent pinned versions
-    // Binaries are in src-tauri/bin/ directory
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("bin")
-        .join(if cfg!(target_os = "macos") {
-            "darwin/ykman"
-        } else if cfg!(target_os = "linux") {
-            "linux/ykman"
-        } else {
-            "windows/ykman.exe"
-        })
+    // Try to use runtime resource resolution if running in bundled app
+    if let Some(app_handle) = get_app_handle()
+        && let Ok(resource_path) = app_handle.path().resolve(
+            if cfg!(target_os = "macos") {
+                "bin/darwin/ykman"
+            } else if cfg!(target_os = "linux") {
+                "bin/linux/ykman"
+            } else {
+                "bin/windows/ykman.exe"
+            },
+            tauri::path::BaseDirectory::Resource,
+        )
+    {
+        debug!(path = %resource_path.display(), "Using bundled ykman (runtime resolved)");
+        return resource_path;
+    }
+
+    // Fallback to compile-time path for development
+    let bundled =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("bin")
+            .join(if cfg!(target_os = "macos") {
+                "darwin/ykman"
+            } else if cfg!(target_os = "linux") {
+                "linux/ykman"
+            } else {
+                "windows/ykman.exe"
+            });
+
+    debug!(path = %bundled.display(), "Using bundled ykman (development mode)");
+    bundled
 }
 
 /// Get path to age binary (bundled only - no fallbacks)
 pub fn get_age_path() -> PathBuf {
-    // Use only bundled binary - no fallbacks to ensure consistent pinned versions
+    // Try to use runtime resource resolution if running in bundled app
+    if let Some(app_handle) = get_app_handle()
+        && let Ok(resource_path) = app_handle.path().resolve(
+            if cfg!(target_os = "macos") {
+                "bin/darwin/age"
+            } else if cfg!(target_os = "linux") {
+                "bin/linux/age"
+            } else {
+                "bin/windows/age.exe"
+            },
+            tauri::path::BaseDirectory::Resource,
+        )
+    {
+        debug!(path = %resource_path.display(), "Using bundled age CLI (runtime resolved)");
+        return resource_path;
+    }
+
+    // Fallback to compile-time path for development
     let bundled =
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("bin")
@@ -92,7 +147,7 @@ pub fn get_age_path() -> PathBuf {
                 "windows/age.exe"
             });
 
-    debug!(path = %bundled.display(), "Using bundled age CLI");
+    debug!(path = %bundled.display(), "Using bundled age CLI (development mode)");
     bundled
 }
 
