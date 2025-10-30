@@ -8,6 +8,8 @@ use super::pty_helpers::{
     poll_for_process_completion, setup_pty_session, wait_for_touch_completion,
 };
 use crate::log_sensitive;
+// debug! macro is only used inside log_sensitive! which is compiled out in release builds
+#[allow(unused_imports)]
 use crate::logging::debug;
 use crate::services::key_management::yubikey::domain::errors::{YubiKeyError, YubiKeyResult};
 use crate::services::key_management::yubikey::infrastructure::providers::provider::{
@@ -163,9 +165,9 @@ impl AgePluginPtyProvider {
 
                     continue; // Continue outer read loop
                 }
-                Ok(Ok(bytes_read)) => {
+                Ok(Ok(_bytes_read)) => {
                     log_sensitive!(dev_only: {
-                        debug!("Read {} bytes from PTY: '{}'", bytes_read, line.trim());
+                        debug!("Read {} bytes from PTY: '{}'", _bytes_read, line.trim());
                     });
 
                     output.push_str(&line);

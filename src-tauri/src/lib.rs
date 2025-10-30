@@ -88,9 +88,9 @@ fn run_bootstrap() -> Result<(), Box<dyn std::error::Error>> {
 /// This is called by the generate-bindings binary and the build hooks
 pub fn generate_typescript_bindings() -> Result<(), String> {
     use specta_typescript::Typescript;
-    use tauri_specta::{Builder, collect_commands};
     use std::fs;
     use std::path::Path;
+    use tauri_specta::{Builder, collect_commands};
 
     let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
         // Crypto commands

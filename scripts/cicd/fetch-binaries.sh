@@ -50,6 +50,17 @@ esac
 
 echo -e "Platform detected: ${YELLOW}$PLATFORM${NC}"
 
+# Detect SHA256 command (platform-aware)
+if command -v sha256sum &> /dev/null; then
+  SHA_CMD="sha256sum"
+elif command -v shasum &> /dev/null; then
+  SHA_CMD="shasum -a 256"
+else
+  echo -e "${RED}❌ No SHA256 command available (need sha256sum or shasum)${NC}"
+  exit 1
+fi
+echo -e "SHA command: ${YELLOW}$SHA_CMD${NC}"
+
 # Determine platform subdirectory
 case "$OS" in
   darwin) PLATFORM_DIR="darwin" ;;
@@ -68,9 +79,11 @@ AGE_SHA=$(jq -r ".dependencies.age.platforms.\"$PLATFORM\".sha256" "$MANIFEST")
 curl -L "$AGE_URL" -o "$BIN_DIR/$PLATFORM_DIR/age" --progress-bar
 
 # Verify checksum
-ACTUAL_SHA=$(shasum -a 256 "$BIN_DIR/$PLATFORM_DIR/age" | cut -d' ' -f1)
+ACTUAL_SHA=$($SHA_CMD "$BIN_DIR/$PLATFORM_DIR/age" | cut -d' ' -f1)
 if [ "$ACTUAL_SHA" != "$AGE_SHA" ]; then
   echo -e "${RED}❌ Checksum mismatch for age${NC}"
+  echo -e "Expected: $AGE_SHA"
+  echo -e "Got:      $ACTUAL_SHA"
   exit 1
 fi
 chmod +x "$BIN_DIR/$PLATFORM_DIR/age"
@@ -84,9 +97,11 @@ PLUGIN_SHA=$(jq -r ".dependencies.\"age-plugin-yubikey\".platforms.\"$PLATFORM\"
 curl -L "$PLUGIN_URL" -o "$BIN_DIR/$PLATFORM_DIR/age-plugin-yubikey" --progress-bar
 
 # Verify checksum
-ACTUAL_SHA=$(shasum -a 256 "$BIN_DIR/$PLATFORM_DIR/age-plugin-yubikey" | cut -d' ' -f1)
+ACTUAL_SHA=$($SHA_CMD "$BIN_DIR/$PLATFORM_DIR/age-plugin-yubikey" | cut -d' ' -f1)
 if [ "$ACTUAL_SHA" != "$PLUGIN_SHA" ]; then
   echo -e "${RED}❌ Checksum mismatch for age-plugin-yubikey${NC}"
+  echo -e "Expected: $PLUGIN_SHA"
+  echo -e "Got:      $ACTUAL_SHA"
   exit 1
 fi
 chmod +x "$BIN_DIR/$PLATFORM_DIR/age-plugin-yubikey"
@@ -109,9 +124,11 @@ YKMAN_FILE=$(jq -r ".dependencies.ykman.platforms.\"$YKMAN_PLATFORM\".filename" 
 curl -L "$YKMAN_URL" -o "$BIN_DIR/$PLATFORM_DIR/$YKMAN_FILE" --progress-bar
 
 # Verify checksum
-ACTUAL_SHA=$(shasum -a 256 "$BIN_DIR/$PLATFORM_DIR/$YKMAN_FILE" | cut -d' ' -f1)
+ACTUAL_SHA=$($SHA_CMD "$BIN_DIR/$PLATFORM_DIR/$YKMAN_FILE" | cut -d' ' -f1)
 if [ "$ACTUAL_SHA" != "$YKMAN_SHA" ]; then
   echo -e "${RED}❌ Checksum mismatch for ykman${NC}"
+  echo -e "Expected: $YKMAN_SHA"
+  echo -e "Got:      $ACTUAL_SHA"
   exit 1
 fi
 

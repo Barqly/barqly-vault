@@ -74,13 +74,13 @@ macro_rules! log_sensitive {
 }
 
 /// Helper function to redact PINs
-pub fn redact_pin(pin: &str) -> String {
+pub fn redact_pin(_pin: &str) -> String {
     #[cfg(debug_assertions)]
     {
-        if pin == "123456" {
+        if _pin == "123456" {
             "DEFAULT_PIN".to_string()
         } else {
-            format!("CUSTOM_PIN[len={}]", pin.len())
+            format!("CUSTOM_PIN[len={}]", _pin.len())
         }
     }
     #[cfg(not(debug_assertions))]
@@ -90,11 +90,11 @@ pub fn redact_pin(pin: &str) -> String {
 }
 
 /// Helper function to redact keys
-pub fn redact_key(key: &str) -> String {
+pub fn redact_key(_key: &str) -> String {
     #[cfg(debug_assertions)]
     {
-        if key.len() > 8 {
-            format!("{}...{}", &key[..4], &key[key.len() - 4..])
+        if _key.len() > 8 {
+            format!("{}...{}", &_key[..4], &_key[_key.len() - 4..])
         } else {
             "[KEY]".to_string()
         }
@@ -106,11 +106,11 @@ pub fn redact_key(key: &str) -> String {
 }
 
 /// Helper to partially show serials for debugging
-pub fn redact_serial(serial: &str) -> String {
+pub fn redact_serial(_serial: &str) -> String {
     #[cfg(debug_assertions)]
     {
-        if serial.len() > 4 {
-            format!("***{}", &serial[serial.len() - 4..])
+        if _serial.len() > 4 {
+            format!("***{}", &_serial[_serial.len() - 4..])
         } else {
             "***".to_string()
         }

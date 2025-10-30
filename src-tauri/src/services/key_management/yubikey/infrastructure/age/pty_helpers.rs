@@ -3,6 +3,8 @@
 //! This module provides reusable utilities for PTY setup, EOF polling, and touch detection.
 
 use crate::log_sensitive;
+// debug! macro is only used inside log_sensitive! which is compiled out in release builds
+#[allow(unused_imports)]
 use crate::logging::debug;
 use crate::services::key_management::yubikey::domain::errors::{YubiKeyError, YubiKeyResult};
 use portable_pty::ExitStatus;
@@ -80,7 +82,9 @@ pub(super) async fn poll_for_process_completion(
 ) -> YubiKeyResult<Option<ExitStatus>> {
     // Active polling with proper retry loop structure
     let max_retries = 60; // 30 seconds total with 500ms intervals
-    let mut nudge_count = 0;
+    // Track nudge attempts (only used in debug logging)
+    #[allow(unused_mut)]
+    let mut _nudge_count = 0;
 
     // Proper polling loop - retry counter increments per polling attempt
     for retry_count in 1..=max_retries {
@@ -110,12 +114,12 @@ pub(super) async fn poll_for_process_completion(
                 // This mimics what a real terminal would do
                 if retry_count % 4 == 0 {
                     // Every 2 seconds (4 * 500ms)
-                    nudge_count += 1;
+                    _nudge_count += 1;
                     log_sensitive!(dev_only: {
-                        debug!("📤 TRACER: Sending CRLF nudge #{nudge_count} to assist line discipline");
+                        debug!("📤 TRACER: Sending CRLF nudge #{_nudge_count} to assist line discipline");
                     });
                     log_sensitive!(dev_only: {
-                        debug!("🕵️ DETECTIVE: Writer available before nudge: true, nudge #{nudge_count}");
+                        debug!("🕵️ DETECTIVE: Writer available before nudge: true, nudge #{_nudge_count}");
                     });
 
                     match writer.write_all(b"\r\n") {
@@ -247,10 +251,10 @@ pub(super) async fn wait_for_touch_completion(
                     }
                 }
             }
-            Ok(Ok(bytes_read)) => {
+            Ok(Ok(_bytes_read)) => {
                 // Got output during touch wait - this means touch completed!
                 log_sensitive!(dev_only: {
-                    debug!("🎉 TRACER: TOUCH COMPLETED! Got output: '{}' ({} bytes)", line.trim(), bytes_read);
+                    debug!("🎉 TRACER: TOUCH COMPLETED! Got output: '{}' ({} bytes)", line.trim(), _bytes_read);
                 });
                 output.push_str(&line);
                 break; // Exit touch-wait mode, return to normal processing
