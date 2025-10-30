@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { CommandError, ErrorCode } from '../bindings';
+import { CommandError } from '../bindings';
 import { logger } from '../lib/logger';
 import { executeKeyGenerationWithProgress } from '../lib/key-generation/key-generation-workflow';
 import { validateKeyGenerationInputs } from '../lib/key-generation/validation';

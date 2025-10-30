@@ -1,4 +1,4 @@
-import { CommandError, ErrorCode } from '../../bindings';
+import { CommandError } from '../../bindings';
 import { validateField } from '../validation';
 import { logger } from '../logger';
 

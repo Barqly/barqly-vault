@@ -1,4 +1,4 @@
-import { CommandError, ErrorCode, FileSelection } from '../../bindings';
+import { CommandError, FileSelection } from '../../bindings';
 import { EncryptionInput } from '../encryption/encryption-workflow';
 
 /**

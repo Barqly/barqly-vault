@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { CommandError, ErrorCode } from '../bindings';
+import type { CommandError } from '../bindings';
 import { toCommandError } from '../lib/errors/command-error';
 import { selectEncryptedFileForDecryption } from '../lib/decryption/file-operations';
 import {
@@ -88,7 +88,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
     } catch (error) {
       const commandError = toCommandError(
         error,
-        ErrorCode.INTERNAL_ERROR,
+        'INTERNAL_ERROR',
         'File selection failed',
         'Please try selecting the file again. If the problem persists, restart the application.',
       );
@@ -149,7 +149,7 @@ export const useFileDecryption = (): UseFileDecryptionReturn => {
           ? (error as CommandError)
           : toCommandError(
               error,
-              ErrorCode.DECRYPTION_FAILED,
+              'DECRYPTION_FAILED',
               'File decryption failed',
               'Please check your key, passphrase, and file. If the problem persists, restart the application.',
             );
