@@ -36,10 +36,10 @@ ls -lh dist/binaries/
 
 # 5. Create GitHub Release with all binaries
 cd dist/binaries
-gh release create barqly-vault-dependencies-r2 \
+gh release create barqly-vault-dependencies \
   age-* age-plugin-yubikey-* ykman-* checksums.txt \
-  --title "Barqly Vault Binary Dependencies R2" \
-  --notes "Binary dependencies for R2 release.
+  --title "Barqly Vault Binary Dependencies" \
+  --notes "Binary dependencies for Barqly Vault.
 
 **Versions:**
 - age: v1.2.1
@@ -54,7 +54,7 @@ gh release create barqly-vault-dependencies-r2 \
   --prerelease
 ```
 
-**Result**: Release `barqly-vault-dependencies-r2` exists with all binaries. This is used by **every** app release going forward.
+**Result**: Release `barqly-vault-dependencies` exists with all binaries. This is used by **every** app release going forward. Updated only when dependency versions change.
 
 ---
 

@@ -1,160 +1,158 @@
-# Binary Management for YubiKey POC
+# Binary Dependencies - R2 Release
 
-This directory contains the binary dependencies required for the YubiKey POC project. We maintain pinned versions of these binaries to ensure reproducibility across development and production environments.
+This directory contains external binary dependencies for Barqly Vault. Binaries are **NOT committed to git** but are fetched from GitHub Release during builds.
 
-## Binaries
+## Architecture Overview
 
-### 1. age-plugin-yubikey
+**Storage:** GitHub Release `barqly-vault-dependencies`
+- All binaries stored as release assets
+- Permanent CDN-backed storage
+- No git repository bloat
+
+**Build Process:**
+1. CI/CD fetches binaries from GitHub Release
+2. Caches by SHA256 checksum
+3. Tauri bundles into application packages
+
+**Update Process:**
+- One-time: Create/update dependency release when versions change
+- Every build: Fetch from release (fast, cached)
+
+## Required Binaries
+
+### 1. age
+- **Version**: 1.2.1
+- **Purpose**: File encryption CLI (multi-recipient support)
+- **Source**: https://github.com/FiloSottile/age
+- **Platforms**: macOS (ARM/Intel), Linux, Windows
+
+### 2. age-plugin-yubikey
 - **Version**: 0.5.0
 - **Purpose**: YubiKey plugin for age encryption
 - **Source**: https://github.com/str4d/age-plugin-yubikey
-- **Distribution**: Pre-built binaries from GitHub releases
+- **Platforms**: macOS (ARM/Intel), Linux, Windows
 
-### 2. ykman (YubiKey Manager)
+### 3. ykman (YubiKey Manager)
 - **Version**: 5.8.0
 - **Purpose**: YubiKey configuration and management CLI
 - **Source**: https://github.com/Yubico/yubikey-manager
-- **Distribution**: Built from source using PyInstaller with official Yubico spec
+- **Distribution**: Built from source using PyInstaller
+- **Platforms**: macOS (universal), Linux, Windows
 
 ## Directory Structure
 
 ```
-bin/
-├── darwin/                 # macOS binaries
-│   ├── age-plugin-yubikey  # Downloaded binary
-│   ├── ykman               # Wrapper script
-│   └── ykman-bundle/       # PyInstaller bundle
-├── linux/                  # Linux binaries (when needed)
-└── checksums.json          # SHA256 checksums for verification
+src-tauri/bin/                      # .gitignored (downloaded during build)
+├── darwin/
+│   ├── age                         # Fetched from GitHub Release
+│   ├── age-plugin-yubikey          # Fetched from GitHub Release
+│   ├── ykman.bat (if Windows)      # Wrapper script
+│   ├── ykman (if Unix)             # Wrapper script
+│   └── ykman-bundle/               # PyInstaller bundle
+│       ├── ykman or ykman.exe      # Main binary
+│       └── _internal/              # Dependencies
+├── linux/                          # Same structure
+├── windows/                        # Same structure
+└── .keep                           # Tracked in git
 ```
 
-## Management Scripts
+**Note:** Only `.keep`, `README.md`, and `binary-dependencies.json` are committed to git.
 
-### Download age-plugin-yubikey
+## Creating/Updating Dependency Release (One-Time)
+
+When updating binary versions (every 3-6 months):
+
 ```bash
-./scripts/download-age-plugin.sh [version]
+# 1. Download age and age-plugin-yubikey (2 minutes)
+./scripts/cicd/download-all-binaries.sh
+
+# 2. Build ykman for all platforms in CI (8-10 minutes)
+gh workflow run build-ykman-bundles.yml -f version=5.8.0
+gh run watch
+
+# 3. Download ykman artifacts
+gh run list --workflow=build-ykman-bundles.yml --limit 1  # Get run ID
+gh run download <run-id> --dir dist/ykman-temp
+mv dist/ykman-temp/*/*.tar.gz dist/binaries/
+
+# 4. Create/Update GitHub Release
+cd dist/binaries
+# Delete old release if updating
+gh release delete barqly-vault-dependencies --yes
+
+# Create new release
+gh release create barqly-vault-dependencies \
+  age-* age-plugin-yubikey-* ykman-* checksums.txt \
+  --title "Barqly Vault Binary Dependencies" \
+  --notes "Binary dependencies..." \
+  --prerelease
+
+# 5. Update binary-dependencies.json with new URLs/checksums
+# (See Phase 2.6 in implementation plan)
 ```
-Downloads the official pre-built binary from GitHub releases.
 
-### Build ykman from source
-```bash
-./scripts/build-ykman.sh [version]
+**Frequency:** Only when age/age-plugin/ykman release new versions
+
+## Every App Build (Automatic)
+
+Binaries are fetched automatically during CI/CD:
+
+```yaml
+# In .github/workflows/release.yml
+- name: Fetch Binary Dependencies
+  run: ./scripts/cicd/fetch-binaries.sh
 ```
-Clones the ykman repository and builds a standalone binary using PyInstaller with Yubico's official spec file, which includes the Entrypoint() function to properly handle Python package imports.
 
-## Version Pinning
-
-We pin exact versions for both binaries to ensure:
-1. **Security**: Known, tested versions
-2. **Reproducibility**: Same behavior across all environments
-3. **Stability**: No unexpected breaking changes
-
-## Checksums
-
-All binaries are verified using SHA256 checksums stored in `checksums.json`. This file is updated automatically by the management scripts.
+The fetch script:
+- Reads `binary-dependencies.json` for URLs and checksums
+- Downloads binaries from GitHub Release
+- Verifies SHA256 checksums
+- Places in `src-tauri/bin/{platform}/`
+- Cached by GitHub Actions (fast subsequent builds)
 
 ## Local Development
 
-For local development, you can either:
-1. Use the binaries in this folder (recommended)
-2. Install via package managers (brew, apt) but ensure version matches
+For local builds:
 
-## Production Bundle
+```bash
+# Fetch binaries for current platform
+./scripts/cicd/fetch-binaries.sh
 
-For production releases, these binaries will be:
-1. Downloaded/built during CI/CD
-2. Verified against checksums
-3. Bundled with the Tauri application
-
-## Security Notes
-
-- Never commit actual binaries to git (use .gitignore)
-- Always verify checksums before use
-- Build from official sources only
-- For ykman: Built from official Yubico repository using their ykman.spec
-- For age-plugin-yubikey: Downloaded from str4d's official releases
-
-## Updating Binaries
-
-To update to a new version:
-1. Test the new version thoroughly
-2. Update the script with new version number
-3. Run the appropriate script
-4. Verify functionality
-5. Update this README with new version info
-6. Commit the scripts and checksums.json (not the binaries)
-
-## CI/CD Pipeline (Future Implementation)
-
-### Cross-Platform Build Requirements
-
-**Platform-Specific Builds:**
-- **macOS (Intel & ARM64)**: Build on macOS runner with universal2 or separate architectures
-- **Windows**: Build on Windows runner (x64 primarily, ARM64 if needed)
-- **Linux**: Build on oldest supported Linux distro for glibc compatibility
-
-**Why Platform-Specific Builds Are Required:**
-- PyInstaller bundles platform-specific Python interpreter and system libraries
-- Each OS has different dynamic library formats (.dylib, .dll, .so)
-- System calls, paths, and USB drivers differ across platforms
-
-### Recommended CI/CD Strategy
-
-#### 1. GitHub Actions / GitLab CI Matrix Builds
-```yaml
-# Example matrix strategy
-strategy:
-  matrix:
-    os: [ubuntu-20.04, windows-latest, macos-latest]
-    arch: [x64, arm64]  # where applicable
+# Build application
+cargo tauri build
 ```
 
-#### 2. Build Process per Platform
-- **Linux**: Use oldest supported distro (e.g., Ubuntu 20.04) for maximum glibc compatibility
-- **Windows**: Include Visual C++ Redistributables if needed
-- **macOS**: Use `target_arch="universal2"` for Intel + ARM64 support
+Binaries are downloaded once, cached locally in `src-tauri/bin/`.
 
-#### 3. Platform-Specific Considerations
+## Platform Coverage
 
-**Windows:**
-- Wrapper script: `.bat` file or use PyInstaller's `--onefile` mode
-- USB drivers: WinUSB vs libusb handling
-- Path separators in spec file
+| Binary | macOS ARM | macOS Intel | Linux x64 | Windows x64 |
+|--------|-----------|-------------|-----------|-------------|
+| age | ✅ | ✅ | ✅ | ✅ |
+| age-plugin-yubikey | ✅ | ✅ | ✅ | ✅ |
+| ykman | ✅ (universal) | ✅ (universal) | ✅ | ✅ |
 
-**Linux:**
-- Build on oldest supported distro to avoid glibc version issues
-- Include udev rules for YubiKey USB permissions
-- Consider AppImage or similar for distribution
+**Total:** 11 binary files across all platforms
 
-**macOS:**
-- Code signing and notarization for distribution
-- Universal binary support for both Intel and Apple Silicon
-- Gatekeeper compatibility
+## Verification
 
-### Build Confidence
+All binaries include SHA256 checksums in `checksums.txt` within the GitHub Release.
 
-We have **high confidence** (90%) that the current build approach will work across platforms because:
-1. We're using Yubico's official `ykman.spec` with their Entrypoint() function
-2. This spec handles the Python import issues we encountered
-3. Yubico successfully ships ykman on all platforms using this approach
-4. PyInstaller + official spec is battle-tested
+To verify manually:
+```bash
+# Download checksums
+curl -L https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/checksums.txt -o checksums.txt
 
-### CI/CD Implementation Notes
+# Verify a binary
+shasum -a 256 -c checksums.txt --ignore-missing
+```
 
-When implementing CI/CD:
-1. Store binaries as build artifacts with SHA256 checksums
-2. Use the existing build scripts with minor platform adaptations
-3. Implement checksum verification in download/deployment steps
-4. Consider using release tags to trigger binary builds
-5. Cache Python dependencies to speed up builds
+## Related Documentation
 
-### Binary Distribution Strategy
+- **Release Process**: `docs/architecture/cicd/release-process.md`
+- **Implementation Plan**: `docs/engineering/R2/r2-binary-dependency-integration-plan.md`
+- **Dependency Versions**: `docs/architecture/dependency-versions.md`
 
-**age-plugin-yubikey:**
-- Download pre-built binaries from GitHub releases (simpler, faster)
-- All platforms already provided by str4d
+---
 
-**ykman:**
-- Build from source using our scripts
-- Ensures compatibility and control over the build process
-- Uses official Yubico spec for reliability
+**Last Updated:** 2025-10-29 (R2 Release - GitHub Releases approach)
