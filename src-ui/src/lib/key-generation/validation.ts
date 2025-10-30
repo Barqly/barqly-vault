@@ -28,8 +28,11 @@ export const validateKeyGenerationInputs = (
     const error: CommandError = {
       code: 'INVALID_INPUT',
       message: labelValidation.error!,
+      details: null,
       recovery_guidance: 'Please provide a unique label for the new key',
       user_actionable: true,
+      trace_id: null,
+      span_id: null,
     };
     logger.error(
       'key-generation-validation',
@@ -54,8 +57,11 @@ export const validateKeyGenerationInputs = (
     const error: CommandError = {
       code: 'INVALID_INPUT',
       message: passphraseValidation.error!,
+      details: null,
       recovery_guidance: 'Please provide a strong passphrase to protect the key',
       user_actionable: true,
+      trace_id: null,
+      span_id: null,
     };
     logger.error(
       'key-generation-validation',

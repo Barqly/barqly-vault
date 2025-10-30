@@ -110,8 +110,11 @@ export const useKeyGeneration = (): UseKeyGenerationReturn => {
         commandError = {
           code: 'INTERNAL_ERROR',
           message: error instanceof Error ? error.message : 'An unexpected error occurred',
+          details: null,
           recovery_guidance: 'Please try again. If the problem persists, restart the application.',
           user_actionable: true,
+          trace_id: null,
+          span_id: null,
         };
       }
 

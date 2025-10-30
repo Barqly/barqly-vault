@@ -30,8 +30,11 @@ export const validateEncryptionInputs = (
       error: {
         code: 'INVALID_INPUT',
         message: 'No files selected for encryption',
+        details: null,
         recovery_guidance: 'Please select files or folders to encrypt',
         user_actionable: true,
+        trace_id: null,
+        span_id: null,
       },
     };
   }
@@ -43,8 +46,11 @@ export const validateEncryptionInputs = (
       error: {
         code: 'INVALID_INPUT',
         message: 'Encryption key is required',
+        details: null,
         recovery_guidance: 'Please select an encryption key',
         user_actionable: true,
+        trace_id: null,
+        span_id: null,
       },
     };
   }
