@@ -274,7 +274,55 @@ jobs:
       - name: Install frontend dependencies
         if: steps.should_build.outputs.build == 'true'
         run: npm install --prefix src-ui
-      
+
+      # Binary dependencies - fetch from GitHub Release
+      - name: Cache Binary Dependencies
+        if: steps.should_build.outputs.build == 'true'
+        uses: actions/cache@v4
+        with:
+          path: src-tauri/bin/
+          key: binaries-${{ hashFiles('src-tauri/bin/binary-dependencies.json') }}
+          restore-keys: |
+            binaries-
+
+      - name: Fetch Binary Dependencies
+        if: steps.should_build.outputs.build == 'true'
+        run: |
+          chmod +x scripts/cicd/fetch-binaries.sh
+          ./scripts/cicd/fetch-binaries.sh
+        shell: bash
+
+      - name: Verify Binary Dependencies
+        if: steps.should_build.outputs.build == 'true'
+        run: |
+          # Verify binaries were downloaded
+          echo "Verifying binaries for ${{ matrix.platform }}..."
+
+          if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
+            PLATFORM_DIR="darwin"
+          elif [[ "${{ matrix.platform }}" == *"ubuntu"* ]]; then
+            PLATFORM_DIR="linux"
+          else
+            PLATFORM_DIR="windows"
+          fi
+
+          # Check required binaries exist
+          for binary in age age-plugin-yubikey ykman; do
+            if [ ! -e "src-tauri/bin/$PLATFORM_DIR/$binary" ] && [ ! -e "src-tauri/bin/$PLATFORM_DIR/${binary}.bat" ]; then
+              echo "❌ ERROR: Binary not found: $binary"
+              exit 1
+            fi
+          done
+
+          # Check ykman-bundle exists
+          if [ ! -d "src-tauri/bin/$PLATFORM_DIR/ykman-bundle" ]; then
+            echo "❌ ERROR: ykman-bundle directory not found"
+            exit 1
+          fi
+
+          echo "✅ All binaries verified for $PLATFORM_DIR"
+        shell: bash
+
       - name: Build with Tauri
         if: steps.should_build.outputs.build == 'true'
         uses: tauri-apps/tauri-action@v0
