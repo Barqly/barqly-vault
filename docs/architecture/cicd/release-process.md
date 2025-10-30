@@ -5,6 +5,59 @@
 **Status**: Active Process Documentation
 **Author**: Release Engineering
 
+## Version Strategy (Critical for Caching!)
+
+**Version field** (in Cargo.toml and tauri.conf.json) represents the **release line**, not individual builds.
+
+### Version Field Locations (Keep Stable)
+
+```toml
+# Cargo.toml (workspace root)
+[workspace.package]
+version = "0.2.0"  # Set once per release cycle
+
+# src-tauri/Cargo.toml
+version = "0.2.0"  # Same as workspace
+
+# src-tauri/tauri.conf.json
+"version": "0.2.0"  # Same as workspace
+```
+
+### Tag Strategy (Identifies Variants)
+
+```bash
+# All these use version = "0.2.0" in source files:
+v0.2.0-alpha.1   # Development checkpoint
+v0.2.0-alpha.2   # Development checkpoint
+v0.2.0-test.1    # CI/CD testing
+v0.2.0-beta.1    # User testing
+v0.2.0-beta.2    # Bug fixes
+v0.2.0           # Production release
+
+# Only update version when moving to 0.3.0:
+v0.3.0-alpha.1   # Now version = "0.3.0" in files
+```
+
+### Why This Matters for Caching
+
+**Stable version (0.2.0):**
+- ✅ Cargo.lock stays consistent
+- ✅ Cache hits on dependencies (686 crates)
+- ✅ Builds: 3-5 minutes (cached)
+- ✅ All v0.2.x builds share cache
+
+**Changing version (0.2.0 → 0.2.1):**
+- ❌ Cargo re-locks dependencies
+- ❌ Cache invalidated
+- ❌ Builds: 15-20 minutes (full download + compile)
+
+**Best Practice:**
+- Set version **once** at start of release cycle
+- Use **tags** for all variants
+- Update version **only** for next major/minor release
+
+---
+
 ## Binary Dependency Setup (One-Time per Version Update)
 
 Barqly Vault bundles external binaries (age, age-plugin-yubikey, ykman). These are created **once** and reused across all app releases.
