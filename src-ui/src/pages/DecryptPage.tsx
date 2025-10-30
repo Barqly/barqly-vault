@@ -1,6 +1,5 @@
 import React from 'react';
 import { useDecryptionWorkflow } from '../hooks/useDecryptionWorkflow';
-import { ErrorMessage } from '../components/ui/error-message';
 import type { CommandError } from '../bindings';
 import { Unlock } from 'lucide-react';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
@@ -50,7 +49,6 @@ const DecryptPage: React.FC = () => {
     isRecoveryMode,
     willRestoreManifest,
     willRestoreKeys: _willRestoreKeys,
-    recoveredItems,
 
     // From useFileDecryption
     isLoading,
