@@ -5,18 +5,10 @@ import { KeyReferenceWithAvailability } from '../../hooks/useKeySelection';
 export interface KeyOptionProps {
   keyData: KeyReferenceWithAvailability;
   isSelected: boolean;
-  isFocused?: boolean;
   onSelect: (keyId: string) => void;
-  formatDate: (dateString: string) => string;
 }
 
-export const KeyOption: React.FC<KeyOptionProps> = ({
-  keyData,
-  isSelected,
-  isFocused = false,
-  onSelect,
-  formatDate,
-}) => {
+export const KeyOption: React.FC<KeyOptionProps> = ({ keyData, isSelected, onSelect }) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();

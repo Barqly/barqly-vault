@@ -233,7 +233,6 @@ export const KeySelectionDropdown: React.FC<KeySelectionDropdownProps> = ({
                     keyData={key}
                     isSelected={key.id === value}
                     onSelect={handleKeySelectWithFocus}
-                    formatDate={formatDate}
                   />
                 ))}
               </ul>
