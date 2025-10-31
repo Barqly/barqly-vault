@@ -430,33 +430,41 @@ jobs:
             # Convert to Windows path for PowerShell
             MSI_WIN=$(cygpath -w "$MSI" 2>/dev/null || echo "$MSI")
 
-            # Use 7-Zip to extract MSI (already installed on Windows runners)
-            echo "Extracting MSI contents with 7-Zip..."
+            # Use msiexec to extract MSI (native Windows tool for proper extraction)
+            echo "Extracting MSI contents with msiexec..."
             powershell -Command "
-              # Create extraction directory
-              New-Item -ItemType Directory -Path msi_extracted -Force | Out-Null
+              # Create extraction directory with full path
+              \$target = Join-Path (Get-Location) 'msi_extracted'
+              New-Item -ItemType Directory -Path \$target -Force | Out-Null
 
-              # Extract MSI using 7-Zip (two-step process for MSI files)
-              Write-Host 'Extracting MSI contents...'
-              & 'C:\Program Files\7-Zip\7z.exe' x '$MSI_WIN' -omsi_extracted -y | Out-Null
+              # Use msiexec /a for administrative installation (proper extraction)
+              Write-Host 'Extracting MSI contents using msiexec /a...'
+              Write-Host \"MSI Path: $MSI_WIN\"
+              Write-Host \"Target Dir: \$target\"
 
-              # MSI files have a nested structure, extract the actual contents
-              if (Test-Path \"msi_extracted\*.cab\") {
-                Get-ChildItem \"msi_extracted\*.cab\" | ForEach-Object {
-                  Write-Host \"Extracting CAB file: \$(\$_.Name)\"
-                  & 'C:\Program Files\7-Zip\7z.exe' x \$_.FullName -omsi_extracted -y | Out-Null
-                }
-              }
+              # Start msiexec process and wait for completion
+              \$process = Start-Process msiexec.exe -ArgumentList '/a', \"\"\"$MSI_WIN\"\"\", '/qn', \"TARGETDIR=\$target\" -Wait -PassThru -NoNewWindow
 
-              # Check if extraction succeeded and show structure
-              if ((Get-ChildItem -Path msi_extracted -Recurse).Count -gt 0) {
+              if (\$process.ExitCode -eq 0) {
                 Write-Host '✓ MSI extracted successfully'
+
+                # Show extracted structure
                 Write-Host 'Extracted structure:'
-                Get-ChildItem -Path msi_extracted -Directory | Select-Object -First 5 | ForEach-Object { Write-Host \$_.FullName }
+                Get-ChildItem -Path \$target -Directory | Select-Object -First 5 | ForEach-Object { Write-Host \$_.FullName }
+
                 Write-Host 'Binary files found:'
-                Get-ChildItem -Path msi_extracted -Recurse -Include '*.exe','*.bat' | Select-Object -First 10 | ForEach-Object { Write-Host \$_.FullName }
+                Get-ChildItem -Path \$target -Recurse -Include '*.exe','*.bat' | Select-Object -First 20 | ForEach-Object { Write-Host \$_.FullName }
+
+                # Also check specific expected paths
+                Write-Host 'Checking for Barqly Vault resources:'
+                if (Test-Path \"\$target\ProgramFiles64Folder\") {
+                  Get-ChildItem -Path \"\$target\ProgramFiles64Folder\" -Recurse -Include '*.exe','*.bat' | ForEach-Object { Write-Host \"Found: \$(\$_.FullName)\" }
+                }
+                if (Test-Path \"\$target\PFiles\") {
+                  Get-ChildItem -Path \"\$target\PFiles\" -Recurse -Include '*.exe','*.bat' | ForEach-Object { Write-Host \"Found: \$(\$_.FullName)\" }
+                }
               } else {
-                Write-Host '❌ MSI extraction failed - no files found'
+                Write-Host \"❌ MSI extraction failed with exit code: \$(\$process.ExitCode)\"
                 exit 1
               }
             "
