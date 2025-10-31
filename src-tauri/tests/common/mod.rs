@@ -23,6 +23,11 @@ static INIT: Once = Once::new();
 /// Initialize the test environment once for the entire test suite
 pub fn init_test_environment() {
     INIT.call_once(|| {
+        // Initialize PathProvider for tests
+        let _ =
+            barqly_vault_lib::services::shared::infrastructure::path_management::init_path_provider(
+            );
+
         // Set up logging for tests
         tracing_subscriber::fmt()
             .with_env_filter("debug")

@@ -4,23 +4,25 @@
 //! - `~/Documents/Barqly-Vaults/` - Encrypted vaults and manifests
 //! - `~/Documents/Barqly-Recovery/` - Decrypted/recovered files
 
+use super::provider::PathProvider;
 use crate::error::StorageError;
 use crate::prelude::*;
-use directories::UserDirs;
 use std::path::PathBuf;
 use std::sync::Once;
 
 use super::directories::{get_manifest_backups_dir, get_vaults_manifest_dir};
 
-/// Get the user's Documents directory
+/// Get the user's Documents directory with headless fallback
+///
+/// Uses PathProvider which includes fallback support for headless environments
+/// (CI/Docker) where UserDirs::document_dir() might return None.
 fn get_documents_dir() -> Result<PathBuf, StorageError> {
-    let user_dirs = UserDirs::new()
-        .ok_or_else(|| StorageError::DirectoryCreationFailed(PathBuf::from("UserDirs")))?;
+    let provider = PathProvider::global()?;
+    let provider = provider
+        .read()
+        .map_err(|_| StorageError::InitializationFailed("PathProvider lock poisoned".into()))?;
 
-    user_dirs
-        .document_dir()
-        .map(|p| p.to_path_buf())
-        .ok_or_else(|| StorageError::DirectoryCreationFailed(PathBuf::from("Documents")))
+    provider.documents_dir()
 }
 
 // Log vault directory creation only once per app session

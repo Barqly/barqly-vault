@@ -230,6 +230,9 @@ mod tests {
 
     #[test]
     fn test_key_registration() {
+        // Initialize PathProvider for test
+        let _ = shared::infrastructure::path_management::init_path_provider();
+
         let mut cleanup = TestCleanup::new();
         cleanup.register_key("test-key");
         assert_eq!(cleanup.artifacts.len(), 2); // .enc and .meta files

@@ -7,6 +7,7 @@
 
 mod directories;
 mod key_paths;
+mod provider;
 mod user_vaults;
 mod validation;
 
@@ -16,6 +17,7 @@ pub use directories::{
     get_manifest_backups_dir, get_vaults_manifest_dir,
 };
 pub use key_paths::{get_key_file_path, get_key_metadata_path};
+pub use provider::{PathProvider, init_path_provider, update_with_app_handle};
 pub use user_vaults::{
     SanitizedVaultName, generate_backup_timestamp, get_manifest_backup_path,
     get_recovery_directory, get_vault_file_path, get_vault_manifest_path, get_vault_recovery_path,
@@ -30,6 +32,9 @@ mod tests {
 
     #[test]
     fn test_app_dir_creation() {
+        // Initialize PathProvider for testing
+        let _ = init_path_provider();
+
         let app_dir = get_app_dir();
         assert!(app_dir.is_ok());
 
@@ -40,6 +45,9 @@ mod tests {
 
     #[test]
     fn test_keys_dir_creation() {
+        // Initialize PathProvider for testing
+        let _ = init_path_provider();
+
         let keys_dir = get_keys_dir();
         assert!(keys_dir.is_ok());
 
@@ -50,6 +58,9 @@ mod tests {
 
     #[test]
     fn test_logs_dir_creation() {
+        // Initialize PathProvider for testing
+        let _ = init_path_provider();
+
         let logs_dir = get_logs_dir();
         assert!(logs_dir.is_ok());
 
@@ -71,6 +82,9 @@ mod tests {
 
     #[test]
     fn test_key_file_path_generation() {
+        // Initialize PathProvider for testing
+        let _ = init_path_provider();
+
         let path = get_key_file_path("test-key");
         assert!(path.is_ok());
 
@@ -80,6 +94,9 @@ mod tests {
 
     #[test]
     fn test_key_metadata_path_generation() {
+        // Initialize PathProvider for testing
+        let _ = init_path_provider();
+
         let path = get_key_metadata_path("test-key");
         assert!(path.is_ok());
 
@@ -89,6 +106,9 @@ mod tests {
 
     #[test]
     fn test_unsafe_label_rejection() {
+        // Initialize PathProvider for testing
+        let _ = init_path_provider();
+
         assert!(get_key_file_path("key/with/slash").is_err());
         assert!(get_key_file_path("key\\with\\backslash").is_err());
         assert!(get_key_file_path("key..with..dots").is_err());

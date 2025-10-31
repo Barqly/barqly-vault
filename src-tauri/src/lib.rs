@@ -178,7 +178,18 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run_app() {
-    // Initialize new tracing system
+    // CRITICAL: Initialize PathProvider FIRST (before logging)
+    // This ensures consistent paths during bootstrap and runtime
+    if let Err(e) = services::shared::infrastructure::path_management::init_path_provider() {
+        // Use eprintln only for initialization errors
+        // This is before logging is set up, so it's acceptable
+        #[allow(clippy::disallowed_macros, clippy::print_stderr)]
+        {
+            eprintln!("Failed to initialize PathProvider: {e:?}");
+        }
+    }
+
+    // Initialize new tracing system (now uses PathProvider internally)
     if let Err(e) = logging::init() {
         // Use eprintln only for initialization errors
         // This is before logging is set up, so it's acceptable
@@ -204,6 +215,16 @@ pub fn run_app() {
             // Initialize the global AppHandle for binary path resolution
             use services::key_management::yubikey::infrastructure::pty::app_handle::init_app_handle;
             init_app_handle(app.handle().clone());
+
+            // Update PathProvider with AppHandle (maintains same paths)
+            if let Err(e) =
+                services::shared::infrastructure::path_management::update_with_app_handle(
+                    app.handle().clone(),
+                )
+            {
+                warn!("Failed to update PathProvider with AppHandle: {}", e);
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

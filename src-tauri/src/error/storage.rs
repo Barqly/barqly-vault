@@ -71,6 +71,10 @@ pub enum StorageError {
     /// Serialization failed
     #[error("Serialization failed: {message}")]
     SerializationFailed { message: String },
+
+    /// Initialization failed
+    #[error("Initialization failed: {0}")]
+    InitializationFailed(String),
 }
 
 impl StorageError {

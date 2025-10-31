@@ -258,6 +258,9 @@ mod tests {
 
     #[test]
     fn test_device_file_path() {
+        // Initialize PathProvider for testing
+        let _ = crate::services::shared::infrastructure::path_management::init_path_provider();
+
         let path = DeviceInfo::get_device_file_path().unwrap();
 
         // Should end with device.json

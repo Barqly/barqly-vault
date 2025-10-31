@@ -19,13 +19,24 @@ use barqly_vault_lib::{
         crypto::infrastructure::encrypt_data,
         file::infrastructure::file_operations::{FileOpsConfig, FileSelection},
         key_management::passphrase::generate_keypair,
+        shared::infrastructure::path_management::init_path_provider,
     },
     // storage tests now use proper domain modules
 };
 use rand::Rng;
 use std::fs;
 use std::io::Write;
+use std::sync::Once;
 use tempfile::tempdir;
+
+// Initialize PathProvider once for all tests in this module
+static INIT: Once = Once::new();
+
+fn setup_test_environment() {
+    INIT.call_once(|| {
+        let _ = init_path_provider();
+    });
+}
 
 // ============================================================================
 // TEST ENVIRONMENT SETUP
@@ -111,6 +122,7 @@ impl Task3IntegrationTestEnv {
 
 #[test]
 fn should_complete_encrypt_files_workflow_successfully() {
+    setup_test_environment();
     // Given: Test environment with files and key
     let mut env = Task3IntegrationTestEnv::new();
     let file1 = env.create_test_file("wallet.dat", "bitcoin wallet data");
@@ -149,6 +161,7 @@ fn should_complete_encrypt_files_workflow_successfully() {
 
 #[test]
 fn should_handle_encrypt_files_with_folder_selection() {
+    setup_test_environment();
     // Given: Test environment with folder containing files
     let mut env = Task3IntegrationTestEnv::new();
     let folder_path = env.create_test_folder_with_files(
@@ -349,6 +362,7 @@ fn should_handle_get_encryption_status_whitespace_operation_id_error() {
 
 #[test]
 fn should_complete_full_encryption_workflow_integration() {
+    setup_test_environment();
     // Given: Test environment with files and key
     let mut env = Task3IntegrationTestEnv::new();
     let file1 = env.create_test_file("wallet.dat", "bitcoin wallet data");
@@ -416,6 +430,7 @@ fn should_complete_full_encryption_workflow_integration() {
 
 #[test]
 fn should_handle_invalid_file_paths_in_encryption_workflow() {
+    setup_test_environment();
     // Given: Test environment with non-existent files
     let env = Task3IntegrationTestEnv::new();
     let key_id = env.setup_test_key();
@@ -445,6 +460,7 @@ fn should_handle_invalid_file_paths_in_encryption_workflow() {
 
 #[test]
 fn should_handle_large_file_list_in_encryption_workflow() {
+    setup_test_environment();
     // Given: Test environment with many files
     let mut env = Task3IntegrationTestEnv::new();
     let key_id = env.setup_test_key();

@@ -364,6 +364,11 @@ mod tests {
 
     #[test]
     fn test_storage_fixtures_create_key_store() {
+        // Initialize PathProvider for test
+        let _ =
+            barqly_vault_lib::services::shared::infrastructure::path_management::init_path_provider(
+            );
+
         let config = TestSuiteConfig::new();
         let (key_infos, _cleanup) = StorageFixtures::create_test_key_store(&config);
 

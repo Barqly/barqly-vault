@@ -12,6 +12,18 @@ use crate::common::helpers::TestAssertions;
 use barqly_vault_lib::error::StorageError;
 use barqly_vault_lib::services::shared::{get_key_file_path, get_key_metadata_path};
 use rstest::*;
+use std::sync::Once;
+
+// Initialize PathProvider once for all tests in this module
+static INIT: Once = Once::new();
+
+fn setup_test_environment() {
+    INIT.call_once(|| {
+        let _ =
+            barqly_vault_lib::services::shared::infrastructure::path_management::init_path_provider(
+            );
+    });
+}
 
 // ============================================================================
 // SAFE LABEL VALIDATION TESTS
@@ -22,6 +34,9 @@ use rstest::*;
 #[case("my_key_123", "underscore_with_numbers")]
 #[case("key-with-dashes", "dashes")]
 fn should_accept_valid_labels(#[case] label: &str, #[case] test_name: &str) {
+    // Setup test environment
+    setup_test_environment();
+
     // Given: A valid label
 
     // When: Getting the key file path
@@ -40,6 +55,9 @@ fn should_accept_valid_labels(#[case] label: &str, #[case] test_name: &str) {
 #[case("key..with..dots", "double_dots")]
 #[case("", "empty_string")]
 fn should_reject_invalid_labels(#[case] label: &str, #[case] test_name: &str) {
+    // Setup test environment
+    setup_test_environment();
+
     // Given: An invalid label
 
     // When: Getting the key file path
