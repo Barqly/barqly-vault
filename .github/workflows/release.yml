@@ -395,22 +395,22 @@ jobs:
             find squashfs-root -type d -name "bin" 2>/dev/null | head -5
 
             # Look for age binary - check multiple possible paths
-            AGE_PATH=$(find squashfs-root \( -path "*/bin/linux/age" -o -path "*/bin/age" \) | head -1)
+            AGE_PATH=$(find squashfs-root -path "*/bin/linux/age" -o -path "*/bin/age" | head -1)
             test -n "$AGE_PATH" || { echo "❌ age not found in AppImage"; exit 1; }
             echo "✓ Found age at: $AGE_PATH"
 
             # Look for age-plugin-yubikey
-            PLUGIN_PATH=$(find squashfs-root \( -path "*/bin/linux/age-plugin-yubikey" -o -path "*/bin/age-plugin-yubikey" \) | head -1)
+            PLUGIN_PATH=$(find squashfs-root -path "*/bin/linux/age-plugin-yubikey" -o -path "*/bin/age-plugin-yubikey" | head -1)
             test -n "$PLUGIN_PATH" || { echo "❌ age-plugin-yubikey not found in AppImage"; exit 1; }
             echo "✓ Found age-plugin-yubikey at: $PLUGIN_PATH"
 
             # Look for ykman wrapper
-            YKMAN_PATH=$(find squashfs-root \( -path "*/bin/linux/ykman" -o -path "*/bin/ykman" \) | head -1)
+            YKMAN_PATH=$(find squashfs-root -path "*/bin/linux/ykman" -o -path "*/bin/ykman" | head -1)
             test -n "$YKMAN_PATH" || { echo "❌ ykman not found in AppImage"; exit 1; }
             echo "✓ Found ykman at: $YKMAN_PATH"
 
             # Look for ykman-bundle directory
-            BUNDLE_PATH=$(find squashfs-root \( -path "*/bin/linux/ykman-bundle" -o -path "*/bin/ykman-bundle" \) -type d | head -1)
+            BUNDLE_PATH=$(find squashfs-root -path "*/bin/linux/ykman-bundle" -o -path "*/bin/ykman-bundle" -type d | head -1)
             test -n "$BUNDLE_PATH" || { echo "❌ ykman-bundle not found in AppImage"; exit 1; }
             echo "✓ Found ykman-bundle at: $BUNDLE_PATH"
 
