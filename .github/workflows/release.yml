@@ -361,9 +361,9 @@ jobs:
             DMG=$(find target/*/release/bundle/dmg -name "*.dmg" | head -1)
             echo "Found DMG: $DMG"
 
-            # Mount the DMG
-            hdiutil attach "$DMG" -quiet
-            MOUNT_POINT=$(df | grep "Barqly Vault" | awk '{print $NF}')
+            # Mount the DMG to a deterministic path
+            MOUNT_POINT=$(mktemp -d)
+            hdiutil attach "$DMG" -mountpoint "$MOUNT_POINT" -nobrowse -quiet
 
             # Verify binaries exist in app bundle
             APP="$MOUNT_POINT/Barqly Vault.app"
@@ -375,8 +375,9 @@ jobs:
             test -d "$APP/Contents/Resources/bin/darwin/ykman-bundle" || { echo "❌ ykman-bundle missing"; exit 1; }
             test -f "$APP/Contents/Resources/bin/darwin/ykman-bundle/ykman" || { echo "❌ ykman binary missing"; exit 1; }
 
-            # Unmount
+            # Unmount and cleanup
             hdiutil detach "$MOUNT_POINT" -quiet
+            rm -rf "$MOUNT_POINT"
             echo "✅ macOS binaries verified in DMG"
 
           elif [[ "${{ matrix.platform }}" == *"ubuntu"* ]]; then
@@ -419,41 +420,61 @@ jobs:
             echo "✅ Linux binaries verified in AppImage"
 
           elif [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
-            # Windows: Extract and verify MSI contents using msiextract (from msitools)
+            # Windows: Extract and verify MSI contents
+            # First find the MSI file
             MSI=$(find target/*/release/bundle/msi -name "*.msi" | head -1)
             echo "Found MSI: $MSI"
 
-            # Install msitools for MSI extraction
-            echo "Installing msitools for MSI extraction..."
-            choco install -y lessmsi
+            # Convert to Windows path for PowerShell
+            MSI_WIN=$(cygpath -w "$MSI" 2>/dev/null || echo "$MSI")
 
-            # Extract MSI contents
-            echo "Extracting MSI to verify contents..."
-            lessmsi x "$MSI" msi_extracted/
+            # Use PowerShell to install lessmsi and extract MSI
+            echo "Installing lessmsi and extracting MSI..."
+            powershell -Command "
+              # Install lessmsi if not present
+              if (-not (Get-Command lessmsi -ErrorAction SilentlyContinue)) {
+                choco install -y lessmsi --no-progress
+              }
 
-            # Check extracted MSI contents for binaries
+              # Create extraction directory
+              New-Item -ItemType Directory -Path msi_extracted -Force | Out-Null
+
+              # Extract MSI
+              Write-Host 'Extracting MSI contents...'
+              lessmsi x '$MSI_WIN' msi_extracted\
+
+              # Check if extraction succeeded
+              if (Test-Path 'msi_extracted\SourceDir') {
+                Write-Host '✓ MSI extracted successfully'
+                Get-ChildItem -Path msi_extracted -Recurse -Include '*.exe','*.bat' | Select-Object -First 10 | ForEach-Object { Write-Host \$_.FullName }
+              } else {
+                Write-Host '❌ MSI extraction failed'
+                exit 1
+              }
+            "
+
+            # Verify binaries in bash (cross-platform compatible)
             echo "Verifying binaries in extracted MSI..."
 
-            # Note: The exact path may vary, let's check what's actually in there
             if [ -d "msi_extracted" ]; then
               echo "MSI structure:"
-              find msi_extracted -type d -name "bin" | head -5
+              find msi_extracted -type d -name "bin" 2>/dev/null | head -5
               echo "Binary files in MSI:"
-              find msi_extracted -type f \( -name "*.exe" -o -name "*.bat" \) | head -20
+              find msi_extracted -type f \( -name "*.exe" -o -name "*.bat" \) 2>/dev/null | head -20
 
               # Check for required binaries (flexible path checking)
-              if ! find msi_extracted -name "age.exe" | grep -q .; then
+              if ! find msi_extracted -name "age.exe" 2>/dev/null | grep -q .; then
                 echo "❌ age.exe not found in MSI package"; exit 1
               fi
-              if ! find msi_extracted -name "age-plugin-yubikey.exe" | grep -q .; then
+              if ! find msi_extracted -name "age-plugin-yubikey.exe" 2>/dev/null | grep -q .; then
                 echo "❌ age-plugin-yubikey.exe not found in MSI package"; exit 1
               fi
-              if ! find msi_extracted -name "ykman.bat" -o -name "ykman.exe" | grep -q .; then
+              if ! find msi_extracted \( -name "ykman.bat" -o -name "ykman.exe" \) 2>/dev/null | grep -q .; then
                 echo "❌ ykman not found in MSI package"; exit 1
               fi
 
               # Verify ykman-bundle exists
-              if ! find msi_extracted -type d -name "ykman-bundle" | grep -q .; then
+              if ! find msi_extracted -type d -name "ykman-bundle" 2>/dev/null | grep -q .; then
                 echo "❌ ykman-bundle directory not found in MSI package"; exit 1
               fi
 
@@ -466,7 +487,7 @@ jobs:
               test -f "src-tauri/bin/windows/ykman.bat" && echo "  ✓ ykman.bat in staging"
               test -d "src-tauri/bin/windows/ykman-bundle" && echo "  ✓ ykman-bundle in staging"
             else
-              echo "❌ Failed to extract MSI"; exit 1
+              echo "❌ msi_extracted directory not found"; exit 1
             fi
 
             # Clean up
