@@ -76,17 +76,28 @@ echo -e "\n${GREEN}Downloading age...${NC}"
 AGE_URL=$(jq -r ".dependencies.age.platforms.\"$PLATFORM\".url" "$MANIFEST")
 AGE_SHA=$(jq -r ".dependencies.age.platforms.\"$PLATFORM\".sha256" "$MANIFEST")
 
-curl -L "$AGE_URL" -o "$BIN_DIR/$PLATFORM_DIR/age" --progress-bar
+# Determine output filename (add .exe for Windows)
+if [[ "$PLATFORM_DIR" == "windows" ]]; then
+  AGE_FILE="age.exe"
+else
+  AGE_FILE="age"
+fi
+
+curl -L "$AGE_URL" -o "$BIN_DIR/$PLATFORM_DIR/$AGE_FILE" --progress-bar
 
 # Verify checksum
-ACTUAL_SHA=$($SHA_CMD "$BIN_DIR/$PLATFORM_DIR/age" | cut -d' ' -f1)
+ACTUAL_SHA=$($SHA_CMD "$BIN_DIR/$PLATFORM_DIR/$AGE_FILE" | cut -d' ' -f1)
 if [ "$ACTUAL_SHA" != "$AGE_SHA" ]; then
   echo -e "${RED}❌ Checksum mismatch for age${NC}"
   echo -e "Expected: $AGE_SHA"
   echo -e "Got:      $ACTUAL_SHA"
   exit 1
 fi
-chmod +x "$BIN_DIR/$PLATFORM_DIR/age"
+
+# Set executable permissions (skip for Windows .exe)
+if [[ "$PLATFORM_DIR" != "windows" ]]; then
+  chmod +x "$BIN_DIR/$PLATFORM_DIR/$AGE_FILE"
+fi
 echo -e "${GREEN}✓ age verified${NC}"
 
 # Download age-plugin-yubikey
@@ -94,17 +105,28 @@ echo -e "\n${GREEN}Downloading age-plugin-yubikey...${NC}"
 PLUGIN_URL=$(jq -r ".dependencies.\"age-plugin-yubikey\".platforms.\"$PLATFORM\".url" "$MANIFEST")
 PLUGIN_SHA=$(jq -r ".dependencies.\"age-plugin-yubikey\".platforms.\"$PLATFORM\".sha256" "$MANIFEST")
 
-curl -L "$PLUGIN_URL" -o "$BIN_DIR/$PLATFORM_DIR/age-plugin-yubikey" --progress-bar
+# Determine output filename (add .exe for Windows)
+if [[ "$PLATFORM_DIR" == "windows" ]]; then
+  PLUGIN_FILE="age-plugin-yubikey.exe"
+else
+  PLUGIN_FILE="age-plugin-yubikey"
+fi
+
+curl -L "$PLUGIN_URL" -o "$BIN_DIR/$PLATFORM_DIR/$PLUGIN_FILE" --progress-bar
 
 # Verify checksum
-ACTUAL_SHA=$($SHA_CMD "$BIN_DIR/$PLATFORM_DIR/age-plugin-yubikey" | cut -d' ' -f1)
+ACTUAL_SHA=$($SHA_CMD "$BIN_DIR/$PLATFORM_DIR/$PLUGIN_FILE" | cut -d' ' -f1)
 if [ "$ACTUAL_SHA" != "$PLUGIN_SHA" ]; then
   echo -e "${RED}❌ Checksum mismatch for age-plugin-yubikey${NC}"
   echo -e "Expected: $PLUGIN_SHA"
   echo -e "Got:      $ACTUAL_SHA"
   exit 1
 fi
-chmod +x "$BIN_DIR/$PLATFORM_DIR/age-plugin-yubikey"
+
+# Set executable permissions (skip for Windows .exe)
+if [[ "$PLATFORM_DIR" != "windows" ]]; then
+  chmod +x "$BIN_DIR/$PLATFORM_DIR/$PLUGIN_FILE"
+fi
 echo -e "${GREEN}✓ age-plugin-yubikey verified${NC}"
 
 # Download and extract ykman bundle
@@ -136,6 +158,11 @@ fi
 echo -e "Extracting ykman bundle..."
 tar -xzf "$BIN_DIR/$PLATFORM_DIR/$YKMAN_FILE" -C "$BIN_DIR/$PLATFORM_DIR"
 rm "$BIN_DIR/$PLATFORM_DIR/$YKMAN_FILE"  # Remove tarball after extraction
+
+# Set executable permissions for extracted ykman binary
+if [ "$OS" = "darwin" ] || [ "$OS" = "linux" ]; then
+  chmod +x "$BIN_DIR/$PLATFORM_DIR/ykman-bundle/ykman"
+fi
 
 # Create platform-appropriate wrapper
 if [ "$OS" = "darwin" ] || [ "$OS" = "linux" ]; then

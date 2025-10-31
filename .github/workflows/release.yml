@@ -286,9 +286,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: src-tauri/bin/
-          key: binaries-${{ hashFiles('src-tauri/bin/binary-dependencies.json') }}
+          key: binaries-${{ runner.os }}-${{ matrix.platform_id }}-${{ hashFiles('src-tauri/bin/binary-dependencies.json') }}
           restore-keys: |
-            binaries-
+            binaries-${{ runner.os }}-${{ matrix.platform_id }}-
+            binaries-${{ runner.os }}-
 
       - name: Fetch Binary Dependencies
         if: steps.should_build.outputs.build == 'true'
@@ -338,7 +339,98 @@ jobs:
           RUSTC_WRAPPER: "sccache"
         with:
           args: ${{ matrix.args }}
-      
+
+      # Verify binaries in bundled artifacts (Post-Bundle Verification)
+      - name: Verify Binaries in Bundled Artifacts
+        if: steps.should_build.outputs.build == 'true'
+        shell: bash
+        run: |
+          echo "🔍 Verifying binaries in bundled artifacts..."
+
+          if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
+            # macOS: Find and mount DMG
+            DMG=$(find target/*/release/bundle/dmg -name "*.dmg" | head -1)
+            echo "Found DMG: $DMG"
+
+            # Mount the DMG
+            hdiutil attach "$DMG" -quiet
+            MOUNT_POINT=$(df | grep "Barqly Vault" | awk '{print $NF}')
+
+            # Verify binaries exist in app bundle
+            APP="$MOUNT_POINT/Barqly Vault.app"
+            echo "Checking binaries in: $APP/Contents/Resources/bin/darwin/"
+
+            test -f "$APP/Contents/Resources/bin/darwin/age" || { echo "❌ age missing"; exit 1; }
+            test -f "$APP/Contents/Resources/bin/darwin/age-plugin-yubikey" || { echo "❌ age-plugin-yubikey missing"; exit 1; }
+            test -f "$APP/Contents/Resources/bin/darwin/ykman" || { echo "❌ ykman wrapper missing"; exit 1; }
+            test -d "$APP/Contents/Resources/bin/darwin/ykman-bundle" || { echo "❌ ykman-bundle missing"; exit 1; }
+            test -f "$APP/Contents/Resources/bin/darwin/ykman-bundle/ykman" || { echo "❌ ykman binary missing"; exit 1; }
+
+            # Unmount
+            hdiutil detach "$MOUNT_POINT" -quiet
+            echo "✅ macOS binaries verified in DMG"
+
+          elif [[ "${{ matrix.platform }}" == *"ubuntu"* ]]; then
+            # Linux: Extract and verify AppImage
+            APPIMAGE=$(find target/*/release/bundle/appimage -name "*.AppImage" | head -1)
+            echo "Found AppImage: $APPIMAGE"
+
+            # Make it executable and extract
+            chmod +x "$APPIMAGE"
+            "$APPIMAGE" --appimage-extract > /dev/null 2>&1
+
+            # Use find to locate binaries (Tauri puts them under resources/bin)
+            echo "Searching for binaries in extracted AppImage..."
+
+            # Look for age binary under resources/bin/linux
+            AGE_PATH=$(find squashfs-root -path "*/resources/bin/linux/age" | head -1)
+            test -n "$AGE_PATH" || { echo "❌ age not found in AppImage"; exit 1; }
+            echo "✓ Found age at: $AGE_PATH"
+
+            # Look for age-plugin-yubikey
+            PLUGIN_PATH=$(find squashfs-root -path "*/resources/bin/linux/age-plugin-yubikey" | head -1)
+            test -n "$PLUGIN_PATH" || { echo "❌ age-plugin-yubikey not found in AppImage"; exit 1; }
+            echo "✓ Found age-plugin-yubikey at: $PLUGIN_PATH"
+
+            # Look for ykman wrapper
+            YKMAN_PATH=$(find squashfs-root -path "*/resources/bin/linux/ykman" | head -1)
+            test -n "$YKMAN_PATH" || { echo "❌ ykman not found in AppImage"; exit 1; }
+            echo "✓ Found ykman at: $YKMAN_PATH"
+
+            # Look for ykman-bundle directory
+            BUNDLE_PATH=$(find squashfs-root -path "*/resources/bin/linux/ykman-bundle" -type d | head -1)
+            test -n "$BUNDLE_PATH" || { echo "❌ ykman-bundle not found in AppImage"; exit 1; }
+            echo "✓ Found ykman-bundle at: $BUNDLE_PATH"
+
+            # Verify ykman binary inside bundle
+            test -f "$BUNDLE_PATH/ykman" || { echo "❌ ykman binary missing from bundle"; exit 1; }
+
+            # Clean up
+            rm -rf squashfs-root
+            echo "✅ Linux binaries verified in AppImage"
+
+          elif [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
+            # Windows: Check MSI contents (requires msitools or 7zip)
+            MSI=$(find target/*/release/bundle/msi -name "*.msi" | head -1)
+            echo "Found MSI: $MSI"
+
+            # We can't easily extract MSI on GitHub Actions Windows runners without tools
+            # So we'll check the staging directory as a proxy (not ideal but better than nothing)
+            echo "Checking Windows staging directory for verification..."
+
+            # Check that files exist with .exe extensions
+            test -f "src-tauri/bin/windows/age.exe" || { echo "❌ age.exe missing"; exit 1; }
+            test -f "src-tauri/bin/windows/age-plugin-yubikey.exe" || { echo "❌ age-plugin-yubikey.exe missing"; exit 1; }
+            test -f "src-tauri/bin/windows/ykman.bat" || { echo "❌ ykman.bat missing"; exit 1; }
+            test -d "src-tauri/bin/windows/ykman-bundle" || { echo "❌ ykman-bundle missing"; exit 1; }
+            test -f "src-tauri/bin/windows/ykman-bundle/ykman.exe" || { echo "❌ ykman.exe missing from bundle"; exit 1; }
+
+            echo "✅ Windows binaries verified (staging check)"
+            echo "⚠️  Note: Full MSI extraction would require additional tools"
+          fi
+
+          echo "✅ Post-bundle verification complete for ${{ matrix.platform }}"
+
       # Find and notarize macOS DMG
       - name: Find DMG Path
         if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'

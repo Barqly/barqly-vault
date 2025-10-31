@@ -48,7 +48,7 @@ export function sanitizeLabel(input: string): SanitizedLabel {
   const asciiOnly = trimmed.replace(/[^\x00-\x7F]/g, '');
 
   // Step 2: Replace invalid filesystem characters and spaces with hyphens
-  const invalidChars = /[\/\\:*?"<>|\s]/g;
+  const invalidChars = /[/\\:*?"<>|\s]/g;
   const replaced = asciiOnly.replace(invalidChars, '-');
 
   // Step 3: Collapse multiple hyphens into single hyphen
