@@ -46,17 +46,23 @@ src-tauri/bin/                      # .gitignored (downloaded during build)
 ├── darwin/
 │   ├── age                         # Fetched from GitHub Release
 │   ├── age-plugin-yubikey          # Fetched from GitHub Release
-│   ├── ykman.bat (if Windows)      # Wrapper script
-│   ├── ykman (if Unix)             # Wrapper script
+│   ├── ykman                       # Unix wrapper script
 │   └── ykman-bundle/               # PyInstaller bundle
-│       ├── ykman or ykman.exe      # Main binary
+│       ├── ykman                   # Main binary
 │       └── _internal/              # Dependencies
-├── linux/                          # Same structure
-├── windows/                        # Same structure
-└── .keep                           # Tracked in git
+├── linux/                          # Same structure as darwin
+├── windows/
+│   ├── age.exe                     # Fetched from GitHub Release (with .exe)
+│   ├── age-plugin-yubikey.exe      # Fetched from GitHub Release (with .exe)
+│   ├── ykman.bat                   # Windows wrapper script
+│   └── ykman-bundle/               # PyInstaller bundle
+│       ├── ykman.exe               # Main binary
+│       └── _internal/              # Dependencies
+├── README.md                       # This file (tracked in git)
+└── binary-dependencies.json        # Version manifest (tracked in git)
 ```
 
-**Note:** Only `.keep`, `README.md`, and `binary-dependencies.json` are committed to git.
+**Note:** Only `README.md` and `binary-dependencies.json` are committed to git.
 
 ## Creating/Updating Dependency Release (One-Time)
 
@@ -131,6 +137,21 @@ Binaries are downloaded once, cached locally in `src-tauri/bin/`.
 | age | ✅ | ✅ | ✅ | ✅ |
 | age-plugin-yubikey | ✅ | ✅ | ✅ | ✅ |
 | ykman | ✅ (universal) | ✅ (universal) | ✅ | ✅ |
+
+## CI/CD Binary Verification
+
+The CI/CD pipeline performs comprehensive binary verification at two stages:
+
+### Pre-Bundle Verification
+- Confirms all binaries are downloaded correctly
+- Checks for platform-specific file extensions (.exe on Windows)
+- Validates ykman-bundle directory structure
+
+### Post-Bundle Verification
+- **macOS**: Extracts and verifies DMG contents using hdiutil
+- **Linux**: Extracts and verifies AppImage using unsquashfs
+- **Windows**: Extracts and verifies MSI package using lessmsi
+- Ensures binaries are correctly included in final distributable packages
 
 **Total:** 11 binary files across all platforms
 
