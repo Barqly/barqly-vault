@@ -389,26 +389,28 @@ jobs:
             chmod +x "$APPIMAGE"
             "$APPIMAGE" --appimage-extract > /dev/null 2>&1
 
-            # Use find to locate binaries (Tauri puts them under resources/bin)
+            # Use find to locate binaries (Tauri bundles at different paths)
             echo "Searching for binaries in extracted AppImage..."
+            echo "AppImage structure:"
+            find squashfs-root -type d -name "bin" 2>/dev/null | head -5
 
-            # Look for age binary under resources/bin/linux
-            AGE_PATH=$(find squashfs-root -path "*/resources/bin/linux/age" | head -1)
+            # Look for age binary - check multiple possible paths
+            AGE_PATH=$(find squashfs-root \( -path "*/bin/linux/age" -o -path "*/bin/age" \) | head -1)
             test -n "$AGE_PATH" || { echo "❌ age not found in AppImage"; exit 1; }
             echo "✓ Found age at: $AGE_PATH"
 
             # Look for age-plugin-yubikey
-            PLUGIN_PATH=$(find squashfs-root -path "*/resources/bin/linux/age-plugin-yubikey" | head -1)
+            PLUGIN_PATH=$(find squashfs-root \( -path "*/bin/linux/age-plugin-yubikey" -o -path "*/bin/age-plugin-yubikey" \) | head -1)
             test -n "$PLUGIN_PATH" || { echo "❌ age-plugin-yubikey not found in AppImage"; exit 1; }
             echo "✓ Found age-plugin-yubikey at: $PLUGIN_PATH"
 
             # Look for ykman wrapper
-            YKMAN_PATH=$(find squashfs-root -path "*/resources/bin/linux/ykman" | head -1)
+            YKMAN_PATH=$(find squashfs-root \( -path "*/bin/linux/ykman" -o -path "*/bin/ykman" \) | head -1)
             test -n "$YKMAN_PATH" || { echo "❌ ykman not found in AppImage"; exit 1; }
             echo "✓ Found ykman at: $YKMAN_PATH"
 
             # Look for ykman-bundle directory
-            BUNDLE_PATH=$(find squashfs-root -path "*/resources/bin/linux/ykman-bundle" -type d | head -1)
+            BUNDLE_PATH=$(find squashfs-root \( -path "*/bin/linux/ykman-bundle" -o -path "*/bin/ykman-bundle" \) -type d | head -1)
             test -n "$BUNDLE_PATH" || { echo "❌ ykman-bundle not found in AppImage"; exit 1; }
             echo "✓ Found ykman-bundle at: $BUNDLE_PATH"
 
@@ -428,27 +430,32 @@ jobs:
             # Convert to Windows path for PowerShell
             MSI_WIN=$(cygpath -w "$MSI" 2>/dev/null || echo "$MSI")
 
-            # Use PowerShell to install lessmsi and extract MSI
-            echo "Installing lessmsi and extracting MSI..."
+            # Use 7-Zip to extract MSI (already installed on Windows runners)
+            echo "Extracting MSI contents with 7-Zip..."
             powershell -Command "
-              # Install lessmsi if not present
-              if (-not (Get-Command lessmsi -ErrorAction SilentlyContinue)) {
-                choco install -y lessmsi --no-progress
-              }
-
               # Create extraction directory
               New-Item -ItemType Directory -Path msi_extracted -Force | Out-Null
 
-              # Extract MSI
+              # Extract MSI using 7-Zip (two-step process for MSI files)
               Write-Host 'Extracting MSI contents...'
-              lessmsi x '$MSI_WIN' msi_extracted\
+              & 'C:\Program Files\7-Zip\7z.exe' x '$MSI_WIN' -omsi_extracted -y | Out-Null
 
-              # Check if extraction succeeded
-              if (Test-Path 'msi_extracted\SourceDir') {
+              # MSI files have a nested structure, extract the actual contents
+              if (Test-Path 'msi_extracted\*.cab') {
+                Get-ChildItem 'msi_extracted\*.cab' | ForEach-Object {
+                  & 'C:\Program Files\7-Zip\7z.exe' x \$_.FullName -omsi_extracted -y | Out-Null
+                }
+              }
+
+              # Check if extraction succeeded and show structure
+              if ((Get-ChildItem -Path msi_extracted -Recurse).Count -gt 0) {
                 Write-Host '✓ MSI extracted successfully'
+                Write-Host 'Extracted structure:'
+                Get-ChildItem -Path msi_extracted -Directory | Select-Object -First 5 | ForEach-Object { Write-Host \$_.FullName }
+                Write-Host 'Binary files found:'
                 Get-ChildItem -Path msi_extracted -Recurse -Include '*.exe','*.bat' | Select-Object -First 10 | ForEach-Object { Write-Host \$_.FullName }
               } else {
-                Write-Host '❌ MSI extraction failed'
+                Write-Host '❌ MSI extraction failed - no files found'
                 exit 1
               }
             "
