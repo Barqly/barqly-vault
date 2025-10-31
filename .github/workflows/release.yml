@@ -441,9 +441,9 @@ jobs:
               & 'C:\Program Files\7-Zip\7z.exe' x '$MSI_WIN' -omsi_extracted -y | Out-Null
 
               # MSI files have a nested structure, extract the actual contents
-              if (Test-Path "msi_extracted\*.cab") {
-                Get-ChildItem "msi_extracted\*.cab" | ForEach-Object {
-                  Write-Host "Extracting CAB file: \$(\$_.Name)"
+              if (Test-Path \"msi_extracted\*.cab\") {
+                Get-ChildItem \"msi_extracted\*.cab\" | ForEach-Object {
+                  Write-Host \"Extracting CAB file: \$(\$_.Name)\"
                   & 'C:\Program Files\7-Zip\7z.exe' x \$_.FullName -omsi_extracted -y | Out-Null
                 }
               }
