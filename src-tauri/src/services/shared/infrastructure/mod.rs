@@ -3,6 +3,7 @@
 //! Cross-domain infrastructure utilities used by multiple service domains.
 //! Contains technical implementations that don't belong to any single domain.
 
+pub mod binary_resolver;
 pub mod caching;
 pub mod device_identity;
 pub mod error;
@@ -10,6 +11,11 @@ pub mod io;
 pub mod label_sanitization;
 pub mod path_management;
 pub mod progress;
+
+// Re-export binary resolver
+pub use binary_resolver::{
+    get_age_path, get_age_plugin_path, get_ykman_path, resolve_bundled_binary,
+};
 
 // Re-export caching
 pub use caching::{CacheMetrics, StorageCache, get_cache};
