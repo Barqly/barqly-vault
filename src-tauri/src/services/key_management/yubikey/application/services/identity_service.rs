@@ -81,19 +81,40 @@ impl AgePluginIdentityService {
 
     /// Find age-plugin-yubikey binary in common locations
     async fn find_plugin_binary() -> Option<PathBuf> {
+        use crate::services::shared::infrastructure::binary_resolver;
+        use tracing::debug;
+
+        // First try the centralized resolver which knows about platform-specific paths
+        // This handles:
+        // - Linux: /usr/lib/Barqly Vault/bin/linux/
+        // - macOS: .../Contents/Resources/bin/darwin/
+        // - Windows: .../resources/bin/windows/
+        match binary_resolver::get_age_plugin_path() {
+            Ok(path) => {
+                debug!(
+                    "Found age-plugin-yubikey via centralized resolver: {}",
+                    path.display()
+                );
+                return Some(path);
+            }
+            Err(err) => {
+                debug!("Centralized resolver failed: {}, trying fallbacks", err);
+            }
+        }
+
+        // Fallback: Check common system paths
         let common_paths = vec![
             "age-plugin-yubikey", // Try PATH first
-            "/usr/local/bin/age-plugin-yubikey",
-            "/opt/homebrew/bin/age-plugin-yubikey",
         ];
 
         for path in common_paths {
             if Command::new(path).arg("--help").output().await.is_ok() {
+                debug!("Found age-plugin-yubikey at: {}", path);
                 return Some(PathBuf::from(path));
             }
         }
 
-        // Try Cargo installation directory
+        // Additional fallback: Try Cargo installation directory
         if let Ok(home_dir) = std::env::var("HOME") {
             let cargo_bin_path = PathBuf::from(home_dir)
                 .join(".cargo")
@@ -101,10 +122,15 @@ impl AgePluginIdentityService {
                 .join("age-plugin-yubikey");
 
             if cargo_bin_path.exists() {
+                debug!(
+                    "Found age-plugin-yubikey in cargo bin: {}",
+                    cargo_bin_path.display()
+                );
                 return Some(cargo_bin_path);
             }
         }
 
+        debug!("age-plugin-yubikey not found in any location");
         None
     }
 

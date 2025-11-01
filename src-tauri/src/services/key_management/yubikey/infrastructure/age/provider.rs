@@ -48,37 +48,50 @@ impl AgePluginProvider {
 
     /// Find the age-plugin-yubikey binary
     pub fn find_plugin_binary() -> YubiKeyResult<PathBuf> {
-        // First, try to find in PATH
+        use crate::services::shared::infrastructure::binary_resolver;
+        use tracing::debug;
+
+        // First try the centralized resolver which knows about platform-specific paths
+        // This handles:
+        // - Linux: /usr/lib/Barqly Vault/bin/linux/
+        // - macOS: .../Contents/Resources/bin/darwin/
+        // - Windows: .../resources/bin/windows/
+        match binary_resolver::get_age_plugin_path() {
+            Ok(path) => {
+                debug!(
+                    "Found age-plugin-yubikey via centralized resolver: {}",
+                    path.display()
+                );
+                return Ok(path);
+            }
+            Err(err) => {
+                debug!("Centralized resolver failed: {}, trying PATH fallback", err);
+            }
+        }
+
+        // Fallback: try to find in system PATH (for user-installed versions)
         if let Ok(path) = Self::find_in_path("age-plugin-yubikey") {
+            debug!("Found age-plugin-yubikey in PATH: {}", path.display());
             return Ok(path);
         }
 
-        // Try common Cargo installation directory
+        // Additional fallback: Try common Cargo installation directory
         if let Ok(home_dir) = std::env::var("HOME") {
             let cargo_bin_path = PathBuf::from(home_dir)
                 .join(".cargo")
                 .join("bin")
                 .join("age-plugin-yubikey");
             if cargo_bin_path.exists() && cargo_bin_path.is_file() {
+                debug!(
+                    "Found age-plugin-yubikey in cargo bin: {}",
+                    cargo_bin_path.display()
+                );
                 return Ok(cargo_bin_path);
             }
         }
 
-        // Try application-specific locations
-        if let Ok(app_dir) = crate::services::shared::get_app_dir() {
-            let runtime_path = app_dir.join("runtime").join("age-plugin-yubikey");
-            if runtime_path.exists() {
-                return Ok(runtime_path);
-            }
-
-            let bundled_path = app_dir.join("binaries").join("age-plugin-yubikey");
-            if bundled_path.exists() {
-                return Ok(bundled_path);
-            }
-        }
-
         Err(YubiKeyError::age_plugin(
-            "age-plugin-yubikey binary not found in PATH, ~/.cargo/bin, or application directories",
+            "age-plugin-yubikey binary not found. Checked bundled locations, PATH, and ~/.cargo/bin",
         ))
     }
 
