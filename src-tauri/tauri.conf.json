@@ -52,10 +52,19 @@
     },
     "linux": {
       "deb": {
-        "depends": []
+        "depends": [
+          "libpcsclite1",
+          "pcscd",
+          "libccid",
+          "libu2f-udev"
+        ]
       },
       "rpm": {
-        "depends": [],
+        "depends": [
+          "pcsc-lite",
+          "pcsc-lite-ccid",
+          "libu2f-host"
+        ],
         "epoch": 0,
         "release": "1"
       },
