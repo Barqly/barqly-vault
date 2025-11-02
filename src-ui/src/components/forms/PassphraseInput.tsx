@@ -156,7 +156,7 @@ const PassphraseInput: React.FC<PassphraseInputProps> = ({
       <div className="flex items-center gap-2">
         <label
           htmlFor={id || 'passphrase-input'}
-          className="block text-sm font-medium text-slate-700"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
         >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
