@@ -3,6 +3,23 @@
 @import './styles/tokens.css';
 @import './styles/theme.css';
 
+/* Inter Variable Font */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/InterVariable.ttf') format('truetype-variations');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/InterVariable-Italic.ttf') format('truetype-variations');
+}
+
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 @theme inline {
@@ -118,6 +135,7 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
   }
 }
 
