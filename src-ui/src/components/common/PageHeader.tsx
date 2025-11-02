@@ -62,7 +62,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         {/* Left side: Title only */}
         <div className="flex items-center">
           <h1
-            className="flex items-center gap-3 text-2xl font-semibold leading-none text-heading"
+            className="flex items-center gap-3 text-2xl font-semibold leading-none text-heading whitespace-nowrap"
             title={titleTooltip}
           >
             <Icon className="h-5 w-5 text-secondary" aria-hidden="true" />
