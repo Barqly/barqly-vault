@@ -57,7 +57,9 @@
           "pcscd",
           "libccid",
           "libu2f-udev"
-        ]
+        ],
+        "desktopTemplate": null,
+        "controlTemplate": "deb-control.template"
       },
       "rpm": {
         "depends": [
