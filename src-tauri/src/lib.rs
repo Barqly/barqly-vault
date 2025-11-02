@@ -164,10 +164,18 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
     let content = fs::read_to_string(&bindings_full_path)
         .map_err(|e| format!("Failed to read bindings file: {e}"))?;
 
+    // Remove any existing @ts-nocheck comments to avoid duplicates
+    let lines: Vec<&str> = content.lines().collect();
+    let content_without_ts_nocheck = lines
+        .into_iter()
+        .filter(|line| !line.contains("@ts-nocheck"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
     // Prepend @ts-nocheck to suppress TypeScript warnings for unused generated code
     let modified_content = format!(
         "// @ts-nocheck - Suppress TypeScript warnings for unused generated code\n{}",
-        content
+        content_without_ts_nocheck
     );
 
     fs::write(&bindings_full_path, modified_content)

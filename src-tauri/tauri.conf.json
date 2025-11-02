@@ -58,8 +58,7 @@
           "libccid",
           "libu2f-udev"
         ],
-        "desktopTemplate": null,
-        "controlTemplate": "deb-control.template"
+        "desktopTemplate": null
       },
       "rpm": {
         "depends": [
