@@ -1,0 +1,12 @@
+Package: barqly-vault
+Version: {{version}}
+Architecture: {{arch}}
+Maintainer: Barqly Team
+Depends: {{depends}}
+Section: utils
+Priority: optional
+Homepage: https://github.com/barqly/barqly-vault
+Description: Secure backup and restore for sensitive data & documents
+ Barqly Vault provides enterprise-grade encryption for your sensitive files
+ and documents. Features include YubiKey support for enhanced security,
+ age encryption, and secure file management capabilities.
