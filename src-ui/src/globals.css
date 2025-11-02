@@ -9,7 +9,7 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url('/fonts/InterVariable.ttf') format('truetype-variations');
+  src: url('./fonts/InterVariable.ttf') format('truetype-variations');
 }
 
 @font-face {
@@ -17,12 +17,16 @@
   font-style: italic;
   font-weight: 100 900;
   font-display: swap;
-  src: url('/fonts/InterVariable-Italic.ttf') format('truetype-variations');
+  src: url('./fonts/InterVariable-Italic.ttf') format('truetype-variations');
 }
 
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 @theme inline {
+  /* Font family - Inter with graceful fallbacks */
+  --font-sans: 'Inter', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --default-font-family: var(--font-sans);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -134,8 +138,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased font-sans;
   }
 }
 
