@@ -699,6 +699,12 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                       className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main"
                       placeholder="e.g., Personal YubiKey"
                     />
+                    <p
+                      className="mt-1 text-xs"
+                      style={{ color: label.length >= 24 ? '#B91C1C' : '#64748b' }}
+                    >
+                      {label.length}/24 characters
+                    </p>
                   </div>
 
                   {/* PIN Fields - 2 Column Grid */}
@@ -1144,9 +1150,16 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     type="text"
                     value={label}
                     onChange={(e) => setLabel(e.target.value)}
+                    maxLength={24}
                     className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main"
                     placeholder="e.g., Personal YubiKey"
                   />
+                  <p
+                    className="mt-1 text-xs"
+                    style={{ color: label.length >= 24 ? '#B91C1C' : '#64748b' }}
+                  >
+                    {label.length}/24 characters
+                  </p>
                 </div>
 
                 {/* YubiKey PIN */}

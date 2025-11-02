@@ -161,9 +161,13 @@ const NewYubiKeySetup: React.FC<{
             type="text"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
+            maxLength={24}
             placeholder="e.g., My-Vault-Key"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
           />
+          <p className="mt-1 text-xs" style={{ color: label.length >= 24 ? '#B91C1C' : '#64748b' }}>
+            {label.length}/24 characters
+          </p>
         </div>
 
         <div>
@@ -232,9 +236,13 @@ const ReusedYubiKeySetup: React.FC<{
             type="text"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
+            maxLength={24}
             placeholder="e.g., Work-Vault-Key"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
           />
+          <p className="mt-1 text-xs" style={{ color: label.length >= 24 ? '#B91C1C' : '#64748b' }}>
+            {label.length}/24 characters
+          </p>
         </div>
 
         <button
