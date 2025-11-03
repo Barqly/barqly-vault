@@ -516,6 +516,39 @@ async initYubikey(serial: string, newPin: string, recoveryPin: string, label: st
 }
 },
 /**
+ * Complete YubiKey setup for Scenario 1: Reused without TDES
+ * 
+ * For YubiKeys that have custom PIN/PUK but management key is not TDES+protected.
+ * This command will:
+ * 1. Change management key to TDES+protected
+ * 2. Generate age identity (requires touch)
+ * 3. Register in global registry
+ */
+async completeYubikeySetup(serial: string, pin: string, label: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("complete_yubikey_setup", { serial, pin, label }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Generate age identity for Scenario 2: Reused with TDES
+ * 
+ * For YubiKeys that already have custom PIN/PUK and TDES+protected management key,
+ * but no age identity yet. This command only:
+ * 1. Generates age identity (requires touch)
+ * 2. Registers in global registry
+ */
+async generateYubikeyIdentity(serial: string, pin: string, label: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("generate_yubikey_identity", { serial, pin, label }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Register an existing YubiKey device to global registry (vault-agnostic)
  * 
  * This command adds an already-initialized YubiKey (with existing age identity)
@@ -534,7 +567,7 @@ async initYubikey(serial: string, newPin: string, recoveryPin: string, label: st
  * - init_yubikey: For NEW YubiKeys (generates new identity)
  * - register_yubikey: For ORPHANED YubiKeys (reads existing identity)
  */
-async registerYubikey(serial: string, label: string, pin: string) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
+async registerYubikey(serial: string, label: string, pin: string | null) : Promise<Result<StreamlinedYubiKeyInitResult, CommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("register_yubikey", { serial, label, pin }) };
 } catch (e) {
@@ -1396,7 +1429,12 @@ state: YubiKeyState;
 /**
  * Registry-level lifecycle status (NIST-aligned) for consistent UI badges
  */
-lifecycle_status: KeyLifecycleStatus; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus; firmware_version: string | null; created_at: string; last_used: string | null }
+lifecycle_status: KeyLifecycleStatus; slot: number | null; recipient: string | null; identity_tag: string | null; label: string | null; pin_status: PinStatus; firmware_version: string | null; 
+/**
+ * Whether YubiKey has TDES PIN-protected management key
+ * Required for proper UI display of reused YubiKeys (differentiates Scenario 1 vs 2)
+ */
+has_tdes_protected_mgmt_key: boolean; created_at: string; last_used: string | null }
 /**
  * Result from YubiKey operations
  */

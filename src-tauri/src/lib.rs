@@ -143,6 +143,8 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         // Streamlined YubiKey commands
         list_yubikeys,
         init_yubikey,
+        complete_yubikey_setup,
+        generate_yubikey_identity,
         register_yubikey,
         // YubiKey crypto commands
         yubikey_decrypt_file,

@@ -219,37 +219,50 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
       return 'Label is required';
     }
 
-    // For orphaned keys, we only need to verify the PIN
+    // Scenario 4: ORPHANED - No PIN validation needed
     if (selectedKey?.state === 'orphaned') {
-      if (!pin) {
-        return 'PIN is required to verify YubiKey ownership';
+      return null; // Only label is required
+    }
+
+    // Scenario 1: NEW - Validate PIN + Recovery PIN
+    if (selectedKey?.state === 'new') {
+      if (pin.length < 6 || pin.length > 8) {
+        return 'PIN must be 6-8 digits';
       }
+      if (!/^\d+$/.test(pin)) {
+        return 'PIN must contain only numbers';
+      }
+      if (pin !== confirmPin) {
+        return 'PINs do not match';
+      }
+
+      // Validate Recovery PIN for NEW keys only
+      if (recoveryPin.length < 6 || recoveryPin.length > 8) {
+        return 'Recovery PIN must be 6-8 digits';
+      }
+      if (!/^\d+$/.test(recoveryPin)) {
+        return 'Recovery PIN must contain only numbers';
+      }
+      if (recoveryPin !== confirmRecoveryPin) {
+        return 'Recovery PINs do not match';
+      }
+      if (pin === recoveryPin) {
+        return 'PIN and Recovery PIN cannot be the same';
+      }
+
       return null;
     }
 
-    // For new/reused keys, validate PIN creation
-    if (pin.length < 6 || pin.length > 8) {
-      return 'PIN must be 6-8 digits';
-    }
-    if (!/^\d+$/.test(pin)) {
-      return 'PIN must contain only numbers';
-    }
-    if (pin !== confirmPin) {
-      return 'PINs do not match';
-    }
-
-    // Validate Recovery PIN
-    if (recoveryPin.length < 6 || recoveryPin.length > 8) {
-      return 'Recovery PIN must be 6-8 digits';
-    }
-    if (!/^\d+$/.test(recoveryPin)) {
-      return 'Recovery PIN must contain only numbers';
-    }
-    if (recoveryPin !== confirmRecoveryPin) {
-      return 'Recovery PINs do not match';
-    }
-    if (pin === recoveryPin) {
-      return 'PIN and Recovery PIN cannot be the same';
+    // Scenario 2 & 3: REUSED (with or without TDES) - Validate PIN only
+    if (selectedKey?.state === 'reused') {
+      if (pin.length < 6 || pin.length > 8) {
+        return 'PIN must be 6-8 digits';
+      }
+      if (!/^\d+$/.test(pin)) {
+        return 'PIN must contain only numbers';
+      }
+      // No Recovery PIN validation for reused keys
+      return null;
     }
 
     return null;
@@ -268,15 +281,14 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
     }
 
     setIsSetupInProgress(true);
-    setShowTouchPrompt(true); // Show touch prompt immediately
     setError(null);
 
     try {
-      if (selectedKey.state === 'new' || selectedKey.state === 'reused') {
-        // Initialize new/reused YubiKey
-        logger.info('YubiKeyRegistryDialog', 'Initializing YubiKey', {
+      // Scenario 1: NEW YubiKey (factory default)
+      if (selectedKey.state === 'new') {
+        setShowTouchPrompt(true); // Touch required
+        logger.info('YubiKeyRegistryDialog', 'Initializing NEW YubiKey', {
           serial: selectedKey.serial,
-          state: selectedKey.state,
         });
 
         const initResult = await commands.initYubikey(
@@ -290,26 +302,63 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
           throw new Error(initResult.error.message || 'Failed to initialize YubiKey');
         }
 
-        // Success - no recovery code step needed
         handleSuccess();
-      } else if (selectedKey.state === 'orphaned') {
-        // Register orphaned YubiKey
-        logger.info('YubiKeyRegistryDialog', 'Registering orphaned YubiKey');
-        logger.debug('YubiKeyRegistryDialog', 'Orphaned YubiKey details', {
+      }
+      // Scenario 2: REUSED without TDES (needs mgmt setup + key generation)
+      else if (selectedKey.state === 'reused' && !selectedKey.has_tdes_protected_mgmt_key) {
+        setShowTouchPrompt(true); // Touch required
+        logger.info('YubiKeyRegistryDialog', 'Completing YubiKey setup (REUSED without TDES)', {
+          serial: selectedKey.serial,
+        });
+
+        const completeResult = await commands.completeYubikeySetup(
+          selectedKey.serial,
+          pin,
+          label.trim(),
+        );
+
+        if (completeResult.status === 'error') {
+          throw new Error(completeResult.error.message || 'Failed to complete YubiKey setup');
+        }
+
+        handleSuccess();
+      }
+      // Scenario 3: REUSED with TDES (only needs key generation)
+      else if (selectedKey.state === 'reused' && selectedKey.has_tdes_protected_mgmt_key) {
+        setShowTouchPrompt(true); // Touch required
+        logger.info('YubiKeyRegistryDialog', 'Generating age identity (REUSED with TDES)', {
+          serial: selectedKey.serial,
+        });
+
+        const generateResult = await commands.generateYubikeyIdentity(
+          selectedKey.serial,
+          pin,
+          label.trim(),
+        );
+
+        if (generateResult.status === 'error') {
+          throw new Error(generateResult.error.message || 'Failed to generate YubiKey identity');
+        }
+
+        handleSuccess();
+      }
+      // Scenario 4: ORPHANED (already has key, just register)
+      else if (selectedKey.state === 'orphaned') {
+        // NO touch required for orphaned keys
+        logger.info('YubiKeyRegistryDialog', 'Registering ORPHANED YubiKey', {
           serial: selectedKey.serial,
         });
 
         const registerResult = await commands.registerYubikey(
           selectedKey.serial,
           label.trim(),
-          pin,
+          null, // No PIN needed for orphaned keys
         );
 
         if (registerResult.status === 'error') {
           throw new Error(registerResult.error.message || 'Failed to register YubiKey');
         }
 
-        // No recovery code for orphaned keys (already initialized)
         handleSuccess();
       }
     } catch (err: any) {
@@ -318,7 +367,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
       setError(friendlyError);
     } finally {
       setIsSetupInProgress(false);
-      setShowTouchPrompt(false); // Hide touch prompt when done
+      setShowTouchPrompt(false);
     }
   };
 
@@ -365,17 +414,16 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
 
   // Focus trap: cycle focus within modal
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    const isOrphaned = selectedKey?.state === 'orphaned';
-
     // Enter key submission
     if (e.key === 'Enter' && !isSetupInProgress) {
       let isFormValid = false;
 
-      if (isOrphaned) {
-        // Orphaned: only need label and PIN
-        isFormValid = !!(label.trim() && pin);
-      } else {
-        // New/Reused: need all PIN fields valid
+      // Scenario 4: ORPHANED - Only label required
+      if (selectedKey?.state === 'orphaned') {
+        isFormValid = !!label.trim();
+      }
+      // Scenario 1: NEW - Need PIN + Recovery PIN
+      else if (selectedKey?.state === 'new') {
         isFormValid = !!(
           label.trim() &&
           pin &&
@@ -386,6 +434,10 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
           recoveryPin === confirmRecoveryPin &&
           pin !== recoveryPin
         );
+      }
+      // Scenario 2 & 3: REUSED - Only need label and PIN
+      else if (selectedKey?.state === 'reused') {
+        isFormValid = !!(label.trim() && pin);
       }
 
       if (isFormValid) {
@@ -401,12 +453,13 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
     let isButtonEnabled = false;
     let lastInputId = '';
 
-    if (isOrphaned) {
-      // Orphaned form: Label + PIN
-      isButtonEnabled = !!(label.trim() && pin && !isSetupInProgress);
-      lastInputId = 'yubikey-pin-orphaned';
-    } else {
-      // New/Reused form: Label + PIN + Confirm + Recovery PIN + Confirm
+    // Scenario 4: ORPHANED - Only label required
+    if (selectedKey?.state === 'orphaned') {
+      isButtonEnabled = !!(label.trim() && !isSetupInProgress);
+      lastInputId = 'yubikey-label-orphaned';
+    }
+    // Scenario 1: NEW - Label + PIN + Recovery PIN
+    else if (selectedKey?.state === 'new') {
       isButtonEnabled = !!(
         !isSetupInProgress &&
         label.trim() &&
@@ -419,6 +472,11 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
         pin !== recoveryPin
       );
       lastInputId = 'confirm-recovery-pin';
+    }
+    // Scenario 2 & 3: REUSED - Label + PIN only
+    else if (selectedKey?.state === 'reused') {
+      isButtonEnabled = !!(label.trim() && pin && !isSetupInProgress);
+      lastInputId = 'yubikey-pin-reused';
     }
 
     // If going backwards (Shift+Tab) from first field
@@ -673,11 +731,437 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
               </div>
             )}
 
-            {/* Setup Step - For NEW/REUSED YubiKeys */}
+            {/* Setup Step - For NEW YubiKeys (Scenario 1) */}
+            {step === 'setup' && selectedKey && selectedKey.state === 'new' && (
+              <div className="space-y-4" onKeyDown={handleKeyDown}>
+                {/* S/N */}
+                <div>
+                  <p className="text-sm text-main">
+                    <span className="font-medium">S/N:</span> {selectedKey.serial}
+                  </p>
+                </div>
+
+                {/* YubiKey Label */}
+                <div>
+                  <label className="block text-sm font-medium text-main mb-2">
+                    YubiKey Label *
+                  </label>
+                  <input
+                    ref={firstFocusableRef}
+                    type="text"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    maxLength={24}
+                    className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main"
+                    placeholder="e.g., Personal YubiKey"
+                  />
+                  <p
+                    className="mt-1 text-xs"
+                    style={{ color: label.length >= 24 ? '#B91C1C' : '#64748b' }}
+                  >
+                    {label.length}/24 characters
+                  </p>
+                </div>
+
+                {/* PIN Fields - 2 Column Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-main mb-2">Create PIN *</label>
+                    <div className="relative">
+                      <input
+                        type={showPin ? 'text' : 'password'}
+                        value={pin}
+                        onChange={(e) => setPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main placeholder-gray-400"
+                        placeholder="6-8 digits"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPin(!showPin)}
+                        tabIndex={-1}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
+                        aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
+                      >
+                        {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-main mb-2">
+                      Confirm PIN *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPin ? 'text' : 'password'}
+                        value={confirmPin}
+                        onChange={(e) => setConfirmPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
+                        style={
+                          confirmPin
+                            ? pin === confirmPin
+                              ? ({
+                                  borderColor: 'rgb(var(--border-default))',
+                                  '--tw-ring-color': 'rgb(59, 130, 246)',
+                                } as React.CSSProperties)
+                              : ({
+                                  borderColor: '#991B1B',
+                                  '--tw-ring-color': '#991B1B',
+                                } as React.CSSProperties)
+                            : ({
+                                borderColor: 'rgb(var(--border-default))',
+                                '--tw-ring-color': 'rgb(59, 130, 246)',
+                              } as React.CSSProperties)
+                        }
+                        placeholder="6-8 digits"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPin(!showPin)}
+                        tabIndex={-1}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
+                        aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
+                      >
+                        {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {confirmPin && (
+                      <p
+                        className="text-xs mt-1"
+                        style={{ color: pin === confirmPin ? 'inherit' : '#991B1B' }}
+                      >
+                        {pin === confirmPin ? '' : 'PINs do not match'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Recovery PIN Fields - 2 Column Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-main mb-2">
+                      Recovery PIN *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showRecoveryPin ? 'text' : 'password'}
+                        value={recoveryPin}
+                        onChange={(e) => setRecoveryPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
+                        style={
+                          recoveryPin && pin
+                            ? recoveryPin !== pin
+                              ? ({
+                                  borderColor: 'rgb(var(--border-default))',
+                                  '--tw-ring-color': 'rgb(59, 130, 246)',
+                                } as React.CSSProperties)
+                              : ({
+                                  borderColor: '#991B1B',
+                                  '--tw-ring-color': '#991B1B',
+                                } as React.CSSProperties)
+                            : ({
+                                borderColor: 'rgb(var(--border-default))',
+                                '--tw-ring-color': 'rgb(59, 130, 246)',
+                              } as React.CSSProperties)
+                        }
+                        placeholder="6-8 digits"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRecoveryPin(!showRecoveryPin)}
+                        tabIndex={-1}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
+                        aria-label={showRecoveryPin ? 'Hide Recovery PIN' : 'Show Recovery PIN'}
+                      >
+                        {showRecoveryPin ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {recoveryPin && pin && recoveryPin === pin && (
+                      <p className="text-xs mt-1" style={{ color: '#991B1B' }}>
+                        Cannot be same as PIN
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-main mb-2">
+                      Confirm Recovery PIN *
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="confirm-recovery-pin"
+                        type={showRecoveryPin ? 'text' : 'password'}
+                        value={confirmRecoveryPin}
+                        onChange={(e) => setConfirmRecoveryPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
+                        style={
+                          confirmRecoveryPin
+                            ? recoveryPin === confirmRecoveryPin
+                              ? ({
+                                  borderColor: 'rgb(var(--border-default))',
+                                  '--tw-ring-color': 'rgb(59, 130, 246)',
+                                } as React.CSSProperties)
+                              : ({
+                                  borderColor: '#991B1B',
+                                  '--tw-ring-color': '#991B1B',
+                                } as React.CSSProperties)
+                            : ({
+                                borderColor: 'rgb(var(--border-default))',
+                                '--tw-ring-color': 'rgb(59, 130, 246)',
+                              } as React.CSSProperties)
+                        }
+                        placeholder="6-8 digits"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRecoveryPin(!showRecoveryPin)}
+                        tabIndex={-1}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
+                        aria-label={showRecoveryPin ? 'Hide Recovery PIN' : 'Show Recovery PIN'}
+                      >
+                        {showRecoveryPin ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {confirmRecoveryPin && (
+                      <p
+                        className="text-xs mt-1"
+                        style={{
+                          color: recoveryPin === confirmRecoveryPin ? 'inherit' : '#991B1B',
+                        }}
+                      >
+                        {recoveryPin === confirmRecoveryPin ? '' : 'Recovery PINs do not match'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Security Tips - Collapsible */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowSecurityTips(!showSecurityTips)}
+                    tabIndex={-1}
+                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                    aria-expanded={showSecurityTips}
+                  >
+                    <Info className="h-4 w-4" />
+                    <span>Security Tips</span>
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform duration-200 ${showSecurityTips ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+
+                  <div
+                    className={`
+                        overflow-hidden transition-all duration-300 ease-in-out
+                        ${showSecurityTips ? 'max-h-48 opacity-100 mt-4' : 'max-h-0 opacity-0'}
+                      `}
+                    aria-hidden={!showSecurityTips}
+                  >
+                    <div
+                      className="rounded-xl border p-4"
+                      style={{
+                        borderColor: 'rgb(var(--border-default))',
+                        backgroundColor: 'rgba(var(--info-panel-bg))',
+                        boxShadow:
+                          '0 1px 3px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
+                      }}
+                    >
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="mb-1 flex items-center gap-2">
+                            <span
+                              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border"
+                              style={{
+                                backgroundColor: 'rgb(var(--surface-card))',
+                                borderColor: 'rgb(var(--border-default))',
+                              }}
+                            >
+                              1
+                            </span>
+                            <span className="text-sm font-semibold text-heading">
+                              PIN for Daily Use
+                            </span>
+                          </div>
+                          <p className="text-sm text-secondary leading-relaxed">
+                            Use your PIN for regular encryption and decryption operations.
+                          </p>
+                        </div>
+
+                        <div>
+                          <div className="mb-1 flex items-center gap-2">
+                            <span
+                              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border"
+                              style={{
+                                backgroundColor: 'rgb(var(--surface-card))',
+                                borderColor: 'rgb(var(--border-default))',
+                              }}
+                            >
+                              2
+                            </span>
+                            <span className="text-sm font-semibold text-heading">
+                              Recovery PIN for Emergencies
+                            </span>
+                          </div>
+                          <p className="text-sm text-secondary leading-relaxed">
+                            Needed only if your PIN is blocked after failed attempts.
+                          </p>
+                        </div>
+                      </div>
+
+                      <p
+                        className="mt-4 border-t pt-3 text-xs text-secondary italic"
+                        style={{ borderColor: 'rgb(var(--border-default))' }}
+                      >
+                        <span className="font-semibold">Security Note:</span> Store both PINs
+                        securely in a password manager. Keep them separate from your YubiKey.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Touch YubiKey Prompt */}
+                {showTouchPrompt && (
+                  <div
+                    className="p-4 rounded-lg border-2 animate-pulse"
+                    style={{
+                      backgroundColor: 'rgba(249, 139, 28, 0.1)',
+                      borderColor: '#F98B1C',
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Fingerprint className="h-6 w-6 flex-shrink-0" style={{ color: '#F98B1C' }} />
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: '#F98B1C' }}>
+                          Touch your YubiKey now
+                        </p>
+                        <p className="text-xs text-secondary mt-0.5">
+                          The green light should be blinking
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {error && (
+                  <div
+                    className="p-4 rounded-lg border"
+                    style={{
+                      backgroundColor: 'rgba(185, 28, 28, 0.15)',
+                      borderColor: '#991B1B',
+                    }}
+                  >
+                    <div className="flex gap-3">
+                      <AlertTriangle
+                        className="h-5 w-5 flex-shrink-0 mt-0.5"
+                        style={{ color: '#991B1B' }}
+                      />
+                      <p className="text-sm" style={{ color: '#FCA5A5' }}>
+                        {error}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    ref={lastFocusableRef}
+                    onClick={handleSetup}
+                    disabled={
+                      isSetupInProgress ||
+                      !label.trim() ||
+                      !pin ||
+                      !confirmPin ||
+                      !recoveryPin ||
+                      !confirmRecoveryPin ||
+                      pin !== confirmPin ||
+                      recoveryPin !== confirmRecoveryPin ||
+                      pin === recoveryPin
+                    }
+                    className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
+                    style={
+                      !(
+                        isSetupInProgress ||
+                        !label.trim() ||
+                        !pin ||
+                        !confirmPin ||
+                        !recoveryPin ||
+                        !confirmRecoveryPin ||
+                        pin !== confirmPin ||
+                        recoveryPin !== confirmRecoveryPin ||
+                        pin === recoveryPin
+                      )
+                        ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
+                        : {
+                            backgroundColor: 'rgb(var(--surface-hover))',
+                            color: 'rgb(var(--text-muted))',
+                            borderColor: 'rgb(var(--border-default))',
+                          }
+                    }
+                    onMouseEnter={(e) => {
+                      if (!e.currentTarget.disabled) {
+                        e.currentTarget.style.backgroundColor = '#1E40AF';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!e.currentTarget.disabled) {
+                        e.currentTarget.style.backgroundColor = '#1D4ED8';
+                      }
+                    }}
+                  >
+                    {isSetupInProgress ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Setting up...
+                      </>
+                    ) : (
+                      'Setup YubiKey'
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setStep('detect')}
+                    disabled={isSetupInProgress}
+                    tabIndex={-1}
+                    className="px-4 py-2 text-main bg-hover rounded-lg hover:bg-hover"
+                  >
+                    Back
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Setup Step - For REUSED YubiKeys without TDES (Scenario 2) */}
             {step === 'setup' &&
               selectedKey &&
-              (selectedKey.state === 'new' || selectedKey.state === 'reused') && (
+              selectedKey.state === 'reused' &&
+              !selectedKey.has_tdes_protected_mgmt_key && (
                 <div className="space-y-4" onKeyDown={handleKeyDown}>
+                  {/* Info Message */}
+                  <div
+                    className="p-4 rounded-lg border"
+                    style={{
+                      backgroundColor: 'rgba(249, 139, 28, 0.1)',
+                      borderColor: '#ffd4a3',
+                    }}
+                  >
+                    <p className="text-sm text-main">
+                      Your YubiKey is partially initialized. Enter your PIN to set up secure
+                      management and generate encryption key.
+                    </p>
+                  </div>
+
                   {/* S/N */}
                   <div>
                     <p className="text-sm text-main">
@@ -707,278 +1191,33 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     </p>
                   </div>
 
-                  {/* PIN Fields - 2 Column Grid */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-main mb-2">
-                        Create PIN *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPin ? 'text' : 'password'}
-                          value={pin}
-                          onChange={(e) => setPin(e.target.value)}
-                          maxLength={8}
-                          className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main placeholder-gray-400"
-                          placeholder="6-8 digits"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPin(!showPin)}
-                          tabIndex={-1}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
-                          aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
-                        >
-                          {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-main mb-2">
-                        Confirm PIN *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPin ? 'text' : 'password'}
-                          value={confirmPin}
-                          onChange={(e) => setConfirmPin(e.target.value)}
-                          maxLength={8}
-                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
-                          style={
-                            confirmPin
-                              ? pin === confirmPin
-                                ? ({
-                                    borderColor: 'rgb(var(--border-default))',
-                                    '--tw-ring-color': 'rgb(59, 130, 246)',
-                                  } as React.CSSProperties)
-                                : ({
-                                    borderColor: '#991B1B',
-                                    '--tw-ring-color': '#991B1B',
-                                  } as React.CSSProperties)
-                              : ({
-                                  borderColor: 'rgb(var(--border-default))',
-                                  '--tw-ring-color': 'rgb(59, 130, 246)',
-                                } as React.CSSProperties)
-                          }
-                          placeholder="6-8 digits"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPin(!showPin)}
-                          tabIndex={-1}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
-                          aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
-                        >
-                          {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      {confirmPin && (
-                        <p
-                          className="text-xs mt-1"
-                          style={{ color: pin === confirmPin ? 'inherit' : '#991B1B' }}
-                        >
-                          {pin === confirmPin ? '' : 'PINs do not match'}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Recovery PIN Fields - 2 Column Grid */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-main mb-2">
-                        Recovery PIN *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showRecoveryPin ? 'text' : 'password'}
-                          value={recoveryPin}
-                          onChange={(e) => setRecoveryPin(e.target.value)}
-                          maxLength={8}
-                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
-                          style={
-                            recoveryPin && pin
-                              ? recoveryPin !== pin
-                                ? ({
-                                    borderColor: 'rgb(var(--border-default))',
-                                    '--tw-ring-color': 'rgb(59, 130, 246)',
-                                  } as React.CSSProperties)
-                                : ({
-                                    borderColor: '#991B1B',
-                                    '--tw-ring-color': '#991B1B',
-                                  } as React.CSSProperties)
-                              : ({
-                                  borderColor: 'rgb(var(--border-default))',
-                                  '--tw-ring-color': 'rgb(59, 130, 246)',
-                                } as React.CSSProperties)
-                          }
-                          placeholder="6-8 digits"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowRecoveryPin(!showRecoveryPin)}
-                          tabIndex={-1}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
-                          aria-label={showRecoveryPin ? 'Hide Recovery PIN' : 'Show Recovery PIN'}
-                        >
-                          {showRecoveryPin ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                      {recoveryPin && pin && recoveryPin === pin && (
-                        <p className="text-xs mt-1" style={{ color: '#991B1B' }}>
-                          Cannot be same as PIN
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-main mb-2">
-                        Confirm Recovery PIN *
-                      </label>
-                      <div className="relative">
-                        <input
-                          id="confirm-recovery-pin"
-                          type={showRecoveryPin ? 'text' : 'password'}
-                          value={confirmRecoveryPin}
-                          onChange={(e) => setConfirmRecoveryPin(e.target.value)}
-                          maxLength={8}
-                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
-                          style={
-                            confirmRecoveryPin
-                              ? recoveryPin === confirmRecoveryPin
-                                ? ({
-                                    borderColor: 'rgb(var(--border-default))',
-                                    '--tw-ring-color': 'rgb(59, 130, 246)',
-                                  } as React.CSSProperties)
-                                : ({
-                                    borderColor: '#991B1B',
-                                    '--tw-ring-color': '#991B1B',
-                                  } as React.CSSProperties)
-                              : ({
-                                  borderColor: 'rgb(var(--border-default))',
-                                  '--tw-ring-color': 'rgb(59, 130, 246)',
-                                } as React.CSSProperties)
-                          }
-                          placeholder="6-8 digits"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowRecoveryPin(!showRecoveryPin)}
-                          tabIndex={-1}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
-                          aria-label={showRecoveryPin ? 'Hide Recovery PIN' : 'Show Recovery PIN'}
-                        >
-                          {showRecoveryPin ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                      {confirmRecoveryPin && (
-                        <p
-                          className="text-xs mt-1"
-                          style={{
-                            color: recoveryPin === confirmRecoveryPin ? 'inherit' : '#991B1B',
-                          }}
-                        >
-                          {recoveryPin === confirmRecoveryPin ? '' : 'Recovery PINs do not match'}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Security Tips - Collapsible */}
+                  {/* PIN Field (your custom PIN) */}
                   <div>
-                    <button
-                      type="button"
-                      onClick={() => setShowSecurityTips(!showSecurityTips)}
-                      tabIndex={-1}
-                      className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                      aria-expanded={showSecurityTips}
-                    >
-                      <Info className="h-4 w-4" />
-                      <span>Security Tips</span>
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform duration-200 ${showSecurityTips ? 'rotate-180' : ''}`}
+                    <label className="block text-sm font-medium text-main mb-2">
+                      PIN (your custom PIN) *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPin ? 'text' : 'password'}
+                        value={pin}
+                        onChange={(e) => setPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main placeholder-gray-400"
+                        placeholder="Enter your PIN"
                       />
-                    </button>
-
-                    <div
-                      className={`
-                        overflow-hidden transition-all duration-300 ease-in-out
-                        ${showSecurityTips ? 'max-h-48 opacity-100 mt-4' : 'max-h-0 opacity-0'}
-                      `}
-                      aria-hidden={!showSecurityTips}
-                    >
-                      <div
-                        className="rounded-xl border p-4"
-                        style={{
-                          borderColor: 'rgb(var(--border-default))',
-                          backgroundColor: 'rgba(var(--info-panel-bg))',
-                          boxShadow:
-                            '0 1px 3px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
-                        }}
+                      <button
+                        type="button"
+                        onClick={() => setShowPin(!showPin)}
+                        tabIndex={-1}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
+                        aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
                       >
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <div className="mb-1 flex items-center gap-2">
-                              <span
-                                className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border"
-                                style={{
-                                  backgroundColor: 'rgb(var(--surface-card))',
-                                  borderColor: 'rgb(var(--border-default))',
-                                }}
-                              >
-                                1
-                              </span>
-                              <span className="text-sm font-semibold text-heading">
-                                PIN for Daily Use
-                              </span>
-                            </div>
-                            <p className="text-sm text-secondary leading-relaxed">
-                              Use your PIN for regular encryption and decryption operations.
-                            </p>
-                          </div>
-
-                          <div>
-                            <div className="mb-1 flex items-center gap-2">
-                              <span
-                                className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold text-heading border"
-                                style={{
-                                  backgroundColor: 'rgb(var(--surface-card))',
-                                  borderColor: 'rgb(var(--border-default))',
-                                }}
-                              >
-                                2
-                              </span>
-                              <span className="text-sm font-semibold text-heading">
-                                Recovery PIN for Emergencies
-                              </span>
-                            </div>
-                            <p className="text-sm text-secondary leading-relaxed">
-                              Needed only if your PIN is blocked after failed attempts.
-                            </p>
-                          </div>
-                        </div>
-
-                        <p
-                          className="mt-4 border-t pt-3 text-xs text-secondary italic"
-                          style={{ borderColor: 'rgb(var(--border-default))' }}
-                        >
-                          <span className="font-semibold">Security Note:</span> Store both PINs
-                          securely in a password manager. Keep them separate from your YubiKey.
-                        </p>
-                      </div>
+                        {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
                   </div>
 
-                  {/* Touch YubiKey Prompt */}
+                  {/* Touch Prompt */}
                   {showTouchPrompt && (
                     <div
                       className="p-4 rounded-lg border-2 animate-pulse"
@@ -1028,30 +1267,10 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     <button
                       ref={lastFocusableRef}
                       onClick={handleSetup}
-                      disabled={
-                        isSetupInProgress ||
-                        !label.trim() ||
-                        !pin ||
-                        !confirmPin ||
-                        !recoveryPin ||
-                        !confirmRecoveryPin ||
-                        pin !== confirmPin ||
-                        recoveryPin !== confirmRecoveryPin ||
-                        pin === recoveryPin
-                      }
+                      disabled={isSetupInProgress || !label.trim() || !pin}
                       className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
                       style={
-                        !(
-                          isSetupInProgress ||
-                          !label.trim() ||
-                          !pin ||
-                          !confirmPin ||
-                          !recoveryPin ||
-                          !confirmRecoveryPin ||
-                          pin !== confirmPin ||
-                          recoveryPin !== confirmRecoveryPin ||
-                          pin === recoveryPin
-                        )
+                        !(isSetupInProgress || !label.trim() || !pin)
                           ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
                           : {
                               backgroundColor: 'rgb(var(--surface-hover))',
@@ -1091,9 +1310,361 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                 </div>
               )}
 
+            {/* Setup Step - For REUSED YubiKeys with TDES (Scenario 3) */}
+            {step === 'setup' &&
+              selectedKey &&
+              selectedKey.state === 'reused' &&
+              selectedKey.has_tdes_protected_mgmt_key && (
+                <div className="space-y-4" onKeyDown={handleKeyDown}>
+                  {/* Info Message */}
+                  <div
+                    className="p-4 rounded-lg border"
+                    style={{
+                      backgroundColor: 'rgba(249, 139, 28, 0.1)',
+                      borderColor: '#ffd4a3',
+                    }}
+                  >
+                    <p className="text-sm text-main">
+                      Your YubiKey is initialized. Enter your PIN to generate the age encryption
+                      key.
+                    </p>
+                  </div>
+
+                  {/* S/N */}
+                  <div>
+                    <p className="text-sm text-main">
+                      <span className="font-medium">S/N:</span> {selectedKey.serial}
+                    </p>
+                  </div>
+
+                  {/* YubiKey Label */}
+                  <div>
+                    <label className="block text-sm font-medium text-main mb-2">
+                      YubiKey Label *
+                    </label>
+                    <input
+                      ref={firstFocusableRef}
+                      type="text"
+                      value={label}
+                      onChange={(e) => setLabel(e.target.value)}
+                      maxLength={24}
+                      className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main"
+                      placeholder="e.g., Personal YubiKey"
+                    />
+                    <p
+                      className="mt-1 text-xs"
+                      style={{ color: label.length >= 24 ? '#B91C1C' : '#64748b' }}
+                    >
+                      {label.length}/24 characters
+                    </p>
+                  </div>
+
+                  {/* PIN Field (your custom PIN) */}
+                  <div>
+                    <label className="block text-sm font-medium text-main mb-2">
+                      PIN (your custom PIN) *
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="yubikey-pin-reused"
+                        type={showPin ? 'text' : 'password'}
+                        value={pin}
+                        onChange={(e) => setPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main placeholder-gray-400"
+                        placeholder="Enter your PIN"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPin(!showPin)}
+                        tabIndex={-1}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
+                        aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
+                      >
+                        {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Touch Prompt */}
+                  {showTouchPrompt && (
+                    <div
+                      className="p-4 rounded-lg border-2 animate-pulse"
+                      style={{
+                        backgroundColor: 'rgba(249, 139, 28, 0.1)',
+                        borderColor: '#F98B1C',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Fingerprint
+                          className="h-6 w-6 flex-shrink-0"
+                          style={{ color: '#F98B1C' }}
+                        />
+                        <div>
+                          <p className="text-sm font-semibold" style={{ color: '#F98B1C' }}>
+                            Touch your YubiKey now
+                          </p>
+                          <p className="text-xs text-secondary mt-0.5">
+                            The green light should be blinking
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {error && (
+                    <div
+                      className="p-4 rounded-lg border"
+                      style={{
+                        backgroundColor: 'rgba(185, 28, 28, 0.15)',
+                        borderColor: '#991B1B',
+                      }}
+                    >
+                      <div className="flex gap-3">
+                        <AlertTriangle
+                          className="h-5 w-5 flex-shrink-0 mt-0.5"
+                          style={{ color: '#991B1B' }}
+                        />
+                        <p className="text-sm" style={{ color: '#FCA5A5' }}>
+                          {error}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      ref={lastFocusableRef}
+                      onClick={handleSetup}
+                      disabled={isSetupInProgress || !label.trim() || !pin}
+                      className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
+                      style={
+                        !(isSetupInProgress || !label.trim() || !pin)
+                          ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
+                          : {
+                              backgroundColor: 'rgb(var(--surface-hover))',
+                              color: 'rgb(var(--text-muted))',
+                              borderColor: 'rgb(var(--border-default))',
+                            }
+                      }
+                      onMouseEnter={(e) => {
+                        if (!e.currentTarget.disabled) {
+                          e.currentTarget.style.backgroundColor = '#1E40AF';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!e.currentTarget.disabled) {
+                          e.currentTarget.style.backgroundColor = '#1D4ED8';
+                        }
+                      }}
+                    >
+                      {isSetupInProgress ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Setting up...
+                        </>
+                      ) : (
+                        'Setup YubiKey'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setStep('detect')}
+                      disabled={isSetupInProgress}
+                      tabIndex={-1}
+                      className="px-4 py-2 text-main bg-hover rounded-lg hover:bg-hover"
+                    >
+                      Back
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            {/* Setup Step - For REUSED YubiKeys with TDES (Scenario 3) */}
+            {step === 'setup' &&
+              selectedKey &&
+              selectedKey.state === 'reused' &&
+              selectedKey.has_tdes_protected_mgmt_key && (
+                <div className="space-y-4" onKeyDown={handleKeyDown}>
+                  {/* Info Message */}
+                  <div
+                    className="p-4 rounded-lg border"
+                    style={{
+                      backgroundColor: 'rgba(249, 139, 28, 0.1)',
+                      borderColor: '#ffd4a3',
+                    }}
+                  >
+                    <p className="text-sm text-main">
+                      Your YubiKey is initialized. Enter your PIN to generate the age encryption
+                      key.
+                    </p>
+                  </div>
+
+                  {/* S/N */}
+                  <div>
+                    <p className="text-sm text-main">
+                      <span className="font-medium">S/N:</span> {selectedKey.serial}
+                    </p>
+                  </div>
+
+                  {/* YubiKey Label */}
+                  <div>
+                    <label className="block text-sm font-medium text-main mb-2">
+                      YubiKey Label *
+                    </label>
+                    <input
+                      ref={firstFocusableRef}
+                      type="text"
+                      value={label}
+                      onChange={(e) => setLabel(e.target.value)}
+                      maxLength={24}
+                      className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main"
+                      placeholder="e.g., Personal YubiKey"
+                    />
+                    <p
+                      className="mt-1 text-xs"
+                      style={{ color: label.length >= 24 ? '#B91C1C' : '#64748b' }}
+                    >
+                      {label.length}/24 characters
+                    </p>
+                  </div>
+
+                  {/* PIN Field (your custom PIN) */}
+                  <div>
+                    <label className="block text-sm font-medium text-main mb-2">
+                      PIN (your custom PIN) *
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="yubikey-pin-reused"
+                        type={showPin ? 'text' : 'password'}
+                        value={pin}
+                        onChange={(e) => setPin(e.target.value)}
+                        maxLength={8}
+                        className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main placeholder-gray-400"
+                        placeholder="Enter your PIN"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPin(!showPin)}
+                        tabIndex={-1}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-secondary transition-colors"
+                        aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
+                      >
+                        {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Touch Prompt */}
+                  {showTouchPrompt && (
+                    <div
+                      className="p-4 rounded-lg border-2 animate-pulse"
+                      style={{
+                        backgroundColor: 'rgba(249, 139, 28, 0.1)',
+                        borderColor: '#F98B1C',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Fingerprint
+                          className="h-6 w-6 flex-shrink-0"
+                          style={{ color: '#F98B1C' }}
+                        />
+                        <div>
+                          <p className="text-sm font-semibold" style={{ color: '#F98B1C' }}>
+                            Touch your YubiKey now
+                          </p>
+                          <p className="text-xs text-secondary mt-0.5">
+                            The green light should be blinking
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {error && (
+                    <div
+                      className="p-4 rounded-lg border"
+                      style={{
+                        backgroundColor: 'rgba(185, 28, 28, 0.15)',
+                        borderColor: '#991B1B',
+                      }}
+                    >
+                      <div className="flex gap-3">
+                        <AlertTriangle
+                          className="h-5 w-5 flex-shrink-0 mt-0.5"
+                          style={{ color: '#991B1B' }}
+                        />
+                        <p className="text-sm" style={{ color: '#FCA5A5' }}>
+                          {error}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      ref={lastFocusableRef}
+                      onClick={handleSetup}
+                      disabled={isSetupInProgress || !label.trim() || !pin}
+                      className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
+                      style={
+                        !(isSetupInProgress || !label.trim() || !pin)
+                          ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
+                          : {
+                              backgroundColor: 'rgb(var(--surface-hover))',
+                              color: 'rgb(var(--text-muted))',
+                              borderColor: 'rgb(var(--border-default))',
+                            }
+                      }
+                      onMouseEnter={(e) => {
+                        if (!e.currentTarget.disabled) {
+                          e.currentTarget.style.backgroundColor = '#1E40AF';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!e.currentTarget.disabled) {
+                          e.currentTarget.style.backgroundColor = '#1D4ED8';
+                        }
+                      }}
+                    >
+                      {isSetupInProgress ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        'Generate Key'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setStep('detect')}
+                      disabled={isSetupInProgress}
+                      tabIndex={-1}
+                      className="px-4 py-2 text-main bg-hover rounded-lg hover:bg-hover"
+                    >
+                      Back
+                    </button>
+                  </div>
+                </div>
+              )}
+
             {/* Setup Step - For ORPHANED YubiKeys */}
             {step === 'setup' && selectedKey && selectedKey.state === 'orphaned' && (
               <div className="space-y-4" onKeyDown={handleKeyDown}>
+                {/* Info Message */}
+                <div
+                  className="p-4 rounded-lg border"
+                  style={{
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderColor: 'rgba(59, 130, 246, 0.3)',
+                  }}
+                >
+                  <p className="text-sm text-main">
+                    YubiKey with existing encryption key detected. No PIN or touch required—just add
+                    it to your registry.
+                  </p>
+                </div>
+
                 {/* S/N */}
                 <div>
                   <p className="text-sm text-main">
@@ -1146,6 +1717,7 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     YubiKey Label *
                   </label>
                   <input
+                    id="yubikey-label-orphaned"
                     ref={firstFocusableRef}
                     type="text"
                     value={label}
@@ -1161,43 +1733,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                     {label.length}/24 characters
                   </p>
                 </div>
-
-                {/* YubiKey PIN */}
-                <div>
-                  <label className="block text-sm font-medium text-main mb-2">YubiKey PIN *</label>
-                  <input
-                    id="yubikey-pin-orphaned"
-                    type="password"
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value)}
-                    maxLength={8}
-                    className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main"
-                    placeholder="••••••"
-                  />
-                </div>
-
-                {/* Touch YubiKey Prompt - Orphaned */}
-                {showTouchPrompt && (
-                  <div
-                    className="p-4 rounded-lg border-2 animate-pulse"
-                    style={{
-                      backgroundColor: 'rgba(249, 139, 28, 0.1)',
-                      borderColor: '#F98B1C',
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Fingerprint className="h-6 w-6 flex-shrink-0" style={{ color: '#F98B1C' }} />
-                      <div>
-                        <p className="text-sm font-semibold" style={{ color: '#F98B1C' }}>
-                          Touch your YubiKey now
-                        </p>
-                        <p className="text-xs text-secondary mt-0.5">
-                          The green light should be blinking
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {error && (
                   <div
@@ -1224,10 +1759,10 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   <button
                     ref={lastFocusableRef}
                     onClick={handleSetup}
-                    disabled={isSetupInProgress || !label.trim() || !pin}
+                    disabled={isSetupInProgress || !label.trim()}
                     className="flex-1 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-default flex items-center justify-center gap-2 border"
                     style={
-                      !(isSetupInProgress || !label.trim() || !pin)
+                      !(isSetupInProgress || !label.trim())
                         ? { backgroundColor: '#1D4ED8', color: '#ffffff', borderColor: '#1D4ED8' }
                         : {
                             backgroundColor: 'rgb(var(--surface-hover))',
@@ -1258,7 +1793,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   <button
                     onClick={() => {
                       setStep('detect');
-                      setPin('');
                       setError(null);
                     }}
                     disabled={isSetupInProgress}
