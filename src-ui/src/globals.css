@@ -9,7 +9,7 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url('./fonts/InterVariable.ttf') format('truetype-variations');
+  src: url('/assets/fonts/InterVariable.ttf') format('truetype-variations');
 }
 
 @font-face {
@@ -17,7 +17,7 @@
   font-style: italic;
   font-weight: 100 900;
   font-display: swap;
-  src: url('./fonts/InterVariable-Italic.ttf') format('truetype-variations');
+  src: url('/assets/fonts/InterVariable-Italic.ttf') format('truetype-variations');
 }
 
 @custom-variant dark (&:is([data-theme="dark"] *));
