@@ -1316,20 +1316,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
               selectedKey.state === 'reused' &&
               selectedKey.has_tdes_protected_mgmt_key && (
                 <div className="space-y-4" onKeyDown={handleKeyDown}>
-                  {/* Info Message */}
-                  <div
-                    className="p-4 rounded-lg border"
-                    style={{
-                      backgroundColor: 'rgba(249, 139, 28, 0.1)',
-                      borderColor: '#ffd4a3',
-                    }}
-                  >
-                    <p className="text-sm text-main">
-                      Your YubiKey is initialized. Enter your PIN to generate the age encryption
-                      key.
-                    </p>
-                  </div>
-
                   {/* S/N */}
                   <div>
                     <p className="text-sm text-main">
