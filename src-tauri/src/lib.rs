@@ -43,8 +43,9 @@ use commands::{
         },
         update_global_key_label::update_global_key_label,
         yubikey::{
-            init_yubikey, init_yubikey_for_vault, list_yubikeys, register_yubikey,
-            register_yubikey_for_vault, yubikey_decrypt_file,
+            complete_yubikey_setup, generate_yubikey_identity, init_yubikey,
+            init_yubikey_for_vault, list_yubikeys, register_yubikey, register_yubikey_for_vault,
+            yubikey_decrypt_file,
         },
     },
     // Storage commands
@@ -286,6 +287,8 @@ pub fn run_app() {
             list_yubikeys,
             init_yubikey,
             register_yubikey,
+            complete_yubikey_setup,
+            generate_yubikey_identity,
             // YubiKey crypto commands
             yubikey_decrypt_file,
         ])

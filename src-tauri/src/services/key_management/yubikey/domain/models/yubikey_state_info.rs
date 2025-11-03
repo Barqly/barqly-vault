@@ -17,6 +17,9 @@ pub struct YubiKeyStateInfo {
     pub label: Option<String>,
     pub pin_status: PinStatus,
     pub firmware_version: Option<String>,
+    /// Whether YubiKey has TDES PIN-protected management key
+    /// Required for proper UI display of reused YubiKeys (differentiates Scenario 1 vs 2)
+    pub has_tdes_protected_mgmt_key: bool,
     pub created_at: DateTime<Utc>,
     pub last_used: Option<DateTime<Utc>>,
 }

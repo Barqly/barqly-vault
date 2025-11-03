@@ -175,7 +175,7 @@ pub async fn init_yubikey(
 pub async fn register_yubikey(
     serial: String,
     label: String,
-    pin: String,
+    pin: Option<String>,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
     info!(
         "Registering existing YubiKey to global registry: {}",
@@ -186,8 +186,11 @@ pub async fn register_yubikey(
     let serial_obj = Serial::new(serial.clone())
         .map_err(|e| CommandError::validation(format!("Invalid serial format: {e}")))?;
 
-    let pin_obj =
-        Pin::new(pin).map_err(|e| CommandError::validation(format!("Invalid PIN: {e}")))?;
+    let pin_obj = if let Some(pin_str) = pin {
+        Some(Pin::new(pin_str).map_err(|e| CommandError::validation(format!("Invalid PIN: {e}")))?)
+    } else {
+        None
+    };
 
     // Initialize YubiKey manager
     let manager = YubiKeyManager::new().await.map_err(|e| {
@@ -229,16 +232,25 @@ pub async fn register_yubikey(
         ));
     }
 
-    // Verify PIN (ownership proof)
-    if !manager
-        .validate_pin(&serial_obj, &pin_obj)
-        .await
-        .unwrap_or(false)
-    {
-        return Err(CommandError::operation(
-            ErrorCode::YubiKeyPinRequired,
-            "Invalid PIN - could not verify YubiKey ownership",
-        ));
+    // Verify PIN if provided (ownership proof)
+    // Note: For ORPHANED keys, PIN is optional since we're just reading the public identity
+    // The frontend should not request PIN for orphaned keys (Scenario 3)
+    if let Some(ref pin) = pin_obj {
+        if !manager
+            .validate_pin(&serial_obj, pin)
+            .await
+            .unwrap_or(false)
+        {
+            return Err(CommandError::operation(
+                ErrorCode::YubiKeyPinRequired,
+                "Invalid PIN - could not verify YubiKey ownership",
+            ));
+        }
+    } else {
+        debug!(
+            serial = %serial_obj.redacted(),
+            "Skipping PIN validation for orphaned key (just reading public identity)"
+        );
     }
 
     // Check if already in registry
@@ -315,5 +327,237 @@ pub async fn register_yubikey(
         identity_tag: identity.identity_tag().to_string(),
         label,
         // Recovery code removed - not needed for registration
+    })
+}
+
+/// Complete YubiKey setup for Scenario 1: Reused without TDES
+///
+/// For YubiKeys that have custom PIN/PUK but management key is not TDES+protected.
+/// This command will:
+/// 1. Change management key to TDES+protected
+/// 2. Generate age identity (requires touch)
+/// 3. Register in global registry
+#[tauri::command]
+#[specta::specta]
+pub async fn complete_yubikey_setup(
+    serial: String,
+    pin: String,
+    label: String,
+) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
+    info!(
+        "Completing YubiKey setup (change mgmt key + generate identity): {}",
+        &serial[..8.min(serial.len())]
+    );
+
+    let serial_obj = Serial::new(serial.clone())
+        .map_err(|e| CommandError::validation(format!("Invalid serial format: {e}")))?;
+
+    let pin_obj =
+        Pin::new(pin).map_err(|e| CommandError::validation(format!("Invalid PIN: {e}")))?;
+
+    let manager = YubiKeyManager::new().await.map_err(|e| {
+        CommandError::operation(
+            ErrorCode::YubiKeyInitializationFailed,
+            format!("Failed to initialize YubiKey manager: {e}"),
+        )
+    })?;
+
+    // Validate device exists
+    let device = manager
+        .detect_device(&serial_obj)
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyNotFound,
+                format!("Failed to detect YubiKey: {e}"),
+            )
+        })?
+        .ok_or_else(|| {
+            CommandError::operation(ErrorCode::YubiKeyNotFound, "YubiKey not connected")
+        })?;
+
+    // Validate PIN
+    if !manager
+        .validate_pin(&serial_obj, &pin_obj)
+        .await
+        .unwrap_or(false)
+    {
+        return Err(CommandError::operation(
+            ErrorCode::YubiKeyPinRequired,
+            "Invalid PIN",
+        ));
+    }
+
+    // Step 1: Change management key to TDES+protected
+    use crate::services::key_management::yubikey::infrastructure::pty::ykman_ops::piv_operations::change_management_key_pty;
+
+    tokio::task::spawn_blocking({
+        let serial_clone = serial_obj.value().to_string();
+        let pin_clone = pin_obj.value().to_string();
+        move || change_management_key_pty(&serial_clone, &pin_clone)
+    })
+    .await
+    .map_err(|e| CommandError::operation(ErrorCode::InternalError, format!("Task error: {e}")))?
+    .map_err(|e| {
+        CommandError::operation(
+            ErrorCode::YubiKeyInitializationFailed,
+            format!("Failed to change management key: {e}"),
+        )
+    })?;
+
+    // Step 2: Generate age identity (requires touch)
+    let identity = manager
+        .generate_identity(&serial_obj, &pin_obj, 1)
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                format!("Failed to generate identity: {e}"),
+            )
+        })?;
+
+    // Step 3: Register in global registry
+    let recovery_placeholder = String::new(); // Not used for reused keys
+
+    let entry_id = manager
+        .register_device(
+            &device,
+            &identity,
+            1,
+            recovery_placeholder,
+            Some(label.clone()),
+        )
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::InternalError,
+                format!("Failed to register YubiKey: {e}"),
+            )
+        })?;
+
+    // Shutdown manager
+    if let Err(e) = manager.shutdown().await {
+        warn!("Failed to shutdown YubiKey manager: {}", e);
+    }
+
+    info!(
+        "Successfully completed YubiKey setup: {} entry ID: {}",
+        serial_obj.redacted(),
+        entry_id
+    );
+
+    Ok(StreamlinedYubiKeyInitResult {
+        serial: device.serial().value().to_string(),
+        slot: 1,
+        recipient: identity.to_recipient().to_string(),
+        identity_tag: identity.identity_tag().to_string(),
+        label,
+    })
+}
+
+/// Generate age identity for Scenario 2: Reused with TDES
+///
+/// For YubiKeys that already have custom PIN/PUK and TDES+protected management key,
+/// but no age identity yet. This command only:
+/// 1. Generates age identity (requires touch)
+/// 2. Registers in global registry
+#[tauri::command]
+#[specta::specta]
+pub async fn generate_yubikey_identity(
+    serial: String,
+    pin: String,
+    label: String,
+) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
+    info!(
+        "Generating age identity for YubiKey: {}",
+        &serial[..8.min(serial.len())]
+    );
+
+    let serial_obj = Serial::new(serial.clone())
+        .map_err(|e| CommandError::validation(format!("Invalid serial format: {e}")))?;
+
+    let pin_obj =
+        Pin::new(pin).map_err(|e| CommandError::validation(format!("Invalid PIN: {e}")))?;
+
+    let manager = YubiKeyManager::new().await.map_err(|e| {
+        CommandError::operation(
+            ErrorCode::YubiKeyInitializationFailed,
+            format!("Failed to initialize YubiKey manager: {e}"),
+        )
+    })?;
+
+    // Validate device exists
+    let device = manager
+        .detect_device(&serial_obj)
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyNotFound,
+                format!("Failed to detect YubiKey: {e}"),
+            )
+        })?
+        .ok_or_else(|| {
+            CommandError::operation(ErrorCode::YubiKeyNotFound, "YubiKey not connected")
+        })?;
+
+    // Validate PIN
+    if !manager
+        .validate_pin(&serial_obj, &pin_obj)
+        .await
+        .unwrap_or(false)
+    {
+        return Err(CommandError::operation(
+            ErrorCode::YubiKeyPinRequired,
+            "Invalid PIN",
+        ));
+    }
+
+    // Generate age identity (requires touch)
+    let identity = manager
+        .generate_identity(&serial_obj, &pin_obj, 1)
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::YubiKeyInitializationFailed,
+                format!("Failed to generate identity: {e}"),
+            )
+        })?;
+
+    // Register in global registry
+    let recovery_placeholder = String::new(); // Not used for reused keys
+
+    let entry_id = manager
+        .register_device(
+            &device,
+            &identity,
+            1,
+            recovery_placeholder,
+            Some(label.clone()),
+        )
+        .await
+        .map_err(|e| {
+            CommandError::operation(
+                ErrorCode::InternalError,
+                format!("Failed to register YubiKey: {e}"),
+            )
+        })?;
+
+    // Shutdown manager
+    if let Err(e) = manager.shutdown().await {
+        warn!("Failed to shutdown YubiKey manager: {}", e);
+    }
+
+    info!(
+        "Successfully generated identity for YubiKey: {} entry ID: {}",
+        serial_obj.redacted(),
+        entry_id
+    );
+
+    Ok(StreamlinedYubiKeyInitResult {
+        serial: device.serial().value().to_string(),
+        slot: 1,
+        recipient: identity.to_recipient().to_string(),
+        identity_tag: identity.identity_tag().to_string(),
+        label,
     })
 }

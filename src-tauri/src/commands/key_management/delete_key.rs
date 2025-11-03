@@ -126,27 +126,45 @@ pub async fn delete_key(request: DeleteKeyRequest) -> CommandResponse<DeleteKeyR
         None
     };
 
-    // Destroy the key in registry (update status to Destroyed)
+    // For PreActivation or already Destroyed keys, completely remove from registry
+    // For Active/Suspended keys, mark as destroyed (safer for attached keys)
     let reason = request
         .reason
         .unwrap_or_else(|| "User requested permanent deletion".to_string());
 
-    key_entry
-        .destroy(reason.clone(), "user".to_string())
-        .map_err(|e| {
-            error!(key_id = %request.key_id, error = %e, "Failed to destroy key");
-            Box::new(CommandError {
-                code: ErrorCode::InvalidKeyState,
-                message: e,
-                details: None,
-                recovery_guidance: Some("Check key state and try again".to_string()),
-                user_actionable: true,
-                trace_id: None,
-                span_id: None,
-            })
-        })?;
-
     let deleted_at = Utc::now();
+
+    if key_entry.lifecycle_status() == KeyLifecycleStatus::PreActivation
+        || key_entry.lifecycle_status() == KeyLifecycleStatus::Destroyed
+    {
+        info!(
+            key_id = %request.key_id,
+            status = ?key_entry.lifecycle_status(),
+            "Removing unused/destroyed key from registry completely (allows re-registration)"
+        );
+        // Actually remove from registry - allows the same YubiKey to be registered again
+        registry.keys.remove(&request.key_id);
+    } else {
+        warn!(
+            key_id = %request.key_id,
+            status = ?key_entry.lifecycle_status(),
+            "Key is Active or Suspended - marking as destroyed instead of removing"
+        );
+        key_entry
+            .destroy(reason.clone(), "user".to_string())
+            .map_err(|e| {
+                error!(key_id = %request.key_id, error = %e, "Failed to destroy key");
+                Box::new(CommandError {
+                    code: ErrorCode::InvalidKeyState,
+                    message: e,
+                    details: None,
+                    recovery_guidance: Some("Check key state and try again".to_string()),
+                    user_actionable: true,
+                    trace_id: None,
+                    span_id: None,
+                })
+            })?;
+    }
 
     // Save the registry FIRST (transaction safety: registry update before file deletion)
     // This way if file deletion fails, registry correctly reflects intent to destroy

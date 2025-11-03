@@ -39,6 +39,47 @@ pub fn has_default_pin(serial: &str) -> Result<bool> {
     Ok(has_default)
 }
 
+/// Check if YubiKey has TDES PIN-protected management key
+///
+/// This is required for age-plugin-yubikey to work properly.
+/// Returns true only if BOTH conditions are met:
+/// 1. Management key algorithm is TDES (not AES192)
+/// 2. Management key is PIN-protected
+///
+/// Uses 'ykman piv info' which doesn't require PIN authentication.
+#[instrument]
+pub fn has_tdes_protected_mgmt_key(serial: &str) -> Result<bool> {
+    debug!(
+        serial = serial,
+        "Checking if YubiKey has TDES PIN-protected management key"
+    );
+
+    let args = vec![
+        "--device".to_string(),
+        serial.to_string(),
+        "piv".to_string(),
+        "info".to_string(),
+    ];
+
+    let output = run_ykman_command(args, None)?;
+
+    // Check for TDES algorithm
+    let has_tdes = output.contains("Management key algorithm: TDES");
+
+    // Check if PIN-protected
+    let is_protected = output.contains("Management key is stored on the YubiKey, protected by PIN");
+
+    debug!(
+        serial = serial,
+        has_tdes = has_tdes,
+        is_protected = is_protected,
+        output_preview = %output.lines().take(5).collect::<Vec<_>>().join(" | "),
+        "Management key status check"
+    );
+
+    Ok(has_tdes && is_protected)
+}
+
 /// Change YubiKey PIN via PTY
 #[instrument(skip(old_pin, new_pin))]
 pub fn change_pin_pty(serial: &str, old_pin: &str, new_pin: &str) -> Result<()> {

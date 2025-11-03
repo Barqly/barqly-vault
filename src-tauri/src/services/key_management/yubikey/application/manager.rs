@@ -245,6 +245,22 @@ impl YubiKeyManager {
                 )
             };
 
+            // Check if YubiKey has TDES PIN-protected management key
+            // This helps UI differentiate between Scenario 1 (no TDES) and Scenario 2 (has TDES)
+            let has_tdes_mgmt_key = match state {
+                YubiKeyState::New => false, // New keys have default mgmt key
+                YubiKeyState::Reused => {
+                    // Check for reused keys to differentiate scenarios
+                    self.has_tdes_protected_mgmt_key(serial)
+                        .await
+                        .unwrap_or(false)
+                }
+                YubiKeyState::Registered | YubiKeyState::Orphaned => {
+                    // Should have TDES if properly initialized
+                    true
+                }
+            };
+
             let yubikey_info = YubiKeyStateInfo {
                 serial: serial.value().to_string(),
                 state,
@@ -255,6 +271,7 @@ impl YubiKeyManager {
                 label,
                 pin_status,
                 firmware_version,
+                has_tdes_protected_mgmt_key: has_tdes_mgmt_key,
                 created_at,
                 last_used,
             };
@@ -302,6 +319,23 @@ impl YubiKeyManager {
         debug!("Checking default PIN for YubiKey: {}", serial.redacted());
 
         self.services.device_service().has_default_pin(serial).await
+    }
+
+    /// Check if YubiKey has TDES PIN-protected management key
+    ///
+    /// This is required for proper UI state detection to differentiate between:
+    /// - Scenario 1: Reused without TDES (need to change mgmt key + generate age key)
+    /// - Scenario 2: Reused with TDES (only need to generate age key)
+    pub async fn has_tdes_protected_mgmt_key(&self, serial: &Serial) -> YubiKeyResult<bool> {
+        use crate::services::key_management::yubikey::infrastructure::pty::ykman_ops::pin_operations;
+
+        debug!(
+            "Checking TDES mgmt key status for YubiKey: {}",
+            serial.redacted()
+        );
+
+        pin_operations::has_tdes_protected_mgmt_key(serial.value())
+            .map_err(|e| YubiKeyError::device(format!("Failed to check mgmt key: {e}")))
     }
 
     // =============================================================================
