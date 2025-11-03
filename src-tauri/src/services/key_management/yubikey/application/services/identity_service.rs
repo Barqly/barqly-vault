@@ -354,7 +354,7 @@ impl IdentityService for AgePluginIdentityService {
         let output = tokio::task::spawn_blocking({
             let args_clone = args.clone();
             let pin_clone = pin.value().to_string();
-            move || run_age_plugin_yubikey(args_clone, Some(&pin_clone), false)
+            move || run_age_plugin_yubikey(args_clone, Some(&pin_clone), true)
         })
         .await
         .map_err(|e| YubiKeyError::device(format!("Task join error: {}", e)))?
