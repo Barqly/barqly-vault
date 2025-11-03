@@ -1651,20 +1651,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
             {/* Setup Step - For ORPHANED YubiKeys */}
             {step === 'setup' && selectedKey && selectedKey.state === 'orphaned' && (
               <div className="space-y-4" onKeyDown={handleKeyDown}>
-                {/* Info Message */}
-                <div
-                  className="p-4 rounded-lg border"
-                  style={{
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderColor: 'rgba(59, 130, 246, 0.3)',
-                  }}
-                >
-                  <p className="text-sm text-main">
-                    YubiKey with existing encryption key detected. No PIN or touch required—just add
-                    it to your registry.
-                  </p>
-                </div>
-
                 {/* S/N */}
                 <div>
                   <p className="text-sm text-main">
