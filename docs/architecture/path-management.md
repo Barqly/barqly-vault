@@ -116,7 +116,8 @@ All subsequent operations use the fully-initialized PathProvider with consistent
 ### Linux
 
 - **Critical**: Must use `com.barqly.vault` not just `vault`
-- Manual construction: `~/.config/com.barqly.vault/`
+- Manual construction: `~/.local/share/com.barqly.vault/` (XDG_DATA_HOME)
+- Tauri method: `app_data_dir()` (NOT `app_config_dir()`)
 - Consistent with other platforms
 
 ## Headless Environment Support

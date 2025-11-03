@@ -6,7 +6,7 @@
 //! ## Platform Paths
 //! - **macOS**: `~/Library/Application Support/com.barqly.vault/`
 //! - **Windows**: `%APPDATA%\com.barqly.vault\`
-//! - **Linux**: `~/.config/com.barqly.vault/`
+//! - **Linux**: `~/.local/share/com.barqly.vault/` (XDG_DATA_HOME)
 
 use super::provider::PathProvider;
 use crate::error::StorageError;
@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 /// # Returns
 /// - **macOS**: `~/Library/Application Support/com.barqly.vault/`
 /// - **Windows**: `%APPDATA%\com.barqly.vault\`
-/// - **Linux**: `~/.config/com.barqly.vault/`
+/// - **Linux**: `~/.local/share/com.barqly.vault/` (XDG_DATA_HOME)
 ///
 /// # Errors
 /// - `StorageError::DirectoryCreationFailed` if the directory cannot be created

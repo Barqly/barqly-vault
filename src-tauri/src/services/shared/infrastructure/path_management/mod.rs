@@ -1,9 +1,9 @@
 //! Cross-platform path handling for Barqly Vault storage.
 //!
-//! This module provides platform-specific directory paths using the `directories` crate:
+//! This module provides platform-specific directory paths using the centralized PathProvider:
 //! - **macOS**: `~/Library/Application Support/com.barqly.vault/`
 //! - **Windows**: `%APPDATA%\com.barqly.vault\`
-//! - **Linux**: `~/.config/com.barqly.vault/`
+//! - **Linux**: `~/.local/share/com.barqly.vault/` (XDG_DATA_HOME)
 
 mod directories;
 mod key_paths;

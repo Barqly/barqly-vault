@@ -143,7 +143,7 @@ impl PathProvider {
     pub fn app_config_dir(&self) -> Result<PathBuf, StorageError> {
         // Try Tauri path resolver first if available
         if let Some(ref app_handle) = self.app_handle
-            && let Ok(path) = app_handle.path().app_config_dir()
+            && let Ok(path) = app_handle.path().app_data_dir()
         {
             return Ok(path);
         }
