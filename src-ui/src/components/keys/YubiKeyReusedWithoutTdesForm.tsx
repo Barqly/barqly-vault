@@ -1,6 +1,7 @@
 import React from 'react';
 import { Loader2, AlertTriangle, Fingerprint, Eye, EyeOff } from 'lucide-react';
 import { YubiKeyStateInfo } from '../../bindings';
+import { useYubiKeyProgress } from '../../hooks/useYubiKeyProgress';
 
 interface YubiKeyReusedWithoutTdesFormProps {
   selectedKey: YubiKeyStateInfo;
@@ -11,13 +12,15 @@ interface YubiKeyReusedWithoutTdesFormProps {
   showPin: boolean;
   setShowPin: (value: boolean) => void;
   isSetupInProgress: boolean;
-  showTouchPrompt: boolean;
   error: string | null;
   onSubmit: () => void;
   onCancel: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   firstFocusableRef: React.RefObject<HTMLInputElement | null>;
   lastFocusableRef: React.RefObject<HTMLButtonElement | null>;
+  // Progress API
+  operationId: string | null;
+  formReadOnly: boolean;
 }
 
 /**
@@ -35,14 +38,18 @@ export const YubiKeyReusedWithoutTdesForm: React.FC<YubiKeyReusedWithoutTdesForm
   showPin,
   setShowPin,
   isSetupInProgress,
-  showTouchPrompt,
   error,
   onSubmit,
   onCancel,
   onKeyDown,
   firstFocusableRef,
   lastFocusableRef,
+  operationId,
+  formReadOnly,
 }) => {
+  // Use progress polling to show touch message at precise time
+  const { showTouchMessage } = useYubiKeyProgress(operationId, isSetupInProgress);
+
   return (
     <div className="space-y-4" onKeyDown={onKeyDown}>
       {/* S/N */}
@@ -61,7 +68,8 @@ export const YubiKeyReusedWithoutTdesForm: React.FC<YubiKeyReusedWithoutTdesForm
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           maxLength={24}
-          className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main"
+          readOnly={formReadOnly}
+          className={`w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main ${formReadOnly ? 'opacity-70 cursor-not-allowed' : ''}`}
           placeholder="e.g., Personal YubiKey"
         />
         <p className="mt-1 text-xs" style={{ color: label.length >= 24 ? '#B91C1C' : '#64748b' }}>
@@ -79,7 +87,8 @@ export const YubiKeyReusedWithoutTdesForm: React.FC<YubiKeyReusedWithoutTdesForm
             value={pin}
             onChange={(e) => setPin(e.target.value)}
             maxLength={8}
-            className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main placeholder-gray-400"
+            readOnly={formReadOnly}
+            className={`w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main placeholder-gray-400 ${formReadOnly ? 'opacity-70 cursor-not-allowed' : ''}`}
             placeholder="Enter your PIN"
           />
           <button
@@ -94,8 +103,8 @@ export const YubiKeyReusedWithoutTdesForm: React.FC<YubiKeyReusedWithoutTdesForm
         </div>
       </div>
 
-      {/* Touch Prompt */}
-      {showTouchPrompt && (
+      {/* Touch Prompt - Shows when backend reaches WaitingForTouch phase */}
+      {showTouchMessage && (
         <div
           className="p-4 rounded-lg border-2 animate-pulse"
           style={{

@@ -56,9 +56,10 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
     setShowPin,
     showRecoveryPin,
     setShowRecoveryPin,
-    showTouchPrompt,
     setError,
     setStep,
+    operationId,
+    formReadOnly,
     // Refs
     firstFocusableRef,
     lastFocusableRef,
@@ -151,7 +152,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                 showSecurityTips={showSecurityTips}
                 setShowSecurityTips={setShowSecurityTips}
                 isSetupInProgress={isSetupInProgress}
-                showTouchPrompt={showTouchPrompt}
                 error={error}
                 onSubmit={handleSetup}
                 onCancel={() => {
@@ -165,6 +165,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                 onKeyDown={handleKeyDown}
                 firstFocusableRef={firstFocusableRef}
                 lastFocusableRef={lastFocusableRef}
+                operationId={operationId}
+                formReadOnly={formReadOnly}
               />
             )}
 
@@ -182,7 +184,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   showPin={showPin}
                   setShowPin={setShowPin}
                   isSetupInProgress={isSetupInProgress}
-                  showTouchPrompt={showTouchPrompt}
                   error={error}
                   onSubmit={handleSetup}
                   onCancel={() => {
@@ -193,6 +194,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   onKeyDown={handleKeyDown}
                   firstFocusableRef={firstFocusableRef}
                   lastFocusableRef={lastFocusableRef}
+                  operationId={operationId}
+                  formReadOnly={formReadOnly}
                 />
               )}
 
@@ -210,7 +213,6 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   showPin={showPin}
                   setShowPin={setShowPin}
                   isSetupInProgress={isSetupInProgress}
-                  showTouchPrompt={showTouchPrompt}
                   error={error}
                   onSubmit={handleSetup}
                   onCancel={() => {
@@ -221,6 +223,8 @@ export const YubiKeyRegistryDialog: React.FC<YubiKeyRegistryDialogProps> = ({
                   onKeyDown={handleKeyDown}
                   firstFocusableRef={firstFocusableRef}
                   lastFocusableRef={lastFocusableRef}
+                  operationId={operationId}
+                  formReadOnly={formReadOnly}
                 />
               )}
 

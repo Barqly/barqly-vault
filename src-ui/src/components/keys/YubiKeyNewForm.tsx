@@ -1,6 +1,7 @@
 import React from 'react';
 import { Loader2, AlertTriangle, Fingerprint, Eye, EyeOff, Info, ChevronDown } from 'lucide-react';
 import { YubiKeyStateInfo } from '../../bindings';
+import { useYubiKeyProgress } from '../../hooks/useYubiKeyProgress';
 
 interface YubiKeyNewFormProps {
   selectedKey: YubiKeyStateInfo;
@@ -21,13 +22,15 @@ interface YubiKeyNewFormProps {
   showSecurityTips: boolean;
   setShowSecurityTips: (value: boolean) => void;
   isSetupInProgress: boolean;
-  showTouchPrompt: boolean;
   error: string | null;
   onSubmit: () => void;
   onCancel: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   firstFocusableRef: React.RefObject<HTMLInputElement | null>;
   lastFocusableRef: React.RefObject<HTMLButtonElement | null>;
+  // Progress API
+  operationId: string | null;
+  formReadOnly: boolean;
 }
 
 /**
@@ -55,14 +58,18 @@ export const YubiKeyNewForm: React.FC<YubiKeyNewFormProps> = ({
   showSecurityTips,
   setShowSecurityTips,
   isSetupInProgress,
-  showTouchPrompt,
   error,
   onSubmit,
   onCancel,
   onKeyDown,
   firstFocusableRef,
   lastFocusableRef,
+  operationId,
+  formReadOnly,
 }) => {
+  // Use progress polling to show touch message at precise time
+  const { showTouchMessage } = useYubiKeyProgress(operationId, isSetupInProgress);
+
   return (
     <div className="space-y-4" onKeyDown={onKeyDown}>
       {/* S/N */}
@@ -81,7 +88,8 @@ export const YubiKeyNewForm: React.FC<YubiKeyNewFormProps> = ({
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           maxLength={24}
-          className="w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main"
+          readOnly={formReadOnly}
+          className={`w-full px-3 py-2 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main ${formReadOnly ? 'opacity-70 cursor-not-allowed' : ''}`}
           placeholder="e.g., Personal YubiKey"
         />
         <p className="mt-1 text-xs" style={{ color: label.length >= 24 ? '#B91C1C' : '#64748b' }}>
@@ -99,7 +107,8 @@ export const YubiKeyNewForm: React.FC<YubiKeyNewFormProps> = ({
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               maxLength={8}
-              className="w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main placeholder-gray-400"
+              readOnly={formReadOnly}
+              className={`w-full px-3 py-2 pr-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-input text-main placeholder-gray-400 ${formReadOnly ? 'opacity-70 cursor-not-allowed' : ''}`}
               placeholder="6-8 digits"
             />
             <button
@@ -122,7 +131,8 @@ export const YubiKeyNewForm: React.FC<YubiKeyNewFormProps> = ({
               value={confirmPin}
               onChange={(e) => setConfirmPin(e.target.value)}
               maxLength={8}
-              className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
+              readOnly={formReadOnly}
+              className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400 ${formReadOnly ? 'opacity-70 cursor-not-allowed' : ''}`}
               style={
                 confirmPin
                   ? pin === confirmPin
@@ -172,7 +182,8 @@ export const YubiKeyNewForm: React.FC<YubiKeyNewFormProps> = ({
               value={recoveryPin}
               onChange={(e) => setRecoveryPin(e.target.value)}
               maxLength={8}
-              className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
+              readOnly={formReadOnly}
+              className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400 ${formReadOnly ? 'opacity-70 cursor-not-allowed' : ''}`}
               style={
                 recoveryPin && pin
                   ? recoveryPin !== pin
@@ -217,7 +228,8 @@ export const YubiKeyNewForm: React.FC<YubiKeyNewFormProps> = ({
               value={confirmRecoveryPin}
               onChange={(e) => setConfirmRecoveryPin(e.target.value)}
               maxLength={8}
-              className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400"
+              readOnly={formReadOnly}
+              className={`w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 bg-input text-main placeholder-gray-400 ${formReadOnly ? 'opacity-70 cursor-not-allowed' : ''}`}
               style={
                 confirmRecoveryPin
                   ? recoveryPin === confirmRecoveryPin
@@ -341,8 +353,8 @@ export const YubiKeyNewForm: React.FC<YubiKeyNewFormProps> = ({
         </div>
       </div>
 
-      {/* Touch YubiKey Prompt */}
-      {showTouchPrompt && (
+      {/* Touch YubiKey Prompt - Shows when backend reaches WaitingForTouch phase */}
+      {showTouchMessage && (
         <div
           className="p-4 rounded-lg border-2 animate-pulse"
           style={{

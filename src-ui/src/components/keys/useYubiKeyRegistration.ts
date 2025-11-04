@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import type React from 'react';
 import { commands, YubiKeyStateInfo } from '../../bindings';
 import { logger } from '../../lib/logger';
 import { getUserFriendlyError } from './yubikey-helpers';
@@ -35,6 +36,9 @@ export const useYubiKeyRegistration = ({
   const [showPin, setShowPin] = useState(false);
   const [showRecoveryPin, setShowRecoveryPin] = useState(false);
   const [showTouchPrompt, setShowTouchPrompt] = useState(false);
+  // Progress API state
+  const [operationId, setOperationId] = useState<string | null>(null);
+  const [formReadOnly, setFormReadOnly] = useState(false);
 
   // Refs for focus management
   const firstFocusableRef = useRef<HTMLInputElement>(null);
@@ -178,13 +182,18 @@ export const useYubiKeyRegistration = ({
       return;
     }
 
+    // Blur inputs to prevent YubiKey OTP typing
+    (document.activeElement as HTMLElement)?.blur();
+
     setIsSetupInProgress(true);
+    setFormReadOnly(true);
     setError(null);
+    setShowTouchPrompt(false);
+    setOperationId(null);
 
     try {
       // Scenario 1: NEW YubiKey (factory default)
       if (selectedKey.state === 'new') {
-        setShowTouchPrompt(true); // Touch required
         logger.info('YubiKeyRegistryDialog', 'Initializing NEW YubiKey', {
           serial: selectedKey.serial,
         });
@@ -200,11 +209,13 @@ export const useYubiKeyRegistration = ({
           throw new Error(initResult.error.message || 'Failed to initialize YubiKey');
         }
 
+        // Start progress polling
+        setOperationId(initResult.data.operation_id);
+
         handleSuccess();
       }
       // Scenario 2: REUSED without TDES (needs mgmt setup + key generation)
       else if (selectedKey.state === 'reused' && !selectedKey.has_tdes_protected_mgmt_key) {
-        setShowTouchPrompt(true); // Touch required
         logger.info('YubiKeyRegistryDialog', 'Completing YubiKey setup (REUSED without TDES)', {
           serial: selectedKey.serial,
         });
@@ -219,11 +230,13 @@ export const useYubiKeyRegistration = ({
           throw new Error(completeResult.error.message || 'Failed to complete YubiKey setup');
         }
 
+        // Start progress polling
+        setOperationId(completeResult.data.operation_id);
+
         handleSuccess();
       }
       // Scenario 3: REUSED with TDES (only needs key generation)
       else if (selectedKey.state === 'reused' && selectedKey.has_tdes_protected_mgmt_key) {
-        setShowTouchPrompt(true); // Touch required
         logger.info('YubiKeyRegistryDialog', 'Generating age identity (REUSED with TDES)', {
           serial: selectedKey.serial,
         });
@@ -237,6 +250,9 @@ export const useYubiKeyRegistration = ({
         if (generateResult.status === 'error') {
           throw new Error(generateResult.error.message || 'Failed to generate YubiKey identity');
         }
+
+        // Start progress polling
+        setOperationId(generateResult.data.operation_id);
 
         handleSuccess();
       }
@@ -265,7 +281,9 @@ export const useYubiKeyRegistration = ({
       setError(friendlyError);
     } finally {
       setIsSetupInProgress(false);
+      setFormReadOnly(false);
       setShowTouchPrompt(false);
+      setOperationId(null);
     }
   };
 
@@ -446,6 +464,9 @@ export const useYubiKeyRegistration = ({
     showRecoveryPin,
     setShowRecoveryPin,
     showTouchPrompt,
+    // Progress API state
+    operationId,
+    formReadOnly,
 
     // Refs
     firstFocusableRef,
