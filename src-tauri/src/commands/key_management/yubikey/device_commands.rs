@@ -15,7 +15,7 @@ use crate::services::key_management::yubikey::{
     YubiKeyManager,
     domain::models::{Pin, Serial},
 };
-use tauri;
+use tauri::{self, Emitter};
 
 // Re-export domain types
 pub use crate::services::key_management::yubikey::domain::models::{
@@ -67,11 +67,12 @@ pub async fn init_yubikey(
     new_pin: String,
     recovery_pin: String,
     label: String,
+    window: tauri::Window,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
     // Generate operation ID for progress tracking
     let operation_id = format!("yubikey_init_{}", chrono::Utc::now().timestamp_millis());
 
-    // Helper to update progress (follows encryption/decryption pattern)
+    // Helper to update progress and emit events (follows encryption/decryption pattern)
     let update_progress = |phase: crate::types::YubiKeyPhase, message: &str| {
         use crate::types::{ProgressDetails, ProgressUpdate, YubiKeyOperationType};
         let progress_update = ProgressUpdate {
@@ -93,7 +94,14 @@ pub async fn init_yubikey(
             timestamp: chrono::Utc::now(),
             estimated_time_remaining: None,
         };
-        crate::commands::crypto::update_global_progress(&operation_id, progress_update);
+
+        // Store in global HashMap
+        crate::commands::crypto::update_global_progress(&operation_id, progress_update.clone());
+
+        // Emit event for real-time frontend updates
+        if let Err(e) = window.emit("yubikey-init-progress", &progress_update) {
+            warn!("Failed to emit progress event: {}", e);
+        }
     };
 
     info!(
@@ -391,11 +399,12 @@ pub async fn complete_yubikey_setup(
     serial: String,
     pin: String,
     label: String,
+    window: tauri::Window,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
     // Generate operation ID for progress tracking
     let operation_id = format!("yubikey_complete_{}", chrono::Utc::now().timestamp_millis());
 
-    // Helper to update progress
+    // Helper to update progress and emit events
     let update_progress = |phase: crate::types::YubiKeyPhase, message: &str| {
         use crate::types::{ProgressDetails, ProgressUpdate, YubiKeyOperationType};
         let progress_update = ProgressUpdate {
@@ -417,7 +426,14 @@ pub async fn complete_yubikey_setup(
             timestamp: chrono::Utc::now(),
             estimated_time_remaining: None,
         };
-        crate::commands::crypto::update_global_progress(&operation_id, progress_update);
+
+        // Store in global HashMap
+        crate::commands::crypto::update_global_progress(&operation_id, progress_update.clone());
+
+        // Emit event for real-time frontend updates
+        if let Err(e) = window.emit("yubikey-complete-progress", &progress_update) {
+            warn!("Failed to emit progress event: {}", e);
+        }
     };
 
     info!(
@@ -562,11 +578,12 @@ pub async fn generate_yubikey_identity(
     serial: String,
     pin: String,
     label: String,
+    window: tauri::Window,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
     // Generate operation ID for progress tracking
     let operation_id = format!("yubikey_generate_{}", chrono::Utc::now().timestamp_millis());
 
-    // Helper to update progress
+    // Helper to update progress and emit events
     let update_progress = |phase: crate::types::YubiKeyPhase, message: &str| {
         use crate::types::{ProgressDetails, ProgressUpdate, YubiKeyOperationType};
         let progress_update = ProgressUpdate {
@@ -587,7 +604,14 @@ pub async fn generate_yubikey_identity(
             timestamp: chrono::Utc::now(),
             estimated_time_remaining: None,
         };
-        crate::commands::crypto::update_global_progress(&operation_id, progress_update);
+
+        // Store in global HashMap
+        crate::commands::crypto::update_global_progress(&operation_id, progress_update.clone());
+
+        // Emit event for real-time frontend updates
+        if let Err(e) = window.emit("yubikey-generate-progress", &progress_update) {
+            warn!("Failed to emit progress event: {}", e);
+        }
     };
 
     info!(
