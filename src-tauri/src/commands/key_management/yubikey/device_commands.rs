@@ -30,7 +30,7 @@ pub struct StreamlinedYubiKeyInitResult {
     pub recipient: String,
     pub identity_tag: String,
     pub label: String,
-    // Recovery code removed - user provides their own recovery PIN
+    pub operation_id: String,
 }
 
 /// List all YubiKeys with intelligent state detection
@@ -68,9 +68,43 @@ pub async fn init_yubikey(
     recovery_pin: String,
     label: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
+    // Generate operation ID for progress tracking
+    let operation_id = format!("yubikey_init_{}", chrono::Utc::now().timestamp_millis());
+
+    // Helper to update progress (follows encryption/decryption pattern)
+    let update_progress = |phase: crate::types::YubiKeyPhase, message: &str| {
+        use crate::types::{ProgressDetails, ProgressUpdate, YubiKeyOperationType};
+        let progress_update = ProgressUpdate {
+            operation_id: operation_id.clone(),
+            progress: match &phase {
+                crate::types::YubiKeyPhase::Starting => 0.0,
+                crate::types::YubiKeyPhase::InProgress { .. } => 50.0,
+                crate::types::YubiKeyPhase::WaitingForTouch => 75.0,
+                crate::types::YubiKeyPhase::Completed => 100.0,
+                _ => 0.0,
+            },
+            message: message.to_string(),
+            details: Some(ProgressDetails::YubiKeyOperation {
+                operation: YubiKeyOperationType::Initialization,
+                phase,
+                requires_interaction: false,
+                context: None,
+            }),
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining: None,
+        };
+        crate::commands::crypto::update_global_progress(&operation_id, progress_update);
+    };
+
     info!(
         "Initializing YubiKey with label {} using YubiKeyManager",
         label
+    );
+
+    // Report starting phase
+    update_progress(
+        crate::types::YubiKeyPhase::Starting,
+        "Starting YubiKey initialization",
     );
 
     // Validate that PIN and recovery PIN are different
@@ -109,6 +143,12 @@ pub async fn init_yubikey(
             )
         })?;
 
+    // Report waiting for touch (hardware setup complete, age key generation next)
+    update_progress(
+        crate::types::YubiKeyPhase::WaitingForTouch,
+        "Hardware setup complete. Touch your YubiKey to generate encryption key",
+    );
+
     // Hash recovery PIN for secure storage
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
@@ -132,6 +172,12 @@ pub async fn init_yubikey(
             )
         })?;
 
+    // Report completion
+    update_progress(
+        crate::types::YubiKeyPhase::Completed,
+        "YubiKey initialized successfully",
+    );
+
     // Shutdown manager gracefully
     if let Err(e) = manager.shutdown().await {
         warn!("Failed to shutdown YubiKey manager: {}", e);
@@ -149,6 +195,7 @@ pub async fn init_yubikey(
         recipient: identity.to_recipient().to_string(),
         identity_tag: identity.identity_tag().to_string(),
         label,
+        operation_id,
         // Recovery PIN not returned - user already knows it
     })
 }
@@ -326,6 +373,7 @@ pub async fn register_yubikey(
         recipient: identity.to_recipient().to_string(),
         identity_tag: identity.identity_tag().to_string(),
         label,
+        operation_id: format!("yubikey_register_{}", chrono::Utc::now().timestamp_millis()),
         // Recovery code removed - not needed for registration
     })
 }
@@ -344,9 +392,43 @@ pub async fn complete_yubikey_setup(
     pin: String,
     label: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
+    // Generate operation ID for progress tracking
+    let operation_id = format!("yubikey_complete_{}", chrono::Utc::now().timestamp_millis());
+
+    // Helper to update progress
+    let update_progress = |phase: crate::types::YubiKeyPhase, message: &str| {
+        use crate::types::{ProgressDetails, ProgressUpdate, YubiKeyOperationType};
+        let progress_update = ProgressUpdate {
+            operation_id: operation_id.clone(),
+            progress: match &phase {
+                crate::types::YubiKeyPhase::Starting => 0.0,
+                crate::types::YubiKeyPhase::InProgress { .. } => 50.0,
+                crate::types::YubiKeyPhase::WaitingForTouch => 75.0,
+                crate::types::YubiKeyPhase::Completed => 100.0,
+                _ => 0.0,
+            },
+            message: message.to_string(),
+            details: Some(ProgressDetails::YubiKeyOperation {
+                operation: YubiKeyOperationType::Initialization,
+                phase,
+                requires_interaction: false,
+                context: None,
+            }),
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining: None,
+        };
+        crate::commands::crypto::update_global_progress(&operation_id, progress_update);
+    };
+
     info!(
         "Completing YubiKey setup (change mgmt key + generate identity): {}",
         &serial[..8.min(serial.len())]
+    );
+
+    // Report starting
+    update_progress(
+        crate::types::YubiKeyPhase::Starting,
+        "Starting YubiKey setup",
     );
 
     let serial_obj = Serial::new(serial.clone())
@@ -405,6 +487,12 @@ pub async fn complete_yubikey_setup(
         )
     })?;
 
+    // Report waiting for touch (mgmt key done, age key generation next)
+    update_progress(
+        crate::types::YubiKeyPhase::WaitingForTouch,
+        "Management key updated. Touch your YubiKey to generate encryption key",
+    );
+
     // Step 2: Generate age identity (requires touch)
     let identity = manager
         .generate_identity(&serial_obj, &pin_obj, 1)
@@ -435,6 +523,12 @@ pub async fn complete_yubikey_setup(
             )
         })?;
 
+    // Report completion
+    update_progress(
+        crate::types::YubiKeyPhase::Completed,
+        "YubiKey setup completed successfully",
+    );
+
     // Shutdown manager
     if let Err(e) = manager.shutdown().await {
         warn!("Failed to shutdown YubiKey manager: {}", e);
@@ -452,6 +546,7 @@ pub async fn complete_yubikey_setup(
         recipient: identity.to_recipient().to_string(),
         identity_tag: identity.identity_tag().to_string(),
         label,
+        operation_id,
     })
 }
 
@@ -468,9 +563,42 @@ pub async fn generate_yubikey_identity(
     pin: String,
     label: String,
 ) -> Result<StreamlinedYubiKeyInitResult, CommandError> {
+    // Generate operation ID for progress tracking
+    let operation_id = format!("yubikey_generate_{}", chrono::Utc::now().timestamp_millis());
+
+    // Helper to update progress
+    let update_progress = |phase: crate::types::YubiKeyPhase, message: &str| {
+        use crate::types::{ProgressDetails, ProgressUpdate, YubiKeyOperationType};
+        let progress_update = ProgressUpdate {
+            operation_id: operation_id.clone(),
+            progress: match &phase {
+                crate::types::YubiKeyPhase::Starting => 0.0,
+                crate::types::YubiKeyPhase::WaitingForTouch => 50.0,
+                crate::types::YubiKeyPhase::Completed => 100.0,
+                _ => 0.0,
+            },
+            message: message.to_string(),
+            details: Some(ProgressDetails::YubiKeyOperation {
+                operation: YubiKeyOperationType::KeyGeneration,
+                phase,
+                requires_interaction: false,
+                context: None,
+            }),
+            timestamp: chrono::Utc::now(),
+            estimated_time_remaining: None,
+        };
+        crate::commands::crypto::update_global_progress(&operation_id, progress_update);
+    };
+
     info!(
         "Generating age identity for YubiKey: {}",
         &serial[..8.min(serial.len())]
+    );
+
+    // Report starting and immediately move to waiting for touch
+    update_progress(
+        crate::types::YubiKeyPhase::WaitingForTouch,
+        "Touch your YubiKey to generate encryption key",
     );
 
     let serial_obj = Serial::new(serial.clone())
@@ -542,6 +670,12 @@ pub async fn generate_yubikey_identity(
             )
         })?;
 
+    // Report completion
+    update_progress(
+        crate::types::YubiKeyPhase::Completed,
+        "Age identity generated successfully",
+    );
+
     // Shutdown manager
     if let Err(e) = manager.shutdown().await {
         warn!("Failed to shutdown YubiKey manager: {}", e);
@@ -559,5 +693,6 @@ pub async fn generate_yubikey_identity(
         recipient: identity.to_recipient().to_string(),
         identity_tag: identity.identity_tag().to_string(),
         label,
+        operation_id,
     })
 }

@@ -1197,7 +1197,7 @@ export type SetCurrentVaultRequest = { vault_id: string }
  * Response from setting current vault
  */
 export type SetCurrentVaultResponse = { success: boolean; vault: VaultSummary }
-export type StreamlinedYubiKeyInitResult = { serial: string; slot: number; recipient: string; identity_tag: string; label: string }
+export type StreamlinedYubiKeyInitResult = { serial: string; slot: number; recipient: string; identity_tag: string; label: string; operation_id: string }
 /**
  * Credentials for unlocking vaults
  */
