@@ -535,6 +535,7 @@
         <div class="nav-links">
           <a href="../">Home</a>
           <a href="./" class="active">Download</a>
+          <a href="../recovery/">Recovery</a>
           <!-- <a href="https://btcpay.barqly.com" target="_blank" rel="noopener">Donate</a> -->
           <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
             ☀️
@@ -579,6 +580,28 @@
         <div class="section">
           <h2>Version History</h2>
 {{VERSION_HISTORY}}
+        </div>
+
+        <div class="section">
+          <h2>Linux Prerequisites (YubiKey Support)</h2>
+          <p>Linux users need to install PC/SC Smart Card libraries for YubiKey support. These dependencies are automatically installed when using DEB or RPM packages if your system is connected to the internet.</p>
+
+          <div class="instruction-card">
+            <h4>Debian/Ubuntu/PopOS:</h4>
+            <pre><code>sudo apt-get install libpcsclite1 pcscd libccid libu2f-udev</code></pre>
+          </div>
+
+          <div class="instruction-card">
+            <h4>RedHat/Fedora/CentOS:</h4>
+            <pre><code>sudo dnf install pcsc-lite pcsc-lite-ccid libu2f-host</code></pre>
+          </div>
+
+          <div class="instruction-card">
+            <h4>Air-Gapped Systems:</h4>
+            <p>If installing on a system without internet access, pre-download these packages on a connected machine before transferring the installer.</p>
+          </div>
+
+          <p><strong>Note:</strong> The AppImage format is self-contained and does not require these dependencies to be pre-installed.</p>
         </div>
 
         <div class="section">

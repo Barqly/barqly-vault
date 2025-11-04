@@ -1,57 +1,71 @@
 # Barqly Vault
 
-**Simple, secure file encryption for the Bitcoin ecosystem**
+**Offline-first, open-source file encryption for desktop**
 
 ---
 
 ## What is Barqly Vault?
 
-Barqly Vault is a minimal, open-source desktop app that lets you encrypt and backup your most important digital files - like Bitcoin output descriptors, Lightning node backups, family documents, or any sensitive data you need to protect.
+Barqly Vault is an **offline-first, open-source desktop application** for encrypting and decrypting sensitive documents — such as Bitcoin wallet descriptors, manifests, and configuration files — using multiple keys (**YubiKeys and/or passphrases**).
 
-## The Problem it Solves
+## Why Barqly Vault?
 
-When you practice Bitcoin self-custody (mainchain or Lightning) or have sensitive family documents, you need a reliable way to create secure backups that you control completely. While some tools have built-in encryption, many users need additional security layers or want to encrypt other sensitive files alongside their Bitcoin backups.
+- **Offline-first:** All operations are local.
+- **Multi-key model:** Use hardware keys (YubiKey), passphrases, or both.
+- **Cross-platform:** Desktop app for macOS, Linux, and Windows.
+- **Open source:** Transparent codebase and workflows.
 
-## How it Works
+## Features
 
-1. **Setup**: You create a secure "key" (like a digital lock) with a passphrase you remember
-2. **Encrypt**: You select files or folders, choose your key, and the app creates an encrypted backup
-3. **Decrypt**: When you need your files back, you use your key and passphrase to unlock them
+### Encryption & Security
+- **Age encryption standard:** Uses [age](https://github.com/FiloSottile/age) (ChaCha20-Poly1305 + X25519) for modern, auditable encryption.
+- **Multi-key encryption:** Each vault supports 2-4 keys in any combination (YubiKey and/or passphrase).
+- **Hardware security:** YubiKey support with multi-device detection and management.
+- **No network calls:** All operations are local-only; encrypted files never leave your control.
 
-## Key Benefits
+### Key Management
+- **Key export/import:** Backup and restore individual keys across machines using standard .agekey.enc format.
+- **Key lifecycle tracking:** NIST-aligned states (PreActivation → Active → Suspended → Deactivated).
+- **Disaster recovery mode:** Auto-detects when vault metadata is missing; restores from encrypted bundle.
 
-- **Simple**: Three clear steps - setup, encrypt, decrypt
-- **Secure**: Uses [age](https://github.com/FiloSottile/age), a modern encryption standard trusted by security experts
-- **Self-Controlled**: Your files never leave your computer unless you choose to move them
-- **Cross-Platform**: Works the same way on Mac, Windows, and Linux
+### User Experience
+- **Batch encryption:** Encrypt multiple files and folders in a single operation.
+- **Integrity verification:** Each vault includes a manifest with file hashes for verification.
+- **Portable outputs:** Store encrypted vaults anywhere (USB, cloud, offline backups).
+- **Theme support:** Light, dark, or system-based themes.
 
-## Target Users
+## Use Cases
 
-- **Bitcoin mainchain users** - wallet recovery info, output descriptors, seed phrases
-- **Lightning node operators** - additional encryption for node backups
-- **Bitcoin businesses** - client data, configuration files, recovery kits
-- **Families** - inheritance planning with all Bitcoin-related documents
+- **Bitcoin mainchain users** - Wallet recovery info, output descriptors
+- **Lightning node operators** - Additional encryption for node backups
+- **Bitcoin businesses** - Client data, configuration files, recovery kits
+- **Families** - Inheritance planning with Bitcoin-related documents
 
-## The Promise
+---
 
-Professional-grade encryption, without the complexity. No cloud. No accounts. No hidden dependencies. Just secure, reliable file protection you fully control.
+## ⚠️ Disclaimer
+
+Barqly Vault is **not intended for direct storage of Bitcoin private keys or seed phrases**.
+It is designed to protect related files (e.g., wallet descriptors, configuration manifests, or vault backups) in a simple and auditable way.
 
 ---
 
 ## 🚀 Get Started
 
-👉 **[Download Barqly Vault](/downloads)** - Get the latest stable release  
-👉 [Try the Alpha Preview](https://github.com/barqly/barqly-vault) - Development builds  
-👉 [Star the Repo](https://github.com/barqly/barqly-vault/stargazers)  
-👉 [Contribute Feedback](https://github.com/barqly/barqly-vault/issues)
+👉 **[Download Barqly Vault](/downloads)** - Get the latest release (v0.2.0)
+👉 **[Recovery Guide](/recovery)** - Disaster recovery instructions
+👉 [GitHub Repository](https://github.com/barqly/barqly-vault) - Source code and issues
+👉 [Star the Repo](https://github.com/barqly/barqly-vault/stargazers) - Show your support
 
 ---
 
-## Current Status
+## Platform Support
 
-**Development Phase**: Core application development in progress  
-**Timeline**: Q3-Q4 2025 for initial release  
-**Platform**: Cross-platform desktop application (macOS, Windows, Linux)
+| Platform | Status |
+|-----------|---------|
+| macOS | ✅ Tested |
+| Linux | ✅ Tested |
+| Windows | 🟡 Testing in progress |
 
 ## Technology Stack
 
@@ -61,4 +75,4 @@ Professional-grade encryption, without the complexity. No cloud. No accounts. No
 
 ---
 
-_Built with ❤️ for the Bitcoin community_
+_Open-source, offline-first file encryption for desktop._
