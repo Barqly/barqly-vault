@@ -1,7 +1,6 @@
 import React from 'react';
 import { Loader2, AlertTriangle, Fingerprint, Eye, EyeOff, Info, ChevronDown } from 'lucide-react';
 import { YubiKeyStateInfo } from '../../bindings';
-import { useYubiKeyProgress } from '../../hooks/useYubiKeyProgress';
 
 interface YubiKeyNewFormProps {
   selectedKey: YubiKeyStateInfo;
@@ -22,14 +21,13 @@ interface YubiKeyNewFormProps {
   showSecurityTips: boolean;
   setShowSecurityTips: (value: boolean) => void;
   isSetupInProgress: boolean;
+  showTouchPrompt: boolean;
   error: string | null;
   onSubmit: () => void;
   onCancel: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   firstFocusableRef: React.RefObject<HTMLInputElement | null>;
   lastFocusableRef: React.RefObject<HTMLButtonElement | null>;
-  // Progress API
-  operationId: string | null;
   formReadOnly: boolean;
 }
 
@@ -58,18 +56,15 @@ export const YubiKeyNewForm: React.FC<YubiKeyNewFormProps> = ({
   showSecurityTips,
   setShowSecurityTips,
   isSetupInProgress,
+  showTouchPrompt,
   error,
   onSubmit,
   onCancel,
   onKeyDown,
   firstFocusableRef,
   lastFocusableRef,
-  operationId,
   formReadOnly,
 }) => {
-  // Use progress polling to show touch message at precise time
-  const { showTouchMessage } = useYubiKeyProgress(operationId, isSetupInProgress);
-
   return (
     <div className="space-y-4" onKeyDown={onKeyDown}>
       {/* S/N */}
@@ -354,7 +349,7 @@ export const YubiKeyNewForm: React.FC<YubiKeyNewFormProps> = ({
       </div>
 
       {/* Touch YubiKey Prompt - Shows when backend reaches WaitingForTouch phase */}
-      {showTouchMessage && (
+      {showTouchPrompt && (
         <div
           className="p-4 rounded-lg border-2 animate-pulse"
           style={{

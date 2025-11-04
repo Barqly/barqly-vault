@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import type React from 'react';
-import { commands, YubiKeyStateInfo } from '../../bindings';
+import { commands, YubiKeyStateInfo, GetProgressResponse } from '../../bindings';
 import { logger } from '../../lib/logger';
 import { getUserFriendlyError } from './yubikey-helpers';
+import { safeListen } from '../../lib/tauri-safe';
 
 interface UseYubiKeyRegistrationProps {
   isOpen: boolean;
@@ -36,8 +37,7 @@ export const useYubiKeyRegistration = ({
   const [showPin, setShowPin] = useState(false);
   const [showRecoveryPin, setShowRecoveryPin] = useState(false);
   const [showTouchPrompt, setShowTouchPrompt] = useState(false);
-  // Progress API state
-  const [operationId, setOperationId] = useState<string | null>(null);
+  // Form state for preventing YubiKey OTP typing
   const [formReadOnly, setFormReadOnly] = useState(false);
 
   // Refs for focus management
@@ -189,7 +189,6 @@ export const useYubiKeyRegistration = ({
     setFormReadOnly(true);
     setError(null);
     setShowTouchPrompt(false);
-    setOperationId(null);
 
     try {
       // Scenario 1: NEW YubiKey (factory default)
@@ -198,21 +197,40 @@ export const useYubiKeyRegistration = ({
           serial: selectedKey.serial,
         });
 
-        const initResult = await commands.initYubikey(
-          selectedKey.serial,
-          pin,
-          recoveryPin,
-          label.trim(),
-        );
+        // Setup event listener BEFORE calling command
+        const unlisten = await safeListen<GetProgressResponse>('yubikey-init-progress', (event) => {
+          const progress = event.payload;
+          logger.debug('YubiKeyRegistryDialog', 'Progress event received', {
+            phase: progress.details?.type === 'YubiKeyOperation' ? progress.details.phase : null,
+            progress: progress.progress,
+          });
 
-        if (initResult.status === 'error') {
-          throw new Error(initResult.error.message || 'Failed to initialize YubiKey');
+          // Show touch message when backend is ready
+          if (
+            progress.details?.type === 'YubiKeyOperation' &&
+            progress.details.phase === 'WaitingForTouch'
+          ) {
+            logger.info('YubiKeyRegistryDialog', 'WaitingForTouch phase - showing touch prompt');
+            setShowTouchPrompt(true);
+          }
+        });
+
+        try {
+          const initResult = await commands.initYubikey(
+            selectedKey.serial,
+            pin,
+            recoveryPin,
+            label.trim(),
+          );
+
+          if (initResult.status === 'error') {
+            throw new Error(initResult.error.message || 'Failed to initialize YubiKey');
+          }
+
+          handleSuccess();
+        } finally {
+          unlisten();
         }
-
-        // Start progress polling
-        setOperationId(initResult.data.operation_id);
-
-        handleSuccess();
       }
       // Scenario 2: REUSED without TDES (needs mgmt setup + key generation)
       else if (selectedKey.state === 'reused' && !selectedKey.has_tdes_protected_mgmt_key) {
@@ -220,20 +238,40 @@ export const useYubiKeyRegistration = ({
           serial: selectedKey.serial,
         });
 
-        const completeResult = await commands.completeYubikeySetup(
-          selectedKey.serial,
-          pin,
-          label.trim(),
+        // Setup event listener BEFORE calling command
+        const unlisten = await safeListen<GetProgressResponse>(
+          'yubikey-complete-progress',
+          (event) => {
+            const progress = event.payload;
+            logger.debug('YubiKeyRegistryDialog', 'Complete progress event received', {
+              phase: progress.details?.type === 'YubiKeyOperation' ? progress.details.phase : null,
+            });
+
+            if (
+              progress.details?.type === 'YubiKeyOperation' &&
+              progress.details.phase === 'WaitingForTouch'
+            ) {
+              logger.info('YubiKeyRegistryDialog', 'WaitingForTouch - showing touch prompt');
+              setShowTouchPrompt(true);
+            }
+          },
         );
 
-        if (completeResult.status === 'error') {
-          throw new Error(completeResult.error.message || 'Failed to complete YubiKey setup');
+        try {
+          const completeResult = await commands.completeYubikeySetup(
+            selectedKey.serial,
+            pin,
+            label.trim(),
+          );
+
+          if (completeResult.status === 'error') {
+            throw new Error(completeResult.error.message || 'Failed to complete YubiKey setup');
+          }
+
+          handleSuccess();
+        } finally {
+          unlisten();
         }
-
-        // Start progress polling
-        setOperationId(completeResult.data.operation_id);
-
-        handleSuccess();
       }
       // Scenario 3: REUSED with TDES (only needs key generation)
       else if (selectedKey.state === 'reused' && selectedKey.has_tdes_protected_mgmt_key) {
@@ -241,20 +279,40 @@ export const useYubiKeyRegistration = ({
           serial: selectedKey.serial,
         });
 
-        const generateResult = await commands.generateYubikeyIdentity(
-          selectedKey.serial,
-          pin,
-          label.trim(),
+        // Setup event listener BEFORE calling command
+        const unlisten = await safeListen<GetProgressResponse>(
+          'yubikey-generate-progress',
+          (event) => {
+            const progress = event.payload;
+            logger.debug('YubiKeyRegistryDialog', 'Generate progress event received', {
+              phase: progress.details?.type === 'YubiKeyOperation' ? progress.details.phase : null,
+            });
+
+            if (
+              progress.details?.type === 'YubiKeyOperation' &&
+              progress.details.phase === 'WaitingForTouch'
+            ) {
+              logger.info('YubiKeyRegistryDialog', 'WaitingForTouch - showing touch prompt');
+              setShowTouchPrompt(true);
+            }
+          },
         );
 
-        if (generateResult.status === 'error') {
-          throw new Error(generateResult.error.message || 'Failed to generate YubiKey identity');
+        try {
+          const generateResult = await commands.generateYubikeyIdentity(
+            selectedKey.serial,
+            pin,
+            label.trim(),
+          );
+
+          if (generateResult.status === 'error') {
+            throw new Error(generateResult.error.message || 'Failed to generate YubiKey identity');
+          }
+
+          handleSuccess();
+        } finally {
+          unlisten();
         }
-
-        // Start progress polling
-        setOperationId(generateResult.data.operation_id);
-
-        handleSuccess();
       }
       // Scenario 4: ORPHANED (already has key, just register)
       else if (selectedKey.state === 'orphaned') {
@@ -283,7 +341,6 @@ export const useYubiKeyRegistration = ({
       setIsSetupInProgress(false);
       setFormReadOnly(false);
       setShowTouchPrompt(false);
-      setOperationId(null);
     }
   };
 
@@ -464,8 +521,6 @@ export const useYubiKeyRegistration = ({
     showRecoveryPin,
     setShowRecoveryPin,
     showTouchPrompt,
-    // Progress API state
-    operationId,
     formReadOnly,
 
     // Refs
