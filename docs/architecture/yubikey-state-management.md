@@ -1,12 +1,12 @@
 # YubiKey State Management
 
-**Version:** 1.0
-**Date:** 2025-11-02
-**Purpose:** Technical reference for YubiKey registration workflow
+**Version:** 2.0
+**Date:** 2025-11-04
+**Purpose:** Technical reference for YubiKey registration workflow and architectural decisions
 
 ## Overview
 
-Barqly Vault supports 4 distinct YubiKey states, each requiring different initialization steps. The backend detects state via hardware inspection, and the frontend displays appropriate forms.
+Barqly Vault supports 4 distinct YubiKey states, each requiring different initialization steps. The backend detects state via hardware inspection, frontend displays appropriate forms, and real-time progress events enable precise "Touch your YubiKey" timing.
 
 ---
 
@@ -282,11 +282,168 @@ if (state === "orphaned") {
 
 ---
 
+## Architecture Decisions
+
+### Progress Updates: Events vs Polling
+
+**Decision:** YubiKey initialization uses **event-based progress** for precise touch message timing.
+
+**Why Events (not Polling):**
+- ✅ Real-time updates DURING operation execution
+- ✅ No timing guesswork or hardcoded delays
+- ✅ Frontend receives updates while `await` blocks
+- ✅ Professional UX with precise touch prompts
+
+**Implementation:**
+```rust
+pub async fn init_yubikey(
+    window: tauri::Window,  // Tauri auto-injects, not in TypeScript signature
+) -> Result<...> {
+    // Emit events during execution
+    window.emit("yubikey-init-progress", progress_update)?;
+}
+```
+
+**Frontend pattern:**
+```typescript
+const unlisten = await safeListen('yubikey-init-progress', (event) => {
+  if (event.payload.details?.phase === 'WaitingForTouch') {
+    setShowTouchMessage(true);  // Show exactly when backend needs it
+  }
+});
+await commands.initYubikey(...);
+unlisten();
+```
+
+---
+
+### Comparison: YubiKey vs Decryption/Encryption
+
+**Decryption/Encryption Pattern:**
+- Have `_window: Window` parameter (unused, hence underscore prefix)
+- Do NOT emit events (no `window.emit()` calls)
+- Frontend shows touch message **statically** based on key type
+- Progress phases determined by **progress percentage ranges** (0-10, 10-20, etc.)
+- Works fine because touch is needed IMMEDIATELY before decryption starts (no delay)
+
+**YubiKey Init Pattern:**
+- Has `window: Window` parameter (NO underscore - actively used)
+- DOES emit events (`window.emit("yubikey-init-progress", ...)`)
+- Frontend shows touch message **event-driven** when phase = WaitingForTouch
+- More sophisticated because touch needed AFTER ykman operations (~1.5s delay)
+
+**Why the difference:**
+- **Decryption:** Touch needed immediately → static message works perfectly
+- **YubiKey Init:** Touch needed after PIN/PUK/mgmt setup → events provide precise timing
+
+**Common infrastructure:**
+- Both use `safeListen()` in frontend (enc/dec have placeholder for future events)
+- Both store progress in global HashMap (`update_global_progress()`)
+- YubiKey additionally emits events for real-time updates
+
+---
+
+### PTY and Touch Detection
+
+**Critical Implementation Detail:**
+
+**For ykman operations (non-interactive):**
+```rust
+// Don't use PTY when passing credentials via flags
+run_ykman_command(args, None)  // None = simple Command execution
+```
+
+**Platform difference discovered:**
+- Linux PTY: `reader.lines()` blocks indefinitely without trailing newline
+- macOS PTY: Handles EOF more gracefully
+- Solution: Use simple Command execution for non-interactive ykman commands
+
+**For age-plugin-yubikey (interactive):**
+```rust
+// Use PTY with touch detection
+run_age_plugin_yubikey(args, Some(pin), expect_touch=true)
+```
+
+**Why this works:**
+- PTY needed to detect "Touch your YubiKey" prompt from age-plugin
+- Touch detection essential for proper UX
+- 60-second timeout prevents hangs
+
+---
+
+### YubiKey OTP Prevention
+
+**Problem:** YubiKey acts as USB keyboard, types OTP characters when touched
+
+**Solution in Frontend:**
+```typescript
+// On form submit:
+(document.activeElement as HTMLElement)?.blur();  // Remove focus
+setFormReadOnly(true);  // Block typing (not disabled - stays visible)
+```
+
+**Why this matters:**
+- User might touch early (before backend needs it)
+- YubiKey types 'cccxxxyyy...' into focused field
+- Blurring prevents OTP from entering form
+- Read-only blocks typing without hiding UI
+
+---
+
+## Event Names
+
+**For Frontend Event Listeners:**
+
+| Scenario | Command | Event Name | When to Listen |
+|----------|---------|------------|----------------|
+| NEW | `init_yubikey` | `'yubikey-init-progress'` | Before command call |
+| REUSED (no TDES) | `complete_yubikey_setup` | `'yubikey-complete-progress'` | Before command call |
+| REUSED (has TDES) | `generate_yubikey_identity` | `'yubikey-generate-progress'` | Before command call |
+| ORPHANED | `register_yubikey` | None (instant operation) | N/A |
+
+**Event payload:** `GetProgressResponse` with `YubiKeyOperation` details
+
+**Critical phases:**
+- `Starting` (0%) - Operation begins
+- `WaitingForTouch` (75%) - Show touch message NOW
+- `Completed` (100%) - Operation done
+
+---
+
 ## Quick Reference
 
-| State | PIN Form? | Touch? | Command | What Happens |
-|-------|-----------|--------|---------|--------------|
-| NEW | PIN+PUK | Yes | `init_yubikey` | Change PIN/PUK/mgmt → gen age key |
-| REUSED (no TDES) | PIN only | Yes | `complete_yubikey_setup` | Change mgmt → gen age key |
-| REUSED (has TDES) | PIN only | Yes | `generate_yubikey_identity` | Gen age key only |
-| ORPHANED | No PIN | No | `register_yubikey` | Read identity → register |
+| State | PIN Form? | Touch? | Command | Event Name |
+|-------|-----------|--------|---------|------------|
+| NEW | PIN+PUK | Yes | `init_yubikey` | `yubikey-init-progress` |
+| REUSED (no TDES) | PIN only | Yes | `complete_yubikey_setup` | `yubikey-complete-progress` |
+| REUSED (has TDES) | PIN only | Yes | `generate_yubikey_identity` | `yubikey-generate-progress` |
+| ORPHANED | No PIN | No | `register_yubikey` | None |
+
+---
+
+## Key Takeaways for New Engineers
+
+1. **YubiKey has 4 distinct states** - Detection logic in `manager.rs`, differentiated by PIN status, TDES status, and age identity presence
+
+2. **Two binaries used:**
+   - `ykman`: PIV operations (PIN/PUK/mgmt changes) - no touch required
+   - `age-plugin-yubikey`: Age identity generation - touch required
+
+3. **PTY usage is selective:**
+   - Don't use PTY for non-interactive commands (causes hangs on Linux)
+   - Use PTY only for age-plugin (needs touch detection)
+
+4. **Progress events are YubiKey-specific:**
+   - Decryption/encryption use static touch messages (immediate need)
+   - YubiKey uses real-time events (delayed need after setup)
+   - Both patterns valid for their use cases
+
+5. **Touch timing matters:**
+   - NEW: Touch needed ~1.5s after submit (after PIN/PUK/mgmt)
+   - Events ensure message appears exactly when backend ready
+   - Prevents YubiKey OTP typing into form fields
+
+6. **Window parameter:**
+   - Tauri auto-injects (doesn't appear in TypeScript)
+   - Prefix with `_` if unused (suppresses warnings)
+   - No prefix if actively calling `.emit()`
