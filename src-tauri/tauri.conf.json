@@ -41,7 +41,8 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "bin"
+      "bin",
+      "LICENSES"
     ],
     "macOS": {
       "entitlements": "entitlements.plist",
