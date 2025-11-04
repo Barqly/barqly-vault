@@ -31,7 +31,8 @@ pub fn change_management_key_pty(serial: &str, pin: &str) -> Result<()> {
 
     debug!(command = %format!("ykman --device {} piv access change-management-key -a tdes -p -g -m [REDACTED] -P [REDACTED]", serial), "Executing ykman command");
 
-    match run_ykman_command(args, Some(pin)) {
+    // Don't use PTY since we're passing PIN via -P flag (non-interactive)
+    match run_ykman_command(args, None) {
         Ok(output) => {
             info!(
                 output_length = output.len(),

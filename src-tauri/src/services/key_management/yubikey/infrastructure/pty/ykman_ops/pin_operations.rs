@@ -118,7 +118,8 @@ pub fn change_pin_pty(serial: &str, old_pin: &str, new_pin: &str) -> Result<()> 
 
     debug!(command = %format!("ykman --device {} piv access change-pin -P [REDACTED] -n [REDACTED]", serial), "Executing ykman command");
 
-    match run_ykman_command(args, Some(old_pin)) {
+    // Don't use PTY since we're passing PIN via -P flag (non-interactive)
+    match run_ykman_command(args, None) {
         Ok(output) => {
             info!(output_length = output.len(), "PIN change succeeded");
             Ok(())
