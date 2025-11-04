@@ -1,51 +1,107 @@
 # Barqly Vault
 
-**Status:** Alpha preview. macOS build tested; Windows & Linux builds in progress. Use at your own risk.
+**Status:** v0.2.0 (R2 Release) – offline-first, cross-platform desktop application with hardware-key (YubiKey) support.
 
-Barqly Vault is a minimal, open-source desktop tool to **encrypt sensitive data and documents** (for example, a Bitcoin output descriptor) before storing them in cloud or local backups.
+Barqly Vault is an **offline-first, open-source desktop application** for encrypting and decrypting sensitive documents — such as Bitcoin wallet descriptors, manifests, and configuration files — using multiple keys (**YubiKeys and/or passphrases**).
 
-⚠️ **Disclaimer:** Barqly Vault is **not intended for private key or seed phrase storage**. It is designed for documents and configuration files that, if compromised, would not directly expose customer Bitcoin or other assets.
+---
 
-## Quickstart
-1. Download a release binary from **[Releases](https://barqly.com/downloads/)**.
-2. Run the app and select files/folders to encrypt.
-3. Choose output location; verify integrity manifest.
+## ⚠️ Disclaimer
+Barqly Vault is **not intended for direct storage of Bitcoin private keys or seed phrases**.  
+It is designed to protect related files (e.g., wallet descriptors, configuration manifests, or vault backups) in a simple and auditable way.
 
-## Screenshots
+---
 
-### Setup Screen
-![Setup Screen](screenshots/Setup.png)
+## 🚀 Quick Start
+1. Download the latest release from **[barqly.com/downloads](https://barqly.com/downloads)**.
+2. Run the app and select files or folders to encrypt.
+3. Choose or create a vault and attach 2-4 keys in any combination (YubiKey or passphrase). Hardware keys are recommended.
+4. Export your recovery bundle (`RECOVERY.txt`) and store it safely offline.
+
+---
+
+## 🖼️ Screenshots
+
+### Manage Keys
+![Manage Keys](screenshots/R2-1-manage-keys.png)
+
+### Create New Key
+![Create New Key](screenshots/R2-2-new-key.png)
+
+### Vault Hub
+![Vault Hub](screenshots/R2-3-vault-hub.png)
 
 ### Encrypt Files
-![Encrypt Screen](screenshots/Encrypt.png)
+![Encrypt Files](screenshots/R2-4-encrypt.png)
+
+### Encryption Success
+![Encryption Success](screenshots/R2-5-encrypt-success.png)
 
 ### Decrypt Files
-![Decrypt Screen](screenshots/Detup.png)
+![Decrypt Files](screenshots/R2-6-decrypt.png)
 
-## Why
-- Reduce risk when using cloud storage by pre-encrypting critical Bitcoin data.
-- Simple UX, portable encryption, transparent integrity checks.
+### Decryption Success
+![Decryption Success](screenshots/R2-7-decrypt-success.png)
 
-## Platforms
-- macOS ✅  
-- Windows 🟡 (help wanted)  
-- Linux 🟡 (help wanted)
+---
 
-## Development Philosophy
+## 🔐 Why Barqly Vault
+- **Offline-first:** All operations are local.  
+- **Multi-key model:** Use hardware keys (YubiKey), passphrases, or both.  
+- **Cross-platform:** Desktop app for macOS, Linux, and Windows.  
+- **Open source:** Transparent codebase and workflows.  
 
-This project uses **AI Driven Development (ADD)** - a methodology that enables both AI-enhanced and traditional development workflows:
+---
 
-- **Rich documentation structure** in [`docs/`](docs/) provides context for AI agents and human developers
-- **Standard tooling** - all commands work with traditional tools (make, npm, cargo)  
-- **Clear setup guides** in [`docs/engineering/`](docs/engineering/) for getting started
+## ✨ Features
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details on both AI-enhanced and traditional contribution approaches.
+### Encryption & Security
+- **Age encryption standard:** Uses [age](https://github.com/FiloSottile/age) (ChaCha20-Poly1305 + X25519) for modern, auditable encryption.
+- **Multi-key encryption:** Each vault supports 2-4 keys in any combination (YubiKey and/or passphrase).
+- **Hardware security:** YubiKey support with multi-device detection and management.
+- **No network calls:** All operations are local-only; encrypted files never leave your control.
 
-## Contributing
-Issues and PRs welcome. Please see [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+### Key Management
+- **Key export/import:** Backup and restore individual keys across machines using standard .agekey.enc format.
+- **Key lifecycle tracking:** NIST-aligned states (PreActivation → Active → Suspended → Deactivated).
+- **Disaster recovery mode:** Auto-detects when vault metadata is missing; restores from encrypted bundle.
 
-## Contact
-Project maintained by Mohammad Nauman - reach out on Nostr: `npub1uy4l2uqwddck85xdv0pwmjua73r4tqqg23nxlq0xef7gmnqx55pq8q2g2m`
+### User Experience
+- **Batch encryption:** Encrypt multiple files and folders in a single operation.
+- **Integrity verification:** Each vault includes a manifest with file hashes for verification.
+- **Portable outputs:** Store encrypted vaults anywhere (USB, cloud, offline backups).
+- **Theme support:** Light, dark, or system-based themes.  
 
-## License
-MIT
+---
+
+## 🧠 Development Philosophy
+Barqly Vault is developed using **AI-Driven Development (ADD)** — an approach that combines traditional coding practices with AI-assisted design and documentation, powered by the [ZenAI Programming framework](https://github.com/inauman/zenai-programming-rituals).
+
+- Clear project documentation in [`/docs`](docs/) for both humans and AI agents.
+- Fully compatible with traditional toolchains (`make`, `npm`, `cargo`).
+- AI-aware context for contributors in [`/docs/engineering`](docs/engineering/).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
+
+---
+
+## 🤝 Contributing
+Contributions are welcome — open an issue or PR, and please review [SECURITY.md](SECURITY.md) for responsible disclosure guidelines.
+
+---
+
+## 🪐 Contact
+Project maintained by **Mohammad Nauman**  
+Reach out on Nostr:  
+`npub1uy4l2uqwddck85xdv0pwmjua73r4tqqg23nxlq0xef7gmnqx55pq8q2g2m`
+
+---
+
+## ⚖️ License
+MIT © 2025 Barqly
+
+---
+
+<p align="center">
+  <em>Offline-first, open-source file encryption for desktop.</em>
+</p>
