@@ -58,18 +58,4 @@ Encryption is designed to be unbreakable without keys. Even Barqly cannot help.
 
 ---
 
-## Need Help?
-
-**Email:** support@barqly.com
-
-Include:
-- Brief description of the issue
-- Which recovery method you tried (YubiKey or Passphrase)
-- Any error messages
-- Operating system (macOS, Windows, Linux)
-
-We typically respond within 24 hours.
-
----
-
 _Last updated: October 27, 2025_

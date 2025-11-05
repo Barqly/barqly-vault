@@ -75,4 +75,20 @@ It is designed to protect related files (e.g., wallet descriptors, configuration
 
 ---
 
+## 🪐 Contact & Feedback
+
+Barqly Vault is an open-source project maintained by **Mohammad Nauman**.  
+If you discover a bug, have a question, or would like to share feedback, you can reach out through:
+
+- **Email:** [nauman@barqly.com](mailto:nauman@barqly.com)
+- **Nostr (@Barqly):** [`npub1y9y7cje0yx26aty28lmr3tr09fgwuym90uslef7e0475m36a97ysr94l54`](nostr:npub1y9y7cje0yx26aty28lmr3tr09fgwuym90uslef7e0475m36a97ysr94l54)  
+  ([View on Nostr Web](https://njump.me/npub1y9y7cje0yx26aty28lmr3tr09fgwuym90uslef7e0475m36a97ysr94l54)) 
+- **X (Twitter)** [@BarqlyHQ](https://x.com/BarqlyHQ)  
+- **GitHub Issues:** [github.com/Barqly/barqly-vault/issues](https://github.com/Barqly/barqly-vault/issues)  
+
+*Responses are handled personally and as time permits.*  
+*Barqly Vault is provided on an open-source, best-effort basis — community collaboration and improvements are always welcome.*
+
+---
+
 _Open-source, offline-first file encryption for desktop._
