@@ -613,6 +613,7 @@
       <div class="header">
         <div class="logo-container">
           <img src="assets/barqly-vault-logo-dark.svg" alt="Barqly Vault" class="logo">
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">v0.2.0</p>
         </div>
         <p class="tagline">
           Offline-first, open-source file encryption for desktop.
@@ -641,43 +642,41 @@
 
         <h3>Encryption & Security</h3>
         <ul>
-          <li><strong>Age encryption standard:</strong> Uses <a href="https://github.com/FiloSottile/age" target="_blank">age</a> (ChaCha20-Poly1305 + X25519) for modern, auditable encryption.</li>
-          <li><strong>Multi-key encryption:</strong> Each vault supports 2-4 keys in any combination (YubiKey and/or passphrase).</li>
-          <li><strong>Hardware security:</strong> YubiKey support with multi-device detection and management.</li>
-          <li><strong>No network calls:</strong> All operations are local-only; encrypted files never leave your control.</li>
+          <li>Age encryption standard: Uses <a href="https://github.com/FiloSottile/age" target="_blank">age</a> (ChaCha20-Poly1305 + X25519) for modern, auditable encryption.</li>
+          <li>Multi-key encryption: Each vault supports 2-4 keys in any combination (YubiKey and/or passphrase).</li>
+          <li>Hardware security: YubiKey support with multi-device detection and management.</li>
+          <li>No network calls: All operations are local-only; encrypted files never leave your control.</li>
         </ul>
 
-        <h3>Key Management</h3>
+        <h3 style="margin-top: 10px;">Key Management</h3>
         <ul>
-          <li><strong>Key export/import:</strong> Backup and restore individual keys across machines using standard .agekey.enc format.</li>
-          <li><strong>Key lifecycle tracking:</strong> NIST-aligned states (PreActivation → Active → Suspended → Deactivated).</li>
-          <li><strong>Disaster recovery mode:</strong> Auto-detects when vault metadata is missing; restores from encrypted bundle.</li>
+          <li>Key export/import: Backup and restore individual keys across machines using standard .agekey.enc format.</li>
+          <li>Key lifecycle tracking: NIST-aligned states (PreActivation → Active → Suspended → Deactivated).</li>
+          <li>Disaster recovery mode: Auto-detects when vault metadata is missing; restores from encrypted bundle.</li>
         </ul>
 
-        <h3>User Experience</h3>
+        <h3 style="margin-top: 10px;">User Experience</h3>
         <ul>
-          <li><strong>Batch encryption:</strong> Encrypt multiple files and folders in a single operation.</li>
-          <li><strong>Integrity verification:</strong> Each vault includes a manifest with file hashes for verification.</li>
-          <li><strong>Portable outputs:</strong> Store encrypted vaults anywhere (USB, cloud, offline backups).</li>
-          <li><strong>Theme support:</strong> Light, dark, or system-based themes.</li>
+          <li>Batch encryption: Encrypt multiple files and folders in a single operation.</li>
+          <li>Integrity verification: Each vault includes a manifest with file hashes for verification.</li>
+          <li>Portable outputs: Store encrypted vaults anywhere (USB, cloud, offline backups).</li>
+          <li>Theme support: Light, dark, or system-based themes.</li>
         </ul>
       </div>
 
       <div class="section">
         <h2>Use Cases</h2>
         <ul>
-          <li><strong>Bitcoin mainchain users</strong> - Wallet recovery info, output descriptors</li>
-          <li><strong>Lightning node operators</strong> - Additional encryption for node backups</li>
-          <li><strong>Bitcoin businesses</strong> - Client data, configuration files, recovery kits</li>
-          <li><strong>Families</strong> - Inheritance planning with Bitcoin-related documents</li>
+          <li>Bitcoiners - Wallet recovery info, output descriptors, taproot scripts</li>
+          <li>Lightning node operators - Additional encryption for node backups</li>
+          <li>Any sensitive data & documents that need to be encrypted</li>
         </ul>
       </div>
 
       <div class="section">
         <h2>⚠️ Disclaimer</h2>
         <p>
-          Barqly Vault is <strong>not intended for direct storage of Bitcoin private keys or seed phrases</strong>.<br>
-          It is designed to protect related files (e.g., wallet descriptors, configuration manifests, or vault backups) in a simple and auditable way.
+          Barqly Vault is <strong>not intended for direct storage of Bitcoin private keys or seed phrases</strong>. It is designed to protect related files (e.g., wallet descriptors, configuration manifests, or vault backups) in a simple and auditable way.
         </p>
       </div>
 
@@ -687,8 +686,8 @@
         <table style="width: 100%; margin-top: 1rem; border-collapse: collapse;">
           <thead>
             <tr style="border-bottom: 2px solid var(--border-color);">
-              <th style="text-align: left; padding: 0.75rem;">Platform</th>
-              <th style="text-align: left; padding: 0.75rem;">Status</th>
+              <th style="padding: 0.75rem;">Platform</th>
+              <th style="padding: 0.75rem;">Status</th>
             </tr>
           </thead>
           <tbody>
