@@ -21,7 +21,7 @@ Full license texts are included in this directory:
 
 ## Usage
 
-Barqly Vault redistributes these binaries in accordance with their respective open source licenses. All copyright notices, license texts, and disclaimers have been preserved as required.
+Barqly Vault redistributes these binaries in compliance with their respective open source licenses. All copyright notices, license texts, and disclaimers have been preserved as required.
 
 ## Questions
 
