@@ -12,7 +12,7 @@ Before starting recovery, ensure you have:
 ✓ **Your encrypted .age file** - Usually in `~/Documents/Barqly-Vaults/`
 ✓ **At least ONE key** from your vault (see your RECOVERY.txt file)
 
-**Important:** Your vault was encrypted to 2-4 keys. You only need **ANY ONE** of them to decrypt.
+**Important:** Your vault was encrypted to up to 4 keys. You only need **ANY ONE** of them to decrypt.
 
 ---
 
@@ -51,9 +51,9 @@ Before starting recovery, ensure you have:
 Encryption is designed to be unbreakable without keys. Even Barqly cannot help.
 
 **Prevent this in the future:**
-- Use 2-4 keys per vault (redundancy!)
-- Mix YubiKeys (hardware) and Passphrase keys (software)
-- Backup passphrase key files securely
+- Use multiple keys per vault (at least 2 recommended for redundancy)
+- Use hardware keys (YubiKeys) for maximum security
+- Backup passphrase key files securely if using them
 - Keep YubiKeys in separate physical locations
 
 ---

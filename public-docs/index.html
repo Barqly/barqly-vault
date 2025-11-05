@@ -595,7 +595,7 @@
         <a href="#" onclick="scrollToTop()">
           <img src="assets/barqly-vault-logo-dark.svg" alt="Barqly Vault" class="nav-logo" id="nav-logo">
         </a>
-        
+
         <div class="nav-links">
           <a href="#" onclick="scrollToTop()">Home</a>
           <a href="downloads/">Download</a>
@@ -643,7 +643,7 @@
         <h3>Encryption & Security</h3>
         <ul>
           <li>Age encryption standard: Uses <a href="https://github.com/FiloSottile/age" target="_blank">age</a> (ChaCha20-Poly1305 + X25519) for modern, auditable encryption.</li>
-          <li>Multi-key encryption: Each vault supports 2-4 keys in any combination (YubiKey and/or passphrase).</li>
+          <li><strong>Multi-key encryption:</strong> Each vault supports up to 4 keys in any combination (YubiKey and/or passphrase).</li>
           <li>Hardware security: YubiKey support with multi-device detection and management.</li>
           <li>No network calls: All operations are local-only; encrypted files never leave your control.</li>
         </ul>
@@ -661,6 +661,34 @@
           <li>Integrity verification: Each vault includes a manifest with file hashes for verification.</li>
           <li>Portable outputs: Store encrypted vaults anywhere (USB, cloud, offline backups).</li>
           <li>Theme support: Light, dark, or system-based themes.</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>Best Practices</h2>
+
+        <h3 style="margin-top: 10px;">Hardware Keys (Most secure, Recommended)</h3>
+        <p>
+          <strong>YubiKeys provide the strongest security</strong> as they are tamper-resistant hardware devices that protect against malware, keyloggers, and unauthorized access. The private key never leaves the hardware token, making it immune to software-based attacks.
+        </p>
+        <p>
+          <strong>Ideal for:</strong> High-value data, Bitcoin wallet descriptors, business-critical files
+        </p>
+
+        <h3 style="margin-top: 10px;">Passphrase Keys (Convenience)</h3>
+        <p>
+          Passphrase-protected software keys offer convenience but are <strong>only as secure as your computer</strong>. They are vulnerable to malware, keyloggers, and physical access to your device.
+        </p>
+        <p>
+          <strong>Best for:</strong> Less sensitive data, temporary encryption, situations where hardware keys aren't practical
+        </p>
+
+        <h3 style="margin-top: 10px;">Key Redundancy</h3>
+        <ul>
+          <li><strong>Minimum 2 keys recommended:</strong> Provides backup in case one key is lost or inaccessible</li>
+          <li><strong>Ideal: 3 hardware keys (YubiKeys):</strong> Maximum security with redundancy</li>
+          <li><strong>Mixed approach:</strong> Combine hardware and passphrase keys for balance of security and convenience</li>
+          <li><strong>Geographic distribution:</strong> Store keys in separate physical locations to protect against loss or disaster</li>
         </ul>
       </div>
 
