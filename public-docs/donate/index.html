@@ -63,7 +63,7 @@
 
       .header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 3rem;
         padding: 3rem 2rem;
         background: linear-gradient(135deg, var(--white) 0%, #FFF9F5 100%);
         border-radius: 20px;
@@ -494,20 +494,38 @@
             <form method="POST" action="https://donate.barqly.com/api/v1/invoices" class="btcpay-form btcpay-form--block">
               <input type="hidden" name="storeId" value="qLWg6tdD5bf6t6AXYLZgiVb9vxmfcQZRNAHgJnC1zoN" />
               <input type="hidden" name="notifyEmail" value="nauman@barqly.com" />
-              <div class="btcpay-custom-container">
-                <div class="btcpay-custom">
-                  <button class="plus-minus" type="button" data-type="-" data-step="1" data-min="1" data-max="10000000">-</button>
-                  <input class="btcpay-input-price" type="number" name="price" min="1" max="10000000" step="1" value="1" data-price="1" style="width:3em;" />
-                  <button class="plus-minus" type="button" data-type="+" data-step="1" data-min="1" data-max="10000000">+</button>
+
+              <div style="border: 1px solid rgba(255,138,0,0.25); border-radius: 12px; padding: 1.5rem; background: rgba(255,138,0,0.03);">
+                <!-- Social Handle Input (Optional) -->
+                <div style="margin-bottom: 1.5rem;">
+                  <input
+                    type="text"
+                    name="buyerName"
+                    placeholder="@X user / Nostr npub (optional)"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--white); color: var(--brand-gray); font-size: 0.9rem; transition: border-color 0.3s ease;"
+                    onfocus="this.style.borderColor='var(--bitcoin-orange)'"
+                    onblur="this.style.borderColor='var(--border-color)'"
+                  />
                 </div>
-                <select name="currency">
-                  <option value="USD" selected>USD</option>
-                  <option value="GBP">GBP</option>
-                  <option value="EUR">EUR</option>
-                  <option value="BTC">BTC</option>
-                </select>
+
+                <div class="btcpay-custom-container">
+                  <div class="btcpay-custom">
+                    <button class="plus-minus" type="button" data-type="-" data-step="1" data-min="1" data-max="10000000">-</button>
+                    <input class="btcpay-input-price" type="number" name="price" min="1" max="10000000" step="1" value="50" data-price="50" style="width:5em;" />
+                    <button class="plus-minus" type="button" data-type="+" data-step="1" data-min="1" data-max="10000000">+</button>
+                  </div>
+                  <select name="currency" style="width: auto;">
+                    <option value="USD" selected>USD</option>
+                    <option value="GBP">GBP</option>
+                    <option value="EUR">EUR</option>
+                    <option value="BTC">BTC</option>
+                  </select>
+                </div>
+                <button type="submit" class="submit" name="submit" style="min-width:209px;min-height:57px;border-radius:4px;border-style:none;background-color:#0f3b21;cursor:pointer;" title="Pay with BTCPay Server, a Self-Hosted Bitcoin Payment Processor"><span style="color:#fff">Donate with</span>
+                  <img src="https://ipduxnoimr7fhktd3gioyiba3jlyi3syhr6s2zzhgvn4pcqavnxzksyd.local/img/paybutton/logo.svg" style="height:57px;display:inline-block;padding:5% 0 5% 5px;vertical-align:middle;">
+                </button>
               </div>
-              <input type="image" class="submit" name="submit" src="https://ipduxnoimr7fhktd3gioyiba3jlyi3syhr6s2zzhgvn4pcqavnxzksyd.local/img/paybutton/pay.svg" style="width:209px" alt="Pay with BTCPay Server, a Self-Hosted Bitcoin Payment Processor">
+              <!-- <input type="image" class="submit" name="submit" src="https://ipduxnoimr7fhktd3gioyiba3jlyi3syhr6s2zzhgvn4pcqavnxzksyd.local/img/paybutton/pay.svg" style="width:209px" alt="Pay with BTCPay Server, a Self-Hosted Bitcoin Payment Processor"> -->
             </form>
             <!-- BTCPay Donate Button code - End -->
           </div>
