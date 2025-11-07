@@ -497,24 +497,26 @@
                 <input type="hidden" name="notifyEmail" value="nauman@barqly.com" />
                 <input type="hidden" name="metadata[orderNote]" value="Donation via Barqly Vault site" />
 
-                <!-- Social Handle Input (Optional) -->
-                <input
-                  type="text"
-                  name="metadata[buyerName]"
-                  placeholder="@X user / Nostr npub (optional)"
-                  style="width: min(100%, 48ch); font-size: 0.95rem; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.24); color: #eee; transition: all 0.3s ease;"
-                  onfocus="this.style.borderColor='rgba(255,138,0,0.55)'; this.style.boxShadow='0 0 0 3px rgba(255,138,0,0.18)'"
-                  onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none'"
-                />
-
-                <!-- Amount Row: +/- | amount | currency -->
-                <div style="display: grid; grid-template-columns: 48px 1fr 104px; gap: 12px; align-items: center; width: 100%; max-width: 400px;">
-                  <button class="plus-minus" type="button" data-type="-" data-step="1" data-min="1" data-max="10000000" style="width: 48px; height: 48px;">-</button>
-                  <input class="btcpay-input-price" type="number" name="price" min="1" max="10000000" step="1" value="50" data-price="50" style="text-align: center; font-size: 1.4rem; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.24); color: #fff; min-width: 10ch;" />
-                  <button class="plus-minus" type="button" data-type="+" data-step="1" data-min="1" data-max="10000000" style="width: 48px; height: 48px;">+</button>
+                <!-- Social Handle Input (Optional) - Centered -->
+                <div style="width: 100%; display: flex; justify-content: center;">
+                  <input
+                    type="text"
+                    name="metadata[buyerName]"
+                    placeholder="@X user / Nostr npub (optional)"
+                    style="width: min(100%, 48ch); font-size: 0.95rem; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.24); color: #eee; transition: all 0.3s ease; text-align: center;"
+                    onfocus="this.style.borderColor='rgba(255,138,0,0.55)'; this.style.boxShadow='0 0 0 3px rgba(255,138,0,0.18)'"
+                    onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none'"
+                  />
                 </div>
 
-                <select name="currency" style="appearance: none; -webkit-appearance: none; -moz-appearance: none; padding: 12px 36px 12px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: linear-gradient(rgba(0,0,0,0.30), rgba(0,0,0,0.30)), url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22><path fill=%22%23eaeaea%22 d=%22M1.41 0L6 4.59 10.59 0 12 1.41 6 7.41 0 1.41z%22/></svg>'); background-repeat: no-repeat, no-repeat; background-position: left top, right 10px center; background-size: auto, 12px 8px; color: #eaeaea; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; width: 104px;" onfocus="this.style.borderColor='rgba(255,138,0,0.55)'; this.style.boxShadow='0 0 0 3px rgba(255,138,0,0.18)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none'">
+                <!-- Amount Row: +/- | amount | currency -->
+                <div style="display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;">
+                  <button class="plus-minus" type="button" data-type="-" data-step="1" data-min="1" data-max="10000000">-</button>
+                  <input class="btcpay-input-price" type="number" name="price" min="1" max="10000000" step="1" value="50" data-price="50" style="text-align: center; font-size: 1.4rem; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.24); color: #fff; min-width: 10ch;" />
+                  <button class="plus-minus" type="button" data-type="+" data-step="1" data-min="1" data-max="10000000">+</button>
+                </div>
+
+                <select name="currency" style="appearance: none; -webkit-appearance: none; -moz-appearance: none; padding: 10px 32px 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: linear-gradient(rgba(0,0,0,0.30), rgba(0,0,0,0.30)), url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22><path fill=%22%23eaeaea%22 d=%22M1.41 0L6 4.59 10.59 0 12 1.41 6 7.41 0 1.41z%22/></svg>'); background-repeat: no-repeat, no-repeat; background-position: left top, right 10px center; background-size: auto, 12px 8px; color: #eaeaea; font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease; width: 90px; text-align: center;" onfocus="this.style.borderColor='rgba(255,138,0,0.55)'; this.style.boxShadow='0 0 0 3px rgba(255,138,0,0.18)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'; this.style.boxShadow='none'">
                   <option value="USD" selected>USD</option>
                   <option value="GBP">GBP</option>
                   <option value="EUR">EUR</option>
