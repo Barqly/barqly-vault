@@ -534,9 +534,9 @@
         
         <div class="nav-links">
           <a href="../">Home</a>
+          <a href="../donate/">❤️ Donate</a>
           <a href="./" class="active">Download</a>
           <a href="../recovery/">Recovery</a>
-          <!-- <a href="https://btcpay.barqly.com" target="_blank" rel="noopener">Donate</a> -->
           <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
             ☀️
           </button>
