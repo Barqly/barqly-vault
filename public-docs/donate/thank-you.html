@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thank You - Barqly Vault</title>
+    <meta
+      name="description"
+      content="Thank you for supporting Barqly Vault! Your contribution helps fund open-source development and security improvements."
+    />
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <style>
+      :root {
+        --bitcoin-orange: #ff8a00;
+        --brand-gray: #565555;
+        --primary-blue: #2563EB;
+        --dark-gray: #1E293B;
+        --medium-gray: #64748B;
+        --light-gray: #F8FAFC;
+        --white: #FFFFFF;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.15);
+        --border-color: rgba(226, 232, 240, 0.5);
+        --link-color: #2563EB;
+        --link-hover-color: #1D4ED8;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        line-height: 1.6;
+        color: var(--brand-gray);
+        background: linear-gradient(135deg, #F8FAFC 0%, #F0F9FF 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      /* Dark Mode Styles */
+      [data-theme="dark"] {
+        --bitcoin-orange: #ff8a00;
+        --brand-gray: #9CA3AF;
+        --primary-blue: #60A5FA;
+        --dark-gray: #F9FAFB;
+        --medium-gray: #D1D5DB;
+        --light-gray: #1F2937;
+        --white: #111827;
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        --hover-shadow: 0 8px 30px rgba(255, 138, 0, 0.2);
+        --border-color: rgba(75, 85, 99, 0.3);
+        --link-color: #60A5FA;
+        --link-hover-color: #93C5FD;
+      }
+
+      [data-theme="dark"] body {
+        background: linear-gradient(135deg, #111827 0%, #1F2937 100%);
+        color: var(--medium-gray);
+      }
+
+      [data-theme="dark"] .navbar {
+        background: rgba(17, 24, 39, 0.95);
+        border-bottom: 1px solid rgba(255, 138, 0, 0.2);
+      }
+
+      [data-theme="dark"] .header {
+        background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+        border-top-color: var(--bitcoin-orange);
+      }
+
+      [data-theme="dark"] .section {
+        background: var(--white);
+        border-color: var(--border-color);
+      }
+
+      .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(17, 24, 39, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 138, 0, 0.2);
+        z-index: 1000;
+        padding: 1rem 0;
+        transition: all 0.3s ease;
+      }
+
+      [data-theme="light"] .navbar {
+        background: rgba(248, 250, 252, 0.95);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+      }
+
+      .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 2rem;
+      }
+
+      .nav-logo {
+        height: 40px;
+        width: auto;
+        transition: transform 0.2s ease;
+      }
+
+      .nav-logo:hover {
+        transform: scale(1.05);
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--medium-gray);
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        color: var(--bitcoin-orange);
+        background: rgba(255, 138, 0, 0.1);
+      }
+
+      .nav-links a.active {
+        color: var(--bitcoin-orange);
+        background: rgba(255, 138, 0, 0.1);
+      }
+
+      .theme-toggle {
+        background: var(--bitcoin-orange);
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin-left: 1rem;
+      }
+
+      .theme-toggle:hover {
+        transform: scale(1.05);
+        background: #FF7A00;
+      }
+
+      .main-content {
+        margin-top: 80px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, var(--white) 0%, #FFF9F5 100%);
+        border-radius: 20px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        border-top: 4px solid var(--bitcoin-orange);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--bitcoin-orange), transparent);
+        opacity: 0.6;
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .logo {
+        height: 80px;
+        width: auto;
+        transition: transform 0.3s ease;
+      }
+
+      .logo:hover {
+        transform: scale(1.05);
+      }
+
+      .success-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+
+      .header h1 {
+        color: var(--dark-gray);
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+      }
+
+      .header .message {
+        font-size: 1.2rem;
+        color: var(--brand-gray);
+        font-weight: 400;
+        max-width: 600px;
+        margin: 0.25rem auto;
+        line-height: 1.6;
+      }
+
+      .section {
+        background: var(--white);
+        margin-bottom: 2rem;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .section:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--hover-shadow);
+      }
+
+      .section h2 {
+        color: var(--brand-gray);
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--bitcoin-orange);
+        padding-bottom: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .action-links {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+      }
+
+      .action-link {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        background: var(--bitcoin-orange);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(255, 138, 0, 0.3);
+      }
+
+      .action-link:hover {
+        background: #FF7A00;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 138, 0, 0.4);
+      }
+
+      .action-link.secondary {
+        background: transparent;
+        border: 2px solid var(--bitcoin-orange);
+        color: var(--bitcoin-orange);
+        box-shadow: none;
+      }
+
+      .action-link.secondary:hover {
+        background: rgba(255, 138, 0, 0.1);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 2rem;
+        color: var(--medium-gray);
+        font-style: italic;
+        font-size: 1.1rem;
+      }
+
+      a {
+        color: var(--link-color);
+        text-decoration: none;
+        transition: color 0.2s ease;
+      }
+
+      a:hover {
+        text-decoration: underline;
+        color: var(--link-hover-color);
+      }
+
+      @media (max-width: 768px) {
+        .nav-container {
+          padding: 0 1rem;
+        }
+
+        .nav-links {
+          gap: 1rem;
+        }
+
+        .nav-links a {
+          padding: 0.5rem 0.75rem;
+          font-size: 0.9rem;
+        }
+
+        .theme-toggle {
+          padding: 0.4rem;
+          margin-left: 0.5rem;
+        }
+
+        .container {
+          padding: 1rem;
+        }
+
+        .header {
+          padding: 2rem 1.5rem;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .section {
+          padding: 1.5rem;
+        }
+
+        .action-links {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .action-link {
+          width: 100%;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="../">
+          <img src="../assets/barqly-vault-logo-dark.svg" alt="Barqly Vault" class="nav-logo" id="nav-logo">
+        </a>
+
+        <div class="nav-links">
+          <a href="../">Home</a>
+          <a href="../donate/">❤️ Donate</a>
+          <a href="../downloads/">Download</a>
+          <a href="../recovery/">Recovery</a>
+          <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+            ☀️
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="main-content">
+      <div class="container">
+        <div class="header">
+          <div class="success-icon">✅</div>
+          <h1>Thank You!</h1>
+          <p class="message">
+            Your support helps fund open-source development and security improvements for Barqly Vault.
+          </p>
+        </div>
+
+        <div class="section" style="text-align: center;">
+          <h2>What's Next?</h2>
+          <p style="margin-bottom: 2rem; color: var(--brand-gray);">
+            Your contribution makes a real difference. Here's how you can stay connected:
+          </p>
+
+          <div class="action-links">
+            <a href="../" class="action-link">Return Home</a>
+            <a href="https://github.com/barqly/barqly-vault" target="_blank" class="action-link secondary">⭐ Star on GitHub</a>
+            <a href="./#what-your-donation-supports" class="action-link secondary">See What You're Supporting</a>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>Built with ❤️ and inspired by the ideals of Bitcoin.</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Theme toggle functionality
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        document.documentElement.setAttribute('data-theme', newTheme);
+
+        // Update logo
+        const navLogo = document.querySelector('.nav-logo');
+        if (newTheme === 'dark') {
+          navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+          document.querySelector('.theme-toggle').textContent = '☀️';
+        } else {
+          navLogo.src = '../assets/barqly-vault-logo-light.svg';
+          document.querySelector('.theme-toggle').textContent = '🌙';
+        }
+
+        // Save preference
+        localStorage.setItem('theme', newTheme);
+      }
+
+      // Initialize theme on page load
+      function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const defaultTheme = savedTheme || 'dark';
+
+        document.documentElement.setAttribute('data-theme', defaultTheme);
+
+        const navLogo = document.querySelector('.nav-logo');
+        if (defaultTheme === 'dark') {
+          navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+          document.querySelector('.theme-toggle').textContent = '☀️';
+        } else {
+          navLogo.src = '../assets/barqly-vault-logo-light.svg';
+          document.querySelector('.theme-toggle').textContent = '🌙';
+        }
+      }
+
+      // Initialize theme when page loads
+      document.addEventListener('DOMContentLoaded', initTheme);
+
+      // Listen for system theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('theme')) {
+          const newTheme = e.matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', newTheme);
+
+          const navLogo = document.querySelector('.nav-logo');
+          if (newTheme === 'dark') {
+            navLogo.src = '../assets/barqly-vault-logo-dark.svg';
+            document.querySelector('.theme-toggle').textContent = '☀️';
+          } else {
+            navLogo.src = '../assets/barqly-vault-logo-light.svg';
+            document.querySelector('.theme-toggle').textContent = '🌙';
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
