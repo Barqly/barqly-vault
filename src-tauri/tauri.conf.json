@@ -42,7 +42,7 @@
     ],
     "resources": [
       "bin",
-      "LICENSES"
+      "../LICENSES"
     ],
     "macOS": {
       "entitlements": "entitlements.plist",
