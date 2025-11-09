@@ -340,21 +340,16 @@ jobs:
 
       - name: Build with Tauri
         if: steps.should_build.outputs.build == 'true'
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
           SCCACHE_GHA_ENABLED: "true"
           RUSTC_WRAPPER: "sccache"
-        shell: bash
-        run: |
-          cd src-tauri
-          if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
-            # macOS: Build only .app bundle (NOT DMG yet - we'll create DMG after signing)
-            cargo tauri build ${{ matrix.args }} --bundles app
-          else
-            # Linux/Windows: Build all bundles normally
-            cargo tauri build ${{ matrix.args }}
-          fi
+        with:
+          # For macOS: Build only .app (we'll create DMG after signing)
+          # For Linux/Windows: Build all bundles normally
+          args: ${{ matrix.platform == 'macos-latest' && format('{0} --bundles app', matrix.args) || matrix.args }}
 
       # Diagnostic: Check code signing identities available
       - name: Verify Code Signing Identity (macOS)
