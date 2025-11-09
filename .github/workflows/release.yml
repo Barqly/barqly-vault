@@ -457,10 +457,26 @@ jobs:
             [ -e "$p" ] && /usr/bin/codesign -dv --verbose=4 "$p" 2>&1 | grep -E "Authority|Timestamp" || true
           done
 
-          # Step 6: Verify complete app
+          # Step 6: Verify complete app and assess with Gatekeeper
           echo "Step 6: Final verification..."
           /usr/bin/codesign --verify --strict --verbose=6 "$APP_PATH"
-          /usr/sbin/spctl --assess --type execute --verbose=4 "$APP_PATH"
+
+          echo "Step 6b: Gatekeeper assessment..."
+          set +e
+          SPCTL_OUTPUT=$(/usr/sbin/spctl --assess --type execute --verbose=4 "$APP_PATH" 2>&1)
+          SPCTL_STATUS=$?
+          set -e
+          echo "$SPCTL_OUTPUT"
+          if [ "$SPCTL_STATUS" -ne 0 ]; then
+            if echo "$SPCTL_OUTPUT" | grep -q "source=Unnotarized Developer ID"; then
+              echo "⚠️ Gatekeeper reports bundle is not yet notarized (expected before notarization)."
+            else
+              echo "❌ Gatekeeper assessment failed with unexpected error"
+              exit "$SPCTL_STATUS"
+            fi
+          else
+            echo "✅ Gatekeeper assessment passed"
+          fi
 
           echo "🎉 All signing complete and verified"
 
