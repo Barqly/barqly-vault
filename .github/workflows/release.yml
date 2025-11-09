@@ -367,6 +367,8 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
         shell: bash
         run: |
+          set -euo pipefail
+          set -o pipefail
           echo "🔐 Post-build signing: all Mach-O files inside .app bundle..."
 
           # Locate the built .app
@@ -436,10 +438,12 @@ jobs:
             # Sign inner binary FIRST
             echo "Signing framework inner binary: $PYINNER"
             /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYINNER"
+            /usr/bin/codesign --verify --strict --verbose=6 "$PYINNER"
 
             # Sign framework directory LAST (seals it with CodeResources)
             echo "Signing framework directory: $FW"
             /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$FW"
+            /usr/bin/codesign --verify --strict --verbose=6 "$FW"
           fi
 
           # Step 4: Sign .app bundle itself last (NO --deep - everything already signed)
@@ -455,8 +459,8 @@ jobs:
 
           # Step 6: Verify complete app
           echo "Step 6: Final verification..."
-          /usr/bin/codesign --verify --deep --strict --verbose=4 "$APP_PATH"
-          /usr/sbin/spctl --assess --type execute --verbose=4 "$APP_PATH" || true
+          /usr/bin/codesign --verify --strict --verbose=6 "$APP_PATH"
+          /usr/sbin/spctl --assess --type execute --verbose=4 "$APP_PATH"
 
           echo "🎉 All signing complete and verified"
 
@@ -983,4 +987,3 @@ jobs:
           echo "⚠️ This is a DRAFT - manually publish when ready for production!"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
