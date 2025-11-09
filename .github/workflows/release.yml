@@ -338,6 +338,26 @@ jobs:
           echo "✅ All binaries verified for $PLATFORM_DIR"
         shell: bash
 
+      # Sign all bundled binaries for macOS notarization
+      - name: Sign Bundled Binaries (macOS)
+        if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
+        shell: bash
+        run: |
+          echo "🔐 Signing bundled binaries for notarization..."
+
+          # Sign all binaries in bin/darwin/
+          for binary in src-tauri/bin/darwin/age src-tauri/bin/darwin/age-plugin-yubikey src-tauri/bin/darwin/ykman src-tauri/bin/darwin/ykman-bundle/ykman; do
+            if [ -f "$binary" ]; then
+              echo "Signing $binary..."
+              codesign --force --sign "$APPLE_SIGNING_IDENTITY" --timestamp --options runtime "$binary"
+              codesign --verify --verbose "$binary"
+            fi
+          done
+
+          echo "✅ All binaries signed successfully"
+
       - name: Build with Tauri
         if: steps.should_build.outputs.build == 'true'
         uses: tauri-apps/tauri-action@v0
