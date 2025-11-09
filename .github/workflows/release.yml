@@ -392,13 +392,14 @@ jobs:
           # Python.framework must be EXCLUDED from generic loop, then signed last
           FW="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
 
+          # Define paths upfront
+          PY="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python"
+
           # Step 1: Sign ALL Mach-O files EXCEPT Python.framework subtree
-          # CRITICAL: The find command must properly exclude Python.framework AND the Python symlink
-          echo "Step 1: Signing all Mach-O files (excluding Python.framework and _internal/Python symlink)..."
+          echo "Step 1: Signing all Mach-O files (excluding Python.framework)..."
           /usr/bin/find "$APP_PATH" \
-            -path "*/Python.framework" -prune -o \
-            -path "*/_internal/Python" -prune -o \
-            -type f \( ! -type l \) -print0 | while IFS= read -r -d '' file; do
+            \( -path "*/Python.framework" -o -path "*/Python.framework/*" \) -prune -o \
+            -type f -print0 | while IFS= read -r -d '' file; do
             if file "$file" | grep -q "Mach-O"; then
               echo "Signing: $file"
               /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$file"
@@ -407,10 +408,21 @@ jobs:
 
           echo "✅ Signed all Mach-O files (framework excluded)"
 
+          # Step 1b: Handle _internal/Python explicitly (can be real file or symlink)
+          echo "Step 1b: Handling _internal/Python..."
+          if [ -e "$PY" ] && [ ! -L "$PY" ] && file "$PY" | grep -q "Mach-O"; then
+            echo "Signing standalone Python binary (real file): $PY"
+            chmod u+w "$PY" 2>/dev/null || true
+            /usr/bin/codesign --remove-signature "$PY" 2>/dev/null || true
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PY"
+          elif [ -L "$PY" ]; then
+            echo "Note: $PY is a symlink (covered by framework signing)"
+          fi
+
           # Step 2: Sign Python.framework properly (inner binary first, then framework)
           echo "Step 2: Signing Python.framework with proper framework rules..."
           if [ -d "$FW" ]; then
-            # Detect current version (usually 3.12)
+            # Detect current version
             CUR_VER=$(/usr/bin/readlink "$FW/Versions/Current" 2>/dev/null || echo "3.12")
             PYINNER="$FW/Versions/$CUR_VER/Python"
 
@@ -425,15 +437,9 @@ jobs:
             echo "Signing framework inner binary: $PYINNER"
             /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYINNER"
 
-            # Sign framework directory LAST (seals it)
+            # Sign framework directory LAST (seals it with CodeResources)
             echo "Signing framework directory: $FW"
             /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$FW"
-          fi
-
-          # Step 3: Sign the standalone Python symlink that points into the framework
-          PYSYM="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python"
-          if [ -L "$PYSYM" ]; then
-            echo "Note: $PYSYM is a symlink to framework - no separate signing needed"
           fi
 
           # Step 4: Sign .app bundle itself last (NO --deep - everything already signed)
