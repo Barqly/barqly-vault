@@ -345,18 +345,46 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
         shell: bash
         run: |
-          echo "🔐 Signing bundled binaries for notarization..."
+          echo "🔐 Signing all binaries in bin/darwin/ for notarization..."
 
-          # Sign all binaries in bin/darwin/
-          for binary in src-tauri/bin/darwin/age src-tauri/bin/darwin/age-plugin-yubikey src-tauri/bin/darwin/ykman src-tauri/bin/darwin/ykman-bundle/ykman; do
-            if [ -f "$binary" ]; then
-              echo "Signing $binary..."
-              codesign --force --sign "$APPLE_SIGNING_IDENTITY" --timestamp --options runtime "$binary"
-              codesign --verify --verbose "$binary"
+          signed_count=0
+
+          # Find ALL Mach-O files (executables, .so, .dylib, .bundle)
+          # Use -print0 and read -d '' to handle spaces in filenames correctly
+          find src-tauri/bin/darwin -type f \
+            \( -perm +111 -o -name "*.dylib" -o -name "*.so" -o -name "*.bundle" \) \
+            -print0 | while IFS= read -r -d '' file; do
+
+            # Verify it's actually a Mach-O file (skip scripts, text files)
+            if file "$file" | grep -q "Mach-O"; then
+              echo "Signing: $file"
+
+              # Remove any existing signature (vendor signatures, old signatures)
+              codesign --remove-signature "$file" 2>/dev/null || true
+
+              # Sign with Developer ID Application certificate
+              # --force: Overwrite if signature somehow remains
+              # --sign: Use Developer ID from secrets
+              # --options runtime: Enable Hardened Runtime (required for notarization)
+              # --timestamp: Add secure timestamp (required for notarization)
+              codesign --force \
+                --sign "$APPLE_SIGNING_IDENTITY" \
+                --options runtime \
+                --timestamp \
+                "$file" || {
+                  echo "❌ Failed to sign $file"
+                  exit 1
+                }
+
+              signed_count=$((signed_count + 1))
             fi
           done
 
-          echo "✅ All binaries signed successfully"
+          echo "✅ Successfully signed $signed_count Mach-O files in bin/darwin/"
+
+          # Verify a sample signature to confirm timestamp is present
+          echo "🔍 Verifying sample signature..."
+          codesign -dv --verbose=4 src-tauri/bin/darwin/age 2>&1 | grep -E "Authority|Timestamp" || true
 
       - name: Build with Tauri
         if: steps.should_build.outputs.build == 'true'
