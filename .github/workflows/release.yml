@@ -338,36 +338,62 @@ jobs:
           echo "✅ All binaries verified for $PLATFORM_DIR"
         shell: bash
 
-      # Sign all bundled binaries for macOS notarization
-      - name: Sign Bundled Binaries (macOS)
+      - name: Build with Tauri
+        if: steps.should_build.outputs.build == 'true'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
+          SCCACHE_GHA_ENABLED: "true"
+          RUSTC_WRAPPER: "sccache"
+        with:
+          args: ${{ matrix.args }}
+
+      # Post-build: Sign all Mach-O files inside the .app bundle
+      - name: Sign Bundled Binaries Inside .app (macOS)
         if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
         shell: bash
         run: |
-          echo "🔐 Signing all binaries in bin/darwin/ for notarization..."
+          echo "🔐 Post-build signing: all Mach-O files inside .app bundle..."
+
+          # Locate the built .app
+          if [ "${{ matrix.arch }}" = "intel" ]; then
+            APP_DIR="target/x86_64-apple-darwin/release/bundle/macos"
+          else
+            APP_DIR="target/aarch64-apple-darwin/release/bundle/macos"
+          fi
+
+          APP_PATH=$(find "$APP_DIR" -maxdepth 1 -name "*.app" -type d | head -1)
+          echo "Found app: $APP_PATH"
+
+          if [ ! -d "$APP_PATH" ]; then
+            echo "❌ ERROR: .app bundle not found!"
+            exit 1
+          fi
+
+          # Clear quarantine attributes
+          xattr -r -d com.apple.quarantine "$APP_PATH" 2>/dev/null || true
 
           signed_count=0
 
-          # Find ALL Mach-O files (executables, .so, .dylib, .bundle)
-          # Use -print0 and read -d '' to handle spaces in filenames correctly
-          find src-tauri/bin/darwin -type f \
-            \( -perm +111 -o -name "*.dylib" -o -name "*.so" -o -name "*.bundle" \) \
+          # Sign every Mach-O file inside .app (executables, .dylib, .so, .bundle)
+          # Use -perm -111 (BSD syntax for macOS, not +111 which is GNU)
+          # Use -print0 and read -d '' to handle spaces in filenames
+          /usr/bin/find "$APP_PATH" -type f \
+            \( -perm -111 -o -name "*.dylib" -o -name "*.so" -o -name "*.bundle" \) \
             -print0 | while IFS= read -r -d '' file; do
 
-            # Verify it's actually a Mach-O file (skip scripts, text files)
+            # Verify it's actually a Mach-O file
             if file "$file" | grep -q "Mach-O"; then
               echo "Signing: $file"
 
-              # Remove any existing signature (vendor signatures, old signatures)
-              codesign --remove-signature "$file" 2>/dev/null || true
+              # Remove any existing signature
+              /usr/bin/codesign --remove-signature "$file" 2>/dev/null || true
 
-              # Sign with Developer ID Application certificate
-              # --force: Overwrite if signature somehow remains
-              # --sign: Use Developer ID from secrets
-              # --options runtime: Enable Hardened Runtime (required for notarization)
-              # --timestamp: Add secure timestamp (required for notarization)
-              codesign --force \
+              # Sign with Developer ID + timestamp + hardened runtime
+              /usr/bin/codesign --force \
                 --sign "$APPLE_SIGNING_IDENTITY" \
                 --options runtime \
                 --timestamp \
@@ -380,22 +406,22 @@ jobs:
             fi
           done
 
-          echo "✅ Successfully signed $signed_count Mach-O files in bin/darwin/"
+          echo "✅ Signed $signed_count Mach-O files inside .app"
 
-          # Verify a sample signature to confirm timestamp is present
-          echo "🔍 Verifying sample signature..."
-          codesign -dv --verbose=4 src-tauri/bin/darwin/age 2>&1 | grep -E "Authority|Timestamp" || true
+          # Sign the .app bundle itself last (inside-out order)
+          echo "🔐 Signing .app bundle itself..."
+          /usr/bin/codesign --force --deep \
+            --sign "$APPLE_SIGNING_IDENTITY" \
+            --options runtime \
+            --timestamp \
+            "$APP_PATH"
 
-      - name: Build with Tauri
-        if: steps.should_build.outputs.build == 'true'
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
-          SCCACHE_GHA_ENABLED: "true"
-          RUSTC_WRAPPER: "sccache"
-        with:
-          args: ${{ matrix.args }}
+          # Verify signatures
+          echo "🔍 Verifying signatures..."
+          /usr/bin/codesign --verify --deep --strict --verbose=4 "$APP_PATH"
+          /usr/sbin/spctl --assess --type execute --verbose=4 "$APP_PATH" || true
+
+          echo "🎉 All signing complete and verified"
 
       # Verify binaries in bundled artifacts (Post-Bundle Verification)
       - name: Verify Binaries in Bundled Artifacts
