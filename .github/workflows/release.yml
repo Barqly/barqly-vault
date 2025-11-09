@@ -388,49 +388,58 @@ jobs:
           # Clear quarantine attributes
           xattr -r -d com.apple.quarantine "$APP_PATH" 2>/dev/null || true
 
-          signed_count=0
+          # Critical: Framework signing order matters!
+          # Python.framework must be EXCLUDED from generic loop, then signed last
+          FW="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
 
-          # Step 1: Sign ALL Mach-O files detected by file command (comprehensive)
-          echo "Step 1: Signing all Mach-O files by detection..."
-          /usr/bin/find "$APP_PATH" -type f -print0 | while IFS= read -r -d '' file; do
+          # Step 1: Sign ALL Mach-O files EXCEPT Python.framework subtree
+          echo "Step 1: Signing all Mach-O files (excluding Python.framework)..."
+          /usr/bin/find "$APP_PATH" \
+            -path "*/Python.framework/*" -prune -o \
+            -type f -print0 | while IFS= read -r -d '' file; do
             if file "$file" | grep -q "Mach-O"; then
               echo "Signing: $file"
               /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$file" 2>/dev/null || true
-              signed_count=$((signed_count + 1))
             fi
           done
 
-          echo "✅ Signed $signed_count Mach-O files"
+          echo "✅ Signed all Mach-O files (framework excluded)"
 
-          # Step 2: Special handling for Python.framework (frameworks need inner binary + framework dir)
+          # Step 2: Sign Python.framework properly (inner binary first, then framework)
           echo "Step 2: Signing Python.framework with proper framework rules..."
-          PYFW="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
-          if [ -d "$PYFW" ]; then
-            # Sign inner Python binary first
-            PYINNER="$PYFW/Versions/3.12/Python"
-            if [ -f "$PYINNER" ]; then
-              echo "Signing framework inner binary: $PYINNER"
-              /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYINNER"
-            fi
+          if [ -d "$FW" ]; then
+            # Detect current version (usually 3.12)
+            CUR_VER=$(/usr/bin/readlink "$FW/Versions/Current" 2>/dev/null || echo "3.12")
+            PYINNER="$FW/Versions/$CUR_VER/Python"
 
-            # Sign the framework directory itself
-            echo "Signing framework directory: $PYFW"
-            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYFW"
+            # Make writable
+            chmod -R u+w "$FW" 2>/dev/null || true
+
+            # Remove any existing signatures
+            /usr/bin/codesign --remove-signature "$PYINNER" 2>/dev/null || true
+            /usr/bin/codesign --remove-signature "$FW" 2>/dev/null || true
+
+            # Sign inner binary FIRST
+            echo "Signing framework inner binary: $PYINNER"
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYINNER"
+
+            # Sign framework directory LAST (seals it)
+            echo "Signing framework directory: $FW"
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$FW"
           fi
 
-          # Step 3: Sign standalone Python interpreter if present
-          PYBIN="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python"
-          if [ -f "$PYBIN" ] && file "$PYBIN" | grep -q "Mach-O"; then
-            echo "Signing standalone Python: $PYBIN"
-            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYBIN"
-          fi
-
-          # Step 4: Sign the .app bundle itself last (inside-out order)
-          echo "Step 4: Signing .app bundle itself..."
+          # Step 3: Sign the .app bundle itself last
+          echo "Step 3: Signing .app bundle itself..."
           /usr/bin/codesign --force --deep --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH"
 
-          # Step 5: Verify signatures
-          echo "Step 5: Verifying all signatures..."
+          # Step 4: Verify signatures on problem areas
+          echo "Step 4: Verifying framework signatures..."
+          for p in "$FW/Python" "$FW/Versions/$CUR_VER/Python" "$FW"; do
+            [ -e "$p" ] && /usr/bin/codesign -dv --verbose=4 "$p" 2>&1 | grep -E "Authority|Timestamp" || true
+          done
+
+          # Step 5: Verify complete app
+          echo "Step 5: Final verification..."
           /usr/bin/codesign --verify --deep --strict --verbose=4 "$APP_PATH"
           /usr/sbin/spctl --assess --type execute --verbose=4 "$APP_PATH" || true
 
