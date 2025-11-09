@@ -393,13 +393,15 @@ jobs:
           FW="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
 
           # Step 1: Sign ALL Mach-O files EXCEPT Python.framework subtree
-          echo "Step 1: Signing all Mach-O files (excluding Python.framework)..."
+          # CRITICAL: The find command must properly exclude Python.framework AND the Python symlink
+          echo "Step 1: Signing all Mach-O files (excluding Python.framework and _internal/Python symlink)..."
           /usr/bin/find "$APP_PATH" \
-            -path "*/Python.framework/*" -prune -o \
-            -type f -print0 | while IFS= read -r -d '' file; do
+            -path "*/Python.framework" -prune -o \
+            -path "*/_internal/Python" -prune -o \
+            -type f \( ! -type l \) -print0 | while IFS= read -r -d '' file; do
             if file "$file" | grep -q "Mach-O"; then
               echo "Signing: $file"
-              /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$file" 2>/dev/null || true
+              /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$file"
             fi
           done
 
@@ -428,18 +430,25 @@ jobs:
             /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$FW"
           fi
 
-          # Step 3: Sign the .app bundle itself last
-          echo "Step 3: Signing .app bundle itself..."
-          /usr/bin/codesign --force --deep --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH"
+          # Step 3: Sign the standalone Python symlink that points into the framework
+          PYSYM="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python"
+          if [ -L "$PYSYM" ]; then
+            echo "Note: $PYSYM is a symlink to framework - no separate signing needed"
+          fi
 
-          # Step 4: Verify signatures on problem areas
-          echo "Step 4: Verifying framework signatures..."
+          # Step 4: Sign .app bundle itself last (NO --deep - everything already signed)
+          # --deep would re-sign framework and break its seal
+          echo "Step 4: Signing .app bundle wrapper (without --deep)..."
+          /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH"
+
+          # Step 5: Verify signatures on problem areas
+          echo "Step 5: Verifying framework signatures..."
           for p in "$FW/Python" "$FW/Versions/$CUR_VER/Python" "$FW"; do
             [ -e "$p" ] && /usr/bin/codesign -dv --verbose=4 "$p" 2>&1 | grep -E "Authority|Timestamp" || true
           done
 
-          # Step 5: Verify complete app
-          echo "Step 5: Final verification..."
+          # Step 6: Verify complete app
+          echo "Step 6: Final verification..."
           /usr/bin/codesign --verify --deep --strict --verbose=4 "$APP_PATH"
           /usr/sbin/spctl --assess --type execute --verbose=4 "$APP_PATH" || true
 
