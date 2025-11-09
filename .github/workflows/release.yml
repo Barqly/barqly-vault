@@ -340,18 +340,34 @@ jobs:
 
       - name: Build with Tauri
         if: steps.should_build.outputs.build == 'true'
-        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
           SCCACHE_GHA_ENABLED: "true"
           RUSTC_WRAPPER: "sccache"
-        with:
-          args: ${{ matrix.args }}
+        shell: bash
+        run: |
+          cd src-tauri
+          if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
+            # macOS: Build only .app bundle (NOT DMG yet - we'll create DMG after signing)
+            cargo tauri build ${{ matrix.args }} --bundles app
+          else
+            # Linux/Windows: Build all bundles normally
+            cargo tauri build ${{ matrix.args }}
+          fi
+
+      # Diagnostic: Check code signing identities available
+      - name: Verify Code Signing Identity (macOS)
+        if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
+        shell: bash
+        run: |
+          echo "🔎 Listing code signing identities on runner:"
+          security find-identity -v -p codesigning || true
 
       # Post-build: Sign all Mach-O files inside the .app bundle
       - name: Sign Bundled Binaries Inside .app (macOS)
         if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
+        id: sign-app
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
         shell: bash
@@ -367,6 +383,7 @@ jobs:
 
           APP_PATH=$(find "$APP_DIR" -maxdepth 1 -name "*.app" -type d | head -1)
           echo "Found app: $APP_PATH"
+          echo "app-path=$APP_PATH" >> $GITHUB_OUTPUT
 
           if [ ! -d "$APP_PATH" ]; then
             echo "❌ ERROR: .app bundle not found!"
@@ -378,11 +395,11 @@ jobs:
 
           signed_count=0
 
-          # Sign every Mach-O file inside .app (executables, .dylib, .so, .bundle)
-          # Use -perm -111 (BSD syntax for macOS, not +111 which is GNU)
-          # Use -print0 and read -d '' to handle spaces in filenames
+          # Sign every Mach-O file inside .app
+          # Don't rely only on -perm (some .so files might not have exec bit)
+          # Explicitly include known patterns
           /usr/bin/find "$APP_PATH" -type f \
-            \( -perm -111 -o -name "*.dylib" -o -name "*.so" -o -name "*.bundle" \) \
+            \( -name "*.dylib" -o -name "*.so" -o -name "*.bundle" -o -name "age" -o -name "age-plugin-yubikey" -o -name "ykman" -o -path "*/Contents/MacOS/*" \) \
             -print0 | while IFS= read -r -d '' file; do
 
             # Verify it's actually a Mach-O file
@@ -422,6 +439,70 @@ jobs:
           /usr/sbin/spctl --assess --type execute --verbose=4 "$APP_PATH" || true
 
           echo "🎉 All signing complete and verified"
+
+      # Diagnostic: Verify specific problem files are signed
+      - name: Inspect Problem Files (macOS)
+        if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
+        shell: bash
+        run: |
+          APP="${{ steps.sign-app.outputs.app-path }}"
+          AGE="$APP/Contents/Resources/bin/darwin/age"
+          SCARD="$APP/Contents/Resources/bin/darwin/ykman-bundle/_internal/smartcard/scard/_scard.cpython-312-darwin.so"
+
+          echo "🔍 Inspecting signatures on problem files..."
+          for f in "$AGE" "$SCARD"; do
+            if [ -f "$f" ]; then
+              echo "━━━ $f ━━━"
+              file "$f" || true
+              echo "Signature details:"
+              codesign -dv --verbose=4 "$f" 2>&1 | grep -E "Authority|Timestamp|Runtime" || echo "⚠️ Missing signature info"
+              echo ""
+            else
+              echo "⚠️ File not found: $f"
+            fi
+          done
+
+      # Create DMG from signed .app bundle
+      - name: Create DMG from Signed App (macOS)
+        if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
+        shell: bash
+        run: |
+          echo "📦 Creating DMG from signed .app bundle..."
+
+          # Locate the signed .app
+          if [ "${{ matrix.arch }}" = "intel" ]; then
+            APP_DIR="target/x86_64-apple-darwin/release/bundle/macos"
+          else
+            APP_DIR="target/aarch64-apple-darwin/release/bundle/macos"
+          fi
+
+          APP_PATH=$(find "$APP_DIR" -maxdepth 1 -name "*.app" -type d | head -1)
+          APP_NAME=$(basename "$APP_PATH")
+
+          # Create DMG output directory
+          DMG_DIR="$(dirname "$APP_DIR")/dmg"
+          mkdir -p "$DMG_DIR"
+
+          # DMG filename
+          if [ "${{ matrix.arch }}" = "intel" ]; then
+            DMG_NAME="Barqly Vault_0.2.0_x64.dmg"
+          else
+            DMG_NAME="Barqly Vault_0.2.0_aarch64.dmg"
+          fi
+
+          DMG_PATH="$DMG_DIR/$DMG_NAME"
+
+          # Create DMG using hdiutil
+          echo "Creating DMG: $DMG_PATH"
+          hdiutil create "$DMG_PATH" \
+            -volname "Barqly Vault" \
+            -fs HFS+ \
+            -srcfolder "$APP_PATH" \
+            -ov \
+            -format UDZO
+
+          echo "✅ DMG created: $DMG_PATH"
+          ls -lh "$DMG_PATH"
 
       # Verify binaries in bundled artifacts (Post-Bundle Verification)
       - name: Verify Binaries in Bundled Artifacts
