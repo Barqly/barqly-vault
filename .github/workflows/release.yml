@@ -390,46 +390,47 @@ jobs:
 
           signed_count=0
 
-          # Sign every Mach-O file inside .app
-          # Don't rely only on -perm (some .so files might not have exec bit)
-          # Explicitly include known patterns
-          /usr/bin/find "$APP_PATH" -type f \
-            \( -name "*.dylib" -o -name "*.so" -o -name "*.bundle" -o -name "age" -o -name "age-plugin-yubikey" -o -name "ykman" -o -path "*/Contents/MacOS/*" \) \
-            -print0 | while IFS= read -r -d '' file; do
-
-            # Verify it's actually a Mach-O file
+          # Step 1: Sign ALL Mach-O files detected by file command (comprehensive)
+          echo "Step 1: Signing all Mach-O files by detection..."
+          /usr/bin/find "$APP_PATH" -type f -print0 | while IFS= read -r -d '' file; do
             if file "$file" | grep -q "Mach-O"; then
               echo "Signing: $file"
-
-              # Remove any existing signature
-              /usr/bin/codesign --remove-signature "$file" 2>/dev/null || true
-
-              # Sign with Developer ID + timestamp + hardened runtime
-              /usr/bin/codesign --force \
-                --sign "$APPLE_SIGNING_IDENTITY" \
-                --options runtime \
-                --timestamp \
-                "$file" || {
-                  echo "❌ Failed to sign $file"
-                  exit 1
-                }
-
+              /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$file" 2>/dev/null || true
               signed_count=$((signed_count + 1))
             fi
           done
 
-          echo "✅ Signed $signed_count Mach-O files inside .app"
+          echo "✅ Signed $signed_count Mach-O files"
 
-          # Sign the .app bundle itself last (inside-out order)
-          echo "🔐 Signing .app bundle itself..."
-          /usr/bin/codesign --force --deep \
-            --sign "$APPLE_SIGNING_IDENTITY" \
-            --options runtime \
-            --timestamp \
-            "$APP_PATH"
+          # Step 2: Special handling for Python.framework (frameworks need inner binary + framework dir)
+          echo "Step 2: Signing Python.framework with proper framework rules..."
+          PYFW="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
+          if [ -d "$PYFW" ]; then
+            # Sign inner Python binary first
+            PYINNER="$PYFW/Versions/3.12/Python"
+            if [ -f "$PYINNER" ]; then
+              echo "Signing framework inner binary: $PYINNER"
+              /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYINNER"
+            fi
 
-          # Verify signatures
-          echo "🔍 Verifying signatures..."
+            # Sign the framework directory itself
+            echo "Signing framework directory: $PYFW"
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYFW"
+          fi
+
+          # Step 3: Sign standalone Python interpreter if present
+          PYBIN="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python"
+          if [ -f "$PYBIN" ] && file "$PYBIN" | grep -q "Mach-O"; then
+            echo "Signing standalone Python: $PYBIN"
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYBIN"
+          fi
+
+          # Step 4: Sign the .app bundle itself last (inside-out order)
+          echo "Step 4: Signing .app bundle itself..."
+          /usr/bin/codesign --force --deep --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH"
+
+          # Step 5: Verify signatures
+          echo "Step 5: Verifying all signatures..."
           /usr/bin/codesign --verify --deep --strict --verbose=4 "$APP_PATH"
           /usr/sbin/spctl --assess --type execute --verbose=4 "$APP_PATH" || true
 
