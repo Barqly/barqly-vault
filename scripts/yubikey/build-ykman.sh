@@ -161,11 +161,16 @@ build_ykman() {
         exit 1
     fi
 
-    # Modify spec for ARM64 instead of universal2 (for Apple Silicon)
+    # Modify spec for specific architecture instead of universal2
     local arch=$(uname -m)
-    if [ "$PLATFORM" = "darwin" ] && [ "$arch" = "arm64" ]; then
-        print_info "Modifying spec for ARM64 architecture..."
-        sed -i.bak 's/target_arch="universal2"/target_arch="arm64"/' ykman.spec
+    if [ "$PLATFORM" = "darwin" ]; then
+        if [ "$arch" = "arm64" ]; then
+            print_info "Modifying spec for ARM64 architecture..."
+            sed -i.bak 's/target_arch="universal2"/target_arch="arm64"/' ykman.spec
+        elif [ "$arch" = "x86_64" ]; then
+            print_info "Modifying spec for x86_64 architecture..."
+            sed -i.bak 's/target_arch="universal2"/target_arch="x86_64"/' ykman.spec
+        fi
     fi
 
     # Remove target_arch on Windows (not supported)
