@@ -560,15 +560,52 @@ jobs:
             echo "✅ Framework signature valid before DMG"
           fi
 
-          # Create a temp directory and copy with ditto to preserve signatures
+          # Create a temp directory and copy with ditto
           echo "Creating DMG: $DMG_PATH"
           TEMP_DIR=$(mktemp -d)
           echo "Using temp directory: $TEMP_DIR"
 
-          # Use ditto to preserve all attributes including code signatures
-          ditto "$APP_PATH" "$TEMP_DIR/$APP_NAME"
+          # Use ditto with --sequesterRsrc to preserve resource forks and signatures
+          echo "Copying with ditto --sequesterRsrc to preserve signatures..."
+          ditto --sequesterRsrc "$APP_PATH" "$TEMP_DIR/$APP_NAME"
 
-          # Create DMG from the preserved copy
+          # Re-sign the Python.framework in temp directory with proper entitlements
+          # This ensures the framework has a fresh, valid signature with PyInstaller entitlements
+          echo "Re-signing Python.framework with entitlements..."
+          FW_TEMP="$TEMP_DIR/$APP_NAME/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
+          if [ -d "$FW_TEMP" ]; then
+            # Find the actual binary inside the framework
+            CUR_VER=$(/usr/bin/readlink "$FW_TEMP/Versions/Current" 2>/dev/null || echo "3.12")
+            PYINNER_TEMP="$FW_TEMP/Versions/$CUR_VER/Python"
+
+            # Path to entitlements file
+            ENTITLEMENTS="$(pwd)/src-tauri/entitlements.plist"
+            echo "Using entitlements: $ENTITLEMENTS"
+
+            # Remove old signatures
+            /usr/bin/codesign --remove-signature "$PYINNER_TEMP" 2>/dev/null || true
+            /usr/bin/codesign --remove-signature "$FW_TEMP" 2>/dev/null || true
+
+            # Sign inner binary first WITH ENTITLEMENTS
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+              --options runtime --timestamp \
+              --entitlements "$ENTITLEMENTS" \
+              "$PYINNER_TEMP"
+
+            # Sign framework directory to seal it (frameworks don't get entitlements)
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+              --options runtime --timestamp \
+              "$FW_TEMP"
+
+            # Verify it's valid
+            /usr/bin/codesign --verify --strict --verbose=2 "$FW_TEMP" || {
+              echo "❌ Failed to re-sign framework in temp directory!"
+              exit 1
+            }
+            echo "✅ Framework re-signed successfully with entitlements"
+          fi
+
+          # Create DMG from the freshly signed copy
           hdiutil create "$DMG_PATH" \
             -volname "Barqly Vault" \
             -fs HFS+ \
