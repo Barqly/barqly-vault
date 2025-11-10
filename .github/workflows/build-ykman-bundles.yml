@@ -71,53 +71,103 @@ jobs:
           chmod +x scripts/yubikey/build-ykman.sh
           ./scripts/yubikey/build-ykman.sh ${{ github.event.inputs.version }}
 
-      # Sign macOS binaries with Developer ID
-      - name: Sign macOS binary
+      # Sign ALL binaries in ykman-bundle (complete signing for notarization)
+      - name: Sign ykman Bundle Completely
         if: matrix.platform == 'darwin'
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
         run: |
-          echo "🔐 Signing ykman binary..."
+          echo "🔐 Signing ALL Mach-O files in ykman-bundle..."
 
-          # The keychain was created by apple-certificates action
           KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          BUNDLE_DIR="src-tauri/bin/darwin/ykman-bundle"
 
-          # List available signing identities from the created keychain
-          echo "Available signing identities:"
-          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
-
-          # Check what was built
-          echo "Checking build output:"
-          ls -la src-tauri/bin/darwin/
-          ls -la src-tauri/bin/darwin/ykman-bundle/ || echo "❌ ykman-bundle directory not found"
-
-          YKMAN_BINARY="src-tauri/bin/darwin/ykman-bundle/ykman"
-
-          if [ ! -f "$YKMAN_BINARY" ]; then
-            echo "❌ ykman binary not found at $YKMAN_BINARY"
-            echo "Directory contents:"
-            find src-tauri/bin/darwin -type f -name "ykman*" || echo "No ykman files found"
+          if [ ! -d "$BUNDLE_DIR" ]; then
+            echo "❌ ykman-bundle not found at $BUNDLE_DIR"
             exit 1
           fi
 
-          echo "✍️ Signing: $YKMAN_BINARY"
-          file "$YKMAN_BINARY"
+          # Count Mach-O files
+          TOTAL_MACHO=$(find "$BUNDLE_DIR" -type f -exec file {} \; | grep -c "Mach-O" || echo 0)
+          echo "Found $TOTAL_MACHO Mach-O binaries to sign"
 
-          # Sign the binary using the specific keychain
+          # Step 1: Sign ALL Mach-O files EXCEPT Python.framework
+          echo "Step 1: Signing all Mach-O files (excluding Python.framework)..."
+          SIGNED_COUNT=0
+          find "$BUNDLE_DIR" \
+            -path "*/Python.framework" -prune -o \
+            -path "*/Python.framework/*" -prune -o \
+            -type f -print0 | while IFS= read -r -d '' file; do
+            if file "$file" | grep -q "Mach-O"; then
+              /usr/bin/codesign \
+                --force \
+                --sign "$APPLE_SIGNING_IDENTITY" \
+                --options runtime \
+                --timestamp \
+                --keychain "$KEYCHAIN_PATH" \
+                "$file" || echo "⚠️ Failed to sign: $file"
+              SIGNED_COUNT=$((SIGNED_COUNT + 1))
+              if [ $((SIGNED_COUNT % 10)) -eq 0 ]; then
+                echo "  Progress: $SIGNED_COUNT files signed..."
+              fi
+            fi
+          done
+          echo "✅ Signed non-framework Mach-O files"
+
+          # Step 2: Sign Python.framework if it exists
+          FW="$BUNDLE_DIR/_internal/Python.framework"
+          if [ -d "$FW" ]; then
+            echo "Step 2: Signing Python.framework..."
+
+            # Detect Python version
+            PY_VER=$(readlink "$FW/Versions/Current" 2>/dev/null || echo "3.12")
+            PY_INNER="$FW/Versions/$PY_VER/Python"
+
+            echo "Framework: $FW"
+            echo "Inner binary: $PY_INNER"
+
+            # Sign inner Python binary first
+            if [ -f "$PY_INNER" ]; then
+              echo "Signing framework inner binary..."
+              /usr/bin/codesign \
+                --force \
+                --sign "$APPLE_SIGNING_IDENTITY" \
+                --options runtime \
+                --timestamp \
+                --keychain "$KEYCHAIN_PATH" \
+                "$PY_INNER"
+              /usr/bin/codesign --verify --strict "$PY_INNER" || echo "⚠️ Inner binary verification failed"
+            fi
+
+            # Sign framework directory
+            echo "Signing framework directory..."
+            /usr/bin/codesign \
+              --force \
+              --sign "$APPLE_SIGNING_IDENTITY" \
+              --options runtime \
+              --timestamp \
+              --keychain "$KEYCHAIN_PATH" \
+              "$FW"
+            /usr/bin/codesign --verify --strict "$FW" || echo "⚠️ Framework verification failed"
+
+            echo "✅ Python.framework signed"
+          fi
+
+          # Step 3: Sign main ykman binary last
+          echo "Step 3: Signing main ykman binary..."
           /usr/bin/codesign \
             --force \
             --sign "$APPLE_SIGNING_IDENTITY" \
             --options runtime \
             --timestamp \
             --keychain "$KEYCHAIN_PATH" \
-            "$YKMAN_BINARY"
+            "$BUNDLE_DIR/ykman"
 
-          # Verify signature
-          echo "🔍 Verifying signature..."
-          /usr/bin/codesign --verify --strict --verbose=2 "$YKMAN_BINARY"
-          /usr/bin/codesign -dv --verbose=4 "$YKMAN_BINARY" 2>&1 | grep -E "Authority|Identifier"
+          echo "🔍 Final verification..."
+          /usr/bin/codesign --verify --strict --verbose=2 "$BUNDLE_DIR/ykman"
+          /usr/bin/codesign -dv --verbose=4 "$BUNDLE_DIR/ykman" 2>&1 | grep -E "Authority|Identifier"
 
-          echo "✅ macOS binary signed successfully"
+          echo "✅ Complete ykman bundle signed successfully ($TOTAL_MACHO files)"
 
       - name: Package ykman bundle
         shell: bash
