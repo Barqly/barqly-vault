@@ -394,16 +394,27 @@ jobs:
               rm -rf Resources
             fi
 
-            # Recreate proper symlinks
-            echo "Creating symlinks..."
+            # Restore Versions/Current symlink (critical for framework structure)
+            if [ ! -L "Versions/Current" ]; then
+              echo "Restoring Versions/Current → 3.12 symlink..."
+              cd Versions
+              rm -rf Current 2>/dev/null || true  # Remove if dereferenced
+              ln -s 3.12 Current
+              cd "$FW"
+            fi
+
+            # Recreate proper symlinks at top level
+            echo "Creating top-level symlinks..."
             ln -s Versions/Current/Python Python
             ln -s Versions/Current/Resources Resources
 
-            # Verify symlinks
+            # Verify all symlinks restored
             echo "After fix:"
             ls -la | grep -E "Python|Resources"
+            echo "Versions/Current:"
+            ls -la Versions/ | grep Current
 
-            echo "✅ Python.framework symlinks restored"
+            echo "✅ Python.framework symlinks restored (3 symlinks)"
           else
             echo "⚠️ Python.framework not found, skipping symlink restoration"
           fi
