@@ -50,7 +50,7 @@ jobs:
         if: matrix.platform == 'darwin'
         uses: ./.github/actions/apple-certificates
         with:
-          certificate-p12: ${{ secrets.APPLE_CERTIFICATE }}
+          certificate-p12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
           certificate-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           operation: setup
 
