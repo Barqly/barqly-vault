@@ -408,13 +408,19 @@ jobs:
             ln -s Versions/Current/Python Python
             ln -s Versions/Current/Resources Resources
 
+            # Remove stale _CodeSignature directory (becomes invalid after symlink restoration)
+            if [ -d "_CodeSignature" ]; then
+              echo "Removing stale _CodeSignature from framework root..."
+              rm -rf _CodeSignature
+            fi
+
             # Verify all symlinks restored
             echo "After fix:"
             ls -la | grep -E "Python|Resources"
             echo "Versions/Current:"
             ls -la Versions/ | grep Current
 
-            echo "✅ Python.framework symlinks restored (3 symlinks)"
+            echo "✅ Python.framework symlinks restored (3 symlinks, cleaned signatures)"
           else
             echo "⚠️ Python.framework not found, skipping symlink restoration"
           fi
