@@ -357,6 +357,57 @@ jobs:
           echo "🔎 Listing code signing identities on runner:"
           security find-identity -v -p codesigning || true
 
+      # Fix Tauri bug that dereferences Python.framework symlinks
+      - name: Restore Python.framework Symlinks (Fix Tauri Bug #13219)
+        if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
+        shell: bash
+        run: |
+          echo "🔧 Restoring Python.framework symlinks broken by Tauri bundler..."
+
+          # Locate the built .app
+          if [ "${{ matrix.arch }}" = "intel" ]; then
+            APP_DIR="target/x86_64-apple-darwin/release/bundle/macos"
+          else
+            APP_DIR="target/aarch64-apple-darwin/release/bundle/macos"
+          fi
+
+          APP_PATH=$(find "$APP_DIR" -maxdepth 1 -name "*.app" -type d | head -1)
+          FW="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
+
+          if [ -d "$FW" ]; then
+            echo "Framework path: $FW"
+
+            # Check current state
+            echo "Before fix:"
+            ls -la "$FW/" | grep -E "Python|Resources"
+
+            cd "$FW"
+
+            # Remove dereferenced files that Tauri created
+            if [ -f "Python" ] && [ ! -L "Python" ]; then
+              echo "Removing dereferenced Python file ($(du -h Python | cut -f1))"
+              rm -f Python
+            fi
+
+            if [ -d "Resources" ] && [ ! -L "Resources" ]; then
+              echo "Removing dereferenced Resources directory"
+              rm -rf Resources
+            fi
+
+            # Recreate proper symlinks
+            echo "Creating symlinks..."
+            ln -s Versions/Current/Python Python
+            ln -s Versions/Current/Resources Resources
+
+            # Verify symlinks
+            echo "After fix:"
+            ls -la | grep -E "Python|Resources"
+
+            echo "✅ Python.framework symlinks restored"
+          else
+            echo "⚠️ Python.framework not found, skipping symlink restoration"
+          fi
+
       # Post-build: Sign all Mach-O files inside the .app bundle
       - name: Sign Bundled Binaries Inside .app (macOS)
         if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
