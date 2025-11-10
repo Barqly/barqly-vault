@@ -400,7 +400,7 @@ jobs:
               cd Versions
               rm -rf Current 2>/dev/null || true  # Remove if dereferenced
               ln -s 3.12 Current
-              cd "$FW"
+              cd ..  # Go back to framework root
             fi
 
             # Recreate proper symlinks at top level
