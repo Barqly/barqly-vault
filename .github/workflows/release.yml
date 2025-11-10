@@ -419,9 +419,15 @@ jobs:
             fi
           done
 
-          # Sign the .app bundle itself (NO --deep - everything already signed)
-          echo "Signing .app bundle..."
-          /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH"
+          # Sign the .app bundle itself (preserve pre-signed ykman-bundle internals)
+          echo "Signing .app bundle (preserving internal signatures)..."
+          /usr/bin/codesign \
+            --force \
+            --sign "$APPLE_SIGNING_IDENTITY" \
+            --options runtime \
+            --timestamp \
+            --preserve-metadata=identifier,entitlements,requirements,flags,runtime \
+            "$APP_PATH"
 
           # Verify final signature
           echo "🔍 Verifying .app signature..."
