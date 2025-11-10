@@ -12,7 +12,7 @@ on:
       update_release:
         description: 'Update barqly-vault-dependencies release'
         type: boolean
-        default: true
+        default: false  # Manual upload recommended
 
 jobs:
   build-ykman:
@@ -45,6 +45,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Setup Apple certificates for macOS signing
+      - name: Setup Apple Certificates
+        if: matrix.platform == 'darwin'
+        uses: ./.github/actions/apple-certificates
+        with:
+          certificate-p12: ${{ secrets.APPLE_CERTIFICATE }}
+          certificate-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          operation: setup
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -66,28 +75,30 @@ jobs:
       - name: Sign macOS binary
         if: matrix.platform == 'darwin'
         env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
         run: |
-          echo "🔐 Setting up code signing..."
+          echo "🔐 Signing ykman binary..."
 
-          # Import certificate
-          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
-          security create-keychain -p actions build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p actions build.keychain
-          security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
-          rm -f certificate.p12
+          # List available signing identities
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning
 
-          echo "✍️ Signing ykman binary..."
+          # Check what was built
+          echo "Checking build output:"
+          ls -la src-tauri/bin/darwin/
+          ls -la src-tauri/bin/darwin/ykman-bundle/ || echo "❌ ykman-bundle directory not found"
+
           YKMAN_BINARY="src-tauri/bin/darwin/ykman-bundle/ykman"
 
           if [ ! -f "$YKMAN_BINARY" ]; then
             echo "❌ ykman binary not found at $YKMAN_BINARY"
+            echo "Directory contents:"
+            find src-tauri/bin/darwin -type f -name "ykman*" || echo "No ykman files found"
             exit 1
           fi
+
+          echo "✍️ Signing: $YKMAN_BINARY"
+          file "$YKMAN_BINARY"
 
           # Sign the binary
           /usr/bin/codesign \
@@ -127,6 +138,13 @@ jobs:
           name: ykman-${{ matrix.platform_name }}
           path: ykman-*.tar.gz
           retention-days: 7
+
+      # Cleanup Apple keychain
+      - name: Cleanup Certificates
+        if: always() && matrix.platform == 'darwin'
+        uses: ./.github/actions/apple-certificates
+        with:
+          operation: cleanup
 
   # Update barqly-vault-dependencies release with signed binaries
   update-dependencies-release:
