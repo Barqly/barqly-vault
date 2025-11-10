@@ -400,7 +400,7 @@ jobs:
           # Step 1: Sign ALL Mach-O files EXCEPT Python.framework subtree
           echo "Step 1: Signing all Mach-O files (excluding Python.framework)..."
           /usr/bin/find "$APP_PATH" \
-            \( -path "*/Python.framework" -o -path "*/Python.framework/*" \) -prune -o \
+            \( -path "*/Python.framework" -o -path "*/Python.framework/*" -o -path "*/_internal/Python" \) -prune -o \
             -type f -print0 | while IFS= read -r -d '' file; do
             if file "$file" | grep -q "Mach-O"; then
               echo "Signing: $file"
@@ -427,6 +427,10 @@ jobs:
             # Detect current version
             CUR_VER=$(/usr/bin/readlink "$FW/Versions/Current" 2>/dev/null || echo "3.12")
             PYINNER="$FW/Versions/$CUR_VER/Python"
+            FW_INFO="$FW/Versions/$CUR_VER/Resources/Info.plist"
+            [ -f "$FW/Resources/Info.plist" ] && FW_INFO="$FW/Resources/Info.plist"
+            FW_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$FW_INFO" 2>/dev/null || echo "org.python.python")
+            echo "Framework identifier: $FW_IDENTIFIER"
 
             # Make writable
             chmod -R u+w "$FW" 2>/dev/null || true
@@ -437,12 +441,13 @@ jobs:
 
             # Sign inner binary FIRST
             echo "Signing framework inner binary: $PYINNER"
-            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYINNER"
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp --identifier "$FW_IDENTIFIER" "$PYINNER"
             /usr/bin/codesign --verify --strict --verbose=6 "$PYINNER"
+            /usr/bin/codesign -dv --verbose=4 "$PYINNER" 2>&1 | grep -E "Identifier|TeamIdentifier|Authority" || true
 
             # Sign framework directory LAST (seals it with CodeResources)
             echo "Signing framework directory: $FW"
-            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$FW"
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp --identifier "$FW_IDENTIFIER" "$FW"
             /usr/bin/codesign --verify --strict --verbose=6 "$FW"
           fi
 
@@ -569,6 +574,11 @@ jobs:
             test -f "$APP/Contents/Resources/bin/darwin/ykman" || { echo "❌ ykman wrapper missing"; exit 1; }
             test -d "$APP/Contents/Resources/bin/darwin/ykman-bundle" || { echo "❌ ykman-bundle missing"; exit 1; }
             test -f "$APP/Contents/Resources/bin/darwin/ykman-bundle/ykman" || { echo "❌ ykman binary missing"; exit 1; }
+
+            PY_DMG="$APP/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework/Python"
+            echo "Running codesign verification on Python inside DMG..."
+            /usr/bin/codesign --verify --strict --verbose=6 "$PY_DMG"
+            /usr/bin/codesign -dv --verbose=4 "$PY_DMG" 2>&1 | grep -E "Identifier|TeamIdentifier|Authority" || true
 
             # Unmount and cleanup
             hdiutil detach "$MOUNT_POINT" -quiet
