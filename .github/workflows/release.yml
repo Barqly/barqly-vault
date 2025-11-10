@@ -564,34 +564,65 @@ jobs:
             echo "✅ Framework signature valid before DMG"
           fi
 
+          # DIAGNOSTIC: Check framework structure BEFORE DMG creation
+          echo ""
+          echo "=== BEFORE DMG: Framework structure check ==="
+          FRAMEWORK_PATH="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
+          ls -la "$FRAMEWORK_PATH/" | head -10
+          echo "Checking if Python is a symlink:"
+          if [ -L "$FRAMEWORK_PATH/Python" ]; then
+            echo "✓ Python is a symlink pointing to: $(readlink "$FRAMEWORK_PATH/Python")"
+          else
+            echo "⚠️ Python is NOT a symlink!"
+            file "$FRAMEWORK_PATH/Python"
+          fi
+          echo "Checking if Resources is a symlink:"
+          if [ -L "$FRAMEWORK_PATH/Resources" ]; then
+            echo "✓ Resources is a symlink pointing to: $(readlink "$FRAMEWORK_PATH/Resources")"
+          else
+            echo "⚠️ Resources is NOT a symlink!"
+          fi
+          echo ""
+
           # Create DMG from the signed .app
           echo "Creating DMG: $DMG_PATH"
 
-          # CRITICAL: Remove extended attributes that can corrupt signatures
-          # Extended attributes are a known cause of "invalid resource directory" errors
+          # CRITICAL: Alternative DMG creation to preserve framework structure
+          # The issue is that hdiutil create -srcfolder corrupts the Python.framework
+          # Solution: Create empty DMG, mount it, copy with ditto, then convert
+
+          echo "🔧 Using alternative DMG creation method to preserve framework..."
+
+          # Remove extended attributes first (still important)
           echo "Removing extended attributes from signed app..."
           /usr/bin/xattr -cr "$APP_PATH" || true
 
-          # Create a clean temp copy to ensure no corruption during DMG creation
-          TEMP_DIR=$(mktemp -d)
-          echo "Creating clean copy in temp directory: $TEMP_DIR"
+          # Create a temporary sparse image (more efficient than fixed size)
+          TEMP_DMG="$RUNNER_TEMP/temp_sparse.dmg"
+          echo "Creating temporary sparse DMG..."
+          hdiutil create -size 500m -fs HFS+ -volname "Barqly Vault" -type SPARSE "$TEMP_DMG"
 
-          # Use cp -a to preserve symlinks properly (not cp -r which can break them)
-          cp -a "$APP_PATH" "$TEMP_DIR/"
+          # Mount the temporary DMG
+          MOUNT_POINT="$RUNNER_TEMP/dmg_mount"
+          mkdir -p "$MOUNT_POINT"
+          echo "Mounting temporary DMG at: $MOUNT_POINT"
+          hdiutil attach "${TEMP_DMG}.sparseimage" -mountpoint "$MOUNT_POINT" -nobrowse -noverify -noautoopen
 
-          # Remove extended attributes from the temp copy as well
-          /usr/bin/xattr -cr "$TEMP_DIR/$(basename "$APP_PATH")" || true
+          # Copy app using ditto (preserves everything correctly including symlinks)
+          echo "Copying app with ditto to preserve structure..."
+          /usr/bin/ditto -v "$APP_PATH" "$MOUNT_POINT/$(basename "$APP_PATH")"
 
-          # Create DMG from the clean temp copy
-          hdiutil create "$DMG_PATH" \
-            -volname "Barqly Vault" \
-            -fs HFS+ \
-            -srcfolder "$TEMP_DIR" \
-            -ov \
-            -format UDZO
+          # Unmount the temporary DMG
+          echo "Unmounting temporary DMG..."
+          hdiutil detach "$MOUNT_POINT" -force
 
-          # Clean up temp directory
-          rm -rf "$TEMP_DIR"
+          # Convert sparse image to compressed DMG
+          echo "Converting to final compressed DMG..."
+          hdiutil convert "${TEMP_DMG}.sparseimage" -format UDZO -o "$DMG_PATH" -ov
+
+          # Clean up
+          rm -f "${TEMP_DMG}.sparseimage"
+          rm -rf "$MOUNT_POINT"
 
           echo "✅ DMG created: $DMG_PATH"
           ls -lh "$DMG_PATH"
@@ -621,6 +652,26 @@ jobs:
             test -f "$APP/Contents/Resources/bin/darwin/ykman" || { echo "❌ ykman wrapper missing"; exit 1; }
             test -d "$APP/Contents/Resources/bin/darwin/ykman-bundle" || { echo "❌ ykman-bundle missing"; exit 1; }
             test -f "$APP/Contents/Resources/bin/darwin/ykman-bundle/ykman" || { echo "❌ ykman binary missing"; exit 1; }
+
+            # DIAGNOSTIC: Check framework structure AFTER DMG mount
+            echo ""
+            echo "=== AFTER DMG: Framework structure check ==="
+            FRAMEWORK_DMG="$APP/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
+            ls -la "$FRAMEWORK_DMG/" | head -10
+            echo "Checking if Python is a symlink:"
+            if [ -L "$FRAMEWORK_DMG/Python" ]; then
+              echo "✓ Python is a symlink pointing to: $(readlink "$FRAMEWORK_DMG/Python")"
+            else
+              echo "⚠️ Python is NOT a symlink!"
+              file "$FRAMEWORK_DMG/Python"
+            fi
+            echo "Checking if Resources is a symlink:"
+            if [ -L "$FRAMEWORK_DMG/Resources" ]; then
+              echo "✓ Resources is a symlink pointing to: $(readlink "$FRAMEWORK_DMG/Resources")"
+            else
+              echo "⚠️ Resources is NOT a symlink!"
+            fi
+            echo ""
 
             PY_DMG="$APP/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework/Python"
             echo "Running codesign verification on Python inside DMG..."
