@@ -674,6 +674,10 @@ jobs:
           echo "Mounting temporary DMG at: $MOUNT_POINT"
           hdiutil attach "${TEMP_DMG}.sparseimage" -mountpoint "$MOUNT_POINT" -nobrowse -noverify -noautoopen
 
+          # Create Applications folder symlink for easy installation
+          echo "Creating Applications folder symlink..."
+          ln -s /Applications "$MOUNT_POINT/Applications"
+
           # Copy app using ditto (preserves everything correctly including symlinks)
           echo "Copying app with ditto to preserve structure..."
           /usr/bin/ditto -v "$APP_PATH" "$MOUNT_POINT/$(basename "$APP_PATH")"
