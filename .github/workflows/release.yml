@@ -43,15 +43,15 @@ on:
       build_macos_arm:
         description: 'Build macOS ARM (Apple Silicon)'
         type: boolean
-        default: true
+        default: false  # Temporarily disabled for testing
       build_linux:
         description: 'Build Linux'
         type: boolean
-        default: true
+        default: false  # Temporarily disabled for testing
       build_windows:
         description: 'Build Windows'
         type: boolean
-        default: true
+        default: false  # Temporarily disabled for testing
 
 jobs:
   # List available beta releases for promotion
@@ -399,12 +399,17 @@ jobs:
 
           # Step 1: Sign ALL Mach-O files EXCEPT Python.framework subtree
           echo "Step 1: Signing all Mach-O files (excluding Python.framework)..."
+          SIGNED_COUNT=0
           /usr/bin/find "$APP_PATH" \
             \( -path "*/Python.framework" -o -path "*/Python.framework/*" -o -path "*/_internal/Python" \) -prune -o \
             -type f -print0 | while IFS= read -r -d '' file; do
             if file "$file" | grep -q "Mach-O"; then
-              echo "Signing: $file"
               /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$file"
+              SIGNED_COUNT=$((SIGNED_COUNT + 1))
+              # Show progress every 10 files
+              if [ $((SIGNED_COUNT % 10)) -eq 0 ]; then
+                echo "  Progress: Signed $SIGNED_COUNT files..."
+              fi
             fi
           done
 
@@ -686,11 +691,11 @@ jobs:
 
               # Use msiexec /a for administrative installation (proper extraction)
               Write-Host 'Extracting MSI contents using msiexec /a...'
-              Write-Host \"MSI Path: $MSI_WIN\"
-              Write-Host \"Target Dir: \$target\"
+              Write-Host "MSI Path: $MSI_WIN"
+              Write-Host "Target Dir: \$target"
 
               # Start msiexec process and wait for completion
-              \$process = Start-Process msiexec.exe -ArgumentList '/a', \"\"\"$MSI_WIN\"\"\", '/qn', \"TARGETDIR=\$target\" -Wait -PassThru -NoNewWindow
+              \$process = Start-Process msiexec.exe -ArgumentList '/a', "`"$MSI_WIN`"", '/qn', "TARGETDIR=\$target" -Wait -PassThru -NoNewWindow
 
               if (\$process.ExitCode -eq 0) {
                 Write-Host '✓ MSI extracted successfully'
@@ -704,14 +709,14 @@ jobs:
 
                 # Also check specific expected paths
                 Write-Host 'Checking for Barqly Vault resources:'
-                if (Test-Path \"\$target\ProgramFiles64Folder\") {
-                  Get-ChildItem -Path \"\$target\ProgramFiles64Folder\" -Recurse -Include '*.exe','*.bat' | ForEach-Object { Write-Host \"Found: \$(\$_.FullName)\" }
+                if (Test-Path "\$target\ProgramFiles64Folder") {
+                  Get-ChildItem -Path "\$target\ProgramFiles64Folder" -Recurse -Include '*.exe','*.bat' | ForEach-Object { Write-Host "Found: \$(\$_.FullName)" }
                 }
-                if (Test-Path \"\$target\PFiles\") {
-                  Get-ChildItem -Path \"\$target\PFiles\" -Recurse -Include '*.exe','*.bat' | ForEach-Object { Write-Host \"Found: \$(\$_.FullName)\" }
+                if (Test-Path "\$target\PFiles") {
+                  Get-ChildItem -Path "\$target\PFiles" -Recurse -Include '*.exe','*.bat' | ForEach-Object { Write-Host "Found: \$(\$_.FullName)" }
                 }
               } else {
-                Write-Host \"❌ MSI extraction failed with exit code: \$(\$process.ExitCode)\"
+                Write-Host "❌ MSI extraction failed with exit code: \$(\$process.ExitCode)"
                 exit 1
               }
             "
