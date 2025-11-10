@@ -43,15 +43,15 @@ on:
       build_macos_arm:
         description: 'Build macOS ARM (Apple Silicon)'
         type: boolean
-        default: false  # Temporarily disabled for testing
+        default: true
       build_linux:
         description: 'Build Linux'
         type: boolean
-        default: false  # Temporarily disabled for testing
+        default: true
       build_windows:
         description: 'Build Windows'
         type: boolean
-        default: false  # Temporarily disabled for testing
+        default: true
 
 jobs:
   # List available beta releases for promotion
