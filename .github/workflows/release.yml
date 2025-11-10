@@ -424,31 +424,39 @@ jobs:
           # Step 2: Sign Python.framework properly (inner binary first, then framework)
           echo "Step 2: Signing Python.framework with proper framework rules..."
           if [ -d "$FW" ]; then
-            # Detect current version
+            # Detect current version (usually 3.12 for PyInstaller)
             CUR_VER=$(/usr/bin/readlink "$FW/Versions/Current" 2>/dev/null || echo "3.12")
             PYINNER="$FW/Versions/$CUR_VER/Python"
-            FW_INFO="$FW/Versions/$CUR_VER/Resources/Info.plist"
-            [ -f "$FW/Resources/Info.plist" ] && FW_INFO="$FW/Resources/Info.plist"
-            FW_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$FW_INFO" 2>/dev/null || echo "org.python.python")
-            echo "Framework identifier: $FW_IDENTIFIER"
+
+            echo "Framework path: $FW"
+            echo "Inner binary: $PYINNER"
 
             # Make writable
             chmod -R u+w "$FW" 2>/dev/null || true
 
-            # Remove any existing signatures
+            # Remove any existing signatures (clean slate)
             /usr/bin/codesign --remove-signature "$PYINNER" 2>/dev/null || true
             /usr/bin/codesign --remove-signature "$FW" 2>/dev/null || true
 
-            # Sign inner binary FIRST
-            echo "Signing framework inner binary: $PYINNER"
-            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp --identifier "$FW_IDENTIFIER" "$PYINNER"
-            /usr/bin/codesign --verify --strict --verbose=6 "$PYINNER"
-            /usr/bin/codesign -dv --verbose=4 "$PYINNER" 2>&1 | grep -E "Identifier|TeamIdentifier|Authority" || true
+            # Sign inner binary FIRST (the real Mach-O, not the symlink)
+            echo "Step 2a: Signing framework inner binary: $PYINNER"
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYINNER"
 
-            # Sign framework directory LAST (seals it with CodeResources)
-            echo "Signing framework directory: $FW"
-            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp --identifier "$FW_IDENTIFIER" "$FW"
+            # Verify inner binary immediately
+            echo "Verifying inner binary signature..."
+            /usr/bin/codesign --verify --strict --verbose=6 "$PYINNER"
+
+            # Sign framework directory LAST (this seals it with CodeResources)
+            echo "Step 2b: Signing framework directory: $FW"
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$FW"
+
+            # Verify framework seal
+            echo "Verifying framework signature..."
             /usr/bin/codesign --verify --strict --verbose=6 "$FW"
+
+            # Show signature details for debugging
+            echo "Framework signature details:"
+            /usr/bin/codesign -dv --verbose=4 "$FW" 2>&1 | grep -E "Authority|TeamIdentifier|Timestamp" || true
           fi
 
           # Step 4: Sign .app bundle itself last (NO --deep - everything already signed)
@@ -457,10 +465,14 @@ jobs:
           /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH"
 
           # Step 5: Verify signatures on problem areas
-          echo "Step 5: Verifying framework signatures..."
-          for p in "$FW/Python" "$FW/Versions/$CUR_VER/Python" "$FW"; do
-            [ -e "$p" ] && /usr/bin/codesign -dv --verbose=4 "$p" 2>&1 | grep -E "Authority|Timestamp" || true
-          done
+          echo "Step 5: Verifying all framework components..."
+          if [ -d "$FW" ]; then
+            echo "Checking framework symlinks and inner binary..."
+            ls -la "$FW/Python" || true
+            ls -la "$FW/Versions/Current" || true
+            [ -e "$FW/Python" ] && /usr/bin/codesign -dv --verbose=4 "$FW/Python" 2>&1 | grep -E "Authority|Timestamp" || true
+            [ -e "$PYINNER" ] && /usr/bin/codesign -dv --verbose=4 "$PYINNER" 2>&1 | grep -E "Authority|Timestamp" || true
+          fi
 
           # Step 6: Verify complete app and assess with Gatekeeper
           echo "Step 6: Final verification..."
@@ -537,14 +549,35 @@ jobs:
 
           DMG_PATH="$DMG_DIR/$DMG_NAME"
 
-          # Create DMG using hdiutil
+          # Verify framework signature BEFORE DMG creation
+          echo "🔍 Verifying framework signature before DMG creation..."
+          FW_CHECK="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
+          if [ -d "$FW_CHECK" ]; then
+            /usr/bin/codesign --verify --strict --verbose=2 "$FW_CHECK" || {
+              echo "❌ Framework signature invalid before DMG creation!"
+              exit 1
+            }
+            echo "✅ Framework signature valid before DMG"
+          fi
+
+          # Create a temp directory and copy with ditto to preserve signatures
           echo "Creating DMG: $DMG_PATH"
+          TEMP_DIR=$(mktemp -d)
+          echo "Using temp directory: $TEMP_DIR"
+
+          # Use ditto to preserve all attributes including code signatures
+          ditto "$APP_PATH" "$TEMP_DIR/$APP_NAME"
+
+          # Create DMG from the preserved copy
           hdiutil create "$DMG_PATH" \
             -volname "Barqly Vault" \
             -fs HFS+ \
-            -srcfolder "$APP_PATH" \
+            -srcfolder "$TEMP_DIR" \
             -ov \
             -format UDZO
+
+          # Clean up temp directory
+          rm -rf "$TEMP_DIR"
 
           echo "✅ DMG created: $DMG_PATH"
           ls -lh "$DMG_PATH"
