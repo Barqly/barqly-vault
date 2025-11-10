@@ -23,7 +23,22 @@ echo -e "${GREEN}📦 Fetching binary dependencies for Barqly Vault${NC}"
 
 # Detect platform
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-ARCH=$(uname -m)
+
+# Use TARGET_ARCH from CI if available (for cross-compilation on ARM64 runners)
+# Otherwise fallback to runtime architecture detection for local builds
+if [ -n "$TARGET_ARCH" ]; then
+  # CI build - use matrix.arch (intel or apple-silicon)
+  case "$TARGET_ARCH" in
+    intel|x86_64|amd64) ARCH="x86_64" ;;
+    apple-silicon|arm64|aarch64) ARCH="arm64" ;;
+    *) echo -e "${RED}❌ Unknown TARGET_ARCH: $TARGET_ARCH${NC}"; exit 1 ;;
+  esac
+  echo -e "Using target architecture from CI: ${YELLOW}$ARCH${NC} (TARGET_ARCH=$TARGET_ARCH)"
+else
+  # Local build - detect from runtime
+  ARCH=$(uname -m)
+  echo -e "Using runtime architecture: ${YELLOW}$ARCH${NC}"
+fi
 
 case "$OS" in
   darwin)

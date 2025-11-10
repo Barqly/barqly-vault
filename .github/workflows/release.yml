@@ -291,6 +291,8 @@ jobs:
 
       - name: Fetch Binary Dependencies
         if: steps.should_build.outputs.build == 'true'
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
         run: |
           chmod +x scripts/cicd/fetch-binaries.sh
           ./scripts/cicd/fetch-binaries.sh
@@ -333,7 +335,33 @@ jobs:
             exit 1
           fi
 
-          echo "✅ All binaries verified for $PLATFORM_DIR"
+          echo "✅ All binaries found"
+
+          # Verify binary architectures on macOS (critical - prevents ARM64 in x86 builds)
+          if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
+            EXPECTED_ARCH="${{ matrix.arch }}"
+            if [ "$EXPECTED_ARCH" = "intel" ]; then
+              EXPECTED_ARCH="x86_64"
+            elif [ "$EXPECTED_ARCH" = "apple-silicon" ]; then
+              EXPECTED_ARCH="arm64"
+            fi
+
+            echo "🔍 Verifying binary architectures match target: $EXPECTED_ARCH"
+
+            for binary in age age-plugin-yubikey ykman-bundle/ykman; do
+              ACTUAL_ARCH=$(file "src-tauri/bin/$PLATFORM_DIR/$binary" | grep -o "x86_64\|arm64" || echo "unknown")
+              if [ "$ACTUAL_ARCH" != "$EXPECTED_ARCH" ]; then
+                echo "❌ ARCHITECTURE MISMATCH: $binary"
+                echo "   Expected: $EXPECTED_ARCH"
+                echo "   Got: $ACTUAL_ARCH"
+                echo "   This causes 'Bad CPU type in executable' errors!"
+                exit 1
+              fi
+              echo "  ✓ $binary: $ACTUAL_ARCH"
+            done
+
+            echo "✅ All binaries match target architecture: $EXPECTED_ARCH"
+          fi
         shell: bash
 
       - name: Build with Tauri
