@@ -746,7 +746,7 @@ jobs:
               Write-Host "Target Dir: \$target"
 
               # Start msiexec process and wait for completion
-              \$process = Start-Process msiexec.exe -ArgumentList '/a', "`"$MSI_WIN`"", '/qn', "TARGETDIR=\$target" -Wait -PassThru -NoNewWindow
+              \$process = Start-Process msiexec.exe -ArgumentList '/a', \"\`\"$MSI_WIN\`\"\", '/qn', \"TARGETDIR=\$target\" -Wait -PassThru -NoNewWindow
 
               if (\$process.ExitCode -eq 0) {
                 Write-Host '✓ MSI extracted successfully'
