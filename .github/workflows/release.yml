@@ -858,9 +858,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Generate release notes
+        continue-on-error: true  # Optional step - can be done manually
         run: |
           VERSION="${{ steps.get_version.outputs.VERSION }}"
-          ./scripts/cicd/generate-release-notes.sh "$VERSION" > release-notes.md
+          if [ -f "./scripts/cicd/generate-release-notes.sh" ]; then
+            ./scripts/cicd/generate-release-notes.sh "$VERSION" > release-notes.md
+          else
+            echo "Script not found - create release notes manually"
+            echo "# Barqly Vault v$VERSION" > release-notes.md
+          fi
       
       - name: Create draft release
         run: |
@@ -969,9 +975,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Generate production release notes
+        continue-on-error: true  # Optional step - can be done manually
         run: |
           PROD_VERSION="${{ steps.get_version.outputs.PROD_VERSION }}"
-          ./scripts/cicd/generate-release-notes.sh "$PROD_VERSION" > release-notes.md
+          if [ -f "./scripts/cicd/generate-release-notes.sh" ]; then
+            ./scripts/cicd/generate-release-notes.sh "$PROD_VERSION" > release-notes.md
+          else
+            echo "Script not found - create release notes manually"
+            echo "# Barqly Vault v$PROD_VERSION" > release-notes.md
+          fi
       
       - name: Create production draft release
         run: |
