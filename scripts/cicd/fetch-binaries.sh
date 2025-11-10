@@ -27,9 +27,9 @@ OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 # Use TARGET_ARCH from CI if available (for cross-compilation on ARM64 runners)
 # Otherwise fallback to runtime architecture detection for local builds
 if [ -n "$TARGET_ARCH" ]; then
-  # CI build - use matrix.arch (intel or apple-silicon)
+  # CI build - use matrix.arch (intel, apple-silicon, x64, etc.)
   case "$TARGET_ARCH" in
-    intel|x86_64|amd64) ARCH="x86_64" ;;
+    intel|x86_64|amd64|x64) ARCH="x86_64" ;;
     apple-silicon|arm64|aarch64) ARCH="arm64" ;;
     *) echo -e "${RED}❌ Unknown TARGET_ARCH: $TARGET_ARCH${NC}"; exit 1 ;;
   esac

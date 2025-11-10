@@ -1,0 +1,62 @@
+name: Build age-plugin-yubikey x86_64
+
+# One-time workflow to build age-plugin-yubikey for Intel Macs
+# Upstream (str4d/age-plugin-yubikey) only provides ARM64 macOS builds
+# This workflow builds the x86_64 version from source
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'age-plugin-yubikey version to build'
+        required: true
+        default: '0.5.0'
+
+jobs:
+  build-x86:
+    runs-on: macos-13  # Intel runner for native x86_64 build
+
+    steps:
+      - name: Checkout age-plugin-yubikey
+        uses: actions/checkout@v4
+        with:
+          repository: str4d/age-plugin-yubikey
+          ref: v${{ github.event.inputs.version }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin
+
+      - name: Build for x86_64
+        run: |
+          echo "Building age-plugin-yubikey v${{ github.event.inputs.version }} for x86_64..."
+          cargo build --release --target x86_64-apple-darwin
+
+          echo "Binary location:"
+          ls -lh target/x86_64-apple-darwin/release/age-plugin-yubikey
+
+          echo "Verifying architecture:"
+          file target/x86_64-apple-darwin/release/age-plugin-yubikey
+
+          # Calculate checksum
+          cd target/x86_64-apple-darwin/release
+          shasum -a 256 age-plugin-yubikey
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: age-plugin-yubikey-x86_64-darwin
+          path: target/x86_64-apple-darwin/release/age-plugin-yubikey
+          retention-days: 7
+
+      - name: Summary
+        run: |
+          echo "✅ age-plugin-yubikey v${{ github.event.inputs.version }} built for x86_64"
+          echo ""
+          echo "📝 Next steps:"
+          echo "1. Download artifact from this run"
+          echo "2. Upload to barqly-vault-dependencies release:"
+          echo "   gh release upload barqly-vault-dependencies age-plugin-yubikey-0.5.0-darwin-x86_64 --clobber"
+          echo "3. Update checksum in src-tauri/bin/binary-dependencies.json"
+          echo "4. Test with R2 beta build"
