@@ -79,9 +79,12 @@ jobs:
         run: |
           echo "🔐 Signing ykman binary..."
 
-          # List available signing identities
+          # The keychain was created by apple-certificates action
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          # List available signing identities from the created keychain
           echo "Available signing identities:"
-          security find-identity -v -p codesigning
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
 
           # Check what was built
           echo "Checking build output:"
@@ -100,12 +103,13 @@ jobs:
           echo "✍️ Signing: $YKMAN_BINARY"
           file "$YKMAN_BINARY"
 
-          # Sign the binary
+          # Sign the binary using the specific keychain
           /usr/bin/codesign \
             --force \
             --sign "$APPLE_SIGNING_IDENTITY" \
             --options runtime \
             --timestamp \
+            --keychain "$KEYCHAIN_PATH" \
             "$YKMAN_BINARY"
 
           # Verify signature
