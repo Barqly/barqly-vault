@@ -359,8 +359,8 @@ jobs:
           echo "🔎 Listing code signing identities on runner:"
           security find-identity -v -p codesigning || true
 
-      # Post-build: Sign all Mach-O files inside the .app bundle
-      - name: Sign Bundled Binaries Inside .app (macOS)
+      # Post-build: Sign .app bundle (ykman is pre-signed, just sign age/age-plugin and .app)
+      - name: Sign App Bundle (macOS)
         if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
         id: sign-app
         env:
@@ -368,8 +368,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          set -o pipefail
-          echo "🔐 Post-build signing: all Mach-O files inside .app bundle..."
+          echo "🔐 Signing .app bundle (ykman is pre-signed from dependencies)..."
 
           # Locate the built .app
           if [ "${{ matrix.arch }}" = "intel" ]; then
@@ -390,99 +389,46 @@ jobs:
           # Clear quarantine attributes
           xattr -r -d com.apple.quarantine "$APP_PATH" 2>/dev/null || true
 
-          # Critical: Framework signing order matters!
-          # Python.framework must be EXCLUDED from generic loop, then signed last
-          FW="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
+          # Sign our own binaries (age, age-plugin-yubikey)
+          # NOTE: ykman-bundle is already signed in dependencies release - DO NOT re-sign
+          echo "Signing our binaries (age, age-plugin-yubikey)..."
+          AGE_BIN="$APP_PATH/Contents/Resources/bin/darwin/age"
+          PLUGIN_BIN="$APP_PATH/Contents/Resources/bin/darwin/age-plugin-yubikey"
 
-          # Define paths upfront
-          PY="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python"
+          if [ -f "$AGE_BIN" ]; then
+            echo "Signing: $AGE_BIN"
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$AGE_BIN"
+          fi
 
-          # Step 1: Sign ALL Mach-O files EXCEPT Python.framework subtree
-          echo "Step 1: Signing all Mach-O files (excluding Python.framework)..."
-          SIGNED_COUNT=0
+          if [ -f "$PLUGIN_BIN" ]; then
+            echo "Signing: $PLUGIN_BIN"
+            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PLUGIN_BIN"
+          fi
+
+          # Sign any other Mach-O files (excluding ykman-bundle which is pre-signed)
+          echo "Signing remaining Mach-O files (excluding pre-signed ykman-bundle)..."
           /usr/bin/find "$APP_PATH" \
-            \( -path "*/Python.framework" -o -path "*/Python.framework/*" -o -path "*/_internal/Python" \) -prune -o \
+            -path "*/ykman-bundle" -prune -o \
+            -path "*/ykman-bundle/*" -prune -o \
             -type f -print0 | while IFS= read -r -d '' file; do
             if file "$file" | grep -q "Mach-O"; then
-              /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$file"
-              SIGNED_COUNT=$((SIGNED_COUNT + 1))
-              # Show progress every 10 files
-              if [ $((SIGNED_COUNT % 10)) -eq 0 ]; then
-                echo "  Progress: Signed $SIGNED_COUNT files..."
+              # Skip if already signed (age, age-plugin we just signed)
+              if ! /usr/bin/codesign --verify "$file" 2>/dev/null; then
+                /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$file"
               fi
             fi
           done
 
-          echo "✅ Signed all Mach-O files (framework excluded)"
-
-          # Step 1b: Handle _internal/Python explicitly (can be real file or symlink)
-          echo "Step 1b: Handling _internal/Python..."
-          if [ -e "$PY" ] && [ ! -L "$PY" ] && file "$PY" | grep -q "Mach-O"; then
-            echo "Signing standalone Python binary (real file): $PY"
-            chmod u+w "$PY" 2>/dev/null || true
-            /usr/bin/codesign --remove-signature "$PY" 2>/dev/null || true
-            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PY"
-          elif [ -L "$PY" ]; then
-            echo "Note: $PY is a symlink (covered by framework signing)"
-          fi
-
-          # Step 2: Sign Python.framework properly (inner binary first, then framework)
-          echo "Step 2: Signing Python.framework with proper framework rules..."
-          if [ -d "$FW" ]; then
-            # Detect current version (usually 3.12 for PyInstaller)
-            CUR_VER=$(/usr/bin/readlink "$FW/Versions/Current" 2>/dev/null || echo "3.12")
-            PYINNER="$FW/Versions/$CUR_VER/Python"
-
-            echo "Framework path: $FW"
-            echo "Inner binary: $PYINNER"
-
-            # Make writable
-            chmod -R u+w "$FW" 2>/dev/null || true
-
-            # Remove any existing signatures (clean slate)
-            /usr/bin/codesign --remove-signature "$PYINNER" 2>/dev/null || true
-            /usr/bin/codesign --remove-signature "$FW" 2>/dev/null || true
-
-            # Sign inner binary FIRST (the real Mach-O, not the symlink)
-            echo "Step 2a: Signing framework inner binary: $PYINNER"
-            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$PYINNER"
-
-            # Verify inner binary immediately
-            echo "Verifying inner binary signature..."
-            /usr/bin/codesign --verify --strict --verbose=6 "$PYINNER"
-
-            # Sign framework directory LAST (this seals it with CodeResources)
-            echo "Step 2b: Signing framework directory: $FW"
-            /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$FW"
-
-            # Verify framework seal
-            echo "Verifying framework signature..."
-            /usr/bin/codesign --verify --strict --verbose=6 "$FW"
-
-            # Show signature details for debugging
-            echo "Framework signature details:"
-            /usr/bin/codesign -dv --verbose=4 "$FW" 2>&1 | grep -E "Authority|TeamIdentifier|Timestamp" || true
-          fi
-
-          # Step 4: Sign .app bundle itself last (NO --deep - everything already signed)
-          echo "Step 4: Signing .app bundle wrapper (without --deep)..."
+          # Sign the .app bundle itself (NO --deep - everything already signed)
+          echo "Signing .app bundle..."
           /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH"
 
-          # Step 5: Verify signatures on problem areas
-          echo "Step 5: Verifying all framework components..."
-          if [ -d "$FW" ]; then
-            echo "Checking framework symlinks and inner binary..."
-            ls -la "$FW/Python" || true
-            ls -la "$FW/Versions/Current" || true
-            [ -e "$FW/Python" ] && /usr/bin/codesign -dv --verbose=4 "$FW/Python" 2>&1 | grep -E "Authority|Timestamp" || true
-            [ -e "$PYINNER" ] && /usr/bin/codesign -dv --verbose=4 "$PYINNER" 2>&1 | grep -E "Authority|Timestamp" || true
-          fi
+          # Verify final signature
+          echo "🔍 Verifying .app signature..."
+          /usr/bin/codesign --verify --strict --verbose=2 "$APP_PATH"
 
-          # Step 6: Verify complete app and assess with Gatekeeper
-          echo "Step 6: Final verification..."
-          /usr/bin/codesign --verify --strict --verbose=6 "$APP_PATH"
-
-          echo "Step 6b: Gatekeeper assessment..."
+          # Gatekeeper assessment
+          echo "🔍 Gatekeeper assessment..."
           set +e
           SPCTL_OUTPUT=$(/usr/sbin/spctl --assess --type execute --verbose=4 "$APP_PATH" 2>&1)
           SPCTL_STATUS=$?
@@ -490,38 +436,14 @@ jobs:
           echo "$SPCTL_OUTPUT"
           if [ "$SPCTL_STATUS" -ne 0 ]; then
             if echo "$SPCTL_OUTPUT" | grep -q "source=Unnotarized Developer ID"; then
-              echo "⚠️ Gatekeeper reports bundle is not yet notarized (expected before notarization)."
+              echo "⚠️ Not yet notarized (expected before notarization)"
             else
-              echo "❌ Gatekeeper assessment failed with unexpected error"
+              echo "❌ Gatekeeper assessment failed"
               exit "$SPCTL_STATUS"
             fi
-          else
-            echo "✅ Gatekeeper assessment passed"
           fi
 
-          echo "🎉 All signing complete and verified"
-
-      # Diagnostic: Verify specific problem files are signed
-      - name: Inspect Problem Files (macOS)
-        if: matrix.platform == 'macos-latest' && steps.should_build.outputs.build == 'true'
-        shell: bash
-        run: |
-          APP="${{ steps.sign-app.outputs.app-path }}"
-          AGE="$APP/Contents/Resources/bin/darwin/age"
-          SCARD="$APP/Contents/Resources/bin/darwin/ykman-bundle/_internal/smartcard/scard/_scard.cpython-312-darwin.so"
-
-          echo "🔍 Inspecting signatures on problem files..."
-          for f in "$AGE" "$SCARD"; do
-            if [ -f "$f" ]; then
-              echo "━━━ $f ━━━"
-              file "$f" || true
-              echo "Signature details:"
-              codesign -dv --verbose=4 "$f" 2>&1 | grep -E "Authority|Timestamp|Runtime" || echo "⚠️ Missing signature info"
-              echo ""
-            else
-              echo "⚠️ File not found: $f"
-            fi
-          done
+          echo "✅ App bundle signed successfully"
 
       # Create DMG from signed .app bundle
       - name: Create DMG from Signed App (macOS)
@@ -553,267 +475,24 @@ jobs:
 
           DMG_PATH="$DMG_DIR/$DMG_NAME"
 
-          # Verify framework signature BEFORE DMG creation
-          echo "🔍 Verifying framework signature before DMG creation..."
-          FW_CHECK="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
-          if [ -d "$FW_CHECK" ]; then
-            /usr/bin/codesign --verify --strict --verbose=2 "$FW_CHECK" || {
-              echo "❌ Framework signature invalid before DMG creation!"
-              exit 1
-            }
-            echo "✅ Framework signature valid before DMG"
-          fi
-
-          # DIAGNOSTIC: Check framework structure BEFORE DMG creation
-          echo ""
-          echo "=== BEFORE DMG: Framework structure check ==="
-          FRAMEWORK_PATH="$APP_PATH/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
-          ls -la "$FRAMEWORK_PATH/" | head -10
-          echo "Checking if Python is a symlink:"
-          if [ -L "$FRAMEWORK_PATH/Python" ]; then
-            echo "✓ Python is a symlink pointing to: $(readlink "$FRAMEWORK_PATH/Python")"
-          else
-            echo "⚠️ Python is NOT a symlink!"
-            file "$FRAMEWORK_PATH/Python"
-          fi
-          echo "Checking if Resources is a symlink:"
-          if [ -L "$FRAMEWORK_PATH/Resources" ]; then
-            echo "✓ Resources is a symlink pointing to: $(readlink "$FRAMEWORK_PATH/Resources")"
-          else
-            echo "⚠️ Resources is NOT a symlink!"
-          fi
-          echo ""
-
-          # Create DMG from the signed .app
+          # Create DMG (simple, no framework concerns since ykman is pre-signed single binary)
           echo "Creating DMG: $DMG_PATH"
 
-          # CRITICAL: Alternative DMG creation to preserve framework structure
-          # The issue is that hdiutil create -srcfolder corrupts the Python.framework
-          # Solution: Create empty DMG, mount it, copy with ditto, then convert
-
-          echo "🔧 Using alternative DMG creation method to preserve framework..."
-
-          # Remove extended attributes first (still important)
-          echo "Removing extended attributes from signed app..."
+          # Remove extended attributes (best practice)
+          echo "Removing extended attributes..."
           /usr/bin/xattr -cr "$APP_PATH" || true
 
-          # Create a temporary sparse image (more efficient than fixed size)
-          TEMP_DMG="$RUNNER_TEMP/temp_sparse.dmg"
-          echo "Creating temporary sparse DMG..."
-          hdiutil create -size 500m -fs HFS+ -volname "Barqly Vault" -type SPARSE "$TEMP_DMG"
-
-          # Mount the temporary DMG
-          MOUNT_POINT="$RUNNER_TEMP/dmg_mount"
-          mkdir -p "$MOUNT_POINT"
-          echo "Mounting temporary DMG at: $MOUNT_POINT"
-          hdiutil attach "${TEMP_DMG}.sparseimage" -mountpoint "$MOUNT_POINT" -nobrowse -noverify -noautoopen
-
-          # Copy app using ditto (preserves everything correctly including symlinks)
-          echo "Copying app with ditto to preserve structure..."
-          /usr/bin/ditto -v "$APP_PATH" "$MOUNT_POINT/$(basename "$APP_PATH")"
-
-          # Unmount the temporary DMG
-          echo "Unmounting temporary DMG..."
-          hdiutil detach "$MOUNT_POINT" -force
-
-          # Convert sparse image to compressed DMG
-          echo "Converting to final compressed DMG..."
-          hdiutil convert "${TEMP_DMG}.sparseimage" -format UDZO -o "$DMG_PATH" -ov
-
-          # Clean up
-          rm -f "${TEMP_DMG}.sparseimage"
-          rm -rf "$MOUNT_POINT"
+          # Create DMG using standard method
+          echo "Creating compressed DMG..."
+          hdiutil create "$DMG_PATH" \
+            -volname "Barqly Vault" \
+            -fs HFS+ \
+            -srcfolder "$APP_PATH" \
+            -ov \
+            -format UDZO
 
           echo "✅ DMG created: $DMG_PATH"
           ls -lh "$DMG_PATH"
-
-      # Verify binaries in bundled artifacts (Post-Bundle Verification)
-      - name: Verify Binaries in Bundled Artifacts
-        if: steps.should_build.outputs.build == 'true'
-        shell: bash
-        run: |
-          echo "🔍 Verifying binaries in bundled artifacts..."
-
-          if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
-            # macOS: Find and mount DMG
-            DMG=$(find target/*/release/bundle/dmg -name "*.dmg" | head -1)
-            echo "Found DMG: $DMG"
-
-            # Mount the DMG to a deterministic path
-            MOUNT_POINT=$(mktemp -d)
-            hdiutil attach "$DMG" -mountpoint "$MOUNT_POINT" -nobrowse -quiet
-
-            # Verify binaries exist in app bundle
-            APP="$MOUNT_POINT/Barqly Vault.app"
-            echo "Checking binaries in: $APP/Contents/Resources/bin/darwin/"
-
-            test -f "$APP/Contents/Resources/bin/darwin/age" || { echo "❌ age missing"; exit 1; }
-            test -f "$APP/Contents/Resources/bin/darwin/age-plugin-yubikey" || { echo "❌ age-plugin-yubikey missing"; exit 1; }
-            test -f "$APP/Contents/Resources/bin/darwin/ykman" || { echo "❌ ykman wrapper missing"; exit 1; }
-            test -d "$APP/Contents/Resources/bin/darwin/ykman-bundle" || { echo "❌ ykman-bundle missing"; exit 1; }
-            test -f "$APP/Contents/Resources/bin/darwin/ykman-bundle/ykman" || { echo "❌ ykman binary missing"; exit 1; }
-
-            # DIAGNOSTIC: Check framework structure AFTER DMG mount
-            echo ""
-            echo "=== AFTER DMG: Framework structure check ==="
-            FRAMEWORK_DMG="$APP/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework"
-            ls -la "$FRAMEWORK_DMG/" | head -10
-            echo "Checking if Python is a symlink:"
-            if [ -L "$FRAMEWORK_DMG/Python" ]; then
-              echo "✓ Python is a symlink pointing to: $(readlink "$FRAMEWORK_DMG/Python")"
-            else
-              echo "⚠️ Python is NOT a symlink!"
-              file "$FRAMEWORK_DMG/Python"
-            fi
-            echo "Checking if Resources is a symlink:"
-            if [ -L "$FRAMEWORK_DMG/Resources" ]; then
-              echo "✓ Resources is a symlink pointing to: $(readlink "$FRAMEWORK_DMG/Resources")"
-            else
-              echo "⚠️ Resources is NOT a symlink!"
-            fi
-            echo ""
-
-            PY_DMG="$APP/Contents/Resources/bin/darwin/ykman-bundle/_internal/Python.framework/Python"
-            echo "Running codesign verification on Python inside DMG..."
-            /usr/bin/codesign --verify --strict --verbose=6 "$PY_DMG"
-            /usr/bin/codesign -dv --verbose=4 "$PY_DMG" 2>&1 | grep -E "Identifier|TeamIdentifier|Authority" || true
-
-            # Unmount and cleanup
-            hdiutil detach "$MOUNT_POINT" -quiet
-            rm -rf "$MOUNT_POINT"
-            echo "✅ macOS binaries verified in DMG"
-
-          elif [[ "${{ matrix.platform }}" == *"ubuntu"* ]]; then
-            # Linux: Extract and verify AppImage
-            APPIMAGE=$(find target/*/release/bundle/appimage -name "*.AppImage" | head -1)
-            echo "Found AppImage: $APPIMAGE"
-
-            # Make it executable and extract
-            chmod +x "$APPIMAGE"
-            "$APPIMAGE" --appimage-extract > /dev/null 2>&1
-
-            # Use find to locate binaries (Tauri bundles at different paths)
-            echo "Searching for binaries in extracted AppImage..."
-            echo "AppImage structure:"
-            find squashfs-root -type d -name "bin" 2>/dev/null | head -5
-
-            # Look for age binary - check multiple possible paths
-            AGE_PATH=$(find squashfs-root -path "*/bin/linux/age" -o -path "*/bin/age" | head -1)
-            test -n "$AGE_PATH" || { echo "❌ age not found in AppImage"; exit 1; }
-            echo "✓ Found age at: $AGE_PATH"
-
-            # Look for age-plugin-yubikey
-            PLUGIN_PATH=$(find squashfs-root -path "*/bin/linux/age-plugin-yubikey" -o -path "*/bin/age-plugin-yubikey" | head -1)
-            test -n "$PLUGIN_PATH" || { echo "❌ age-plugin-yubikey not found in AppImage"; exit 1; }
-            echo "✓ Found age-plugin-yubikey at: $PLUGIN_PATH"
-
-            # Look for ykman wrapper
-            YKMAN_PATH=$(find squashfs-root -path "*/bin/linux/ykman" -o -path "*/bin/ykman" | head -1)
-            test -n "$YKMAN_PATH" || { echo "❌ ykman not found in AppImage"; exit 1; }
-            echo "✓ Found ykman at: $YKMAN_PATH"
-
-            # Look for ykman-bundle directory
-            BUNDLE_PATH=$(find squashfs-root -path "*/bin/linux/ykman-bundle" -o -path "*/bin/ykman-bundle" -type d | head -1)
-            test -n "$BUNDLE_PATH" || { echo "❌ ykman-bundle not found in AppImage"; exit 1; }
-            echo "✓ Found ykman-bundle at: $BUNDLE_PATH"
-
-            # Verify ykman binary inside bundle
-            test -f "$BUNDLE_PATH/ykman" || { echo "❌ ykman binary missing from bundle"; exit 1; }
-
-            # Clean up
-            rm -rf squashfs-root
-            echo "✅ Linux binaries verified in AppImage"
-
-          elif [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
-            # Windows: Extract and verify MSI contents
-            # First find the MSI file
-            MSI=$(find target/*/release/bundle/msi -name "*.msi" | head -1)
-            echo "Found MSI: $MSI"
-
-            # Convert to Windows path for PowerShell
-            MSI_WIN=$(cygpath -w "$MSI" 2>/dev/null || echo "$MSI")
-
-            # Use msiexec to extract MSI (native Windows tool for proper extraction)
-            echo "Extracting MSI contents with msiexec..."
-            powershell -Command "
-              # Create extraction directory with full path
-              \$target = Join-Path (Get-Location) 'msi_extracted'
-              New-Item -ItemType Directory -Path \$target -Force | Out-Null
-
-              # Use msiexec /a for administrative installation (proper extraction)
-              Write-Host 'Extracting MSI contents using msiexec /a...'
-              Write-Host "MSI Path: $MSI_WIN"
-              Write-Host "Target Dir: \$target"
-
-              # Start msiexec process and wait for completion
-              \$process = Start-Process msiexec.exe -ArgumentList '/a', \"\`\"$MSI_WIN\`\"\", '/qn', \"TARGETDIR=\$target\" -Wait -PassThru -NoNewWindow
-
-              if (\$process.ExitCode -eq 0) {
-                Write-Host '✓ MSI extracted successfully'
-
-                # Show extracted structure
-                Write-Host 'Extracted structure:'
-                Get-ChildItem -Path \$target -Directory | Select-Object -First 5 | ForEach-Object { Write-Host \$_.FullName }
-
-                Write-Host 'Binary files found:'
-                Get-ChildItem -Path \$target -Recurse -Include '*.exe','*.bat' | Select-Object -First 20 | ForEach-Object { Write-Host \$_.FullName }
-
-                # Also check specific expected paths
-                Write-Host 'Checking for Barqly Vault resources:'
-                if (Test-Path "\$target\ProgramFiles64Folder") {
-                  Get-ChildItem -Path "\$target\ProgramFiles64Folder" -Recurse -Include '*.exe','*.bat' | ForEach-Object { Write-Host "Found: \$(\$_.FullName)" }
-                }
-                if (Test-Path "\$target\PFiles") {
-                  Get-ChildItem -Path "\$target\PFiles" -Recurse -Include '*.exe','*.bat' | ForEach-Object { Write-Host "Found: \$(\$_.FullName)" }
-                }
-              } else {
-                Write-Host "❌ MSI extraction failed with exit code: \$(\$process.ExitCode)"
-                exit 1
-              }
-            "
-
-            # Verify binaries in bash (cross-platform compatible)
-            echo "Verifying binaries in extracted MSI..."
-
-            if [ -d "msi_extracted" ]; then
-              echo "MSI structure:"
-              find msi_extracted -type d -name "bin" 2>/dev/null | head -5
-              echo "Binary files in MSI:"
-              find msi_extracted -type f \( -name "*.exe" -o -name "*.bat" \) 2>/dev/null | head -20
-
-              # Check for required binaries (flexible path checking)
-              if ! find msi_extracted -name "age.exe" 2>/dev/null | grep -q .; then
-                echo "❌ age.exe not found in MSI package"; exit 1
-              fi
-              if ! find msi_extracted -name "age-plugin-yubikey.exe" 2>/dev/null | grep -q .; then
-                echo "❌ age-plugin-yubikey.exe not found in MSI package"; exit 1
-              fi
-              if ! find msi_extracted \( -name "ykman.bat" -o -name "ykman.exe" \) 2>/dev/null | grep -q .; then
-                echo "❌ ykman not found in MSI package"; exit 1
-              fi
-
-              # Verify ykman-bundle exists
-              if ! find msi_extracted -type d -name "ykman-bundle" 2>/dev/null | grep -q .; then
-                echo "❌ ykman-bundle directory not found in MSI package"; exit 1
-              fi
-
-              echo "✅ Windows binaries verified in MSI package"
-
-              # Also check staging directory as a secondary verification
-              echo "Secondary check - staging directory:"
-              test -f "src-tauri/bin/windows/age.exe" && echo "  ✓ age.exe in staging"
-              test -f "src-tauri/bin/windows/age-plugin-yubikey.exe" && echo "  ✓ age-plugin-yubikey.exe in staging"
-              test -f "src-tauri/bin/windows/ykman.bat" && echo "  ✓ ykman.bat in staging"
-              test -d "src-tauri/bin/windows/ykman-bundle" && echo "  ✓ ykman-bundle in staging"
-            else
-              echo "❌ msi_extracted directory not found"; exit 1
-            fi
-
-            # Clean up
-            rm -rf msi_extracted
-          fi
-
-          echo "✅ Post-bundle verification complete for ${{ matrix.platform }}"
 
       # Find and notarize macOS DMG
       - name: Find DMG Path

@@ -1,6 +1,7 @@
-name: Build ykman Bundles
+name: Build & Sign ykman Bundles
 
-# Manual trigger to build ykman for all platforms (macOS, Linux, Windows)
+# Manual trigger to build and sign ykman for all platforms
+# Publishes signed binaries to barqly-vault-dependencies release
 on:
   workflow_dispatch:
     inputs:
@@ -8,20 +9,35 @@ on:
         description: 'ykman version to build'
         required: true
         default: '5.8.0'
+      update_release:
+        description: 'Update barqly-vault-dependencies release'
+        type: boolean
+        default: true
 
 jobs:
   build-ykman:
     strategy:
       matrix:
         include:
+          # macOS Intel (use macos-13 for x86_64)
+          - os: macos-13
+            platform: darwin
+            arch: x86_64
+            platform_name: darwin-x86_64
+          # macOS Apple Silicon (macos-latest is ARM64)
           - os: macos-latest
             platform: darwin
-            platform_name: darwin-universal
+            arch: arm64
+            platform_name: darwin-arm64
+          # Linux
           - os: ubuntu-22.04
             platform: linux
+            arch: x86_64
             platform_name: linux-x86_64
+          # Windows
           - os: windows-latest
             platform: windows
+            arch: x86_64
             platform_name: windows-x86_64
 
     runs-on: ${{ matrix.os }}
@@ -40,32 +56,53 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libpcsclite-dev swig
 
-      - name: Install Windows dependencies
-        if: matrix.platform == 'windows'
+      - name: Build ykman
         shell: bash
         run: |
-          # Git Bash is already available
-          # Python 3.12 is set up above
-          echo "Windows dependencies ready (Git Bash + Python)"
+          chmod +x scripts/yubikey/build-ykman.sh
+          ./scripts/yubikey/build-ykman.sh ${{ github.event.inputs.version }}
 
-      - name: Build ykman (macOS)
+      # Sign macOS binaries with Developer ID
+      - name: Sign macOS binary
         if: matrix.platform == 'darwin'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
-          chmod +x scripts/yubikey/build-ykman.sh
-          ./scripts/yubikey/build-ykman.sh ${{ github.event.inputs.version }}
+          echo "🔐 Setting up code signing..."
 
-      - name: Build ykman (Linux)
-        if: matrix.platform == 'linux'
-        run: |
-          chmod +x scripts/yubikey/build-ykman.sh
-          ./scripts/yubikey/build-ykman.sh ${{ github.event.inputs.version }}
+          # Import certificate
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security create-keychain -p actions build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p actions build.keychain
+          security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
+          rm -f certificate.p12
 
-      - name: Build ykman (Windows)
-        if: matrix.platform == 'windows'
-        shell: bash
-        run: |
-          chmod +x scripts/yubikey/build-ykman.sh
-          ./scripts/yubikey/build-ykman.sh ${{ github.event.inputs.version }}
+          echo "✍️ Signing ykman binary..."
+          YKMAN_BINARY="src-tauri/bin/darwin/ykman-bundle/ykman"
+
+          if [ ! -f "$YKMAN_BINARY" ]; then
+            echo "❌ ykman binary not found at $YKMAN_BINARY"
+            exit 1
+          fi
+
+          # Sign the binary
+          /usr/bin/codesign \
+            --force \
+            --sign "$APPLE_SIGNING_IDENTITY" \
+            --options runtime \
+            --timestamp \
+            "$YKMAN_BINARY"
+
+          # Verify signature
+          echo "🔍 Verifying signature..."
+          /usr/bin/codesign --verify --strict --verbose=2 "$YKMAN_BINARY"
+          /usr/bin/codesign -dv --verbose=4 "$YKMAN_BINARY" 2>&1 | grep -E "Authority|Identifier"
+
+          echo "✅ macOS binary signed successfully"
 
       - name: Package ykman bundle
         shell: bash
@@ -73,7 +110,16 @@ jobs:
           cd src-tauri/bin/${{ matrix.platform }}
           tar -czf ../../../ykman-${{ github.event.inputs.version }}-${{ matrix.platform_name }}.tar.gz ykman-bundle
           cd ../../..
+
+          echo "📦 Created tarball:"
           ls -lh ykman-*.tar.gz
+
+          # Calculate checksum
+          if [[ "${{ matrix.platform }}" == "darwin" ]] || [[ "${{ matrix.platform }}" == "linux" ]]; then
+            shasum -a 256 ykman-*.tar.gz
+          else
+            sha256sum ykman-*.tar.gz
+          fi
 
       - name: Upload ykman bundle
         uses: actions/upload-artifact@v4
@@ -81,3 +127,54 @@ jobs:
           name: ykman-${{ matrix.platform_name }}
           path: ykman-*.tar.gz
           retention-days: 7
+
+  # Update barqly-vault-dependencies release with signed binaries
+  update-dependencies-release:
+    needs: build-ykman
+    if: github.event.inputs.update_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/ykman-artifacts
+
+      - name: Organize artifacts
+        run: |
+          mkdir -p dist/binaries
+          find dist/ykman-artifacts -name "*.tar.gz" -exec mv {} dist/binaries/ \;
+          cd dist/binaries
+
+          echo "📋 Artifacts to upload:"
+          ls -lh ykman-*.tar.gz
+
+          echo "🔐 Generating checksums..."
+          shasum -a 256 ykman-*.tar.gz > ykman-checksums.txt
+          cat ykman-checksums.txt
+
+      - name: Update barqly-vault-dependencies release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist/binaries
+
+          RELEASE_TAG="barqly-vault-dependencies"
+
+          echo "📤 Uploading ykman binaries to $RELEASE_TAG release..."
+
+          # Upload each file (gh release upload handles duplicates by replacing)
+          for file in ykman-*.tar.gz ykman-checksums.txt; do
+            echo "Uploading $file..."
+            gh release upload "$RELEASE_TAG" "$file" --clobber
+          done
+
+          echo "✅ Updated $RELEASE_TAG release with signed ykman binaries"
+          echo ""
+          echo "📝 Next steps:"
+          echo "1. Update src-tauri/bin/binary-dependencies.json with new checksums"
+          echo "2. Test with: gh workflow run release.yml -f version=0.2.0-test.X"

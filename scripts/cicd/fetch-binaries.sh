@@ -132,12 +132,8 @@ echo -e "${GREEN}✓ age-plugin-yubikey verified${NC}"
 # Download and extract ykman bundle
 echo -e "\n${GREEN}Downloading ykman...${NC}"
 
-# Determine ykman platform (darwin uses universal, others use arch-specific)
-if [ "$OS" = "darwin" ]; then
-  YKMAN_PLATFORM="darwin-universal"
-else
-  YKMAN_PLATFORM="$PLATFORM"
-fi
+# Use platform-specific binaries for all platforms (no more universal)
+YKMAN_PLATFORM="$PLATFORM"
 
 YKMAN_URL=$(jq -r ".dependencies.ykman.platforms.\"$YKMAN_PLATFORM\".url" "$MANIFEST")
 YKMAN_SHA=$(jq -r ".dependencies.ykman.platforms.\"$YKMAN_PLATFORM\".sha256" "$MANIFEST")

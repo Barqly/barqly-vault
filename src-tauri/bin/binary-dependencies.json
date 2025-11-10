@@ -71,13 +71,20 @@
       "upstream": "https://github.com/Yubico/yubikey-manager",
       "build_method": "pyinstaller",
       "bundle_type": "tarball",
+      "signed": true,
+      "note": "Pre-signed in barqly-vault-dependencies release - DO NOT re-sign in main build",
       "platforms": {
-        "darwin-universal": {
-          "filename": "ykman-5.8.0-darwin-universal.tar.gz",
-          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/ykman-5.8.0-darwin-universal.tar.gz",
-          "sha256": "523ffd1f6f3923abe57ac100537306ce647784df8f91a9c67cb2d97f1ad7ee7c",
-          "size": 14680064,
-          "note": "Universal binary works on both Intel and Apple Silicon"
+        "darwin-arm64": {
+          "filename": "ykman-5.8.0-darwin-arm64.tar.gz",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/ykman-5.8.0-darwin-arm64.tar.gz",
+          "sha256": "UPDATE_AFTER_BUILDING",
+          "size": 0
+        },
+        "darwin-x86_64": {
+          "filename": "ykman-5.8.0-darwin-x86_64.tar.gz",
+          "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/ykman-5.8.0-darwin-x86_64.tar.gz",
+          "sha256": "UPDATE_AFTER_BUILDING",
+          "size": 0
         },
         "linux-x86_64": {
           "filename": "ykman-5.8.0-linux-x86_64.tar.gz",
