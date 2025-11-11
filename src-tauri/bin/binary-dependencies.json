@@ -49,7 +49,7 @@
         "darwin-x86_64": {
           "filename": "age-plugin-yubikey-0.5.0-darwin-x86_64",
           "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/age-plugin-yubikey-0.5.0-darwin-x86_64",
-          "sha256": "006396d1524b9ef9ad96d084684ab81fe7893b1a0a179aea96829c7bbc95d903",
+          "sha256": "df442ba79d529519204ba69283d4926d97dcb41dbcb00cef2674588f575b12dc",
           "size": 4087808
         },
         "linux-x86_64": {
