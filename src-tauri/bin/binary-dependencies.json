@@ -77,25 +77,25 @@
         "darwin-arm64": {
           "filename": "ykman-5.8.0-darwin-arm64.tar.gz",
           "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/ykman-5.8.0-darwin-arm64.tar.gz",
-          "sha256": "5e15fd31b3247975635590ab79f3c394ad984a38203dce810ab331b3c5acc06a",
+          "sha256": "97500a986ee71937f33a161b0d914a79f39f0fa590130fb4aa90f19289653f6e",
           "size": 14680064
         },
         "darwin-x86_64": {
           "filename": "ykman-5.8.0-darwin-x86_64.tar.gz",
           "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/ykman-5.8.0-darwin-x86_64.tar.gz",
-          "sha256": "bcb3c4b3312ae1ff7ebe84ead6cfbcda166fc66994f4cc1953534ab2cd550ccf",
+          "sha256": "dfb9f19d1956c6457dcc4ab5e92a974f4b645c2d54f7a4635773a20eb69b972b",
           "size": 15728640
         },
         "linux-x86_64": {
           "filename": "ykman-5.8.0-linux-x86_64.tar.gz",
           "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/ykman-5.8.0-linux-x86_64.tar.gz",
-          "sha256": "14f940ecc5037100c79244258423b9a66a51cc5ba00f0cc391cdec327ea2e1f9",
+          "sha256": "dba08268f2f75fcd62d430e828a9edf680a55c16711264b84372ff1edc818368",
           "size": 30408704
         },
         "windows-x86_64": {
           "filename": "ykman-5.8.0-windows-x86_64.tar.gz",
           "url": "https://github.com/Barqly/barqly-vault/releases/download/barqly-vault-dependencies/ykman-5.8.0-windows-x86_64.tar.gz",
-          "sha256": "e24467dc5d20cf013b607569573ab54d295e12a25a27e701907268f4571eabe0",
+          "sha256": "e70a207af5ffe64b50ac2097c48b8de64e3e4da4f45a9df77a9a0b7caaf6899c",
           "size": 19922944
         }
       }
