@@ -498,7 +498,19 @@ jobs:
             \( -path "*/Python.framework" -o -path "*/Python.framework/*" -o -path "*/_internal/Python" \) -prune -o \
             -type f -print0 | while IFS= read -r -d '' file; do
             if file "$file" | grep -q "Mach-O"; then
-              /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$file"
+              # Check if this is ykman binary - needs entitlements for PyInstaller
+              if [[ "$file" == */ykman-bundle/ykman ]]; then
+                echo "Signing ykman with entitlements (PyInstaller runtime support)..."
+                /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+                  --options runtime --timestamp \
+                  --entitlements entitlements-ykman.plist \
+                  "$file"
+              else
+                # Sign other binaries normally
+                /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" \
+                  --options runtime --timestamp \
+                  "$file"
+              fi
               SIGNED_COUNT=$((SIGNED_COUNT + 1))
               # Show progress every 10 files
               if [ $((SIGNED_COUNT % 10)) -eq 0 ]; then
