@@ -153,13 +153,14 @@ jobs:
             echo "✅ Python.framework signed"
           fi
 
-          # Step 3: Sign main ykman binary last
-          echo "Step 3: Signing main ykman binary..."
+          # Step 3: Sign main ykman binary last (with entitlements for PyInstaller)
+          echo "Step 3: Signing main ykman binary with entitlements..."
           /usr/bin/codesign \
             --force \
             --sign "$APPLE_SIGNING_IDENTITY" \
             --options runtime \
             --timestamp \
+            --entitlements entitlements-ykman.plist \
             --keychain "$KEYCHAIN_PATH" \
             "$BUNDLE_DIR/ykman"
 
@@ -167,7 +168,11 @@ jobs:
           /usr/bin/codesign --verify --strict --verbose=2 "$BUNDLE_DIR/ykman"
           /usr/bin/codesign -dv --verbose=4 "$BUNDLE_DIR/ykman" 2>&1 | grep -E "Authority|Identifier"
 
-          echo "✅ Complete ykman bundle signed successfully ($TOTAL_MACHO files)"
+          echo "🔍 Verifying entitlements..."
+          /usr/bin/codesign -d --entitlements - "$BUNDLE_DIR/ykman" | grep -E "allow-unsigned-executable-memory|disable-library-validation" && \
+            echo "✅ Entitlements present" || echo "⚠️ Entitlements missing"
+
+          echo "✅ Complete ykman bundle signed successfully ($TOTAL_MACHO files with entitlements)"
 
       - name: Package ykman bundle
         shell: bash
