@@ -10,14 +10,14 @@
 
 | Platform | Size | Download |
 |----------|------|----------|
-| macOS (Apple Silicon) | TBD MB | [barqly-vault-0.2.0-macos-arm64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-macos-arm64.dmg) |
-| macOS (Intel) | TBD MB | [barqly-vault-0.2.0-macos-x86_64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-macos-x86_64.dmg) |
-| Windows | TBD MB | [barqly-vault-0.2.0-x64.msi](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-x64.msi) |
-| Windows | TBD MB | [barqly-vault-0.2.0-windows-x64.zip](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-windows-x64.zip) |
-| Linux | TBD MB | [barqly-vault-0.2.0-1_amd64.deb](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-1_amd64.deb) |
-| Linux | TBD MB | [barqly-vault-0.2.0-1.x86_64.rpm](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-1.x86_64.rpm) |
-| Linux | TBD MB | [barqly-vault-0.2.0-1_amd64.AppImage](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-1_amd64.AppImage) |
-| Linux | TBD MB | [barqly-vault-0.2.0-x86_64.tar.gz](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-x86_64.tar.gz) |
+| macOS (Apple Silicon) | 34.6 MB | [barqly-vault-0.2.0-macos-arm64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-macos-arm64.dmg) |
+| macOS (Intel) | 37.1 MB | [barqly-vault-0.2.0-macos-x86_64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-macos-x86_64.dmg) |
+| Windows | 33.9 MB | [barqly-vault-0.2.0-x64.msi](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-x64.msi) |
+| Windows | 6.4 MB | [barqly-vault-0.2.0-windows-x64.zip](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-windows-x64.zip) |
+| Linux | 47.1 MB | [barqly-vault-0.2.0-1_amd64.deb](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-1_amd64.deb) |
+| Linux | 47.1 MB | [barqly-vault-0.2.0-1.x86_64.rpm](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-1.x86_64.rpm) |
+| Linux | 124.2 MB | [barqly-vault-0.2.0-1_amd64.AppImage](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-1_amd64.AppImage) |
+| Linux | 8.0 MB | [barqly-vault-0.2.0-x86_64.tar.gz](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/barqly-vault-0.2.0-x86_64.tar.gz) |
 
 **Checksums:** [checksums.txt](https://github.com/barqly/barqly-vault/releases/download/v0.2.0/checksums.txt)
 
