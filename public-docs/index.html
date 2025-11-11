@@ -619,6 +619,9 @@
         </p>
       </div>
 
+      <!-- Hero Screenshot -->
+      <div id="hero-screenshot-container"></div>
+
       <div class="section">
         <h2>What is Barqly Vault?</h2>
         <p>
@@ -765,6 +768,9 @@
 
       </div>
 
+      <!-- Screenshot Carousel -->
+      <div id="carousel-container"></div>
+
       <div class="footer">
         <p>Built with ❤️ for the Bitcoin community</p>
         <p style="margin-top: 1rem;">
@@ -852,6 +858,72 @@
             document.querySelector('.theme-toggle').textContent = '🌙';
           }
         }
+      });
+
+      // Load modular components
+      fetch('includes/hero-screenshot.html')
+        .then(response => response.text())
+        .then(html => document.getElementById('hero-screenshot-container').innerHTML = html);
+
+      fetch('includes/screenshot-carousel.html')
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('carousel-container').innerHTML = html;
+          // Initialize carousel after loading
+          initializeCarousel();
+        });
+
+      // Carousel functions (must be global for onclick handlers)
+      let currentSlide = 0;
+
+      function initializeCarousel() {
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('.dot');
+        if (slides.length > 0 && slides[0]) {
+          slides[0].classList.add('active');
+        }
+        if (dots.length > 0 && dots[0]) {
+          dots[0].classList.add('active');
+        }
+      }
+
+      function showSlide(n) {
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('.dot');
+
+        if (n >= slides.length) currentSlide = 0;
+        if (n < 0) currentSlide = slides.length - 1;
+
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+
+        if (slides[currentSlide]) {
+          slides[currentSlide].classList.add('active');
+        }
+        if (dots[currentSlide]) {
+          dots[currentSlide].classList.add('active');
+        }
+      }
+
+      function carouselNext() {
+        currentSlide++;
+        showSlide(currentSlide);
+      }
+
+      function carouselPrev() {
+        currentSlide--;
+        showSlide(currentSlide);
+      }
+
+      function carouselGoTo(n) {
+        currentSlide = n;
+        showSlide(currentSlide);
+      }
+
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') carouselPrev();
+        if (e.key === 'ArrowRight') carouselNext();
       });
     </script>
   </body>

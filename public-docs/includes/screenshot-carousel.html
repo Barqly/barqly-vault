@@ -1,0 +1,218 @@
+<!-- Screenshot Carousel -->
+<div class="carousel-section">
+  <h2>See <span class="brand-name-barq">Barq</span><span class="brand-name-ly">ly Vault</span> in Action</h2>
+  <div class="carousel-container">
+    <div class="carousel">
+      <div class="carousel-slides">
+        <div class="carousel-slide active">
+          <img src="assets/screenshots/R2-1-manage-keys.png" alt="Multi-key management dashboard" loading="lazy">
+          <p class="slide-caption">Multi-key management dashboard</p>
+        </div>
+        <div class="carousel-slide">
+          <img src="assets/screenshots/R2-2-new-key.png" alt="Creating a new encryption key" loading="lazy">
+          <p class="slide-caption">Create passphrase or YubiKey-based encryption keys</p>
+        </div>
+        <div class="carousel-slide">
+          <img src="assets/screenshots/R2-3-vault-hub.png" alt="Vault overview" loading="lazy">
+          <p class="slide-caption">Vault overview with encryption status</p>
+        </div>
+        <div class="carousel-slide">
+          <img src="assets/screenshots/R2-4-encrypt.png" alt="Encryption setup" loading="lazy">
+          <p class="slide-caption">Set up multi-key encryption for your files</p>
+        </div>
+        <div class="carousel-slide">
+          <img src="assets/screenshots/R2-5-encrypt-success.png" alt="Successful encryption" loading="lazy">
+          <p class="slide-caption">Secure encryption completed</p>
+        </div>
+        <div class="carousel-slide">
+          <img src="assets/screenshots/R2-6-decrypt.png" alt="Decryption in progress" loading="lazy">
+          <p class="slide-caption">Decrypt your vaults with any registered key</p>
+        </div>
+        <div class="carousel-slide">
+          <img src="assets/screenshots/R2-7-decrypt-success.png" alt="Successful decryption" loading="lazy">
+          <p class="slide-caption">Files successfully recovered</p>
+        </div>
+      </div>
+
+      <button class="carousel-btn carousel-btn-prev" onclick="carouselPrev()" aria-label="Previous screenshot">❮</button>
+      <button class="carousel-btn carousel-btn-next" onclick="carouselNext()" aria-label="Next screenshot">❯</button>
+    </div>
+
+    <div class="carousel-dots">
+      <span class="dot active" onclick="carouselGoTo(0)"></span>
+      <span class="dot" onclick="carouselGoTo(1)"></span>
+      <span class="dot" onclick="carouselGoTo(2)"></span>
+      <span class="dot" onclick="carouselGoTo(3)"></span>
+      <span class="dot" onclick="carouselGoTo(4)"></span>
+      <span class="dot" onclick="carouselGoTo(5)"></span>
+      <span class="dot" onclick="carouselGoTo(6)"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .carousel-section {
+    margin: 4rem 0;
+  }
+
+  .carousel-section h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--medium-gray);
+  }
+
+  .brand-name-barq {
+    color: var(--bitcoin-orange);
+    font-weight: 600;
+  }
+
+  .brand-name-ly {
+    color: var(--dark-gray);
+    font-weight: 600;
+  }
+
+  [data-theme="dark"] .carousel-section h2 {
+    color: #9CA3AF;
+  }
+
+  [data-theme="dark"] .brand-name-ly {
+    color: #E5E7EB;
+  }
+
+  .carousel-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .carousel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--card-bg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(226, 232, 240, 0.6);
+    transition: border-color 0.3s ease;
+  }
+
+  [data-theme="dark"] .carousel {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .carousel-slides {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+  }
+
+  .carousel-slide {
+    min-width: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .carousel-slide.active {
+    display: flex;
+  }
+
+  .carousel-slide img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .slide-caption {
+    padding: 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    background: var(--card-bg);
+  }
+
+  .carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    font-size: 2rem;
+    padding: 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.3s, background 0.3s;
+    z-index: 10;
+  }
+
+  .carousel:hover .carousel-btn {
+    opacity: 1;
+  }
+
+  .carousel-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  .carousel-btn-prev {
+    left: 1rem;
+  }
+
+  .carousel-btn-next {
+    right: 1rem;
+  }
+
+  .carousel-dots {
+    text-align: center;
+    padding: 1.5rem 0;
+  }
+
+  .dot {
+    height: 12px;
+    width: 12px;
+    margin: 0 6px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+  }
+
+  .dot:hover {
+    background-color: #777;
+    transform: scale(1.2);
+  }
+
+  .dot.active {
+    background-color: var(--bitcoin-orange);
+    transform: scale(1.3);
+  }
+
+  [data-theme="dark"] .carousel-btn {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  [data-theme="dark"] .carousel-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  [data-theme="dark"] .dot {
+    background-color: #555;
+  }
+
+  @media (max-width: 768px) {
+    .carousel-btn {
+      font-size: 1.5rem;
+      padding: 0.5rem;
+      opacity: 1;
+    }
+
+    .carousel-btn-prev {
+      left: 0.5rem;
+    }
+
+    .carousel-btn-next {
+      right: 0.5rem;
+    }
+  }
+</style>
+
+<!-- Carousel JavaScript is in main index.html for global scope -->

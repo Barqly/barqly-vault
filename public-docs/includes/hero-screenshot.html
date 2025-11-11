@@ -1,0 +1,68 @@
+<!-- Hero Screenshot Section -->
+<div class="hero-screenshot">
+  <img
+    src="assets/screenshots/R2-1-manage-keys.png"
+    alt="Barqly Vault - Multi-key encryption management interface"
+    loading="lazy"
+  />
+  <p class="screenshot-caption">Manage multiple encryption keys with YubiKey hardware support</p>
+</div>
+
+<style>
+  .hero-screenshot {
+    margin: 3rem 0;
+    text-align: center;
+    animation: fadeIn 0.6s ease-in;
+  }
+
+  .hero-screenshot img {
+    width: 100%;
+    max-width: 1000px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(226, 232, 240, 0.6);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .hero-screenshot img:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+  }
+
+  .screenshot-caption {
+    margin-top: 1rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-style: italic;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .hero-screenshot img:hover {
+    border-color: rgba(255, 138, 0, 0.3);
+  }
+
+  [data-theme="dark"] .hero-screenshot img {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  [data-theme="dark"] .hero-screenshot img:hover {
+    border-color: rgba(255, 138, 0, 0.4);
+  }
+
+  @media (max-width: 768px) {
+    .hero-screenshot {
+      margin: 2rem 0;
+    }
+  }
+</style>
