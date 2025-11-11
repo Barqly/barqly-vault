@@ -16,51 +16,51 @@
     "downloads": {
       "macos_arm64": {
         "filename": "barqly-vault-0.2.0-macos-arm64.dmg",
-        "size": "TBD MB",
-        "size_bytes": 0,
-        "sha256": "TBD..."
+        "size": "34.6 MB",
+        "size_bytes": 36325094,
+        "sha256": "444b39126f52ec306ec8a20bf59ac783b37c5c81c0cddd33c69a1a7af27e8845"
       },
       "macos_x64": {
         "filename": "barqly-vault-0.2.0-macos-x86_64.dmg",
-        "size": "TBD MB",
-        "size_bytes": 0,
-        "sha256": "TBD..."
+        "size": "37.1 MB",
+        "size_bytes": 38951315,
+        "sha256": "585250b81bab5bdb466184c01a111ec0e0214818e0b49edb58551fc22adf24b0"
       },
       "windows_msi": {
         "filename": "barqly-vault-0.2.0-x64.msi",
-        "size": "TBD MB",
-        "size_bytes": 0,
-        "sha256": "TBD..."
+        "size": "33.9 MB",
+        "size_bytes": 35531486,
+        "sha256": "7ec80a56f60885cc8bbb775cc0e41d0e02f64443e3ddb3600cc8e68d9f5bf0de"
       },
       "windows_zip": {
         "filename": "barqly-vault-0.2.0-windows-x64.zip",
-        "size": "TBD MB",
-        "size_bytes": 0,
-        "sha256": "TBD..."
+        "size": "6.4 MB",
+        "size_bytes": 6709724,
+        "sha256": "195d8e733320cb61e037daab8afdc7d574157cbe723304f8b413b0ed823bd132"
       },
       "linux_deb": {
         "filename": "barqly-vault-0.2.0-1_amd64.deb",
-        "size": "TBD MB",
-        "size_bytes": 0,
-        "sha256": "TBD..."
+        "size": "47.1 MB",
+        "size_bytes": 49385856,
+        "sha256": "08e678c3166999fd0fbc8e23288f1ec8ba4da7df7901f6f7647586f3e38b34cd"
       },
       "linux_rpm": {
         "filename": "barqly-vault-0.2.0-1.x86_64.rpm",
-        "size": "TBD MB",
-        "size_bytes": 0,
-        "sha256": "TBD..."
+        "size": "47.1 MB",
+        "size_bytes": 49376438,
+        "sha256": "ada211d4c1b2b35754235d8f069c5e4c83cbe7fb8b18b7e497d61bac3fdfd482"
       },
       "linux_appimage": {
         "filename": "barqly-vault-0.2.0-1_amd64.AppImage",
-        "size": "TBD MB",
-        "size_bytes": 0,
-        "sha256": "TBD..."
+        "size": "124.2 MB",
+        "size_bytes": 130202104,
+        "sha256": "ce84565e96beb3fc1cd6abd224952d9b1fddb43e66119656b789f42b4ceac048"
       },
       "linux_tar": {
         "filename": "barqly-vault-0.2.0-x86_64.tar.gz",
-        "size": "TBD MB",
-        "size_bytes": 0,
-        "sha256": "TBD..."
+        "size": "8.0 MB",
+        "size_bytes": 8433237,
+        "sha256": "a30fcdc1021eb0995fe452155a995f38d80fb8f4da143ddb3e4c1873decf1b44"
       }
     },
     "verification": {

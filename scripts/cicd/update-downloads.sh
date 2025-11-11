@@ -52,22 +52,52 @@ echo -e "\n${YELLOW}2. Updating data.json...${NC}"
 # Create a backup of the current data.json
 cp "$DATA_FILE" "$DATA_FILE.bak"
 
-# Update the data.json with new version info
-# Note: This is a simple update - file sizes and checksums would need to be updated manually
-# or we could fetch them from the GitHub release assets
+# Save release data to temp file for Python to read
+echo "$RELEASE_DATA" > /tmp/release-data.json
+
+# Update the data.json with new version info and fetch asset sizes/checksums
 python3 -c "
 import json
 import sys
+import subprocess
 
 # Read current data
 with open('$DATA_FILE', 'r') as f:
     data = json.load(f)
 
+# Fetch release assets from GitHub API (via temp file)
+try:
+    with open('/tmp/release-data.json', 'r') as f:
+        release_info = json.load(f)
+    assets = {asset['name']: asset for asset in release_info.get('assets', [])}
+    print(f'✅ Loaded {len(assets)} assets from release', file=sys.stderr)
+except Exception as e:
+    print(f'⚠️ Could not parse release data: {e}', file=sys.stderr)
+    assets = {}
+
+# Download and parse checksums.txt if available
+checksums = {}
+try:
+    result = subprocess.run(
+        ['gh', 'release', 'download', 'v$VERSION', '--repo', '$REPO', '--pattern', 'checksums.txt', '--dir', '/tmp', '--clobber'],
+        capture_output=True, text=True, timeout=30
+    )
+    if result.returncode == 0:
+        with open('/tmp/checksums.txt', 'r') as f:
+            for line in f:
+                parts = line.strip().split(maxsplit=1)
+                if len(parts) == 2:
+                    sha256, filename = parts
+                    checksums[filename] = sha256
+        print(f'✅ Loaded {len(checksums)} checksums from checksums.txt', file=sys.stderr)
+except Exception as e:
+    print(f'⚠️ Could not fetch checksums: {e}', file=sys.stderr)
+
 # Move current latest to archive (if it exists)
 if 'latest' in data and data['latest']['version'] != '$VERSION':
     if 'archive' not in data:
         data['archive'] = []
-    
+
     # Add current latest to archive
     archive_entry = {
         'version': data['latest']['version'],
@@ -77,15 +107,28 @@ if 'latest' in data and data['latest']['version'] != '$VERSION':
     # Insert at beginning of archive list
     data['archive'].insert(0, archive_entry)
 
-# Create downloads dict with generated filenames
+# Create downloads dict with real sizes from GitHub release
 downloads = {}
 for platform, template in data['filename_templates'].items():
     filename = template.replace('{VERSION}', '$VERSION')
+
+    # Get asset info if available
+    if filename in assets:
+        size_bytes = assets[filename]['size']
+        size_mb = round(size_bytes / (1024 * 1024), 1)
+        size_str = f'{size_mb} MB'
+    else:
+        size_bytes = 0
+        size_str = 'TBD MB'
+
+    # Get checksum if available
+    sha256 = checksums.get(filename, 'TBD...')
+
     downloads[platform] = {
         'filename': filename,
-        'size': 'TBD MB',  # Would need to be fetched from actual release
-        'size_bytes': 0,
-        'sha256': 'TBD...'
+        'size': size_str,
+        'size_bytes': size_bytes,
+        'sha256': sha256
     }
 
 # Update latest version info
