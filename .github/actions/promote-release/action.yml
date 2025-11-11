@@ -147,10 +147,12 @@ runs:
       shell: bash
       run: |
         echo "📦 Creating release v${{ inputs.target-version }}..."
-        
-        # Generate release notes
+
+        # Create placeholder release notes (user will edit manually)
         VERSION="${{ inputs.target-version }}"
-        bash ${{ github.workspace }}/scripts/cicd/generate-release-notes.sh "$VERSION" > release-notes.md
+        echo "# Barqly Vault v$VERSION" > release-notes.md
+        echo "" >> release-notes.md
+        echo "Release notes to be added manually." >> release-notes.md
         
         # Create release with artifacts
         DRAFT_FLAG=""
