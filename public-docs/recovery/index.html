@@ -602,12 +602,8 @@
           </ul>
         </div>
 
-        <div class="footer">
-          <p>Built with ❤️ for the Bitcoin community</p>
-          <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
-            Last updated: October 27, 2025
-          </p>
-        </div>
+                <!-- Common Footer -->
+        <div id="footer-container"></div>
       </div>
     </div>
 
@@ -685,6 +681,11 @@
           }
         }
       });
+    
+    // Load common footer
+    fetch('../includes/footer.html')
+      .then(response => response.text())
+      .then(html => document.getElementById('footer-container').innerHTML = html);
     </script>
   </body>
 </html>

@@ -400,9 +400,8 @@
           </div>
         </div>
 
-        <div class="footer">
-          <p>Built with ❤️ and inspired by the ideals of Bitcoin.</p>
-        </div>
+                        <!-- Common Footer -->
+        <div id="footer-container"></div>
       </div>
     </div>
 
@@ -464,6 +463,11 @@
           }
         }
       });
+    
+    // Load common footer
+    fetch('../../includes/footer.html')
+      .then(response => response.text())
+      .then(html => document.getElementById('footer-container').innerHTML = html);
     </script>
   </body>
 </html>
