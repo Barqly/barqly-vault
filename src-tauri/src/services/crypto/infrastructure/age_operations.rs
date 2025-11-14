@@ -302,12 +302,20 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
     let plugin_dir = age_path
         .parent()
         .unwrap_or_else(|| std::path::Path::new("."));
+    // Build PATH with platform-specific separator (: on Unix, ; on Windows)
     let current_path = std::env::var("PATH").unwrap_or_default();
-    let new_path = format!("{}:{}", plugin_dir.display(), current_path);
+    let paths =
+        std::env::split_paths(&current_path).chain(std::iter::once(plugin_dir.to_path_buf()));
+
+    let new_path = std::env::join_paths(paths)
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|e| {
+            warn!("Failed to construct PATH: {}, using original", e);
+            current_path.clone()
+        });
 
     debug!(
         plugin_dir = %plugin_dir.display(),
-        new_path = %new_path,
         "Setting up PATH for age CLI to find age-plugin-yubikey"
     );
 
@@ -524,12 +532,20 @@ pub fn decrypt_data_cli(encrypted_data: &[u8]) -> Result<Vec<u8>> {
     let plugin_dir = age_path
         .parent()
         .unwrap_or_else(|| std::path::Path::new("."));
+    // Build PATH with platform-specific separator (: on Unix, ; on Windows)
     let current_path = std::env::var("PATH").unwrap_or_default();
-    let new_path = format!("{}:{}", plugin_dir.display(), current_path);
+    let paths =
+        std::env::split_paths(&current_path).chain(std::iter::once(plugin_dir.to_path_buf()));
+
+    let new_path = std::env::join_paths(paths)
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|e| {
+            warn!("Failed to construct PATH: {}, using original", e);
+            current_path.clone()
+        });
 
     debug!(
         plugin_dir = %plugin_dir.display(),
-        new_path = %new_path,
         "Setting up PATH for age CLI to find age-plugin-yubikey"
     );
 
