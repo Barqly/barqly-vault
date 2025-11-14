@@ -354,7 +354,13 @@ impl MultiRecipientCrypto {
         // Set up environment for age decryption
         let mut env_path = std::env::var("PATH").unwrap_or_default();
         if let Some(plugin_dir) = plugin_path.parent() {
-            env_path = format!("{}:{}", plugin_dir.display(), env_path);
+            // Build PATH with platform-specific separator
+            let paths =
+                std::env::split_paths(&env_path).chain(std::iter::once(plugin_dir.to_path_buf()));
+            env_path = std::env::join_paths(paths)
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
         }
 
         // Create age decryption command

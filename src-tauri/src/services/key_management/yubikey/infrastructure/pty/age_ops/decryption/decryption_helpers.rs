@@ -35,8 +35,14 @@ pub(super) fn run_age_decryption_pty(
     let plugin_dir = age_path
         .parent()
         .unwrap_or_else(|| std::path::Path::new("."));
+
+    // Build PATH with platform-specific separator (: on Unix, ; on Windows)
     let current_path = std::env::var("PATH").unwrap_or_default();
-    let new_path = format!("{}:{}", plugin_dir.display(), current_path);
+    let paths =
+        std::env::split_paths(&current_path).chain(std::iter::once(plugin_dir.to_path_buf()));
+    let new_path = std::env::join_paths(paths)
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_e| current_path.clone());
 
     // Build command: age -d -i identity_file -o output_file input_file
     let mut cmd = CommandBuilder::new(age_path.to_str().unwrap());
