@@ -1,7 +1,7 @@
 # Barqly Vault Release Process
 
 **Created**: 2025-09-02
-**Updated**: 2025-10-29 (Added binary dependency management)
+**Updated**: 2025-11-11 (R2 release: Added manual steps, troubleshooting, incremental releases)
 **Status**: Active Process Documentation
 **Author**: Release Engineering
 
@@ -27,10 +27,10 @@ version = "0.2.0"  # Same as workspace
 
 ```bash
 # All these use version = "0.2.0" in source files:
-v0.2.0-alpha.1   # Development checkpoint
+v0.2.0-alpha.1   # Development checkpoint - no dmg attestation
 v0.2.0-alpha.2   # Development checkpoint
-v0.2.0-test.1    # CI/CD testing
-v0.2.0-beta.1    # User testing
+v0.2.0-test.1    # CI/CD testing - no dmg attestation
+v0.2.0-beta.1    # User testing - apple dmg attestation
 v0.2.0-beta.2    # Bug fixes
 v0.2.0           # Production release
 
@@ -213,8 +213,79 @@ make publish-prod VERSION=0.3.0
 1. Converts GitHub draft release to published release
 2. Updates download documentation (`public-docs/downloads/index.html`)
 3. Updates version data (`scripts/cicd/downloads/data.json`)
-4. Commits and pushes documentation changes to main branch
-5. Triggers automatic documentation deployment
+4. Fetches asset sizes and checksums from GitHub API automatically
+5. Commits and pushes documentation changes to main branch
+6. Triggers automatic documentation deployment
+
+### Phase 5.5: Manual Steps Required (Human)
+
+**Critical:** These steps MUST be done by a human, cannot be automated.
+
+**Before Promotion - Edit Beta Release Notes:**
+1. Navigate to: https://github.com/Barqly/barqly-vault/releases
+2. Find `v0.3.0-beta.1` draft release
+3. Click "Edit"
+4. Copy content from `tbd/r3/RELEASE_NOTES_0.3.0.md` (prepare in advance)
+5. Paste into release description
+6. Add beta-specific notes if needed
+7. Save as draft (or publish for beta testing)
+
+**After Promotion - Edit Production Release Notes:**
+1. Promotion creates `v0.3.0` draft automatically
+2. Find `v0.3.0` draft on releases page
+3. Verify release notes (usually copied from beta)
+4. Remove any "(Beta)" references
+5. Verify release date is correct
+6. Save as draft (publish-prod command will publish it)
+
+**Why Manual:**
+- Release notes require human judgment and context
+- Security notices need careful wording
+- Breaking changes need clear explanation
+- `generate-release-notes.sh` intentionally removed (was just placeholder)
+
+## Post-Release Cleanup
+
+Recommended cleanup after successful production release:
+
+### Clean Up Test Releases
+```bash
+# List all test releases
+gh release list | grep test
+
+# Delete old test releases (used for CI/CD debugging)
+gh release delete v0.2.0-test.1 --yes
+gh release delete v0.2.0-test.2 --yes
+
+# Delete associated tags
+git push --delete origin v0.2.0-test.1
+git push --delete origin v0.2.0-test.2
+```
+
+### Clean Up Beta Releases (Optional)
+```bash
+# Strategy: Keep latest beta for reference, delete earlier iterations
+
+# If you promoted beta.2 to production:
+# - Keep v0.3.0-beta.2 (shows what went to production)
+# - Delete v0.3.0-beta.1 (superseded)
+
+gh release delete v0.3.0-beta.1 --yes
+git push --delete origin v0.3.0-beta.1
+```
+
+**Note:** Some teams keep all betas for historical reference. Your choice.
+
+### Archive Working Documents
+```bash
+# Archive release working documents
+mkdir -p tbd/archive/
+mv tbd/r3 tbd/archive/r3-release-$(date +%Y%m%d)
+
+git add tbd/
+git commit -m "chore: archive R3 release documentation"
+git push origin main
+```
 
 ## Why This Process Design
 
@@ -233,6 +304,70 @@ make publish-prod VERSION=0.3.0
 - **No GitHub exceptions**: Avoids complex bot permissions
 - **Controlled releases**: Manual gate for production deployment
 - **Low frequency**: ~1 production release per week makes manual feasible
+
+## Incremental Releases (Patch Versions)
+
+### When to Use Patch Releases
+
+**Patch versions (0.2.0 → 0.2.1 → 0.2.2):**
+- Bug fixes only (no new features)
+- Security patches
+- Minor improvements
+- No breaking changes
+
+**Examples from R2:**
+- Fix Windows-specific UI issue
+- Update bundled binary with security fix
+- Improve error message clarity
+- Fix Intel Mac compatibility issue
+
+### Process for Incremental Release
+
+**⚠️ Important:** Changing version field **invalidates Cargo cache**
+
+**Impact:**
+- First build: ~15-20 minutes (cache invalidated)
+- Subsequent builds: ~3-5 minutes (cache restored)
+
+**Complete Process:**
+
+**Step 1: Update Version**
+```bash
+# Update in all 3 files:
+# Cargo.toml, src-tauri/Cargo.toml, src-tauri/tauri.conf.json
+version = "0.2.1"
+
+git add Cargo.toml src-tauri/Cargo.toml src-tauri/tauri.conf.json
+git commit -m "chore: bump version to 0.2.1"
+git push origin main
+```
+
+**Step 2: Follow Beta → Production Flow**
+```bash
+# Create beta (expect 15-20 min due to cache invalidation)
+git tag v0.2.1-beta.1
+git push origin v0.2.1-beta.1
+
+# Wait for build
+gh run watch
+
+# Test artifacts
+
+# Edit beta release notes
+
+# Promote when ready
+make promote-beta FROM=0.2.1-beta.1 TO=0.2.1
+
+# Edit production release notes
+
+# Publish
+make publish-prod VERSION=0.2.1
+```
+
+**Subsequent patches (0.2.1 → 0.2.2):**
+- Same process
+- First build slow (cache invalidated)
+- All 0.2.x builds can't share cache (different version in Cargo.lock)
 
 ## File Standardization During Promotion
 
@@ -300,6 +435,117 @@ make publish-prod VERSION=0.3.0
 gh release list --limit 10
 ```
 
+## Troubleshooting Common Issues
+
+### Architecture Mismatch (Intel Mac)
+
+**Symptom:** "Bad CPU type in executable" errors on Intel Macs
+
+**Cause:** Binary dependencies are ARM64 instead of x86_64
+
+**Diagnosis:**
+```bash
+# On affected Intel Mac:
+file /Applications/Barqly\ Vault.app/Contents/Resources/bin/darwin/age
+# Should show: x86_64
+# If shows: arm64 ← WRONG
+```
+
+**Fix:**
+- Verify `TARGET_ARCH` environment variable in workflow
+- Check architecture verification step catches mismatch
+- Rebuild if binaries wrong architecture
+
+### Notarization Failure
+
+**Symptom:** Build succeeds but "Status = Invalid" from Apple
+
+**Diagnosis:**
+```bash
+# Check notarization logs in CI output
+gh run view <run-id> --log | grep "Status = Invalid" -A50
+
+# Look for specific file paths in "issues" array
+# Common: Python.framework/Python, _cffi_backend.so
+```
+
+**Common Causes:**
+1. **Unsigned files in ykman-bundle** - All 60+ Mach-O files must be signed
+2. **Python.framework symlinks broken** - Tauri bug #13219 dereferences symlinks
+3. **ykman missing entitlements** - PyInstaller needs specific entitlements
+
+**Fix:**
+- Verify symlink restoration step ran
+- Check all files signed (build logs show "Signed X files")
+- Verify entitlements present: `codesign -d --entitlements - ykman`
+
+### ykman Silent Hang (Intel Mac, macOS 15.6)
+
+**Symptom:** ykman commands hang, no error in app logs
+
+**Diagnosis:**
+```bash
+# On Intel Mac, check Console.app for:
+# "Library Validation failed... mapped file has no cdhash"
+```
+
+**Cause:** macOS 15.6 Library Validation blocks PyInstaller temp files
+
+**Fix:** Verify ykman signed with entitlements:
+```bash
+codesign -d --entitlements - ykman-bundle/ykman
+# Must show:
+# - com.apple.security.cs.allow-unsigned-executable-memory
+# - com.apple.security.cs.disable-library-validation
+```
+
+**Note:** macOS 15.7+ is more lenient, issue specific to 15.6
+
+### Binary Download Checksum Mismatch
+
+**Symptom:** fetch-binaries.sh fails with checksum mismatch
+
+**Cause:** Old binaries cached, new checksums in binary-dependencies.json
+
+**Fix:**
+```bash
+# Clear GitHub Actions cache
+gh api repos/Barqly/barqly-vault/actions/caches \
+  --jq '.actions_caches[] | select(.key | startswith("binaries-")) | .id' | \
+  while read cache_id; do
+    gh api -X DELETE repos/Barqly/barqly-vault/actions/caches/$cache_id
+  done
+
+# Or: workflow will fail fast and retry with fresh download
+```
+
+### Emergency Procedures
+
+**Rollback Production Release:**
+```bash
+# If critical bug found after publishing
+# Option A: Unpublish, fix, republish
+gh release edit v0.3.0 --draft=true
+# Fix issues, create new beta, test thoroughly, republish
+
+# Option B: Emergency patch release
+# Jump directly to v0.3.1 with fix
+# Document issue in release notes
+```
+
+**Manual Notarization (If CI Repeatedly Fails):**
+```bash
+# As last resort, notarize locally:
+# 1. Download .app from CI artifacts
+# 2. Sign locally with proper tools
+# 3. Submit to Apple manually
+# 4. Staple ticket
+# 5. Create DMG
+# 6. Upload to release
+
+# Note: Rarely needed, CI should handle this
+```
+
 ## Security & Compliance Notes
 
 - **Branch Protection**: Main branch requires PR reviews and status checks
@@ -307,6 +553,8 @@ gh release list --limit 10
 - **Code Signing**: All macOS builds are notarized via Apple Developer Program
 - **Checksums**: SHA256 verification for all release artifacts
 - **Documentation**: Automatic updates maintain consistency across all platforms
+- **Entitlements**: PyInstaller binaries include required macOS entitlements
+- **Architecture Verification**: Automated checks prevent platform mismatches
 
 ---
 
