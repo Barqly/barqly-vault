@@ -18,11 +18,18 @@
 //! This approach ensures binaries are found regardless of installation method
 //! while following platform-specific packaging standards.
 
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::RwLock;
 use tauri::Manager;
 use tracing::{debug, info, warn};
 
 use super::super::super::key_management::yubikey::infrastructure::pty::app_handle::get_app_handle;
+
+/// Memory cache for resolved binary paths (avoids repeated disk I/O)
+static BINARY_PATH_CACHE: Lazy<RwLock<HashMap<String, PathBuf>>> =
+    Lazy::new(|| RwLock::new(HashMap::new()));
 
 /// Platform-specific directory name for binaries
 fn get_platform_dir() -> &'static str {
@@ -40,7 +47,12 @@ fn get_platform_dir() -> &'static str {
 /// Platform-specific binary extension
 fn get_binary_extension(base_name: &str) -> String {
     if cfg!(target_os = "windows") {
-        format!("{}.exe", base_name)
+        // Special case: ykman uses .bat wrapper on Windows (PyInstaller bundle)
+        if base_name == "ykman" {
+            format!("{}.bat", base_name)
+        } else {
+            format!("{}.exe", base_name)
+        }
     } else {
         base_name.to_string()
     }
@@ -58,6 +70,20 @@ fn get_binary_extension(base_name: &str) -> String {
 /// * `Some(PathBuf)` - Path to the binary if found
 /// * `None` - If binary not found in any location
 pub fn resolve_bundled_binary(binary_name: &str) -> Option<PathBuf> {
+    // Check cache first (avoids repeated disk I/O and log noise)
+    {
+        let cache = BINARY_PATH_CACHE.read().unwrap();
+        if let Some(cached_path) = cache.get(binary_name) {
+            debug!(
+                "Using cached path for '{}': {}",
+                binary_name,
+                cached_path.display()
+            );
+            return Some(cached_path.clone());
+        }
+    }
+
+    // Not cached - perform full resolution
     let os_dir = get_platform_dir();
     let filename = get_binary_extension(binary_name);
     let mut candidates = Vec::new();
@@ -161,10 +187,17 @@ pub fn resolve_bundled_binary(binary_name: &str) -> Option<PathBuf> {
 
         if exists && is_file {
             info!(
-                "✅ FOUND binary '{}' at: {}",
+                "✅ FOUND binary '{}' at: {} (cached for future use)",
                 binary_name,
                 candidate.display()
             );
+
+            // Cache the resolved path
+            {
+                let mut cache = BINARY_PATH_CACHE.write().unwrap();
+                cache.insert(binary_name.to_string(), candidate.clone());
+            }
+
             return Some(candidate.clone());
         }
     }
