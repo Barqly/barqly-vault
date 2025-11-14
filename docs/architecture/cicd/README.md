@@ -108,10 +108,12 @@ DMG/MSI/AppImage with embedded binaries
 | Script | Purpose | Location |
 |--------|---------|----------|
 | `download-all-binaries.sh` | Download age/age-plugin for all platforms | `scripts/cicd/` |
-| `build-ykman-bundles.yml` | Build ykman for macOS/Linux/Windows | `.github/workflows/` |
-| `fetch-binaries.sh` | Fetch binaries from GitHub Release | `scripts/cicd/` (Phase 2.7) |
+| `build-ykman-bundles.yml` | Build ykman for all platforms (with entitlements) | `.github/workflows/` |
+| `build-age-plugin-yubikey-x86.yml` | Build Intel Mac age-plugin (upstream ARM-only) | `.github/workflows/` |
+| `fetch-binaries.sh` | Fetch binaries from GitHub Release (CI) | `scripts/cicd/` |
 | `promote-beta.sh` | Promote beta → production | `scripts/cicd/` |
-| `publish-production.sh` | Publish release + update docs | `scripts/cicd/` |
+| `publish-production.sh` | Publish release + auto-update downloads | `scripts/cicd/` |
+| `update-downloads.sh` | Fetch sizes/checksums, generate pages | `scripts/cicd/` |
 
 ---
 
@@ -132,9 +134,14 @@ DMG/MSI/AppImage with embedded binaries
 |-------|----------|
 | Build fails on test tag | Check `.github/workflows/release.yml` logs |
 | Binary not found in app | Verify `fetch-binaries.sh` ran in CI |
-| Notarization fails | Check Apple Developer secrets in GitHub |
+| Notarization fails | Check "Status = Invalid" logs for specific files. Common: unsigned .so files, broken Python.framework symlinks |
 | ykman build fails | Check platform dependencies in `build-ykman-bundles.yml` |
-| Checksums mismatch | Regenerate: `shasum -a 256 * > checksums.txt` |
+| Checksums mismatch | Old cache restored. Clear Actions cache or wait for fresh download |
+| "Bad CPU type" on Intel Mac | Architecture mismatch. Verify `TARGET_ARCH=intel` in workflow, check architecture verification step |
+| ykman hangs on Intel (macOS 15.6) | Library Validation issue. Verify entitlements: `codesign -d --entitlements - ykman` |
+| Python.framework signature invalid | Tauri bug #13219 - symlinks dereferenced. Verify symlink restoration step ran |
+
+**Detailed troubleshooting:** See [release-process.md#troubleshooting](./release-process.md#troubleshooting-common-issues)
 
 ---
 
