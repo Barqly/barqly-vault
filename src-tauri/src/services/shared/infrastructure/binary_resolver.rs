@@ -44,12 +44,12 @@ fn get_platform_dir() -> &'static str {
     }
 }
 
-/// Platform-specific binary extension
+/// Platform-specific binary extension and path
 fn get_binary_extension(base_name: &str) -> String {
     if cfg!(target_os = "windows") {
-        // Special case: ykman uses .bat wrapper on Windows (PyInstaller bundle)
+        // Special case: ykman is PyInstaller bundle - call exe directly to avoid CMD window flashing
         if base_name == "ykman" {
-            format!("{}.bat", base_name)
+            "ykman-bundle/ykman.exe".to_string()
         } else {
             format!("{}.exe", base_name)
         }
