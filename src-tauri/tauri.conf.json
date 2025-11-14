@@ -41,7 +41,9 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "bin",
+      "bin/darwin",
+      "bin/linux",
+      "bin/windows",
       "../LICENSES"
     ],
     "macOS": {
