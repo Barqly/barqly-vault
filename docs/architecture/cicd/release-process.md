@@ -217,9 +217,9 @@ make publish-prod VERSION=0.3.0
 5. Commits and pushes documentation changes to main branch
 6. Triggers automatic documentation deployment
 
-### Phase 5.5: Manual Steps Required (Human)
+### Phase 5.5: Manual Steps Required (Manager)
 
-**Critical:** These steps MUST be done by a human, cannot be automated.
+**Critical:** These steps MUST be done by a manager, cannot be automated.
 
 **Before Promotion - Edit Beta Release Notes:**
 1. Navigate to: https://github.com/Barqly/barqly-vault/releases
@@ -239,7 +239,7 @@ make publish-prod VERSION=0.3.0
 6. Save as draft (publish-prod command will publish it)
 
 **Why Manual:**
-- Release notes require human judgment and context
+- Release notes require manager judgment and context
 - Security notices need careful wording
 - Breaking changes need clear explanation
 - `generate-release-notes.sh` intentionally removed (was just placeholder)
@@ -276,7 +276,7 @@ git push --delete origin v0.3.0-beta.1
 
 **Note:** Some teams keep all betas for historical reference. Your choice.
 
-### Archive Working Documents
+### Archive Working Documents in tbd (gitignored folder, optional)
 ```bash
 # Archive release working documents
 mkdir -p tbd/archive/
@@ -549,7 +549,7 @@ gh release edit v0.3.0 --draft=true
 ## Security & Compliance Notes
 
 - **Branch Protection**: Main branch requires PR reviews and status checks
-- **Manual Gates**: Production publication requires human approval
+- **Manual Gates**: Production publication requires manager approval
 - **Code Signing**: All macOS builds are notarized via Apple Developer Program
 - **Checksums**: SHA256 verification for all release artifacts
 - **Documentation**: Automatic updates maintain consistency across all platforms

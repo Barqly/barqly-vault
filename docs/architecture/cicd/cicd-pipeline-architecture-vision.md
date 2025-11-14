@@ -1,9 +1,14 @@
-# CI/CD Pipeline Architecture for Barqly Vault
+# CI/CD Pipeline Architecture for Barqly Vault (VISION)
 
-**Created**: 2025-08-20  
-**Updated**: 2025-09-02  
-**Status**: Active Implementation  
+**Created**: 2025-08-20
+**Updated**: 2025-09-02
+**Status**: ⚠️ **ASPIRATIONAL - Not Fully Implemented**
+**Archived**: 2025-11-11 (Post-R2 documentation cleanup)
 **Author**: System Architect
+
+> **Note:** This document describes the ideal/aspirational CI/CD architecture. Many features described here are not yet implemented. For the **actual current implementation**, see:
+> - [release-process.md](./release-process.md) - What actually exists today
+> - [README.md](./README.md) - Quick reference for current workflows
 
 ## Executive Summary
 

@@ -145,6 +145,25 @@ DMG/MSI/AppImage with embedded binaries
 
 ---
 
+## 📌 Key Learnings from R2 Release
+
+**macOS Notarization:**
+- Python.framework symlinks must be restored after Tauri bundling (Tauri bug #13219)
+- All Mach-O files must be signed (~60 in ykman-bundle)
+- ykman requires entitlements for PyInstaller (allow-unsigned-executable-memory, disable-library-validation)
+
+**Intel Mac Support:**
+- age-plugin-yubikey upstream only provides ARM64 - must build x86_64 from source
+- TARGET_ARCH must be passed to fetch-binaries.sh (prevents runner arch confusion)
+- Architecture verification prevents deployment issues
+
+**Downloads Automation:**
+- update-downloads.sh now auto-fetches asset sizes/checksums from GitHub API
+- No more "TBD" placeholders
+- Fully automated for future releases
+
+---
+
 ## 📝 Release Frequency
 
 - **Alpha tags**: As needed (daily during development)
