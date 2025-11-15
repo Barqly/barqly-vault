@@ -4,9 +4,15 @@ mod decryption_helpers;
 
 use super::super::core::{PtyError, Result, run_age_plugin_yubikey};
 use crate::prelude::*;
-use decryption_helpers::run_age_decryption_pty;
 use std::fs;
 use std::path::Path;
+
+// Platform-specific imports
+#[cfg(target_os = "windows")]
+use decryption_helpers::run_age_decryption_pipes_windows;
+
+#[cfg(not(target_os = "windows"))]
+use decryption_helpers::run_age_decryption_pty;
 
 /// Decrypt data using age CLI with PTY for YubiKey interaction
 /// This function creates the necessary temporary files and handles the PTY interaction
@@ -70,7 +76,14 @@ pub fn decrypt_data_with_yubikey_pty(
         "Created temporary files for YubiKey decryption"
     );
 
-    // Run age CLI with PTY
+    // Run age CLI - platform-specific approach
+    // Windows: Use pipes with stderr monitoring (ConPTY doesn't forward stderr)
+    // macOS/Linux: Use PTY (works correctly)
+    #[cfg(target_os = "windows")]
+    let result =
+        run_age_decryption_pipes_windows(&temp_encrypted, &temp_identity, &temp_output, pin);
+
+    #[cfg(not(target_os = "windows"))]
     let result = run_age_decryption_pty(&temp_encrypted, &temp_identity, &temp_output, pin);
 
     // Clean up input files
