@@ -185,8 +185,12 @@ exec "$SCRIPT_DIR/ykman-bundle/ykman" "$@"
 EOF
   chmod +x "$BIN_DIR/$PLATFORM_DIR/ykman"
 else
-  # Windows: No wrapper needed (backend uses ykman-bundle/ykman.exe directly)
-  echo "Windows: ykman-bundle/ykman.exe will be called directly (no wrapper)"
+  # Windows wrapper
+  cat > "$BIN_DIR/$PLATFORM_DIR/ykman.bat" << 'EOF'
+@echo off
+set SCRIPT_DIR=%~dp0
+"%SCRIPT_DIR%ykman-bundle\ykman.exe" %*
+EOF
 fi
 
 echo -e "${GREEN}✓ ykman extracted and ready${NC}"
