@@ -157,3 +157,127 @@ pub fn decrypt_with_age_pty(
 
     Ok(())
 }
+
+// ============================================================================
+// TESTING: Pipes-based approach (no PTY) - Testing if this works on all platforms
+// TODO: If successful, this may replace PTY approach above
+// ============================================================================
+
+/// EXPERIMENTAL: Decrypt data using age CLI with stdin/stdout pipes (no PTY)
+/// Testing if we can eliminate PTY dependency and use simpler pipes approach
+#[instrument(skip(encrypted_data, pin))]
+pub fn decrypt_data_with_yubikey_pipes(
+    encrypted_data: &[u8],
+    serial: &str,
+    slot: u8,
+    recipient: &str,
+    identity_tag: &str,
+    pin: &str,
+) -> Result<Vec<u8>> {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    use std::sync::Arc;
+
+    info!(
+        serial = %redact_serial(serial),
+        slot = slot,
+        recipient = %redact_key(recipient),
+        data_size = encrypted_data.len(),
+        "TESTING: YubiKey decryption with pipes (no PTY)"
+    );
+
+    // Get age binary path
+    let age_path = super::super::core::get_age_path();
+
+    // Create temporary identity file
+    let temp_dir = std::env::temp_dir();
+    let temp_identity = temp_dir.join(format!("yubikey_identity_pipes_{}.txt", std::process::id()));
+
+    let identity_content = format!(
+        "#       Serial: {}, Slot: {}\n#   PIN policy: cached\n# Touch policy: cached\n#    Recipient: {}\n{}\n",
+        serial, slot, recipient, identity_tag
+    );
+
+    fs::write(&temp_identity, &identity_content).map_err(|e| {
+        error!(error = %e, "Failed to write identity file");
+        PtyError::Io(e)
+    })?;
+
+    // Set up PATH for plugin discovery
+    let plugin_dir = age_path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let current_path = std::env::var("PATH").unwrap_or_default();
+    let paths = std::env::split_paths(&current_path)
+        .chain(std::iter::once(plugin_dir.to_path_buf()));
+    let new_path = std::env::join_paths(paths)
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_| current_path);
+
+    // Spawn age CLI with pipes (similar to encryption pattern)
+    let mut child = Command::new(&age_path)
+        .arg("-d")
+        .arg("-i")
+        .arg(temp_identity.to_str().unwrap())
+        .env("PATH", new_path)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| {
+            let _ = fs::remove_file(&temp_identity);
+            error!(error = %e, "Failed to spawn age CLI");
+            PtyError::PtyOperation(format!("Failed to spawn age: {e}"))
+        })?;
+
+    // Write encrypted data to stdin in separate thread (prevent deadlock)
+    let stdin = child.stdin.take().ok_or_else(|| {
+        let _ = fs::remove_file(&temp_identity);
+        PtyError::PtyOperation("Failed to get stdin".to_string())
+    })?;
+
+    let data_arc = Arc::new(encrypted_data.to_vec());
+    let data_for_thread = Arc::clone(&data_arc);
+
+    let stdin_thread = std::thread::spawn(move || -> Result<()> {
+        let mut stdin = stdin;
+        stdin.write_all(&data_for_thread).map_err(|e| {
+            error!(error = %e, "Failed to write to age stdin");
+            PtyError::Io(e)
+        })?;
+        drop(stdin);
+        Ok(())
+    });
+
+    // Read output while stdin writes concurrently
+    let output = child.wait_with_output().map_err(|e| {
+        let _ = fs::remove_file(&temp_identity);
+        error!(error = %e, "Failed to wait for age process");
+        PtyError::PtyOperation(format!("Age process failed: {e}"))
+    })?;
+
+    // Clean up identity file
+    let _ = fs::remove_file(&temp_identity);
+
+    // Ensure stdin thread completed
+    stdin_thread
+        .join()
+        .map_err(|_| PtyError::PtyOperation("Stdin thread panicked".to_string()))?
+        .map_err(|e| {
+            error!(error = ?e, "Stdin thread failed");
+            e
+        })?;
+
+    // Check success
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        error!(stderr = %stderr, "Age decryption failed");
+        return Err(PtyError::PtyOperation(format!("Decryption failed: {}", stderr)));
+    }
+
+    debug!(
+        encrypted_size = encrypted_data.len(),
+        decrypted_size = output.stdout.len(),
+        "TESTING: Pipes-based decryption succeeded!"
+    );
+
+    Ok(output.stdout)
+}
