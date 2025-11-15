@@ -175,7 +175,7 @@ pub fn run_age_plugin_yubikey(
                         || line.contains("PIN for")
                     {
                         let _ = tx_reader.send(PtyState::WaitingForPin);
-                    } else if line.contains("Touch your YubiKey") || line.contains("touch") {
+                    } else if super::yubikey_prompt_patterns::is_touch_prompt(line) {
                         let _ = tx_reader.send(PtyState::WaitingForTouch);
                     } else if line.contains("AGE-PLUGIN-YUBIKEY-") {
                         // Identity tag found - this is the completion signal for generation

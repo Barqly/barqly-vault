@@ -4,6 +4,7 @@ pub mod age_ops;
 pub mod app_handle;
 pub mod core;
 pub mod ykman_ops;
+pub mod yubikey_prompt_patterns;
 
 pub use age_ops::{decrypt_with_age_pty, generate_age_identity_pty};
 pub use core::{run_age_plugin_yubikey, run_ykman_command};

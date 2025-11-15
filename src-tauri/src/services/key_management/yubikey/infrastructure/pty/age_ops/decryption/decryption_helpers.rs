@@ -3,6 +3,7 @@ use super::super::super::core::{
     COMMAND_TIMEOUT, PIN_INJECT_DELAY, PtyError, PtyState, Result, get_age_path,
 };
 use crate::prelude::*;
+use crate::services::key_management::yubikey::infrastructure::pty::yubikey_prompt_patterns;
 use std::path::Path;
 
 /// Internal function to run age decryption with PTY
@@ -114,11 +115,7 @@ pub(super) fn run_age_decryption_pty(
                                 {
                                     info!("🔐 PIN prompt detected");
                                     let _ = tx_reader.send(PtyState::WaitingForPin);
-                                } else if line.contains("Please touch")
-                                    || line.contains("Touch your")
-                                    || line.contains("👆")
-                                    || line.contains("touch")
-                                {
+                                } else if yubikey_prompt_patterns::is_touch_prompt(&line) {
                                     info!("👆 Touch prompt detected");
                                     let _ = tx_reader.send(PtyState::WaitingForTouch);
                                 } else if line.contains("error")
@@ -141,11 +138,7 @@ pub(super) fn run_age_decryption_pty(
                             {
                                 info!("🔐 PIN prompt detected (partial)");
                                 let _ = tx_reader.send(PtyState::WaitingForPin);
-                            } else if remaining.contains("Please touch")
-                                || remaining.contains("Touch your")
-                                || remaining.contains("👆")
-                                || remaining.contains("touch")
-                            {
+                            } else if yubikey_prompt_patterns::is_touch_prompt(remaining) {
                                 info!("👆 Touch prompt detected (partial)");
                                 let _ = tx_reader.send(PtyState::WaitingForTouch);
                             }
