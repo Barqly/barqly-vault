@@ -7,11 +7,13 @@ use crate::prelude::*;
 use std::fs;
 use std::path::Path;
 
+// TODO: Cleanup after Windows PTY testing
+// If PTY works on Windows, remove the commented pipes implementation entirely
 // Platform-specific imports
-#[cfg(target_os = "windows")]
-use decryption_helpers::run_age_decryption_pipes_windows;
+// #[cfg(target_os = "windows")]
+// use decryption_helpers::run_age_decryption_pipes_windows;
 
-#[cfg(not(target_os = "windows"))]
+// Use PTY on all platforms (testing if PTY works on Windows with CREATE_NO_WINDOW on other operations)
 use decryption_helpers::run_age_decryption_pty;
 
 /// Decrypt data using age CLI with PTY for YubiKey interaction
@@ -76,14 +78,17 @@ pub fn decrypt_data_with_yubikey_pty(
         "Created temporary files for YubiKey decryption"
     );
 
-    // Run age CLI - platform-specific approach
-    // Windows: Use pipes with stderr monitoring (ConPTY doesn't forward stderr)
-    // macOS/Linux: Use PTY (works correctly)
-    #[cfg(target_os = "windows")]
-    let result =
-        run_age_decryption_pipes_windows(&temp_encrypted, &temp_identity, &temp_output, pin);
+    // TODO: Cleanup after Windows PTY testing
+    // If PTY works on Windows, remove the commented pipes code below and the pipes function entirely
+    // Run age CLI - Testing PTY approach on all platforms
+    // Previous Windows approach: Used pipes with stderr monitoring because ConPTY didn't forward stderr
+    // Problem: CREATE_NO_WINDOW breaks pipes (stderr.read() returns EOF immediately)
+    // Testing: PTY on Windows with CREATE_NO_WINDOW on other operations (ykman, etc.) but not PTY itself
+    // #[cfg(target_os = "windows")]
+    // let result =
+    //     run_age_decryption_pipes_windows(&temp_encrypted, &temp_identity, &temp_output, pin);
 
-    #[cfg(not(target_os = "windows"))]
+    // Use PTY on all platforms (including Windows for testing)
     let result = run_age_decryption_pty(&temp_encrypted, &temp_identity, &temp_output, pin);
 
     // Clean up input files
