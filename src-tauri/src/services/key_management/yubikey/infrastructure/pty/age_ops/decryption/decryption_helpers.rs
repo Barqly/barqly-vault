@@ -318,9 +318,15 @@ pub(super) fn run_age_decryption_pty_windows(
         .try_clone_reader()
         .map_err(|e| PtyError::PtyOperation(format!("Failed to clone reader: {e}")))?;
 
+    // Clone writer for reader thread to respond to terminal queries (ConPTY handshake)
+    let mut reader_writer = pair
+        .master
+        .try_clone_writer()
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to clone writer for reader: {e}")))?;
+
     let tx_reader = tx.clone();
     thread::spawn(move || {
-        use std::io::Read;
+        use std::io::{Read, Write};
 
         let mut raw_buffer = [0u8; 4096]; // Larger buffer for Windows
         let mut accumulated_output = String::new();
@@ -350,6 +356,23 @@ pub(super) fn run_age_decryption_pty_windows(
                         accumulated_output.push_str(text);
                         accumulated_raw.extend_from_slice(raw_data);
                         debug!(raw_text = %text, "Raw PTY text before stripping (Windows)");
+
+                        // CRITICAL: Respond to ConPTY terminal queries to unblock state machine
+                        // ESC[6n = Device Status Report (cursor position query)
+                        // ConPTY hangs waiting for response if we don't answer!
+                        if text.contains("\x1b[6n") {
+                            info!(
+                                "Device Status Report (ESC[6n) detected, responding to unblock ConPTY (Windows)"
+                            );
+                            // Respond with cursor position: row 1, col 1
+                            if let Err(e) = write!(reader_writer, "\x1b[1;1R") {
+                                debug!(error = %e, "Failed to write DSR response");
+                            } else if let Err(e) = reader_writer.flush() {
+                                debug!(error = %e, "Failed to flush DSR response");
+                            } else {
+                                debug!("Sent DSR response (ESC[1;1R) to unblock ConPTY");
+                            }
+                        }
 
                         // Try stripping ANSI sequences to extract clean text
                         let stripped_bytes = strip_ansi_escapes::strip(&accumulated_raw);
