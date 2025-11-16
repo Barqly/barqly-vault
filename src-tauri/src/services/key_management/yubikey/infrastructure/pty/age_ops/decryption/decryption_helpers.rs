@@ -324,33 +324,47 @@ pub(super) fn run_age_decryption_pipes_windows(
 
     let tx_stderr = tx.clone();
     thread::spawn(move || {
-        let reader = BufReader::new(stderr);
-        for line in reader.lines() {
-            match line {
-                Ok(line) => {
-                    if !line.is_empty() {
-                        debug!(stderr_line = %line, "Age CLI stderr");
+        use std::io::Read;
 
-                        // Pattern matching for age CLI states
-                        if line.contains("Enter PIN")
-                            || line.contains("PIN:")
-                            || line.contains("PIN for")
+        let mut stderr = stderr;
+        let mut buffer = [0u8; 1024];
+        let mut accumulated = String::new();
+
+        loop {
+            match stderr.read(&mut buffer) {
+                Ok(0) => {
+                    debug!("Stderr reached EOF");
+                    break;
+                }
+                Ok(n) => {
+                    // Convert bytes to string and accumulate
+                    if let Ok(text) = std::str::from_utf8(&buffer[..n]) {
+                        accumulated.push_str(text);
+                        debug!(stderr_chunk = %text, chunk_size = n, "Raw stderr chunk received");
+
+                        // Pattern matching on accumulated text (doesn't require complete lines)
+                        if accumulated.contains("Enter PIN")
+                            || accumulated.contains("PIN:")
+                            || accumulated.contains("PIN for")
                         {
                             info!("🔐 PIN prompt detected (stderr)");
                             let _ = tx_stderr.send(PtyState::WaitingForPin);
-                        } else if line.contains("waiting on")
-                            || yubikey_prompt_patterns::is_touch_prompt(&line)
+                        } else if accumulated.contains("waiting on")
+                            || yubikey_prompt_patterns::is_touch_prompt(&accumulated)
                         {
-                            info!("👆 Touch prompt detected (stderr): {}", line);
+                            info!("👆 Touch prompt detected (stderr): {}", accumulated.trim());
                             let _ = tx_stderr.send(PtyState::WaitingForTouch);
-                        } else if line.contains("error")
-                            || line.contains("failed")
-                            || line.contains("Error")
-                            || line.contains("Failed")
+                        } else if accumulated.contains("error")
+                            || accumulated.contains("failed")
+                            || accumulated.contains("Error")
+                            || accumulated.contains("Failed")
                         {
-                            error!(error_line = %line, "Age CLI error detected (stderr)");
-                            let _ = tx_stderr.send(PtyState::Failed(line));
+                            error!(error_text = %accumulated.trim(), "Age CLI error detected (stderr)");
+                            let _ =
+                                tx_stderr.send(PtyState::Failed(accumulated.trim().to_string()));
                         }
+                    } else {
+                        debug!(bytes = n, "Non-UTF8 data in stderr, skipping");
                     }
                 }
                 Err(e) => {
@@ -359,7 +373,10 @@ pub(super) fn run_age_decryption_pipes_windows(
                 }
             }
         }
-        debug!("Stderr reader thread exiting");
+        debug!(
+            accumulated_length = accumulated.len(),
+            "Stderr reader thread exiting"
+        );
     });
 
     // Stdout reader thread - just consume output (actual decrypted data goes to file)
