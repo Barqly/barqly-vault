@@ -10,6 +10,13 @@ use std::thread;
 use std::time::{Duration, Instant};
 use thiserror::Error;
 
+// Windows-specific process creation flags to hide console windows
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 #[derive(Debug, Error)]
 pub enum PtyError {
     #[error("PTY operation failed: {0}")]
@@ -289,7 +296,13 @@ pub fn run_ykman_command(args: Vec<String>, pin: Option<&str>) -> Result<String>
         run_ykman_pty(args, pin)?
     } else {
         // Use simple command execution for non-interactive commands
-        let output = Command::new(get_ykman_path()).args(args).output()?;
+        let mut cmd = Command::new(get_ykman_path());
+        cmd.args(args);
+
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
+
+        let output = cmd.output()?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);

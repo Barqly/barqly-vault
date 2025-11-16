@@ -12,6 +12,13 @@ use crate::services::key_management::yubikey::{
 use async_trait::async_trait;
 use std::time::Duration;
 
+// Windows-specific process creation flags to hide console windows
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /// Device service trait for YubiKey hardware operations
 #[async_trait]
 pub trait DeviceService: Send + Sync + std::fmt::Debug {
@@ -70,8 +77,13 @@ impl YkmanDeviceService {
         // Security: Don't log args - may contain PIN/PUK
         debug!("Running ykman command with {} args", args.len());
 
-        let output = tokio::process::Command::new(&self.ykman_path)
-            .args(&args)
+        let mut cmd = tokio::process::Command::new(&self.ykman_path);
+        cmd.args(&args);
+
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
+
+        let output = cmd
             .output()
             .await
             .map_err(|e| YubiKeyError::device(format!("Failed to run ykman: {}", e)))?;

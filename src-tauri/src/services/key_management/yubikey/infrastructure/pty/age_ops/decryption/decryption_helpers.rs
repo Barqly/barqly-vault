@@ -255,10 +255,13 @@ pub(super) fn run_age_decryption_pipes_windows(
     pin: &str,
 ) -> Result<()> {
     use std::io::{BufRead, BufReader, Write};
+    use std::os::windows::process::CommandExt;
     use std::process::{Command, Stdio};
     use std::sync::mpsc;
     use std::thread;
     use std::time::Instant;
+
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
 
     let age_path = get_age_path();
     debug!(age_path = %age_path.display(), "Using age binary (Windows pipes mode)");
@@ -296,6 +299,7 @@ pub(super) fn run_age_decryption_pipes_windows(
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .creation_flags(CREATE_NO_WINDOW)
         .spawn()
         .map_err(|e| {
             error!(error = %e, "Failed to spawn age CLI");

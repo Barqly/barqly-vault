@@ -2,6 +2,14 @@
 /// Handles identity generation, listing, and verification
 use super::super::core::{PtyError, Result, get_age_plugin_path, run_age_plugin_yubikey};
 use crate::prelude::*;
+use std::process::Command;
+
+// Windows-specific process creation flags to hide console windows
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 /// Generate age identity via PTY with YubiKey
 /// IMPORTANT: serial parameter ensures operation happens on correct YubiKey
@@ -101,7 +109,14 @@ pub fn list_yubikey_identities() -> Result<Vec<String>> {
 
     // Execute age-plugin-yubikey --list directly
     debug!(command = ?age_path, args = "--list", "Executing command");
-    let output_result = Command::new(&age_path).arg("--list").output();
+
+    let mut cmd = Command::new(&age_path);
+    cmd.arg("--list");
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let output_result = cmd.output();
 
     let output = match output_result {
         Ok(cmd_output) => {
@@ -163,19 +178,18 @@ pub fn list_yubikey_identities() -> Result<Vec<String>> {
 pub fn get_identity_for_serial(serial: &str) -> Result<String> {
     info!(serial = %redact_serial(serial), "Getting identity for YubiKey");
 
-    use std::process::Command;
-
     let age_path = get_age_plugin_path();
     debug!(command_path = %age_path.display(), "Running age-plugin-yubikey --identity");
 
-    let output = Command::new(&age_path)
-        .arg("--identity")
-        .arg("--serial")
-        .arg(serial)
-        .output()
-        .map_err(|e| {
-            PtyError::PtyOperation(format!("Failed to execute age-plugin-yubikey: {e}"))
-        })?;
+    let mut cmd = Command::new(&age_path);
+    cmd.arg("--identity").arg("--serial").arg(serial);
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let output = cmd.output().map_err(|e| {
+        PtyError::PtyOperation(format!("Failed to execute age-plugin-yubikey: {e}"))
+    })?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -231,19 +245,18 @@ pub fn get_identity_for_serial(serial: &str) -> Result<String> {
 /// Check if a specific YubiKey has an age identity by serial number
 #[instrument]
 pub fn check_yubikey_has_identity(serial: &str) -> Result<Option<String>> {
-    use std::process::Command;
-
     info!(serial = %redact_serial(serial), "Checking if YubiKey has an identity");
 
     let age_path = get_age_plugin_path();
 
     // Run age-plugin-yubikey --identity --serial <serial>
-    let output = Command::new(&age_path)
-        .arg("--identity")
-        .arg("--serial")
-        .arg(serial)
-        .output()
-        .map_err(PtyError::Io)?;
+    let mut cmd = Command::new(&age_path);
+    cmd.arg("--identity").arg("--serial").arg(serial);
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let output = cmd.output().map_err(PtyError::Io)?;
 
     if !output.status.success() {
         // No identity for this serial

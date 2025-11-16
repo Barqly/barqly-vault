@@ -13,6 +13,13 @@ use age::Recipient;
 use std::io::Write;
 use std::str::FromStr;
 
+// Windows-specific process creation flags to hide console windows
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /// Multi-recipient encryption parameters
 #[derive(Debug, Clone)]
 pub struct MultiRecipientEncryptParams {
@@ -379,6 +386,9 @@ impl MultiRecipientCrypto {
         if let Some(pin_value) = pin {
             cmd.env("YUBIKEY_PIN", pin_value);
         }
+
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
 
         let mut child = cmd.spawn().map_err(|e| {
             CryptoError::DecryptionFailed(format!("Failed to spawn age process: {e}"))

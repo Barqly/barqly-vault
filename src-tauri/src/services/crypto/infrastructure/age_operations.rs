@@ -10,6 +10,13 @@ use super::{CryptoError, Result};
 use crate::prelude::*;
 use crate::services::key_management::yubikey::infrastructure::pty::core::get_age_path;
 
+// Windows-specific process creation flags to hide console windows
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /// A keypair containing both public and private keys
 pub struct KeyPair {
     pub public_key: PublicKey,
@@ -320,21 +327,24 @@ pub fn encrypt_data_multi_recipient_cli(data: &[u8], recipients: &[PublicKey]) -
     );
 
     // Spawn age command with stdin/stdout pipes and updated PATH
-    let mut child = Command::new(&age_path)
-        .args(&args)
+    let mut cmd = Command::new(&age_path);
+    cmd.args(&args)
         .env("PATH", new_path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| {
-            error!(
-                error = %e,
-                age_path = %age_path.display(),
-                "Failed to spawn age CLI process"
-            );
-            CryptoError::EncryptionFailed(format!("Failed to start age CLI: {e}"))
-        })?;
+        .stderr(Stdio::piped());
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let mut child = cmd.spawn().map_err(|e| {
+        error!(
+            error = %e,
+            age_path = %age_path.display(),
+            "Failed to spawn age CLI process"
+        );
+        CryptoError::EncryptionFailed(format!("Failed to start age CLI: {e}"))
+    })?;
 
     // Write data to stdin in a separate thread to avoid deadlock
     // This prevents the issue where writing > 65KB to stdin blocks while
@@ -550,21 +560,24 @@ pub fn decrypt_data_cli(encrypted_data: &[u8]) -> Result<Vec<u8>> {
     );
 
     // Spawn age command with stdin/stdout pipes and updated PATH
-    let mut child = Command::new(&age_path)
-        .args(&args)
+    let mut cmd = Command::new(&age_path);
+    cmd.args(&args)
         .env("PATH", new_path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| {
-            error!(
-                error = %e,
-                age_path = %age_path.display(),
-                "Failed to spawn age CLI process for decryption"
-            );
-            CryptoError::DecryptionFailed(format!("Failed to start age CLI: {e}"))
-        })?;
+        .stderr(Stdio::piped());
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let mut child = cmd.spawn().map_err(|e| {
+        error!(
+            error = %e,
+            age_path = %age_path.display(),
+            "Failed to spawn age CLI process for decryption"
+        );
+        CryptoError::DecryptionFailed(format!("Failed to start age CLI: {e}"))
+    })?;
 
     // Write encrypted data to stdin in a separate thread to avoid deadlock
     // This prevents the issue where writing > 65KB to stdin blocks while

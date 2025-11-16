@@ -16,6 +16,13 @@ use tempfile::NamedTempFile;
 use tokio::fs;
 use tokio::process::Command;
 
+// Windows-specific process creation flags to hide console windows
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /// Identity service trait for age-plugin-yubikey operations
 #[async_trait]
 pub trait IdentityService: Send + Sync + std::fmt::Debug {
@@ -108,7 +115,13 @@ impl AgePluginIdentityService {
         ];
 
         for path in common_paths {
-            if Command::new(path).arg("--help").output().await.is_ok() {
+            let mut cmd = Command::new(path);
+            cmd.arg("--help");
+
+            #[cfg(target_os = "windows")]
+            cmd.creation_flags(CREATE_NO_WINDOW);
+
+            if cmd.output().await.is_ok() {
                 debug!("Found age-plugin-yubikey at: {}", path);
                 return Some(PathBuf::from(path));
             }
@@ -150,6 +163,9 @@ impl AgePluginIdentityService {
         }
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
+
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
 
         let mut child = cmd.spawn().map_err(|e| {
             YubiKeyError::age_plugin(format!("Failed to spawn age-plugin-yubikey: {}", e))

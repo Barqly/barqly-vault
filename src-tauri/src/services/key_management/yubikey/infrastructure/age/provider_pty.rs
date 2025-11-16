@@ -24,6 +24,13 @@ use tokio::fs;
 use tokio::process::Command;
 use tokio::time::timeout;
 
+// Windows-specific process creation flags to hide console windows
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 /// Default timeout for age-plugin-yubikey operations
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -58,12 +65,13 @@ impl AgePluginPtyProvider {
     /// Execute plugin with arguments
     async fn execute_plugin(&self, args: &[&str]) -> YubiKeyResult<(String, String)> {
         let output = timeout(self.timeout, async {
-            Command::new(&self.plugin_path)
-                .args(args)
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .output()
-                .await
+            let mut cmd = Command::new(&self.plugin_path);
+            cmd.args(args).stdout(Stdio::piped()).stderr(Stdio::piped());
+
+            #[cfg(target_os = "windows")]
+            cmd.creation_flags(CREATE_NO_WINDOW);
+
+            cmd.output().await
         })
         .await
         .map_err(|_| YubiKeyError::age_plugin("age-plugin-yubikey operation timed out"))?
@@ -350,12 +358,15 @@ impl YubiIdentityProvider for AgePluginPtyProvider {
 
         let age_path = get_age_path();
         let output = timeout(INTERACTIVE_TIMEOUT, async {
-            Command::new(&age_path)
-                .args(["--decrypt", &temp_path.to_string_lossy()])
+            let mut cmd = Command::new(&age_path);
+            cmd.args(["--decrypt", &temp_path.to_string_lossy()])
                 .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .output()
-                .await
+                .stderr(Stdio::piped());
+
+            #[cfg(target_os = "windows")]
+            cmd.creation_flags(CREATE_NO_WINDOW);
+
+            cmd.output().await
         })
         .await
         .map_err(|_| YubiKeyError::age_plugin("age decryption operation timed out"))?
