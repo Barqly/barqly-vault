@@ -288,6 +288,229 @@ pub fn run_age_plugin_yubikey(
     Ok(result)
 }
 
+// ============================================================================
+// Windows-Specific Implementation with DSR Response and CRLF
+// ============================================================================
+// NOTE: Windows ConPTY requires:
+// 1. DSR response (ESC[1;1R) when it sends ESC[6n query
+// 2. CRLF (\r\n) line endings for PIN input (canonical mode)
+// macOS/Linux use original function above (working correctly)
+// ============================================================================
+
+/// Windows-specific: Run age-plugin-yubikey with ConPTY DSR handling and CRLF
+#[cfg(target_os = "windows")]
+pub fn run_age_plugin_yubikey_windows(
+    args: Vec<String>,
+    pin: Option<&str>,
+    expect_touch: bool,
+) -> Result<String> {
+    use std::io::Read;
+
+    let age_path = get_age_plugin_path();
+    info!(
+        command_path = %age_path.display(),
+        args = %args.join(" "),
+        pin_provided = pin.is_some(),
+        expect_touch = expect_touch,
+        "Starting age-plugin-yubikey command (Windows with DSR/CRLF)"
+    );
+
+    let pty_system = native_pty_system();
+    let pair = pty_system
+        .openpty(PtySize {
+            rows: 24,
+            cols: 80,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to open PTY: {e}")))?;
+
+    let age_plugin_path = age_path.to_str().unwrap();
+    debug!(command = %age_plugin_path, "Building PTY command (Windows)");
+
+    let mut cmd = CommandBuilder::new(age_plugin_path);
+    for arg in &args {
+        debug!(arg = %arg, "Adding command argument");
+        cmd.arg(arg);
+    }
+
+    debug!("Spawning PTY command (Windows)");
+    let mut child = pair.slave.spawn_command(cmd).map_err(|e| {
+        error!(error = %e, "Failed to spawn age-plugin-yubikey");
+        PtyError::PtyOperation(format!("Failed to spawn command: {e}"))
+    })?;
+
+    let (tx, rx) = mpsc::channel::<PtyState>();
+
+    // Reader thread with raw read for DSR detection and ANSI stripping
+    let reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to clone reader: {e}")))?;
+
+    let tx_reader = tx.clone();
+    thread::spawn(move || {
+        let mut reader = reader;
+        let mut raw_buffer = [0u8; 4096];
+        let mut accumulated_output = String::new();
+        let mut accumulated_raw = Vec::new();
+        let mut full_output = String::new();
+
+        loop {
+            match reader.read(&mut raw_buffer) {
+                Ok(0) => break,
+                Ok(n) => {
+                    let raw_data = &raw_buffer[..n];
+
+                    // Log raw bytes for Windows debugging
+                    debug!(
+                        raw_hex = ?raw_data.iter().map(|b| format!("{:02x}", b)).collect::<Vec<_>>(),
+                        raw_len = n,
+                        "Raw PTY bytes (Windows key gen)"
+                    );
+
+                    // Detect DSR query
+                    if raw_data.windows(4).any(|w| w == b"\x1b[6n") {
+                        debug!("Device Status Report query (ESC[6n) detected (Windows key gen)");
+                        let _ = tx_reader.send(PtyState::DeviceStatusReport);
+                    }
+
+                    if let Ok(text) = std::str::from_utf8(raw_data) {
+                        accumulated_output.push_str(text);
+                        accumulated_raw.extend_from_slice(raw_data);
+                        full_output.push_str(text);
+
+                        // Strip ANSI and check for prompts
+                        let stripped_bytes = strip_ansi_escapes::strip(&accumulated_raw);
+                        if let Ok(clean_text) = String::from_utf8(stripped_bytes) {
+                            let trimmed = clean_text.trim();
+                            if !trimmed.is_empty() {
+                                debug!(clean_text = %trimmed, "Stripped text (Windows key gen)");
+
+                                if trimmed.contains("Generating key") {
+                                    let _ = tx_reader.send(PtyState::GeneratingKey);
+                                } else if trimmed.contains("Enter PIN") || trimmed.contains("PIN:")
+                                {
+                                    let _ = tx_reader.send(PtyState::WaitingForPin);
+                                } else if super::yubikey_prompt_patterns::is_touch_prompt(trimmed) {
+                                    let _ = tx_reader.send(PtyState::WaitingForTouch);
+                                } else if trimmed.contains("AGE-PLUGIN-YUBIKEY-") {
+                                    debug!(identity_tag = %trimmed, "Found identity tag (Windows)");
+                                    let _ = tx_reader.send(PtyState::Complete(full_output.clone()));
+                                } else if trimmed.contains("error") || trimmed.contains("failed") {
+                                    let _ = tx_reader.send(PtyState::Failed(trimmed.to_string()));
+                                }
+                            }
+                        }
+                    }
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    thread::sleep(Duration::from_millis(50));
+                    continue;
+                }
+                Err(_) => break,
+            }
+        }
+
+        let _ = tx_reader.send(PtyState::Complete(full_output));
+    });
+
+    let mut writer = pair
+        .master
+        .take_writer()
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to get writer: {e}")))?;
+
+    let start = Instant::now();
+    let mut pin_sent = false;
+    let mut result = String::new();
+
+    loop {
+        if start.elapsed() > COMMAND_TIMEOUT {
+            let _ = child.kill();
+            return Err(PtyError::Timeout(COMMAND_TIMEOUT.as_secs()));
+        }
+
+        match rx.recv_timeout(Duration::from_millis(100)) {
+            Ok(state) => match state {
+                PtyState::DeviceStatusReport => {
+                    debug!("Responding to DSR query (Windows key gen)");
+                    write!(writer, "\x1b[1;1R")
+                        .map_err(|e| PtyError::PtyOperation(format!("Failed to send DSR: {e}")))?;
+                    writer
+                        .flush()
+                        .map_err(|e| PtyError::PtyOperation(format!("Failed to flush DSR: {e}")))?;
+                    debug!("Sent DSR response (Windows key gen)");
+                }
+                PtyState::GeneratingKey if pin.is_some() && !pin_sent => {
+                    info!(
+                        pin = %redact_pin(pin.unwrap()),
+                        pin_length = pin.unwrap().len(),
+                        "'Generating key' detected, injecting PIN (Windows)"
+                    );
+                    thread::sleep(PIN_INJECT_DELAY);
+                    // CRITICAL: Windows CRLF line ending
+                    write!(writer, "{}\r\n", pin.unwrap())
+                        .map_err(|e| PtyError::PtyOperation(format!("Failed to send PIN: {e}")))?;
+                    writer.flush()?;
+                    pin_sent = true;
+                    debug!("PIN sent for key generation (Windows CRLF)");
+                }
+                PtyState::WaitingForPin if pin.is_some() && !pin_sent => {
+                    info!(
+                        pin = %redact_pin(pin.unwrap()),
+                        pin_length = pin.unwrap().len(),
+                        "PIN prompt detected, injecting PIN (Windows)"
+                    );
+                    thread::sleep(PIN_INJECT_DELAY);
+                    // CRITICAL: Windows CRLF line ending
+                    write!(writer, "{}\r\n", pin.unwrap())
+                        .map_err(|e| PtyError::PtyOperation(format!("Failed to send PIN: {e}")))?;
+                    writer.flush()?;
+                    pin_sent = true;
+                    debug!("PIN sent successfully (Windows CRLF)");
+                }
+                PtyState::WaitingForTouch => {
+                    info!("Touch your YubiKey now... (Windows)");
+                    if expect_touch && start.elapsed() > TOUCH_TIMEOUT {
+                        let _ = child.kill();
+                        return Err(PtyError::TouchTimeout);
+                    }
+                }
+                PtyState::Complete(output) => {
+                    result = output;
+                    break;
+                }
+                PtyState::Failed(error) => {
+                    return Err(PtyError::PtyOperation(error));
+                }
+                _ => {}
+            },
+            Err(mpsc::RecvTimeoutError::Timeout) => match child.try_wait() {
+                Ok(Some(status)) => {
+                    if !status.success() {
+                        return Err(PtyError::PtyOperation(
+                            "Command failed (Windows)".to_string(),
+                        ));
+                    }
+                    break;
+                }
+                _ => continue,
+            },
+            Err(mpsc::RecvTimeoutError::Disconnected) => break,
+        }
+    }
+
+    let _ = child.wait();
+    info!(
+        result_length = result.len(),
+        "age-plugin-yubikey command completed (Windows)"
+    );
+    if result.is_empty() {
+        warn!(args = ?args, "age-plugin-yubikey returned empty result (Windows)");
+    }
+    Ok(result)
+}
+
 /// Run ykman command through PTY
 pub fn run_ykman_command(args: Vec<String>, pin: Option<&str>) -> Result<String> {
     // Security: No logging when PIN is in scope - maximum security
