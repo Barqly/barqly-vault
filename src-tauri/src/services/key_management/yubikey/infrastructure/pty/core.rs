@@ -47,6 +47,7 @@ pub enum PtyState {
     GeneratingKey, // Add this state for age-plugin-yubikey
     WaitingForTouch,
     TouchDetected,
+    DeviceStatusReport, // Windows ConPTY sends ESC[6n query, needs ESC[row;colR response
     Complete(String),
     Failed(String),
 }

@@ -345,6 +345,12 @@ pub(super) fn run_age_decryption_pty_windows(
                         "Raw PTY bytes (Windows)"
                     );
 
+                    // Detect Device Status Report query (ESC[6n) to signal main thread for response
+                    if raw_data.windows(4).any(|w| w == b"\x1b[6n") {
+                        debug!("Device Status Report query (ESC[6n) detected in PTY output");
+                        let _ = tx_reader.send(PtyState::DeviceStatusReport);
+                    }
+
                     // Convert to string and log before stripping
                     if let Ok(text) = std::str::from_utf8(raw_data) {
                         accumulated_output.push_str(text);
@@ -417,17 +423,6 @@ pub(super) fn run_age_decryption_pty_windows(
         .take_writer()
         .map_err(|e| PtyError::PtyOperation(format!("Failed to get writer: {e}")))?;
 
-    // CRITICAL: Proactively respond to expected Device Status Report (ESC[6n) query
-    // ConPTY will send this query and block if we don't respond
-    // Send cursor position response immediately to prevent blocking
-    info!("Sending proactive DSR response to prevent ConPTY blocking (Windows)");
-    write!(writer, "\x1b[1;1R")
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to write DSR response: {e}")))?;
-    writer
-        .flush()
-        .map_err(|e| PtyError::PtyOperation(format!("Failed to flush DSR response: {e}")))?;
-    debug!("Sent proactive cursor position response (ESC[1;1R) to ConPTY");
-
     let start = Instant::now();
     let mut pin_sent = false;
     let mut last_activity = Instant::now();
@@ -476,6 +471,16 @@ pub(super) fn run_age_decryption_pty_windows(
                     PtyState::WaitingForTouch => {
                         info!("👆 Please touch your YubiKey to complete decryption... (Windows)");
                         thread::sleep(std::time::Duration::from_millis(500));
+                    }
+                    PtyState::DeviceStatusReport => {
+                        debug!("Responding to Device Status Report query (ESC[6n)");
+                        write!(writer, "\x1b[1;1R").map_err(|e| {
+                            PtyError::PtyOperation(format!("Failed to send DSR response: {e}"))
+                        })?;
+                        writer.flush().map_err(|e| {
+                            PtyError::PtyOperation(format!("Failed to flush DSR response: {e}"))
+                        })?;
+                        debug!("Sent DSR response (ESC[1;1R) to unblock ConPTY");
                     }
                     PtyState::Failed(err) => {
                         warn!(error = %err, "Decryption failed (Windows)");
