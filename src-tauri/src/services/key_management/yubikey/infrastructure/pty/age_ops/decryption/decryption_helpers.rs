@@ -442,14 +442,17 @@ pub(super) fn run_age_decryption_pty_windows(
         if !pin_sent && start.elapsed() > std::time::Duration::from_millis(300) {
             info!("No PIN prompt detected after 300ms, injecting PIN (timing fallback - Windows)");
             thread::sleep(PIN_INJECT_DELAY);
-            writeln!(writer, "{}", pin)
-                .map_err(|e| PtyError::PtyOperation(format!("Failed to send PIN: {e}")))?;
+            // CRITICAL: Use \r\n (CRLF) for Windows console canonical mode
+            // ConPTY buffers stdin until it sees \r\n, not just \n
+            write!(writer, "{}\r\n", pin).map_err(|e| {
+                PtyError::PtyOperation(format!("Failed to send PIN with CRLF: {e}"))
+            })?;
             writer
                 .flush()
                 .map_err(|e| PtyError::PtyOperation(format!("Failed to flush: {e}")))?;
             pin_sent = true;
             last_activity = Instant::now();
-            debug!("PIN sent via timing fallback (Windows)");
+            debug!("PIN sent via timing fallback with CRLF (Windows)");
         }
 
         match rx.recv_timeout(std::time::Duration::from_millis(100)) {
@@ -459,14 +462,16 @@ pub(super) fn run_age_decryption_pty_windows(
                     PtyState::WaitingForPin if !pin_sent => {
                         info!("PIN prompt detected, injecting PIN (Windows)");
                         thread::sleep(PIN_INJECT_DELAY);
-                        writeln!(writer, "{}", pin).map_err(|e| {
-                            PtyError::PtyOperation(format!("Failed to send PIN: {e}"))
+                        // CRITICAL: Use \r\n (CRLF) for Windows console canonical mode
+                        // ConPTY buffers stdin until it sees \r\n, not just \n
+                        write!(writer, "{}\r\n", pin).map_err(|e| {
+                            PtyError::PtyOperation(format!("Failed to send PIN with CRLF: {e}"))
                         })?;
                         writer
                             .flush()
                             .map_err(|e| PtyError::PtyOperation(format!("Failed to flush: {e}")))?;
                         pin_sent = true;
-                        debug!("PIN sent successfully (Windows)");
+                        debug!("PIN sent successfully with CRLF (Windows)");
                     }
                     PtyState::WaitingForTouch => {
                         info!("👆 Please touch your YubiKey to complete decryption... (Windows)");
