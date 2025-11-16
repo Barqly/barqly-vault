@@ -352,40 +352,30 @@ pub(super) fn run_age_decryption_pty_windows(
                         debug!(raw_text = %text, "Raw PTY text before stripping (Windows)");
 
                         // Try stripping ANSI sequences to extract clean text
-                        match strip_ansi_escapes::strip(&accumulated_raw) {
-                            Ok(stripped_bytes) => {
-                                if let Ok(clean_text) = String::from_utf8(stripped_bytes) {
-                                    let trimmed = clean_text.trim();
-                                    if !trimmed.is_empty() {
-                                        debug!(clean_text = %trimmed, "Stripped text (Windows - after ANSI removal)");
+                        let stripped_bytes = strip_ansi_escapes::strip(&accumulated_raw);
+                        if let Ok(clean_text) = String::from_utf8(stripped_bytes) {
+                            let trimmed = clean_text.trim();
+                            if !trimmed.is_empty() {
+                                debug!(clean_text = %trimmed, "Stripped text (Windows - after ANSI removal)");
 
-                                        // Pattern matching on clean text
-                                        if trimmed.contains("Enter PIN")
-                                            || trimmed.contains("PIN:")
-                                            || trimmed.contains("PIN for")
-                                        {
-                                            info!("🔐 PIN prompt detected (after ANSI stripping)");
-                                            let _ = tx_reader.send(PtyState::WaitingForPin);
-                                        } else if yubikey_prompt_patterns::is_touch_prompt(trimmed)
-                                        {
-                                            info!(
-                                                "👆 Touch prompt detected (after ANSI stripping)"
-                                            );
-                                            let _ = tx_reader.send(PtyState::WaitingForTouch);
-                                        } else if trimmed.contains("error")
-                                            || trimmed.contains("failed")
-                                            || trimmed.contains("Error")
-                                            || trimmed.contains("Failed")
-                                        {
-                                            error!(error_line = %trimmed, "Age CLI error detected (Windows)");
-                                            let _ = tx_reader
-                                                .send(PtyState::Failed(trimmed.to_string()));
-                                        }
-                                    }
+                                // Pattern matching on clean text
+                                if trimmed.contains("Enter PIN")
+                                    || trimmed.contains("PIN:")
+                                    || trimmed.contains("PIN for")
+                                {
+                                    info!("🔐 PIN prompt detected (after ANSI stripping)");
+                                    let _ = tx_reader.send(PtyState::WaitingForPin);
+                                } else if yubikey_prompt_patterns::is_touch_prompt(trimmed) {
+                                    info!("👆 Touch prompt detected (after ANSI stripping)");
+                                    let _ = tx_reader.send(PtyState::WaitingForTouch);
+                                } else if trimmed.contains("error")
+                                    || trimmed.contains("failed")
+                                    || trimmed.contains("Error")
+                                    || trimmed.contains("Failed")
+                                {
+                                    error!(error_line = %trimmed, "Age CLI error detected (Windows)");
+                                    let _ = tx_reader.send(PtyState::Failed(trimmed.to_string()));
                                 }
-                            }
-                            Err(e) => {
-                                debug!(error = ?e, "Failed to strip ANSI sequences, using raw text");
                             }
                         }
 
