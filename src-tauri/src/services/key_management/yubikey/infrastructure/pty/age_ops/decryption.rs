@@ -7,14 +7,16 @@ use crate::prelude::*;
 use std::fs;
 use std::path::Path;
 
-// TODO: Cleanup after Windows PTY testing
-// If PTY works on Windows, remove the commented pipes implementation entirely
+// TODO: Cleanup after Windows testing - remove unused implementations
 // Platform-specific imports
-// #[cfg(target_os = "windows")]
-// use decryption_helpers::run_age_decryption_pipes_windows;
+#[cfg(target_os = "windows")]
+use decryption_helpers::run_age_decryption_pty_windows; // Windows PTY with ANSI stripping
 
-// Use PTY on all platforms (testing if PTY works on Windows with CREATE_NO_WINDOW on other operations)
-use decryption_helpers::run_age_decryption_pty;
+#[cfg(not(target_os = "windows"))]
+use decryption_helpers::run_age_decryption_pty; // macOS/Linux standard PTY
+
+// Pipes implementation preserved but not used (for reference/rollback)
+// use decryption_helpers::run_age_decryption_pipes_windows;
 
 /// Decrypt data using age CLI with PTY for YubiKey interaction
 /// This function creates the necessary temporary files and handles the PTY interaction
@@ -78,18 +80,18 @@ pub fn decrypt_data_with_yubikey_pty(
         "Created temporary files for YubiKey decryption"
     );
 
-    // TODO: Cleanup after Windows PTY testing
-    // If PTY works on Windows, remove the commented pipes code below and the pipes function entirely
-    // Run age CLI - Testing PTY approach on all platforms
-    // Previous Windows approach: Used pipes with stderr monitoring because ConPTY didn't forward stderr
-    // Problem: CREATE_NO_WINDOW breaks pipes (stderr.read() returns EOF immediately)
-    // Testing: PTY on Windows with CREATE_NO_WINDOW on other operations (ykman, etc.) but not PTY itself
-    // #[cfg(target_os = "windows")]
-    // let result =
-    //     run_age_decryption_pipes_windows(&temp_encrypted, &temp_identity, &temp_output, pin);
+    // TODO: Cleanup after Windows testing - finalize which implementation to keep
+    // Run age CLI - Platform-specific approach
+    // Windows: PTY with ANSI stripping + timing fallback
+    // macOS/Linux: Standard PTY (working correctly)
+    #[cfg(target_os = "windows")]
+    let result = run_age_decryption_pty_windows(&temp_encrypted, &temp_identity, &temp_output, pin);
 
-    // Use PTY on all platforms (including Windows for testing)
+    #[cfg(not(target_os = "windows"))]
     let result = run_age_decryption_pty(&temp_encrypted, &temp_identity, &temp_output, pin);
+
+    // Pipes implementation preserved for reference (not currently used)
+    // let result = run_age_decryption_pipes_windows(...);
 
     // Clean up input files
     let _ = fs::remove_file(&temp_encrypted);

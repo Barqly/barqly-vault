@@ -70,6 +70,8 @@ walkdir = "2.4"
 sha2 = "0.10"
 hex = "0.4"
 tempfile = "3.8"
+# Windows ConPTY ANSI sequence stripping for text extraction
+strip-ansi-escapes = "0.2"
 tauri-plugin-dialog = "2.3.1"
 # Caching dependency
 lru = "0.12"

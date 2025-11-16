@@ -236,6 +236,289 @@ pub(super) fn run_age_decryption_pty(
 }
 
 // ============================================================================
+// Windows-Specific PTY Implementation with ANSI Stripping
+// ============================================================================
+// NOTE: Windows ConPTY sends ANSI escape sequences instead of plain text.
+// macOS gets: "Enter PIN for YubiKey..."
+// Windows gets: ESC[6n (control sequence)
+// Solution: Strip ANSI sequences + timing-based PIN injection fallback
+// ============================================================================
+
+/// Windows-specific: Run age decryption with PTY and ANSI sequence stripping
+/// This handles Windows ConPTY's behavior of sending escape sequences instead of plain text
+#[cfg(target_os = "windows")]
+pub(super) fn run_age_decryption_pty_windows(
+    encrypted_file: &Path,
+    identity_file: &Path,
+    output_file: &Path,
+    pin: &str,
+) -> Result<()> {
+    use portable_pty::{CommandBuilder, PtySize, native_pty_system};
+    use std::io::Write;
+    use std::sync::mpsc;
+    use std::thread;
+    use std::time::Instant;
+
+    let age_path = get_age_path();
+    debug!(age_path = %age_path.display(), "Using age binary (Windows PTY with ANSI stripping)");
+
+    let pty_system = native_pty_system();
+    let pair = pty_system
+        .openpty(PtySize {
+            rows: 24,
+            cols: 80,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to open PTY: {e}")))?;
+
+    // Set up environment for age CLI to find the plugin
+    let plugin_dir = age_path
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."));
+
+    let current_path = std::env::var("PATH").unwrap_or_default();
+    let paths =
+        std::env::split_paths(&current_path).chain(std::iter::once(plugin_dir.to_path_buf()));
+    let new_path = std::env::join_paths(paths)
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_e| current_path.clone());
+
+    // Build command
+    let mut cmd = CommandBuilder::new(age_path.to_str().unwrap());
+    cmd.arg("-d");
+    cmd.arg("-i");
+    cmd.arg(identity_file.to_str().unwrap());
+    cmd.arg("-o");
+    cmd.arg(output_file.to_str().unwrap());
+    cmd.arg(encrypted_file.to_str().unwrap());
+    cmd.env("PATH", new_path);
+
+    debug!(
+        command = %format!("age -d -i {} -o {} {}",
+            identity_file.display(),
+            output_file.display(),
+            encrypted_file.display()
+        ),
+        "Executing age decryption command (Windows PTY)"
+    );
+
+    let mut child = pair.slave.spawn_command(cmd).map_err(|e| {
+        error!(error = %e, "Failed to spawn age CLI");
+        PtyError::PtyOperation(format!("Failed to spawn age: {e}"))
+    })?;
+
+    debug!("Age CLI process spawned successfully (Windows PTY)");
+
+    let (tx, rx) = mpsc::channel::<PtyState>();
+
+    // Reader thread with ANSI stripping and raw byte logging
+    let mut reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to clone reader: {e}")))?;
+
+    let tx_reader = tx.clone();
+    thread::spawn(move || {
+        use std::io::Read;
+
+        let mut raw_buffer = [0u8; 4096]; // Larger buffer for Windows
+        let mut accumulated_output = String::new();
+        let mut accumulated_raw = Vec::new();
+
+        loop {
+            match reader.read(&mut raw_buffer) {
+                Ok(0) => {
+                    debug!(
+                        final_accumulated_len = accumulated_output.len(),
+                        "PTY reader reached EOF (Windows)"
+                    );
+                    break;
+                }
+                Ok(n) => {
+                    let raw_data = &raw_buffer[..n];
+
+                    // CRITICAL: Log raw bytes in hex to see EXACTLY what ConPTY sends
+                    debug!(
+                        raw_hex = ?raw_data.iter().map(|b| format!("{:02x}", b)).collect::<Vec<_>>(),
+                        raw_len = n,
+                        "Raw PTY bytes (Windows)"
+                    );
+
+                    // Convert to string and log before stripping
+                    if let Ok(text) = std::str::from_utf8(raw_data) {
+                        accumulated_output.push_str(text);
+                        accumulated_raw.extend_from_slice(raw_data);
+                        debug!(raw_text = %text, "Raw PTY text before stripping (Windows)");
+
+                        // Try stripping ANSI sequences to extract clean text
+                        match strip_ansi_escapes::strip(&accumulated_raw) {
+                            Ok(stripped_bytes) => {
+                                if let Ok(clean_text) = String::from_utf8(stripped_bytes) {
+                                    let trimmed = clean_text.trim();
+                                    if !trimmed.is_empty() {
+                                        debug!(clean_text = %trimmed, "Stripped text (Windows - after ANSI removal)");
+
+                                        // Pattern matching on clean text
+                                        if trimmed.contains("Enter PIN")
+                                            || trimmed.contains("PIN:")
+                                            || trimmed.contains("PIN for")
+                                        {
+                                            info!("🔐 PIN prompt detected (after ANSI stripping)");
+                                            let _ = tx_reader.send(PtyState::WaitingForPin);
+                                        } else if yubikey_prompt_patterns::is_touch_prompt(trimmed)
+                                        {
+                                            info!(
+                                                "👆 Touch prompt detected (after ANSI stripping)"
+                                            );
+                                            let _ = tx_reader.send(PtyState::WaitingForTouch);
+                                        } else if trimmed.contains("error")
+                                            || trimmed.contains("failed")
+                                            || trimmed.contains("Error")
+                                            || trimmed.contains("Failed")
+                                        {
+                                            error!(error_line = %trimmed, "Age CLI error detected (Windows)");
+                                            let _ = tx_reader
+                                                .send(PtyState::Failed(trimmed.to_string()));
+                                        }
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                debug!(error = ?e, "Failed to strip ANSI sequences, using raw text");
+                            }
+                        }
+
+                        // Also check partial accumulated output (without stripping) for immediate patterns
+                        let remaining = accumulated_output.trim();
+                        if !remaining.is_empty() {
+                            if remaining.contains("Enter PIN")
+                                || remaining.contains("PIN:")
+                                || remaining.contains("PIN for")
+                            {
+                                info!("🔐 PIN prompt detected (partial, Windows)");
+                                let _ = tx_reader.send(PtyState::WaitingForPin);
+                            } else if yubikey_prompt_patterns::is_touch_prompt(remaining) {
+                                info!("👆 Touch prompt detected (partial, Windows)");
+                                let _ = tx_reader.send(PtyState::WaitingForTouch);
+                            }
+                        }
+                    }
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    std::thread::sleep(std::time::Duration::from_millis(50));
+                    continue;
+                }
+                Err(e) => {
+                    debug!(error = %e, "PTY read error, exiting reader (Windows)");
+                    break;
+                }
+            }
+        }
+        debug!(
+            accumulated_len = accumulated_output.len(),
+            accumulated_raw_len = accumulated_raw.len(),
+            "PTY reader thread exiting (Windows)"
+        );
+    });
+
+    let mut writer = pair
+        .master
+        .take_writer()
+        .map_err(|e| PtyError::PtyOperation(format!("Failed to get writer: {e}")))?;
+
+    let start = Instant::now();
+    let mut pin_sent = false;
+    let mut last_activity = Instant::now();
+
+    info!("🔐 Touch your YubiKey when prompted to complete decryption!");
+
+    loop {
+        if start.elapsed() > COMMAND_TIMEOUT {
+            warn!("Operation timed out (Windows PTY)");
+            let _ = child.kill();
+            return Err(PtyError::Timeout(COMMAND_TIMEOUT.as_secs()));
+        }
+
+        // WINDOWS ENHANCEMENT: Timing-based PIN injection fallback
+        // If no PIN prompt detected after 300ms, inject PIN anyway
+        // (user testing shows instant touch works, 300ms is safe initialization time)
+        if !pin_sent && start.elapsed() > std::time::Duration::from_millis(300) {
+            info!("No PIN prompt detected after 300ms, injecting PIN (timing fallback - Windows)");
+            thread::sleep(PIN_INJECT_DELAY);
+            writeln!(writer, "{}", pin)
+                .map_err(|e| PtyError::PtyOperation(format!("Failed to send PIN: {e}")))?;
+            writer
+                .flush()
+                .map_err(|e| PtyError::PtyOperation(format!("Failed to flush: {e}")))?;
+            pin_sent = true;
+            last_activity = Instant::now();
+            debug!("PIN sent via timing fallback (Windows)");
+        }
+
+        match rx.recv_timeout(std::time::Duration::from_millis(100)) {
+            Ok(state) => {
+                last_activity = Instant::now();
+                match state {
+                    PtyState::WaitingForPin if !pin_sent => {
+                        info!("PIN prompt detected, injecting PIN (Windows)");
+                        thread::sleep(PIN_INJECT_DELAY);
+                        writeln!(writer, "{}", pin).map_err(|e| {
+                            PtyError::PtyOperation(format!("Failed to send PIN: {e}"))
+                        })?;
+                        writer
+                            .flush()
+                            .map_err(|e| PtyError::PtyOperation(format!("Failed to flush: {e}")))?;
+                        pin_sent = true;
+                        debug!("PIN sent successfully (Windows)");
+                    }
+                    PtyState::WaitingForTouch => {
+                        info!("👆 Please touch your YubiKey to complete decryption... (Windows)");
+                        thread::sleep(std::time::Duration::from_millis(500));
+                    }
+                    PtyState::Failed(err) => {
+                        warn!(error = %err, "Decryption failed (Windows)");
+                        let _ = child.kill();
+                        return Err(PtyError::PtyOperation(err));
+                    }
+                    _ => {}
+                }
+            }
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                // Check if process has exited
+                match child.try_wait() {
+                    Ok(Some(status)) => {
+                        debug!(status = ?status, "Process exited (Windows)");
+                        if status.success() {
+                            info!("Age decryption completed successfully (Windows PTY)");
+                            return Ok(());
+                        } else {
+                            return Err(PtyError::PtyOperation(
+                                "Age CLI process failed (Windows)".to_string(),
+                            ));
+                        }
+                    }
+                    Ok(None) => {
+                        // Still running
+                        continue;
+                    }
+                    Err(e) => {
+                        return Err(PtyError::PtyOperation(format!(
+                            "Failed to check process (Windows): {e}"
+                        )));
+                    }
+                }
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => break,
+        }
+    }
+
+    let _ = child.wait();
+    info!("Age CLI decryption process completed (Windows PTY)");
+    Ok(())
+}
+
+// ============================================================================
 // Windows-Specific Pipes Implementation
 // ============================================================================
 // NOTE: Windows ConPTY does not properly forward stderr text to PTY master.
