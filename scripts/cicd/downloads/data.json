@@ -10,64 +10,69 @@
     "linux_tar": "barqly-vault-{VERSION}-x86_64.tar.gz"
   },
   "latest": {
-    "version": "0.2.0",
-    "release_date": "2025-11-11",
-    "github_release_url": "https://github.com/Barqly/barqly-vault/releases/tag/v0.2.0",
+    "version": "0.2.1",
+    "release_date": "2025-11-17",
+    "github_release_url": "https://github.com/Barqly/barqly-vault/releases/tag/v0.2.1",
     "downloads": {
       "macos_arm64": {
-        "filename": "barqly-vault-0.2.0-macos-arm64.dmg",
-        "size": "34.6 MB",
-        "size_bytes": 36325094,
-        "sha256": "444b39126f52ec306ec8a20bf59ac783b37c5c81c0cddd33c69a1a7af27e8845"
+        "filename": "barqly-vault-0.2.1-macos-arm64.dmg",
+        "size": "34.7 MB",
+        "size_bytes": 36337650,
+        "sha256": "006ec3c609270d6b1a978d3815772dce6a22d7985c02f2f2f418abac93c3c64e"
       },
       "macos_x64": {
-        "filename": "barqly-vault-0.2.0-macos-x86_64.dmg",
+        "filename": "barqly-vault-0.2.1-macos-x86_64.dmg",
         "size": "37.1 MB",
-        "size_bytes": 38951315,
-        "sha256": "585250b81bab5bdb466184c01a111ec0e0214818e0b49edb58551fc22adf24b0"
+        "size_bytes": 38929391,
+        "sha256": "4d2bb45035c9e6b94c19f82874bd16fe13d840775b0f30427ec40b0577200e0f"
       },
       "windows_msi": {
-        "filename": "barqly-vault-0.2.0-x64.msi",
+        "filename": "barqly-vault-0.2.1-x64.msi",
         "size": "33.9 MB",
-        "size_bytes": 35531486,
-        "sha256": "7ec80a56f60885cc8bbb775cc0e41d0e02f64443e3ddb3600cc8e68d9f5bf0de"
+        "size_bytes": 35551966,
+        "sha256": "f48ee1a60df23880992bc38fce8ef444e14d91609847f971067248374a90fa93"
       },
       "windows_zip": {
-        "filename": "barqly-vault-0.2.0-windows-x64.zip",
+        "filename": "barqly-vault-0.2.1-windows-x64.zip",
         "size": "6.4 MB",
-        "size_bytes": 6709724,
-        "sha256": "195d8e733320cb61e037daab8afdc7d574157cbe723304f8b413b0ed823bd132"
+        "size_bytes": 6718799,
+        "sha256": "a0ee28b3982239d7a5760e039e5920e19bac29abffcad3f0982bf1a49dcaab1b"
       },
       "linux_deb": {
-        "filename": "barqly-vault-0.2.0-1_amd64.deb",
+        "filename": "barqly-vault-0.2.1-1_amd64.deb",
         "size": "47.1 MB",
-        "size_bytes": 49385856,
-        "sha256": "08e678c3166999fd0fbc8e23288f1ec8ba4da7df7901f6f7647586f3e38b34cd"
+        "size_bytes": 49371618,
+        "sha256": "284e8296a0f08e9ac7d4bb0190df4208160b79483d7a6050bef7b6c824431d5d"
       },
       "linux_rpm": {
-        "filename": "barqly-vault-0.2.0-1.x86_64.rpm",
+        "filename": "barqly-vault-0.2.1-1.x86_64.rpm",
         "size": "47.1 MB",
-        "size_bytes": 49376438,
-        "sha256": "ada211d4c1b2b35754235d8f069c5e4c83cbe7fb8b18b7e497d61bac3fdfd482"
+        "size_bytes": 49365538,
+        "sha256": "26d501a664a9e46fe7a97eea1b61c3997c3d5f078240516bce97ab5d7ad917fe"
       },
       "linux_appimage": {
-        "filename": "barqly-vault-0.2.0-1_amd64.AppImage",
-        "size": "124.2 MB",
-        "size_bytes": 130202104,
-        "sha256": "ce84565e96beb3fc1cd6abd224952d9b1fddb43e66119656b789f42b4ceac048"
+        "filename": "barqly-vault-0.2.1-1_amd64.AppImage",
+        "size": "124.1 MB",
+        "size_bytes": 130173432,
+        "sha256": "c4bb90764982f79d93c189fe0ac177774fd85b4e48d420351dcbb1ab781da2ea"
       },
       "linux_tar": {
-        "filename": "barqly-vault-0.2.0-x86_64.tar.gz",
+        "filename": "barqly-vault-0.2.1-x86_64.tar.gz",
         "size": "8.0 MB",
-        "size_bytes": 8433237,
-        "sha256": "a30fcdc1021eb0995fe452155a995f38d80fb8f4da143ddb3e4c1873decf1b44"
+        "size_bytes": 8424902,
+        "sha256": "19a36523ed94a7f80c6291a4f34135c3002993098a7e136d35333192596790d1"
       }
     },
     "verification": {
-      "checksums_url": "https://github.com/barqly/barqly-vault/releases/download/v0.2.0/checksums.txt"
+      "checksums_url": "https://github.com/barqly/barqly-vault/releases/download/v0.2.1/checksums.txt"
     }
   },
   "archive": [
+    {
+      "version": "0.2.0",
+      "release_date": "2025-11-11",
+      "github_release_url": "https://github.com/Barqly/barqly-vault/releases/tag/v0.2.0"
+    },
     {
       "version": "0.1.0",
       "release_date": "2025-09-02",
