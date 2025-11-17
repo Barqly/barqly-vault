@@ -366,9 +366,8 @@ pub fn run_age_plugin_yubikey_windows(
         let mut reader = reader;
         let mut raw_buffer = [0u8; 4096];
         let mut accumulated_output = String::new();
-        let mut accumulated_raw = Vec::new();
         let mut full_output = String::new(); // Raw text for logging
-        let mut clean_output = String::new(); // Stripped text for parser
+        let mut clean_output = String::new(); // Stripped text for parser (accumulated from chunks)
 
         loop {
             match reader.read(&mut raw_buffer) {
@@ -391,16 +390,16 @@ pub fn run_age_plugin_yubikey_windows(
 
                     if let Ok(text) = std::str::from_utf8(raw_data) {
                         accumulated_output.push_str(text);
-                        accumulated_raw.extend_from_slice(raw_data);
                         full_output.push_str(text);
 
-                        // Strip ANSI and check for prompts
-                        let stripped_bytes = strip_ansi_escapes::strip(&accumulated_raw);
-                        if let Ok(clean_text) = String::from_utf8(stripped_bytes) {
-                            clean_output = clean_text.clone(); // Accumulate clean text for parser
-                            let trimmed = clean_text.trim();
+                        // Strip ANSI from THIS chunk only (not accumulated buffer)
+                        // Stripping large accumulated buffers returns only first section
+                        let chunk_stripped = strip_ansi_escapes::strip(raw_data);
+                        if let Ok(chunk_clean) = String::from_utf8(chunk_stripped) {
+                            clean_output.push_str(&chunk_clean); // APPEND stripped chunks
+                            let trimmed = clean_output.trim();
                             if !trimmed.is_empty() {
-                                debug!(clean_text = %trimmed, "Stripped text (Windows key gen)");
+                                debug!(clean_accumulated = %trimmed, "Clean output accumulated (Windows key gen)");
 
                                 if trimmed.contains("Generating key") {
                                     let _ = tx_reader.send(PtyState::GeneratingKey);
