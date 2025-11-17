@@ -65,7 +65,7 @@ It is designed to protect related files (e.g., wallet descriptors, configuration
 |-----------|---------|
 | macOS | ✅ Tested |
 | Linux | ✅ Tested |
-| Windows | 🟡 Testing in progress |
+| Windows | ✅ Tested |
 
 ## Technology Stack
 
