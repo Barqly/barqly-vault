@@ -367,7 +367,8 @@ pub fn run_age_plugin_yubikey_windows(
         let mut raw_buffer = [0u8; 4096];
         let mut accumulated_output = String::new();
         let mut accumulated_raw = Vec::new();
-        let mut full_output = String::new();
+        let mut full_output = String::new(); // Raw text for logging
+        let mut clean_output = String::new(); // Stripped text for parser
 
         loop {
             match reader.read(&mut raw_buffer) {
@@ -396,6 +397,7 @@ pub fn run_age_plugin_yubikey_windows(
                         // Strip ANSI and check for prompts
                         let stripped_bytes = strip_ansi_escapes::strip(&accumulated_raw);
                         if let Ok(clean_text) = String::from_utf8(stripped_bytes) {
+                            clean_output = clean_text.clone(); // Accumulate clean text for parser
                             let trimmed = clean_text.trim();
                             if !trimmed.is_empty() {
                                 debug!(clean_text = %trimmed, "Stripped text (Windows key gen)");
@@ -409,7 +411,8 @@ pub fn run_age_plugin_yubikey_windows(
                                     let _ = tx_reader.send(PtyState::WaitingForTouch);
                                 } else if trimmed.contains("AGE-PLUGIN-YUBIKEY-") {
                                     debug!(identity_tag = %trimmed, "Found identity tag (Windows)");
-                                    let _ = tx_reader.send(PtyState::Complete(full_output.clone()));
+                                    let _ =
+                                        tx_reader.send(PtyState::Complete(clean_output.clone()));
                                 } else if trimmed.contains("error") || trimmed.contains("failed") {
                                     let _ = tx_reader.send(PtyState::Failed(trimmed.to_string()));
                                 }
@@ -425,7 +428,7 @@ pub fn run_age_plugin_yubikey_windows(
             }
         }
 
-        let _ = tx_reader.send(PtyState::Complete(full_output));
+        let _ = tx_reader.send(PtyState::Complete(clean_output));
     });
 
     let mut writer = pair
