@@ -1,6 +1,6 @@
 /// Internal PTY helpers for age decryption operations
 use super::super::super::core::{
-    COMMAND_TIMEOUT, PIN_INJECT_DELAY, PtyError, PtyState, Result, get_age_path,
+    COMMAND_TIMEOUT, PIN_INJECT_DELAY, PTY_COLS, PTY_ROWS, PtyError, PtyState, Result, get_age_path,
 };
 use crate::prelude::*;
 use crate::services::key_management::yubikey::infrastructure::pty::yubikey_prompt_patterns;
@@ -25,8 +25,8 @@ pub(super) fn run_age_decryption_pty(
     let pty_system = native_pty_system();
     let pair = pty_system
         .openpty(PtySize {
-            rows: 24,
-            cols: 80,
+            rows: PTY_ROWS,
+            cols: PTY_COLS,
             pixel_width: 0,
             pixel_height: 0,
         })
@@ -265,8 +265,8 @@ pub(super) fn run_age_decryption_pty_windows(
     let pty_system = native_pty_system();
     let pair = pty_system
         .openpty(PtySize {
-            rows: 24,
-            cols: 80,
+            rows: PTY_ROWS,
+            cols: PTY_COLS,
             pixel_width: 0,
             pixel_height: 0,
         })

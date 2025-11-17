@@ -37,9 +37,22 @@ pub enum PtyError {
 
 pub type Result<T> = std::result::Result<T, PtyError>;
 
+// PTY operation timeouts
 pub const TOUCH_TIMEOUT: Duration = Duration::from_secs(30);
 pub const PIN_INJECT_DELAY: Duration = Duration::from_millis(300);
 pub const COMMAND_TIMEOUT: Duration = Duration::from_secs(60);
+
+// PTY terminal dimensions
+pub const PTY_ROWS: u16 = 24;
+
+// Windows ConPTY strictly enforces column wrapping which breaks multi-line parsing
+// Use wider columns to prevent age-plugin-yubikey output from wrapping
+#[cfg(target_os = "windows")]
+pub const PTY_COLS: u16 = 240;
+
+// macOS/Linux PTY doesn't enforce strict wrapping, standard width works
+#[cfg(not(target_os = "windows"))]
+pub const PTY_COLS: u16 = 80;
 
 #[derive(Debug, Clone)]
 pub enum PtyState {
@@ -128,8 +141,8 @@ pub fn run_age_plugin_yubikey(
     let pty_system = native_pty_system();
     let pair = pty_system
         .openpty(PtySize {
-            rows: 24,
-            cols: 80,
+            rows: PTY_ROWS,
+            cols: PTY_COLS,
             pixel_width: 0,
             pixel_height: 0,
         })
@@ -318,8 +331,8 @@ pub fn run_age_plugin_yubikey_windows(
     let pty_system = native_pty_system();
     let pair = pty_system
         .openpty(PtySize {
-            rows: 24,
-            cols: 80,
+            rows: PTY_ROWS,
+            cols: PTY_COLS,
             pixel_width: 0,
             pixel_height: 0,
         })
@@ -544,8 +557,8 @@ fn run_ykman_pty(args: Vec<String>, pin: Option<&str>) -> Result<String> {
     let pty_system = native_pty_system();
     let pair = pty_system
         .openpty(PtySize {
-            rows: 24,
-            cols: 80,
+            rows: PTY_ROWS,
+            cols: PTY_COLS,
             pixel_width: 0,
             pixel_height: 0,
         })
