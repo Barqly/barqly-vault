@@ -128,6 +128,9 @@ pub fn decrypt_data_with_yubikey_pty(
     }
 }
 
+// TODO: DEPRECATED - Not used in production, cleanup after Windows work complete
+// Production uses decrypt_data_with_yubikey_pty() instead
+// This function is exported but has no callers in the codebase
 /// Decrypt file with age-plugin-yubikey via PTY
 /// IMPORTANT: serial parameter ensures operation happens on correct YubiKey
 #[instrument(skip(identity, pin))]

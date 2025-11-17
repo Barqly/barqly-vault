@@ -23,6 +23,13 @@ use std::os::windows::process::CommandExt;
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
+// Platform-specific imports for age-plugin-yubikey function
+#[cfg(target_os = "windows")]
+use crate::services::key_management::yubikey::infrastructure::pty::core::run_age_plugin_yubikey_windows;
+
+#[cfg(not(target_os = "windows"))]
+use crate::services::key_management::yubikey::infrastructure::pty::core::run_age_plugin_yubikey;
+
 /// Identity service trait for age-plugin-yubikey operations
 #[async_trait]
 pub trait IdentityService: Send + Sync + std::fmt::Debug {
@@ -366,7 +373,18 @@ impl IdentityService for AgePluginIdentityService {
         ];
 
         // Use PTY-based execution for PIN interaction
-        use crate::services::key_management::yubikey::infrastructure::pty::core::run_age_plugin_yubikey;
+        // Platform-specific: Windows uses version with DSR response and CRLF line endings
+        #[cfg(target_os = "windows")]
+        let output = tokio::task::spawn_blocking({
+            let args_clone = args.clone();
+            let pin_clone = pin.value().to_string();
+            move || run_age_plugin_yubikey_windows(args_clone, Some(&pin_clone), true)
+        })
+        .await
+        .map_err(|e| YubiKeyError::device(format!("Task join error: {}", e)))?
+        .map_err(|e| YubiKeyError::device(format!("age-plugin-yubikey failed: {}", e)))?;
+
+        #[cfg(not(target_os = "windows"))]
         let output = tokio::task::spawn_blocking({
             let args_clone = args.clone();
             let pin_clone = pin.value().to_string();
