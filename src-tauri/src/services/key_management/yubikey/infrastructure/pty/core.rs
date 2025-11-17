@@ -365,8 +365,6 @@ pub fn run_age_plugin_yubikey_windows(
     thread::spawn(move || {
         let mut reader = reader;
         let mut raw_buffer = [0u8; 4096];
-        let mut accumulated_output = String::new();
-        let mut full_output = String::new(); // Raw text for logging
         let mut clean_output = String::new(); // Stripped text for parser (accumulated from chunks)
 
         loop {
@@ -388,35 +386,31 @@ pub fn run_age_plugin_yubikey_windows(
                         let _ = tx_reader.send(PtyState::DeviceStatusReport);
                     }
 
-                    if let Ok(text) = std::str::from_utf8(raw_data) {
-                        accumulated_output.push_str(text);
-                        full_output.push_str(text);
+                    // Strip ANSI from THIS chunk only
+                    let chunk_stripped = strip_ansi_escapes::strip(raw_data);
+                    if let Ok(chunk_clean) = String::from_utf8(chunk_stripped) {
+                        clean_output.push_str(&chunk_clean); // APPEND!
 
-                        // Strip ANSI from THIS chunk only (not accumulated buffer)
-                        // Stripping large accumulated buffers returns only first section
-                        let chunk_stripped = strip_ansi_escapes::strip(raw_data);
-                        if let Ok(chunk_clean) = String::from_utf8(chunk_stripped) {
-                            clean_output.push_str(&chunk_clean); // APPEND stripped chunks
-                            let trimmed = clean_output.trim();
-                            if !trimmed.is_empty() {
-                                debug!(clean_accumulated = %trimmed, "Clean output accumulated (Windows key gen)");
-
-                                if trimmed.contains("Generating key") {
-                                    let _ = tx_reader.send(PtyState::GeneratingKey);
-                                } else if trimmed.contains("Enter PIN") || trimmed.contains("PIN:")
-                                {
-                                    let _ = tx_reader.send(PtyState::WaitingForPin);
-                                } else if super::yubikey_prompt_patterns::is_touch_prompt(trimmed) {
-                                    let _ = tx_reader.send(PtyState::WaitingForTouch);
-                                } else if trimmed.contains("AGE-PLUGIN-YUBIKEY-") {
-                                    debug!(identity_tag = %trimmed, "Found identity tag (Windows)");
-                                    let _ =
-                                        tx_reader.send(PtyState::Complete(clean_output.clone()));
-                                } else if trimmed.contains("error") || trimmed.contains("failed") {
-                                    let _ = tx_reader.send(PtyState::Failed(trimmed.to_string()));
-                                }
-                            }
+                        // Check patterns in this chunk
+                        if chunk_clean.contains("Generating key") {
+                            debug!("Generating key detected");
+                            let _ = tx_reader.send(PtyState::GeneratingKey);
+                        } else if chunk_clean.contains("Enter PIN") || chunk_clean.contains("PIN:")
+                        {
+                            debug!("PIN prompt detected");
+                            let _ = tx_reader.send(PtyState::WaitingForPin);
+                        } else if super::yubikey_prompt_patterns::is_touch_prompt(&chunk_clean) {
+                            debug!("Touch prompt detected");
+                            let _ = tx_reader.send(PtyState::WaitingForTouch);
+                        } else if chunk_clean.contains("AGE-PLUGIN-YUBIKEY-") {
+                            debug!(output_length = clean_output.len(), "Identity tag found");
+                            let _ = tx_reader.send(PtyState::Complete(clean_output.clone()));
+                        } else if chunk_clean.contains("error") || chunk_clean.contains("failed") {
+                            debug!("Error detected");
+                            let _ = tx_reader.send(PtyState::Failed(chunk_clean.to_string()));
                         }
+                    } else {
+                        debug!("Failed to convert stripped chunk to UTF-8, skipping");
                     }
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
@@ -427,6 +421,10 @@ pub fn run_age_plugin_yubikey_windows(
             }
         }
 
+        debug!(
+            final_output_length = clean_output.len(),
+            "Reader thread exiting"
+        );
         let _ = tx_reader.send(PtyState::Complete(clean_output));
     });
 

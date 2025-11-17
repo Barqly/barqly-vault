@@ -16,7 +16,8 @@ mod windows_ansi_stripping_tests {
         let chunk2 = hex::decode(chunk2_hex).unwrap();
 
         // Line 285: Identity tag
-        let chunk3_hex = "4147452d504c5547494e2d5955424b4b45592d313250444436515656e5a58453932435a4657353";
+        let chunk3_hex =
+            "4147452d504c5547494e2d5955424b4b45592d313250444436515656e5a58453932435a4657353";
         let chunk3 = hex::decode(chunk3_hex).unwrap();
 
         println!("\n=== Testing BROKEN approach (strip accumulated, replace) ===");
@@ -27,9 +28,17 @@ mod windows_ansi_stripping_tests {
             accumulated.extend_from_slice(chunk);
             let stripped = strip_ansi_escapes::strip(&accumulated);
             if let Ok(clean) = String::from_utf8(stripped) {
-                clean_broken = clean.clone();  // REPLACE
-                println!("After chunk {}: Contains 'Serial': {}", i+1, clean_broken.contains("Serial"));
-                println!("After chunk {}: Contains 'AGE-PLUGIN': {}", i+1, clean_broken.contains("AGE-PLUGIN"));
+                clean_broken = clean.clone(); // REPLACE
+                println!(
+                    "After chunk {}: Contains 'Serial': {}",
+                    i + 1,
+                    clean_broken.contains("Serial")
+                );
+                println!(
+                    "After chunk {}: Contains 'AGE-PLUGIN': {}",
+                    i + 1,
+                    clean_broken.contains("AGE-PLUGIN")
+                );
             }
         }
 
@@ -39,25 +48,53 @@ mod windows_ansi_stripping_tests {
         for (i, chunk) in [&chunk1, &chunk2, &chunk3].iter().enumerate() {
             let chunk_stripped = strip_ansi_escapes::strip(chunk);
             if let Ok(chunk_clean) = String::from_utf8(chunk_stripped) {
-                clean_fixed.push_str(&chunk_clean);  // APPEND
-                println!("After chunk {}: Contains 'Serial': {}", i+1, clean_fixed.contains("Serial"));
-                println!("After chunk {}: Contains 'AGE-PLUGIN': {}", i+1, clean_fixed.contains("AGE-PLUGIN"));
+                clean_fixed.push_str(&chunk_clean); // APPEND
+                println!(
+                    "After chunk {}: Contains 'Serial': {}",
+                    i + 1,
+                    clean_fixed.contains("Serial")
+                );
+                println!(
+                    "After chunk {}: Contains 'AGE-PLUGIN': {}",
+                    i + 1,
+                    clean_fixed.contains("AGE-PLUGIN")
+                );
             }
         }
 
         println!("\n=== Results ===");
         println!("Broken approach final length: {}", clean_broken.len());
         println!("Fixed approach final length: {}", clean_fixed.len());
-        println!("Broken contains 'Serial': {}", clean_broken.contains("Serial"));
-        println!("Fixed contains 'Serial': {}", clean_fixed.contains("Serial"));
-        println!("Broken contains 'AGE-PLUGIN': {}", clean_broken.contains("AGE-PLUGIN"));
-        println!("Fixed contains 'AGE-PLUGIN': {}", clean_fixed.contains("AGE-PLUGIN"));
+        println!(
+            "Broken contains 'Serial': {}",
+            clean_broken.contains("Serial")
+        );
+        println!(
+            "Fixed contains 'Serial': {}",
+            clean_fixed.contains("Serial")
+        );
+        println!(
+            "Broken contains 'AGE-PLUGIN': {}",
+            clean_broken.contains("AGE-PLUGIN")
+        );
+        println!(
+            "Fixed contains 'AGE-PLUGIN': {}",
+            clean_fixed.contains("AGE-PLUGIN")
+        );
 
         // Verify fix works
-        assert!(clean_fixed.contains("Serial"), "Fixed approach should contain Serial");
-        assert!(clean_fixed.contains("AGE-PLUGIN") || clean_fixed.len() > clean_broken.len(),
-                "Fixed approach should preserve more content");
-        assert!(clean_fixed.len() >= clean_broken.len(), "Fixed should have at least as much content");
+        assert!(
+            clean_fixed.contains("Serial"),
+            "Fixed approach should contain Serial"
+        );
+        assert!(
+            clean_fixed.contains("AGE-PLUGIN") || clean_fixed.len() > clean_broken.len(),
+            "Fixed approach should preserve more content"
+        );
+        assert!(
+            clean_fixed.len() >= clean_broken.len(),
+            "Fixed should have at least as much content"
+        );
     }
 
     #[test]
@@ -87,9 +124,18 @@ mod windows_ansi_stripping_tests {
         println!("\nFinal clean output:\n{}", clean_output);
 
         // Verify parser can extract what it needs
-        assert!(clean_output.contains("Serial: 31310420"), "Should contain serial");
-        assert!(clean_output.contains("age1yubikey"), "Should contain recipient");
-        assert!(clean_output.contains("AGE-PLUGIN-YUBIKEY"), "Should contain identity tag");
+        assert!(
+            clean_output.contains("Serial: 31310420"),
+            "Should contain serial"
+        );
+        assert!(
+            clean_output.contains("age1yubikey"),
+            "Should contain recipient"
+        );
+        assert!(
+            clean_output.contains("AGE-PLUGIN-YUBIKEY"),
+            "Should contain identity tag"
+        );
 
         println!("✅ All required content present for parser!");
     }
