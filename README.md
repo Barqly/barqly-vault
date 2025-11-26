@@ -15,7 +15,7 @@ It is designed to protect related files (e.g., wallet descriptors, configuration
 ## 🚀 Quick Start
 1. Download the latest release from **[barqly.com/downloads](https://barqly.com/downloads)**.
 2. Run the app and select files or folders to encrypt.
-3. Choose or create a vault and attach 2-4 keys in any combination (YubiKey or passphrase). Hardware keys are recommended.
+3. Choose or create a vault and attach up to 4 keys in any combination (YubiKey or passphrase). Hardware keys are recommended.
 4. Export your recovery bundle (`RECOVERY.txt`) and store it safely offline.
 
 ---
@@ -57,7 +57,7 @@ It is designed to protect related files (e.g., wallet descriptors, configuration
 
 ### Encryption & Security
 - **Age encryption standard:** Uses [age](https://github.com/FiloSottile/age) (ChaCha20-Poly1305 + X25519) for modern, auditable encryption.
-- **Multi-key encryption:** Each vault supports 2-4 keys in any combination (YubiKey and/or passphrase).
+- **Multi-key encryption:** Each vault supports up to 4 keys in any combination (YubiKey and/or passphrase).
 - **Hardware security:** YubiKey support with multi-device detection and management.
 - **No network calls:** All operations are local-only; encrypted files never leave your control.
 

@@ -31,7 +31,7 @@ If `{ARG}` is empty, set Target Agent as "N/A" (normal checkpoint)
    - MM = current month (01-12)
    - n = counter starting at 1. Check if file exists. If yes, increment to 2, 3, etc. NEVER overwrite existing files.
 
-2. **Location**: Save in `./tbd/` folder (create if it doesn't exist)
+2. **Location**: Save in `./handoff/` folder (create if it doesn't exist)
 
 ## Template
 
@@ -96,7 +96,7 @@ If `{ARG}` is empty, set Target Agent as "N/A" (normal checkpoint)
 
 ## 🔖 Resume Point
 **To continue from here:** [Specific instruction on where/how to resume]
-**For agent handoff:** "@{ARG} read tbd/ssc{DD}{MM}.{n}.md"
+**For agent handoff:** "@{ARG} read handoff/ssc{DD}{MM}.{n}.md"
 **Context needed:** [What the agent needs to know to continue]
 **Next command to run:** [If applicable]
 ```
@@ -107,14 +107,14 @@ After creating checkpoint:
 
 If Target Agent specified:
 ```
-✅ Handoff checkpoint created: tbd/ssc{DD}{MM}.{n}.md
+✅ Handoff checkpoint created: handoff/ssc{DD}{MM}.{n}.md
 🎯 Target: {ARG}
-📋 Quick handoff: "@{ARG} read tbd/ssc{DD}{MM}.{n}.md"
+📋 Quick handoff: "@{ARG} read handoff/ssc{DD}{MM}.{n}.md"
 ```
 
 If no Target Agent:
 ```
-✅ Checkpoint saved: tbd/ssc{DD}{MM}.{n}.md
+✅ Checkpoint saved: handoff/ssc{DD}{MM}.{n}.md
 Work continues...
 ```
 
@@ -131,7 +131,7 @@ Work continues...
 
 ### Workflow:
 1. Frontend completes work: `/ssc sbe`
-2. Outputs: "@sr-backend-engineer read tbd/ssc1312.1.md"
+2. Outputs: "@sr-backend-engineer read handoff/ssc1312.1.md"
 3. Backend loads only relevant context from file
 
 ## Execution

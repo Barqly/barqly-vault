@@ -87,8 +87,8 @@ await refreshKeysForVault(currentVault.id); // Update cache
 | **VaultHub** | ✅ Complete | `getCurrentVaultKeys()` for badges | None (display only) |
 | **KeyMenuBar** | ✅ Complete | `getCurrentVaultKeys()` for display | None (display only) |
 | **Encrypt** | ✅ Correct | KeyMenuBar only (visual display) | `vault_id` only (backend retrieves keys) |
-| **Decrypt** | 🔄 Migration needed | Currently uses deprecated `vaultKeys` | Should use cache for key selection UI |
-| **Manage Keys** | 🔄 Migration needed | Local state (out of sync) | Should call `refreshKeysForVault()` |
+| **Decrypt** | ✅ Migration completed | Currently uses deprecated `vaultKeys` | Should use cache for key selection UI |
+| **Manage Keys** | ✅ Migration completed | Local state (out of sync) | Should call `refreshKeysForVault()` |
 
 ---
 

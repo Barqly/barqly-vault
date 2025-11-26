@@ -296,7 +296,7 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
 
           {/* Policy info - always visible */}
           <div className="mb-3 text-sm text-slate-400">
-            <p>Select 2-4 keys for this vault (preferably hardware keys).</p>
+            <p>Select up to 4 keys for this vault (preferably hardware keys).</p>
           </div>
 
           {/* Key list */}

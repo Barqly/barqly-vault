@@ -11,7 +11,7 @@ Create a concise summary file with the following specifications:
    - MM = month (01-12)
    - n = counter (1, 2, 3...) for multiple quick summaries in a day
 
-2. **Location**: Save in `./tbd/` folder (create if it doesn't exist)
+2. **Location**: Save in `./handoff/` folder (create if it doesn't exist)
 
 3. **Purpose**: This is for getting a second opinion, handing off a problem, or quickly documenting a specific issue
 

@@ -13,7 +13,7 @@ Create TWO files as specified below:
    - MM = current month from system date (01-12)
    - n = counter starting at 1. Check if file exists. If yes, increment to 2, 3, etc. NEVER overwrite existing files.
 
-2. **Location**: Save in `./tbd/` folder (create if it doesn't exist)
+2. **Location**: Save in `./handoff/` folder (create if it doesn't exist)
 
 3. **Get Current Date**: Use system date/time for all timestamps, not cached or previous dates
 
@@ -218,7 +218,7 @@ Create TWO files as specified below:
 ## File 2: Quick Start Summary
 
 1. **Filename Format**: `ssd{DD}{MM}.{n}-quick.md` (use same date and counter as detailed summary)
-2. **Location**: Save in `./tbd/` folder
+2. **Location**: Save in `./handoff/` folder
 
 ### Quick Start Template:
 
@@ -259,14 +259,14 @@ When this command is executed:
 
 1. **CHECK SYSTEM DATE**: Get the current date from the system (not from memory or previous context)
 2. **CREATE BOTH FILES**: 
-   - Write the detailed summary to `tbd/ssd{DD}{MM}.{n}.md`
-   - Write the quick start to `tbd/ssd{DD}{MM}.{n}-quick.md`
+   - Write the detailed summary to `handoff/ssd{DD}{MM}.{n}.md`
+   - Write the quick start to `handoff/ssd{DD}{MM}.{n}-quick.md`
 3. **VERIFY FILES CREATED**: Confirm both files were written successfully
 4. **DISPLAY CONFIRMATION**:
    ```
    ✅ Created TWO session summary files:
-   📄 Detailed: tbd/ssd{DD}{MM}.{n}.md
-   📋 Quick Start: tbd/ssd{DD}{MM}.{n}-quick.md
+   📄 Detailed: handoff/ssd{DD}{MM}.{n}.md
+   📋 Quick Start: handoff/ssd{DD}{MM}.{n}-quick.md
    
    Ready for /clear when you want to start fresh.
    Use /ssn in the new session to load context.

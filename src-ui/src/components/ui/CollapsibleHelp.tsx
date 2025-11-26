@@ -110,7 +110,7 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '2',
       title: 'Lock with Keys',
-      description: 'Files are encrypted to all keys attached to your vault (2-4 keys).',
+      description: 'Files are encrypted to all keys attached to your vault (up to 4 keys).',
     },
     {
       number: '3',
@@ -147,7 +147,7 @@ const CollapsibleHelp: React.FC<CollapsibleHelpProps> = ({
     {
       number: '2',
       title: 'Attach Keys',
-      description: 'Add 2-4 keys per vault (YubiKey or Passphrase) for redundancy.',
+      description: 'Add up to 4 keys per vault (YubiKey or Passphrase) for redundancy.',
     },
     {
       number: '3',

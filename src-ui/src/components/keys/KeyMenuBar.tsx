@@ -17,7 +17,7 @@ interface KeyMenuBarProps {
 
 /**
  * Compact horizontal key menu bar that replaces static badges in header
- * Shows up to 4 keys in any combination (2-4 keys: Passphrase, YubiKey, or mixed)
+ * Shows up to 4 keys in any combination (up to 4 keys: Passphrase, YubiKey, or mixed)
  * Keys are displayed with YubiKeys first, then Passphrase keys, sorted alphabetically within each type
  * Context-aware: interactive on Manage Keys page, visual-only on other pages
  * Vault-aware: Shows empty placeholders when vaultId is null (smooth UX for Encrypt/Decrypt workflows)

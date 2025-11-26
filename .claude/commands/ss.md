@@ -11,7 +11,7 @@ Please create a session summary file with the following specifications:
    - MM = month (01-12)  
    - n = counter (1, 2, 3...) for multiple summaries in a day
 
-2. **Location**: Save in `./tbd/` folder (create if it doesn't exist)
+2. **Location**: Save in `./handoff/` folder (create if it doesn't exist)
 
 3. **Template Structure** - Include these sections:
 
@@ -110,7 +110,7 @@ Please create a session summary file with the following specifications:
 When this command is invoked:
 
 1. Check current date and determine the filename (ss{DD}{MM}.{n}.md)
-2. Create the `tbd` directory if it doesn't exist
+2. Create the `handoff` directory if it doesn't exist
 3. Find the next available counter for today
 4. Create the file with the filled template based on our current conversation
 5. Include:
