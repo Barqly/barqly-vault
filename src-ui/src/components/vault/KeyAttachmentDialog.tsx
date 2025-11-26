@@ -3,6 +3,7 @@ import { X, Loader2, Key, Fingerprint, Lock } from 'lucide-react';
 import { commands, VaultSummary, GlobalKey } from '../../bindings';
 import { logger } from '../../lib/logger';
 import { useVault } from '../../contexts/VaultContext';
+import { filterGlobalOwnedKeys } from '../../lib/key-types';
 
 interface KeyAttachmentDialogProps {
   isOpen: boolean;
@@ -56,10 +57,10 @@ export const KeyAttachmentDialog: React.FC<KeyAttachmentDialogProps> = ({
           });
         }
 
-        // Get all keys from global cache (instant)
-        const allKeys = globalKeyCache;
+        // Get all owned keys from global cache (instant) - exclude Recipients
+        const allKeys = filterGlobalOwnedKeys(globalKeyCache);
 
-        logger.info('KeyAttachmentDialog', 'Keys from global cache', {
+        logger.info('KeyAttachmentDialog', 'Owned keys from global cache', {
           count: allKeys.length,
         });
 

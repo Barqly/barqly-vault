@@ -9,6 +9,7 @@ import {
   Clock,
   Sparkles,
   AlertTriangle,
+  Users,
 } from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
@@ -231,6 +232,7 @@ export const KeyTable: React.FC<KeyTableProps> = ({
             {sortedKeys.map((keyRef) => {
               const isPassphrase = keyRef.key_type.type === 'Passphrase';
               const isYubiKey = keyRef.key_type.type === 'YubiKey';
+              const isRecipient = keyRef.key_type.type === 'Recipient';
               const attachments = vaultAttachments(keyRef.id);
               const vaultCount = attachments.length;
               const isDeactivated = keyRef.lifecycle_status === 'deactivated';
@@ -247,15 +249,25 @@ export const KeyTable: React.FC<KeyTableProps> = ({
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3 relative group">
                       <div
-                        className="rounded-lg p-1.5 flex-shrink-0"
-                        style={{
-                          backgroundColor: isPassphrase
-                            ? 'rgba(15, 118, 110, 0.1)'
-                            : 'rgba(249, 139, 28, 0.08)',
-                          border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
-                        }}
+                        className={
+                          isRecipient
+                            ? 'rounded-lg p-1.5 flex-shrink-0 pill-recipient'
+                            : 'rounded-lg p-1.5 flex-shrink-0'
+                        }
+                        style={
+                          isRecipient
+                            ? undefined
+                            : {
+                                backgroundColor: isPassphrase
+                                  ? 'rgba(15, 118, 110, 0.1)'
+                                  : 'rgba(249, 139, 28, 0.08)',
+                                border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
+                              }
+                        }
                       >
-                        {isPassphrase ? (
+                        {isRecipient ? (
+                          <Users className="h-4 w-4" />
+                        ) : isPassphrase ? (
                           <Key className="h-4 w-4" style={{ color: '#13897F' }} />
                         ) : (
                           <Fingerprint className="h-4 w-4" style={{ color: '#F98B1C' }} />

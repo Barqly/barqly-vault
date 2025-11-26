@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Key, Fingerprint, Grid3x3, List, Shield, Upload } from 'lucide-react';
+import { Key, Fingerprint, Grid3x3, List, Shield, Upload, Users } from 'lucide-react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { join, downloadDir } from '@tauri-apps/api/path';
 import { useVault } from '../contexts/VaultContext';
@@ -16,6 +16,7 @@ import { CreateKeyModal } from '../components/keys/CreateKeyModal';
 import { ExportKeyWarningDialog } from '../components/keys/ExportKeyWarningDialog';
 import { ImportPassphraseKeyDialog } from '../components/keys/ImportPassphraseKeyDialog';
 import { EditKeyLabelDialog } from '../components/keys/EditKeyLabelDialog';
+import { AddRecipientDialog } from '../components/keys/AddRecipientDialog';
 import VaultFilterDropdown, { VaultFilterValue } from '../components/keys/VaultFilterDropdown';
 import ToastContainer from '../components/ui/ToastContainer';
 import CollapsibleHelp from '../components/ui/CollapsibleHelp';
@@ -42,8 +43,10 @@ const ManageKeysPage: React.FC = () => {
     refreshAllKeys,
     showPassphraseKeys,
     showYubiKeyKeys,
+    showRecipientKeys,
     togglePassphraseFilter,
     toggleYubiKeyFilter,
+    toggleRecipientFilter,
   } = useManageKeysWorkflow();
 
   const [showPassphraseDialog, setShowPassphraseDialog] = useState(false);
@@ -55,6 +58,7 @@ const ManageKeysPage: React.FC = () => {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showEditLabelDialog, setShowEditLabelDialog] = useState(false);
   const [selectedKeyForEdit, setSelectedKeyForEdit] = useState<GlobalKey | null>(null);
+  const [showAddRecipientDialog, setShowAddRecipientDialog] = useState(false);
   const [vaultFilter, setVaultFilter] = useState<VaultFilterValue>('all');
 
   // Toast notifications
@@ -387,6 +391,32 @@ const ManageKeysPage: React.FC = () => {
               Import Key
             </button>
 
+            {/* Add Recipient Button - Violet ghost style */}
+            <button
+              onClick={() => setShowAddRecipientDialog(true)}
+              className="
+                flex items-center gap-2 px-4 py-2
+                text-sm font-medium
+                border rounded-lg
+                transition-colors
+              "
+              style={{
+                borderColor: 'rgb(var(--recipient-border))',
+                color: 'rgb(var(--brand-recipient))',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(var(--recipient-bg))';
+                e.currentTarget.style.borderColor = 'rgb(var(--brand-recipient))';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.borderColor = 'rgb(var(--recipient-border))';
+              }}
+              title="Add a recipient (other person's public key)"
+            >
+              <Users className="h-4 w-4" />+ Add Recipient
+            </button>
+
             {/* Vault Filter Dropdown */}
             <VaultFilterDropdown value={vaultFilter} onChange={setVaultFilter} vaults={vaults} />
 
@@ -483,6 +513,38 @@ const ManageKeysPage: React.FC = () => {
                   className="h-4 w-4"
                   style={{
                     color: showYubiKeyKeys ? '#ff8a00' : '#94a3b8',
+                  }}
+                />
+              </button>
+
+              {/* Recipient Filter - Violet background */}
+              <button
+                onClick={toggleRecipientFilter}
+                className="p-2 transition-all"
+                style={{
+                  backgroundColor: showRecipientKeys ? '#1E1028' : 'rgb(var(--surface-hover))',
+                  border: showRecipientKeys ? '1px solid #2D1B3D' : undefined,
+                  boxShadow: showRecipientKeys
+                    ? 'inset 3px 0 6px -2px rgba(124, 58, 237, 0)'
+                    : undefined,
+                }}
+                onMouseEnter={(e) => {
+                  if (showRecipientKeys) {
+                    e.currentTarget.style.boxShadow =
+                      'inset 3px 0 6px -2px rgba(124, 58, 237, 0.6)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (showRecipientKeys) {
+                    e.currentTarget.style.boxShadow = 'inset 3px 0 6px -2px rgba(124, 58, 237, 0)';
+                  }
+                }}
+                title={showRecipientKeys ? 'Hide Recipients' : 'Show Recipients'}
+              >
+                <Users
+                  className="h-4 w-4"
+                  style={{
+                    color: showRecipientKeys ? '#7C3AED' : '#94a3b8',
                   }}
                 />
               </button>
@@ -711,6 +773,17 @@ const ManageKeysPage: React.FC = () => {
             setShowImportDialog(false);
             await refreshAllKeys();
             showSuccess('Key Imported', 'Passphrase key imported successfully');
+          }}
+        />
+
+        {/* Add Recipient Dialog */}
+        <AddRecipientDialog
+          isOpen={showAddRecipientDialog}
+          onClose={() => setShowAddRecipientDialog(false)}
+          onSuccess={async () => {
+            setShowAddRecipientDialog(false);
+            await refreshAllKeys();
+            showSuccess('Recipient Added', 'Recipient added successfully');
           }}
         />
 

@@ -14,6 +14,7 @@ export const useManageKeysWorkflow = () => {
   // New: Multi-select filter state
   const [showPassphraseKeys, setShowPassphraseKeys] = useState(true);
   const [showYubiKeyKeys, setShowYubiKeyKeys] = useState(true);
+  const [showRecipientKeys, setShowRecipientKeys] = useState(true);
   const [isCreatingKey, setIsCreatingKey] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isDetectingYubiKey, setIsDetectingYubiKey] = useState(false);
@@ -36,44 +37,56 @@ export const useManageKeysWorkflow = () => {
     [allKeys],
   );
 
-  // Toggle filter functions - Prevent both from being deactivated
+  // Toggle filter functions - Prevent all from being deactivated
   const togglePassphraseFilter = useCallback(() => {
     setShowPassphraseKeys((prev) => {
-      // If trying to deactivate Passphrase, only allow if YubiKey is active
-      if (prev && !showYubiKeyKeys) {
-        return true; // Keep Passphrase active (can't deactivate both)
+      // If trying to deactivate Passphrase, only allow if at least one other is active
+      if (prev && !showYubiKeyKeys && !showRecipientKeys) {
+        return true; // Keep Passphrase active (can't deactivate all)
       }
       return !prev;
     });
-  }, [showYubiKeyKeys]);
+  }, [showYubiKeyKeys, showRecipientKeys]);
 
   const toggleYubiKeyFilter = useCallback(() => {
     setShowYubiKeyKeys((prev) => {
-      // If trying to deactivate YubiKey, only allow if Passphrase is active
-      if (prev && !showPassphraseKeys) {
-        return true; // Keep YubiKey active (can't deactivate both)
+      // If trying to deactivate YubiKey, only allow if at least one other is active
+      if (prev && !showPassphraseKeys && !showRecipientKeys) {
+        return true; // Keep YubiKey active (can't deactivate all)
       }
       return !prev;
     });
-  }, [showPassphraseKeys]);
+  }, [showPassphraseKeys, showRecipientKeys]);
+
+  const toggleRecipientFilter = useCallback(() => {
+    setShowRecipientKeys((prev) => {
+      // If trying to deactivate Recipient, only allow if at least one other is active
+      if (prev && !showPassphraseKeys && !showYubiKeyKeys) {
+        return true; // Keep Recipient active (can't deactivate all)
+      }
+      return !prev;
+    });
+  }, [showPassphraseKeys, showYubiKeyKeys]);
 
   // Filter and search keys
   const filteredKeys = useMemo(() => {
     // Filter out destroyed keys (per NIST spec - not shown in UI)
     let keys = allKeys.filter((k) => k.lifecycle_status !== 'destroyed');
 
-    // Apply multi-select filter
-    // If both are selected or both are unselected = show all
-    // If only one is selected = show only that type
-    const bothSelected = showPassphraseKeys && showYubiKeyKeys;
-    const noneSelected = !showPassphraseKeys && !showYubiKeyKeys;
+    // Apply multi-select filter - show keys that match ANY active filter
+    const allSelected = showPassphraseKeys && showYubiKeyKeys && showRecipientKeys;
+    const noneSelected = !showPassphraseKeys && !showYubiKeyKeys && !showRecipientKeys;
 
-    if (bothSelected || noneSelected) {
+    if (allSelected || noneSelected) {
       // Show all keys (no filter)
-    } else if (showPassphraseKeys) {
-      keys = keys.filter((k) => k.key_type.type === 'Passphrase');
-    } else if (showYubiKeyKeys) {
-      keys = keys.filter((k) => k.key_type.type === 'YubiKey');
+    } else {
+      // Filter to show only selected types
+      keys = keys.filter((k) => {
+        if (showPassphraseKeys && k.key_type.type === 'Passphrase') return true;
+        if (showYubiKeyKeys && k.key_type.type === 'YubiKey') return true;
+        if (showRecipientKeys && k.key_type.type === 'Recipient') return true;
+        return false;
+      });
     }
 
     // Apply search
@@ -87,18 +100,25 @@ export const useManageKeysWorkflow = () => {
     // Remove duplicates (keys should already be unique from global registry)
     const uniqueKeys = Array.from(new Map(keys.map((k) => [k.id, k])).values());
 
-    // Sort: Passphrase first (alphabetically), then YubiKey (alphabetically)
+    // Sort: YubiKey first (hardware), then Passphrase, then Recipient (alphabetically within type)
     const sortedKeys = uniqueKeys.sort((a, b) => {
-      // First, sort by type (Passphrase before YubiKey)
-      if (a.key_type.type !== b.key_type.type) {
-        return a.key_type.type === 'Passphrase' ? -1 : 1;
-      }
+      const typeOrder: Record<string, number> = { YubiKey: 0, Passphrase: 1, Recipient: 2 };
+      const aOrder = typeOrder[a.key_type.type] ?? 3;
+      const bOrder = typeOrder[b.key_type.type] ?? 3;
+      if (aOrder !== bOrder) return aOrder - bOrder;
       // Then, sort alphabetically by label
       return a.label.localeCompare(b.label);
     });
 
     return sortedKeys;
-  }, [allKeys, showPassphraseKeys, showYubiKeyKeys, searchQuery, getKeyVaultAttachments]);
+  }, [
+    allKeys,
+    showPassphraseKeys,
+    showYubiKeyKeys,
+    showRecipientKeys,
+    searchQuery,
+    getKeyVaultAttachments,
+  ]);
 
   // Toggle key selection
   const toggleKeySelection = useCallback((keyId: string) => {
@@ -135,6 +155,7 @@ export const useManageKeysWorkflow = () => {
     error,
     showPassphraseKeys,
     showYubiKeyKeys,
+    showRecipientKeys,
 
     // Derived state
     allKeys: filteredKeys,
@@ -153,5 +174,6 @@ export const useManageKeysWorkflow = () => {
     clearError,
     togglePassphraseFilter,
     toggleYubiKeyFilter,
+    toggleRecipientFilter,
   };
 };

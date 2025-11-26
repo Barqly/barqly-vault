@@ -40,6 +40,11 @@
   --yubikey-bg: 249 139 28 / 0.08; /* Orange tint 8% - REFINED! */
   --yubikey-border: 255 212 163; /* #ffd4a3 */
 
+  /* ===== RECIPIENT ACCENTS (Theme-aware backgrounds) ===== */
+  --brand-recipient: 124 58 237; /* #7C3AED - violet-600 */
+  --recipient-bg: 124 58 237 / 0.1; /* Violet tint 10% */
+  --recipient-border: 196 181 253; /* #C4B5FD - violet-300 */
+
   /* ===== STATUS COLORS (Semantic) ===== */
   --status-success: 19 137 127; /* Teal - matches Passphrase! */
   --status-error: 185 28 28; /* #B91C1C - Muted red */
@@ -84,6 +89,10 @@
   /* ===== YUBIKEY ACCENTS ===== */
   --yubikey-bg: 249 139 28 / 0.12; /* Slightly higher in dark mode */
   --yubikey-border: 180 83 9; /* Darker orange border */
+
+  /* ===== RECIPIENT ACCENTS ===== */
+  --recipient-bg: 124 58 237 / 0.15; /* Slightly higher in dark mode */
+  --recipient-border: 91 33 182; /* #5B21B6 - violet-800 */
 
   /* ===== STATUS BADGE ADJUSTMENTS ===== */
   --status-new-bg: 51 65 85; /* slate-700 - Darker gray for dark mode */

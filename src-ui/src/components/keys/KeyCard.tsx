@@ -10,6 +10,7 @@ import {
   Sparkles,
   AlertTriangle,
   Pencil,
+  Users,
 } from 'lucide-react';
 import { GlobalKey, VaultStatistics, commands } from '../../bindings';
 import { logger } from '../../lib/logger';
@@ -49,6 +50,7 @@ export const KeyCard: React.FC<KeyCardProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const isPassphrase = keyRef.key_type.type === 'Passphrase';
   const isYubiKey = keyRef.key_type.type === 'YubiKey';
+  const isRecipient = keyRef.key_type.type === 'Recipient';
 
   // Can edit label ONLY if key is not attached to any vault
   const canEditLabel = keyRef.vault_associations.length === 0;
@@ -237,9 +239,15 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       `}
       style={{
         boxShadow: isSelected
-          ? `0 0 0 2px ${isPassphrase ? 'rgba(167, 243, 208, 0.5)' : 'rgba(255, 138, 0, 0.5)'}`
+          ? `0 0 0 2px ${isRecipient ? 'rgba(124, 58, 237, 0.5)' : isPassphrase ? 'rgba(167, 243, 208, 0.5)' : 'rgba(255, 138, 0, 0.5)'}`
           : '0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)',
-        borderColor: isSelected ? (isPassphrase ? '#A7F3D0' : '#ff8a00') : undefined,
+        borderColor: isSelected
+          ? isRecipient
+            ? '#7C3AED'
+            : isPassphrase
+              ? '#A7F3D0'
+              : '#ff8a00'
+          : undefined,
       }}
       onClick={() => onSelect?.(keyRef.id)}
     >
@@ -247,13 +255,25 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       <div className="flex items-center gap-3 px-5 pt-3 pb-2">
         {/* Icon - h-4 w-4 to match VaultAttachmentDialog */}
         <div
-          className="rounded-lg p-2 flex-shrink-0"
-          style={{
-            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.08)',
-            border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
-          }}
+          className={
+            isRecipient
+              ? 'rounded-lg p-2 flex-shrink-0 pill-recipient'
+              : 'rounded-lg p-2 flex-shrink-0'
+          }
+          style={
+            isRecipient
+              ? undefined
+              : {
+                  backgroundColor: isPassphrase
+                    ? 'rgba(15, 118, 110, 0.1)'
+                    : 'rgba(249, 139, 28, 0.08)',
+                  border: isPassphrase ? '1px solid #B7E1DD' : '1px solid #ffd4a3',
+                }
+          }
         >
-          {isPassphrase ? (
+          {isRecipient ? (
+            <Users className="h-4 w-4" />
+          ) : isPassphrase ? (
             <Key
               className="h-4 w-4"
               style={{
@@ -285,7 +305,11 @@ export const KeyCard: React.FC<KeyCardProps> = ({
               className="flex-shrink-0 transition-colors"
               style={{ color: 'rgb(var(--text-muted))' }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = isPassphrase ? '#13897F' : '#F98B1C';
+                e.currentTarget.style.color = isRecipient
+                  ? '#7C3AED'
+                  : isPassphrase
+                    ? '#13897F'
+                    : '#F98B1C';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.color = 'rgb(var(--text-muted))';
@@ -302,14 +326,24 @@ export const KeyCard: React.FC<KeyCardProps> = ({
       <div className="flex items-center justify-between px-5 py-2">
         {/* Type Badge */}
         <span
-          className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
-          style={{
-            backgroundColor: isPassphrase ? 'rgba(15, 118, 110, 0.1)' : 'rgba(249, 139, 28, 0.08)',
-            color: isPassphrase ? '#13897F' : '#F98B1C',
-            border: `1px solid ${isPassphrase ? '#B7E1DD' : '#ffd4a3'}`,
-          }}
+          className={
+            isRecipient
+              ? 'inline-flex px-2 py-0.5 text-xs font-medium rounded-full pill-recipient'
+              : 'inline-flex px-2 py-0.5 text-xs font-medium rounded-full'
+          }
+          style={
+            isRecipient
+              ? undefined
+              : {
+                  backgroundColor: isPassphrase
+                    ? 'rgba(15, 118, 110, 0.1)'
+                    : 'rgba(249, 139, 28, 0.08)',
+                  color: isPassphrase ? '#13897F' : '#F98B1C',
+                  border: `1px solid ${isPassphrase ? '#B7E1DD' : '#ffd4a3'}`,
+                }
+          }
         >
-          {isPassphrase ? 'Passphrase' : 'YubiKey'}
+          {isRecipient ? 'Recipient' : isPassphrase ? 'Passphrase' : 'YubiKey'}
         </span>
 
         {/* Status Badge */}

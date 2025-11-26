@@ -144,8 +144,10 @@ export const useDecryptionWorkflow = () => {
           setSuggestedKeys(vaultInfo.associated_keys);
         } else if (vaultInfo.is_recovery_mode) {
           // Recovery mode: Use global key cache from VaultContext (cache-first approach)
-          // Filter out destroyed keys (not usable)
-          const usableKeys = globalKeyCache.filter((k) => k.lifecycle_status !== 'destroyed');
+          // Filter out destroyed keys and recipients (recipients can't decrypt)
+          const usableKeys = globalKeyCache.filter(
+            (k) => k.lifecycle_status !== 'destroyed' && k.key_type.type !== 'Recipient',
+          );
 
           if (usableKeys.length > 0) {
             // Transform GlobalKey to KeyReference format with proper type narrowing
@@ -161,14 +163,17 @@ export const useDecryptionWorkflow = () => {
                   last_used: keyInfo.last_used,
                 };
               } else {
+                // Must be YubiKey since we filtered out Recipients
                 return {
                   id: keyInfo.id,
                   label: keyInfo.label,
                   type: 'YubiKey',
-                  data: keyInfo.key_type.data as {
-                    serial: string;
-                    firmware_version?: string | null;
-                  },
+                  data: (
+                    keyInfo.key_type as {
+                      type: 'YubiKey';
+                      data: { serial: string; firmware_version?: string | null };
+                    }
+                  ).data,
                   lifecycle_status: keyInfo.lifecycle_status,
                   created_at: keyInfo.created_at,
                   last_used: keyInfo.last_used,
@@ -181,8 +186,9 @@ export const useDecryptionWorkflow = () => {
             // VaultContext might still be loading, fall back to direct API call
             const allKeysResult = await commands.listUnifiedKeys({ type: 'All' });
             if (allKeysResult.status === 'ok') {
+              // Filter out destroyed keys and recipients (recipients can't decrypt)
               const usableGlobalKeys = allKeysResult.data.filter(
-                (k) => k.lifecycle_status !== 'destroyed',
+                (k) => k.lifecycle_status !== 'destroyed' && k.key_type.type !== 'Recipient',
               );
               const registeredKeys = usableGlobalKeys.map((keyInfo): VaultKey => {
                 if (keyInfo.key_type.type === 'Passphrase') {
@@ -196,14 +202,17 @@ export const useDecryptionWorkflow = () => {
                     last_used: keyInfo.last_used,
                   };
                 } else {
+                  // Must be YubiKey since we filtered out Recipients
                   return {
                     id: keyInfo.id,
                     label: keyInfo.label,
                     type: 'YubiKey',
-                    data: keyInfo.key_type.data as {
-                      serial: string;
-                      firmware_version?: string | null;
-                    },
+                    data: (
+                      keyInfo.key_type as {
+                        type: 'YubiKey';
+                        data: { serial: string; firmware_version?: string | null };
+                      }
+                    ).data,
                     lifecycle_status: keyInfo.lifecycle_status,
                     created_at: keyInfo.created_at,
                     last_used: keyInfo.last_used,
@@ -244,8 +253,10 @@ export const useDecryptionWorkflow = () => {
   useEffect(() => {
     if (isRecoveryMode && selectedFile && vaultContextInitialized) {
       // Use globalKeyCache directly (reactive to cache updates)
-      // Filter out destroyed keys (not usable for recovery)
-      const usableKeys = globalKeyCache.filter((k) => k.lifecycle_status !== 'destroyed');
+      // Filter out destroyed keys and recipients (not usable for recovery/decryption)
+      const usableKeys = globalKeyCache.filter(
+        (k) => k.lifecycle_status !== 'destroyed' && k.key_type.type !== 'Recipient',
+      );
 
       if (usableKeys.length > 0) {
         // Transform GlobalKey to KeyReference format with proper type narrowing
@@ -261,11 +272,17 @@ export const useDecryptionWorkflow = () => {
               last_used: keyInfo.last_used,
             };
           } else {
+            // Must be YubiKey since we filtered out Recipients
             return {
               id: keyInfo.id,
               label: keyInfo.label,
               type: 'YubiKey',
-              data: keyInfo.key_type.data as { serial: string; firmware_version?: string | null },
+              data: (
+                keyInfo.key_type as {
+                  type: 'YubiKey';
+                  data: { serial: string; firmware_version?: string | null };
+                }
+              ).data,
               lifecycle_status: keyInfo.lifecycle_status,
               created_at: keyInfo.created_at,
               last_used: keyInfo.last_used,
@@ -566,19 +583,24 @@ export const useDecryptionWorkflow = () => {
   }, []);
 
   // Determine selected key type for touch prompt
-  const selectedKeyType = React.useMemo(() => {
+  const selectedKeyType = React.useMemo((): 'YubiKey' | 'Passphrase' | null => {
     if (!selectedKeyId) return null;
 
     // First check in availableKeys (recovery mode)
     const recoveryKey = availableKeys.find((k) => k.id === selectedKeyId);
     if (recoveryKey) {
-      return recoveryKey.type; // 'YubiKey' or 'Passphrase'
+      // Recipients can't decrypt, so treat as null
+      if (recoveryKey.type === 'Recipient') return null;
+      return recoveryKey.type;
     }
 
     // Then check in globalKeyCache (normal mode)
     const globalKey = globalKeyCache.find((k) => k.id === selectedKeyId);
     if (globalKey) {
-      return globalKey.key_type.type; // 'YubiKey' or 'Passphrase'
+      const keyType = globalKey.key_type.type;
+      // Recipients can't decrypt, so treat as null
+      if (keyType === 'Recipient') return null;
+      return keyType;
     }
 
     return null;

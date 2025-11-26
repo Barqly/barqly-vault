@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Archive, Key, FlipHorizontal, Clock, HardDrive, Files, Fingerprint } from 'lucide-react';
+import {
+  Archive,
+  Key,
+  FlipHorizontal,
+  Clock,
+  HardDrive,
+  Files,
+  Fingerprint,
+  Users,
+} from 'lucide-react';
 import { VaultSummary, VaultKey, VaultStatistics, commands } from '../../bindings';
-import { isPassphraseKey, isYubiKey } from '../../lib/key-types';
+import { isPassphraseKey, isYubiKey, filterRecipients, filterOwnedKeys } from '../../lib/key-types';
 import { formatBytes, formatFileCount } from '../../lib/format-utils';
 import KeyAttachmentDialog from './KeyAttachmentDialog';
+import RecipientAttachmentDialog from './RecipientAttachmentDialog';
 
 interface VaultCardProps {
   vault: VaultSummary;
@@ -45,6 +55,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
   const [showKeyDialog, setShowKeyDialog] = useState(false);
+  const [showRecipientDialog, setShowRecipientDialog] = useState(false);
 
   // Use prop statistics if provided, otherwise fetch locally
   const statistics = propStatistics !== undefined ? propStatistics : localStatistics;
@@ -86,6 +97,8 @@ const VaultCard: React.FC<VaultCardProps> = ({
   // Calculate key statistics
   const passphraseKeys = keys.filter(isPassphraseKey);
   const yubiKeys = keys.filter(isYubiKey);
+  const recipientKeys = filterRecipients(keys);
+  const ownedKeys = filterOwnedKeys(keys);
 
   // Truncate vault name for display
   const displayName = vault.name.length > 20 ? `${vault.name.substring(0, 20)}...` : vault.name;
@@ -193,8 +206,19 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 </span>
               )}
 
-              {/* Show message if no keys */}
-              {keys.length === 0 && (
+              {/* Recipients - Violet theme */}
+              {recipientKeys.length > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full pill-recipient"
+                  title={`${recipientKeys.length} ${recipientKeys.length === 1 ? 'Recipient' : 'Recipients'}`}
+                >
+                  <Users className="h-3 w-3" />
+                  {recipientKeys.length}
+                </span>
+              )}
+
+              {/* Show message if no owned keys (recipients alone don't count) */}
+              {ownedKeys.length === 0 && (
                 <span className="text-xs text-secondary">No keys configured</span>
               )}
             </div>
@@ -289,36 +313,79 @@ const VaultCard: React.FC<VaultCardProps> = ({
           Delete
         </button>
 
-        {/* Keys Button - Right aligned, premium blue (matches KeyCard Vault button) */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowKeyDialog(true);
-          }}
-          className="
-            flex items-center justify-center gap-1 px-3 py-1.5
-            text-xs font-medium text-white
-            rounded-md transition-colors
-          "
-          style={{
-            backgroundColor: '#1D4ED8',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#1E40AF';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#1D4ED8';
-          }}
-        >
-          <Key className="h-3 w-3" />
-          Keys
-        </button>
+        {/* Right side buttons */}
+        <div className="flex items-center gap-2">
+          {/* Recipients Button - Violet style */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowRecipientDialog(true);
+            }}
+            className="
+              flex items-center justify-center gap-1 px-3 py-1.5
+              text-xs font-medium
+              rounded-md transition-colors
+            "
+            style={{
+              backgroundColor: 'rgba(var(--recipient-bg))',
+              color: 'rgb(var(--brand-recipient))',
+              border: '1px solid rgb(var(--recipient-border))',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(124, 58, 237, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(var(--recipient-bg))';
+            }}
+          >
+            <Users className="h-3 w-3" />
+            Recipients
+          </button>
+
+          {/* Keys Button - Premium blue (matches KeyCard Vault button) */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowKeyDialog(true);
+            }}
+            className="
+              flex items-center justify-center gap-1 px-3 py-1.5
+              text-xs font-medium text-white
+              rounded-md transition-colors
+            "
+            style={{
+              backgroundColor: '#1D4ED8',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1E40AF';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#1D4ED8';
+            }}
+          >
+            <Key className="h-3 w-3" />
+            Keys
+          </button>
+        </div>
       </div>
 
       {/* Key Attachment Dialog */}
       <KeyAttachmentDialog
         isOpen={showKeyDialog}
         onClose={() => setShowKeyDialog(false)}
+        vaultInfo={vault}
+        onSuccess={() => {
+          // Refresh keys for this vault
+          if (onKeysUpdated) {
+            onKeysUpdated();
+          }
+        }}
+      />
+
+      {/* Recipient Attachment Dialog */}
+      <RecipientAttachmentDialog
+        isOpen={showRecipientDialog}
+        onClose={() => setShowRecipientDialog(false)}
         vaultInfo={vault}
         onSuccess={() => {
           // Refresh keys for this vault
