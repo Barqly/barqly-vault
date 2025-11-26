@@ -161,7 +161,7 @@ fn map_validation_error(e: RecipientValidationError, field: &str) -> Box<Command
         }
         RecipientValidationError::InvalidPublicKeyLength(_) => (
             ErrorCode::InvalidInput,
-            "Public key must be exactly 62 characters",
+            "Public key must be 62-128 characters (62 for standard, 71 for YubiKey)",
         ),
         RecipientValidationError::InvalidPublicKeyCharacters => (
             ErrorCode::InvalidInput,
