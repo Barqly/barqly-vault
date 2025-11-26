@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import React from 'react';
 import type { KeyReference } from '../lib/key-types';
+import { isOwnedKey } from '../lib/key-types';
 import { useVault } from '../contexts/VaultContext';
 import { logger } from '../lib/logger';
 
@@ -86,11 +87,12 @@ export function useKeySelection(
     });
 
     // Filter keys based on includeAllKeys parameter
-    // For decryption, we want all keys regardless of status
+    // For decryption, we want all owned keys (Passphrase + YubiKey) regardless of status
     // For encryption, we typically want only active keys
+    // Always exclude Recipients - they can only encrypt, not decrypt
     const filteredKeys = includeAllKeys
-      ? allKeys // Include all keys for decryption
-      : allKeys.filter((key) => key.lifecycle_status === 'active');
+      ? allKeys.filter((key) => isOwnedKey(key)) // Include only owned keys (exclude Recipients)
+      : allKeys.filter((key) => key.lifecycle_status === 'active' && isOwnedKey(key));
 
     // Merge availability status from globalKeyCache
     const keysWithAvailability: KeyReferenceWithAvailability[] = filteredKeys.map((key) => {
