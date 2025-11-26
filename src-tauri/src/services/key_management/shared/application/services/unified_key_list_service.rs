@@ -267,6 +267,33 @@ impl UnifiedKeyListService {
 
                     all_keys.push(key_info);
                 }
+                KeyEntry::Recipient {
+                    label,
+                    created_at,
+                    last_used,
+                    public_key,
+                    lifecycle_status,
+                    vault_associations,
+                    deactivated_at,
+                    ..
+                } => {
+                    // Recipients are always available (public key only, no hardware needed)
+                    let key_info = GlobalKey {
+                        id: key_id,
+                        label,
+                        key_type: KeyType::Recipient,
+                        recipient: public_key,
+                        is_available: true,
+                        vault_associations,
+                        lifecycle_status,
+                        created_at,
+                        last_used,
+                        yubikey_info: None,
+                        deactivated_at,
+                    };
+
+                    all_keys.push(key_info);
+                }
             }
         }
 

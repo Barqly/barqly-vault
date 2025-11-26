@@ -269,6 +269,12 @@ impl VaultBundleEncryptionService {
                     public_keys.push(crypto::PublicKey::from(recipient.clone()));
                     keys_used.push(label.clone());
                 }
+                Ok(KeyEntry::Recipient {
+                    label, public_key, ..
+                }) => {
+                    public_keys.push(crypto::PublicKey::from(public_key.clone()));
+                    keys_used.push(label.clone());
+                }
                 Err(_) => {
                     warn!(key_id, "Key not found in registry, skipping");
                 }

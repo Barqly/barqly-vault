@@ -148,6 +148,14 @@ impl MultiRecipientCrypto {
                     })?;
                 Ok(Box::new(recipient))
             }
+            RecipientType::PublicKeyOnly => {
+                // Public key only recipient - use the stored public key directly
+                let recipient = age::x25519::Recipient::from_str(&recipient_info.public_key)
+                    .map_err(|e| {
+                        CryptoError::InvalidKey(format!("Invalid recipient public key: {e}"))
+                    })?;
+                Ok(Box::new(recipient))
+            }
         }
     }
 

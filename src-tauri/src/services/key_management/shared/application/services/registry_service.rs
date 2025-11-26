@@ -237,6 +237,9 @@ impl KeyRegistryService {
             crate::services::key_management::shared::KeyEntry::Yubikey { label, .. } => {
                 label.clone()
             }
+            crate::services::key_management::shared::KeyEntry::Recipient { label, .. } => {
+                label.clone()
+            }
         };
 
         // Remove recipient by label (idempotent)
@@ -340,6 +343,9 @@ impl KeyRegistryService {
                 label.clone()
             }
             crate::services::key_management::shared::KeyEntry::Yubikey { label, .. } => {
+                label.clone()
+            }
+            crate::services::key_management::shared::KeyEntry::Recipient { label, .. } => {
                 label.clone()
             }
         };
@@ -476,6 +482,21 @@ impl KeyRegistryService {
                 deactivated_at: None,
                 previous_lifecycle_status: None,
             },
+            RecipientType::PublicKeyOnly => KeyEntry::Recipient {
+                label: recipient.label.clone(),
+                created_at: recipient.created_at,
+                last_used: None,
+                public_key: recipient.public_key.clone(),
+                lifecycle_status: KeyLifecycleStatus::Active, // From manifest means it's active
+                status_history: vec![StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Active,
+                    "Imported from vault manifest",
+                    "system",
+                )],
+                vault_associations: vec![], // Will be populated by higher level
+                deactivated_at: None,
+                previous_lifecycle_status: None,
+            },
         }
     }
 
@@ -490,6 +511,9 @@ impl KeyRegistryService {
                     return Ok(Some(key_id.clone()));
                 }
                 KeyEntry::Yubikey { recipient, .. } if recipient == public_key => {
+                    return Ok(Some(key_id.clone()));
+                }
+                KeyEntry::Recipient { public_key: pk, .. } if pk == public_key => {
                     return Ok(Some(key_id.clone()));
                 }
                 _ => continue,

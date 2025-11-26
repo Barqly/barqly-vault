@@ -177,6 +177,15 @@ impl DecryptionOrchestrationService {
                     &passphrase_str,
                 )?
             }
+            KeyEntry::Recipient { .. } => {
+                error!(
+                    key_id = %input.key_id,
+                    "Cannot decrypt with recipient key - no private key available"
+                );
+                return Err(CryptoError::DecryptionFailed(
+                    "Cannot decrypt with a recipient key. Recipients are public keys only - you need the owner's private key to decrypt.".to_string()
+                ));
+            }
         };
 
         debug!(

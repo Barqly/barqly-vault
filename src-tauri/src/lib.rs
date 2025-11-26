@@ -27,6 +27,7 @@ use commands::{
     get_key_menu_data,
     get_progress,
     key_management::{
+        add_recipient::add_recipient,
         attach_key::attach_key_to_vault,
         deactivate_key::deactivate_key,
         delete_key::delete_key,
@@ -140,6 +141,8 @@ pub fn generate_typescript_bindings() -> Result<(), String> {
         register_yubikey_for_vault,
         attach_key_to_vault,
         import_key_file,
+        // Recipient (public-key-only) commands
+        add_recipient,
         // Streamlined YubiKey commands
         list_yubikeys,
         init_yubikey,
@@ -285,6 +288,8 @@ pub fn run_app() {
             register_yubikey_for_vault,
             attach_key_to_vault,
             import_key_file,
+            // Recipient (public-key-only) commands
+            add_recipient,
             // Streamlined YubiKey commands
             list_yubikeys,
             init_yubikey,

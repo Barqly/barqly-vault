@@ -217,6 +217,22 @@ impl KeyManager {
             return Ok(()); // Already attached - success (no-op)
         }
 
+        // Safety check: Recipients can only be attached if vault has ≥1 owned key
+        // This ensures the user can always decrypt their own files
+        if key_entry.is_recipient() {
+            let has_owned_key = metadata
+                .recipients()
+                .iter()
+                .any(|r| !matches!(r.recipient_type, RecipientType::PublicKeyOnly));
+
+            if !has_owned_key {
+                return Err(
+                    "Cannot add a recipient to a vault without your own key. Add a passphrase or YubiKey first."
+                        .into(),
+                );
+            }
+        }
+
         // Create recipient info based on key type
         let recipient = match &key_entry {
             KeyEntry::Passphrase {
@@ -256,6 +272,18 @@ impl KeyManager {
                     firmware_version: firmware_version.clone(),
                 },
                 public_key: recipient.clone(),
+                label: label.clone(),
+                created_at: *created_at,
+            },
+            KeyEntry::Recipient {
+                label,
+                public_key,
+                created_at,
+                ..
+            } => RecipientInfo {
+                key_id: key_id.to_string(),
+                recipient_type: RecipientType::PublicKeyOnly,
+                public_key: public_key.clone(),
                 label: label.clone(),
                 created_at: *created_at,
             },

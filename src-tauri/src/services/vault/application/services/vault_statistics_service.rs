@@ -319,6 +319,11 @@ impl VaultStatisticsService {
                     // Real availability check would require hardware detection
                     ("yubikey".to_string(), lifecycle_status.is_operational())
                 }
+                RecipientType::PublicKeyOnly => {
+                    // Public key only recipients (other people's keys)
+                    // They are always "available" for encryption but cannot decrypt
+                    ("recipient".to_string(), true)
+                }
             };
 
             // Count active vs orphaned

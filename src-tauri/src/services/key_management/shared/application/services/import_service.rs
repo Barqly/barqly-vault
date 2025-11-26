@@ -545,6 +545,7 @@ impl KeyImportService {
         match entry {
             KeyEntry::Passphrase { public_key, .. } => public_key.clone(),
             KeyEntry::Yubikey { recipient, .. } => recipient.clone(),
+            KeyEntry::Recipient { public_key, .. } => public_key.clone(),
         }
     }
 }

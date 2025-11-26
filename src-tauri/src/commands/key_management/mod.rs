@@ -9,7 +9,9 @@
 //! - unified_keys.rs: Cross-key-type operations and unified APIs
 //! - attach_key.rs: Universal key attachment to vaults (R2 API)
 //! - import_key.rs: Import external .enc key files (R2 API Phase 4)
+//! - add_recipient.rs: Add recipient (public-key-only) entries (R2.2)
 
+pub mod add_recipient;
 pub mod attach_key;
 pub mod deactivate_key;
 pub mod delete_key;
@@ -61,3 +63,5 @@ pub use restore_key::{RestoreKeyRequest, RestoreKeyResponse, restore_key};
 pub use update_global_key_label::{
     UpdateGlobalKeyLabelRequest, UpdateGlobalKeyLabelResponse, update_global_key_label,
 };
+
+pub use add_recipient::{AddRecipientRequest, AddRecipientResponse, add_recipient};

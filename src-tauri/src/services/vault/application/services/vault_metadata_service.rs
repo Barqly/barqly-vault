@@ -192,6 +192,18 @@ impl VaultMetadataService {
                     created_at: *created_at,
                 }
             }
+            KeyEntry::Recipient {
+                label,
+                public_key,
+                created_at,
+                ..
+            } => RecipientInfo {
+                key_id: key_id.to_string(),
+                recipient_type: RecipientType::PublicKeyOnly,
+                public_key: public_key.clone(),
+                label: label.clone(),
+                created_at: *created_at,
+            },
         }
     }
 

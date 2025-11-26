@@ -164,6 +164,34 @@ pub async fn get_key_menu_data(
                     });
                 }
             }
+            RecipientType::PublicKeyOnly => {
+                // Public-key-only recipient (other people's keys)
+                let key_id = &recipient.key_id;
+
+                if let Some(KeyEntry::Recipient {
+                    label, created_at, ..
+                }) = registry.get_key(key_id)
+                {
+                    key_menu_items.push(VaultKey {
+                        id: key_id.to_string(),
+                        label: label.clone(),
+                        lifecycle_status: KeyLifecycleStatus::Active, // Recipients in vault are active
+                        key_type: KeyType::Recipient,
+                        created_at: *created_at,
+                        last_used: None,
+                    });
+                } else {
+                    // Fallback to recipient data from vault metadata
+                    key_menu_items.push(VaultKey {
+                        id: key_id.to_string(),
+                        label: recipient.label.clone(),
+                        lifecycle_status: KeyLifecycleStatus::Active,
+                        key_type: KeyType::Recipient,
+                        created_at: recipient.created_at,
+                        last_used: None,
+                    });
+                }
+            }
         }
     }
 

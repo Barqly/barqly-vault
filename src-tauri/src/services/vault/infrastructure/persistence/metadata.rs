@@ -131,6 +131,10 @@ pub enum RecipientType {
         identity_tag: String,             // AGE-PLUGIN-YUBIKEY-...
         firmware_version: Option<String>, // e.g. "5.7.1"
     },
+    /// Public key only - user does NOT have the private key
+    /// Used for encrypting to other people's keys (R2.2 Recipients feature)
+    #[serde(rename = "recipient")]
+    PublicKeyOnly,
 }
 
 impl VaultMetadata {
@@ -262,6 +266,7 @@ impl VaultMetadata {
                     (&r.recipient_type, recipient_type),
                     (RecipientType::Passphrase { .. }, "passphrase")
                         | (RecipientType::YubiKey { .. }, "yubikey")
+                        | (RecipientType::PublicKeyOnly, "recipient")
                 )
             })
             .collect()
@@ -536,6 +541,7 @@ impl RecipientInfo {
             } => {
                 format!("YubiKey {model}: {serial} (slot {slot})")
             }
+            RecipientType::PublicKeyOnly => format!("Recipient: {}", self.label),
         }
     }
 
@@ -548,6 +554,7 @@ impl RecipientInfo {
                 let _ = serial;
                 true
             }
+            RecipientType::PublicKeyOnly => false, // Cannot decrypt - no private key
         }
     }
 }

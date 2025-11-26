@@ -181,5 +181,12 @@ pub async fn verify_key_passphrase(
                 }
             }
         }
+        crate::services::key_management::shared::KeyEntry::Recipient { .. } => {
+            // Recipients are public-key-only entries - cannot verify passphrase
+            Err(Box::new(CommandError::operation(
+                ErrorCode::InvalidKeyState,
+                "Cannot verify passphrase for a recipient key. Recipients are public keys belonging to other people.".to_string(),
+            )))
+        }
     }
 }

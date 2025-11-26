@@ -198,6 +198,9 @@ pub async fn get_vault_keys(input: GetVaultKeysRequest) -> CommandResponse<GetVa
                             serial,
                             firmware_version,
                         },
+                        KeyType::Recipient => {
+                            crate::services::key_management::shared::domain::models::KeyType::Recipient
+                        }
                     },
                     label: key_info.label,
                     lifecycle_status: key_info.lifecycle_status,
@@ -346,6 +349,9 @@ pub async fn update_key_label(
             *label = input.new_label.trim().to_string();
         }
         KeyEntry::Yubikey { label, .. } => {
+            *label = input.new_label.trim().to_string();
+        }
+        KeyEntry::Recipient { label, .. } => {
             *label = input.new_label.trim().to_string();
         }
     }

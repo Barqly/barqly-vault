@@ -172,6 +172,9 @@ pub async fn analyze_encrypted_vault(
                                 firmware_version: firmware_version.clone(),
                             }
                         }
+                        crate::services::vault::infrastructure::persistence::metadata::RecipientType::PublicKeyOnly => {
+                            crate::services::key_management::shared::domain::models::KeyType::Recipient
+                        }
                     },
                     lifecycle_status: crate::services::key_management::shared::domain::models::key_lifecycle::KeyLifecycleStatus::Active,
                     created_at: recipient.created_at,

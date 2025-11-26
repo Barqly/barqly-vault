@@ -492,6 +492,20 @@ async importKeyFile(request: ImportKeyFileRequest) : Promise<Result<ImportKeyFil
 }
 },
 /**
+ * Add a recipient (public-key-only entry) to the key registry
+ * 
+ * This creates a new registry entry for a public key belonging to someone else.
+ * Recipients can only be used for encryption - the user cannot decrypt with them.
+ */
+async addRecipient(request: AddRecipientRequest) : Promise<Result<AddRecipientResponse, CommandError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("add_recipient", { request }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * List all YubiKeys with intelligent state detection
  * Uses YubiKeyManager for centralized device and registry operations
  */
@@ -601,6 +615,30 @@ async yubikeyDecryptFile(encryptedFile: string, unlockMethod: UnlockMethod | nul
 
 export type AddPassphraseKeyRequest = { vault_id: string; label: string; passphrase: string }
 export type AddPassphraseKeyResponse = { key_reference: VaultKey; public_key: string }
+/**
+ * Request to add a recipient to the registry
+ */
+export type AddRecipientRequest = { 
+/**
+ * User-friendly label for this recipient
+ */
+label: string; 
+/**
+ * Age public key (age1... format)
+ */
+public_key: string }
+/**
+ * Response from adding a recipient
+ */
+export type AddRecipientResponse = { 
+/**
+ * Generated key ID for the new recipient
+ */
+key_id: string; 
+/**
+ * The created recipient as a VaultKey for UI consumption
+ */
+key_reference: VaultKey }
 /**
  * Request to analyze an encrypted vault file
  */
@@ -1097,7 +1135,12 @@ serial: string;
 /**
  * Firmware version for compatibility tracking
  */
-firmware_version?: string | null } }
+firmware_version?: string | null } } | 
+/**
+ * Recipient - public key only (user does NOT have private key)
+ * Used for encrypting to other people's keys
+ */
+{ type: "Recipient" }
 /**
  * Response containing list of vaults
  */
@@ -1290,7 +1333,12 @@ serial: string;
 /**
  * Firmware version for compatibility tracking
  */
-firmware_version?: string | null } }) & { 
+firmware_version?: string | null } } | 
+/**
+ * Recipient - public key only (user does NOT have private key)
+ * Used for encrypting to other people's keys
+ */
+{ type: "Recipient" }) & { 
 /**
  * Unique identifier for this key reference
  */

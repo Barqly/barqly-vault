@@ -313,6 +313,17 @@ pub async fn update_global_key_label(
                 "Updated YubiKey entry label"
             );
         }
+        crate::services::key_management::shared::infrastructure::KeyEntry::Recipient {
+            label,
+            ..
+        } => {
+            *label = trimmed_label.to_string();
+            debug!(
+                old_label = %current_label,
+                new_label = %trimmed_label,
+                "Updated Recipient entry label"
+            );
+        }
     }
 
     // Remove old entry and insert with new key_id

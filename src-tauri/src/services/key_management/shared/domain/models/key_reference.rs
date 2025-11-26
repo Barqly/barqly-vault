@@ -56,6 +56,10 @@ pub enum KeyType {
         #[serde(default)]
         firmware_version: Option<String>,
     },
+
+    /// Recipient - public key only (user does NOT have private key)
+    /// Used for encrypting to other people's keys
+    Recipient,
 }
 
 /// Filter options for key listing operations
@@ -158,6 +162,12 @@ impl VaultKey {
                 *created_at,
                 *last_used,
             ),
+            crate::services::key_management::shared::KeyEntry::Recipient {
+                label,
+                created_at,
+                last_used,
+                ..
+            } => (KeyType::Recipient, label.clone(), *created_at, *last_used),
         };
 
         Self {
@@ -178,6 +188,19 @@ impl VaultKey {
     /// Check if this is a YubiKey
     pub fn is_yubikey(&self) -> bool {
         matches!(self.key_type, KeyType::YubiKey { .. })
+    }
+
+    /// Check if this is a recipient (public key only)
+    pub fn is_recipient(&self) -> bool {
+        matches!(self.key_type, KeyType::Recipient)
+    }
+
+    /// Check if this is an owned key (user has private key)
+    pub fn is_owned_key(&self) -> bool {
+        matches!(
+            self.key_type,
+            KeyType::Passphrase { .. } | KeyType::YubiKey { .. }
+        )
     }
 
     /// Get YubiKey serial if this is a YubiKey reference

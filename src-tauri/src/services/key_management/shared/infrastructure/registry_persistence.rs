@@ -77,6 +77,33 @@ pub enum KeyEntry {
         #[serde(skip_serializing_if = "Option::is_none")]
         previous_lifecycle_status: Option<KeyLifecycleStatus>,
     },
+    /// Recipient - public key only entry for encrypting to others
+    /// Unlike Passphrase/YubiKey, the user does NOT have the private key.
+    /// These entries allow encrypting vaults for other people to decrypt.
+    #[serde(rename = "recipient")]
+    Recipient {
+        label: String,
+        created_at: DateTime<Utc>,
+        last_used: Option<DateTime<Utc>>,
+        public_key: String, // age1... format (the only required field)
+
+        // NIST lifecycle fields
+        #[serde(default = "default_lifecycle_status")]
+        lifecycle_status: KeyLifecycleStatus,
+        #[serde(default)]
+        status_history: Vec<StatusHistoryEntry>,
+        #[serde(default)]
+        vault_associations: Vec<String>,
+
+        // Deactivation tracking
+        #[serde(default)]
+        #[serde(skip_serializing_if = "Option::is_none")]
+        deactivated_at: Option<DateTime<Utc>>,
+
+        #[serde(default)]
+        #[serde(skip_serializing_if = "Option::is_none")]
+        previous_lifecycle_status: Option<KeyLifecycleStatus>,
+    },
 }
 
 // Default function for lifecycle_status to ensure backward compatibility
@@ -90,6 +117,7 @@ impl KeyEntry {
         match self {
             KeyEntry::Passphrase { label, .. } => label,
             KeyEntry::Yubikey { label, .. } => label,
+            KeyEntry::Recipient { label, .. } => label,
         }
     }
 
@@ -98,6 +126,7 @@ impl KeyEntry {
         match self {
             KeyEntry::Passphrase { created_at, .. } => *created_at,
             KeyEntry::Yubikey { created_at, .. } => *created_at,
+            KeyEntry::Recipient { created_at, .. } => *created_at,
         }
     }
 
@@ -106,6 +135,7 @@ impl KeyEntry {
         match self {
             KeyEntry::Passphrase { last_used, .. } => *last_used,
             KeyEntry::Yubikey { last_used, .. } => *last_used,
+            KeyEntry::Recipient { last_used, .. } => *last_used,
         }
     }
 
@@ -115,6 +145,7 @@ impl KeyEntry {
         match self {
             KeyEntry::Passphrase { last_used, .. } => *last_used = Some(now),
             KeyEntry::Yubikey { last_used, .. } => *last_used = Some(now),
+            KeyEntry::Recipient { last_used, .. } => *last_used = Some(now),
         }
     }
 
@@ -126,6 +157,17 @@ impl KeyEntry {
     /// Check if this is a YubiKey
     pub fn is_yubikey(&self) -> bool {
         matches!(self, KeyEntry::Yubikey { .. })
+    }
+
+    /// Check if this is a recipient (public key only)
+    pub fn is_recipient(&self) -> bool {
+        matches!(self, KeyEntry::Recipient { .. })
+    }
+
+    /// Check if this is an owned key (user has private key)
+    /// Returns true for Passphrase and YubiKey, false for Recipient
+    pub fn is_owned_key(&self) -> bool {
+        matches!(self, KeyEntry::Passphrase { .. } | KeyEntry::Yubikey { .. })
     }
 
     /// Get YubiKey serial if this is a YubiKey entry
@@ -144,6 +186,15 @@ impl KeyEntry {
         }
     }
 
+    /// Get the public key/recipient string for encryption
+    pub fn public_key(&self) -> &str {
+        match self {
+            KeyEntry::Passphrase { public_key, .. } => public_key,
+            KeyEntry::Yubikey { recipient, .. } => recipient,
+            KeyEntry::Recipient { public_key, .. } => public_key,
+        }
+    }
+
     /// Get the lifecycle status of this key
     pub fn lifecycle_status(&self) -> KeyLifecycleStatus {
         match self {
@@ -151,6 +202,9 @@ impl KeyEntry {
                 lifecycle_status, ..
             } => *lifecycle_status,
             KeyEntry::Yubikey {
+                lifecycle_status, ..
+            } => *lifecycle_status,
+            KeyEntry::Recipient {
                 lifecycle_status, ..
             } => *lifecycle_status,
         }
@@ -194,6 +248,14 @@ impl KeyEntry {
                 *lifecycle_status = status;
                 status_history.push(history_entry);
             }
+            KeyEntry::Recipient {
+                lifecycle_status,
+                status_history,
+                ..
+            } => {
+                *lifecycle_status = status;
+                status_history.push(history_entry);
+            }
         }
 
         Ok(())
@@ -204,6 +266,7 @@ impl KeyEntry {
         match self {
             KeyEntry::Passphrase { status_history, .. } => status_history,
             KeyEntry::Yubikey { status_history, .. } => status_history,
+            KeyEntry::Recipient { status_history, .. } => status_history,
         }
     }
 
@@ -214,6 +277,9 @@ impl KeyEntry {
                 vault_associations, ..
             } => vault_associations,
             KeyEntry::Yubikey {
+                vault_associations, ..
+            } => vault_associations,
+            KeyEntry::Recipient {
                 vault_associations, ..
             } => vault_associations,
         }
@@ -236,6 +302,13 @@ impl KeyEntry {
                     vault_associations.push(vault_id);
                 }
             }
+            KeyEntry::Recipient {
+                vault_associations, ..
+            } => {
+                if !vault_associations.contains(&vault_id) {
+                    vault_associations.push(vault_id);
+                }
+            }
         }
     }
 
@@ -248,6 +321,11 @@ impl KeyEntry {
                 vault_associations.retain(|id| id != vault_id);
             }
             KeyEntry::Yubikey {
+                vault_associations, ..
+            } => {
+                vault_associations.retain(|id| id != vault_id);
+            }
+            KeyEntry::Recipient {
                 vault_associations, ..
             } => {
                 vault_associations.retain(|id| id != vault_id);
@@ -293,6 +371,22 @@ impl KeyEntry {
                 ));
             }
             KeyEntry::Yubikey {
+                lifecycle_status,
+                status_history,
+                deactivated_at,
+                previous_lifecycle_status,
+                ..
+            } => {
+                *previous_lifecycle_status = Some(*lifecycle_status);
+                *lifecycle_status = KeyLifecycleStatus::Deactivated;
+                *deactivated_at = Some(Utc::now());
+                status_history.push(StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Deactivated,
+                    reason,
+                    changed_by,
+                ));
+            }
+            KeyEntry::Recipient {
                 lifecycle_status,
                 status_history,
                 deactivated_at,
@@ -376,6 +470,31 @@ impl KeyEntry {
                 *previous_lifecycle_status = None;
                 status_history.push(StatusHistoryEntry::new(restore_to, reason, changed_by));
             }
+            KeyEntry::Recipient {
+                lifecycle_status,
+                status_history,
+                deactivated_at,
+                previous_lifecycle_status,
+                vault_associations,
+                ..
+            } => {
+                // Determine the state to restore to
+                let restore_to = if let Some(prev_status) = previous_lifecycle_status {
+                    *prev_status
+                } else {
+                    // Fallback: restore based on vault associations
+                    if !vault_associations.is_empty() {
+                        KeyLifecycleStatus::Active
+                    } else {
+                        KeyLifecycleStatus::Suspended
+                    }
+                };
+
+                *lifecycle_status = restore_to;
+                *deactivated_at = None;
+                *previous_lifecycle_status = None;
+                status_history.push(StatusHistoryEntry::new(restore_to, reason, changed_by));
+            }
         }
 
         Ok(())
@@ -386,6 +505,7 @@ impl KeyEntry {
         match self {
             KeyEntry::Passphrase { deactivated_at, .. } => *deactivated_at,
             KeyEntry::Yubikey { deactivated_at, .. } => *deactivated_at,
+            KeyEntry::Recipient { deactivated_at, .. } => *deactivated_at,
         }
     }
 
@@ -427,6 +547,23 @@ impl KeyEntry {
                 ));
             }
             KeyEntry::Yubikey {
+                lifecycle_status,
+                status_history,
+                deactivated_at,
+                previous_lifecycle_status,
+                ..
+            } => {
+                *lifecycle_status = KeyLifecycleStatus::Destroyed;
+                // Clear deactivation metadata since we're bypassing the grace period
+                *deactivated_at = None;
+                *previous_lifecycle_status = None;
+                status_history.push(StatusHistoryEntry::new(
+                    KeyLifecycleStatus::Destroyed,
+                    reason,
+                    changed_by,
+                ));
+            }
+            KeyEntry::Recipient {
                 lifecycle_status,
                 status_history,
                 deactivated_at,
@@ -641,11 +778,34 @@ impl KeyRegistry {
             .collect()
     }
 
+    /// Get all recipient entries (public key only)
+    pub fn recipient_keys(&self) -> Vec<(&String, &KeyEntry)> {
+        self.keys
+            .iter()
+            .filter(|(_, entry)| entry.is_recipient())
+            .collect()
+    }
+
+    /// Get all owned keys (passphrase + yubikey, not recipients)
+    pub fn owned_keys(&self) -> Vec<(&String, &KeyEntry)> {
+        self.keys
+            .iter()
+            .filter(|(_, entry)| entry.is_owned_key())
+            .collect()
+    }
+
     /// Find YubiKey by serial number
     pub fn find_yubikey_by_serial(&self, serial: &str) -> Option<(&String, &KeyEntry)> {
         self.keys
             .iter()
             .find(|(_, entry)| entry.yubikey_serial() == Some(serial))
+    }
+
+    /// Find entry by public key (for duplicate detection)
+    pub fn find_by_public_key(&self, public_key: &str) -> Option<(&String, &KeyEntry)> {
+        self.keys
+            .iter()
+            .find(|(_, entry)| entry.public_key() == public_key)
     }
 
     /// Mark a key as used (updates last_used timestamp)
@@ -729,6 +889,19 @@ impl KeyRegistry {
                     ));
                 }
                 KeyEntry::Yubikey {
+                    lifecycle_status,
+                    status_history,
+                    ..
+                } => {
+                    *lifecycle_status = initial_status;
+                    // Add initial history entry
+                    status_history.push(StatusHistoryEntry::new(
+                        initial_status,
+                        "Migrated from registry v1",
+                        "system",
+                    ));
+                }
+                KeyEntry::Recipient {
                     lifecycle_status,
                     status_history,
                     ..
