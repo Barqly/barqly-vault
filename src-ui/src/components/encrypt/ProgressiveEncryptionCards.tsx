@@ -3,6 +3,7 @@ import { ChevronLeft, Archive, Lock, ChevronDown, Check, AlertTriangle } from 'l
 import FileDropZone from '../common/FileDropZone';
 import RecoveryInfoPanel from './RecoveryInfoPanel';
 import { useVault } from '../../contexts/VaultContext';
+import { filterOwnedKeys, filterRecipients } from '../../lib/key-types';
 
 interface ProgressiveEncryptionCardsProps {
   currentStep: number;
@@ -252,14 +253,26 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                 >
                   <span className="flex items-center gap-2">
                     {workflowVault ? (
-                      <>
-                        <Archive className="h-4 w-4" style={{ color: '#3B82F6' }} />
-                        <span>{workflowVault.name}</span>
-                        <span style={{ color: 'rgb(var(--text-secondary))' }} className="text-sm">
-                          ({keyCache.get(workflowVault.id)?.length || 0}{' '}
-                          {keyCache.get(workflowVault.id)?.length === 1 ? 'key' : 'keys'})
-                        </span>
-                      </>
+                      (() => {
+                        const vaultKeys = keyCache.get(workflowVault.id) || [];
+                        const ownedCount = filterOwnedKeys(vaultKeys).length;
+                        const recipientCount = filterRecipients(vaultKeys).length;
+                        return (
+                          <>
+                            <Archive className="h-4 w-4" style={{ color: '#3B82F6' }} />
+                            <span>{workflowVault.name}</span>
+                            <span
+                              style={{ color: 'rgb(var(--text-secondary))' }}
+                              className="text-sm"
+                            >
+                              ({ownedCount} {ownedCount === 1 ? 'key' : 'keys'}
+                              {recipientCount > 0 &&
+                                `, ${recipientCount} ${recipientCount === 1 ? 'recipient' : 'recipients'}`}
+                              )
+                            </span>
+                          </>
+                        );
+                      })()
                     ) : (
                       <span style={{ color: 'rgb(var(--text-secondary))' }}>
                         {vaultsWithKeys.length === 0 ? 'No vaults available' : 'Choose vault...'}
@@ -283,6 +296,8 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                       .sort((a, b) => a.name.localeCompare(b.name))
                       .map((vault, index) => {
                         const keys = keyCache.get(vault.id) || [];
+                        const ownedCount = filterOwnedKeys(keys).length;
+                        const recipientCount = filterRecipients(keys).length;
                         const isSelected = vault.id === workflowVault?.id;
                         const isFocused = index === focusedIndex;
                         return (
@@ -325,7 +340,10 @@ const ProgressiveEncryptionCards: React.FC<ProgressiveEncryptionCardsProps> = ({
                                 className="text-sm"
                                 style={{ color: 'rgb(var(--text-secondary))' }}
                               >
-                                ({keys.length} {keys.length === 1 ? 'key' : 'keys'})
+                                ({ownedCount} {ownedCount === 1 ? 'key' : 'keys'}
+                                {recipientCount > 0 &&
+                                  `, ${recipientCount} ${recipientCount === 1 ? 'recipient' : 'recipients'}`}
+                                )
                               </span>
                             </div>
                             {isSelected && <Check className="h-4 w-4 text-blue-600" />}
