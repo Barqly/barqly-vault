@@ -15,7 +15,7 @@ use crate::services::key_management::shared::KeyEntry;
 use crate::services::shared::infrastructure::progress::ProgressManager;
 use crate::services::shared::infrastructure::{get_keys_dir, get_vault_manifest_path};
 use crate::services::vault::application::services::VersionComparisonService;
-use crate::services::vault::infrastructure::persistence::metadata::VaultMetadata;
+use crate::services::vault::infrastructure::persistence::metadata::{BundleType, VaultMetadata};
 use age::secrecy::{ExposeSecret, SecretString};
 use std::path::{Path, PathBuf};
 
@@ -211,8 +211,23 @@ impl DecryptionOrchestrationService {
         let (manifest_updated, encryption_revision, bundle_manifest) =
             self.process_vault_manifest(&extracted_files, &output_dir)?;
 
+        // Detect if this is a shared bundle (defense-in-depth)
+        // Shared bundle = explicit bundle_type OR decrypting with PublicKeyOnly recipient key
+        let is_shared_bundle = self.is_shared_bundle(&bundle_manifest, &key_entry);
+
+        if is_shared_bundle {
+            info!(
+                "Detected shared bundle - skipping registry restoration, cleaning internal files"
+            );
+        }
+
         // Step 6: Restore .agekey.enc files from bundle to keys directory
-        let enc_files_restored = self.restore_encryption_keys(&extracted_files)?;
+        // SKIP for shared bundles - they don't contain (and shouldn't restore) private keys
+        let enc_files_restored = if is_shared_bundle {
+            0
+        } else {
+            self.restore_encryption_keys(&extracted_files)?
+        };
 
         if enc_files_restored > 0 {
             info!(
@@ -222,10 +237,10 @@ impl DecryptionOrchestrationService {
         }
 
         // Step 7: Restore Key Registry from vault manifest (RECOVERY FLOW)
-        if manifest_updated && bundle_manifest.is_some() {
-            // If manifest was restored from bundle, also restore registry
-            let bundle_manifest = bundle_manifest.unwrap();
-            let keys_restored = self.restore_key_registry_from_manifest(&bundle_manifest)?;
+        // SKIP for shared bundles - don't overwrite local registry with sender's keys
+        if !is_shared_bundle && manifest_updated && bundle_manifest.is_some() {
+            let bundle_manifest = bundle_manifest.as_ref().unwrap();
+            let keys_restored = self.restore_key_registry_from_manifest(bundle_manifest)?;
             info!(
                 keys_restored,
                 "Restored keys to registry from vault manifest"
@@ -239,11 +254,17 @@ impl DecryptionOrchestrationService {
             .manifest_verification
             .verify_manifest(&extracted_files, &output_dir);
 
+        // Step 9: Clean up internal files for shared bundles (user sees only their files)
+        if is_shared_bundle {
+            self.clean_internal_files(&extracted_files, &output_dir)?;
+        }
+
         info!(
             manifest_verified = manifest_verified,
             manifest_updated = manifest_updated,
             encryption_revision = ?encryption_revision,
             enc_files_restored = enc_files_restored,
+            is_shared_bundle = is_shared_bundle,
             "Decryption orchestration completed successfully"
         );
 
@@ -252,7 +273,11 @@ impl DecryptionOrchestrationService {
             output_dir,
             output_exists,
             manifest_verified,
-            external_manifest_restored: Some(manifest_updated),
+            external_manifest_restored: if is_shared_bundle {
+                None // Shared bundles don't restore manifests
+            } else {
+                Some(manifest_updated)
+            },
         })
     }
 
@@ -466,6 +491,95 @@ impl DecryptionOrchestrationService {
     /// Check if output directory already exists
     fn check_output_exists(&self, path: &Path) -> bool {
         path.exists() && path.is_dir()
+    }
+
+    /// Detect if this is a shared bundle (defense-in-depth)
+    ///
+    /// A bundle is considered "shared" if:
+    /// 1. The manifest explicitly has `bundle_type == Shared`, OR
+    /// 2. The decryption key is a `Recipient` (PublicKeyOnly) entry
+    ///
+    /// This provides defense-in-depth: even if an older backup bundle is
+    /// somehow decrypted with a recipient key, we treat it as shared.
+    fn is_shared_bundle(
+        &self,
+        bundle_manifest: &Option<VaultMetadata>,
+        key_entry: &KeyEntry,
+    ) -> bool {
+        // Check 1: Explicit bundle_type in manifest
+        let manifest_says_shared = bundle_manifest
+            .as_ref()
+            .map(|m| matches!(m.bundle_type, BundleType::Shared))
+            .unwrap_or(false);
+
+        // Check 2: Decrypting key is a Recipient (PublicKeyOnly) type
+        // This shouldn't normally happen (Recipients can't decrypt), but
+        // provides defense-in-depth for edge cases
+        let key_is_recipient = matches!(key_entry, KeyEntry::Recipient { .. });
+
+        let is_shared = manifest_says_shared || key_is_recipient;
+
+        if is_shared {
+            debug!(
+                manifest_says_shared,
+                key_is_recipient, "Detected shared bundle scenario"
+            );
+        }
+
+        is_shared
+    }
+
+    /// Clean up internal files from extracted output directory
+    ///
+    /// For shared bundles, users should only see their actual files,
+    /// not internal vault metadata like manifests or key files.
+    fn clean_internal_files(
+        &self,
+        extracted_files: &[file_operations::FileInfo],
+        output_dir: &Path,
+    ) -> CryptoResult<()> {
+        let mut cleaned_count = 0;
+
+        for file_info in extracted_files {
+            if let Some(file_name) = file_info.path.file_name() {
+                let file_name_str = file_name.to_string_lossy();
+
+                // Remove internal files: .manifest, .agekey.enc
+                let is_internal =
+                    file_name_str.ends_with(".manifest") || file_name_str.ends_with(".agekey.enc");
+
+                if is_internal {
+                    let file_path = output_dir.join(&file_info.path);
+                    if file_path.exists() {
+                        match std::fs::remove_file(&file_path) {
+                            Ok(_) => {
+                                debug!(
+                                    file = %file_name_str,
+                                    "Cleaned internal file from shared bundle output"
+                                );
+                                cleaned_count += 1;
+                            }
+                            Err(e) => {
+                                warn!(
+                                    file = %file_name_str,
+                                    error = %e,
+                                    "Failed to clean internal file"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if cleaned_count > 0 {
+            info!(
+                cleaned_count,
+                "Cleaned internal files from shared bundle output"
+            );
+        }
+
+        Ok(())
     }
 }
 

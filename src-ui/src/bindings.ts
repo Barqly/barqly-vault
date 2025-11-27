@@ -829,7 +829,15 @@ export type EncryptFilesMultiInput = { vault_id: string; in_file_paths: string[]
 /**
  * Response from multi-key encryption command
  */
-export type EncryptFilesMultiResponse = { encrypted_file_path: string; manifest_file_path: string; file_exists_warning: boolean; keys_used: string[] }
+export type EncryptFilesMultiResponse = { 
+/**
+ * Path to the backup bundle (for self-recovery)
+ */
+encrypted_file_path: string; 
+/**
+ * Path to the shared bundle (for recipients) - present when Recipients exist
+ */
+shared_file_path: string | null; manifest_file_path: string; file_exists_warning: boolean; keys_used: string[] }
 /**
  * Encryption operation status
  */

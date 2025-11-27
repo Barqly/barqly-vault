@@ -10,6 +10,18 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+/// Bundle type for distinguishing backup from share scenarios
+///
+/// - `Backup`: Full recovery bundle with .agekey.enc files and complete metadata
+/// - `Shared`: Stripped bundle for sharing with recipients (no private keys, sanitized metadata)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum BundleType {
+    #[default]
+    Backup,
+    Shared,
+}
+
 /// Vault metadata supporting multiple protection modes (Schema v2 - Nested structure)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VaultMetadata {
@@ -20,6 +32,9 @@ pub struct VaultMetadata {
     pub content: ContentInfo,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub integrity: Option<IntegrityInfo>,
+    /// Bundle type: backup (full recovery) or shared (for recipients)
+    #[serde(default)]
+    pub bundle_type: BundleType,
 }
 
 /// Machine information for tracking vault operations across devices
@@ -180,6 +195,7 @@ impl VaultMetadata {
                 },
             },
             integrity: None,
+            bundle_type: BundleType::Backup,
         }
     }
 
@@ -450,6 +466,58 @@ impl VaultMetadata {
     /// Get the number of keys in this vault
     pub fn key_count(&self) -> usize {
         self.encryption.recipients.len()
+    }
+
+    /// Check if vault has any PublicKeyOnly (Recipient) keys
+    ///
+    /// Returns true if any recipient is a PublicKeyOnly type, indicating
+    /// this vault is intended for sharing with external parties.
+    pub fn has_recipients(&self) -> bool {
+        self.encryption
+            .recipients
+            .iter()
+            .any(|r| matches!(r.recipient_type, RecipientType::PublicKeyOnly))
+    }
+
+    /// Create a sanitized manifest for sharing (strips sensitive data)
+    ///
+    /// This creates a copy of the manifest with:
+    /// - `bundle_type` set to `Shared`
+    /// - Generic labels (derived from public key)
+    /// - Redacted YubiKey serials and identity tags
+    /// - Cleared passphrase key filenames
+    pub fn to_shared_manifest(&self) -> VaultMetadata {
+        let mut shared = self.clone();
+        shared.bundle_type = BundleType::Shared;
+
+        for recipient in shared.encryption.recipients.iter_mut() {
+            // Generic labels: first 8 chars of pubkey after "age1"
+            if recipient.public_key.len() >= 12 {
+                recipient.label = format!("Key-{}", &recipient.public_key[4..12]);
+            }
+
+            match &mut recipient.recipient_type {
+                RecipientType::YubiKey {
+                    serial,
+                    identity_tag,
+                    firmware_version,
+                    ..
+                } => {
+                    *serial = "XXXXXXXX".to_string();
+                    *identity_tag = "REDACTED".to_string();
+                    *firmware_version = None;
+                }
+                RecipientType::Passphrase { key_filename } => {
+                    // Clear filename - .agekey.enc not included in shared bundles
+                    *key_filename = String::new();
+                }
+                RecipientType::PublicKeyOnly => {
+                    // No sensitive data to redact
+                }
+            }
+        }
+
+        shared
     }
 }
 
@@ -768,5 +836,149 @@ mod tests {
         // v1 should not be newer than v2
         let (is_newer, _) = metadata_v1.compare_version(&metadata_v2);
         assert!(!is_newer);
+    }
+
+    #[test]
+    fn test_has_recipients_with_public_key_only() {
+        // Vault with a PublicKeyOnly recipient (external party)
+        let recipient = RecipientInfo {
+            key_id: "bob-work-key".to_string(),
+            recipient_type: RecipientType::PublicKeyOnly,
+            public_key: "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p"
+                .to_string(),
+            label: "Bob's Work Key".to_string(),
+            created_at: Utc::now(),
+        };
+
+        let metadata = create_test_metadata("vault-008", "Sharing Test", vec![recipient]);
+        assert!(metadata.has_recipients());
+    }
+
+    #[test]
+    fn test_has_recipients_without_public_key_only() {
+        // Vault with only passphrase recipient (self-recovery)
+        let recipient = RecipientInfo::new_passphrase(
+            "my-key".to_string(),
+            "age1self123".to_string(),
+            "My Recovery Key".to_string(),
+            "my-key.agekey.enc".to_string(),
+        );
+
+        let metadata = create_test_metadata("vault-009", "Self-Recovery Test", vec![recipient]);
+        assert!(!metadata.has_recipients());
+    }
+
+    #[test]
+    fn test_has_recipients_mixed_vault() {
+        // Vault with both owner key and external recipient
+        let passphrase = RecipientInfo::new_passphrase(
+            "my-key".to_string(),
+            "age1self123abc".to_string(),
+            "My Recovery Key".to_string(),
+            "my-key.agekey.enc".to_string(),
+        );
+        let recipient = RecipientInfo {
+            key_id: "bob-key".to_string(),
+            recipient_type: RecipientType::PublicKeyOnly,
+            public_key: "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p"
+                .to_string(),
+            label: "Bob".to_string(),
+            created_at: Utc::now(),
+        };
+
+        let metadata = create_test_metadata("vault-010", "Mixed Test", vec![passphrase, recipient]);
+        assert!(metadata.has_recipients());
+    }
+
+    #[test]
+    fn test_to_shared_manifest_sets_bundle_type() {
+        let recipient = RecipientInfo::new_passphrase(
+            "my-key".to_string(),
+            "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p".to_string(),
+            "My Key".to_string(),
+            "my-key.agekey.enc".to_string(),
+        );
+
+        let metadata = create_test_metadata("vault-011", "Shared Bundle Test", vec![recipient]);
+        assert_eq!(metadata.bundle_type, BundleType::Backup);
+
+        let shared = metadata.to_shared_manifest();
+        assert_eq!(shared.bundle_type, BundleType::Shared);
+    }
+
+    #[test]
+    fn test_to_shared_manifest_sanitizes_labels() {
+        let recipient = RecipientInfo::new_passphrase(
+            "alice-personal".to_string(),
+            "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p".to_string(),
+            "Alice's Personal Key".to_string(),
+            "alice.agekey.enc".to_string(),
+        );
+
+        let metadata = create_test_metadata("vault-012", "Label Sanitization", vec![recipient]);
+        let shared = metadata.to_shared_manifest();
+
+        // Label should be generic: "Key-" + first 8 chars after "age1"
+        assert_eq!(shared.encryption.recipients[0].label, "Key-ql3z7hjy");
+    }
+
+    #[test]
+    fn test_to_shared_manifest_redacts_yubikey_data() {
+        let yubikey_recipient = RecipientInfo::new_yubikey(
+            "yubikey-12345".to_string(),
+            "age1yubikey1qgyl9efw5cexsg8ee66jpxglnvfaswhd4zjhntqawagp4zgh064puht4g9l".to_string(),
+            "Nauman's YubiKey".to_string(),
+            "12345678".to_string(),
+            1,
+            82,
+            "YubiKey 5".to_string(),
+            "AGE-PLUGIN-YUBIKEY-REALIDENTITY".to_string(),
+            Some("5.7.1".to_string()),
+        );
+
+        let metadata =
+            create_test_metadata("vault-013", "YubiKey Redaction", vec![yubikey_recipient]);
+        let shared = metadata.to_shared_manifest();
+
+        match &shared.encryption.recipients[0].recipient_type {
+            RecipientType::YubiKey {
+                serial,
+                identity_tag,
+                firmware_version,
+                ..
+            } => {
+                assert_eq!(serial, "XXXXXXXX");
+                assert_eq!(identity_tag, "REDACTED");
+                assert!(firmware_version.is_none());
+            }
+            _ => panic!("Expected YubiKey recipient type"),
+        }
+    }
+
+    #[test]
+    fn test_to_shared_manifest_clears_passphrase_filename() {
+        let passphrase = RecipientInfo::new_passphrase(
+            "key-id".to_string(),
+            "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p".to_string(),
+            "Test Key".to_string(),
+            "secret-key.agekey.enc".to_string(),
+        );
+
+        let metadata = create_test_metadata("vault-014", "Passphrase Clear", vec![passphrase]);
+        let shared = metadata.to_shared_manifest();
+
+        match &shared.encryption.recipients[0].recipient_type {
+            RecipientType::Passphrase { key_filename } => {
+                assert!(key_filename.is_empty(), "key_filename should be cleared");
+            }
+            _ => panic!("Expected Passphrase recipient type"),
+        }
+    }
+
+    #[test]
+    fn test_bundle_type_default() {
+        // Verify BundleType defaults to Backup for backward compatibility
+        let default_type: BundleType = Default::default();
+        assert_eq!(default_type, BundleType::Backup);
     }
 }

@@ -80,6 +80,7 @@ impl CryptoManager {
         // Convert back to expected response
         Ok(EncryptFilesMultiResponse {
             encrypted_file_path: result.encrypted_file_path,
+            shared_file_path: result.shared_file_path,
             manifest_file_path: result.manifest_path,
             file_exists_warning,
             keys_used: result.keys_used,

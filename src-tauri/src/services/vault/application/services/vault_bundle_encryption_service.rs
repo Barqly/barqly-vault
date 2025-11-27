@@ -11,7 +11,7 @@ use crate::services::shared::infrastructure::{DeviceInfo, get_vaults_directory};
 use crate::services::vault;
 use crate::services::vault::application::services::{PayloadStagingService, VaultMetadataService};
 use crate::services::vault::domain::VaultError;
-use crate::services::vault::infrastructure::persistence::metadata::VaultFileEntry;
+use crate::services::vault::infrastructure::persistence::metadata::{BundleType, VaultFileEntry};
 use std::path::PathBuf;
 
 type Result<T> = std::result::Result<T, VaultError>;
@@ -28,7 +28,10 @@ pub struct VaultBundleEncryptionInput {
 /// Result of vault bundle encryption
 #[derive(Debug, Clone)]
 pub struct VaultBundleEncryptionResult {
+    /// Path to the backup bundle (full recovery with .agekey.enc files)
     pub encrypted_file_path: String,
+    /// Path to the shared bundle (stripped, no private keys) - present when Recipients exist
+    pub shared_file_path: Option<String>,
     pub manifest_path: String,
     pub encryption_revision: u32,
     pub keys_used: Vec<String>,
@@ -117,35 +120,20 @@ impl VaultBundleEncryptionService {
             "Built VaultMetadata"
         );
 
-        // Step 5: Determine output paths - TAR in secure temp, .age in Barqly-Vaults
+        // Step 5: Determine output paths
         use crate::services::shared::infrastructure::io::SecureTempFile;
-
-        let secure_tar = SecureTempFile::new().map_err(|e| {
-            VaultError::OperationFailed(format!("Failed to create secure temp file: {}", e))
-        })?;
-        let output_path = secure_tar.path().to_path_buf();
 
         let vaults_dir = get_vaults_directory().map_err(|e| {
             VaultError::StorageError(format!("Failed to get vaults directory: {}", e))
         })?;
-        let encrypted_path =
-            vaults_dir.join(format!("{}.age", vault_metadata.vault.sanitized_name));
 
-        // Step 6: Create complete payload (user files + manifest + .enc + RECOVERY.txt)
+        // Check if vault has external recipients (PublicKeyOnly) for dual-output
+        let has_recipients = vault_metadata.has_recipients();
+
+        // Step 6: Create file selection for payload staging
         let file_selection = self.create_file_selection(&input.file_paths)?;
 
-        let _archive_operation = self
-            .payload_staging
-            .create_vault_payload(&file_selection, &vault_metadata, &output_path)
-            .map_err(|e| VaultError::OperationFailed(format!("Failed to create payload: {}", e)))?;
-
-        info!("Created complete vault payload with manifest");
-
-        // Step 7: Read archive for encryption
-        let archive_data = std::fs::read(&output_path)
-            .map_err(|e| VaultError::OperationFailed(format!("Failed to read archive: {}", e)))?;
-
-        // Step 8: Collect public keys from vault
+        // Step 7: Collect public keys from vault (same for both bundles)
         let (public_keys, keys_used) = self.collect_vault_public_keys(&vault.get_key_ids())?;
 
         if public_keys.is_empty() {
@@ -154,48 +142,128 @@ impl VaultBundleEncryptionService {
             ));
         }
 
-        // Step 9: Encrypt with all recipients (multi-recipient age)
-        let encrypted_data = crypto::encrypt_data_multi_recipient(&archive_data, &public_keys)
-            .map_err(|e| VaultError::OperationFailed(format!("Encryption failed: {}", e)))?;
+        // Step 8: Create and encrypt BACKUP bundle (full recovery)
+        let backup_encrypted_path =
+            vaults_dir.join(format!("{}.age", vault_metadata.vault.sanitized_name));
 
-        // Step 10: Write encrypted file
-        std::fs::write(&encrypted_path, encrypted_data).map_err(|e| {
-            VaultError::OperationFailed(format!("Failed to write encrypted file: {}", e))
+        let secure_tar_backup = SecureTempFile::new().map_err(|e| {
+            VaultError::OperationFailed(format!("Failed to create secure temp file: {}", e))
+        })?;
+
+        self.payload_staging
+            .create_vault_payload(
+                &file_selection,
+                &vault_metadata,
+                secure_tar_backup.path(),
+                BundleType::Backup,
+            )
+            .map_err(|e| {
+                VaultError::OperationFailed(format!("Failed to create backup payload: {}", e))
+            })?;
+
+        let backup_data = std::fs::read(secure_tar_backup.path()).map_err(|e| {
+            VaultError::OperationFailed(format!("Failed to read backup archive: {}", e))
+        })?;
+
+        let backup_encrypted = crypto::encrypt_data_multi_recipient(&backup_data, &public_keys)
+            .map_err(|e| VaultError::OperationFailed(format!("Backup encryption failed: {}", e)))?;
+
+        std::fs::write(&backup_encrypted_path, backup_encrypted).map_err(|e| {
+            VaultError::OperationFailed(format!("Failed to write backup bundle: {}", e))
         })?;
 
         info!(
-            encrypted_path = %encrypted_path.display(),
-            size = archive_data.len(),
-            "Encrypted vault bundle"
+            encrypted_path = %backup_encrypted_path.display(),
+            size = backup_data.len(),
+            "Created backup bundle"
         );
 
-        // Step 11: Write RECOVERY.txt alongside .age file (non-fatal if fails)
+        // Securely delete backup temp file
+        secure_tar_backup.secure_delete().map_err(|e| {
+            VaultError::OperationFailed(format!("Failed to securely delete temp TAR: {}", e))
+        })?;
+
+        // Step 9: Create and encrypt SHARED bundle if Recipients present
+        let shared_encrypted_path = if has_recipients {
+            let shared_path = vaults_dir.join(format!(
+                "{}-shared.age",
+                vault_metadata.vault.sanitized_name
+            ));
+
+            let secure_tar_shared = SecureTempFile::new().map_err(|e| {
+                VaultError::OperationFailed(format!(
+                    "Failed to create secure temp file for shared: {}",
+                    e
+                ))
+            })?;
+
+            self.payload_staging
+                .create_vault_payload(
+                    &file_selection,
+                    &vault_metadata,
+                    secure_tar_shared.path(),
+                    BundleType::Shared,
+                )
+                .map_err(|e| {
+                    VaultError::OperationFailed(format!("Failed to create shared payload: {}", e))
+                })?;
+
+            let shared_data = std::fs::read(secure_tar_shared.path()).map_err(|e| {
+                VaultError::OperationFailed(format!("Failed to read shared archive: {}", e))
+            })?;
+
+            let shared_encrypted = crypto::encrypt_data_multi_recipient(&shared_data, &public_keys)
+                .map_err(|e| {
+                    VaultError::OperationFailed(format!("Shared encryption failed: {}", e))
+                })?;
+
+            std::fs::write(&shared_path, shared_encrypted).map_err(|e| {
+                VaultError::OperationFailed(format!("Failed to write shared bundle: {}", e))
+            })?;
+
+            info!(
+                shared_path = %shared_path.display(),
+                size = shared_data.len(),
+                "Created shared bundle (stripped for recipients)"
+            );
+
+            // Securely delete shared temp file
+            secure_tar_shared.secure_delete().map_err(|e| {
+                VaultError::OperationFailed(format!(
+                    "Failed to securely delete shared temp TAR: {}",
+                    e
+                ))
+            })?;
+
+            Some(shared_path.to_string_lossy().to_string())
+        } else {
+            None
+        };
+
+        // Step 10: Write RECOVERY.txt alongside backup .age file (non-fatal if fails)
         if let Err(e) = self
             .payload_staging
-            .write_recovery_file(&vault_metadata, &encrypted_path)
+            .write_recovery_file(&vault_metadata, &backup_encrypted_path)
         {
             warn!("Failed to create RECOVERY.txt (non-fatal): {}", e);
         }
 
-        // Step 12: Save VaultMetadata to non-sync storage
+        // Step 11: Save VaultMetadata to non-sync storage
         self.metadata_service
             .save_manifest(&vault_metadata)
             .map_err(|e| VaultError::StorageError(format!("Failed to save manifest: {}", e)))?;
-
-        // Step 13: Securely delete temporary TAR file (overwrite + unlink)
-        secure_tar.secure_delete().map_err(|e| {
-            VaultError::OperationFailed(format!("Failed to securely delete temp TAR: {}", e))
-        })?;
 
         info!(
             vault = %vault_metadata.label(),
             revision = vault_metadata.versioning.revision,
             keys_count = keys_used.len(),
+            has_shared = has_recipients,
             "Vault bundle encryption completed"
         );
 
         Ok(VaultBundleEncryptionResult {
-            encrypted_file_path: encrypted_path.to_string_lossy().to_string(),
+            encrypted_file_path: backup_encrypted_path.to_string_lossy().to_string(),
+            shared_file_path: shared_encrypted_path,
             manifest_path: format!(
                 "non-sync vaults/{}.manifest",
                 vault_metadata.vault.sanitized_name
