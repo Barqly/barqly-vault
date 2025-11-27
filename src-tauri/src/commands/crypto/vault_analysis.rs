@@ -127,11 +127,13 @@ pub async fn analyze_encrypted_vault(
 
     // Parse vault name and date from filename
     // Expected format: "Sam-Family-Vault-2025-01-13.age" or "Sam-Family-Vault.age"
-    let (vault_name_sanitized, creation_date) = parse_vault_filename(filename)?;
+    // Also detects "-shared" suffix for shared bundles
+    let (vault_name_sanitized, creation_date, is_shared_bundle) = parse_vault_filename(filename)?;
 
     debug!(
         vault_name_sanitized = %vault_name_sanitized,
         creation_date = ?creation_date,
+        is_shared_bundle = is_shared_bundle,
         "Parsed filename components"
     );
 
@@ -141,8 +143,28 @@ pub async fn analyze_encrypted_vault(
     info!(
         vault_name_sanitized = %vault_name_sanitized,
         vault_name_display = %vault_name,
+        is_shared_bundle = is_shared_bundle,
         "Desanitized vault name"
     );
+
+    // For shared bundles, skip manifest lookup entirely
+    // Recipients don't have the sender's manifest - that's expected behavior
+    if is_shared_bundle {
+        info!(
+            vault_name = %vault_name,
+            "Shared bundle detected - skipping manifest lookup, using global key registry"
+        );
+
+        return Ok(AnalyzeEncryptedVaultResponse {
+            vault_name,
+            vault_name_sanitized,
+            manifest_exists: false,
+            vault_id: None,
+            associated_keys: vec![], // Will use global key list in UI
+            creation_date,
+            is_recovery_mode: false, // NOT recovery mode - normal decryption flow
+        });
+    }
 
     // Check if manifest exists and get vault info
     let vault_manager = VaultManager::new();
@@ -221,12 +243,25 @@ pub async fn analyze_encrypted_vault(
     Ok(response)
 }
 
-/// Parse vault filename to extract sanitized name and optional date
+/// Parse vault filename to extract sanitized name, optional date, and shared bundle flag
 ///
 /// Expected formats:
-/// - "Sam-Family-Vault-2025-01-13.age" → ("Sam-Family-Vault", Some("2025-01-13"))
-/// - "Sam-Family-Vault.age" → ("Sam-Family-Vault", None)
-fn parse_vault_filename(filename: &str) -> Result<(String, Option<String>), Box<CommandError>> {
+/// - "Sam-Family-Vault-2025-01-13.age" → ("Sam-Family-Vault", Some("2025-01-13"), false)
+/// - "Sam-Family-Vault.age" → ("Sam-Family-Vault", None, false)
+/// - "Sam-Family-Vault-shared.age" → ("Sam-Family-Vault", None, true)
+/// - "Sam-Family-Vault-2025-01-13-shared.age" → ("Sam-Family-Vault", Some("2025-01-13"), true)
+fn parse_vault_filename(
+    filename: &str,
+) -> Result<(String, Option<String>, bool), Box<CommandError>> {
+    // First, detect and strip "-shared" suffix BEFORE regex parsing
+    // This ensures date extraction works correctly for shared bundles
+    let (filename_to_parse, is_shared_bundle) =
+        if let Some(stripped) = filename.strip_suffix("-shared.age") {
+            (format!("{}.age", stripped), true)
+        } else {
+            (filename.to_string(), false)
+        };
+
     // Regex pattern: capture vault name, optional date, then .age extension
     // Pattern: ^(vault-name)(?:-(\d{4}-\d{2}-\d{2}))?\.age$
     let pattern = r"^([^-]+(?:-[^-]+)*?)(?:-(\d{4}-\d{2}-\d{2}))?\.age$";
@@ -242,7 +277,7 @@ fn parse_vault_filename(filename: &str) -> Result<(String, Option<String>), Box<
         })
     })?;
 
-    let captures = re.captures(filename).ok_or_else(|| {
+    let captures = re.captures(&filename_to_parse).ok_or_else(|| {
         Box::new(CommandError {
             code: ErrorCode::InvalidInput,
             message: format!(
@@ -278,7 +313,7 @@ fn parse_vault_filename(filename: &str) -> Result<(String, Option<String>), Box<
 
     let creation_date = captures.get(2).map(|m| m.as_str().to_string());
 
-    Ok((vault_name, creation_date))
+    Ok((vault_name, creation_date, is_shared_bundle))
 }
 
 #[cfg(test)]
@@ -290,6 +325,7 @@ mod tests {
         let result = parse_vault_filename("Sam-Family-Vault-2025-01-13.age").unwrap();
         assert_eq!(result.0, "Sam-Family-Vault");
         assert_eq!(result.1, Some("2025-01-13".to_string()));
+        assert!(!result.2, "Should not be a shared bundle");
     }
 
     #[test]
@@ -297,6 +333,7 @@ mod tests {
         let result = parse_vault_filename("Sam-Family-Vault.age").unwrap();
         assert_eq!(result.0, "Sam-Family-Vault");
         assert_eq!(result.1, None);
+        assert!(!result.2, "Should not be a shared bundle");
     }
 
     #[test]
@@ -304,6 +341,7 @@ mod tests {
         let result = parse_vault_filename("Vault.age").unwrap();
         assert_eq!(result.0, "Vault");
         assert_eq!(result.1, None);
+        assert!(!result.2, "Should not be a shared bundle");
     }
 
     #[test]
@@ -311,6 +349,7 @@ mod tests {
         let result = parse_vault_filename("AKAH-Family-Trust-2025-10-13.age").unwrap();
         assert_eq!(result.0, "AKAH-Family-Trust");
         assert_eq!(result.1, Some("2025-10-13".to_string()));
+        assert!(!result.2, "Should not be a shared bundle");
     }
 
     #[test]
@@ -320,10 +359,35 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_filename_shared_bundle() {
+        let result = parse_vault_filename("Sam-Family-Vault-shared.age").unwrap();
+        assert_eq!(result.0, "Sam-Family-Vault");
+        assert_eq!(result.1, None);
+        assert!(result.2, "Should be detected as shared bundle");
+    }
+
+    #[test]
+    fn test_parse_filename_shared_bundle_with_date() {
+        let result = parse_vault_filename("TV01-2025-01-15-shared.age").unwrap();
+        assert_eq!(result.0, "TV01");
+        assert_eq!(result.1, Some("2025-01-15".to_string()));
+        assert!(result.2, "Should be detected as shared bundle");
+    }
+
+    #[test]
+    fn test_parse_filename_shared_single_word() {
+        let result = parse_vault_filename("Vault-shared.age").unwrap();
+        assert_eq!(result.0, "Vault");
+        assert_eq!(result.1, None);
+        assert!(result.2, "Should be detected as shared bundle");
+    }
+
+    #[test]
     fn test_parse_filename_invalid_date() {
         // If the date format doesn't match YYYY-MM-DD, it's treated as part of the vault name
         let result = parse_vault_filename("Sam-Family-Vault-invalid-date.age").unwrap();
         assert_eq!(result.0, "Sam-Family-Vault-invalid-date");
         assert_eq!(result.1, None); // No date captured
+        assert!(!result.2, "Should not be a shared bundle");
     }
 }
