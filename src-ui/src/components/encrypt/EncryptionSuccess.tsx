@@ -87,7 +87,7 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
         </div>
       </div>
 
-      <div className="px-6 pt-6 pb-3">
+      <div className="px-6 pt-0 pb-3">
         {/* Encryption Summary - shows what was encrypted */}
         <EncryptionSummary
           vaultName={vaultName}
