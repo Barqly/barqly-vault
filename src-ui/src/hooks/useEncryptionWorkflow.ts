@@ -11,6 +11,8 @@ import { logger } from '../lib/logger';
 interface EncryptionResult {
   outputPath: string;
   fileName: string;
+  sharedFilePath?: string; // Present when Recipients exist - stripped for sharing
+  sharedFileName?: string; // Derived from sharedFilePath
   fileCount: number;
   originalSize: number;
   encryptedSize: number;
@@ -181,6 +183,8 @@ export const useEncryptionWorkflow = () => {
       setEncryptionResult({
         outputPath: response.encrypted_file_path,
         fileName: response.encrypted_file_path.split('/').pop() || 'encrypted-file.age',
+        sharedFilePath: response.shared_file_path || undefined,
+        sharedFileName: response.shared_file_path?.split('/').pop(),
         fileCount: selectedFiles!.file_count,
         originalSize: selectedFiles!.total_size,
         encryptedSize: Math.round(selectedFiles!.total_size * 0.75),

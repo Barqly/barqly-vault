@@ -5,6 +5,8 @@ import EncryptionSummary from './EncryptionSummary';
 interface EncryptionSuccessProps {
   outputPath: string;
   fileName: string;
+  sharedFilePath?: string; // Present when Recipients exist - for sharing
+  sharedFileName?: string; // Derived from sharedFilePath
   fileCount: number;
   originalSize: number;
   encryptedSize: number;
@@ -19,6 +21,8 @@ interface EncryptionSuccessProps {
 const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
   outputPath,
   fileName,
+  sharedFilePath,
+  sharedFileName,
   fileCount,
   originalSize,
   encryptedSize: _encryptedSize,
@@ -92,6 +96,8 @@ const EncryptionSuccess: React.FC<EncryptionSuccessProps> = ({
           recipientCount={recipientCount}
           outputFileName={archiveName ? `${archiveName}.age` : fileName}
           outputPath={outputPath}
+          sharedFilePath={sharedFilePath}
+          sharedFileName={sharedFileName}
           hasRecoveryItems={true}
         />
 
