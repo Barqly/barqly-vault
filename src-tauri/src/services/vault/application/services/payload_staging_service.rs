@@ -68,30 +68,24 @@ impl PayloadStagingService {
 
         info!(file_count = staging.file_count(), "Staged user files");
 
-        // Step 2: Add manifest to staging
-        // For shared bundles, use sanitized manifest (redacted metadata)
-        let manifest_to_include = if is_shared {
-            vault_metadata.to_shared_manifest()
-        } else {
-            vault_metadata.clone()
-        };
-
-        let manifest_json = serde_json::to_string_pretty(&manifest_to_include).map_err(|e| {
-            VaultError::OperationFailed(format!("Failed to serialize manifest: {}", e))
-        })?;
-
-        let manifest_filename = format!("{}.manifest", vault_metadata.vault.sanitized_name);
-        staging
-            .add_file_content(&manifest_filename, manifest_json.as_bytes())
-            .map_err(|e| {
-                VaultError::OperationFailed(format!("Failed to add manifest to staging: {}", e))
+        // Step 2: Add manifest to staging (ONLY for backup bundles)
+        // Shared bundles contain ONLY user files - no manifest, no .agekey.enc
+        if !is_shared {
+            let manifest_json = serde_json::to_string_pretty(&vault_metadata).map_err(|e| {
+                VaultError::OperationFailed(format!("Failed to serialize manifest: {}", e))
             })?;
 
-        info!(
-            is_shared,
-            "Added {} manifest to payload",
-            if is_shared { "sanitized" } else { "full" }
-        );
+            let manifest_filename = format!("{}.manifest", vault_metadata.vault.sanitized_name);
+            staging
+                .add_file_content(&manifest_filename, manifest_json.as_bytes())
+                .map_err(|e| {
+                    VaultError::OperationFailed(format!("Failed to add manifest to staging: {}", e))
+                })?;
+
+            info!("Added manifest to backup payload");
+        } else {
+            info!("Skipping manifest for shared bundle (files only)");
+        }
 
         // Step 3: Add passphrase .agekey.enc files to staging
         // ONLY for backup bundles - shared bundles exclude private key material
