@@ -150,7 +150,20 @@ impl YubiKeyManager {
                     if has_default_pin {
                         YubiKeyState::New
                     } else {
-                        YubiKeyState::Reused
+                        // Fallback for firmware < 5.3 where PIV metadata isn't available
+                        // and "Using default PIN!" warnings aren't shown.
+                        // Use management key protection as proxy:
+                        // - Factory reset = unprotected mgmt key = New
+                        // - Our initialization = TDES protected by PIN = Reused
+                        let mgmt_protected = self
+                            .has_tdes_protected_mgmt_key(serial)
+                            .await
+                            .unwrap_or(false);
+                        if mgmt_protected {
+                            YubiKeyState::Reused
+                        } else {
+                            YubiKeyState::New
+                        }
                     }
                 }
                 (true, false) => {
