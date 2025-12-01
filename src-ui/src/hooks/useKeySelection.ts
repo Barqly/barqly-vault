@@ -60,12 +60,46 @@ export function useKeySelection(
   // Use cache-first architecture - get keys from VaultContext cache
   // Access keyCache directly like KeyMenuBar does to avoid memoization issues
   const keysFromCache = useMemo(() => {
-    if (!targetVaultId) {
+    let allKeys: KeyReference[] = [];
+
+    if (targetVaultId) {
+      // Normal mode: Get keys from vault-specific cache
+      allKeys = (keyCache.get(targetVaultId) || []) as KeyReference[];
+    } else if (includeAllKeys) {
+      // Shared bundle mode: No local vault, use global key registry
+      // Convert GlobalKey to KeyReference (VaultKey) format for compatibility
+      allKeys = globalKeyCache
+        .filter((gk) => gk.key_type.type !== 'Recipient') // Only owned keys
+        .map((gk) => {
+          const keyType = gk.key_type;
+          // Build the discriminated union part based on key type
+          if (keyType.type === 'Passphrase') {
+            return {
+              type: 'Passphrase' as const,
+              data: keyType.data,
+              id: gk.id,
+              label: gk.label,
+              lifecycle_status: gk.lifecycle_status,
+              created_at: gk.created_at,
+              last_used: gk.last_used,
+            };
+          } else if (keyType.type === 'YubiKey') {
+            return {
+              type: 'YubiKey' as const,
+              data: keyType.data,
+              id: gk.id,
+              label: gk.label,
+              lifecycle_status: gk.lifecycle_status,
+              created_at: gk.created_at,
+              last_used: gk.last_used,
+            };
+          }
+          // Should never reach here due to filter, but TypeScript needs this
+          throw new Error(`Unexpected key type: ${keyType.type}`);
+        });
+    } else {
       return [];
     }
-
-    // Get keys from cache (instant, no async) - access cache directly
-    const allKeys = (keyCache.get(targetVaultId) || []) as KeyReference[];
 
     // Debug: Check what's in the cache
     logger.debug('useKeySelection', 'Cache state', {
@@ -136,13 +170,14 @@ export function useKeySelection(
   const loading = !isInitialized;
 
   // Update error state when no vault is selected
+  // For shared bundles (includeAllKeys=true), no vault is expected - use global keys
   useEffect(() => {
-    if (!targetVaultId) {
+    if (!targetVaultId && !includeAllKeys) {
       setError('No vault selected');
     } else {
       setError('');
     }
-  }, [targetVaultId]);
+  }, [targetVaultId, includeAllKeys]);
 
   // Notify parent component when keys are loaded
   useEffect(() => {
