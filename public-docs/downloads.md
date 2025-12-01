@@ -4,27 +4,28 @@
 
 ---
 
-## Latest Release (Version 0.2.1)
+## Latest Release (Version 0.2.2)
 
-**Released:** 2025-11-17 | **Release Notes:** [View on GitHub](https://github.com/Barqly/barqly-vault/releases/tag/v0.2.1)
+**Released:** 2025-12-01 | **Release Notes:** [View on GitHub](https://github.com/Barqly/barqly-vault/releases/tag/v0.2.2)
 
 | Platform | Size | Download |
 |----------|------|----------|
-| macOS (Apple Silicon) | 34.7 MB | [barqly-vault-0.2.1-macos-arm64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.1/barqly-vault-0.2.1-macos-arm64.dmg) |
-| macOS (Intel) | 37.1 MB | [barqly-vault-0.2.1-macos-x86_64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.1/barqly-vault-0.2.1-macos-x86_64.dmg) |
-| Windows | 33.9 MB | [barqly-vault-0.2.1-x64.msi](https://github.com/barqly/barqly-vault/releases/download/v0.2.1/barqly-vault-0.2.1-x64.msi) |
-| Windows | 6.4 MB | [barqly-vault-0.2.1-windows-x64.zip](https://github.com/barqly/barqly-vault/releases/download/v0.2.1/barqly-vault-0.2.1-windows-x64.zip) |
-| Linux | 47.1 MB | [barqly-vault-0.2.1-1_amd64.deb](https://github.com/barqly/barqly-vault/releases/download/v0.2.1/barqly-vault-0.2.1-1_amd64.deb) |
-| Linux | 47.1 MB | [barqly-vault-0.2.1-1.x86_64.rpm](https://github.com/barqly/barqly-vault/releases/download/v0.2.1/barqly-vault-0.2.1-1.x86_64.rpm) |
-| Linux | 124.1 MB | [barqly-vault-0.2.1-1_amd64.AppImage](https://github.com/barqly/barqly-vault/releases/download/v0.2.1/barqly-vault-0.2.1-1_amd64.AppImage) |
-| Linux | 8.0 MB | [barqly-vault-0.2.1-x86_64.tar.gz](https://github.com/barqly/barqly-vault/releases/download/v0.2.1/barqly-vault-0.2.1-x86_64.tar.gz) |
+| macOS (Apple Silicon) | 34.6 MB | [barqly-vault-0.2.2-macos-arm64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.2/barqly-vault-0.2.2-macos-arm64.dmg) |
+| macOS (Intel) | 37.0 MB | [barqly-vault-0.2.2-macos-x86_64.dmg](https://github.com/barqly/barqly-vault/releases/download/v0.2.2/barqly-vault-0.2.2-macos-x86_64.dmg) |
+| Windows | 33.8 MB | [barqly-vault-0.2.2-x64.msi](https://github.com/barqly/barqly-vault/releases/download/v0.2.2/barqly-vault-0.2.2-x64.msi) |
+| Windows | 6.4 MB | [barqly-vault-0.2.2-windows-x64.zip](https://github.com/barqly/barqly-vault/releases/download/v0.2.2/barqly-vault-0.2.2-windows-x64.zip) |
+| Linux | 47.1 MB | [barqly-vault-0.2.2-1_amd64.deb](https://github.com/barqly/barqly-vault/releases/download/v0.2.2/barqly-vault-0.2.2-1_amd64.deb) |
+| Linux | 47.0 MB | [barqly-vault-0.2.2-1.x86_64.rpm](https://github.com/barqly/barqly-vault/releases/download/v0.2.2/barqly-vault-0.2.2-1.x86_64.rpm) |
+| Linux | 125.0 MB | [barqly-vault-0.2.2-1_amd64.AppImage](https://github.com/barqly/barqly-vault/releases/download/v0.2.2/barqly-vault-0.2.2-1_amd64.AppImage) |
+| Linux | 8.0 MB | [barqly-vault-0.2.2-x86_64.tar.gz](https://github.com/barqly/barqly-vault/releases/download/v0.2.2/barqly-vault-0.2.2-x86_64.tar.gz) |
 
-**Checksums:** [checksums.txt](https://github.com/barqly/barqly-vault/releases/download/v0.2.1/checksums.txt)
+**Checksums:** [checksums.txt](https://github.com/barqly/barqly-vault/releases/download/v0.2.2/checksums.txt)
 
 ---
 
 ## Version History
 
+- [Version 0.2.1](https://github.com/Barqly/barqly-vault/releases/tag/v0.2.1)
 - [Version 0.2.0](https://github.com/Barqly/barqly-vault/releases/tag/v0.2.0)
 - [Version 0.1.0](https://github.com/Barqly/barqly-vault/releases/tag/v0.1.0)
 
